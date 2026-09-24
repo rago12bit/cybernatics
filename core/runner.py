@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from core.adapters.base import ToolAdapter
+from core.config import scratch_dir
 
 CONTAINER_TARGET = "/target"
 CONTAINER_OUT = "/out"
@@ -68,7 +69,7 @@ def run_tool(adapter: ToolAdapter, target: Path) -> RunResult:
     """Run one adapter in a sandbox. Never raises for tool failure; reports status instead."""
     spec = adapter.spec
     name = f"bulwark-{spec.name}-{uuid.uuid4().hex[:8]}"
-    with tempfile.TemporaryDirectory(prefix="bulwark-out-") as tmp:
+    with tempfile.TemporaryDirectory(prefix="bulwark-out-", dir=scratch_dir()) as tmp:
         out_dir = Path(tmp)
         out_dir.chmod(0o777)  # container runs as a non-root uid
         argv = build_docker_argv(adapter, target, out_dir, name)

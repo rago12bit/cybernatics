@@ -16,19 +16,42 @@ ruff check . && black --check . && mypy && pytest
 
 License: Apache-2.0
 
-## Building the scanner images
+## Run the full stack (API + worker + Postgres + Redis + object store)
 
-Scanner images run sandboxed (no network). Build the local ones once:
+```bash
+./scripts/init-env.sh                       # writes .env with random secrets; creates the work dir
+docker compose --profile scanners build     # builds the app image and the 4 custom scanner images
+docker compose up -d
+```
+
+The API listens on `http://127.0.0.1:8000` (interactive docs at `/docs`). Every endpoint except
+`/healthz` needs `Authorization: Bearer $BULWARK_API_TOKEN` (see `.env`).
+
+```bash
+TOKEN=$(grep ^BULWARK_API_TOKEN .env | cut -d= -f2)
+curl -X POST localhost:8000/scans -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+     -d '{"source": {"type": "git", "url": "https://github.com/OWASP/NodeGoat"}}'
+curl -X POST localhost:8000/scans/upload -H "Authorization: Bearer $TOKEN" -F archive=@project.zip
+curl localhost:8000/scans/<id>                                    -H "Authorization: Bearer $TOKEN"
+curl "localhost:8000/scans/<id>/findings?severity=HIGH&limit=20"  -H "Authorization: Bearer $TOKEN"
+```
+
+Live progress: connect a WebSocket to `/scans/<id>/ws`, send `{"token": "<token>"}`, and receive
+`snapshot`, `tool.finished` and `scan.finished` events. The API never scans server-side paths: only
+Git URLs and uploaded archives. See [docs/api.md](docs/api.md).
+
+Vulnerability databases are baked into the Trivy and OSV images at build time (the sandbox has no
+network at run time); rebuild those images to refresh them. Semgrep's rules are fetched at build
+time and are for your own internal use only: see [ADR-006](docs/adr/0006-semgrep-rules-licensing.md).
+
+## Building the scanner images without compose
 
 ```bash
 docker build -t bulwark/bandit:1.7.10 docker/bandit
-docker/semgrep/fetch-rules.sh && docker build -t bulwark/semgrep:1.90.0 docker/semgrep
-docker build -t bulwark/trivy:0.55.2 docker/trivy          # bakes in a ~1.4 GB vuln DB
-docker build -t bulwark/osv-scanner:1.9.2 docker/osv-scanner  # offline DBs: PyPI, npm, Go
+docker build -t bulwark/semgrep:1.90.0 docker/semgrep
+docker build -t bulwark/trivy:0.55.2 docker/trivy              # bakes in a ~1.4 GB vuln DB
+docker build -t bulwark/osv-scanner:1.9.2 docker/osv-scanner   # offline DBs: PyPI, npm, Go
 ```
-
-Vulnerability databases are baked in at build time (the sandbox has no network at run time), so
-rebuild the Trivy and OSV images to refresh them.
 
 ## Usage
 

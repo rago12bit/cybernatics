@@ -5,39 +5,57 @@ description = "Unified security scanning platform: orchestration, normalization 
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "Apache-2.0" }
-dependencies = ["typer>=0.12", "celery[redis]>=5.4"]
+dependencies = [
+    "typer>=0.12",
+    "celery[redis]>=5.4",
+    "sqlalchemy>=2.0",
+    "alembic>=1.13",
+    "psycopg[binary]>=3.2",
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "python-multipart>=0.0.9",
+    "boto3>=1.34",
+]
 
 [project.scripts]
 bulwark = "cli.main:app"
 
 [project.optional-dependencies]
-dev = ["pytest>=8", "pytest-cov>=5", "ruff>=0.6", "black>=24", "mypy>=1.11"]
+dev = ["pytest>=8", "pytest-cov>=5", "ruff>=0.6", "black>=24", "mypy>=1.11", "httpx>=0.27"]
 
 [tool.setuptools.packages.find]
-include = ["core*", "cli*"]
+include = ["core*", "cli*", "api*"]
 
 [tool.black]
+extend-exclude = "migrations/versions"
 target-version = ["py310"]
 line-length = 100
 
 [tool.ruff]
+extend-exclude = ["migrations/versions"]
 line-length = 100
 target-version = "py310"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
 
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["E501"]
+
 [tool.ruff.lint.flake8-bugbear]
-extend-immutable-calls = ["typer.Argument", "typer.Option"]
+extend-immutable-calls = [
+    "typer.Argument", "typer.Option",
+    "fastapi.Depends", "fastapi.Query", "fastapi.File", "fastapi.Form",
+]
 
 [tool.mypy]
 strict = true
-files = ["core"]
+files = ["core", "api"]
 
 [[tool.mypy.overrides]]
-module = ["celery.*", "kombu.*"]
+module = ["celery.*", "kombu.*", "boto3.*", "botocore.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "--cov=core --cov-fail-under=80"
+addopts = "--cov=core --cov=api --cov-fail-under=80"

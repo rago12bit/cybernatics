@@ -80,6 +80,7 @@ class ToolOutcome:
     exit_code: int | None = None
     duration_seconds: float = 0.0
     error: str | None = None
+    raw: bytes = b""  # not serialized; stored as an artifact only after secret-safety checks
 
     def status_block(self) -> dict[str, Any]:
         block: dict[str, Any] = {
@@ -119,7 +120,9 @@ def execute_tool(name: str, target: Path) -> ToolOutcome:
     findings = adapter.parse(run.raw) if run.raw else []
     # No output = failure; output with zero findings = clean pass.
     error = None if run.status == "ok" else (run.stderr.strip() or run.status)[-500:]
-    return ToolOutcome(name, run.status, findings, run.exit_code, time.monotonic() - start, error)
+    return ToolOutcome(
+        name, run.status, findings, run.exit_code, time.monotonic() - start, error, run.raw
+    )
 
 
 Executor = Callable[[list[str], Path], list[ToolOutcome]]

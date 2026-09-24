@@ -73,6 +73,7 @@ class TrivyAdapter(ToolAdapter):
             log.warning("trivy: could not parse output: %s", exc)
             return []
         findings: list[Finding] = []
+        seen_misconfigs: set[tuple[str, str, int, int, str]] = set()
         for res in results:
             try:
                 target = str(res["Target"])
@@ -81,6 +82,20 @@ class TrivyAdapter(ToolAdapter):
                     if (f := self._vuln(v, target, rtype)) is not None:
                         findings.append(f)
                 for m in res.get("Misconfigurations") or []:
+                    # Trivy reports some misconfigs twice (same rule, resource and lines; only
+                    # cosmetic fields differ). Collapse them here, deliberately and visibly.
+                    cause = m.get("CauseMetadata") or {}
+                    key = (
+                        str(m.get("ID")),
+                        target,
+                        int(cause.get("StartLine") or 0),
+                        int(cause.get("EndLine") or 0),
+                        str(cause.get("Resource", "")),
+                    )
+                    if key in seen_misconfigs:
+                        log.debug("trivy: collapsed duplicate misconfiguration %s", key)
+                        continue
+                    seen_misconfigs.add(key)
                     if (f := self._misconfig(m, target, rtype)) is not None:
                         findings.append(f)
             except (KeyError, TypeError, AttributeError) as exc:

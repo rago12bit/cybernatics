@@ -8,5 +8,5 @@ __pycache__/
 htmlcov/
 node_modules/
 .DS_Store
-docker/semgrep/rules/
-docker/semgrep/.rules-src/
+.env
+*.db

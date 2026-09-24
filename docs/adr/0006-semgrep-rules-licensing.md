@@ -11,8 +11,8 @@ and does **not** allow distributing the rules or making them available to others
 
 ## Decision
 - Rules are never committed to this repo (`docker/semgrep/rules/` is git-ignored).
-- `docker/semgrep/fetch-rules.sh` clones a pinned commit at image build time; each user builds
-  their own image locally for their own use. The image is never pushed to a registry.
+- A multi-stage `docker/semgrep/Dockerfile` clones a pinned commit at image build time; each user
+  builds their own image locally for their own use. The image is never pushed to a registry.
 - The Semgrep adapter stays in the codebase: it is the reference for the shared SARIF path.
 
 ## Consequences

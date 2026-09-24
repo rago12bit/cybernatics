@@ -7,6 +7,7 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
 
+from core.config import scratch_dir
 from core.gitfetch import clone_repo
 from core.ingest import IngestError, Limits, extract_archive
 from core.workspace import prepare_workspace
@@ -15,7 +16,7 @@ from core.workspace import prepare_workspace
 @contextmanager
 def materialize(source: str, limits: Limits | None = None) -> Iterator[Path]:
     """Yield a sanitized, size-limited workspace for `source`; cleaned up on exit."""
-    with tempfile.TemporaryDirectory(prefix="bulwark-ws-") as tmp:
+    with tempfile.TemporaryDirectory(prefix="bulwark-ws-", dir=scratch_dir()) as tmp:
         tmp_path = Path(tmp)
         staged: Path
         if source.startswith(("https://", "http://", "git@", "ssh://", "git://", "file://")):

@@ -8,6 +8,7 @@ access to the Docker daemon. Start one with:  celery -A core.tasks worker -l inf
 from __future__ import annotations
 
 import os
+import re
 from pathlib import Path
 from typing import Any
 
@@ -17,11 +18,12 @@ from celery.exceptions import SoftTimeLimitExceeded
 from core.runner import RunnerError
 from core.scan import ADAPTERS, ToolOutcome
 
-celery_app = Celery(
-    "bulwark",
-    broker=os.environ.get("BULWARK_BROKER_URL", "redis://localhost:6379/0"),
-    backend=os.environ.get("BULWARK_RESULT_URL", "redis://localhost:6379/1"),
-)
+_REDIS = os.environ.get("BULWARK_REDIS_URL", "redis://localhost:6379/0")
+_BROKER = os.environ.get("BULWARK_BROKER_URL", _REDIS)
+# Results live in a separate Redis db from the broker unless overridden.
+_BACKEND = os.environ.get("BULWARK_RESULT_URL", re.sub(r"/0$", "/1", _REDIS))
+
+celery_app = Celery("bulwark", broker=_BROKER, backend=_BACKEND)
 celery_app.conf.update(
     task_serializer="json",
     result_serializer="json",
@@ -49,6 +51,21 @@ def run_tool_task(self: Any, tool: str, target: str) -> dict[str, Any]:
         return execute_tool(tool, Path(target)).to_dict()
     except SoftTimeLimitExceeded:
         return ToolOutcome(tool, "timeout", error="celery soft time limit").to_dict()
+
+
+@celery_app.task(name="bulwark.run_scan", bind=True, acks_late=True, ignore_result=True)  # type: ignore[untyped-decorator]
+def run_scan_task(self: Any, scan_id: str) -> str:
+    """Server-side scan job (used by the API). Idempotent: a redelivered task restarts cleanly."""
+    from core.config import Settings
+    from core.events import RedisPublisher
+    from core.persistence.db import get_session_factory
+    from core.persistence.storage import S3Store
+    from core.pipeline import run_scan_job
+
+    settings = Settings.from_env()
+    return run_scan_job(
+        scan_id, get_session_factory(), S3Store(settings), RedisPublisher(settings.redis_url)
+    )
 
 
 def celery_executor(tools: list[str], target: Path) -> list[ToolOutcome]:

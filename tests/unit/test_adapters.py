@@ -130,3 +130,13 @@ def test_sca_tools_only_apply_when_lockfiles_or_iac_exist() -> None:
     assert not TrivyAdapter().applies_to(bare)
     assert OsvScannerAdapter().applies_to(RepoContext(Path("."), lockfiles=("go.mod",)))
     assert TrivyAdapter().applies_to(RepoContext(Path("."), has_dockerfile=True))
+
+
+def test_trivy_collapses_its_own_duplicate_misconfigs() -> None:
+    findings = _parse("trivy", TrivyAdapter())
+    ids = [f.id for f in findings]
+    assert len(ids) == len(set(ids)), "adapter ids must be unique within one run"
+    raw = json.loads((GOLDEN / "trivy" / "raw.json").read_bytes())
+    raw_misconf = sum(len(r.get("Misconfigurations") or []) for r in raw["Results"])
+    kept = sum(f.taxonomy.category is not Category.SCA for f in findings)
+    assert (raw_misconf, kept) == (26, 15)  # 11 exact duplicates collapsed, none silently lost
