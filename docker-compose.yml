@@ -87,7 +87,7 @@ services:
 
   worker:
     <<: *app
-    command: ["celery", "-A", "core.tasks", "worker", "-B", "-P", "threads", "-c", "4", "-l", "info"]  # -B: embedded beat for housekeeping (run ONE worker with -B)
+    command: ["celery", "-A", "core.tasks", "worker", "-B", "-s", "/tmp/celerybeat-schedule", "-P", "threads", "-c", "4", "-l", "info"]  # -B: embedded beat for housekeeping (run ONE worker with -B)
     environment:
       <<: *app-env
       DOCKER_HOST: tcp://socket-proxy:2375
