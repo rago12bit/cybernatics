@@ -1,0 +1,226 @@
+[
+  {
+    "description": "Avoiding SQL string concatenation: untrusted input concatenated with raw SQL query can result in SQL Injection. In order to execute raw query safely, prepared statement should be used. SQLAlchemy provides TextualSQL to easily used prepared statement with named parameters. For complex SQL composition, use SQL Expression Language or Schema Definition Language. In most cases, SQLAlchemy ORM will be a better option.",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "semgrep"
+      ],
+      "rule_ids": {
+        "semgrep": "python.sqlalchemy.security.sqlalchemy-execute-raw-query"
+      }
+    },
+    "fingerprint": "",
+    "id": "semgrep:python.sqlalchemy.security.sqlalchemy-execute-raw-query:src/users.py:7",
+    "location": {
+      "end_line": 7,
+      "path": "src/users.py",
+      "snippet": "    return conn.execute(query).fetchall()",
+      "snippet_hash": "sha256:f71bfeb0d5931b3c7089d94f5a1aad92d5df2ca32f3def3f041580248327278f",
+      "start_line": 7
+    },
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [],
+      "suggested_patch": null,
+      "summary": ""
+    },
+    "scoring": {
+      "confidence": 0.3,
+      "cvss_v3_1": null,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "semgrep": "ERROR"
+      },
+      "normalized_severity": "HIGH",
+      "reachable": null,
+      "risk_score": null
+    },
+    "taxonomy": {
+      "category": "sast",
+      "cve": [],
+      "cwe": [
+        "CWE-89"
+      ],
+      "owasp_top_10_2021": [
+        "A03:2021"
+      ]
+    },
+    "title": "Avoiding SQL string concatenation: untrusted input concatenated with raw SQL query can result in SQL Injection",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  },
+  {
+    "description": "Detected subprocess function 'call' without a static string. If this data can be controlled by a malicious actor, it may be an instance of command injection. Audit the use of this call to ensure it is not controllable by an external resource. You may consider using 'shlex.escape()'.",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "semgrep"
+      ],
+      "rule_ids": {
+        "semgrep": "python.lang.security.audit.dangerous-subprocess-use-audit"
+      }
+    },
+    "fingerprint": "",
+    "id": "semgrep:python.lang.security.audit.dangerous-subprocess-use-audit:src/users.py:11",
+    "location": {
+      "end_line": 11,
+      "path": "src/users.py",
+      "snippet": "    return subprocess.call(cmd, shell=True)",
+      "snippet_hash": "sha256:cd29438fe2e7db6a914705e129acbb7d5b9148c970f1d95607288eefb3b8802f",
+      "start_line": 11
+    },
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [],
+      "suggested_patch": null,
+      "summary": ""
+    },
+    "scoring": {
+      "confidence": 0.3,
+      "cvss_v3_1": null,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "semgrep": "ERROR"
+      },
+      "normalized_severity": "HIGH",
+      "reachable": null,
+      "risk_score": null
+    },
+    "taxonomy": {
+      "category": "sast",
+      "cve": [],
+      "cwe": [
+        "CWE-78"
+      ],
+      "owasp_top_10_2021": [
+        "A03:2021"
+      ]
+    },
+    "title": "Detected subprocess function 'call' without a static string",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  },
+  {
+    "description": "Found 'subprocess' function 'call' with 'shell=True'. This is dangerous because this call will spawn the command using a shell process. Doing so propagates current shell settings and variables, which makes it much easier for a malicious actor to execute commands. Use 'shell=False' instead.",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "semgrep"
+      ],
+      "rule_ids": {
+        "semgrep": "python.lang.security.audit.subprocess-shell-true"
+      }
+    },
+    "fingerprint": "",
+    "id": "semgrep:python.lang.security.audit.subprocess-shell-true:src/users.py:11",
+    "location": {
+      "end_line": 11,
+      "path": "src/users.py",
+      "snippet": "    return subprocess.call(cmd, shell=True)",
+      "snippet_hash": "sha256:cd29438fe2e7db6a914705e129acbb7d5b9148c970f1d95607288eefb3b8802f",
+      "start_line": 11
+    },
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [],
+      "suggested_patch": null,
+      "summary": ""
+    },
+    "scoring": {
+      "confidence": 0.6,
+      "cvss_v3_1": null,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "semgrep": "ERROR"
+      },
+      "normalized_severity": "HIGH",
+      "reachable": null,
+      "risk_score": null
+    },
+    "taxonomy": {
+      "category": "sast",
+      "cve": [],
+      "cwe": [
+        "CWE-78"
+      ],
+      "owasp_top_10_2021": [
+        "A03:2021"
+      ]
+    },
+    "title": "Found 'subprocess' function 'call' with 'shell=True'",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  },
+  {
+    "description": "Detected MD5 hash algorithm which is considered insecure. MD5 is not collision resistant and is therefore not suitable as a cryptographic signature. Use SHA256 or SHA3 instead.",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "semgrep"
+      ],
+      "rule_ids": {
+        "semgrep": "python.lang.security.insecure-hash-algorithm-md5"
+      }
+    },
+    "fingerprint": "",
+    "id": "semgrep:python.lang.security.insecure-hash-algorithm-md5:src/users.py:15",
+    "location": {
+      "end_line": 15,
+      "path": "src/users.py",
+      "snippet": "    return hashlib.md5(pw.encode()).hexdigest()",
+      "snippet_hash": "sha256:a3647352554e19a46de097598f1d22e920b401cfdf77d5a357e02746a4003fb2",
+      "start_line": 15
+    },
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [],
+      "suggested_patch": null,
+      "summary": ""
+    },
+    "scoring": {
+      "confidence": 0.6,
+      "cvss_v3_1": null,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "semgrep": "WARNING"
+      },
+      "normalized_severity": "MEDIUM",
+      "reachable": null,
+      "risk_score": null
+    },
+    "taxonomy": {
+      "category": "sast",
+      "cve": [],
+      "cwe": [
+        "CWE-327"
+      ],
+      "owasp_top_10_2021": [
+        "A02:2021"
+      ]
+    },
+    "title": "Detected MD5 hash algorithm which is considered insecure",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  }
+]

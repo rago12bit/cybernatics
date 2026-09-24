@@ -11,6 +11,8 @@ from pathlib import Path
 
 from core.models import Finding
 
+TARGET_PREFIX = "/target/"  # where the runner mounts the scan target inside containers
+
 
 @dataclass(frozen=True)
 class ToolSpec:

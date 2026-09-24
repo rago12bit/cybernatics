@@ -4,10 +4,11 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from pathlib import Path
 from typing import Any
 
-from core.adapters.base import ToolAdapter, ToolSpec
+from core.adapters.base import TARGET_PREFIX, ToolAdapter, ToolSpec
 from core.models import (
     Category,
     Evidence,
@@ -22,8 +23,10 @@ from core.models import (
 log = logging.getLogger(__name__)
 
 _SEVERITY = {"HIGH": Severity.HIGH, "MEDIUM": Severity.MEDIUM, "LOW": Severity.LOW}
+# B105-B107 echo the hardcoded value in their message; never carry it into a Finding (T7).
+_HARDCODED_PW_RULES = {"B105", "B106", "B107"}
+_QUOTED = re.compile(r"(['\"]).*?\1")
 _CONFIDENCE = {"HIGH": 0.9, "MEDIUM": 0.6, "LOW": 0.3}
-_TARGET_PREFIX = "/target/"
 
 
 class BanditAdapter(ToolAdapter):
@@ -49,15 +52,19 @@ class BanditAdapter(ToolAdapter):
 
     def _to_finding(self, r: dict[str, Any]) -> Finding | None:
         try:
-            path = str(r["filename"]).removeprefix(_TARGET_PREFIX)
+            path = str(r["filename"]).removeprefix(TARGET_PREFIX)
             line_range = r.get("line_range") or [r["line_number"]]
             snippet = str(r.get("code", ""))
+            text = str(r["issue_text"])
+            if r.get("test_id") in _HARDCODED_PW_RULES:
+                text = _QUOTED.sub("'[redacted]'", text)
+                snippet = "[snippet withheld: hardcoded credential]"
             native = str(r["issue_severity"]).upper()
             cwe = r.get("issue_cwe") or {}
             return Finding(
                 id=f"bandit:{r['test_id']}:{path}:{r['line_number']}",
-                title=str(r["issue_text"]),
-                description=f"{r['test_name']} ({r['test_id']}): {r['issue_text']}",
+                title=text,
+                description=f"{r['test_name']} ({r['test_id']}): {text}",
                 location=Location(
                     path=path,
                     start_line=int(min(line_range)),

@@ -7,23 +7,56 @@ from pathlib import Path
 
 from core.adapters import RepoContext, ToolAdapter
 from core.adapters.bandit import BanditAdapter
+from core.adapters.gitleaks import GitleaksAdapter
+from core.adapters.semgrep import SemgrepAdapter
 from core.models import Finding
+from core.redact import redact_near_secrets
 from core.runner import run_tool
 
-ADAPTERS: dict[str, ToolAdapter] = {a.spec.name: a for a in (BanditAdapter(),)}
+ADAPTERS: dict[str, ToolAdapter] = {
+    a.spec.name: a for a in (BanditAdapter(), SemgrepAdapter(), GitleaksAdapter())
+}
 
-_EXT_LANG = {".py": "python", ".js": "javascript", ".ts": "javascript", ".go": "go"}
+_EXT_LANG = {
+    ".py": "python",
+    ".js": "javascript",
+    ".ts": "javascript",
+    ".go": "go",
+    ".java": "java",
+}
 _SKIP_DIRS = {".git", "node_modules", ".venv", "venv", "__pycache__"}
+
+
+_LOCKFILES = {
+    "package-lock.json", "yarn.lock", "pnpm-lock.yaml", "poetry.lock", "Pipfile.lock",
+    "requirements.txt", "go.sum", "Cargo.lock", "Gemfile.lock", "composer.lock",
+}  # fmt: skip
+_IAC_SUFFIXES = {".tf", ".tfvars"}
 
 
 def detect_context(root: Path) -> RepoContext:
     langs: set[str] = set()
+    lockfiles: list[str] = []
+    has_dockerfile = has_iac = False
     for p in root.rglob("*"):
-        if any(part in _SKIP_DIRS for part in p.relative_to(root).parts):
+        rel = p.relative_to(root)
+        if any(part in _SKIP_DIRS for part in rel.parts) or not p.is_file():
             continue
-        if p.is_file() and p.suffix in _EXT_LANG:
+        if p.suffix in _EXT_LANG:
             langs.add(_EXT_LANG[p.suffix])
-    return RepoContext(root=root, languages=frozenset(langs))
+        if p.name in _LOCKFILES:
+            lockfiles.append(str(rel))
+        if p.name == "Dockerfile" or p.name.startswith("Dockerfile."):
+            has_dockerfile = True
+        if p.suffix in _IAC_SUFFIXES:
+            has_iac = True
+    return RepoContext(
+        root=root,
+        languages=frozenset(langs),
+        has_dockerfile=has_dockerfile,
+        has_iac=has_iac,
+        lockfiles=tuple(sorted(lockfiles)),
+    )
 
 
 @dataclass
@@ -51,4 +84,5 @@ def scan(target: Path, tools: list[str]) -> ScanResult:
             "findings": len(found),
             "exit_code": run.exit_code,
         }
+    result.findings = redact_near_secrets(result.findings)
     return result

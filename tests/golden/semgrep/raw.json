@@ -1,0 +1,252 @@
+{
+ "$schema": "https://docs.oasis-open.org/sarif/sarif/v2.1.0/os/schemas/sarif-schema-2.1.0.json",
+ "runs": [
+  {
+   "invocations": [
+    {
+     "executionSuccessful": true,
+     "toolExecutionNotifications": []
+    }
+   ],
+   "results": [
+    {
+     "fingerprints": {
+      "matchBasedId/v1": "3e57f1127551f66bafdc2bf54f03da73006c9814a66999f574ebdcc8ad15cfcdaebf9495678524b65b378a6184191c21010193482bd6de974e50da5134577cea_0"
+     },
+     "locations": [
+      {
+       "physicalLocation": {
+        "artifactLocation": {
+         "uri": "/target/src/users.py",
+         "uriBaseId": "%SRCROOT%"
+        },
+        "region": {
+         "endColumn": 31,
+         "endLine": 7,
+         "snippet": {
+          "text": "    return conn.execute(query).fetchall()"
+         },
+         "startColumn": 12,
+         "startLine": 7
+        }
+       }
+      }
+     ],
+     "message": {
+      "text": "Avoiding SQL string concatenation: untrusted input concatenated with raw SQL query can result in SQL Injection. In order to execute raw query safely, prepared statement should be used. SQLAlchemy provides TextualSQL to easily used prepared statement with named parameters. For complex SQL composition, use SQL Expression Language or Schema Definition Language. In most cases, SQLAlchemy ORM will be a better option."
+     },
+     "properties": {},
+     "ruleId": "rules.python.sqlalchemy.security.sqlalchemy-execute-raw-query"
+    },
+    {
+     "fingerprints": {
+      "matchBasedId/v1": "f937f35fb2a2c931bc00b245bca70b9498f2954ef9a7862fc1986aa5d46b6f6bbfeb3e6aa8a8e68b7634cbe989ec25dda7d84f4b92f3405557b0628024ee6c05_0"
+     },
+     "locations": [
+      {
+       "physicalLocation": {
+        "artifactLocation": {
+         "uri": "/target/src/users.py",
+         "uriBaseId": "%SRCROOT%"
+        },
+        "region": {
+         "endColumn": 44,
+         "endLine": 11,
+         "snippet": {
+          "text": "    return subprocess.call(cmd, shell=True)"
+         },
+         "startColumn": 12,
+         "startLine": 11
+        }
+       }
+      }
+     ],
+     "message": {
+      "text": "Detected subprocess function 'call' without a static string. If this data can be controlled by a malicious actor, it may be an instance of command injection. Audit the use of this call to ensure it is not controllable by an external resource. You may consider using 'shlex.escape()'."
+     },
+     "properties": {},
+     "ruleId": "rules.python.lang.security.audit.dangerous-subprocess-use-audit"
+    },
+    {
+     "fingerprints": {
+      "matchBasedId/v1": "0ac7c97989fec8c11c8d4d220ccbbe146547e1a1852456830f6b446ba2072be129d87247ac46b007a6b6f3d4a5f70e314361fe2b76801c41d9ead88765826dcc_0"
+     },
+     "locations": [
+      {
+       "physicalLocation": {
+        "artifactLocation": {
+         "uri": "/target/src/users.py",
+         "uriBaseId": "%SRCROOT%"
+        },
+        "region": {
+         "endColumn": 43,
+         "endLine": 11,
+         "snippet": {
+          "text": "    return subprocess.call(cmd, shell=True)"
+         },
+         "startColumn": 39,
+         "startLine": 11
+        }
+       }
+      }
+     ],
+     "message": {
+      "text": "Found 'subprocess' function 'call' with 'shell=True'. This is dangerous because this call will spawn the command using a shell process. Doing so propagates current shell settings and variables, which makes it much easier for a malicious actor to execute commands. Use 'shell=False' instead."
+     },
+     "properties": {},
+     "ruleId": "rules.python.lang.security.audit.subprocess-shell-true"
+    },
+    {
+     "fingerprints": {
+      "matchBasedId/v1": "c7b2d1319b7e77a9897fa93fc1e7797f6c60b74af4d4406cac98f6c8ba20055bacfd06c7ecfaed291a3a8e32b3f005193a48668ae9815881a169c8b97e629352_0"
+     },
+     "locations": [
+      {
+       "physicalLocation": {
+        "artifactLocation": {
+         "uri": "/target/src/users.py",
+         "uriBaseId": "%SRCROOT%"
+        },
+        "region": {
+         "endColumn": 36,
+         "endLine": 15,
+         "snippet": {
+          "text": "    return hashlib.md5(pw.encode()).hexdigest()"
+         },
+         "startColumn": 12,
+         "startLine": 15
+        }
+       }
+      }
+     ],
+     "message": {
+      "text": "Detected MD5 hash algorithm which is considered insecure. MD5 is not collision resistant and is therefore not suitable as a cryptographic signature. Use SHA256 or SHA3 instead."
+     },
+     "properties": {},
+     "ruleId": "rules.python.lang.security.insecure-hash-algorithm-md5"
+    }
+   ],
+   "tool": {
+    "driver": {
+     "name": "Semgrep OSS",
+     "rules": [
+      {
+       "defaultConfiguration": {
+        "level": "error"
+       },
+       "fullDescription": {
+        "text": "Detected subprocess function '$FUNC' without a static string. If this data can be controlled by a malicious actor, it may be an instance of command injection. Audit the use of this call to ensure it is not controllable by an external resource. You may consider using 'shlex.escape()'."
+       },
+       "help": {
+        "markdown": "Detected subprocess function '$FUNC' without a static string. If this data can be controlled by a malicious actor, it may be an instance of command injection. Audit the use of this call to ensure it is not controllable by an external resource. You may consider using 'shlex.escape()'.\n\n<b>References:</b>\n - [https://stackoverflow.com/questions/3172470/actual-meaning-of-shell-true-in-subprocess](https://stackoverflow.com/questions/3172470/actual-meaning-of-shell-true-in-subprocess)\n - [https://docs.python.org/3/library/subprocess.html](https://docs.python.org/3/library/subprocess.html)\n - [https://docs.python.org/3/library/shlex.html](https://docs.python.org/3/library/shlex.html)\n - [https://semgrep.dev/docs/cheat-sheets/python-command-injection/](https://semgrep.dev/docs/cheat-sheets/python-command-injection/)\n",
+        "text": "Detected subprocess function '$FUNC' without a static string. If this data can be controlled by a malicious actor, it may be an instance of command injection. Audit the use of this call to ensure it is not controllable by an external resource. You may consider using 'shlex.escape()'."
+       },
+       "id": "rules.python.lang.security.audit.dangerous-subprocess-use-audit",
+       "name": "rules.python.lang.security.audit.dangerous-subprocess-use-audit",
+       "properties": {
+        "precision": "very-high",
+        "tags": [
+         "CWE-78: Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection')",
+         "LOW CONFIDENCE",
+         "OWASP-A01:2017 - Injection",
+         "OWASP-A03:2021 - Injection",
+         "OWASP-A05:2025 - Injection",
+         "security"
+        ]
+       },
+       "shortDescription": {
+        "text": "Semgrep Finding: rules.python.lang.security.audit.dangerous-subprocess-use-audit"
+       }
+      },
+      {
+       "defaultConfiguration": {
+        "level": "error"
+       },
+       "fullDescription": {
+        "text": "Avoiding SQL string concatenation: untrusted input concatenated with raw SQL query can result in SQL Injection. In order to execute raw query safely, prepared statement should be used. SQLAlchemy provides TextualSQL to easily used prepared statement with named parameters. For complex SQL composition, use SQL Expression Language or Schema Definition Language. In most cases, SQLAlchemy ORM will be a better option."
+       },
+       "help": {
+        "markdown": "Avoiding SQL string concatenation: untrusted input concatenated with raw SQL query can result in SQL Injection. In order to execute raw query safely, prepared statement should be used. SQLAlchemy provides TextualSQL to easily used prepared statement with named parameters. For complex SQL composition, use SQL Expression Language or Schema Definition Language. In most cases, SQLAlchemy ORM will be a better option.\n\n<b>References:</b>\n - [https://docs.sqlalchemy.org/en/14/core/tutorial.html#using-textual-sql](https://docs.sqlalchemy.org/en/14/core/tutorial.html#using-textual-sql)\n - [https://www.tutorialspoint.com/sqlalchemy/sqlalchemy_quick_guide.htm](https://www.tutorialspoint.com/sqlalchemy/sqlalchemy_quick_guide.htm)\n - [https://docs.sqlalchemy.org/en/14/core/tutorial.html#using-more-specific-text-with-table-expression-literal-column-and-expression-column](https://docs.sqlalchemy.org/en/14/core/tutorial.html#using-more-specific-text-with-table-expression-literal-column-and-expression-column)\n",
+        "text": "Avoiding SQL string concatenation: untrusted input concatenated with raw SQL query can result in SQL Injection. In order to execute raw query safely, prepared statement should be used. SQLAlchemy provides TextualSQL to easily used prepared statement with named parameters. For complex SQL composition, use SQL Expression Language or Schema Definition Language. In most cases, SQLAlchemy ORM will be a better option."
+       },
+       "id": "rules.python.sqlalchemy.security.sqlalchemy-execute-raw-query",
+       "name": "rules.python.sqlalchemy.security.sqlalchemy-execute-raw-query",
+       "properties": {
+        "precision": "very-high",
+        "tags": [
+         "CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')",
+         "LOW CONFIDENCE",
+         "OWASP-A01:2017 - Injection",
+         "OWASP-A03:2021 - Injection",
+         "OWASP-A05:2025 - Injection",
+         "security"
+        ]
+       },
+       "shortDescription": {
+        "text": "Semgrep Finding: rules.python.sqlalchemy.security.sqlalchemy-execute-raw-query"
+       }
+      },
+      {
+       "defaultConfiguration": {
+        "level": "error"
+       },
+       "fullDescription": {
+        "text": "Found 'subprocess' function '$FUNC' with 'shell=True'. This is dangerous because this call will spawn the command using a shell process. Doing so propagates current shell settings and variables, which makes it much easier for a malicious actor to execute commands. Use 'shell=False' instead."
+       },
+       "help": {
+        "markdown": "Found 'subprocess' function '$FUNC' with 'shell=True'. This is dangerous because this call will spawn the command using a shell process. Doing so propagates current shell settings and variables, which makes it much easier for a malicious actor to execute commands. Use 'shell=False' instead.\n\n<b>References:</b>\n - [https://stackoverflow.com/questions/3172470/actual-meaning-of-shell-true-in-subprocess](https://stackoverflow.com/questions/3172470/actual-meaning-of-shell-true-in-subprocess)\n - [https://docs.python.org/3/library/subprocess.html](https://docs.python.org/3/library/subprocess.html)\n",
+        "text": "Found 'subprocess' function '$FUNC' with 'shell=True'. This is dangerous because this call will spawn the command using a shell process. Doing so propagates current shell settings and variables, which makes it much easier for a malicious actor to execute commands. Use 'shell=False' instead."
+       },
+       "id": "rules.python.lang.security.audit.subprocess-shell-true",
+       "name": "rules.python.lang.security.audit.subprocess-shell-true",
+       "properties": {
+        "precision": "very-high",
+        "tags": [
+         "CWE-78: Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection')",
+         "MEDIUM CONFIDENCE",
+         "OWASP-A01:2017 - Injection",
+         "OWASP-A03:2021 - Injection",
+         "OWASP-A05:2025 - Injection",
+         "security"
+        ]
+       },
+       "shortDescription": {
+        "text": "Semgrep Finding: rules.python.lang.security.audit.subprocess-shell-true"
+       }
+      },
+      {
+       "defaultConfiguration": {
+        "level": "warning"
+       },
+       "fullDescription": {
+        "text": "Detected MD5 hash algorithm which is considered insecure. MD5 is not collision resistant and is therefore not suitable as a cryptographic signature. Use SHA256 or SHA3 instead."
+       },
+       "help": {
+        "markdown": "Detected MD5 hash algorithm which is considered insecure. MD5 is not collision resistant and is therefore not suitable as a cryptographic signature. Use SHA256 or SHA3 instead.\n\n<b>References:</b>\n - [https://www.schneier.com/blog/archives/2012/10/when_will_we_se.html](https://www.schneier.com/blog/archives/2012/10/when_will_we_se.html)\n - [https://www.trendmicro.com/vinfo/us/security/news/vulnerabilities-and-exploits/sha-1-collision-signals-the-end-of-the-algorithm-s-viability](https://www.trendmicro.com/vinfo/us/security/news/vulnerabilities-and-exploits/sha-1-collision-signals-the-end-of-the-algorithm-s-viability)\n - [http://2012.sharcs.org/slides/stevens.pdf](http://2012.sharcs.org/slides/stevens.pdf)\n - [https://pycryptodome.readthedocs.io/en/latest/src/hash/sha3_256.html](https://pycryptodome.readthedocs.io/en/latest/src/hash/sha3_256.html)\n",
+        "text": "Detected MD5 hash algorithm which is considered insecure. MD5 is not collision resistant and is therefore not suitable as a cryptographic signature. Use SHA256 or SHA3 instead."
+       },
+       "id": "rules.python.lang.security.insecure-hash-algorithm-md5",
+       "name": "rules.python.lang.security.insecure-hash-algorithm-md5",
+       "properties": {
+        "precision": "very-high",
+        "tags": [
+         "CWE-327: Use of a Broken or Risky Cryptographic Algorithm",
+         "MEDIUM CONFIDENCE",
+         "OWASP-A02:2021 - Cryptographic Failures",
+         "OWASP-A03:2017 - Sensitive Data Exposure",
+         "OWASP-A04:2025 - Cryptographic Failures",
+         "security"
+        ]
+       },
+       "shortDescription": {
+        "text": "Semgrep Finding: rules.python.lang.security.insecure-hash-algorithm-md5"
+       }
+      }
+     ],
+     "semanticVersion": "1.90.0"
+    }
+   }
+  }
+ ],
+ "version": "2.1.0"
+}

@@ -224,7 +224,7 @@
     }
   },
   {
-    "description": "hardcoded_password_string (B105): Possible hardcoded password: 'hunter2'",
+    "description": "hardcoded_password_string (B105): Possible hardcoded password: '[redacted]'",
     "evidence": {
       "agreement_count": 1,
       "reported_by": [
@@ -239,8 +239,8 @@
     "location": {
       "end_line": 13,
       "path": "src/users.py",
-      "snippet": "12 \n13 PASSWORD = \"hunter2\"\n",
-      "snippet_hash": "sha256:3d9bff75ae234ec0c7f3aeb7d2c247d11b08fcd23d9443c0903ad1b6d783c93f",
+      "snippet": "[snippet withheld: hardcoded credential]",
+      "snippet_hash": "sha256:bd100294b444d14e7f49f0b8be9b82a82a08e5f220148ee85add4777ebdbba71",
       "start_line": 13
     },
     "remediation": {
@@ -272,7 +272,7 @@
       ],
       "owasp_top_10_2021": []
     },
-    "title": "Possible hardcoded password: 'hunter2'",
+    "title": "Possible hardcoded password: '[redacted]'",
     "triage": {
       "state": "open",
       "suppression_reason": null,

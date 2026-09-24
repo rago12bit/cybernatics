@@ -47,6 +47,7 @@ def build_docker_argv(
         "--network=none",
         "--read-only",
         "--cap-drop=ALL",
+        "--user=10001:10001",
         "--security-opt=no-new-privileges",
         f"--memory={spec.memory_limit}",
         "--cpus=1.0",

@@ -10,6 +10,7 @@ def test_sandbox_flags_present() -> None:
         "--network=none",
         "--read-only",
         "--cap-drop=ALL",
+        "--user=10001:10001",
         "--security-opt=no-new-privileges",
         "--memory=2g",
         "--cpus=1.0",

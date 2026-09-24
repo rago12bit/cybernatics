@@ -24,3 +24,13 @@ def test_skips_tool_when_not_applicable(tmp_path: Path) -> None:
 def test_cli_rejects_unknown_tool(tmp_path: Path) -> None:
     result = runner.invoke(app, ["scan", str(tmp_path), "--tools", "nope"])
     assert result.exit_code != 0
+
+
+def test_detect_context_finds_lockfiles_docker_and_iac(tmp_path: Path) -> None:
+    (tmp_path / "Dockerfile").write_text("FROM scratch\n")
+    (tmp_path / "main.tf").write_text("")
+    (tmp_path / "sub").mkdir()
+    (tmp_path / "sub" / "package-lock.json").write_text("{}")
+    ctx = detect_context(tmp_path)
+    assert ctx.has_dockerfile and ctx.has_iac
+    assert ctx.lockfiles == ("sub/package-lock.json",)

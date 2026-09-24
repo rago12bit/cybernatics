@@ -19,4 +19,5 @@ jobs:
       - run: black --check .
       - run: mypy
       - run: docker build -t bulwark/bandit:1.7.10 docker/bandit
+      - run: docker/semgrep/fetch-rules.sh && docker build -t bulwark/semgrep:1.90.0 docker/semgrep
       - run: pytest
