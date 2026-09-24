@@ -10,10 +10,11 @@ Fallback order: arm64-native alternative -> `--platform linux/amd64` under Roset
 
 | Tool | Candidate image | arm64? | Status |
 |------|-----------------|--------|--------|
-| Semgrep CE | returntocorp/semgrep:1.90.0 | ? | TODO: Docker daemon was down on 2026-09-24 |
-| Trivy | aquasec/trivy | ? | TODO |
-| Gitleaks | zricethezav/gitleaks | ? | TODO |
-| OSV-Scanner | ghcr.io/google/osv-scanner | ? | TODO |
-| Bandit | (build our own python:3.12-slim + pip bandit image) | n/a | TODO |
+| Semgrep CE | returntocorp/semgrep:1.90.0 | yes | verified 2026-09-24 |
+| Trivy | aquasec/trivy | yes | verified 2026-09-24 |
+| Gitleaks | zricethezav/gitleaks | yes | verified 2026-09-24 |
+| OSV-Scanner | ghcr.io/google/osv-scanner | yes | verified 2026-09-24 |
+| Bandit | built locally from `python:3.12-slim` (`docker/bandit/Dockerfile`) | yes | base image is multi-arch |
 
-Tier-2 (Grype, Checkov, KICS, gosec, Hadolint, Dockle) to be checked before Week 22.
+No Tier-1 tool needs the Rosetta fallback. Tier-2 (Grype, Checkov, KICS, gosec, Hadolint, Dockle)
+to be checked before Week 22. Digest pinning happens when images are finalised for production.

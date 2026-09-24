@@ -18,4 +18,5 @@ jobs:
       - run: ruff check .
       - run: black --check .
       - run: mypy
+      - run: docker build -t bulwark/bandit:1.7.10 docker/bandit
       - run: pytest

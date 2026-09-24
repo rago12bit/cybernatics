@@ -1,0 +1,282 @@
+[
+  {
+    "description": "blacklist (B404): Consider possible security implications associated with the subprocess module.",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "bandit"
+      ],
+      "rule_ids": {
+        "bandit": "B404"
+      }
+    },
+    "fingerprint": "",
+    "id": "bandit:B404:src/users.py:1",
+    "location": {
+      "end_line": 1,
+      "path": "src/users.py",
+      "snippet": "1 import sqlite3, subprocess, hashlib\n2 \n3 def get_user(conn, user_id):\n",
+      "snippet_hash": "sha256:8c85866ad8677061d07dab8d107662a1b186fbde5125273a54e01c8b5c445245",
+      "start_line": 1
+    },
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [
+        "https://bandit.readthedocs.io/en/1.7.10/blacklists/blacklist_imports.html#b404-import-subprocess"
+      ],
+      "suggested_patch": null,
+      "summary": ""
+    },
+    "scoring": {
+      "confidence": 0.9,
+      "cvss_v3_1": null,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "bandit": "LOW"
+      },
+      "normalized_severity": "LOW",
+      "reachable": null,
+      "risk_score": null
+    },
+    "taxonomy": {
+      "category": "sast",
+      "cve": [],
+      "cwe": [
+        "CWE-78"
+      ],
+      "owasp_top_10_2021": []
+    },
+    "title": "Consider possible security implications associated with the subprocess module.",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  },
+  {
+    "description": "hardcoded_sql_expressions (B608): Possible SQL injection vector through string-based query construction.",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "bandit"
+      ],
+      "rule_ids": {
+        "bandit": "B608"
+      }
+    },
+    "fingerprint": "",
+    "id": "bandit:B608:src/users.py:4",
+    "location": {
+      "end_line": 4,
+      "path": "src/users.py",
+      "snippet": "3 def get_user(conn, user_id):\n4     query = \"SELECT * FROM users WHERE id=\" + user_id\n5     return conn.execute(query).fetchall()\n",
+      "snippet_hash": "sha256:cd3feac9eb28c8fe25a30a75997041ec5fd69c7bc13211548aea3184fc9207bb",
+      "start_line": 4
+    },
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [
+        "https://bandit.readthedocs.io/en/1.7.10/plugins/b608_hardcoded_sql_expressions.html"
+      ],
+      "suggested_patch": null,
+      "summary": ""
+    },
+    "scoring": {
+      "confidence": 0.3,
+      "cvss_v3_1": null,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "bandit": "MEDIUM"
+      },
+      "normalized_severity": "MEDIUM",
+      "reachable": null,
+      "risk_score": null
+    },
+    "taxonomy": {
+      "category": "sast",
+      "cve": [],
+      "cwe": [
+        "CWE-89"
+      ],
+      "owasp_top_10_2021": []
+    },
+    "title": "Possible SQL injection vector through string-based query construction.",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  },
+  {
+    "description": "subprocess_popen_with_shell_equals_true (B602): subprocess call with shell=True identified, security issue.",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "bandit"
+      ],
+      "rule_ids": {
+        "bandit": "B602"
+      }
+    },
+    "fingerprint": "",
+    "id": "bandit:B602:src/users.py:8",
+    "location": {
+      "end_line": 8,
+      "path": "src/users.py",
+      "snippet": "7 def run(cmd):\n8     return subprocess.call(cmd, shell=True)\n9 \n",
+      "snippet_hash": "sha256:9ccd26cd08b8f8559d2fdd59a81998535124ab7b85049891abb1b9b87fc8d7b4",
+      "start_line": 8
+    },
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [
+        "https://bandit.readthedocs.io/en/1.7.10/plugins/b602_subprocess_popen_with_shell_equals_true.html"
+      ],
+      "suggested_patch": null,
+      "summary": ""
+    },
+    "scoring": {
+      "confidence": 0.9,
+      "cvss_v3_1": null,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "bandit": "HIGH"
+      },
+      "normalized_severity": "HIGH",
+      "reachable": null,
+      "risk_score": null
+    },
+    "taxonomy": {
+      "category": "sast",
+      "cve": [],
+      "cwe": [
+        "CWE-78"
+      ],
+      "owasp_top_10_2021": []
+    },
+    "title": "subprocess call with shell=True identified, security issue.",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  },
+  {
+    "description": "hashlib (B324): Use of weak MD5 hash for security. Consider usedforsecurity=False",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "bandit"
+      ],
+      "rule_ids": {
+        "bandit": "B324"
+      }
+    },
+    "fingerprint": "",
+    "id": "bandit:B324:src/users.py:11",
+    "location": {
+      "end_line": 11,
+      "path": "src/users.py",
+      "snippet": "10 def digest(pw):\n11     return hashlib.md5(pw.encode()).hexdigest()\n12 \n",
+      "snippet_hash": "sha256:239ec418559942d33d48e68d89ab8af125cb142358848cc20380edda2d92b989",
+      "start_line": 11
+    },
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [
+        "https://bandit.readthedocs.io/en/1.7.10/plugins/b324_hashlib.html"
+      ],
+      "suggested_patch": null,
+      "summary": ""
+    },
+    "scoring": {
+      "confidence": 0.9,
+      "cvss_v3_1": null,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "bandit": "HIGH"
+      },
+      "normalized_severity": "HIGH",
+      "reachable": null,
+      "risk_score": null
+    },
+    "taxonomy": {
+      "category": "sast",
+      "cve": [],
+      "cwe": [
+        "CWE-327"
+      ],
+      "owasp_top_10_2021": []
+    },
+    "title": "Use of weak MD5 hash for security. Consider usedforsecurity=False",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  },
+  {
+    "description": "hardcoded_password_string (B105): Possible hardcoded password: 'hunter2'",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "bandit"
+      ],
+      "rule_ids": {
+        "bandit": "B105"
+      }
+    },
+    "fingerprint": "",
+    "id": "bandit:B105:src/users.py:13",
+    "location": {
+      "end_line": 13,
+      "path": "src/users.py",
+      "snippet": "12 \n13 PASSWORD = \"hunter2\"\n",
+      "snippet_hash": "sha256:3d9bff75ae234ec0c7f3aeb7d2c247d11b08fcd23d9443c0903ad1b6d783c93f",
+      "start_line": 13
+    },
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [
+        "https://bandit.readthedocs.io/en/1.7.10/plugins/b105_hardcoded_password_string.html"
+      ],
+      "suggested_patch": null,
+      "summary": ""
+    },
+    "scoring": {
+      "confidence": 0.6,
+      "cvss_v3_1": null,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "bandit": "LOW"
+      },
+      "normalized_severity": "LOW",
+      "reachable": null,
+      "risk_score": null
+    },
+    "taxonomy": {
+      "category": "sast",
+      "cve": [],
+      "cwe": [
+        "CWE-259"
+      ],
+      "owasp_top_10_2021": []
+    },
+    "title": "Possible hardcoded password: 'hunter2'",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  }
+]
