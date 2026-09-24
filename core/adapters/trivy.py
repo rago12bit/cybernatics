@@ -47,7 +47,9 @@ class TrivyAdapter(ToolAdapter):
         writable_volumes=("/db",),  # Trivy opens its DB read-write; volume is copied from image
     )
 
-    def build_command(self, target: Path, output: Path) -> list[str]:
+    def build_command(
+        self, target: Path, output: Path, ctx: RepoContext | None = None
+    ) -> list[str]:
         return [
             "fs",
             "--cache-dir", "/db",

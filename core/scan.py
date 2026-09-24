@@ -114,7 +114,7 @@ def execute_tool(name: str, target: Path) -> ToolOutcome:
     adapter = ADAPTERS[name]
     start = time.monotonic()
     try:
-        run = run_tool(adapter, target)
+        run = run_tool(adapter, target, detect_context(target))
     except RunnerError as exc:
         return ToolOutcome(name, "error", error=str(exc), duration_seconds=time.monotonic() - start)
     findings = adapter.parse(run.raw) if run.raw else []

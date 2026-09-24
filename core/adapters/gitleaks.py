@@ -37,7 +37,9 @@ class GitleaksAdapter(ToolAdapter):
         timeout_seconds=300,
     )
 
-    def build_command(self, target: Path, output: Path) -> list[str]:
+    def build_command(
+        self, target: Path, output: Path, ctx: RepoContext | None = None
+    ) -> list[str]:
         return [
             "detect",
             "--no-git",

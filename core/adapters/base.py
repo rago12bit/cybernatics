@@ -41,8 +41,13 @@ class ToolAdapter(ABC):
     spec: ToolSpec
 
     @abstractmethod
-    def build_command(self, target: Path, output: Path) -> list[str]:
-        """Argv executed inside the container. Must write results to `output`."""
+    def build_command(
+        self, target: Path, output: Path, ctx: RepoContext | None = None
+    ) -> list[str]:
+        """Argv executed inside the container. Must write results to `output`.
+
+        `ctx` (optional) lets a tool narrow its work to what the repo actually contains.
+        """
 
     @abstractmethod
     def parse(self, raw: bytes) -> list[Finding]:

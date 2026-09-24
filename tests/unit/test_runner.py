@@ -29,3 +29,22 @@ def test_writable_volume_only_where_a_tool_declares_it() -> None:
     bandit = build_docker_argv(BanditAdapter(), Path("."), Path("."), "c1")
     assert "/db" not in bandit
     assert "--read-only" in trivy  # rootfs stays read-only even for Trivy
+
+
+def test_semgrep_loads_only_the_rules_for_languages_present() -> None:
+    from core.adapters import RepoContext
+    from core.adapters.semgrep import SemgrepAdapter
+
+    def configs(langs: set[str] | None) -> list[str]:
+        ctx = RepoContext(Path("."), frozenset(langs)) if langs is not None else None
+        argv = SemgrepAdapter().build_command(Path("/target"), Path("/out/r.json"), ctx)
+        return [argv[i + 1] for i, a in enumerate(argv) if a == "--config"]
+
+    assert configs({"python"}) == ["/rules/python"]
+    assert configs({"python", "javascript"}) == [
+        "/rules/javascript",
+        "/rules/typescript",
+        "/rules/python",
+    ]
+    assert configs(set()) == ["/rules"] and configs(None) == ["/rules"]  # unknown -> everything
+    assert configs({"ruby"}) == ["/rules"]  # no rules for it -> fall back, never scan nothing

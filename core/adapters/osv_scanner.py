@@ -57,7 +57,9 @@ class OsvScannerAdapter(ToolAdapter):
         timeout_seconds=600,
     )
 
-    def build_command(self, target: Path, output: Path) -> list[str]:
+    def build_command(
+        self, target: Path, output: Path, ctx: RepoContext | None = None
+    ) -> list[str]:
         return [
             "--experimental-offline-vulnerabilities",
             "--format", "json",

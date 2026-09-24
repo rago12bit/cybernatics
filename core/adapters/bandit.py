@@ -8,7 +8,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-from core.adapters.base import TARGET_PREFIX, ToolAdapter, ToolSpec
+from core.adapters.base import TARGET_PREFIX, RepoContext, ToolAdapter, ToolSpec
 from core.models import (
     Category,
     Evidence,
@@ -38,7 +38,9 @@ class BanditAdapter(ToolAdapter):
         timeout_seconds=600,
     )
 
-    def build_command(self, target: Path, output: Path) -> list[str]:
+    def build_command(
+        self, target: Path, output: Path, ctx: RepoContext | None = None
+    ) -> list[str]:
         return ["-r", str(target), "-f", "json", "-o", str(output), "-q"]
 
     def parse(self, raw: bytes) -> list[Finding]:

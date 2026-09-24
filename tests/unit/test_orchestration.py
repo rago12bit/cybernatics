@@ -90,11 +90,13 @@ def test_execute_tool_reports_runner_error_and_timeout(
     from core.runner import RunnerError, RunResult
 
     monkeypatch.setattr(
-        scan_mod, "run_tool", lambda a, t: (_ for _ in ()).throw(RunnerError("no docker"))
+        scan_mod, "run_tool", lambda a, t, c=None: (_ for _ in ()).throw(RunnerError("no docker"))
     )
     assert scan_mod.execute_tool("bandit", tmp_path).status == "error"
     monkeypatch.setattr(
-        scan_mod, "run_tool", lambda a, t: RunResult("bandit", "timeout", None, b"", "wall-clock")
+        scan_mod,
+        "run_tool",
+        lambda a, t, c=None: RunResult("bandit", "timeout", None, b"", "wall-clock"),
     )
     o = scan_mod.execute_tool("bandit", tmp_path)
     assert o.status == "timeout" and o.findings == [] and o.error

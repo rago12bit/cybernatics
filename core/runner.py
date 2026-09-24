@@ -13,7 +13,7 @@ import uuid
 from dataclasses import dataclass
 from pathlib import Path
 
-from core.adapters.base import ToolAdapter
+from core.adapters.base import RepoContext, ToolAdapter
 from core.config import scratch_dir
 
 CONTAINER_TARGET = "/target"
@@ -35,10 +35,14 @@ class RunResult:
 
 
 def build_docker_argv(
-    adapter: ToolAdapter, target: Path, out_dir: Path, container_name: str
+    adapter: ToolAdapter,
+    target: Path,
+    out_dir: Path,
+    container_name: str,
+    ctx: RepoContext | None = None,
 ) -> list[str]:
     spec = adapter.spec
-    tool_cmd = adapter.build_command(Path(CONTAINER_TARGET), Path(CONTAINER_OUT) / OUTPUT_NAME)
+    tool_cmd = adapter.build_command(Path(CONTAINER_TARGET), Path(CONTAINER_OUT) / OUTPUT_NAME, ctx)
     return [
         "docker",
         "run",
@@ -65,14 +69,14 @@ def build_docker_argv(
     ]
 
 
-def run_tool(adapter: ToolAdapter, target: Path) -> RunResult:
+def run_tool(adapter: ToolAdapter, target: Path, ctx: RepoContext | None = None) -> RunResult:
     """Run one adapter in a sandbox. Never raises for tool failure; reports status instead."""
     spec = adapter.spec
     name = f"bulwark-{spec.name}-{uuid.uuid4().hex[:8]}"
     with tempfile.TemporaryDirectory(prefix="bulwark-out-", dir=scratch_dir()) as tmp:
         out_dir = Path(tmp)
         out_dir.chmod(0o777)  # container runs as a non-root uid
-        argv = build_docker_argv(adapter, target, out_dir, name)
+        argv = build_docker_argv(adapter, target, out_dir, name, ctx)
         try:
             proc = subprocess.run(
                 argv, capture_output=True, timeout=spec.timeout_seconds, check=False
