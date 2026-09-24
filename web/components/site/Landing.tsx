@@ -10,23 +10,30 @@ const fmt = (n: number) => n.toLocaleString("en-US");
 
 export function Landing() {
   const max = Math.max(...BENCHMARK.rawPerScanner.map((s) => s.raw));
+  const confirmed = BENCHMARK.repos.reduce((n, r) => n + r.merged, 0); // findings reported by 2+ scanners
   return (
     <div className="page">
       {/* ---- Hero ---- */}
       <StackSection index={0}>
       <section className="section hero" id="product">
         <div className="hero-copy">
-          <span className="eyebrow">Security scanning platform</span>
-          <h1 className="display">Security scanning, without the noise.</h1>
-          <p className="lede">
-            Bulwark runs best-in-class open-source scanners in locked-down containers, merges their overlapping
-            results into one report, and shows you which scanners agree.
-          </p>
-          <div className="hero-actions">
-            <Link href="/app" className="btn primary">Open the app →</Link>
-            <Link href="#results" className="btn">See the results</Link>
+          <div className="hero-main">
+            <span className="eyebrow">Security scanning platform</span>
+            <h1 className="display">Security scanning, without the noise.</h1>
+            <p className="lede">
+              Bulwark runs best-in-class open-source scanners in locked-down containers, merges their overlapping
+              results into one report, and shows you which scanners agree.
+            </p>
+            <div className="hero-actions">
+              <Link href="/app" className="btn primary">Open the app →</Link>
+              <Link href="#results" className="btn">See the results</Link>
+            </div>
           </div>
-          <p className="label dimmed">5 scanners · sandboxed · {pct(BENCHMARK.dedupRate)} fewer findings</p>
+          <div className="hero-stats">
+            <div><span className="numeral">5</span><span className="label dimmed">Scanners, one pipeline</span></div>
+            <div><span className="numeral">{pct(BENCHMARK.dedupRate)}</span><span className="label dimmed">Fewer findings, 5 repos</span></div>
+            <div><span className="numeral">0</span><span className="label dimmed">Network access in sandbox</span></div>
+          </div>
         </div>
         <div className="hero-art">
           <div className="solution">
@@ -35,6 +42,9 @@ export function Landing() {
               <div className="brackets" aria-hidden="true"><i /><i /><i /><i /></div>
               <DedupDiagram />
             </div>
+            <ul className="rail" aria-label="Scanners feeding the pipeline">
+              {["bandit", "semgrep", "gitleaks", "trivy", "osv-scanner"].map((t) => <li key={t}>{t}</li>)}
+            </ul>
           </div>
         </div>
       </section>
@@ -55,6 +65,10 @@ export function Landing() {
               <div className="codewin">
                 <header><span className="dots" aria-hidden="true"><i /><i /><i /></span><span className="name">bulwark scan</span></header>
                 <pre><code><span className="c"># a public repo, folder or .zip</span>{"\n"}<span className="k">$</span> <span className="n">bulwark scan</span> <span className="s">https://github.com/OWASP/NodeGoat</span>{"\n\n"}<span className="n">{"{"}</span>{"\n"}  <span className="s">&quot;tool_status&quot;</span>: <span className="n">{"{"} ... 5 scanners ok {"}"}</span>,{"\n"}  <span className="s">&quot;stats&quot;</span>: <span className="n">{"{"}</span>{"\n"}    <span className="s">&quot;raw_findings&quot;</span>: <span className="n">{BENCHMARK.repos[1]!.raw}</span>,{"\n"}    <span className="s">&quot;unique_findings&quot;</span>: <span className="n">{BENCHMARK.repos[1]!.unique}</span>,{"\n"}    <span className="s">&quot;dedup_rate&quot;</span>: <span className="n">{BENCHMARK.repos[1]!.dedup.toFixed(2)}</span>{"\n"}  <span className="n">{"}"}</span>,{"\n"}  <span className="s">&quot;findings&quot;</span>: <span className="n">[ ... ]</span>{"\n"}<span className="n">{"}"}</span></code></pre>
+              </div>
+              <div className="codewin grow">
+                <header><span className="dots" aria-hidden="true"><i /><i /><i /></span><span className="name">live progress · websocket</span></header>
+                <pre><code><span className="c"># one event per scanner, as it finishes</span>{"\n"}<span className="k">tool.finished</span>  <span className="n">gitleaks</span>     <span className="s">ok</span>  <span className="n">findings=1</span>{"\n"}<span className="k">tool.finished</span>  <span className="n">bandit</span>       <span className="s">ok</span>  <span className="n">findings=6</span>{"\n"}<span className="k">tool.finished</span>  <span className="n">osv-scanner</span>  <span className="s">ok</span>  <span className="n">findings=7</span>{"\n"}<span className="k">tool.finished</span>  <span className="n">trivy</span>        <span className="s">ok</span>  <span className="n">findings=8</span>{"\n"}<span className="k">tool.finished</span>  <span className="n">semgrep</span>      <span className="s">ok</span>  <span className="n">findings=1</span>{"\n"}<span className="k">scan.finished</span>  <span className="s">completed</span>  <span className="n">raw=23 unique=21</span></code></pre>
               </div>
               <div className="stack">
                 <span className="label">One engine, several surfaces</span>
@@ -104,6 +118,11 @@ export function Landing() {
               <span className="eyebrow plain">Robustness</span>
               <p className="numeral">5 / 5</p>
               <p className="small muted">repositories completed with no scanner failing or timing out.</p>
+            </div>
+            <div>
+              <span className="eyebrow plain">Confirmed by 2+ scanners</span>
+              <p className="numeral">{fmt(confirmed)}</p>
+              <p className="small muted">findings that independent scanners each reported, and that Bulwark merged into one.</p>
             </div>
           </div>
         </section>
