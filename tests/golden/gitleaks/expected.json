@@ -19,6 +19,7 @@
       "snippet_hash": "sha256:6cb1162e2ac89bfd9ec7f3fc4eb87a673ec550997500f8dc42368f0df01d079d",
       "start_line": 20
     },
+    "package": null,
     "remediation": {
       "generated_by": "static",
       "is_suggestion": true,

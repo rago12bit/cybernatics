@@ -20,4 +20,6 @@ jobs:
       - run: mypy
       - run: docker build -t bulwark/bandit:1.7.10 docker/bandit
       - run: docker/semgrep/fetch-rules.sh && docker build -t bulwark/semgrep:1.90.0 docker/semgrep
+      - run: docker build -t bulwark/trivy:0.55.2 docker/trivy
+      - run: docker build -t bulwark/osv-scanner:1.9.2 docker/osv-scanner
       - run: pytest

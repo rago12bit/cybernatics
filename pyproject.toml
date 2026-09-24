@@ -5,7 +5,7 @@ description = "Unified security scanning platform: orchestration, normalization 
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "Apache-2.0" }
-dependencies = ["typer>=0.12"]
+dependencies = ["typer>=0.12", "celery[redis]>=5.4"]
 
 [project.scripts]
 bulwark = "cli.main:app"
@@ -33,6 +33,10 @@ extend-immutable-calls = ["typer.Argument", "typer.Option"]
 [tool.mypy]
 strict = true
 files = ["core"]
+
+[[tool.mypy.overrides]]
+module = ["celery.*", "kombu.*"]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

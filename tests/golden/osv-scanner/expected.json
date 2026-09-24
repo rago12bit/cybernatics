@@ -1,0 +1,1080 @@
+[
+  {
+    "description": "All versions of package lodash prior to 4.17.21 are vulnerable to Regular Expression Denial of Service (ReDoS) via the `toNumber`, `trim` and `trimEnd` functions. \n\nSteps to reproduce (provided by reporter Liyuan Chen):\n```js\nvar lo = require('lodash');\n\nfunction build_blank(n) {\n    var ret = \"1\"\n    for (var i = 0; i < n; i++) {\n        ret += \" \"\n    }\n    return ret + \"1\";\n}\nvar s = build_blank(50000) var time0 = Date.now();\nlo.trim(s) \nvar time_cost0 = Date.now() - time0;\nconsole.log(\"time_cost0: \" + time_cost0);\nvar time1 = Date.now();\nlo.toNumber(s) var time_cost1 = Date.now() - time1;\nconsole.log(\"time_cost1: \" + time_cost1);\nvar time2 = Date.now();\nlo.trimEnd(s);\nvar time_cost2 = Date.now() - time2;\nconsole.log(\"time_cost2: \" + time_cost2);\n```",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "osv-scanner"
+      ],
+      "rule_ids": {
+        "osv-scanner": "GHSA-29mw-wpgm-hmr9"
+      }
+    },
+    "fingerprint": "",
+    "id": "osv-scanner:GHSA-29mw-wpgm-hmr9:package-lock.json:lodash@4.17.4",
+    "location": {
+      "end_line": 1,
+      "path": "package-lock.json",
+      "snippet": "lodash@4.17.4",
+      "snippet_hash": "sha256:03970e5485933b6bb885cd9d15a7d2cdd4365cdf4c5d2fa8454530c70550c54e",
+      "start_line": 1
+    },
+    "package": {
+      "ecosystem": "npm",
+      "name": "lodash",
+      "version": "4.17.4"
+    },
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [
+        "https://osv.dev/GHSA-29mw-wpgm-hmr9"
+      ],
+      "suggested_patch": null,
+      "summary": "Upgrade lodash to 4.17.21 or later."
+    },
+    "scoring": {
+      "confidence": 0.9,
+      "cvss_v3_1": 5.3,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "osv-scanner": "5.3"
+      },
+      "normalized_severity": "MEDIUM",
+      "reachable": null,
+      "risk_score": null
+    },
+    "taxonomy": {
+      "category": "sca",
+      "cve": [
+        "CVE-2020-28500"
+      ],
+      "cwe": [
+        "CWE-1333",
+        "CWE-400"
+      ],
+      "owasp_top_10_2021": []
+    },
+    "title": "lodash 4.17.4: Regular Expression Denial of Service (ReDoS) in lodash",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  },
+  {
+    "description": "`lodash` versions prior to 4.17.21 are vulnerable to Command Injection via the template function.",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "osv-scanner"
+      ],
+      "rule_ids": {
+        "osv-scanner": "GHSA-35jh-r3h4-6jhm"
+      }
+    },
+    "fingerprint": "",
+    "id": "osv-scanner:GHSA-35jh-r3h4-6jhm:package-lock.json:lodash@4.17.4",
+    "location": {
+      "end_line": 1,
+      "path": "package-lock.json",
+      "snippet": "lodash@4.17.4",
+      "snippet_hash": "sha256:03970e5485933b6bb885cd9d15a7d2cdd4365cdf4c5d2fa8454530c70550c54e",
+      "start_line": 1
+    },
+    "package": {
+      "ecosystem": "npm",
+      "name": "lodash",
+      "version": "4.17.4"
+    },
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [
+        "https://osv.dev/GHSA-35jh-r3h4-6jhm"
+      ],
+      "suggested_patch": null,
+      "summary": "Upgrade lodash to 4.17.21 or later."
+    },
+    "scoring": {
+      "confidence": 0.9,
+      "cvss_v3_1": 7.2,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "osv-scanner": "7.2"
+      },
+      "normalized_severity": "HIGH",
+      "reachable": null,
+      "risk_score": null
+    },
+    "taxonomy": {
+      "category": "sca",
+      "cve": [
+        "CVE-2021-23337",
+        "CVE-2026-4800"
+      ],
+      "cwe": [
+        "CWE-77",
+        "CWE-94"
+      ],
+      "owasp_top_10_2021": []
+    },
+    "title": "lodash 4.17.4: Command Injection in lodash",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  },
+  {
+    "description": "Versions of `lodash` before 4.17.11 are vulnerable to prototype pollution. \n\nThe vulnerable functions are 'defaultsDeep', 'merge', and 'mergeWith' which allow a malicious user to modify the prototype of `Object` via `{constructor: {prototype: {...}}}` causing the addition or modification of an existing property that will exist on all objects.\n\n\n\n\n## Recommendation\n\nUpdate to version 4.17.11 or later.",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "osv-scanner"
+      ],
+      "rule_ids": {
+        "osv-scanner": "GHSA-4xc9-xhrj-v574"
+      }
+    },
+    "fingerprint": "",
+    "id": "osv-scanner:GHSA-4xc9-xhrj-v574:package-lock.json:lodash@4.17.4",
+    "location": {
+      "end_line": 1,
+      "path": "package-lock.json",
+      "snippet": "lodash@4.17.4",
+      "snippet_hash": "sha256:03970e5485933b6bb885cd9d15a7d2cdd4365cdf4c5d2fa8454530c70550c54e",
+      "start_line": 1
+    },
+    "package": {
+      "ecosystem": "npm",
+      "name": "lodash",
+      "version": "4.17.4"
+    },
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [
+        "https://osv.dev/GHSA-4xc9-xhrj-v574"
+      ],
+      "suggested_patch": null,
+      "summary": "Upgrade lodash to 4.17.11 or later."
+    },
+    "scoring": {
+      "confidence": 0.9,
+      "cvss_v3_1": null,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "osv-scanner": ""
+      },
+      "normalized_severity": "HIGH",
+      "reachable": null,
+      "risk_score": null
+    },
+    "taxonomy": {
+      "category": "sca",
+      "cve": [
+        "CVE-2018-16487"
+      ],
+      "cwe": [
+        "CWE-400"
+      ],
+      "owasp_top_10_2021": []
+    },
+    "title": "lodash 4.17.4: Prototype Pollution in lodash",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  },
+  {
+    "description": "### Impact\n\nLodash versions 4.17.23 and earlier are vulnerable to prototype pollution in the `_.unset` and `_.omit` functions. The fix for [CVE-2025-13465](https://github.com/lodash/lodash/security/advisories/GHSA-xxjr-mmjv-4gpg) only guards against string key members, so an attacker can bypass the check by passing array-wrapped path segments. This allows deletion of properties from built-in prototypes such as `Object.prototype`, `Number.prototype`, and `String.prototype`.\n\nThe issue permits deletion of prototype properties but does not allow overwriting their original behavior.\n\n### Patches\n\nThis issue is patched in 4.18.0.\n\n### Workarounds\n\nNone. Upgrade to the patched version.",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "osv-scanner"
+      ],
+      "rule_ids": {
+        "osv-scanner": "GHSA-f23m-r3pf-42rh"
+      }
+    },
+    "fingerprint": "",
+    "id": "osv-scanner:GHSA-f23m-r3pf-42rh:package-lock.json:lodash@4.17.4",
+    "location": {
+      "end_line": 1,
+      "path": "package-lock.json",
+      "snippet": "lodash@4.17.4",
+      "snippet_hash": "sha256:03970e5485933b6bb885cd9d15a7d2cdd4365cdf4c5d2fa8454530c70550c54e",
+      "start_line": 1
+    },
+    "package": {
+      "ecosystem": "npm",
+      "name": "lodash",
+      "version": "4.17.4"
+    },
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [
+        "https://osv.dev/GHSA-f23m-r3pf-42rh"
+      ],
+      "suggested_patch": null,
+      "summary": "Upgrade lodash to 4.18.0 or later."
+    },
+    "scoring": {
+      "confidence": 0.9,
+      "cvss_v3_1": 6.5,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "osv-scanner": "6.5"
+      },
+      "normalized_severity": "MEDIUM",
+      "reachable": null,
+      "risk_score": null
+    },
+    "taxonomy": {
+      "category": "sca",
+      "cve": [
+        "CVE-2025-13465",
+        "CVE-2026-2950"
+      ],
+      "cwe": [
+        "CWE-1321"
+      ],
+      "owasp_top_10_2021": []
+    },
+    "title": "lodash 4.17.4: lodash vulnerable to Prototype Pollution via array path bypass in `_.unset` and `_.omit`",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  },
+  {
+    "description": "Versions of `lodash` before 4.17.5 are vulnerable to prototype pollution. \n\nThe vulnerable functions are 'defaultsDeep', 'merge', and 'mergeWith' which allow a malicious user to modify the prototype of `Object` via `__proto__` causing the addition or modification of an existing property that will exist on all objects.\n\n\n\n\n## Recommendation\n\nUpdate to version 4.17.5 or later.",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "osv-scanner"
+      ],
+      "rule_ids": {
+        "osv-scanner": "GHSA-fvqr-27wr-82fm"
+      }
+    },
+    "fingerprint": "",
+    "id": "osv-scanner:GHSA-fvqr-27wr-82fm:package-lock.json:lodash@4.17.4",
+    "location": {
+      "end_line": 1,
+      "path": "package-lock.json",
+      "snippet": "lodash@4.17.4",
+      "snippet_hash": "sha256:03970e5485933b6bb885cd9d15a7d2cdd4365cdf4c5d2fa8454530c70550c54e",
+      "start_line": 1
+    },
+    "package": {
+      "ecosystem": "npm",
+      "name": "lodash",
+      "version": "4.17.4"
+    },
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [
+        "https://osv.dev/GHSA-fvqr-27wr-82fm"
+      ],
+      "suggested_patch": null,
+      "summary": "Upgrade lodash to 4.17.5 or later."
+    },
+    "scoring": {
+      "confidence": 0.9,
+      "cvss_v3_1": 6.5,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "osv-scanner": "6.5"
+      },
+      "normalized_severity": "MEDIUM",
+      "reachable": null,
+      "risk_score": null
+    },
+    "taxonomy": {
+      "category": "sca",
+      "cve": [
+        "CVE-2018-3721"
+      ],
+      "cwe": [
+        "CWE-1321",
+        "CWE-471"
+      ],
+      "owasp_top_10_2021": []
+    },
+    "title": "lodash 4.17.4: Prototype Pollution in lodash",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  },
+  {
+    "description": "Versions of `lodash` before 4.17.12 are vulnerable to Prototype Pollution.  The function `defaultsDeep` allows a malicious user to modify the prototype of `Object` via `{constructor: {prototype: {...}}}` causing the addition or modification of an existing property that will exist on all objects.\n\n## Recommendation\n\nUpdate to version 4.17.12 or later.",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "osv-scanner"
+      ],
+      "rule_ids": {
+        "osv-scanner": "GHSA-jf85-cpcp-j695"
+      }
+    },
+    "fingerprint": "",
+    "id": "osv-scanner:GHSA-jf85-cpcp-j695:package-lock.json:lodash@4.17.4",
+    "location": {
+      "end_line": 1,
+      "path": "package-lock.json",
+      "snippet": "lodash@4.17.4",
+      "snippet_hash": "sha256:03970e5485933b6bb885cd9d15a7d2cdd4365cdf4c5d2fa8454530c70550c54e",
+      "start_line": 1
+    },
+    "package": {
+      "ecosystem": "npm",
+      "name": "lodash",
+      "version": "4.17.4"
+    },
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [
+        "https://osv.dev/GHSA-jf85-cpcp-j695"
+      ],
+      "suggested_patch": null,
+      "summary": "Upgrade lodash to 4.17.12 or later."
+    },
+    "scoring": {
+      "confidence": 0.9,
+      "cvss_v3_1": 9.1,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "osv-scanner": "9.1"
+      },
+      "normalized_severity": "CRITICAL",
+      "reachable": null,
+      "risk_score": null
+    },
+    "taxonomy": {
+      "category": "sca",
+      "cve": [
+        "CVE-2019-10744"
+      ],
+      "cwe": [
+        "CWE-1321",
+        "CWE-20"
+      ],
+      "owasp_top_10_2021": []
+    },
+    "title": "lodash 4.17.4: Prototype Pollution in lodash",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  },
+  {
+    "description": "Versions of lodash prior to 4.17.19 are vulnerable to Prototype Pollution. The functions `pick`, `set`, `setWith`, `update`, `updateWith`, and `zipObjectDeep` allow a malicious user to modify the prototype of Object if the property identifiers are user-supplied. Being affected by this issue requires manipulating objects based on user-provided property values or arrays.\n\nThis vulnerability causes the addition or modification of an existing property that will exist on all objects and may lead to Denial of Service or Code Execution under specific circumstances.",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "osv-scanner"
+      ],
+      "rule_ids": {
+        "osv-scanner": "GHSA-p6mc-m468-83gw"
+      }
+    },
+    "fingerprint": "",
+    "id": "osv-scanner:GHSA-p6mc-m468-83gw:package-lock.json:lodash@4.17.4",
+    "location": {
+      "end_line": 1,
+      "path": "package-lock.json",
+      "snippet": "lodash@4.17.4",
+      "snippet_hash": "sha256:03970e5485933b6bb885cd9d15a7d2cdd4365cdf4c5d2fa8454530c70550c54e",
+      "start_line": 1
+    },
+    "package": {
+      "ecosystem": "npm",
+      "name": "lodash",
+      "version": "4.17.4"
+    },
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [
+        "https://osv.dev/GHSA-p6mc-m468-83gw"
+      ],
+      "suggested_patch": null,
+      "summary": "Upgrade lodash to 4.17.19 or later."
+    },
+    "scoring": {
+      "confidence": 0.9,
+      "cvss_v3_1": 7.4,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "osv-scanner": "7.4"
+      },
+      "normalized_severity": "HIGH",
+      "reachable": null,
+      "risk_score": null
+    },
+    "taxonomy": {
+      "category": "sca",
+      "cve": [
+        "CVE-2020-8203"
+      ],
+      "cwe": [
+        "CWE-1321",
+        "CWE-770"
+      ],
+      "owasp_top_10_2021": []
+    },
+    "title": "lodash 4.17.4: Prototype Pollution in lodash",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  },
+  {
+    "description": "lodash prior to 4.7.11 is affected by: CWE-400: Uncontrolled Resource Consumption. The impact is: Denial of service. The component is: Date handler. The attack vector is: Attacker provides very long strings, which the library attempts to match using a regular expression. The fixed version is: 4.7.11.",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "osv-scanner"
+      ],
+      "rule_ids": {
+        "osv-scanner": "GHSA-x5rq-j2xg-h7qm"
+      }
+    },
+    "fingerprint": "",
+    "id": "osv-scanner:GHSA-x5rq-j2xg-h7qm:package-lock.json:lodash@4.17.4",
+    "location": {
+      "end_line": 1,
+      "path": "package-lock.json",
+      "snippet": "lodash@4.17.4",
+      "snippet_hash": "sha256:03970e5485933b6bb885cd9d15a7d2cdd4365cdf4c5d2fa8454530c70550c54e",
+      "start_line": 1
+    },
+    "package": {
+      "ecosystem": "npm",
+      "name": "lodash",
+      "version": "4.17.4"
+    },
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [
+        "https://osv.dev/GHSA-x5rq-j2xg-h7qm"
+      ],
+      "suggested_patch": null,
+      "summary": "Upgrade lodash to 4.17.11 or later."
+    },
+    "scoring": {
+      "confidence": 0.9,
+      "cvss_v3_1": 6.5,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "osv-scanner": "6.5"
+      },
+      "normalized_severity": "MEDIUM",
+      "reachable": null,
+      "risk_score": null
+    },
+    "taxonomy": {
+      "category": "sca",
+      "cve": [
+        "CVE-2019-1010266"
+      ],
+      "cwe": [
+        "CWE-400"
+      ],
+      "owasp_top_10_2021": []
+    },
+    "title": "lodash 4.17.4: Regular Expression Denial of Service (ReDoS) in lodash",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  },
+  {
+    "description": "The Pallets Project flask version Before 0.12.3 contains a CWE-20: Improper Input Validation vulnerability in flask that can result in Large amount of memory usage possibly leading to denial of service. This attack appear to be exploitable via Attacker provides JSON data in incorrect encoding. This vulnerability appears to have been fixed in 0.12.3.",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "osv-scanner"
+      ],
+      "rule_ids": {
+        "osv-scanner": "GHSA-562c-5r94-xh97"
+      }
+    },
+    "fingerprint": "",
+    "id": "osv-scanner:GHSA-562c-5r94-xh97:requirements.txt:flask@0.12",
+    "location": {
+      "end_line": 1,
+      "path": "requirements.txt",
+      "snippet": "flask@0.12",
+      "snippet_hash": "sha256:e9c39ffbba3ee08ed1d140f72f0d9e8614725691ec2cd5cea2731d4199bbefba",
+      "start_line": 1
+    },
+    "package": {
+      "ecosystem": "pypi",
+      "name": "flask",
+      "version": "0.12"
+    },
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [
+        "https://osv.dev/GHSA-562c-5r94-xh97"
+      ],
+      "suggested_patch": null,
+      "summary": "Upgrade flask to 0.12.3 or later."
+    },
+    "scoring": {
+      "confidence": 0.9,
+      "cvss_v3_1": 8.7,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "osv-scanner": "8.7"
+      },
+      "normalized_severity": "HIGH",
+      "reachable": null,
+      "risk_score": null
+    },
+    "taxonomy": {
+      "category": "sca",
+      "cve": [
+        "CVE-2018-1000656"
+      ],
+      "cwe": [
+        "CWE-20"
+      ],
+      "owasp_top_10_2021": []
+    },
+    "title": "flask 0.12: Flask is vulnerable to Denial of Service via incorrect encoding of JSON data",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  },
+  {
+    "description": "The Pallets Project Flask before 1.0 is affected by unexpected memory usage. The impact is denial of service. The attack vector is crafted encoded JSON data. The fixed version is 1. NOTE this may overlap CVE-2018-1000656.",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "osv-scanner"
+      ],
+      "rule_ids": {
+        "osv-scanner": "GHSA-5wv5-4vpf-pj6m"
+      }
+    },
+    "fingerprint": "",
+    "id": "osv-scanner:GHSA-5wv5-4vpf-pj6m:requirements.txt:flask@0.12",
+    "location": {
+      "end_line": 1,
+      "path": "requirements.txt",
+      "snippet": "flask@0.12",
+      "snippet_hash": "sha256:e9c39ffbba3ee08ed1d140f72f0d9e8614725691ec2cd5cea2731d4199bbefba",
+      "start_line": 1
+    },
+    "package": {
+      "ecosystem": "pypi",
+      "name": "flask",
+      "version": "0.12"
+    },
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [
+        "https://osv.dev/GHSA-5wv5-4vpf-pj6m"
+      ],
+      "suggested_patch": null,
+      "summary": "Upgrade flask to 1.0 or later."
+    },
+    "scoring": {
+      "confidence": 0.9,
+      "cvss_v3_1": 8.7,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "osv-scanner": "8.7"
+      },
+      "normalized_severity": "HIGH",
+      "reachable": null,
+      "risk_score": null
+    },
+    "taxonomy": {
+      "category": "sca",
+      "cve": [
+        "CVE-2019-1010083"
+      ],
+      "cwe": [
+        "CWE-400"
+      ],
+      "owasp_top_10_2021": []
+    },
+    "title": "flask 0.12: Pallets Project Flask is vulnerable to Denial of Service via Unexpected memory usage",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  },
+  {
+    "description": "When the `session` object is accessed, Flask should set the `Vary: Cookie` header. This instructs caches not to cache the response, as it may contain information specific to a logged in user. This is handled in most cases, but some forms of access such as the Python `in` operator were overlooked.\n\nThe severity depends on the application's use of the session, and the cache's behavior regarding cookies. The risk depends on all these conditions being met.\n\n1. The application must be hosted behind a caching proxy that does not ignore responses with cookies.\n2. The application does not set a `Cache-Control` header to indicate that a page is private or should not be cached.\n3. The application accesses the session in a way that does not access the values, only the keys, and does not mutate the session.",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "osv-scanner"
+      ],
+      "rule_ids": {
+        "osv-scanner": "GHSA-68rp-wp8r-4726"
+      }
+    },
+    "fingerprint": "",
+    "id": "osv-scanner:GHSA-68rp-wp8r-4726:requirements.txt:flask@0.12",
+    "location": {
+      "end_line": 1,
+      "path": "requirements.txt",
+      "snippet": "flask@0.12",
+      "snippet_hash": "sha256:e9c39ffbba3ee08ed1d140f72f0d9e8614725691ec2cd5cea2731d4199bbefba",
+      "start_line": 1
+    },
+    "package": {
+      "ecosystem": "pypi",
+      "name": "flask",
+      "version": "0.12"
+    },
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [
+        "https://osv.dev/GHSA-68rp-wp8r-4726"
+      ],
+      "suggested_patch": null,
+      "summary": "Upgrade flask to 3.1.3 or later."
+    },
+    "scoring": {
+      "confidence": 0.9,
+      "cvss_v3_1": 2.3,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "osv-scanner": "2.3"
+      },
+      "normalized_severity": "LOW",
+      "reachable": null,
+      "risk_score": null
+    },
+    "taxonomy": {
+      "category": "sca",
+      "cve": [
+        "CVE-2026-27205"
+      ],
+      "cwe": [
+        "CWE-524"
+      ],
+      "owasp_top_10_2021": []
+    },
+    "title": "flask 0.12: Flask session does not add `Vary: Cookie` header when accessed in some ways",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  },
+  {
+    "description": "When all of the following conditions are met, a response containing data intended for one client may be cached and subsequently sent by a proxy to other clients. If the proxy also caches `Set-Cookie` headers, it may send one client's `session` cookie to other clients. The severity depends on the application's use of the session, and the proxy's behavior regarding cookies. The risk depends on _all_ these conditions being met.\n\n1. The application must be hosted behind a caching proxy that does not strip cookies or ignore responses with cookies.\n2. The application sets [`session.permanent = True`](https://flask.palletsprojects.com/en/2.3.x/api/#flask.session.permanent).\n2. The application does not access or modify the session at any point during a request.\n4. [`SESSION_REFRESH_EACH_REQUEST`](https://flask.palletsprojects.com/en/2.3.x/config/#SESSION_REFRESH_EACH_REQUEST) is enabled (the default).\n5. The application does not set a `Cache-Control` header to indicate that a page is private or should not be cached.\n\nThis happens because vulnerable versions of Flask only set the `Vary: Cookie` header when the session is accessed or modified, not when it is refreshed (re-sent to update the expiration) without being accessed or modified.",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "osv-scanner"
+      ],
+      "rule_ids": {
+        "osv-scanner": "GHSA-m2qf-hxjv-5gpq"
+      }
+    },
+    "fingerprint": "",
+    "id": "osv-scanner:GHSA-m2qf-hxjv-5gpq:requirements.txt:flask@0.12",
+    "location": {
+      "end_line": 1,
+      "path": "requirements.txt",
+      "snippet": "flask@0.12",
+      "snippet_hash": "sha256:e9c39ffbba3ee08ed1d140f72f0d9e8614725691ec2cd5cea2731d4199bbefba",
+      "start_line": 1
+    },
+    "package": {
+      "ecosystem": "pypi",
+      "name": "flask",
+      "version": "0.12"
+    },
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [
+        "https://osv.dev/GHSA-m2qf-hxjv-5gpq"
+      ],
+      "suggested_patch": null,
+      "summary": "Upgrade flask to 2.3.2 or later."
+    },
+    "scoring": {
+      "confidence": 0.9,
+      "cvss_v3_1": 8.7,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "osv-scanner": "8.7"
+      },
+      "normalized_severity": "HIGH",
+      "reachable": null,
+      "risk_score": null
+    },
+    "taxonomy": {
+      "category": "sca",
+      "cve": [
+        "CVE-2023-30861"
+      ],
+      "cwe": [
+        "CWE-539"
+      ],
+      "owasp_top_10_2021": []
+    },
+    "title": "flask 0.12: Flask vulnerable to possible disclosure of permanent session cookie due to missing Vary: Cookie header",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  },
+  {
+    "description": "### Impact\n\nDue to a URL parsing issue, Requests releases prior to 2.32.4 may leak .netrc credentials to third parties for specific maliciously-crafted URLs.\n\n### Workarounds\nFor older versions of Requests, use of the .netrc file can be disabled with `trust_env=False` on your Requests Session ([docs](https://requests.readthedocs.io/en/latest/api/#requests.Session.trust_env)).\n\n### References\nhttps://github.com/psf/requests/pull/6965\nhttps://seclists.org/fulldisclosure/2025/Jun/2",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "osv-scanner"
+      ],
+      "rule_ids": {
+        "osv-scanner": "GHSA-9hjg-9r4m-mvj7"
+      }
+    },
+    "fingerprint": "",
+    "id": "osv-scanner:GHSA-9hjg-9r4m-mvj7:requirements.txt:requests@2.19.0",
+    "location": {
+      "end_line": 1,
+      "path": "requirements.txt",
+      "snippet": "requests@2.19.0",
+      "snippet_hash": "sha256:86cf1dadc4a5e21125457e613ab496330e5f6da56777fb50c0f8da1598bdeb98",
+      "start_line": 1
+    },
+    "package": {
+      "ecosystem": "pypi",
+      "name": "requests",
+      "version": "2.19.0"
+    },
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [
+        "https://osv.dev/GHSA-9hjg-9r4m-mvj7"
+      ],
+      "suggested_patch": null,
+      "summary": "Upgrade requests to 2.32.4 or later."
+    },
+    "scoring": {
+      "confidence": 0.9,
+      "cvss_v3_1": 5.3,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "osv-scanner": "5.3"
+      },
+      "normalized_severity": "MEDIUM",
+      "reachable": null,
+      "risk_score": null
+    },
+    "taxonomy": {
+      "category": "sca",
+      "cve": [
+        "CVE-2024-47081"
+      ],
+      "cwe": [
+        "CWE-522"
+      ],
+      "owasp_top_10_2021": []
+    },
+    "title": "requests 2.19.0: Requests vulnerable to .netrc credentials leak via malicious URLs",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  },
+  {
+    "description": "When using a `requests.Session`, if the first request to a given origin is made with `verify=False`, TLS certificate verification may remain disabled for all subsequent requests to that origin, even if `verify=True` is explicitly specified later.\n\nThis occurs because the underlying connection is reused from the session's connection pool, causing the initial TLS verification setting to persist for the lifetime of the pooled connection. As a result, applications may unintentionally send requests without certificate verification, leading to potential man-in-the-middle attacks and compromised confidentiality or integrity.\n\nThis behavior affects versions of `requests` prior to 2.32.0.",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "osv-scanner"
+      ],
+      "rule_ids": {
+        "osv-scanner": "GHSA-9wx4-h78v-vm56"
+      }
+    },
+    "fingerprint": "",
+    "id": "osv-scanner:GHSA-9wx4-h78v-vm56:requirements.txt:requests@2.19.0",
+    "location": {
+      "end_line": 1,
+      "path": "requirements.txt",
+      "snippet": "requests@2.19.0",
+      "snippet_hash": "sha256:86cf1dadc4a5e21125457e613ab496330e5f6da56777fb50c0f8da1598bdeb98",
+      "start_line": 1
+    },
+    "package": {
+      "ecosystem": "pypi",
+      "name": "requests",
+      "version": "2.19.0"
+    },
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [
+        "https://osv.dev/GHSA-9wx4-h78v-vm56"
+      ],
+      "suggested_patch": null,
+      "summary": "Upgrade requests to 2.32.0 or later."
+    },
+    "scoring": {
+      "confidence": 0.9,
+      "cvss_v3_1": 5.6,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "osv-scanner": "5.6"
+      },
+      "normalized_severity": "MEDIUM",
+      "reachable": null,
+      "risk_score": null
+    },
+    "taxonomy": {
+      "category": "sca",
+      "cve": [
+        "CVE-2024-35195"
+      ],
+      "cwe": [
+        "CWE-670"
+      ],
+      "owasp_top_10_2021": []
+    },
+    "title": "requests 2.19.0: Requests `Session` object does not verify requests after making first request with verify=False",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  },
+  {
+    "description": "### Impact\nThe `requests.utils.extract_zipped_paths()` utility function uses a predictable filename when extracting files from zip archives into the system temporary directory. If the target file already exists, it is reused without validation. A local attacker with write access to the temp directory could pre-create a malicious file that would be loaded in place of the legitimate one.\n\n### Affected usages\n**Standard usage of the Requests library is not affected by this vulnerability.** Only applications that call `extract_zipped_paths()` directly are impacted.\n\n### Remediation\nUpgrade to at least Requests 2.33.0, where the library now extracts files to a non-deterministic location.\n\nIf developers are unable to upgrade, they can set `TMPDIR` in their environment to a directory with restricted write access.",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "osv-scanner"
+      ],
+      "rule_ids": {
+        "osv-scanner": "GHSA-gc5v-m9x4-r6x2"
+      }
+    },
+    "fingerprint": "",
+    "id": "osv-scanner:GHSA-gc5v-m9x4-r6x2:requirements.txt:requests@2.19.0",
+    "location": {
+      "end_line": 1,
+      "path": "requirements.txt",
+      "snippet": "requests@2.19.0",
+      "snippet_hash": "sha256:86cf1dadc4a5e21125457e613ab496330e5f6da56777fb50c0f8da1598bdeb98",
+      "start_line": 1
+    },
+    "package": {
+      "ecosystem": "pypi",
+      "name": "requests",
+      "version": "2.19.0"
+    },
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [
+        "https://osv.dev/GHSA-gc5v-m9x4-r6x2"
+      ],
+      "suggested_patch": null,
+      "summary": "Upgrade requests to 2.33.0 or later."
+    },
+    "scoring": {
+      "confidence": 0.9,
+      "cvss_v3_1": 4.4,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "osv-scanner": "4.4"
+      },
+      "normalized_severity": "MEDIUM",
+      "reachable": null,
+      "risk_score": null
+    },
+    "taxonomy": {
+      "category": "sca",
+      "cve": [
+        "CVE-2026-25645"
+      ],
+      "cwe": [
+        "CWE-377"
+      ],
+      "owasp_top_10_2021": []
+    },
+    "title": "requests 2.19.0: Requests has Insecure Temp File Reuse in its extract_zipped_paths() utility function",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  },
+  {
+    "description": "### Impact\n\nSince Requests v2.3.0, Requests has been vulnerable to potentially leaking `Proxy-Authorization` headers to destination servers, specifically during redirects to an HTTPS origin. This is a product of how `rebuild_proxies` is used to recompute and [reattach the `Proxy-Authorization` header](https://github.com/psf/requests/blob/f2629e9e3c7ce3c3c8c025bcd8db551101cbc773/requests/sessions.py#L319-L328) to requests when redirected. Note this behavior has _only_ been observed to affect proxied requests when credentials are supplied in the URL user information component (e.g. `https://username:password@proxy:8080`).\n\n**Current vulnerable behavior(s):**\n\n1. HTTP \u2192 HTTPS: **leak**\n2. HTTPS \u2192 HTTP: **no leak**\n3. HTTPS \u2192 HTTPS: **leak**\n4. HTTP \u2192 HTTP: **no leak**\n\nFor HTTP connections sent through the proxy, the proxy will identify the header in the request itself and remove it prior to forwarding to the destination server. However when sent over HTTPS, the `Proxy-Authorization` header must be sent in the CONNECT request as the proxy has no visibility into further tunneled requests. This results in Requests forwarding the header to the destination server unintentionally, allowing a malicious actor to potentially exfiltrate those credentials.\n\nThe reason this currently works for HTTPS connections in Requests is the `Proxy-Authorization` header is also handled by urllib3 with our usage of the ProxyManager in adapters.py with [`proxy_manager_for`](https://github.com/psf/requests/blob/f2629e9e3c7ce3c3c8c025bcd8db551101cbc773/requests/adapters.py#L199-L235). This will compute the required proxy headers in `proxy_headers` and pass them to the Proxy Manager, avoiding attaching them directly to the Request object. This will be our preferred option going forward for default usage.\n\n### Patches\nStarting in Requests v2.31.0, Requests will no longer attach this header to redirects with an HTTPS destination. This should have no negative impacts on the default behavior of the library as the proxy credentials are already properly being handled by urllib3's ProxyManager.\n\nFor users with custom adapters, this _may_ be potentially breaking if you were already working around this behavior. The previous functionality of `rebuild_proxies` doesn't make sense in any case, so we would encourage any users impacted to migrate any handling of Proxy-Authorization directly into their custom adapter.\n\n### Workarounds\nFor users who are not able to update Requests immediately, there is one potential workaround.\n\nYou may disable redirects by setting `allow_redirects` to `False` on all calls through Requests top-level APIs. Note that if you're currently relying on redirect behaviors, you will need to capture the 3xx response codes and ensure a new request is made to the redirect destination.\n```\nimport requests\nr = requests.get('http://github.com/', allow_redirects=False)\n```\n\n### Credits\n\nThis vulnerability was discovered and disclosed by the following individuals.\n\nDennis Brinkrolf, Haxolot (https://haxolot.com/)\nTobias Funke, (tobiasfunke93@gmail.com)",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "osv-scanner"
+      ],
+      "rule_ids": {
+        "osv-scanner": "GHSA-j8r2-6x86-q33q"
+      }
+    },
+    "fingerprint": "",
+    "id": "osv-scanner:GHSA-j8r2-6x86-q33q:requirements.txt:requests@2.19.0",
+    "location": {
+      "end_line": 1,
+      "path": "requirements.txt",
+      "snippet": "requests@2.19.0",
+      "snippet_hash": "sha256:86cf1dadc4a5e21125457e613ab496330e5f6da56777fb50c0f8da1598bdeb98",
+      "start_line": 1
+    },
+    "package": {
+      "ecosystem": "pypi",
+      "name": "requests",
+      "version": "2.19.0"
+    },
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [
+        "https://osv.dev/GHSA-j8r2-6x86-q33q"
+      ],
+      "suggested_patch": null,
+      "summary": "Upgrade requests to 2.31.0 or later."
+    },
+    "scoring": {
+      "confidence": 0.9,
+      "cvss_v3_1": 6.1,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "osv-scanner": "6.1"
+      },
+      "normalized_severity": "MEDIUM",
+      "reachable": null,
+      "risk_score": null
+    },
+    "taxonomy": {
+      "category": "sca",
+      "cve": [
+        "CVE-2023-32681"
+      ],
+      "cwe": [
+        "CWE-200"
+      ],
+      "owasp_top_10_2021": []
+    },
+    "title": "requests 2.19.0: Unintended leak of Proxy-Authorization header in requests",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  },
+  {
+    "description": "The Requests package through 2.19.1 before 2018-09-14 for Python sends an HTTP Authorization header to an http URI upon receiving a same-hostname https-to-http redirect, which makes it easier for remote attackers to discover credentials by sniffing the network.",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "osv-scanner"
+      ],
+      "rule_ids": {
+        "osv-scanner": "GHSA-x84v-xcm2-53pg"
+      }
+    },
+    "fingerprint": "",
+    "id": "osv-scanner:GHSA-x84v-xcm2-53pg:requirements.txt:requests@2.19.0",
+    "location": {
+      "end_line": 1,
+      "path": "requirements.txt",
+      "snippet": "requests@2.19.0",
+      "snippet_hash": "sha256:86cf1dadc4a5e21125457e613ab496330e5f6da56777fb50c0f8da1598bdeb98",
+      "start_line": 1
+    },
+    "package": {
+      "ecosystem": "pypi",
+      "name": "requests",
+      "version": "2.19.0"
+    },
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [
+        "https://osv.dev/GHSA-x84v-xcm2-53pg"
+      ],
+      "suggested_patch": null,
+      "summary": "Upgrade requests to 2.20.0 or later."
+    },
+    "scoring": {
+      "confidence": 0.9,
+      "cvss_v3_1": 7.5,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "osv-scanner": "7.5"
+      },
+      "normalized_severity": "HIGH",
+      "reachable": null,
+      "risk_score": null
+    },
+    "taxonomy": {
+      "category": "sca",
+      "cve": [
+        "CVE-2018-18074"
+      ],
+      "cwe": [
+        "CWE-522"
+      ],
+      "owasp_top_10_2021": []
+    },
+    "title": "requests 2.19.0: Insufficiently Protected Credentials in Requests",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  }
+]

@@ -19,6 +19,7 @@
       "snippet_hash": "sha256:f71bfeb0d5931b3c7089d94f5a1aad92d5df2ca32f3def3f041580248327278f",
       "start_line": 7
     },
+    "package": null,
     "remediation": {
       "generated_by": "static",
       "is_suggestion": true,
@@ -75,6 +76,7 @@
       "snippet_hash": "sha256:cd29438fe2e7db6a914705e129acbb7d5b9148c970f1d95607288eefb3b8802f",
       "start_line": 11
     },
+    "package": null,
     "remediation": {
       "generated_by": "static",
       "is_suggestion": true,
@@ -131,6 +133,7 @@
       "snippet_hash": "sha256:cd29438fe2e7db6a914705e129acbb7d5b9148c970f1d95607288eefb3b8802f",
       "start_line": 11
     },
+    "package": null,
     "remediation": {
       "generated_by": "static",
       "is_suggestion": true,
@@ -187,6 +190,7 @@
       "snippet_hash": "sha256:a3647352554e19a46de097598f1d22e920b401cfdf77d5a357e02746a4003fb2",
       "start_line": 15
     },
+    "package": null,
     "remediation": {
       "generated_by": "static",
       "is_suggestion": true,

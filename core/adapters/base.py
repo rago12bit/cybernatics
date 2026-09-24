@@ -23,6 +23,7 @@ class ToolSpec:
     timeout_seconds: int = 900
     memory_limit: str = "2g"
     native_sarif: bool = False
+    writable_volumes: tuple[str, ...] = ()  # container paths needing a throwaway rw volume
 
 
 @dataclass(frozen=True)

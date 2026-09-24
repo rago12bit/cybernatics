@@ -51,6 +51,31 @@ class Taxonomy:
     cve: tuple[str, ...] = ()
 
 
+_ECOSYSTEMS = {
+    "pypi": "pypi", "pip": "pypi", "poetry": "pypi", "pipenv": "pypi",
+    "npm": "npm", "yarn": "npm", "pnpm": "npm",
+    "go": "go", "gomod": "go", "golang": "go",
+    "cargo": "cargo", "crates.io": "cargo", "rustcrates": "cargo",
+    "rubygems": "rubygems", "bundler": "rubygems", "gem": "rubygems",
+    "maven": "maven", "pom": "maven", "jar": "maven", "gradle": "maven",
+    "packagist": "packagist", "composer": "packagist",
+    "nuget": "nuget",
+}  # fmt: skip
+
+
+@dataclass(frozen=True)
+class Package:
+    """Affected dependency (SCA). Ecosystem is normalized so tools agree on identity (ADR-004)."""
+
+    name: str
+    version: str
+    ecosystem: str
+
+    @staticmethod
+    def normalize_ecosystem(raw: str) -> str:
+        return _ECOSYSTEMS.get(raw.strip().lower(), raw.strip().lower())
+
+
 @dataclass
 class Scoring:
     native_severity: dict[str, str] = field(default_factory=dict)
@@ -98,6 +123,7 @@ class Finding:
     remediation: Remediation = field(default_factory=Remediation)
     triage: Triage = field(default_factory=Triage)
     fingerprint: str = ""
+    package: Package | None = None
 
     def to_dict(self) -> dict[str, Any]:
         def default(obj: Any) -> Any:
@@ -113,3 +139,30 @@ def _walk(obj: Any, default: Any) -> Any:
     if isinstance(obj, (list, tuple)):
         return [_walk(v, default) for v in obj]
     return default(obj)
+
+
+def finding_from_dict(d: dict[str, Any]) -> Finding:
+    """Inverse of Finding.to_dict(); used to carry Findings across process boundaries (Celery)."""
+    tax = d["taxonomy"]
+    sc = d["scoring"]
+    pkg = d.get("package")
+    return Finding(
+        id=d["id"],
+        title=d["title"],
+        description=d["description"],
+        location=Location(**d["location"]),
+        taxonomy=Taxonomy(
+            Category(tax["category"]),
+            cwe=tuple(tax["cwe"]),
+            owasp_top_10_2021=tuple(tax["owasp_top_10_2021"]),
+            cve=tuple(tax["cve"]),
+        ),
+        scoring=Scoring(
+            **{**sc, "normalized_severity": Severity(sc["normalized_severity"])},
+        ),
+        evidence=Evidence(**d["evidence"]),
+        remediation=Remediation(**d["remediation"]),
+        triage=Triage(**{**d["triage"], "state": TriageState(d["triage"]["state"])}),
+        fingerprint=d.get("fingerprint", ""),
+        package=Package(**pkg) if pkg else None,
+    )

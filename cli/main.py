@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 
 import typer
 
+from core.ingest import IngestError
 from core.scan import ADAPTERS, scan
+from core.source import materialize
 
 app = typer.Typer(help="Bulwark: unified security scanning.", no_args_is_help=True)
 
@@ -19,16 +20,27 @@ def _root() -> None:
 
 @app.command("scan")
 def scan_cmd(
-    path: Path = typer.Argument(..., exists=True, file_okay=False, resolve_path=True),
+    source: str = typer.Argument(..., help="Directory, .zip/.tar.gz archive, or public Git URL."),
     tools: str = typer.Option(",".join(ADAPTERS), help="Comma-separated tool names."),
     fmt: str = typer.Option("json", "--format", help="Output format: json."),
+    distributed: bool = typer.Option(False, "--distributed", help="Run tools on Celery workers."),
 ) -> None:
     if fmt != "json":
         raise typer.BadParameter("only 'json' is supported so far", param_hint="--format")
+    names = [t.strip() for t in tools.split(",") if t.strip()]
     try:
-        result = scan(path, [t.strip() for t in tools.split(",") if t.strip()])
+        with materialize(source) as workspace:
+            if distributed:
+                from core.tasks import celery_executor
+
+                result = scan(workspace, names, celery_executor)
+            else:
+                result = scan(workspace, names)
     except ValueError as exc:
         raise typer.BadParameter(str(exc), param_hint="--tools") from exc
+    except IngestError as exc:
+        typer.echo(f"error: {exc}", err=True)
+        raise typer.Exit(2) from exc
     typer.echo(
         json.dumps(
             {

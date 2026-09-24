@@ -14,6 +14,8 @@ Fallback order: arm64-native alternative -> `--platform linux/amd64` under Roset
 | Trivy | aquasec/trivy | yes | verified 2026-09-24 |
 | Gitleaks | zricethezav/gitleaks | yes | verified 2026-09-24 |
 | OSV-Scanner | ghcr.io/google/osv-scanner | yes | verified 2026-09-24 |
+| Trivy (custom image, DB baked in) | `docker/trivy/Dockerfile` on aquasec/trivy:0.55.2 | yes | verified 2026-09-24 (built and run) |
+| OSV-Scanner (custom image, offline DBs) | `docker/osv-scanner/Dockerfile` on osv-scanner:v1.9.2 | yes | verified 2026-09-24 (built and run) |
 | Bandit | built locally from `python:3.12-slim` (`docker/bandit/Dockerfile`) | yes | base image is multi-arch |
 
 No Tier-1 tool needs the Rosetta fallback. Tier-2 (Grype, Checkov, KICS, gosec, Hadolint, Dockle)

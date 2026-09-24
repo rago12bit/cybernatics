@@ -19,3 +19,9 @@ by their adapter.
 - GitHub Code Scanning consumes our export with no extra work.
 - One SARIF ingestion path is reused across adapters.
 - SARIF is verbose and lacks some fields we need (EPSS, KEV); those live on `Finding`, not SARIF.
+
+## Amendment (2026-09-24, Week 4)
+SARIF is lossy for SCA: it carries no package identity, CVSS vector or CWE list. The Trivy and
+OSV-Scanner adapters therefore parse each tool's richer native JSON straight into `Finding`.
+SARIF remains the ingestion path for tools that emit it natively (Semgrep) and will be the
+*export* format generated from `Finding` (Week 10, for GitHub Code Scanning).

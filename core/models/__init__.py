@@ -3,12 +3,14 @@ from core.models.finding import (
     Evidence,
     Finding,
     Location,
+    Package,
     Remediation,
     Scoring,
     Severity,
     Taxonomy,
     Triage,
     TriageState,
+    finding_from_dict,
 )
 
 __all__ = [
@@ -16,10 +18,12 @@ __all__ = [
     "Evidence",
     "Finding",
     "Location",
+    "Package",
     "Remediation",
     "Scoring",
     "Severity",
     "Taxonomy",
     "Triage",
     "TriageState",
+    "finding_from_dict",
 ]

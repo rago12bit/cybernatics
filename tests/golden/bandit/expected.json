@@ -19,6 +19,7 @@
       "snippet_hash": "sha256:8c85866ad8677061d07dab8d107662a1b186fbde5125273a54e01c8b5c445245",
       "start_line": 1
     },
+    "package": null,
     "remediation": {
       "generated_by": "static",
       "is_suggestion": true,
@@ -75,6 +76,7 @@
       "snippet_hash": "sha256:cd3feac9eb28c8fe25a30a75997041ec5fd69c7bc13211548aea3184fc9207bb",
       "start_line": 4
     },
+    "package": null,
     "remediation": {
       "generated_by": "static",
       "is_suggestion": true,
@@ -131,6 +133,7 @@
       "snippet_hash": "sha256:9ccd26cd08b8f8559d2fdd59a81998535124ab7b85049891abb1b9b87fc8d7b4",
       "start_line": 8
     },
+    "package": null,
     "remediation": {
       "generated_by": "static",
       "is_suggestion": true,
@@ -187,6 +190,7 @@
       "snippet_hash": "sha256:239ec418559942d33d48e68d89ab8af125cb142358848cc20380edda2d92b989",
       "start_line": 11
     },
+    "package": null,
     "remediation": {
       "generated_by": "static",
       "is_suggestion": true,
@@ -243,6 +247,7 @@
       "snippet_hash": "sha256:bd100294b444d14e7f49f0b8be9b82a82a08e5f220148ee85add4777ebdbba71",
       "start_line": 13
     },
+    "package": null,
     "remediation": {
       "generated_by": "static",
       "is_suggestion": true,

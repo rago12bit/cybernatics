@@ -23,6 +23,29 @@ Scanner images run sandboxed (no network). Build the local ones once:
 ```bash
 docker build -t bulwark/bandit:1.7.10 docker/bandit
 docker/semgrep/fetch-rules.sh && docker build -t bulwark/semgrep:1.90.0 docker/semgrep
+docker build -t bulwark/trivy:0.55.2 docker/trivy          # bakes in a ~1.4 GB vuln DB
+docker build -t bulwark/osv-scanner:1.9.2 docker/osv-scanner  # offline DBs: PyPI, npm, Go
+```
+
+Vulnerability databases are baked in at build time (the sandbox has no network at run time), so
+rebuild the Trivy and OSV images to refresh them.
+
+## Usage
+
+```bash
+bulwark scan ./my-project                                # directory
+bulwark scan project.zip                                 # archive (zip / tar.gz), extracted safely
+bulwark scan https://github.com/owner/repo               # public Git URL (github/gitlab/bitbucket)
+bulwark scan ./my-project --tools bandit,trivy           # subset of tools
+```
+
+Tools run in parallel; a tool that fails or times out is reported in `tool_status` and never fails
+the scan. To fan tools out to Celery workers instead of local threads:
+
+```bash
+docker run -d -p 6379:6379 redis:7-alpine
+celery -A core.tasks worker -P threads -c 5     # threads: work is subprocess-bound
+bulwark scan ./my-project --distributed
 ```
 
 Gitleaks uses the upstream image. Semgrep's rules are fetched at build time and are for your own
