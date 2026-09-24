@@ -286,6 +286,17 @@
   ]
  },
  {
+  "fp": "sha256:539a5eb4eb831343607eb74c4457b0b221da0fa75e867b2d5c2d49e609fb3ad8",
+  "line": 1,
+  "n": 2,
+  "path": "requirements.txt",
+  "sev": "MEDIUM",
+  "tools": [
+   "trivy",
+   "osv-scanner"
+  ]
+ },
+ {
   "fp": "sha256:f10a9210fc005e768cde8c9920ec882a631455096ba8473474f0f5c1569182bd",
   "line": 1,
   "n": 2,
@@ -367,17 +378,6 @@
   "sev": "LOW",
   "tools": [
    "trivy"
-  ]
- },
- {
-  "fp": "sha256:539a5eb4eb831343607eb74c4457b0b221da0fa75e867b2d5c2d49e609fb3ad8",
-  "line": 1,
-  "n": 2,
-  "path": "requirements.txt",
-  "sev": "LOW",
-  "tools": [
-   "trivy",
-   "osv-scanner"
   ]
  },
  {

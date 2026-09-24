@@ -15,7 +15,7 @@ Fallback order: arm64-native alternative -> `--platform linux/amd64` under Roset
 | Gitleaks | zricethezav/gitleaks | yes | verified 2026-09-24 |
 | OSV-Scanner | ghcr.io/google/osv-scanner | yes | verified 2026-09-24 |
 | Trivy (custom image, DB baked in) | `docker/trivy/Dockerfile` on aquasec/trivy:0.55.2 | yes | verified 2026-09-24 (built and run) |
-| OSV-Scanner (custom image, offline DBs) | `docker/osv-scanner/Dockerfile` on osv-scanner:v1.9.2 | yes | verified 2026-09-24 (built and run) |
+| OSV-Scanner (custom image, offline DBs) | `docker/osv-scanner/Dockerfile` on osv-scanner:v2.6.0 | yes | verified 2026-09-24 (built and run) |
 | RustFS (object store) | rustfs/rustfs | yes | verified 2026-09-24 (ADR-007) |
 | docker-socket-proxy | tecnativa/docker-socket-proxy | yes | verified 2026-09-24 (ran on arm64) |
 | Bandit | built locally from `python:3.12-slim` (`docker/bandit/Dockerfile`) | yes | base image is multi-arch |

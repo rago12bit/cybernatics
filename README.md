@@ -55,7 +55,7 @@ time and are for your own internal use only: see [ADR-006](docs/adr/0006-semgrep
 docker build -t bulwark/bandit:1.7.10 docker/bandit
 docker build -t bulwark/semgrep:1.90.0 docker/semgrep
 docker build -t bulwark/trivy:0.55.2 docker/trivy              # bakes in a ~1.4 GB vuln DB
-docker build -t bulwark/osv-scanner:1.9.2 docker/osv-scanner   # offline DBs: PyPI, npm, Go
+docker build -t bulwark/osv-scanner:2.6.0 docker/osv-scanner   # offline DBs: PyPI, npm, Go
 ```
 
 ## Usage

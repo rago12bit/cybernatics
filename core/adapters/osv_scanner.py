@@ -30,7 +30,7 @@ log = logging.getLogger(__name__)
 class OsvScannerAdapter(ToolAdapter):
     spec = ToolSpec(
         name="osv-scanner",
-        image="bulwark/osv-scanner:1.9.2",
+        image="bulwark/osv-scanner:2.6.0",
         categories=frozenset({"sca"}),
         languages=frozenset(),
         timeout_seconds=600,
@@ -40,12 +40,13 @@ class OsvScannerAdapter(ToolAdapter):
         self, target: Path, output: Path, ctx: RepoContext | None = None
     ) -> list[str]:
         return [
-            "--experimental-offline-vulnerabilities",
-            # Manifests (package.json, pom.xml, ...) otherwise trigger transitive dependency
-            # resolution over the network; the sandbox has none, so each file stalls until timeout.
-            "--experimental-no-resolve",
+            "scan", "source",
+            "--offline-vulnerabilities",
+            # Manifests (requirements.txt, package.json, pom.xml, ...) otherwise trigger transitive
+            # dependency resolution over the network; the sandbox has none, so each file stalls.
+            "--no-resolve",
             "--format", "json",
-            "--output", str(output),
+            "--output-file", str(output),
             "-r", str(target),
         ]  # fmt: skip
 

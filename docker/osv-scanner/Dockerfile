@@ -1,15 +1,17 @@
-FROM ghcr.io/google/osv-scanner:v1.9.2
-# Offline OSV databases are baked in for the ecosystems in seed/ (PyPI, npm, Go). osv-scanner caches
-# them under $XDG_CACHE_HOME/osv-scanner. Add a seed lockfile to add an ecosystem; rebuild to refresh.
+FROM ghcr.io/google/osv-scanner:v2.6.0
+# Offline OSV databases are baked in for the ecosystems in seed/ (PyPI, npm, Go): the sandbox has no
+# network at run time. Add a seed lockfile to add an ecosystem; rebuild to refresh.
+# (v2 matches offline in roughly constant time; v1.9.2 cost ~0.5s per package and timed out on
+# real lockfiles: 250 packages took 140s vs 11s.)
 ENV XDG_CACHE_HOME=/osvdb
 COPY seed /seed
 WORKDIR /seed
 # osv-scanner exits non-zero when it finds vulns (the seeds are vulnerable on purpose), so the
 # exit code is ignored and the build instead FAILS if the databases did not land.
 RUN mkdir /osvdb \
- && (/osv-scanner --experimental-offline-vulnerabilities --experimental-download-offline-databases -r . || true) \
- && test -s /osvdb/osv-scanner/PyPI/all.zip && test -s /osvdb/osv-scanner/npm/all.zip \
- && test -s /osvdb/osv-scanner/Go/all.zip \
+ && (/osv-scanner scan source --offline-vulnerabilities --download-offline-databases --no-resolve -r . || true) \
+ && test -s /osvdb/osv-scalibr/PyPI/all.zip && test -s /osvdb/osv-scalibr/npm/all.zip \
+ && test -s /osvdb/osv-scalibr/Go/all.zip \
  && chmod -R a+rX /osvdb && du -sh /osvdb
 WORKDIR /
 USER 10001

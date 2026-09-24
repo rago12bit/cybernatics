@@ -33,6 +33,10 @@ celery_app.conf.update(
     result_expires=3600,
 )
 
+celery_app.conf.beat_schedule = {
+    "housekeeping": {"task": "bulwark.maintenance", "schedule": 300.0},  # every 5 minutes
+}
+
 # Wall-clock margin above the tool's own timeout before Celery steps in as a backstop.
 SOFT_MARGIN, HARD_MARGIN = 20, 40
 
@@ -66,6 +70,31 @@ def run_scan_task(self: Any, scan_id: str) -> str:
     return run_scan_job(
         scan_id, get_session_factory(), S3Store(settings), RedisPublisher(settings.redis_url)
     )
+
+
+@celery_app.task(name="bulwark.maintenance", ignore_result=True)  # type: ignore[untyped-decorator]
+def maintenance_task() -> dict[str, int]:
+    """Periodic housekeeping (scheduled by Celery beat: run the worker with -B)."""
+    from datetime import timedelta
+
+    from core.config import Settings
+    from core.events import RedisPublisher
+    from core.maintenance import cleanup_containers, cleanup_scratch, reap_stale_scans
+    from core.persistence.db import get_session_factory
+
+    settings = Settings.from_env()
+    max_minutes = int(os.environ.get("BULWARK_SCAN_MAX_MINUTES", "30"))
+    with get_session_factory()() as s:
+        reaped = reap_stale_scans(
+            s, timedelta(minutes=max_minutes), RedisPublisher(settings.redis_url)
+        )
+    killed = cleanup_containers()
+    removed = cleanup_scratch(settings.workdir / "tmp") + cleanup_scratch(settings.upload_dir)
+    return {
+        "scans_reaped": len(reaped),
+        "containers_killed": len(killed),
+        "scratch_removed": len(removed),
+    }
 
 
 def celery_executor(tools: list[str], target: Path) -> list[ToolOutcome]:

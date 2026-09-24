@@ -87,7 +87,7 @@ services:
 
   worker:
     <<: *app
-    command: ["celery", "-A", "core.tasks", "worker", "-P", "threads", "-c", "4", "-l", "info"]
+    command: ["celery", "-A", "core.tasks", "worker", "-B", "-P", "threads", "-c", "4", "-l", "info"]  # -B: embedded beat for housekeeping (run ONE worker with -B)
     environment:
       <<: *app-env
       DOCKER_HOST: tcp://socket-proxy:2375
@@ -126,7 +126,7 @@ services:
   scanner-osv:
     profiles: [scanners]
     build: docker/osv-scanner
-    image: bulwark/osv-scanner:1.9.2
+    image: bulwark/osv-scanner:2.6.0
 
 volumes:
   pgdata:
