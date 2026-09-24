@@ -1,33 +1,67 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getFindings } from "@/lib/api";
 import { defaultQuery, locationLabel, pageCount } from "@/lib/format";
 import { CATEGORIES, SEVERITIES, TOOLS, type Finding, type FindingsPage, type FindingsQuery, type ScanView, type Severity } from "@/lib/types";
 import { SeverityBadge } from "./Badges";
 import { FindingDetail } from "./FindingDetail";
 
-export function FindingsTable({ scan, version }: { scan: ScanView; version: number }) {
+export function FindingsTable({
+  scan,
+  version,
+  fetchFindings = getFindings,
+}: {
+  scan: ScanView;
+  version: number;
+  fetchFindings?: (id: string, q: FindingsQuery) => Promise<FindingsPage>;
+}) {
   const [q, setQ] = useState<FindingsQuery>(defaultQuery());
   const [pathInput, setPathInput] = useState("");
   const [page, setPage] = useState<FindingsPage | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Finding | null>(null);
+  const [open, setOpen] = useState(false); // drives the sheet's enter/exit; `selected` outlives it during exit
+  const exitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const trigger = useRef<HTMLElement | null>(null);
+
+  const select = useCallback((f: Finding, el: HTMLElement) => {
+    // Interruptible: choosing again mid-exit cancels the exit; CSS re-targets from the live position.
+    if (exitTimer.current) clearTimeout(exitTimer.current);
+    trigger.current = el;
+    setSelected(f);
+    setOpen(true); // FindingDetail mounts closed and flips to open after a forced style flush
+  }, []);
+
+  const close = useCallback(() => {
+    setOpen(false);
+    if (exitTimer.current) clearTimeout(exitTimer.current);
+    exitTimer.current = setTimeout(() => setSelected(null), 300);
+    trigger.current?.focus({ preventScroll: true });
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") close(); };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, close]);
+  useEffect(() => () => { if (exitTimer.current) clearTimeout(exitTimer.current); }, []);
 
   // Debounce the free-text path filter so typing does not fire a request per keystroke.
   useEffect(() => {
-    const t = setTimeout(() => setQ((cur) => (cur.path === pathInput ? cur : { ...cur, path: pathInput, page: 0 })), 300);
+    const t = setTimeout(() => setQ((cur) => (cur.path === pathInput ? cur : { ...cur, path: pathInput, page: 0 })), 150);
     return () => clearTimeout(t);
   }, [pathInput]);
 
   useEffect(() => {
     let cancelled = false;
-    getFindings(scan.id, q).then(
+    fetchFindings(scan.id, q).then(
       (p) => { if (!cancelled) { setPage(p); setError(null); } },
       (e) => { if (!cancelled) setError(e instanceof Error ? e.message : "Failed to load findings"); },
     );
     return () => { cancelled = true; };
-  }, [scan.id, q, version]);
+  }, [scan.id, q, version, fetchFindings]);
 
   const update = (patch: Partial<FindingsQuery>) => setQ((cur) => ({ ...cur, ...patch, page: patch.page ?? 0 }));
   const toggleSeverity = (s: Severity) =>
@@ -35,14 +69,14 @@ export function FindingsTable({ scan, version }: { scan: ScanView; version: numb
   const pages = pageCount(page?.total ?? 0);
 
   return (
-    <section aria-labelledby="findings-h" className={selected ? "findings with-detail" : "findings"}>
+    <section aria-labelledby="findings-h" className="card findings">
       <div className="list">
         <h2 id="findings-h">Findings {page && <span className="muted">({page.total})</span>}</h2>
 
         <div className="filters" role="search" aria-label="Filter findings">
           <div className="chips" role="group" aria-label="Severity">
             {SEVERITIES.map((s) => (
-              <button key={s} type="button" className={`filter sev-${s.toLowerCase()}`} aria-pressed={q.severity.includes(s)} onClick={() => toggleSeverity(s)}>{s}</button>
+              <button key={s} type="button" className={`filter sev-${s.toLowerCase()}`} aria-pressed={q.severity.includes(s)} onClick={() => toggleSeverity(s)}><span>{s}</span></button>
             ))}
           </div>
           <label className="inline">Category
@@ -80,7 +114,7 @@ export function FindingsTable({ scan, version }: { scan: ScanView; version: numb
                   <tr key={f.id} className={selected?.id === f.id ? "selected" : ""}>
                     <td><SeverityBadge severity={f.scoring.normalized_severity} /></td>
                     <td>
-                      <button type="button" className="link row-title" onClick={() => setSelected(f)} aria-pressed={selected?.id === f.id}>{f.title}</button>
+                      <button type="button" className="link row-title" onClick={(e) => select(f, e.currentTarget)} aria-pressed={selected?.id === f.id}><span className="clamp">{f.title}</span></button>
                     </td>
                     <td><code className="small">{locationLabel(f)}</code></td>
                     <td>
@@ -99,7 +133,8 @@ export function FindingsTable({ scan, version }: { scan: ScanView; version: numb
           <button type="button" disabled={q.page + 1 >= pages} onClick={() => setQ({ ...q, page: q.page + 1 })}>Next →</button>
         </nav>
       </div>
-      {selected && <FindingDetail finding={selected} scan={scan} onClose={() => setSelected(null)} />}
+      <div className="scrim" data-state={open ? "open" : "closed"} onClick={close} aria-hidden="true" />
+      {selected && <FindingDetail finding={selected} scan={scan} open={open} onClose={close} />}
     </section>
   );
 }

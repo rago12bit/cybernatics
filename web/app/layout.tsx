@@ -15,7 +15,11 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       <body>
         <header className="top">
           <a href="/" className="brand">Bulwark</a>
-          <span className="muted small">Unified security scanning</span>
+          <nav aria-label="Primary">
+            <a href="/" aria-current="page">Scans</a>
+          </nav>
+          <span className="spacer" />
+          <span className="muted small">One report, fewer duplicates</span>
         </header>
         <main>{children}</main>
       </body>

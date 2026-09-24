@@ -1,3 +1,4 @@
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { agreementLabel, locationLabel, nativeSeverities } from "@/lib/format";
 import { cveUrl, cweUrl, owaspUrl, safeHttpsUrl } from "@/lib/safe";
 import type { Finding, ScanView } from "@/lib/types";
@@ -12,19 +13,44 @@ function Ref({ href, label }: { href: string | null; label: string }) {
   );
 }
 
-export function FindingDetail({ finding: f, scan, onClose }: { finding: Finding; scan: ScanView | null; onClose: () => void }) {
+export function FindingDetail({
+  finding: f,
+  scan,
+  open = true,
+  onClose,
+}: {
+  finding: Finding;
+  scan: ScanView | null;
+  open?: boolean;
+  onClose: () => void;
+}) {
   const refs = f.remediation.references.map((r) => ({ raw: r, url: safeHttpsUrl(r) }));
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const sheetRef = useRef<HTMLElement>(null);
+  // Mount closed, force the browser to compute that style, THEN flip to open in the same frame, so
+  // the enter transition always runs. This needs no rAF/timer, which browsers pause when the tab
+  // is not being painted.
+  const [entered, setEntered] = useState(false);
+  useLayoutEffect(() => {
+    void sheetRef.current?.getBoundingClientRect();
+    setEntered(true);
+  }, []);
+  const shown = open && entered;
+  // Keyboard users land in the sheet when it opens (focus returns to the row in FindingsTable).
+  useEffect(() => {
+    if (open) closeRef.current?.focus({ preventScroll: true });
+  }, [open]);
   return (
-    <aside className="detail card" aria-label="Finding details">
-      <div className="detail-head">
+    <aside ref={sheetRef} className="sheet" data-state={shown ? "open" : "closed"} aria-label="Finding details" aria-hidden={!open}>
+      <div className="sheet-head">
         <SeverityBadge severity={f.scoring.normalized_severity} />
-        <button className="link" onClick={onClose} aria-label="Close details">Close ✕</button>
+        <button ref={closeRef} className="link" onClick={onClose} aria-label="Close details" tabIndex={open ? 0 : -1}>Close</button>
       </div>
       {/* All scanner-derived strings below are rendered as React text nodes: never as HTML. */}
       <h3>{f.title}</h3>
       <p className="agree"><strong>{agreementLabel(f, scan)}</strong>{" "}
         <span className="muted">· confidence {Math.round(f.scoring.confidence * 100)}%</span></p>
-      {f.evidence.agreement_count > 1 && <p className="muted small">Independent scanners agreeing raises confidence and merged into this single finding.</p>}
+      {f.evidence.agreement_count > 1 && <p className="muted small">Independent scanners agreed, which raises confidence. Their reports were merged into this one finding.</p>}
 
       <dl>
         <dt>Location</dt>

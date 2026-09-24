@@ -1,0 +1,2633 @@
+{
+ "scan": {
+  "id": "00000000-0000-0000-0000-000000000000",
+  "status": "completed",
+  "source_type": "archive",
+  "source_label": "combo.zip (preview data)",
+  "tools": [
+   "bandit",
+   "semgrep",
+   "gitleaks",
+   "trivy",
+   "osv-scanner"
+  ],
+  "created_at": "2026-09-25T00:00:00Z",
+  "started_at": "2026-09-25T00:00:01Z",
+  "finished_at": "2026-09-25T00:00:35Z",
+  "error": null,
+  "tool_status": {
+   "bandit": {
+    "status": "ok",
+    "findings": 6,
+    "exit_code": 0,
+    "duration_seconds": 2.4,
+    "error": null,
+    "raw_artifact": "withheld"
+   },
+   "semgrep": {
+    "status": "ok",
+    "findings": 4,
+    "exit_code": 0,
+    "duration_seconds": 31.8,
+    "error": null,
+    "raw_artifact": "withheld"
+   },
+   "gitleaks": {
+    "status": "ok",
+    "findings": 1,
+    "exit_code": 0,
+    "duration_seconds": 0.8,
+    "error": null,
+    "raw_artifact": "available"
+   },
+   "trivy": {
+    "status": "ok",
+    "findings": 34,
+    "exit_code": 0,
+    "duration_seconds": 4.6,
+    "error": null,
+    "raw_artifact": "withheld"
+   },
+   "osv-scanner": {
+    "status": "ok",
+    "findings": 17,
+    "exit_code": 0,
+    "duration_seconds": 14.1,
+    "error": null,
+    "raw_artifact": "withheld"
+   }
+  },
+  "severity_counts": {
+   "CRITICAL": 2,
+   "HIGH": 20,
+   "MEDIUM": 9,
+   "LOW": 7
+  },
+  "raw_findings": 62,
+  "unique_findings": 38,
+  "dedup_rate": 0.387
+ },
+ "findings": [
+  {
+   "id": "trivy:AVD-AWS-0107:main.tf:11",
+   "title": "An ingress security group rule allows traffic from /0.",
+   "description": "Security group rule allows ingress from public internet.",
+   "location": {
+    "path": "main.tf",
+    "start_line": 11,
+    "end_line": 11,
+    "snippet": "resource \"aws_security_group_rule\" \"r\" {\n  type              = \"ingress\"\n  from_port         = 22\n  to_port           = 22\n  protocol          = \"tcp\"\n  cidr_blocks       = [\"0.0.0.0/0\"]\n  security_group_id = \"sg-123456\"\n}",
+    "snippet_hash": "sha256:767c91c9893c389bf2df97bc883bf9c5ab177ae09d9e0cf804eab9620cbe158f"
+   },
+   "taxonomy": {
+    "category": "iac",
+    "cwe": [],
+    "owasp_top_10_2021": [],
+    "cve": [],
+    "aliases": []
+   },
+   "scoring": {
+    "native_severity": {
+     "trivy": "CRITICAL"
+    },
+    "normalized_severity": "CRITICAL",
+    "cvss_v3_1": null,
+    "epss_score": null,
+    "in_cisa_kev": false,
+    "reachable": null,
+    "risk_score": null,
+    "confidence": 0.8
+   },
+   "evidence": {
+    "reported_by": [
+     "trivy"
+    ],
+    "agreement_count": 1,
+    "rule_ids": {
+     "trivy": [
+      "AVD-AWS-0107"
+     ]
+    }
+   },
+   "remediation": {
+    "summary": "Set a more restrictive cidr range",
+    "suggested_patch": null,
+    "references": [
+     "https://avd.aquasec.com/misconfig/avd-aws-0107"
+    ],
+    "generated_by": "static",
+    "is_suggestion": true
+   },
+   "triage": {
+    "state": "open",
+    "user_marked_false_positive": false,
+    "suppression_reason": null
+   },
+   "fingerprint": "sha256:b81b496dae44d72164a9bdb51eb9ac5c9d7ec4aa0875c305bbc2d5a7682868eb",
+   "package": null
+  },
+  {
+   "id": "trivy:CVE-2019-10744:package-lock.json:lodash@4.17.4",
+   "title": "lodash 4.17.4: nodejs-lodash: prototype pollution in defaultsDeep function leading to modifying properties",
+   "description": "Versions of lodash lower than 4.17.12 are vulnerable to Prototype Pollution. The function defaultsDeep could be tricked into adding or modifying properties of Object.prototype using a constructor payload.",
+   "location": {
+    "path": "package-lock.json",
+    "start_line": 1,
+    "end_line": 1,
+    "snippet": "lodash@4.17.4",
+    "snippet_hash": "sha256:03970e5485933b6bb885cd9d15a7d2cdd4365cdf4c5d2fa8454530c70550c54e"
+   },
+   "taxonomy": {
+    "category": "sca",
+    "cwe": [
+     "CWE-1321",
+     "CWE-20"
+    ],
+    "owasp_top_10_2021": [],
+    "cve": [
+     "CVE-2019-10744"
+    ],
+    "aliases": [
+     "CVE-2019-10744",
+     "GHSA-jf85-cpcp-j695",
+     "SNYK-JS-LODASH-450202"
+    ]
+   },
+   "scoring": {
+    "native_severity": {
+     "trivy": "CRITICAL",
+     "osv-scanner": "9.1"
+    },
+    "normalized_severity": "CRITICAL",
+    "cvss_v3_1": 9.1,
+    "epss_score": null,
+    "in_cisa_kev": false,
+    "reachable": null,
+    "risk_score": null,
+    "confidence": 0.99
+   },
+   "evidence": {
+    "reported_by": [
+     "trivy",
+     "osv-scanner"
+    ],
+    "agreement_count": 2,
+    "rule_ids": {
+     "trivy": [
+      "CVE-2019-10744"
+     ],
+     "osv-scanner": [
+      "GHSA-jf85-cpcp-j695"
+     ]
+    }
+   },
+   "remediation": {
+    "summary": "Upgrade lodash to 4.17.12 or later.",
+    "suggested_patch": null,
+    "references": [
+     "https://avd.aquasec.com/nvd/cve-2019-10744",
+     "https://osv.dev/GHSA-jf85-cpcp-j695"
+    ],
+    "generated_by": "static",
+    "is_suggestion": true
+   },
+   "triage": {
+    "state": "open",
+    "user_marked_false_positive": false,
+    "suppression_reason": null
+   },
+   "fingerprint": "sha256:9228b90ed3f723a18066468fdecb043a13498379e9e47132c851929d73f9f722",
+   "package": {
+    "name": "lodash",
+    "version": "4.17.4",
+    "ecosystem": "npm"
+   }
+  },
+  {
+   "id": "trivy:DS002:Dockerfile:2",
+   "title": "Image user should not be 'root'",
+   "description": "Last USER command in Dockerfile should not be 'root'",
+   "location": {
+    "path": "Dockerfile",
+    "start_line": 2,
+    "end_line": 2,
+    "snippet": "USER root",
+    "snippet_hash": "sha256:afa9c1eeee8b880163b1663b0fd4f677dcb9bd827fb9c1057a2cf5b691e819be"
+   },
+   "taxonomy": {
+    "category": "container",
+    "cwe": [],
+    "owasp_top_10_2021": [],
+    "cve": [],
+    "aliases": []
+   },
+   "scoring": {
+    "native_severity": {
+     "trivy": "HIGH"
+    },
+    "normalized_severity": "HIGH",
+    "cvss_v3_1": null,
+    "epss_score": null,
+    "in_cisa_kev": false,
+    "reachable": null,
+    "risk_score": null,
+    "confidence": 0.8
+   },
+   "evidence": {
+    "reported_by": [
+     "trivy"
+    ],
+    "agreement_count": 1,
+    "rule_ids": {
+     "trivy": [
+      "DS002"
+     ]
+    }
+   },
+   "remediation": {
+    "summary": "Add 'USER <non root user name>' line to the Dockerfile",
+    "suggested_patch": null,
+    "references": [
+     "https://avd.aquasec.com/misconfig/ds002"
+    ],
+    "generated_by": "static",
+    "is_suggestion": true
+   },
+   "triage": {
+    "state": "open",
+    "user_marked_false_positive": false,
+    "suppression_reason": null
+   },
+   "fingerprint": "sha256:da5218ba213ee4c43b80d0a214680eab3081fa96d972eda9766cce718616e6be",
+   "package": null
+  },
+  {
+   "id": "trivy:DS029:Dockerfile:4",
+   "title": "'apt-get' missing '--no-install-recommends'",
+   "description": "'--no-install-recommends' flag is missed: 'apt-get update && apt-get install -y curl'",
+   "location": {
+    "path": "Dockerfile",
+    "start_line": 4,
+    "end_line": 4,
+    "snippet": "RUN apt-get update && apt-get install -y curl",
+    "snippet_hash": "sha256:8d8194b27a2ffe752c12d7bc3f6ec6b576c99e6b6e9cf313127ecb205b97b716"
+   },
+   "taxonomy": {
+    "category": "container",
+    "cwe": [],
+    "owasp_top_10_2021": [],
+    "cve": [],
+    "aliases": []
+   },
+   "scoring": {
+    "native_severity": {
+     "trivy": "HIGH"
+    },
+    "normalized_severity": "HIGH",
+    "cvss_v3_1": null,
+    "epss_score": null,
+    "in_cisa_kev": false,
+    "reachable": null,
+    "risk_score": null,
+    "confidence": 0.8
+   },
+   "evidence": {
+    "reported_by": [
+     "trivy"
+    ],
+    "agreement_count": 1,
+    "rule_ids": {
+     "trivy": [
+      "DS029"
+     ]
+    }
+   },
+   "remediation": {
+    "summary": "Add '--no-install-recommends' flag to 'apt-get'",
+    "suggested_patch": null,
+    "references": [
+     "https://avd.aquasec.com/misconfig/ds029"
+    ],
+    "generated_by": "static",
+    "is_suggestion": true
+   },
+   "triage": {
+    "state": "open",
+    "user_marked_false_positive": false,
+    "suppression_reason": null
+   },
+   "fingerprint": "sha256:fbd7e902f0e5e069d6926ba30416d4198e941cfcb402c598dfd88319d7d567ad",
+   "package": null
+  },
+  {
+   "id": "trivy:AVD-AWS-0086:main.tf:1",
+   "title": "S3 Access block should block public ACL",
+   "description": "No public access block so not blocking public acls",
+   "location": {
+    "path": "main.tf",
+    "start_line": 1,
+    "end_line": 4,
+    "snippet": "resource \"aws_s3_bucket\" \"b\" {\n  bucket = \"example-bucket\"\n  acl    = \"public-read\"\n}",
+    "snippet_hash": "sha256:c6eeb3dfda121ea78f02e15a7c1a2696421e4e3e256ff4e216a3016c68c7763c"
+   },
+   "taxonomy": {
+    "category": "iac",
+    "cwe": [],
+    "owasp_top_10_2021": [],
+    "cve": [],
+    "aliases": []
+   },
+   "scoring": {
+    "native_severity": {
+     "trivy": "HIGH"
+    },
+    "normalized_severity": "HIGH",
+    "cvss_v3_1": null,
+    "epss_score": null,
+    "in_cisa_kev": false,
+    "reachable": null,
+    "risk_score": null,
+    "confidence": 0.8
+   },
+   "evidence": {
+    "reported_by": [
+     "trivy"
+    ],
+    "agreement_count": 1,
+    "rule_ids": {
+     "trivy": [
+      "AVD-AWS-0086"
+     ]
+    }
+   },
+   "remediation": {
+    "summary": "Enable blocking any PUT calls with a public ACL specified",
+    "suggested_patch": null,
+    "references": [
+     "https://avd.aquasec.com/misconfig/avd-aws-0086"
+    ],
+    "generated_by": "static",
+    "is_suggestion": true
+   },
+   "triage": {
+    "state": "open",
+    "user_marked_false_positive": false,
+    "suppression_reason": null
+   },
+   "fingerprint": "sha256:db32ccfc4eed72edd5c29a277d2b165040137bdbb55e794dcff00c6b491555b6",
+   "package": null
+  },
+  {
+   "id": "trivy:AVD-AWS-0087:main.tf:1",
+   "title": "S3 Access block should block public policy",
+   "description": "No public access block so not blocking public policies",
+   "location": {
+    "path": "main.tf",
+    "start_line": 1,
+    "end_line": 4,
+    "snippet": "resource \"aws_s3_bucket\" \"b\" {\n  bucket = \"example-bucket\"\n  acl    = \"public-read\"\n}",
+    "snippet_hash": "sha256:c6eeb3dfda121ea78f02e15a7c1a2696421e4e3e256ff4e216a3016c68c7763c"
+   },
+   "taxonomy": {
+    "category": "iac",
+    "cwe": [],
+    "owasp_top_10_2021": [],
+    "cve": [],
+    "aliases": []
+   },
+   "scoring": {
+    "native_severity": {
+     "trivy": "HIGH"
+    },
+    "normalized_severity": "HIGH",
+    "cvss_v3_1": null,
+    "epss_score": null,
+    "in_cisa_kev": false,
+    "reachable": null,
+    "risk_score": null,
+    "confidence": 0.8
+   },
+   "evidence": {
+    "reported_by": [
+     "trivy"
+    ],
+    "agreement_count": 1,
+    "rule_ids": {
+     "trivy": [
+      "AVD-AWS-0087"
+     ]
+    }
+   },
+   "remediation": {
+    "summary": "Prevent policies that allow public access being PUT",
+    "suggested_patch": null,
+    "references": [
+     "https://avd.aquasec.com/misconfig/avd-aws-0087"
+    ],
+    "generated_by": "static",
+    "is_suggestion": true
+   },
+   "triage": {
+    "state": "open",
+    "user_marked_false_positive": false,
+    "suppression_reason": null
+   },
+   "fingerprint": "sha256:db32ccfc4eed72edd5c29a277d2b165040137bdbb55e794dcff00c6b491555b6",
+   "package": null
+  },
+  {
+   "id": "trivy:AVD-AWS-0088:main.tf:1",
+   "title": "Unencrypted S3 bucket.",
+   "description": "Bucket does not have encryption enabled",
+   "location": {
+    "path": "main.tf",
+    "start_line": 1,
+    "end_line": 4,
+    "snippet": "resource \"aws_s3_bucket\" \"b\" {\n  bucket = \"example-bucket\"\n  acl    = \"public-read\"\n}",
+    "snippet_hash": "sha256:c6eeb3dfda121ea78f02e15a7c1a2696421e4e3e256ff4e216a3016c68c7763c"
+   },
+   "taxonomy": {
+    "category": "iac",
+    "cwe": [],
+    "owasp_top_10_2021": [],
+    "cve": [],
+    "aliases": []
+   },
+   "scoring": {
+    "native_severity": {
+     "trivy": "HIGH"
+    },
+    "normalized_severity": "HIGH",
+    "cvss_v3_1": null,
+    "epss_score": null,
+    "in_cisa_kev": false,
+    "reachable": null,
+    "risk_score": null,
+    "confidence": 0.8
+   },
+   "evidence": {
+    "reported_by": [
+     "trivy"
+    ],
+    "agreement_count": 1,
+    "rule_ids": {
+     "trivy": [
+      "AVD-AWS-0088"
+     ]
+    }
+   },
+   "remediation": {
+    "summary": "Configure bucket encryption",
+    "suggested_patch": null,
+    "references": [
+     "https://avd.aquasec.com/misconfig/avd-aws-0088"
+    ],
+    "generated_by": "static",
+    "is_suggestion": true
+   },
+   "triage": {
+    "state": "open",
+    "user_marked_false_positive": false,
+    "suppression_reason": null
+   },
+   "fingerprint": "sha256:db32ccfc4eed72edd5c29a277d2b165040137bdbb55e794dcff00c6b491555b6",
+   "package": null
+  },
+  {
+   "id": "trivy:AVD-AWS-0091:main.tf:1",
+   "title": "S3 Access Block should Ignore Public Acl",
+   "description": "No public access block so not blocking public acls",
+   "location": {
+    "path": "main.tf",
+    "start_line": 1,
+    "end_line": 4,
+    "snippet": "resource \"aws_s3_bucket\" \"b\" {\n  bucket = \"example-bucket\"\n  acl    = \"public-read\"\n}",
+    "snippet_hash": "sha256:c6eeb3dfda121ea78f02e15a7c1a2696421e4e3e256ff4e216a3016c68c7763c"
+   },
+   "taxonomy": {
+    "category": "iac",
+    "cwe": [],
+    "owasp_top_10_2021": [],
+    "cve": [],
+    "aliases": []
+   },
+   "scoring": {
+    "native_severity": {
+     "trivy": "HIGH"
+    },
+    "normalized_severity": "HIGH",
+    "cvss_v3_1": null,
+    "epss_score": null,
+    "in_cisa_kev": false,
+    "reachable": null,
+    "risk_score": null,
+    "confidence": 0.8
+   },
+   "evidence": {
+    "reported_by": [
+     "trivy"
+    ],
+    "agreement_count": 1,
+    "rule_ids": {
+     "trivy": [
+      "AVD-AWS-0091"
+     ]
+    }
+   },
+   "remediation": {
+    "summary": "Enable ignoring the application of public ACLs in PUT calls",
+    "suggested_patch": null,
+    "references": [
+     "https://avd.aquasec.com/misconfig/avd-aws-0091"
+    ],
+    "generated_by": "static",
+    "is_suggestion": true
+   },
+   "triage": {
+    "state": "open",
+    "user_marked_false_positive": false,
+    "suppression_reason": null
+   },
+   "fingerprint": "sha256:db32ccfc4eed72edd5c29a277d2b165040137bdbb55e794dcff00c6b491555b6",
+   "package": null
+  },
+  {
+   "id": "trivy:AVD-AWS-0093:main.tf:1",
+   "title": "S3 Access block should restrict public bucket to limit access",
+   "description": "No public access block so not restricting public buckets",
+   "location": {
+    "path": "main.tf",
+    "start_line": 1,
+    "end_line": 4,
+    "snippet": "resource \"aws_s3_bucket\" \"b\" {\n  bucket = \"example-bucket\"\n  acl    = \"public-read\"\n}",
+    "snippet_hash": "sha256:c6eeb3dfda121ea78f02e15a7c1a2696421e4e3e256ff4e216a3016c68c7763c"
+   },
+   "taxonomy": {
+    "category": "iac",
+    "cwe": [],
+    "owasp_top_10_2021": [],
+    "cve": [],
+    "aliases": []
+   },
+   "scoring": {
+    "native_severity": {
+     "trivy": "HIGH"
+    },
+    "normalized_severity": "HIGH",
+    "cvss_v3_1": null,
+    "epss_score": null,
+    "in_cisa_kev": false,
+    "reachable": null,
+    "risk_score": null,
+    "confidence": 0.8
+   },
+   "evidence": {
+    "reported_by": [
+     "trivy"
+    ],
+    "agreement_count": 1,
+    "rule_ids": {
+     "trivy": [
+      "AVD-AWS-0093"
+     ]
+    }
+   },
+   "remediation": {
+    "summary": "Limit the access to public buckets to only the owner or AWS Services (eg; CloudFront)",
+    "suggested_patch": null,
+    "references": [
+     "https://avd.aquasec.com/misconfig/avd-aws-0093"
+    ],
+    "generated_by": "static",
+    "is_suggestion": true
+   },
+   "triage": {
+    "state": "open",
+    "user_marked_false_positive": false,
+    "suppression_reason": null
+   },
+   "fingerprint": "sha256:db32ccfc4eed72edd5c29a277d2b165040137bdbb55e794dcff00c6b491555b6",
+   "package": null
+  },
+  {
+   "id": "trivy:AVD-AWS-0132:main.tf:1",
+   "title": "S3 encryption should use Customer Managed Keys",
+   "description": "Bucket does not encrypt data with a customer managed key.",
+   "location": {
+    "path": "main.tf",
+    "start_line": 1,
+    "end_line": 4,
+    "snippet": "resource \"aws_s3_bucket\" \"b\" {\n  bucket = \"example-bucket\"\n  acl    = \"public-read\"\n}",
+    "snippet_hash": "sha256:c6eeb3dfda121ea78f02e15a7c1a2696421e4e3e256ff4e216a3016c68c7763c"
+   },
+   "taxonomy": {
+    "category": "iac",
+    "cwe": [],
+    "owasp_top_10_2021": [],
+    "cve": [],
+    "aliases": []
+   },
+   "scoring": {
+    "native_severity": {
+     "trivy": "HIGH"
+    },
+    "normalized_severity": "HIGH",
+    "cvss_v3_1": null,
+    "epss_score": null,
+    "in_cisa_kev": false,
+    "reachable": null,
+    "risk_score": null,
+    "confidence": 0.8
+   },
+   "evidence": {
+    "reported_by": [
+     "trivy"
+    ],
+    "agreement_count": 1,
+    "rule_ids": {
+     "trivy": [
+      "AVD-AWS-0132"
+     ]
+    }
+   },
+   "remediation": {
+    "summary": "Enable encryption using customer managed keys",
+    "suggested_patch": null,
+    "references": [
+     "https://avd.aquasec.com/misconfig/avd-aws-0132"
+    ],
+    "generated_by": "static",
+    "is_suggestion": true
+   },
+   "triage": {
+    "state": "open",
+    "user_marked_false_positive": false,
+    "suppression_reason": null
+   },
+   "fingerprint": "sha256:db32ccfc4eed72edd5c29a277d2b165040137bdbb55e794dcff00c6b491555b6",
+   "package": null
+  },
+  {
+   "id": "trivy:AVD-AWS-0092:main.tf:3",
+   "title": "S3 Buckets not publicly accessible through ACL.",
+   "description": "Bucket has a public ACL: \"public-read\"",
+   "location": {
+    "path": "main.tf",
+    "start_line": 3,
+    "end_line": 3,
+    "snippet": "resource \"aws_s3_bucket\" \"b\" {\n  bucket = \"example-bucket\"\n  acl    = \"public-read\"\n}",
+    "snippet_hash": "sha256:c6eeb3dfda121ea78f02e15a7c1a2696421e4e3e256ff4e216a3016c68c7763c"
+   },
+   "taxonomy": {
+    "category": "iac",
+    "cwe": [],
+    "owasp_top_10_2021": [],
+    "cve": [],
+    "aliases": []
+   },
+   "scoring": {
+    "native_severity": {
+     "trivy": "HIGH"
+    },
+    "normalized_severity": "HIGH",
+    "cvss_v3_1": null,
+    "epss_score": null,
+    "in_cisa_kev": false,
+    "reachable": null,
+    "risk_score": null,
+    "confidence": 0.8
+   },
+   "evidence": {
+    "reported_by": [
+     "trivy"
+    ],
+    "agreement_count": 1,
+    "rule_ids": {
+     "trivy": [
+      "AVD-AWS-0092"
+     ]
+    }
+   },
+   "remediation": {
+    "summary": "Don't use canned ACLs or switch to private acl",
+    "suggested_patch": null,
+    "references": [
+     "https://avd.aquasec.com/misconfig/avd-aws-0092"
+    ],
+    "generated_by": "static",
+    "is_suggestion": true
+   },
+   "triage": {
+    "state": "open",
+    "user_marked_false_positive": false,
+    "suppression_reason": null
+   },
+   "fingerprint": "sha256:db32ccfc4eed72edd5c29a277d2b165040137bdbb55e794dcff00c6b491555b6",
+   "package": null
+  },
+  {
+   "id": "trivy:CVE-2018-16487:package-lock.json:lodash@4.17.4",
+   "title": "lodash 4.17.4: lodash: Prototype pollution in utilities function",
+   "description": "A prototype pollution vulnerability was found in lodash <4.17.11 where the functions merge, mergeWith, and defaultsDeep can be tricked into adding or modifying properties of Object.prototype.",
+   "location": {
+    "path": "package-lock.json",
+    "start_line": 1,
+    "end_line": 1,
+    "snippet": "lodash@4.17.4",
+    "snippet_hash": "sha256:03970e5485933b6bb885cd9d15a7d2cdd4365cdf4c5d2fa8454530c70550c54e"
+   },
+   "taxonomy": {
+    "category": "sca",
+    "cwe": [
+     "CWE-400"
+    ],
+    "owasp_top_10_2021": [],
+    "cve": [
+     "CVE-2018-16487"
+    ],
+    "aliases": [
+     "CVE-2018-16487",
+     "GHSA-4xc9-xhrj-v574"
+    ]
+   },
+   "scoring": {
+    "native_severity": {
+     "trivy": "HIGH",
+     "osv-scanner": ""
+    },
+    "normalized_severity": "HIGH",
+    "cvss_v3_1": 5.6,
+    "epss_score": null,
+    "in_cisa_kev": false,
+    "reachable": null,
+    "risk_score": null,
+    "confidence": 0.99
+   },
+   "evidence": {
+    "reported_by": [
+     "trivy",
+     "osv-scanner"
+    ],
+    "agreement_count": 2,
+    "rule_ids": {
+     "trivy": [
+      "CVE-2018-16487"
+     ],
+     "osv-scanner": [
+      "GHSA-4xc9-xhrj-v574"
+     ]
+    }
+   },
+   "remediation": {
+    "summary": "Upgrade lodash to >=4.17.11 or later.",
+    "suggested_patch": null,
+    "references": [
+     "https://avd.aquasec.com/nvd/cve-2018-16487",
+     "https://osv.dev/GHSA-4xc9-xhrj-v574"
+    ],
+    "generated_by": "static",
+    "is_suggestion": true
+   },
+   "triage": {
+    "state": "open",
+    "user_marked_false_positive": false,
+    "suppression_reason": null
+   },
+   "fingerprint": "sha256:258d9f4e9e351b1dbb234e6ea93215ab74eecc2f13934fd63cc312d2767fba3f",
+   "package": {
+    "name": "lodash",
+    "version": "4.17.4",
+    "ecosystem": "npm"
+   }
+  },
+  {
+   "id": "trivy:CVE-2020-8203:package-lock.json:lodash@4.17.4",
+   "title": "lodash 4.17.4: nodejs-lodash: prototype pollution in zipObjectDeep function",
+   "description": "Prototype pollution attack when using _.zipObjectDeep in lodash before 4.17.20.",
+   "location": {
+    "path": "package-lock.json",
+    "start_line": 1,
+    "end_line": 1,
+    "snippet": "lodash@4.17.4",
+    "snippet_hash": "sha256:03970e5485933b6bb885cd9d15a7d2cdd4365cdf4c5d2fa8454530c70550c54e"
+   },
+   "taxonomy": {
+    "category": "sca",
+    "cwe": [
+     "CWE-770",
+     "CWE-1321"
+    ],
+    "owasp_top_10_2021": [],
+    "cve": [
+     "CVE-2020-8203"
+    ],
+    "aliases": [
+     "CVE-2020-8203",
+     "GHSA-p6mc-m468-83gw"
+    ]
+   },
+   "scoring": {
+    "native_severity": {
+     "trivy": "HIGH",
+     "osv-scanner": "7.4"
+    },
+    "normalized_severity": "HIGH",
+    "cvss_v3_1": 7.4,
+    "epss_score": null,
+    "in_cisa_kev": false,
+    "reachable": null,
+    "risk_score": null,
+    "confidence": 0.99
+   },
+   "evidence": {
+    "reported_by": [
+     "trivy",
+     "osv-scanner"
+    ],
+    "agreement_count": 2,
+    "rule_ids": {
+     "trivy": [
+      "CVE-2020-8203"
+     ],
+     "osv-scanner": [
+      "GHSA-p6mc-m468-83gw"
+     ]
+    }
+   },
+   "remediation": {
+    "summary": "Upgrade lodash to 4.17.19 or later.",
+    "suggested_patch": null,
+    "references": [
+     "https://avd.aquasec.com/nvd/cve-2020-8203",
+     "https://osv.dev/GHSA-p6mc-m468-83gw"
+    ],
+    "generated_by": "static",
+    "is_suggestion": true
+   },
+   "triage": {
+    "state": "open",
+    "user_marked_false_positive": false,
+    "suppression_reason": null
+   },
+   "fingerprint": "sha256:4301ab85dc7db748e6799119728c398c160372d13615664a9e394540ed015a3b",
+   "package": {
+    "name": "lodash",
+    "version": "4.17.4",
+    "ecosystem": "npm"
+   }
+  },
+  {
+   "id": "trivy:CVE-2021-23337:package-lock.json:lodash@4.17.4",
+   "title": "lodash 4.17.4: nodejs-lodash: command injection via template",
+   "description": "Lodash versions prior to 4.17.21 are vulnerable to Command Injection via the template function.",
+   "location": {
+    "path": "package-lock.json",
+    "start_line": 1,
+    "end_line": 1,
+    "snippet": "lodash@4.17.4",
+    "snippet_hash": "sha256:03970e5485933b6bb885cd9d15a7d2cdd4365cdf4c5d2fa8454530c70550c54e"
+   },
+   "taxonomy": {
+    "category": "sca",
+    "cwe": [
+     "CWE-94",
+     "CWE-77"
+    ],
+    "owasp_top_10_2021": [],
+    "cve": [
+     "CVE-2021-23337",
+     "CVE-2026-4800"
+    ],
+    "aliases": [
+     "CVE-2021-23337",
+     "CVE-2026-4800",
+     "GHSA-35jh-r3h4-6jhm",
+     "GHSA-r5fr-rjxr-66jc"
+    ]
+   },
+   "scoring": {
+    "native_severity": {
+     "trivy": "HIGH",
+     "osv-scanner": "7.2"
+    },
+    "normalized_severity": "HIGH",
+    "cvss_v3_1": 9.8,
+    "epss_score": null,
+    "in_cisa_kev": false,
+    "reachable": null,
+    "risk_score": null,
+    "confidence": 0.99
+   },
+   "evidence": {
+    "reported_by": [
+     "trivy",
+     "osv-scanner"
+    ],
+    "agreement_count": 2,
+    "rule_ids": {
+     "trivy": [
+      "CVE-2021-23337",
+      "CVE-2026-4800"
+     ],
+     "osv-scanner": [
+      "GHSA-35jh-r3h4-6jhm"
+     ]
+    }
+   },
+   "remediation": {
+    "summary": "Upgrade lodash to 4.17.21 or later.",
+    "suggested_patch": null,
+    "references": [
+     "https://avd.aquasec.com/nvd/cve-2021-23337",
+     "https://avd.aquasec.com/nvd/cve-2026-4800",
+     "https://osv.dev/GHSA-35jh-r3h4-6jhm"
+    ],
+    "generated_by": "static",
+    "is_suggestion": true
+   },
+   "triage": {
+    "state": "open",
+    "user_marked_false_positive": false,
+    "suppression_reason": null
+   },
+   "fingerprint": "sha256:57c1a958c1da055244f5983f46ce6a01cb2805ac55873e9daab676bbaf732ddf",
+   "package": {
+    "name": "lodash",
+    "version": "4.17.4",
+    "ecosystem": "npm"
+   }
+  },
+  {
+   "id": "trivy:CVE-2018-1000656:requirements.txt:flask@0.12",
+   "title": "flask 0.12: python-flask: Denial of Service via crafted JSON file",
+   "description": "The Pallets Project flask version Before 0.12.3 contains a CWE-20: Improper Input Validation vulnerability in flask that can result in Large amount of memory usage possibly leading to denial of service. This attack appear to be exploitable via Attacker provides JSON data in incorrect encoding. This vulnerability appears to have been fixed in 0.12.3. NOTE: this may overlap CVE-2019-1010083.",
+   "location": {
+    "path": "requirements.txt",
+    "start_line": 1,
+    "end_line": 1,
+    "snippet": "flask@0.12",
+    "snippet_hash": "sha256:e9c39ffbba3ee08ed1d140f72f0d9e8614725691ec2cd5cea2731d4199bbefba"
+   },
+   "taxonomy": {
+    "category": "sca",
+    "cwe": [
+     "CWE-20"
+    ],
+    "owasp_top_10_2021": [],
+    "cve": [
+     "CVE-2018-1000656"
+    ],
+    "aliases": [
+     "CVE-2018-1000656",
+     "GHSA-562c-5r94-xh97",
+     "PYSEC-2018-66"
+    ]
+   },
+   "scoring": {
+    "native_severity": {
+     "trivy": "HIGH",
+     "osv-scanner": "8.7"
+    },
+    "normalized_severity": "HIGH",
+    "cvss_v3_1": 8.7,
+    "epss_score": null,
+    "in_cisa_kev": false,
+    "reachable": null,
+    "risk_score": null,
+    "confidence": 0.99
+   },
+   "evidence": {
+    "reported_by": [
+     "trivy",
+     "osv-scanner"
+    ],
+    "agreement_count": 2,
+    "rule_ids": {
+     "trivy": [
+      "CVE-2018-1000656"
+     ],
+     "osv-scanner": [
+      "GHSA-562c-5r94-xh97"
+     ]
+    }
+   },
+   "remediation": {
+    "summary": "Upgrade flask to 0.12.3 or later.",
+    "suggested_patch": null,
+    "references": [
+     "https://avd.aquasec.com/nvd/cve-2018-1000656",
+     "https://osv.dev/GHSA-562c-5r94-xh97"
+    ],
+    "generated_by": "static",
+    "is_suggestion": true
+   },
+   "triage": {
+    "state": "open",
+    "user_marked_false_positive": false,
+    "suppression_reason": null
+   },
+   "fingerprint": "sha256:850d7970ad0104bda443e54a599ce814da70f097aa0816678a3c8bf118425c4d",
+   "package": {
+    "name": "flask",
+    "version": "0.12",
+    "ecosystem": "pypi"
+   }
+  },
+  {
+   "id": "trivy:CVE-2018-18074:requirements.txt:requests@2.19.0",
+   "title": "requests 2.19.0: python-requests: Redirect from HTTPS to HTTP does not remove Authorization header",
+   "description": "The Requests package before 2.20.0 for Python sends an HTTP Authorization header to an http URI upon receiving a same-hostname https-to-http redirect, which makes it easier for remote attackers to discover credentials by sniffing the network.",
+   "location": {
+    "path": "requirements.txt",
+    "start_line": 1,
+    "end_line": 1,
+    "snippet": "requests@2.19.0",
+    "snippet_hash": "sha256:86cf1dadc4a5e21125457e613ab496330e5f6da56777fb50c0f8da1598bdeb98"
+   },
+   "taxonomy": {
+    "category": "sca",
+    "cwe": [
+     "CWE-522"
+    ],
+    "owasp_top_10_2021": [],
+    "cve": [
+     "CVE-2018-18074"
+    ],
+    "aliases": [
+     "CVE-2018-18074",
+     "GHSA-x84v-xcm2-53pg",
+     "PYSEC-2018-28"
+    ]
+   },
+   "scoring": {
+    "native_severity": {
+     "trivy": "HIGH",
+     "osv-scanner": "7.5"
+    },
+    "normalized_severity": "HIGH",
+    "cvss_v3_1": 7.5,
+    "epss_score": null,
+    "in_cisa_kev": false,
+    "reachable": null,
+    "risk_score": null,
+    "confidence": 0.99
+   },
+   "evidence": {
+    "reported_by": [
+     "trivy",
+     "osv-scanner"
+    ],
+    "agreement_count": 2,
+    "rule_ids": {
+     "trivy": [
+      "CVE-2018-18074"
+     ],
+     "osv-scanner": [
+      "GHSA-x84v-xcm2-53pg"
+     ]
+    }
+   },
+   "remediation": {
+    "summary": "Upgrade requests to 2.20.0 or later.",
+    "suggested_patch": null,
+    "references": [
+     "https://avd.aquasec.com/nvd/cve-2018-18074",
+     "https://osv.dev/GHSA-x84v-xcm2-53pg"
+    ],
+    "generated_by": "static",
+    "is_suggestion": true
+   },
+   "triage": {
+    "state": "open",
+    "user_marked_false_positive": false,
+    "suppression_reason": null
+   },
+   "fingerprint": "sha256:21279876a231c04986ac3da1c3878d4cbcb147ad186adda5ae26b699044e65f0",
+   "package": {
+    "name": "requests",
+    "version": "2.19.0",
+    "ecosystem": "pypi"
+   }
+  },
+  {
+   "id": "trivy:CVE-2019-1010083:requirements.txt:flask@0.12",
+   "title": "flask 0.12: python-flask: unexpected memory usage can lead to denial of service via crafted encoded JSON data",
+   "description": "The Pallets Project Flask before 1.0 is affected by: unexpected memory usage. The impact is: denial of service. The attack vector is: crafted encoded JSON data. The fixed version is: 1. NOTE: this may overlap CVE-2018-1000656.",
+   "location": {
+    "path": "requirements.txt",
+    "start_line": 1,
+    "end_line": 1,
+    "snippet": "flask@0.12",
+    "snippet_hash": "sha256:e9c39ffbba3ee08ed1d140f72f0d9e8614725691ec2cd5cea2731d4199bbefba"
+   },
+   "taxonomy": {
+    "category": "sca",
+    "cwe": [
+     "CWE-400"
+    ],
+    "owasp_top_10_2021": [],
+    "cve": [
+     "CVE-2019-1010083"
+    ],
+    "aliases": [
+     "CVE-2019-1010083",
+     "GHSA-5wv5-4vpf-pj6m",
+     "PYSEC-2019-179"
+    ]
+   },
+   "scoring": {
+    "native_severity": {
+     "trivy": "HIGH",
+     "osv-scanner": "8.7"
+    },
+    "normalized_severity": "HIGH",
+    "cvss_v3_1": 8.7,
+    "epss_score": null,
+    "in_cisa_kev": false,
+    "reachable": null,
+    "risk_score": null,
+    "confidence": 0.99
+   },
+   "evidence": {
+    "reported_by": [
+     "trivy",
+     "osv-scanner"
+    ],
+    "agreement_count": 2,
+    "rule_ids": {
+     "trivy": [
+      "CVE-2019-1010083"
+     ],
+     "osv-scanner": [
+      "GHSA-5wv5-4vpf-pj6m"
+     ]
+    }
+   },
+   "remediation": {
+    "summary": "Upgrade flask to 1.0 or later.",
+    "suggested_patch": null,
+    "references": [
+     "https://avd.aquasec.com/nvd/cve-2019-1010083",
+     "https://osv.dev/GHSA-5wv5-4vpf-pj6m"
+    ],
+    "generated_by": "static",
+    "is_suggestion": true
+   },
+   "triage": {
+    "state": "open",
+    "user_marked_false_positive": false,
+    "suppression_reason": null
+   },
+   "fingerprint": "sha256:9a7aa0dcac5611a64af0e59a4814301504ffdbcd61a31187a3fe709d54a02520",
+   "package": {
+    "name": "flask",
+    "version": "0.12",
+    "ecosystem": "pypi"
+   }
+  },
+  {
+   "id": "trivy:CVE-2023-30861:requirements.txt:flask@0.12",
+   "title": "flask 0.12: flask: Possible disclosure of permanent session cookie due to missing Vary: Cookie header",
+   "description": "Flask is a lightweight WSGI web application framework. When all of the following conditions are met, a response containing data intended for one client may be cached and subsequently sent by the proxy to other clients. If the proxy also caches `Set-Cookie` headers, it may send one client's `session` cookie to other clients. The severity depends on the application's use of the session and the proxy's behavior regarding cookies. The risk depends on all these conditions being met.\n\n1. The application must be hosted behind a caching proxy that does not strip cookies or ignore responses with cookies.\n2. The application sets `session.permanent = True`\n3. The application does not access or modify the session at any point during a request.\n4. `SESSION_REFRESH_EACH_REQUEST` enabled (the default).\n5. The application does not set a `Cache-Control` header to indicate that a page is private or should not be cached.\n\nThis happens because vulnerable versions of Flask only set the `Vary: Cookie` header when the session is accessed or modified, not when it is refreshed (re-sent to update the expiration) without being accessed or modified. This issue has been fixed in versions 2.3.2 and 2.2.5.",
+   "location": {
+    "path": "requirements.txt",
+    "start_line": 1,
+    "end_line": 1,
+    "snippet": "flask@0.12",
+    "snippet_hash": "sha256:e9c39ffbba3ee08ed1d140f72f0d9e8614725691ec2cd5cea2731d4199bbefba"
+   },
+   "taxonomy": {
+    "category": "sca",
+    "cwe": [
+     "CWE-539"
+    ],
+    "owasp_top_10_2021": [],
+    "cve": [
+     "CVE-2023-30861"
+    ],
+    "aliases": [
+     "CVE-2023-30861",
+     "GHSA-m2qf-hxjv-5gpq",
+     "PYSEC-2023-62"
+    ]
+   },
+   "scoring": {
+    "native_severity": {
+     "trivy": "HIGH",
+     "osv-scanner": "8.7"
+    },
+    "normalized_severity": "HIGH",
+    "cvss_v3_1": 8.7,
+    "epss_score": null,
+    "in_cisa_kev": false,
+    "reachable": null,
+    "risk_score": null,
+    "confidence": 0.99
+   },
+   "evidence": {
+    "reported_by": [
+     "trivy",
+     "osv-scanner"
+    ],
+    "agreement_count": 2,
+    "rule_ids": {
+     "trivy": [
+      "CVE-2023-30861"
+     ],
+     "osv-scanner": [
+      "GHSA-m2qf-hxjv-5gpq"
+     ]
+    }
+   },
+   "remediation": {
+    "summary": "Upgrade flask to 2.3.2, 2.2.5 or later.",
+    "suggested_patch": null,
+    "references": [
+     "https://avd.aquasec.com/nvd/cve-2023-30861",
+     "https://osv.dev/GHSA-m2qf-hxjv-5gpq"
+    ],
+    "generated_by": "static",
+    "is_suggestion": true
+   },
+   "triage": {
+    "state": "open",
+    "user_marked_false_positive": false,
+    "suppression_reason": null
+   },
+   "fingerprint": "sha256:093374c8a52628fd1f76c5cd946414fb2e4b8c2ad10c89c164bb581870d196b9",
+   "package": {
+    "name": "flask",
+    "version": "0.12",
+    "ecosystem": "pypi"
+   }
+  },
+  {
+   "id": "semgrep:python.sqlalchemy.security.sqlalchemy-execute-raw-query:src/users.py:7",
+   "title": "Avoiding SQL string concatenation: untrusted input concatenated with raw SQL query can result in SQL Injection",
+   "description": "Avoiding SQL string concatenation: untrusted input concatenated with raw SQL query can result in SQL Injection. In order to execute raw query safely, prepared statement should be used. SQLAlchemy provides TextualSQL to easily used prepared statement with named parameters. For complex SQL composition, use SQL Expression Language or Schema Definition Language. In most cases, SQLAlchemy ORM will be a better option.",
+   "location": {
+    "path": "src/users.py",
+    "start_line": 7,
+    "end_line": 7,
+    "snippet": "    return conn.execute(query).fetchall()",
+    "snippet_hash": "sha256:f71bfeb0d5931b3c7089d94f5a1aad92d5df2ca32f3def3f041580248327278f"
+   },
+   "taxonomy": {
+    "category": "sast",
+    "cwe": [
+     "CWE-89"
+    ],
+    "owasp_top_10_2021": [
+     "A03:2021"
+    ],
+    "cve": [],
+    "aliases": []
+   },
+   "scoring": {
+    "native_severity": {
+     "bandit": "MEDIUM",
+     "semgrep": "ERROR"
+    },
+    "normalized_severity": "HIGH",
+    "cvss_v3_1": null,
+    "epss_score": null,
+    "in_cisa_kev": false,
+    "reachable": null,
+    "risk_score": null,
+    "confidence": 0.51
+   },
+   "evidence": {
+    "reported_by": [
+     "bandit",
+     "semgrep"
+    ],
+    "agreement_count": 2,
+    "rule_ids": {
+     "bandit": [
+      "B608"
+     ],
+     "semgrep": [
+      "python.sqlalchemy.security.sqlalchemy-execute-raw-query"
+     ]
+    }
+   },
+   "remediation": {
+    "summary": "",
+    "suggested_patch": null,
+    "references": [
+     "https://bandit.readthedocs.io/en/1.7.10/plugins/b608_hardcoded_sql_expressions.html"
+    ],
+    "generated_by": "static",
+    "is_suggestion": true
+   },
+   "triage": {
+    "state": "open",
+    "user_marked_false_positive": false,
+    "suppression_reason": null
+   },
+   "fingerprint": "sha256:f2a299fd6401659ba3a8b4f8001e1845575a38cbda5393bc6151c93f34d09a7c",
+   "package": null
+  },
+  {
+   "id": "bandit:B602:src/users.py:11",
+   "title": "subprocess call with shell=True identified, security issue.",
+   "description": "subprocess_popen_with_shell_equals_true (B602): subprocess call with shell=True identified, security issue.",
+   "location": {
+    "path": "src/users.py",
+    "start_line": 11,
+    "end_line": 11,
+    "snippet": "10 def run(cmd):\n11     return subprocess.call(cmd, shell=True)\n12 \n",
+    "snippet_hash": "sha256:a5495e3b85d2c04150ea50bb554b421a85599824a693fb5449edc1792cb7c6ce"
+   },
+   "taxonomy": {
+    "category": "sast",
+    "cwe": [
+     "CWE-78"
+    ],
+    "owasp_top_10_2021": [
+     "A03:2021"
+    ],
+    "cve": [],
+    "aliases": []
+   },
+   "scoring": {
+    "native_severity": {
+     "bandit": "HIGH",
+     "semgrep": "ERROR"
+    },
+    "normalized_severity": "HIGH",
+    "cvss_v3_1": null,
+    "epss_score": null,
+    "in_cisa_kev": false,
+    "reachable": null,
+    "risk_score": null,
+    "confidence": 0.972
+   },
+   "evidence": {
+    "reported_by": [
+     "bandit",
+     "semgrep"
+    ],
+    "agreement_count": 2,
+    "rule_ids": {
+     "bandit": [
+      "B602"
+     ],
+     "semgrep": [
+      "python.lang.security.audit.dangerous-subprocess-use-audit",
+      "python.lang.security.audit.subprocess-shell-true"
+     ]
+    }
+   },
+   "remediation": {
+    "summary": "",
+    "suggested_patch": null,
+    "references": [
+     "https://bandit.readthedocs.io/en/1.7.10/plugins/b602_subprocess_popen_with_shell_equals_true.html"
+    ],
+    "generated_by": "static",
+    "is_suggestion": true
+   },
+   "triage": {
+    "state": "open",
+    "user_marked_false_positive": false,
+    "suppression_reason": null
+   },
+   "fingerprint": "sha256:a70d47e2716e8b93587e48c0d70e48ec8e7f5f3332e6cb8febc32b660410b4de",
+   "package": null
+  },
+  {
+   "id": "bandit:B324:src/users.py:15",
+   "title": "Use of weak MD5 hash for security. Consider usedforsecurity=False",
+   "description": "hashlib (B324): Use of weak MD5 hash for security. Consider usedforsecurity=False",
+   "location": {
+    "path": "src/users.py",
+    "start_line": 15,
+    "end_line": 15,
+    "snippet": "14 def digest(pw):\n15     return hashlib.md5(pw.encode()).hexdigest()\n16 \n",
+    "snippet_hash": "sha256:23ca88a7663af2e8b0adbd128469d6eb0d69e9aa41d0d2346c104b33fca246c5"
+   },
+   "taxonomy": {
+    "category": "sast",
+    "cwe": [
+     "CWE-327"
+    ],
+    "owasp_top_10_2021": [
+     "A02:2021"
+    ],
+    "cve": [],
+    "aliases": []
+   },
+   "scoring": {
+    "native_severity": {
+     "bandit": "HIGH",
+     "semgrep": "WARNING"
+    },
+    "normalized_severity": "HIGH",
+    "cvss_v3_1": null,
+    "epss_score": null,
+    "in_cisa_kev": false,
+    "reachable": null,
+    "risk_score": null,
+    "confidence": 0.96
+   },
+   "evidence": {
+    "reported_by": [
+     "bandit",
+     "semgrep"
+    ],
+    "agreement_count": 2,
+    "rule_ids": {
+     "bandit": [
+      "B324"
+     ],
+     "semgrep": [
+      "python.lang.security.insecure-hash-algorithm-md5"
+     ]
+    }
+   },
+   "remediation": {
+    "summary": "",
+    "suggested_patch": null,
+    "references": [
+     "https://bandit.readthedocs.io/en/1.7.10/plugins/b324_hashlib.html"
+    ],
+    "generated_by": "static",
+    "is_suggestion": true
+   },
+   "triage": {
+    "state": "open",
+    "user_marked_false_positive": false,
+    "suppression_reason": null
+   },
+   "fingerprint": "sha256:15a6c7cb0c5ecb195185576eff6d3770ce1b605c84382ecca97b53d50066c8bb",
+   "package": null
+  },
+  {
+   "id": "gitleaks:df8c6cb92ed6",
+   "title": "Detected a Generic API Key, potentially exposing access to various services and sensitive operations.",
+   "description": "Possible hardcoded secret matched rule 'generic-api-key'.",
+   "location": {
+    "path": "src/users.py",
+    "start_line": 20,
+    "end_line": 20,
+    "snippet": "[secret redacted]",
+    "snippet_hash": "sha256:6cb1162e2ac89bfd9ec7f3fc4eb87a673ec550997500f8dc42368f0df01d079d"
+   },
+   "taxonomy": {
+    "category": "secrets",
+    "cwe": [
+     "CWE-798",
+     "CWE-259"
+    ],
+    "owasp_top_10_2021": [],
+    "cve": [],
+    "aliases": []
+   },
+   "scoring": {
+    "native_severity": {
+     "bandit": "LOW",
+     "gitleaks": "ALL"
+    },
+    "normalized_severity": "HIGH",
+    "cvss_v3_1": null,
+    "epss_score": null,
+    "in_cisa_kev": false,
+    "reachable": null,
+    "risk_score": null,
+    "confidence": 0.88
+   },
+   "evidence": {
+    "reported_by": [
+     "bandit",
+     "gitleaks"
+    ],
+    "agreement_count": 2,
+    "rule_ids": {
+     "bandit": [
+      "B105"
+     ],
+     "gitleaks": [
+      "generic-api-key"
+     ]
+    }
+   },
+   "remediation": {
+    "summary": "Rotate this credential and load it from the environment or a secrets manager; committed secrets should be treated as compromised.",
+    "suggested_patch": null,
+    "references": [
+     "https://cwe.mitre.org/data/definitions/798.html",
+     "https://bandit.readthedocs.io/en/1.7.10/plugins/b105_hardcoded_password_string.html"
+    ],
+    "generated_by": "static",
+    "is_suggestion": true
+   },
+   "triage": {
+    "state": "open",
+    "user_marked_false_positive": false,
+    "suppression_reason": null
+   },
+   "fingerprint": "sha256:ad21b208e4f9c8bf859f6ed115ef5b9f60ff821346b0c1afa5ccc3d42f8138d7",
+   "package": null
+  },
+  {
+   "id": "trivy:AVD-AWS-0090:main.tf:1",
+   "title": "S3 Data should be versioned",
+   "description": "Bucket does not have versioning enabled",
+   "location": {
+    "path": "main.tf",
+    "start_line": 1,
+    "end_line": 4,
+    "snippet": "resource \"aws_s3_bucket\" \"b\" {\n  bucket = \"example-bucket\"\n  acl    = \"public-read\"\n}",
+    "snippet_hash": "sha256:c6eeb3dfda121ea78f02e15a7c1a2696421e4e3e256ff4e216a3016c68c7763c"
+   },
+   "taxonomy": {
+    "category": "iac",
+    "cwe": [],
+    "owasp_top_10_2021": [],
+    "cve": [],
+    "aliases": []
+   },
+   "scoring": {
+    "native_severity": {
+     "trivy": "MEDIUM"
+    },
+    "normalized_severity": "MEDIUM",
+    "cvss_v3_1": null,
+    "epss_score": null,
+    "in_cisa_kev": false,
+    "reachable": null,
+    "risk_score": null,
+    "confidence": 0.8
+   },
+   "evidence": {
+    "reported_by": [
+     "trivy"
+    ],
+    "agreement_count": 1,
+    "rule_ids": {
+     "trivy": [
+      "AVD-AWS-0090"
+     ]
+    }
+   },
+   "remediation": {
+    "summary": "Enable versioning to protect against accidental/malicious removal or modification",
+    "suggested_patch": null,
+    "references": [
+     "https://avd.aquasec.com/misconfig/avd-aws-0090"
+    ],
+    "generated_by": "static",
+    "is_suggestion": true
+   },
+   "triage": {
+    "state": "open",
+    "user_marked_false_positive": false,
+    "suppression_reason": null
+   },
+   "fingerprint": "sha256:db32ccfc4eed72edd5c29a277d2b165040137bdbb55e794dcff00c6b491555b6",
+   "package": null
+  },
+  {
+   "id": "osv-scanner:GHSA-fvqr-27wr-82fm:package-lock.json:lodash@4.17.4",
+   "title": "lodash 4.17.4: Prototype Pollution in lodash",
+   "description": "Versions of `lodash` before 4.17.5 are vulnerable to prototype pollution. \n\nThe vulnerable functions are 'defaultsDeep', 'merge', and 'mergeWith' which allow a malicious user to modify the prototype of `Object` via `__proto__` causing the addition or modification of an existing property that will exist on all objects.\n\n\n\n\n## Recommendation\n\nUpdate to version 4.17.5 or later.",
+   "location": {
+    "path": "package-lock.json",
+    "start_line": 1,
+    "end_line": 1,
+    "snippet": "lodash@4.17.4",
+    "snippet_hash": "sha256:03970e5485933b6bb885cd9d15a7d2cdd4365cdf4c5d2fa8454530c70550c54e"
+   },
+   "taxonomy": {
+    "category": "sca",
+    "cwe": [
+     "CWE-1321",
+     "CWE-471"
+    ],
+    "owasp_top_10_2021": [],
+    "cve": [
+     "CVE-2018-3721"
+    ],
+    "aliases": [
+     "CVE-2018-3721",
+     "GHSA-fvqr-27wr-82fm"
+    ]
+   },
+   "scoring": {
+    "native_severity": {
+     "trivy": "LOW",
+     "osv-scanner": "6.5"
+    },
+    "normalized_severity": "MEDIUM",
+    "cvss_v3_1": 6.5,
+    "epss_score": null,
+    "in_cisa_kev": false,
+    "reachable": null,
+    "risk_score": null,
+    "confidence": 0.99
+   },
+   "evidence": {
+    "reported_by": [
+     "trivy",
+     "osv-scanner"
+    ],
+    "agreement_count": 2,
+    "rule_ids": {
+     "trivy": [
+      "CVE-2018-3721"
+     ],
+     "osv-scanner": [
+      "GHSA-fvqr-27wr-82fm"
+     ]
+    }
+   },
+   "remediation": {
+    "summary": "Upgrade lodash to 4.17.5 or later.",
+    "suggested_patch": null,
+    "references": [
+     "https://osv.dev/GHSA-fvqr-27wr-82fm",
+     "https://avd.aquasec.com/nvd/cve-2018-3721"
+    ],
+    "generated_by": "static",
+    "is_suggestion": true
+   },
+   "triage": {
+    "state": "open",
+    "user_marked_false_positive": false,
+    "suppression_reason": null
+   },
+   "fingerprint": "sha256:504433d4460a05aa7e95090d017e7b8e593cf9d2c31dd4183ec3e0c5f38c9d7f",
+   "package": {
+    "name": "lodash",
+    "version": "4.17.4",
+    "ecosystem": "npm"
+   }
+  },
+  {
+   "id": "trivy:CVE-2019-1010266:package-lock.json:lodash@4.17.4",
+   "title": "lodash 4.17.4: lodash: uncontrolled resource consumption in Data handler causing denial of service",
+   "description": "lodash prior to 4.17.11 is affected by: CWE-400: Uncontrolled Resource Consumption. The impact is: Denial of service. The component is: Date handler. The attack vector is: Attacker provides very long strings, which the library attempts to match using a regular expression. The fixed version is: 4.17.11.",
+   "location": {
+    "path": "package-lock.json",
+    "start_line": 1,
+    "end_line": 1,
+    "snippet": "lodash@4.17.4",
+    "snippet_hash": "sha256:03970e5485933b6bb885cd9d15a7d2cdd4365cdf4c5d2fa8454530c70550c54e"
+   },
+   "taxonomy": {
+    "category": "sca",
+    "cwe": [
+     "CWE-400",
+     "CWE-770"
+    ],
+    "owasp_top_10_2021": [],
+    "cve": [
+     "CVE-2019-1010266"
+    ],
+    "aliases": [
+     "CVE-2019-1010266",
+     "GHSA-x5rq-j2xg-h7qm",
+     "SNYK-JS-LODASH-73639"
+    ]
+   },
+   "scoring": {
+    "native_severity": {
+     "trivy": "MEDIUM",
+     "osv-scanner": "6.5"
+    },
+    "normalized_severity": "MEDIUM",
+    "cvss_v3_1": 6.5,
+    "epss_score": null,
+    "in_cisa_kev": false,
+    "reachable": null,
+    "risk_score": null,
+    "confidence": 0.99
+   },
+   "evidence": {
+    "reported_by": [
+     "trivy",
+     "osv-scanner"
+    ],
+    "agreement_count": 2,
+    "rule_ids": {
+     "trivy": [
+      "CVE-2019-1010266"
+     ],
+     "osv-scanner": [
+      "GHSA-x5rq-j2xg-h7qm"
+     ]
+    }
+   },
+   "remediation": {
+    "summary": "Upgrade lodash to 4.17.11 or later.",
+    "suggested_patch": null,
+    "references": [
+     "https://avd.aquasec.com/nvd/cve-2019-1010266",
+     "https://osv.dev/GHSA-x5rq-j2xg-h7qm"
+    ],
+    "generated_by": "static",
+    "is_suggestion": true
+   },
+   "triage": {
+    "state": "open",
+    "user_marked_false_positive": false,
+    "suppression_reason": null
+   },
+   "fingerprint": "sha256:f06a7bd155ebecfa4302eb124fad81151e20c58ad9171089660b5efcb5705c8a",
+   "package": {
+    "name": "lodash",
+    "version": "4.17.4",
+    "ecosystem": "npm"
+   }
+  },
+  {
+   "id": "trivy:CVE-2020-28500:package-lock.json:lodash@4.17.4",
+   "title": "lodash 4.17.4: nodejs-lodash: ReDoS via the toNumber, trim and trimEnd functions",
+   "description": "Lodash versions prior to 4.17.21 are vulnerable to Regular Expression Denial of Service (ReDoS) via the toNumber, trim and trimEnd functions.",
+   "location": {
+    "path": "package-lock.json",
+    "start_line": 1,
+    "end_line": 1,
+    "snippet": "lodash@4.17.4",
+    "snippet_hash": "sha256:03970e5485933b6bb885cd9d15a7d2cdd4365cdf4c5d2fa8454530c70550c54e"
+   },
+   "taxonomy": {
+    "category": "sca",
+    "cwe": [
+     "CWE-1333",
+     "CWE-400"
+    ],
+    "owasp_top_10_2021": [],
+    "cve": [
+     "CVE-2020-28500"
+    ],
+    "aliases": [
+     "CVE-2020-28500",
+     "GHSA-29mw-wpgm-hmr9"
+    ]
+   },
+   "scoring": {
+    "native_severity": {
+     "trivy": "MEDIUM",
+     "osv-scanner": "5.3"
+    },
+    "normalized_severity": "MEDIUM",
+    "cvss_v3_1": 5.3,
+    "epss_score": null,
+    "in_cisa_kev": false,
+    "reachable": null,
+    "risk_score": null,
+    "confidence": 0.99
+   },
+   "evidence": {
+    "reported_by": [
+     "trivy",
+     "osv-scanner"
+    ],
+    "agreement_count": 2,
+    "rule_ids": {
+     "trivy": [
+      "CVE-2020-28500"
+     ],
+     "osv-scanner": [
+      "GHSA-29mw-wpgm-hmr9"
+     ]
+    }
+   },
+   "remediation": {
+    "summary": "Upgrade lodash to 4.17.21 or later.",
+    "suggested_patch": null,
+    "references": [
+     "https://avd.aquasec.com/nvd/cve-2020-28500",
+     "https://osv.dev/GHSA-29mw-wpgm-hmr9"
+    ],
+    "generated_by": "static",
+    "is_suggestion": true
+   },
+   "triage": {
+    "state": "open",
+    "user_marked_false_positive": false,
+    "suppression_reason": null
+   },
+   "fingerprint": "sha256:2eb47de371c0a36edde3a4ca23691e45d232b6dba874ce3676b3a2378a0e91fe",
+   "package": {
+    "name": "lodash",
+    "version": "4.17.4",
+    "ecosystem": "npm"
+   }
+  },
+  {
+   "id": "trivy:CVE-2025-13465:package-lock.json:lodash@4.17.4",
+   "title": "lodash 4.17.4: lodash: prototype pollution in _.unset and _.omit functions",
+   "description": "Lodash versions 4.0.0 through 4.17.22 are vulnerable to prototype pollution in the _.unset\u00a0and _.omit\u00a0functions. An attacker can pass crafted paths which cause Lodash to delete methods from global prototypes.\n\nThe issue permits deletion of properties but does not allow overwriting their original behavior.\n\nThis issue is patched on 4.17.23",
+   "location": {
+    "path": "package-lock.json",
+    "start_line": 1,
+    "end_line": 1,
+    "snippet": "lodash@4.17.4",
+    "snippet_hash": "sha256:03970e5485933b6bb885cd9d15a7d2cdd4365cdf4c5d2fa8454530c70550c54e"
+   },
+   "taxonomy": {
+    "category": "sca",
+    "cwe": [
+     "CWE-1321"
+    ],
+    "owasp_top_10_2021": [],
+    "cve": [
+     "CVE-2025-13465",
+     "CVE-2026-2950"
+    ],
+    "aliases": [
+     "CVE-2025-13465",
+     "CVE-2026-2950",
+     "GHSA-f23m-r3pf-42rh",
+     "GHSA-xxjr-mmjv-4gpg"
+    ]
+   },
+   "scoring": {
+    "native_severity": {
+     "trivy": "MEDIUM",
+     "osv-scanner": "6.5"
+    },
+    "normalized_severity": "MEDIUM",
+    "cvss_v3_1": 6.5,
+    "epss_score": null,
+    "in_cisa_kev": false,
+    "reachable": null,
+    "risk_score": null,
+    "confidence": 0.99
+   },
+   "evidence": {
+    "reported_by": [
+     "trivy",
+     "osv-scanner"
+    ],
+    "agreement_count": 2,
+    "rule_ids": {
+     "trivy": [
+      "CVE-2025-13465",
+      "CVE-2026-2950"
+     ],
+     "osv-scanner": [
+      "GHSA-f23m-r3pf-42rh"
+     ]
+    }
+   },
+   "remediation": {
+    "summary": "Upgrade lodash to 4.17.23 or later.",
+    "suggested_patch": null,
+    "references": [
+     "https://avd.aquasec.com/nvd/cve-2025-13465",
+     "https://avd.aquasec.com/nvd/cve-2026-2950",
+     "https://osv.dev/GHSA-f23m-r3pf-42rh"
+    ],
+    "generated_by": "static",
+    "is_suggestion": true
+   },
+   "triage": {
+    "state": "open",
+    "user_marked_false_positive": false,
+    "suppression_reason": null
+   },
+   "fingerprint": "sha256:ae1dc3bc7a57a71b499df2a496b43551c8e1fee62f5198a8216a2254f514d33e",
+   "package": {
+    "name": "lodash",
+    "version": "4.17.4",
+    "ecosystem": "npm"
+   }
+  },
+  {
+   "id": "trivy:CVE-2023-32681:requirements.txt:requests@2.19.0",
+   "title": "requests 2.19.0: python-requests: Unintended leak of Proxy-Authorization header",
+   "description": "Requests is a HTTP library. Since Requests 2.3.0, Requests has been leaking Proxy-Authorization headers to destination servers when redirected to an HTTPS endpoint. This is a product of how we use `rebuild_proxies` to reattach the `Proxy-Authorization` header to requests. For HTTP connections sent through the tunnel, the proxy will identify the header in the request itself and remove it prior to forwarding to the destination server. However when sent over HTTPS, the `Proxy-Authorization` header must be sent in the CONNECT request as the proxy has no visibility into the tunneled request. This results in Requests forwarding proxy credentials to the destination server unintentionally, allowing a malicious actor to potentially exfiltrate sensitive information. This issue has been patched in version 2.31.0.",
+   "location": {
+    "path": "requirements.txt",
+    "start_line": 1,
+    "end_line": 1,
+    "snippet": "requests@2.19.0",
+    "snippet_hash": "sha256:86cf1dadc4a5e21125457e613ab496330e5f6da56777fb50c0f8da1598bdeb98"
+   },
+   "taxonomy": {
+    "category": "sca",
+    "cwe": [
+     "CWE-200"
+    ],
+    "owasp_top_10_2021": [],
+    "cve": [
+     "CVE-2023-32681"
+    ],
+    "aliases": [
+     "CVE-2023-32681",
+     "GHSA-j8r2-6x86-q33q",
+     "PYSEC-2023-74"
+    ]
+   },
+   "scoring": {
+    "native_severity": {
+     "trivy": "MEDIUM",
+     "osv-scanner": "6.1"
+    },
+    "normalized_severity": "MEDIUM",
+    "cvss_v3_1": 6.1,
+    "epss_score": null,
+    "in_cisa_kev": false,
+    "reachable": null,
+    "risk_score": null,
+    "confidence": 0.99
+   },
+   "evidence": {
+    "reported_by": [
+     "trivy",
+     "osv-scanner"
+    ],
+    "agreement_count": 2,
+    "rule_ids": {
+     "trivy": [
+      "CVE-2023-32681"
+     ],
+     "osv-scanner": [
+      "GHSA-j8r2-6x86-q33q"
+     ]
+    }
+   },
+   "remediation": {
+    "summary": "Upgrade requests to 2.31.0 or later.",
+    "suggested_patch": null,
+    "references": [
+     "https://avd.aquasec.com/nvd/cve-2023-32681",
+     "https://osv.dev/GHSA-j8r2-6x86-q33q"
+    ],
+    "generated_by": "static",
+    "is_suggestion": true
+   },
+   "triage": {
+    "state": "open",
+    "user_marked_false_positive": false,
+    "suppression_reason": null
+   },
+   "fingerprint": "sha256:f10a9210fc005e768cde8c9920ec882a631455096ba8473474f0f5c1569182bd",
+   "package": {
+    "name": "requests",
+    "version": "2.19.0",
+    "ecosystem": "pypi"
+   }
+  },
+  {
+   "id": "trivy:CVE-2024-35195:requirements.txt:requests@2.19.0",
+   "title": "requests 2.19.0: requests: subsequent requests to the same host ignore cert verification",
+   "description": "Requests is a HTTP library. Prior to 2.32.0, when making requests through a Requests `Session`, if the first request is made with `verify=False` to disable cert verification, all subsequent requests to the same host will continue to ignore cert verification regardless of changes to the value of `verify`. This behavior will continue for the lifecycle of the connection in the connection pool. This vulnerability is fixed in 2.32.0.",
+   "location": {
+    "path": "requirements.txt",
+    "start_line": 1,
+    "end_line": 1,
+    "snippet": "requests@2.19.0",
+    "snippet_hash": "sha256:86cf1dadc4a5e21125457e613ab496330e5f6da56777fb50c0f8da1598bdeb98"
+   },
+   "taxonomy": {
+    "category": "sca",
+    "cwe": [
+     "CWE-670"
+    ],
+    "owasp_top_10_2021": [],
+    "cve": [
+     "CVE-2024-35195"
+    ],
+    "aliases": [
+     "CVE-2024-35195",
+     "GHSA-9wx4-h78v-vm56",
+     "PYSEC-2026-1873"
+    ]
+   },
+   "scoring": {
+    "native_severity": {
+     "trivy": "MEDIUM",
+     "osv-scanner": "5.6"
+    },
+    "normalized_severity": "MEDIUM",
+    "cvss_v3_1": 5.6,
+    "epss_score": null,
+    "in_cisa_kev": false,
+    "reachable": null,
+    "risk_score": null,
+    "confidence": 0.99
+   },
+   "evidence": {
+    "reported_by": [
+     "trivy",
+     "osv-scanner"
+    ],
+    "agreement_count": 2,
+    "rule_ids": {
+     "trivy": [
+      "CVE-2024-35195"
+     ],
+     "osv-scanner": [
+      "GHSA-9wx4-h78v-vm56"
+     ]
+    }
+   },
+   "remediation": {
+    "summary": "Upgrade requests to 2.32.0 or later.",
+    "suggested_patch": null,
+    "references": [
+     "https://avd.aquasec.com/nvd/cve-2024-35195",
+     "https://osv.dev/GHSA-9wx4-h78v-vm56"
+    ],
+    "generated_by": "static",
+    "is_suggestion": true
+   },
+   "triage": {
+    "state": "open",
+    "user_marked_false_positive": false,
+    "suppression_reason": null
+   },
+   "fingerprint": "sha256:21f84590ae093ee570e205281c0cda9ebe3de3cd8c3225de2d34a1aff53edcc4",
+   "package": {
+    "name": "requests",
+    "version": "2.19.0",
+    "ecosystem": "pypi"
+   }
+  },
+  {
+   "id": "trivy:CVE-2024-47081:requirements.txt:requests@2.19.0",
+   "title": "requests 2.19.0: requests: Requests vulnerable to .netrc credentials leak via malicious URLs",
+   "description": "Requests is a HTTP library. Due to a URL parsing issue, Requests releases prior to 2.32.4 may leak .netrc credentials to third parties for specific maliciously-crafted URLs. Users should upgrade to version 2.32.4 to receive a fix. For older versions of Requests, use of the .netrc file can be disabled with `trust_env=False` on one's Requests Session.",
+   "location": {
+    "path": "requirements.txt",
+    "start_line": 1,
+    "end_line": 1,
+    "snippet": "requests@2.19.0",
+    "snippet_hash": "sha256:86cf1dadc4a5e21125457e613ab496330e5f6da56777fb50c0f8da1598bdeb98"
+   },
+   "taxonomy": {
+    "category": "sca",
+    "cwe": [
+     "CWE-522"
+    ],
+    "owasp_top_10_2021": [],
+    "cve": [
+     "CVE-2024-47081"
+    ],
+    "aliases": [
+     "CVE-2024-47081",
+     "GHSA-9hjg-9r4m-mvj7",
+     "PYSEC-2026-1872"
+    ]
+   },
+   "scoring": {
+    "native_severity": {
+     "trivy": "MEDIUM",
+     "osv-scanner": "5.3"
+    },
+    "normalized_severity": "MEDIUM",
+    "cvss_v3_1": 5.3,
+    "epss_score": null,
+    "in_cisa_kev": false,
+    "reachable": null,
+    "risk_score": null,
+    "confidence": 0.99
+   },
+   "evidence": {
+    "reported_by": [
+     "trivy",
+     "osv-scanner"
+    ],
+    "agreement_count": 2,
+    "rule_ids": {
+     "trivy": [
+      "CVE-2024-47081"
+     ],
+     "osv-scanner": [
+      "GHSA-9hjg-9r4m-mvj7"
+     ]
+    }
+   },
+   "remediation": {
+    "summary": "Upgrade requests to 2.32.4 or later.",
+    "suggested_patch": null,
+    "references": [
+     "https://avd.aquasec.com/nvd/cve-2024-47081",
+     "https://osv.dev/GHSA-9hjg-9r4m-mvj7"
+    ],
+    "generated_by": "static",
+    "is_suggestion": true
+   },
+   "triage": {
+    "state": "open",
+    "user_marked_false_positive": false,
+    "suppression_reason": null
+   },
+   "fingerprint": "sha256:cf7f006897213db3249806fee9445e96c5217ac649019bf297edfdf09abdd3a5",
+   "package": {
+    "name": "requests",
+    "version": "2.19.0",
+    "ecosystem": "pypi"
+   }
+  },
+  {
+   "id": "trivy:CVE-2026-25645:requirements.txt:requests@2.19.0",
+   "title": "requests 2.19.0: requests: Requests: Security bypass due to predictable temporary file creation",
+   "description": "Requests is a HTTP library. Prior to version 2.33.0, the `requests.utils.extract_zipped_paths()` utility function uses a predictable filename when extracting files from zip archives into the system temporary directory. If the target file already exists, it is reused without validation. A local attacker with write access to the temp directory could pre-create a malicious file that would be loaded in place of the legitimate one. Standard usage of the Requests library is not affected by this vulnerability. Only applications that call `extract_zipped_paths()` directly are impacted. Starting in version 2.33.0, the library extracts files to a non-deterministic location. If developers are unable to upgrade, they can set `TMPDIR` in their environment to a directory with restricted write access.",
+   "location": {
+    "path": "requirements.txt",
+    "start_line": 1,
+    "end_line": 1,
+    "snippet": "requests@2.19.0",
+    "snippet_hash": "sha256:86cf1dadc4a5e21125457e613ab496330e5f6da56777fb50c0f8da1598bdeb98"
+   },
+   "taxonomy": {
+    "category": "sca",
+    "cwe": [
+     "CWE-377"
+    ],
+    "owasp_top_10_2021": [],
+    "cve": [
+     "CVE-2026-25645"
+    ],
+    "aliases": [
+     "CVE-2026-25645",
+     "GHSA-gc5v-m9x4-r6x2",
+     "PYSEC-2026-2275"
+    ]
+   },
+   "scoring": {
+    "native_severity": {
+     "trivy": "MEDIUM",
+     "osv-scanner": "4.4"
+    },
+    "normalized_severity": "MEDIUM",
+    "cvss_v3_1": 5.5,
+    "epss_score": null,
+    "in_cisa_kev": false,
+    "reachable": null,
+    "risk_score": null,
+    "confidence": 0.99
+   },
+   "evidence": {
+    "reported_by": [
+     "trivy",
+     "osv-scanner"
+    ],
+    "agreement_count": 2,
+    "rule_ids": {
+     "trivy": [
+      "CVE-2026-25645"
+     ],
+     "osv-scanner": [
+      "GHSA-gc5v-m9x4-r6x2"
+     ]
+    }
+   },
+   "remediation": {
+    "summary": "Upgrade requests to 2.33.0 or later.",
+    "suggested_patch": null,
+    "references": [
+     "https://avd.aquasec.com/nvd/cve-2026-25645",
+     "https://osv.dev/GHSA-gc5v-m9x4-r6x2"
+    ],
+    "generated_by": "static",
+    "is_suggestion": true
+   },
+   "triage": {
+    "state": "open",
+    "user_marked_false_positive": false,
+    "suppression_reason": null
+   },
+   "fingerprint": "sha256:e0f454b0fdea16db7cef00befc00ef26f3e2feafc7e5bbe6e0a8d0b433976d80",
+   "package": {
+    "name": "requests",
+    "version": "2.19.0",
+    "ecosystem": "pypi"
+   }
+  },
+  {
+   "id": "trivy:DS026:Dockerfile:1",
+   "title": "No HEALTHCHECK defined",
+   "description": "Add HEALTHCHECK instruction in your Dockerfile",
+   "location": {
+    "path": "Dockerfile",
+    "start_line": 1,
+    "end_line": 1,
+    "snippet": "",
+    "snippet_hash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+   },
+   "taxonomy": {
+    "category": "container",
+    "cwe": [],
+    "owasp_top_10_2021": [],
+    "cve": [],
+    "aliases": []
+   },
+   "scoring": {
+    "native_severity": {
+     "trivy": "LOW"
+    },
+    "normalized_severity": "LOW",
+    "cvss_v3_1": null,
+    "epss_score": null,
+    "in_cisa_kev": false,
+    "reachable": null,
+    "risk_score": null,
+    "confidence": 0.8
+   },
+   "evidence": {
+    "reported_by": [
+     "trivy"
+    ],
+    "agreement_count": 1,
+    "rule_ids": {
+     "trivy": [
+      "DS026"
+     ]
+    }
+   },
+   "remediation": {
+    "summary": "Add HEALTHCHECK instruction in Dockerfile",
+    "suggested_patch": null,
+    "references": [
+     "https://avd.aquasec.com/misconfig/ds026"
+    ],
+    "generated_by": "static",
+    "is_suggestion": true
+   },
+   "triage": {
+    "state": "open",
+    "user_marked_false_positive": false,
+    "suppression_reason": null
+   },
+   "fingerprint": "sha256:cd0b2b8c84588a62a31c97906f1c6a7e0a1145a19feafe1d8121caa367a10be4",
+   "package": null
+  },
+  {
+   "id": "trivy:AVD-AWS-0094:main.tf:1",
+   "title": "S3 buckets should each define an aws_s3_bucket_public_access_block",
+   "description": "Bucket does not have a corresponding public access block.",
+   "location": {
+    "path": "main.tf",
+    "start_line": 1,
+    "end_line": 4,
+    "snippet": "resource \"aws_s3_bucket\" \"b\" {\n  bucket = \"example-bucket\"\n  acl    = \"public-read\"\n}",
+    "snippet_hash": "sha256:c6eeb3dfda121ea78f02e15a7c1a2696421e4e3e256ff4e216a3016c68c7763c"
+   },
+   "taxonomy": {
+    "category": "iac",
+    "cwe": [],
+    "owasp_top_10_2021": [],
+    "cve": [],
+    "aliases": []
+   },
+   "scoring": {
+    "native_severity": {
+     "trivy": "LOW"
+    },
+    "normalized_severity": "LOW",
+    "cvss_v3_1": null,
+    "epss_score": null,
+    "in_cisa_kev": false,
+    "reachable": null,
+    "risk_score": null,
+    "confidence": 0.8
+   },
+   "evidence": {
+    "reported_by": [
+     "trivy"
+    ],
+    "agreement_count": 1,
+    "rule_ids": {
+     "trivy": [
+      "AVD-AWS-0094"
+     ]
+    }
+   },
+   "remediation": {
+    "summary": "Define a aws_s3_bucket_public_access_block for the given bucket to control public access policies",
+    "suggested_patch": null,
+    "references": [
+     "https://avd.aquasec.com/misconfig/avd-aws-0094"
+    ],
+    "generated_by": "static",
+    "is_suggestion": true
+   },
+   "triage": {
+    "state": "open",
+    "user_marked_false_positive": false,
+    "suppression_reason": null
+   },
+   "fingerprint": "sha256:db32ccfc4eed72edd5c29a277d2b165040137bdbb55e794dcff00c6b491555b6",
+   "package": null
+  },
+  {
+   "id": "trivy:s3-bucket-logging:main.tf:1",
+   "title": "S3 Bucket Logging",
+   "description": "Bucket has logging disabled",
+   "location": {
+    "path": "main.tf",
+    "start_line": 1,
+    "end_line": 4,
+    "snippet": "resource \"aws_s3_bucket\" \"b\" {\n  bucket = \"example-bucket\"\n  acl    = \"public-read\"\n}",
+    "snippet_hash": "sha256:c6eeb3dfda121ea78f02e15a7c1a2696421e4e3e256ff4e216a3016c68c7763c"
+   },
+   "taxonomy": {
+    "category": "iac",
+    "cwe": [],
+    "owasp_top_10_2021": [],
+    "cve": [],
+    "aliases": []
+   },
+   "scoring": {
+    "native_severity": {
+     "trivy": "LOW"
+    },
+    "normalized_severity": "LOW",
+    "cvss_v3_1": null,
+    "epss_score": null,
+    "in_cisa_kev": false,
+    "reachable": null,
+    "risk_score": null,
+    "confidence": 0.8
+   },
+   "evidence": {
+    "reported_by": [
+     "trivy"
+    ],
+    "agreement_count": 1,
+    "rule_ids": {
+     "trivy": [
+      "s3-bucket-logging"
+     ]
+    }
+   },
+   "remediation": {
+    "summary": "Add a logging block to the resource to enable access logging",
+    "suggested_patch": null,
+    "references": [
+     "https://avd.aquasec.com/misconfig/s3-bucket-logging"
+    ],
+    "generated_by": "static",
+    "is_suggestion": true
+   },
+   "triage": {
+    "state": "open",
+    "user_marked_false_positive": false,
+    "suppression_reason": null
+   },
+   "fingerprint": "sha256:db32ccfc4eed72edd5c29a277d2b165040137bdbb55e794dcff00c6b491555b6",
+   "package": null
+  },
+  {
+   "id": "trivy:AVD-AWS-0124:main.tf:6",
+   "title": "Missing description for security group rule.",
+   "description": "Security group rule does not have a description.",
+   "location": {
+    "path": "main.tf",
+    "start_line": 6,
+    "end_line": 13,
+    "snippet": "resource \"aws_security_group_rule\" \"r\" {\n  type              = \"ingress\"\n  from_port         = 22\n  to_port           = 22\n  protocol          = \"tcp\"\n  cidr_blocks       = [\"0.0.0.0/0\"]\n  security_group_id = \"sg-123456\"\n}",
+    "snippet_hash": "sha256:767c91c9893c389bf2df97bc883bf9c5ab177ae09d9e0cf804eab9620cbe158f"
+   },
+   "taxonomy": {
+    "category": "iac",
+    "cwe": [],
+    "owasp_top_10_2021": [],
+    "cve": [],
+    "aliases": []
+   },
+   "scoring": {
+    "native_severity": {
+     "trivy": "LOW"
+    },
+    "normalized_severity": "LOW",
+    "cvss_v3_1": null,
+    "epss_score": null,
+    "in_cisa_kev": false,
+    "reachable": null,
+    "risk_score": null,
+    "confidence": 0.8
+   },
+   "evidence": {
+    "reported_by": [
+     "trivy"
+    ],
+    "agreement_count": 1,
+    "rule_ids": {
+     "trivy": [
+      "AVD-AWS-0124"
+     ]
+    }
+   },
+   "remediation": {
+    "summary": "Add descriptions for all security groups rules",
+    "suggested_patch": null,
+    "references": [
+     "https://avd.aquasec.com/misconfig/avd-aws-0124"
+    ],
+    "generated_by": "static",
+    "is_suggestion": true
+   },
+   "triage": {
+    "state": "open",
+    "user_marked_false_positive": false,
+    "suppression_reason": null
+   },
+   "fingerprint": "sha256:b81b496dae44d72164a9bdb51eb9ac5c9d7ec4aa0875c305bbc2d5a7682868eb",
+   "package": null
+  },
+  {
+   "id": "trivy:CVE-2026-27205:requirements.txt:flask@0.12",
+   "title": "flask 0.12: flask: Flask: Information disclosure via improper caching of session data",
+   "description": "Flask is a web server gateway interface (WSGI) web application framework. In versions 3.1.2 and below, when the session object is accessed, Flask should set the Vary: Cookie header., resulting in a Use of Cache Containing Sensitive Information vulnerability. The logic instructs caches not to cache the response, as it may contain information specific to a logged in user. This is handled in most cases, but some forms of access such as the Python in operator were overlooked. The severity and risk depend on the application being hosted behind a caching proxy that doesn't ignore responses with cookies, not setting a Cache-Control header to mark pages as private or non-cacheable, and accessing the session in a way that only touches keys without reading values or mutating the session. The issue has been fixed in version 3.1.3.",
+   "location": {
+    "path": "requirements.txt",
+    "start_line": 1,
+    "end_line": 1,
+    "snippet": "flask@0.12",
+    "snippet_hash": "sha256:e9c39ffbba3ee08ed1d140f72f0d9e8614725691ec2cd5cea2731d4199bbefba"
+   },
+   "taxonomy": {
+    "category": "sca",
+    "cwe": [
+     "CWE-524"
+    ],
+    "owasp_top_10_2021": [],
+    "cve": [
+     "CVE-2026-27205"
+    ],
+    "aliases": [
+     "CVE-2026-27205",
+     "GHSA-68rp-wp8r-4726",
+     "PYSEC-2026-2151"
+    ]
+   },
+   "scoring": {
+    "native_severity": {
+     "trivy": "LOW",
+     "osv-scanner": "2.3"
+    },
+    "normalized_severity": "LOW",
+    "cvss_v3_1": 4.3,
+    "epss_score": null,
+    "in_cisa_kev": false,
+    "reachable": null,
+    "risk_score": null,
+    "confidence": 0.99
+   },
+   "evidence": {
+    "reported_by": [
+     "trivy",
+     "osv-scanner"
+    ],
+    "agreement_count": 2,
+    "rule_ids": {
+     "trivy": [
+      "CVE-2026-27205"
+     ],
+     "osv-scanner": [
+      "GHSA-68rp-wp8r-4726"
+     ]
+    }
+   },
+   "remediation": {
+    "summary": "Upgrade flask to 3.1.3 or later.",
+    "suggested_patch": null,
+    "references": [
+     "https://avd.aquasec.com/nvd/cve-2026-27205",
+     "https://osv.dev/GHSA-68rp-wp8r-4726"
+    ],
+    "generated_by": "static",
+    "is_suggestion": true
+   },
+   "triage": {
+    "state": "open",
+    "user_marked_false_positive": false,
+    "suppression_reason": null
+   },
+   "fingerprint": "sha256:539a5eb4eb831343607eb74c4457b0b221da0fa75e867b2d5c2d49e609fb3ad8",
+   "package": {
+    "name": "flask",
+    "version": "0.12",
+    "ecosystem": "pypi"
+   }
+  },
+  {
+   "id": "bandit:B404:src/users.py:2",
+   "title": "Consider possible security implications associated with the subprocess module.",
+   "description": "blacklist (B404): Consider possible security implications associated with the subprocess module.",
+   "location": {
+    "path": "src/users.py",
+    "start_line": 2,
+    "end_line": 2,
+    "snippet": "1 import hashlib\n2 import subprocess\n3 \n",
+    "snippet_hash": "sha256:c3e2514d4492344926f72954be8ad1a0ac55b10f14f65b37b17c9eb03a020fbe"
+   },
+   "taxonomy": {
+    "category": "sast",
+    "cwe": [
+     "CWE-78"
+    ],
+    "owasp_top_10_2021": [],
+    "cve": [],
+    "aliases": []
+   },
+   "scoring": {
+    "native_severity": {
+     "bandit": "LOW"
+    },
+    "normalized_severity": "LOW",
+    "cvss_v3_1": null,
+    "epss_score": null,
+    "in_cisa_kev": false,
+    "reachable": null,
+    "risk_score": null,
+    "confidence": 0.9
+   },
+   "evidence": {
+    "reported_by": [
+     "bandit"
+    ],
+    "agreement_count": 1,
+    "rule_ids": {
+     "bandit": [
+      "B404"
+     ]
+    }
+   },
+   "remediation": {
+    "summary": "",
+    "suggested_patch": null,
+    "references": [
+     "https://bandit.readthedocs.io/en/1.7.10/blacklists/blacklist_imports.html#b404-import-subprocess"
+    ],
+    "generated_by": "static",
+    "is_suggestion": true
+   },
+   "triage": {
+    "state": "open",
+    "user_marked_false_positive": false,
+    "suppression_reason": null
+   },
+   "fingerprint": "sha256:edcfd92b24864bf8524bce6864679fb6e1a9c31ac30b7be3eae1c2dbb5128087",
+   "package": null
+  },
+  {
+   "id": "bandit:B105:src/users.py:18",
+   "title": "Possible hardcoded password: '[redacted]'",
+   "description": "hardcoded_password_string (B105): Possible hardcoded password: '[redacted]'",
+   "location": {
+    "path": "src/users.py",
+    "start_line": 18,
+    "end_line": 18,
+    "snippet": "[snippet withheld: near a detected secret]",
+    "snippet_hash": "sha256:339dcf269a93faee305b832305e6638d8b5d675af7b01344a344b5f9a6d3eb46"
+   },
+   "taxonomy": {
+    "category": "sast",
+    "cwe": [
+     "CWE-259"
+    ],
+    "owasp_top_10_2021": [],
+    "cve": [],
+    "aliases": []
+   },
+   "scoring": {
+    "native_severity": {
+     "bandit": "LOW"
+    },
+    "normalized_severity": "LOW",
+    "cvss_v3_1": null,
+    "epss_score": null,
+    "in_cisa_kev": false,
+    "reachable": null,
+    "risk_score": null,
+    "confidence": 0.6
+   },
+   "evidence": {
+    "reported_by": [
+     "bandit"
+    ],
+    "agreement_count": 1,
+    "rule_ids": {
+     "bandit": [
+      "B105"
+     ]
+    }
+   },
+   "remediation": {
+    "summary": "",
+    "suggested_patch": null,
+    "references": [
+     "https://bandit.readthedocs.io/en/1.7.10/plugins/b105_hardcoded_password_string.html"
+    ],
+    "generated_by": "static",
+    "is_suggestion": true
+   },
+   "triage": {
+    "state": "open",
+    "user_marked_false_positive": false,
+    "suppression_reason": null
+   },
+   "fingerprint": "sha256:819c9b8961370b3ef057a044cea123a58b6c3b27468127bd57e2873c32bbfb04",
+   "package": null
+  }
+ ]
+}

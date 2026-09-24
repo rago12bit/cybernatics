@@ -12,7 +12,10 @@ export function ToolCards({ scan }: { scan: ScanView }) {
         return (
           <li key={name} className={`tool tool-${status}`}>
             <div className="tool-head">
-              <strong>{name}</strong>
+              <span className="name">
+                {status === "pending" && running && (scan.status === "running" ? <span className="spinner" aria-hidden="true" /> : <span className="dot" aria-hidden="true" />)}
+                {name}
+              </span>
               <StatusBadge status={status} />
             </div>
             <div className="muted small">
@@ -21,7 +24,6 @@ export function ToolCards({ scan }: { scan: ScanView }) {
               {!t && running && "waiting…"}
             </div>
             {t && (t.status === "error" || t.status === "timeout") && t.error && <div className="small error-text">{t.error}</div>}
-            {t?.raw_artifact === "withheld" && <div className="small muted">Raw output withheld: this scan contains secrets.</div>}
           </li>
         );
       })}

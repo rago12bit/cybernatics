@@ -56,11 +56,22 @@ describe("findings query", () => {
 });
 
 describe("labels", () => {
-  it("agreement denominator counts only tools that ran", () => {
-    expect(agreementLabel(finding(2), scan())).toBe("Flagged by 2 of 2 scanners");
-    expect(agreementLabel(finding(1), scan())).toBe("Flagged by 1 of 2 scanners");
+  it("agreement denominator counts only scanners that ran AND cover the finding's category", () => {
+    const sc = scan({
+      tool_status: {
+        bandit: { status: "ok", findings: 1, exit_code: 1, duration_seconds: 1, error: null, raw_artifact: null },
+        semgrep: { status: "ok", findings: 1, exit_code: 0, duration_seconds: 1, error: null, raw_artifact: null },
+        trivy: { status: "ok", findings: 0, exit_code: 0, duration_seconds: 1, error: null, raw_artifact: null },
+        gitleaks: { status: "ok", findings: 0, exit_code: 0, duration_seconds: 1, error: null, raw_artifact: null },
+      },
+    });
+    // Trivy and Gitleaks ran but cannot find a SQL injection, so they are not counted against it.
+    expect(agreementLabel(finding(2), sc)).toBe("Flagged by 2 of 2 code scanners");
+    expect(agreementLabel(finding(1), sc)).toBe("Flagged by 1 of 2 code scanners");
     expect(agreementLabel(finding(1), null)).toBe("Flagged by 1 scanner");
-    expect(agreementLabel(finding(3), scan())).toBe("Flagged by 3 scanners"); // never "3 of 2"
+    expect(agreementLabel(finding(3), sc)).toBe("Flagged by 3 scanners"); // never "3 of 2"
+    const semgrepDown = scan({ tool_status: { ...sc.tool_status, semgrep: { ...sc.tool_status.semgrep!, status: "timeout" } } });
+    expect(agreementLabel(finding(1), semgrepDown)).toBe("Flagged by 1 of 1 code scanners"); // a dead scanner is not a miss
   });
   it("dedup summary", () => {
     expect(dedupSummary(scan())).toContain("10 raw findings became 6");

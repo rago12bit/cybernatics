@@ -19,7 +19,7 @@ export function ScanPage({ id }: { id: string }) {
       <p><Link href="/">← All scans</Link></p>
       <section className="card" aria-labelledby="scan-h">
         <div className="scan-head">
-          <h2 id="scan-h" className="wrap">{scan.source_label}</h2>
+          <h1 id="scan-h">{scan.source_label}</h1>
           <StatusBadge status={scan.status} />
         </div>
         <p className="muted small" role="status" aria-live="polite">
@@ -32,6 +32,9 @@ export function ScanPage({ id }: { id: string }) {
             <div><span className="muted small">Severity</span><br /><SeverityCounts counts={scan.severity_counts} /></div>
             <p className="dedup">{dedupSummary(scan)}</p>
           </div>
+        )}
+        {Object.values(scan.tool_status).some((t) => t.raw_artifact === "withheld") && (
+          <p className="muted small">Raw scanner output was not stored for this scan because secrets were found; it could echo them.</p>
         )}
         {scan.status === "partial" && <p className="warn">Some scanners failed or timed out. Results below are from the scanners that finished.</p>}
       </section>

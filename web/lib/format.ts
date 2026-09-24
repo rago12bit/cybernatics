@@ -28,13 +28,27 @@ export function pageCount(total: number): number {
   return Math.max(1, Math.ceil(total / PAGE_SIZE));
 }
 
-/** "Flagged by 2 of 5 scanners": the denominator is tools that actually ran on this repo. */
+// Which scanners could even have found each kind of issue. "2 of 5" would understate agreement:
+// Trivy cannot find a SQL injection, so it is not a scanner that "missed" one.
+const CATEGORY_TOOLS: Record<string, string[]> = {
+  sast: ["bandit", "semgrep"],
+  sca: ["trivy", "osv-scanner"],
+  secrets: ["gitleaks"],
+  iac: ["trivy"],
+  container: ["trivy"],
+};
+const CATEGORY_NOUN: Record<string, string> = {
+  sast: "code scanners", sca: "dependency scanners", secrets: "secret scanners", iac: "scanners", container: "scanners",
+};
+
+/** "Flagged by 2 of 2 code scanners": the denominator is scanners that ran AND cover this category. */
 export function agreementLabel(f: Finding, scan: ScanView | null): string {
-  const ran = scan
-    ? Object.values(scan.tool_status).filter((t) => t.status !== "skipped").length
-    : 0;
   const n = f.evidence.agreement_count;
-  return ran > 0 && ran >= n ? `Flagged by ${n} of ${ran} scanners` : `Flagged by ${n} scanner${n === 1 ? "" : "s"}`;
+  if (!scan) return `Flagged by ${n} scanner${n === 1 ? "" : "s"}`;
+  const covering = new Set([...(CATEGORY_TOOLS[f.taxonomy.category] ?? []), ...f.evidence.reported_by]);
+  const ran = [...covering].filter((t) => scan.tool_status[t] && scan.tool_status[t]!.status === "ok").length;
+  const noun = CATEGORY_NOUN[f.taxonomy.category] ?? "scanners";
+  return ran >= n && ran > 0 ? `Flagged by ${n} of ${ran} ${noun}` : `Flagged by ${n} scanner${n === 1 ? "" : "s"}`;
 }
 
 export function dedupSummary(scan: ScanView): string {

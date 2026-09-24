@@ -31,7 +31,7 @@ export function SubmitForm() {
 
   return (
     <form className="card" onSubmit={submit} aria-labelledby="submit-h">
-      <h2 id="submit-h">Scan a codebase</h2>
+      <h1 id="submit-h">Scan a codebase</h1>
       <div className="seg" role="group" aria-label="Source type">
         <button type="button" aria-pressed={mode === "git"} onClick={() => setMode("git")}>Public Git URL</button>
         <button type="button" aria-pressed={mode === "upload"} onClick={() => setMode("upload")}>Upload archive</button>
