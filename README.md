@@ -86,3 +86,13 @@ cd web && npm ci
 npm run dev          # http://localhost:3000, expects the API on :8000 (NEXT_PUBLIC_API_URL)
 npm test && npm run typecheck && npm run build
 ```
+
+## Commit convention
+
+Commits follow [Conventional Commits](https://www.conventionalcommits.org) (`feat:`, `fix:`, `perf:`,
+`docs:`, `chore:`, ...); the changelog and version numbers are generated from them. CI lints the
+commits of every pull request against `.commitlintrc.json`. To check locally:
+
+```bash
+npx --yes -p @commitlint/cli -p @commitlint/config-conventional commitlint --from origin/main
+```

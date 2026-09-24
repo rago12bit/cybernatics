@@ -40,3 +40,15 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+
+  commitlint:
+    # Conventional Commits (design doc §11.2): the CHANGELOG and versioning are generated from these.
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: wagoid/commitlint-github-action@v6
+        with:
+          configFile: .commitlintrc.json

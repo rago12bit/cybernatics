@@ -1,5 +1,5 @@
 [project]
-name = "bulwark"
+name = "bulwark-scan"
 version = "0.0.1"
 description = "Unified security scanning platform: orchestration, normalization and prioritization over open-source scanners."
 readme = "README.md"
