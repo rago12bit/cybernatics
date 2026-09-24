@@ -2,7 +2,7 @@ import Link from "next/link";
 import { API_URL } from "@/lib/api";
 import { BENCHMARK } from "@/lib/benchmark";
 import { Blueprint, DedupChart, DedupDiagram, PipelineDiagram, StepChart, Stripes } from "./graphics";
-import { Reveal } from "./Reveal";
+import { StackSection } from "./StackSection";
 import { Scanners } from "./Scanners";
 
 const pct = (n: number, d = 1) => `${(n * 100).toFixed(d)}%`;
@@ -13,6 +13,7 @@ export function Landing() {
   return (
     <div className="page">
       {/* ---- Hero ---- */}
+      <StackSection index={0}>
       <section className="section hero" id="product">
         <div className="hero-copy">
           <span className="eyebrow">Security scanning platform</span>
@@ -37,9 +38,10 @@ export function Landing() {
           </div>
         </div>
       </section>
+      </StackSection>
 
       {/* ---- Feature grid ---- */}
-      <Reveal>
+      <StackSection index={1}>
         <section className="section" aria-labelledby="more-h">
           <div className="sec-head">
             <h2 id="more-h">Do more with Bulwark</h2>
@@ -69,10 +71,10 @@ export function Landing() {
             </div>
           </div>
         </section>
-      </Reveal>
+      </StackSection>
 
       {/* ---- Results ---- */}
-      <Reveal>
+      <StackSection index={2}>
         <section className="section metrics" id="results" aria-labelledby="results-h">
           <div className="metric-main">
             <div className="rule"><span className="eyebrow plain">Findings after merging</span></div>
@@ -105,10 +107,10 @@ export function Landing() {
             </div>
           </div>
         </section>
-      </Reveal>
+      </StackSection>
 
       {/* ---- Scanners + pipeline ---- */}
-      <Reveal>
+      <StackSection index={3}>
         <section className="section ingredients" id="scanners" aria-labelledby="scan-h">
           <div className="cell stack">
             <span className="eyebrow">The scanners [05]</span>
@@ -124,10 +126,10 @@ export function Landing() {
             </div>
           </div>
         </section>
-      </Reveal>
+      </StackSection>
 
       {/* ---- Shipped / roadmap ---- */}
-      <Reveal>
+      <StackSection index={4}>
         <section className="section stackrow" aria-label="Status">
           <div className="cell stack">
             <span className="eyebrow">What ships today</span>
@@ -152,9 +154,10 @@ export function Landing() {
             </ul>
           </div>
         </section>
-      </Reveal>
+      </StackSection>
 
-      {/* ---- CTA + footer ---- */}
+      {/* ---- CTA + footer (the last panel slides over everything) ---- */}
+      <StackSection index={5}>
       <section className="cta" aria-label="Get started">
         <Stripes seed={7} groups={16} rows={2} />
         <div className="cta-copy">
@@ -173,6 +176,7 @@ export function Landing() {
         </div>
         <Stripes seed={11} groups={16} rows={3} />
       </footer>
+      </StackSection>
     </div>
   );
 }

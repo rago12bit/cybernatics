@@ -97,6 +97,11 @@ internal use only — see [ADR-006](docs/adr/0006-semgrep-rules-licensing.md).
 
 ## Web UI development
 
+The landing page uses a scroll-driven section stack (each section pins while the next slides over it).
+It is disabled under `prefers-reduced-motion` and below 961px, where sections simply flow; the geometry
+lives in `web/lib/stack.ts` and is unit-tested.
+
+
 ```bash
 cd web && npm ci
 npm run dev          # http://localhost:3000, expects the API on :8000 (NEXT_PUBLIC_API_URL)

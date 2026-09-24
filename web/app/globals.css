@@ -309,8 +309,6 @@ a.chip { color: var(--teal); border-color: var(--teal-deep); } a.chip:hover { ba
 
 /* ---------- Motion (skipped entirely under prefers-reduced-motion) ---------- */
 @media (prefers-reduced-motion: no-preference) {
-  .reveal { opacity: 0; transform: translate3d(0, 14px, 0); transition: opacity 600ms var(--ease-out), transform 700ms var(--ease-out); }
-  .reveal.in { opacity: 1; transform: none; }
   .blink { animation: blink 3.2s ease-in-out infinite; }
   .blink.d1 { animation-delay: 0.4s; } .blink.d2 { animation-delay: 0.9s; } .blink.d3 { animation-delay: 1.5s; } .blink.d4 { animation-delay: 2.1s; }
   @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
@@ -413,3 +411,15 @@ a.chip { color: var(--teal); border-color: var(--teal-deep); } a.chip:hover { ba
 .tbar b.w-90 { right: auto; width: 90%; }
 .tbar b.w-95 { right: auto; width: 95%; }
 .tbar b.w-100 { right: auto; width: 100%; }
+
+/* ---------- Scroll-driven section stack (reference recording): each section pins while the next slides over it ----------
+   The pin offset and --cover are set from JS through the CSSOM (allowed by the strict CSP). Stacking is only
+   switched on for wide screens without reduced motion (see lib/stack.ts STACK_QUERY); otherwise sections flow. */
+.stack-sec { --cover: 0; position: relative; background: var(--bg); scroll-margin-top: var(--header-h); }
+.stack-sec.stacked { position: sticky; box-shadow: 0 -28px 50px -24px rgba(0, 0, 0, 0.75); border-top: 1px solid var(--line-strong); }
+.stack-sec:first-child.stacked { box-shadow: none; border-top: 0; }
+.stack-inner { transform-origin: 50% 0; }
+.stack-sec.stacked .stack-inner { transform: scale(calc(1 - var(--cover) * 0.035)); will-change: transform; }
+.stack-sec.stacked::after { content: ""; position: absolute; inset: 0; background: #060605; opacity: calc(var(--cover) * 0.6); pointer-events: none; }
+
+section[id] { scroll-margin-top: var(--header-h); }
