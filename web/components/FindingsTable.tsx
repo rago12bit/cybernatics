@@ -1,34 +1,47 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { getFindings } from "@/lib/api";
-import { defaultQuery, locationLabel, pageCount } from "@/lib/format";
+import { collectAll, exportFilename, exportPayload } from "@/lib/export";
+import { defaultQuery, isDefaultQuery, locationLabel, pageCount, queryToSearch, rangeLabel, searchToQuery } from "@/lib/format";
 import { CATEGORIES, SEVERITIES, TOOLS, type Finding, type FindingsPage, type FindingsQuery, type ScanView, type Severity } from "@/lib/types";
 import { SeverityBadge } from "./Badges";
 import { FindingDetail } from "./FindingDetail";
 
-export function FindingsTable({
-  scan,
-  version,
-  fetchFindings = getFindings,
-}: {
-  scan: ScanView;
-  version: number;
-  fetchFindings?: (id: string, q: FindingsQuery) => Promise<FindingsPage>;
-}) {
+type Fetcher = (id: string, q: FindingsQuery, limit?: number) => Promise<FindingsPage>;
+
+const isTyping = (t: EventTarget | null) => t instanceof HTMLElement && /^(INPUT|SELECT|TEXTAREA)$/.test(t.tagName);
+
+export function FindingsTable({ scan, version, fetchFindings = getFindings }: { scan: ScanView; version: number; fetchFindings?: Fetcher }) {
   const [q, setQ] = useState<FindingsQuery>(defaultQuery());
   const [pathInput, setPathInput] = useState("");
+  const [hydrated, setHydrated] = useState(false);
   const [page, setPage] = useState<FindingsPage | null>(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Finding | null>(null);
   const [open, setOpen] = useState(false); // drives the sheet's enter/exit; `selected` outlives it during exit
+  const [exporting, setExporting] = useState(false);
   const exitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const trigger = useRef<HTMLElement | null>(null);
+  const tbody = useRef<HTMLTableSectionElement>(null);
 
-  const select = useCallback((f: Finding, el: HTMLElement) => {
+  // Restore filters from the URL once after mount (never during render: avoids hydration mismatches).
+  useEffect(() => {
+    const init = searchToQuery(window.location.search);
+    setQ(init);
+    setPathInput(init.path);
+    setHydrated(true);
+  }, []);
+  useEffect(() => {
+    if (!hydrated) return;
+    window.history.replaceState(null, "", `${window.location.pathname}${queryToSearch(q)}${window.location.hash}`);
+  }, [q, hydrated]);
+
+  const select = useCallback((f: Finding, el: HTMLElement | null) => {
     // Interruptible: choosing again mid-exit cancels the exit; CSS re-targets from the live position.
     if (exitTimer.current) clearTimeout(exitTimer.current);
-    trigger.current = el;
+    if (el) trigger.current = el;
     setSelected(f);
     setOpen(true); // FindingDetail mounts closed and flips to open after a forced style flush
   }, []);
@@ -40,12 +53,30 @@ export function FindingsTable({
     trigger.current?.focus({ preventScroll: true });
   }, []);
 
+  const items = page?.items ?? [];
+  const index = selected ? items.findIndex((f) => f.id === selected.id) : -1;
+  const go = useCallback(
+    (delta: number) => {
+      const next = items[index + delta];
+      if (!next) return;
+      const btn = tbody.current?.querySelector<HTMLElement>(`[data-fid="${CSS.escape(next.id)}"]`) ?? null;
+      select(next, btn);
+      btn?.scrollIntoView({ block: "nearest" });
+    },
+    [items, index, select],
+  );
+
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") close(); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") return close();
+      if (isTyping(e.target) || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key === "j") go(1);
+      if (e.key === "k") go(-1);
+    };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [open, close]);
+  }, [open, close, go]);
   useEffect(() => () => { if (exitTimer.current) clearTimeout(exitTimer.current); }, []);
 
   // Debounce the free-text path filter so typing does not fire a request per keystroke.
@@ -55,23 +86,67 @@ export function FindingsTable({
   }, [pathInput]);
 
   useEffect(() => {
+    if (!hydrated) return;
     let cancelled = false;
+    setLoading(true);
     fetchFindings(scan.id, q).then(
-      (p) => { if (!cancelled) { setPage(p); setError(null); } },
-      (e) => { if (!cancelled) setError(e instanceof Error ? e.message : "Failed to load findings"); },
+      (p) => { if (!cancelled) { setPage(p); setError(null); setLoading(false); } },
+      (e) => { if (!cancelled) { setError(e instanceof Error ? e.message : "Failed to load findings"); setLoading(false); } },
     );
     return () => { cancelled = true; };
-  }, [scan.id, q, version, fetchFindings]);
+  }, [scan.id, q, version, fetchFindings, hydrated]);
 
   const update = (patch: Partial<FindingsQuery>) => setQ((cur) => ({ ...cur, ...patch, page: patch.page ?? 0 }));
-  const toggleSeverity = (s: Severity) =>
-    update({ severity: q.severity.includes(s) ? q.severity.filter((x) => x !== s) : [...q.severity, s] });
+  const toggleSeverity = (s: Severity) => update({ severity: q.severity.includes(s) ? q.severity.filter((x) => x !== s) : [...q.severity, s] });
+  const reset = () => {
+    setPathInput("");
+    setQ(defaultQuery());
+  };
   const pages = pageCount(page?.total ?? 0);
 
+  // ArrowUp/Down move between rows without tabbing through every button.
+  const onRowKeys = (e: ReactKeyboardEvent<HTMLTableSectionElement>) => {
+    if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+    const btns = [...(tbody.current?.querySelectorAll<HTMLElement>("button.row-title") ?? [])];
+    const at = btns.indexOf(document.activeElement as HTMLElement);
+    const next = btns[at + (e.key === "ArrowDown" ? 1 : -1)];
+    if (next) { e.preventDefault(); next.focus(); }
+  };
+
+  async function exportAll() {
+    setExporting(true);
+    try {
+      const all = await collectAll((qq, limit) => fetchFindings(scan.id, qq, limit), q);
+      const blob = new Blob([JSON.stringify(exportPayload(scan, all, q), null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = exportFilename(scan);
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 10_000);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Export failed");
+    } finally {
+      setExporting(false);
+    }
+  }
+
+  const filtered = !isDefaultQuery(q);
   return (
     <section aria-labelledby="findings-h" className="section findings">
       <div className="list">
-        <div className="app-head"><span className="eyebrow">Findings</span><h2 id="findings-h" className="h1">{page ? page.total : "…"} <span className="muted">to review</span></h2></div>
+        <div className="app-head">
+          <span className="eyebrow">Findings</span>
+          <div className="head-row">
+            <h2 id="findings-h" className="h1">{page ? page.total : "…"} <span className="muted">{filtered ? "match" : "to review"}</span></h2>
+            <div className="head-actions">
+              {filtered && <button type="button" className="btn sm" onClick={reset}>Reset filters</button>}
+              <button type="button" className="btn sm" onClick={exportAll} disabled={exporting || !page || page.total === 0} aria-label={`Export ${page?.total ?? 0} findings as JSON`}>{exporting ? "Exporting…" : "Export JSON"}</button>
+            </div>
+          </div>
+        </div>
 
         <div className="filters" role="search" aria-label="Filter findings">
           <div className="chips" role="group" aria-label="Severity">
@@ -104,22 +179,34 @@ export function FindingsTable({
         </div>
 
         {error && <p className="f-empty error" role="alert">{error}</p>}
-        {page && page.items.length === 0 && <p className="f-empty muted">{page.total === 0 && scan.unique_findings === 0 ? "No findings." : "No findings match these filters."}</p>}
-        {page && page.items.length > 0 && (
-          <div className="scroll">
-            <table className="findings-table">
+        {!error && page && page.items.length === 0 && (
+          <div className="f-empty">
+            <p className="muted">{page.total === 0 && scan.unique_findings === 0 ? "No findings. Nothing to review." : "No findings match these filters."}</p>
+            {filtered && <button type="button" className="btn sm" onClick={reset}>Reset filters</button>}
+          </div>
+        )}
+        {!error && !page && loading && (
+          <div className="scroll" aria-busy="true" aria-label="Loading findings">
+            <table className="findings-table skeleton">
               <thead><tr><th>Severity</th><th>Finding</th><th>Location</th><th>Scanners</th></tr></thead>
-              <tbody>
+              <tbody>{Array.from({ length: 8 }, (_, i) => <tr key={i}><td><span className="sk sk-s" /></td><td><span className="sk sk-l" /></td><td><span className="sk sk-m" /></td><td><span className="sk sk-s" /></td></tr>)}</tbody>
+            </table>
+          </div>
+        )}
+        {page && page.items.length > 0 && (
+          <div className={loading ? "scroll busy" : "scroll"} aria-busy={loading}>
+            <table className="findings-table">
+              <caption className="sr-only">Findings for this scan. Use arrow keys to move between rows and Enter to open one.</caption>
+              <thead><tr><th scope="col">Severity</th><th scope="col">Finding</th><th scope="col">Location</th><th scope="col">Scanners</th></tr></thead>
+              <tbody ref={tbody} onKeyDown={onRowKeys}>
                 {page.items.map((f) => (
                   <tr key={f.id} className={selected?.id === f.id ? "selected" : ""}>
                     <td><SeverityBadge severity={f.scoring.normalized_severity} /></td>
                     <td>
-                      <button type="button" className="row-title" onClick={(e) => select(f, e.currentTarget)} aria-pressed={selected?.id === f.id}><span className="clamp">{f.title}</span></button>
+                      <button type="button" className="row-title" data-fid={f.id} onClick={(e) => select(f, e.currentTarget)} aria-pressed={selected?.id === f.id}><span className="clamp">{f.title}</span></button>
                     </td>
                     <td><code className="loc">{locationLabel(f)}</code></td>
-                    <td>
-                      <span title={f.evidence.reported_by.join(", ")}>{f.evidence.agreement_count > 1 ? `${f.evidence.agreement_count} agree` : f.evidence.reported_by[0]}</span>
-                    </td>
+                    <td><span className="chips">{f.evidence.reported_by.map((t) => <span key={t} className="chip">{t}</span>)}</span></td>
                   </tr>
                 ))}
               </tbody>
@@ -128,13 +215,25 @@ export function FindingsTable({
         )}
 
         <nav className="pager" aria-label="Pagination">
-          <button type="button" disabled={q.page === 0} onClick={() => setQ({ ...q, page: q.page - 1 })}>← Prev</button>
-          <span>Page {q.page + 1} of {pages}</span>
-          <button type="button" disabled={q.page + 1 >= pages} onClick={() => setQ({ ...q, page: q.page + 1 })}>Next →</button>
+          <button type="button" className="btn sm" disabled={q.page === 0} onClick={() => setQ({ ...q, page: q.page - 1 })}>← Prev</button>
+          <span role="status" aria-live="polite">{page ? rangeLabel(page.total, q.page, page.items.length) : "Loading"}{pages > 1 ? ` · page ${q.page + 1} of ${pages}` : ""}</span>
+          <button type="button" className="btn sm" disabled={q.page + 1 >= pages} onClick={() => setQ({ ...q, page: q.page + 1 })}>Next →</button>
         </nav>
+        <p className="kbd-hint small dim" aria-hidden="true">↑ ↓ move between rows · Enter opens · <kbd>j</kbd> <kbd>k</kbd> next / previous finding · Esc closes</p>
       </div>
       <div className="scrim" data-state={open ? "open" : "closed"} onClick={close} aria-hidden="true" />
-      {selected && <FindingDetail finding={selected} scan={scan} open={open} onClose={close} />}
+      {selected && (
+        <FindingDetail
+          finding={selected}
+          scan={scan}
+          open={open}
+          onClose={close}
+          position={index >= 0 ? { index: index + 1, total: items.length } : undefined}
+          onPrev={index > 0 ? () => go(-1) : undefined}
+          onNext={index >= 0 && index < items.length - 1 ? () => go(1) : undefined}
+        />
+      )}
     </section>
   );
 }
+

@@ -12,15 +12,15 @@ export function defaultQuery(): FindingsQuery {
 }
 
 /** Build the API query string. Empty filters are omitted; values are URL-encoded. */
-export function findingsQueryString(q: FindingsQuery): string {
+export function findingsQueryString(q: FindingsQuery, limit: number = PAGE_SIZE): string {
   const p = new URLSearchParams();
   for (const s of q.severity) p.append("severity", s);
   if (q.category) p.set("category", q.category);
   if (q.tool) p.set("tool", q.tool);
   if (q.path.trim()) p.set("path", q.path.trim());
   p.set("sort", q.sort);
-  p.set("limit", String(PAGE_SIZE));
-  p.set("offset", String(q.page * PAGE_SIZE));
+  p.set("limit", String(limit));
+  p.set("offset", String(q.page * limit));
   return p.toString();
 }
 
@@ -77,4 +77,63 @@ export function nativeSeverities(f: Finding): string {
 
 export function isTerminal(status: string): boolean {
   return status === "completed" || status === "partial" || status === "failed";
+}
+
+// ---- Filter state <-> URL (so a filtered view survives refresh and can be shared) ----------------
+
+const SORTS = ["severity", "path", "risk"] as const;
+
+export function isDefaultQuery(q: FindingsQuery): boolean {
+  const d = defaultQuery();
+  return q.severity.length === 0 && q.category === d.category && q.tool === d.tool && q.path.trim() === "" && q.sort === d.sort;
+}
+
+/** Serialise only what differs from the defaults, e.g. `?sev=HIGH,CRITICAL&cat=sca&p=2`. */
+export function queryToSearch(q: FindingsQuery): string {
+  const p = new URLSearchParams();
+  if (q.severity.length) p.set("sev", q.severity.join(","));
+  if (q.category) p.set("cat", q.category);
+  if (q.tool) p.set("tool", q.tool);
+  if (q.path.trim()) p.set("q", q.path.trim());
+  if (q.sort !== "severity") p.set("sort", q.sort);
+  if (q.page > 0) p.set("p", String(q.page + 1));
+  const s = p.toString();
+  return s ? `?${s}` : "";
+}
+
+/** Parse untrusted URL input back into a valid query: anything unrecognised is dropped, never trusted. */
+export function searchToQuery(search: string): FindingsQuery {
+  const p = new URLSearchParams(search);
+  const q = defaultQuery();
+  q.severity = (p.get("sev") ?? "").split(",").filter((s): s is Severity => (SEVERITIES as string[]).includes(s));
+  q.severity = [...new Set(q.severity)];
+  const cat = p.get("cat") ?? "";
+  q.category = ["sast", "sca", "secrets", "iac", "container"].includes(cat) ? cat : "";
+  const tool = p.get("tool") ?? "";
+  q.tool = ["bandit", "semgrep", "gitleaks", "trivy", "osv-scanner"].includes(tool) ? tool : "";
+  q.path = (p.get("q") ?? "").slice(0, 200);
+  const sort = p.get("sort") as (typeof SORTS)[number] | null;
+  q.sort = sort && SORTS.includes(sort) ? sort : "severity";
+  const page = Number.parseInt(p.get("p") ?? "1", 10);
+  q.page = Number.isFinite(page) && page > 1 ? Math.min(page - 1, 10_000) : 0;
+  return q;
+}
+
+/** "Showing 51-100 of 291" */
+export function rangeLabel(total: number, page: number, shown: number): string {
+  if (total === 0 || shown === 0) return "No results";
+  const from = page * PAGE_SIZE + 1;
+  return `Showing ${from}-${from + shown - 1} of ${total}`;
+}
+
+/** "just now", "3 min ago", "2 h ago", "4 d ago", else a date. */
+export function relativeTime(iso: string, now: number = Date.now()): string {
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) return "";
+  const s = Math.max(0, Math.round((now - t) / 1000));
+  if (s < 45) return "just now";
+  if (s < 3600) return `${Math.round(s / 60)} min ago`;
+  if (s < 86400) return `${Math.round(s / 3600)} h ago`;
+  if (s < 7 * 86400) return `${Math.round(s / 86400)} d ago`;
+  return new Date(t).toLocaleDateString();
 }

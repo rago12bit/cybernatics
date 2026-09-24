@@ -58,8 +58,8 @@ async function request<T>(path: string, init: RequestInit = {}, token = getToken
 export const verifyToken = (token: string) => request<ScanSummary[]>("/scans?limit=1", {}, token);
 export const listScans = () => request<ScanSummary[]>("/scans?limit=15");
 export const getScan = (id: string) => request<ScanView>(`/scans/${encodeURIComponent(id)}`);
-export const getFindings = (id: string, q: FindingsQuery) =>
-  request<FindingsPage>(`/scans/${encodeURIComponent(id)}/findings?${findingsQueryString(q)}`);
+export const getFindings = (id: string, q: FindingsQuery, limit?: number) =>
+  request<FindingsPage>(`/scans/${encodeURIComponent(id)}/findings?${findingsQueryString(q, limit)}`);
 
 export function createGitScan(url: string, tools: string[]) {
   return request<{ id: string; status: string }>("/scans", {

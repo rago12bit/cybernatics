@@ -1,11 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { ApiError, clearToken, getToken, setToken, verifyToken } from "@/lib/api";
 
 export function TokenGate({ children }: { children: ReactNode }) {
   const [state, setState] = useState<"checking" | "need" | "ok">("checking");
   const [value, setValue] = useState("");
+  const [show, setShow] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -31,25 +33,29 @@ export function TokenGate({ children }: { children: ReactNode }) {
       setToken(value.trim());
       setState("ok");
     } catch (err) {
-      setError(err instanceof ApiError && err.status === 401 ? "That token was not accepted." : err instanceof Error ? err.message : "Failed");
+      setError(err instanceof ApiError && err.status === 401 ? "That token was not accepted. Check it and try again." : err instanceof Error ? err.message : "Failed");
     } finally {
       setBusy(false);
     }
   }
 
-  if (state === "checking") return <p className="cell muted" role="status">Connecting…</p>;
+  if (state === "checking") return <div className="state-page compact" role="status" aria-live="polite"><span className="eyebrow">Connecting</span><span className="sk sk-l" /></div>;
   if (state === "ok") return <>{children}</>;
   return (
-    <form className="gate" onSubmit={submit}>
-      <span className="eyebrow">Sign in</span>
-      <p className="muted">
-        Enter your API token (<code>BULWARK_API_TOKEN</code> from <code>.env</code>). It is kept only for
-        this browser tab.
-      </p>
-      <label htmlFor="token">API token</label>
-      <input id="token" type="password" autoComplete="off" value={value} onChange={(e) => setValue(e.target.value)} required />
-      {error && <p className="error" role="alert">{error}</p>}
-      <button className="btn primary" disabled={busy || !value.trim()}>{busy ? "Checking…" : "Continue →"}</button>
-    </form>
+    <div className="gate-wrap">
+      <form className="gate" onSubmit={submit} aria-labelledby="gate-h">
+        <span className="eyebrow" id="gate-h">Sign in</span>
+        <h1 className="h2">Connect to your Bulwark server</h1>
+        <p className="muted small">Paste the API token from your server&apos;s <code>.env</code> file (<code>BULWARK_API_TOKEN</code>). It stays in this browser tab only and is never put in a URL.</p>
+        <label htmlFor="token">API token</label>
+        <div className="pw">
+          <input id="token" type={show ? "text" : "password"} autoComplete="off" autoFocus spellCheck={false} value={value} onChange={(e) => setValue(e.target.value)} required aria-describedby={error ? "token-err" : undefined} aria-invalid={error ? true : undefined} />
+          <button type="button" className="btn sm" onClick={() => setShow((s) => !s)} aria-pressed={show}>{show ? "Hide" : "Show"}</button>
+        </div>
+        {error && <p id="token-err" className="error small" role="alert">{error}</p>}
+        <button className="btn primary" disabled={busy || !value.trim()}>{busy ? "Checking…" : "Continue →"}</button>
+        <p className="small muted gate-alt">No server handy? <Link href="/demo">Explore a sample scan</Link>, no token needed.</p>
+      </form>
+    </div>
   );
 }

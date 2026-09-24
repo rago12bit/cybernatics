@@ -83,3 +83,72 @@ describe("labels", () => {
     expect(locationLabel(finding(1))).toBe("a.py:3-5");
   });
 });
+
+import { isDefaultQuery, queryToSearch, rangeLabel, relativeTime, searchToQuery } from "../lib/format";
+import { collectAll, exportFilename, exportPayload } from "../lib/export";
+
+describe("filter state <-> URL", () => {
+  it("round-trips a non-default query and omits defaults", () => {
+    const q = { ...defaultQuery(), severity: ["HIGH", "CRITICAL"] as never, category: "sca", tool: "trivy", path: "src/a b", sort: "path" as const, page: 2 };
+    const s = queryToSearch(q);
+    expect(s).toBe("?sev=HIGH%2CCRITICAL&cat=sca&tool=trivy&q=src%2Fa+b&sort=path&p=3");
+    expect(searchToQuery(s)).toEqual(q);
+    expect(queryToSearch(defaultQuery())).toBe("");
+    expect(isDefaultQuery(defaultQuery())).toBe(true);
+    expect(isDefaultQuery({ ...defaultQuery(), tool: "trivy" })).toBe(false);
+    expect(isDefaultQuery({ ...defaultQuery(), page: 3 })).toBe(true); // paging alone is not a "filter"
+  });
+  it("treats the URL as untrusted: unknown values are dropped", () => {
+    const q = searchToQuery("?sev=HIGH,DROP%20TABLE,HIGH&cat=evil&tool=<script>&sort=hax&p=-5&q=" + "x".repeat(500));
+    expect(q.severity).toEqual(["HIGH"]);
+    expect(q.category).toBe("");
+    expect(q.tool).toBe("");
+    expect(q.sort).toBe("severity");
+    expect(q.page).toBe(0);
+    expect(q.path.length).toBe(200);
+    expect(searchToQuery("?p=abc").page).toBe(0);
+    expect(searchToQuery("?p=999999999").page).toBe(10_000);
+  });
+});
+
+describe("labels", () => {
+  it("range label", () => {
+    expect(rangeLabel(291, 0, 50)).toBe("Showing 1-50 of 291");
+    expect(rangeLabel(291, 5, 41)).toBe("Showing 251-291 of 291");
+    expect(rangeLabel(0, 0, 0)).toBe("No results");
+  });
+  it("relative time", () => {
+    const now = Date.parse("2026-09-25T12:00:00Z");
+    const at = (s: number) => new Date(now - s * 1000).toISOString();
+    expect([10, 120, 7200, 3 * 86400].map((s) => relativeTime(at(s), now))).toEqual(["just now", "2 min ago", "2 h ago", "3 d ago"]);
+    expect(relativeTime("garbage", now)).toBe("");
+    expect(relativeTime(at(-30), now)).toBe("just now"); // clock skew never shows the future
+  });
+});
+
+describe("export", () => {
+  const scan = { id: "s1", source_label: "https://github.com/OWASP/NodeGoat", status: "completed", raw_findings: 5, unique_findings: 3, dedup_rate: 0.4, tool_status: { trivy: { status: "ok" } } } as unknown as ScanView;
+  it("pages through every result and stops at the total", async () => {
+    const calls: number[] = [];
+    const mk = (n: number) => Array.from({ length: n }, (_, i) => ({ id: String(i) }) as never);
+    const got = await collectAll(async (q, limit) => {
+      calls.push(q.page);
+      return { total: 1100, limit, offset: q.page * limit, items: mk(q.page < 2 ? 500 : 100) };
+    }, defaultQuery());
+    expect(got.length).toBe(1100);
+    expect(calls).toEqual([0, 1, 2]);
+  });
+  it("is bounded and survives an empty page", async () => {
+    expect((await collectAll(async (q, l) => ({ total: 99999, limit: l, offset: 0, items: [{ id: "x" } as never] }), defaultQuery(), 3)).length).toBe(3);
+    expect(await collectAll(async (_q, l) => ({ total: 10, limit: l, offset: 0, items: [] }), defaultQuery())).toEqual([]);
+  });
+  it("payload is self-describing; filename is filesystem-safe", () => {
+    const p = exportPayload(scan, [], { ...defaultQuery(), tool: "trivy" });
+    expect(p.generated_by).toBe("Bulwark");
+    expect(p.filters.tool).toBe("trivy");
+    expect(p.scan.dedup_rate).toBe(0.4);
+    expect(exportFilename(scan)).toBe("bulwark-github.com-OWASP-NodeGoat-findings.json");
+    expect(exportFilename({ ...scan, source_label: "../../etc/passwd" })).not.toContain("/");
+    expect(exportFilename({ ...scan, source_label: "???" })).toBe("bulwark-scan-findings.json");
+  });
+});

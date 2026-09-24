@@ -40,7 +40,7 @@ docker compose --profile scanners build     # builds the app image and the 4 cus
 docker compose up -d
 ```
 
-Open **http://localhost:3000** for the web UI: paste your API token once, submit a Git URL or an
+Open **http://localhost:3000** for the web UI (no server needed to look around: **/demo** is a full sample report): paste your API token once, submit a Git URL or an
 archive, watch scanners report live, then filter and sort the merged findings and open any finding for
 the code, per-scanner severities and fix guidance. The UI is served with a strict per-request-nonce
 CSP and renders all scanner data as text, never HTML (threat T9; covered by `web/tests/xss.test.tsx`).

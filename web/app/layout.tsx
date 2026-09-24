@@ -19,8 +19,9 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   return (
     <html lang="en" className={`${sans.variable} ${mono.variable}`}>
       <body>
+        <a href="#main" className="skip">Skip to content</a>
         <SiteHeader />
-        <main>{children}</main>
+        <main id="main" tabIndex={-1}>{children}</main>
       </body>
     </html>
   );

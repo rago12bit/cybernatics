@@ -3,7 +3,7 @@
   "id": "00000000-0000-0000-0000-000000000000",
   "status": "completed",
   "source_type": "archive",
-  "source_label": "combo.zip (preview data)",
+  "source_label": "sample-project (demo scan)",
   "tools": [
    "bandit",
    "semgrep",

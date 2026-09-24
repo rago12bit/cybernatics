@@ -3,6 +3,7 @@ import { dedupSummary, isTerminal } from "@/lib/format";
 import type { Connection } from "@/lib/useScan";
 import type { FindingsPage, FindingsQuery, ScanView, Severity } from "@/lib/types";
 import { SeverityCounts, StatusBadge } from "./Badges";
+import { LocalTime } from "./LocalTime";
 import { FindingsTable } from "./FindingsTable";
 import { ToolCards } from "./ToolCards";
 
@@ -15,11 +16,13 @@ export function ScanReport({
   connection,
   version,
   fetchFindings,
+  crumb = { href: "/app", label: "← All scans" },
 }: {
   scan: ScanView;
   connection: Connection;
   version: number;
-  fetchFindings?: (id: string, q: FindingsQuery) => Promise<FindingsPage>;
+  fetchFindings?: (id: string, q: FindingsQuery, limit?: number) => Promise<FindingsPage>;
+  crumb?: { href: string; label: string };
 }) {
   const done = isTerminal(scan.status);
   const max = Math.max(...ORDER.map((s) => scan.severity_counts[s] ?? 0));
@@ -27,7 +30,7 @@ export function ScanReport({
     <>
       <section className="section" aria-labelledby="scan-h">
         <div className="app-head">
-          <Link href="/app" className="crumb">← All scans</Link>
+          <Link href={crumb.href} className="crumb">{crumb.label}</Link>
           <div className="scan-head">
             <div className="stack">
               <span className="eyebrow">Scan</span>
@@ -37,7 +40,7 @@ export function ScanReport({
           </div>
           <p className="label dimmed" role="status" aria-live="polite">
             {done
-              ? `Finished ${scan.finished_at ? new Date(scan.finished_at).toLocaleString() : ""}`
+              ? <>Finished {scan.finished_at ? <LocalTime iso={scan.finished_at} /> : ""}</>
               : connection === "live" ? "Live: updates arrive as each scanner finishes"
               : connection === "polling" ? "Refreshing every few seconds" : "Connecting"}
           </p>

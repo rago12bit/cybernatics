@@ -26,7 +26,7 @@ export function Landing() {
             </p>
             <div className="hero-actions">
               <Link href="/app" className="btn primary">Open the app →</Link>
-              <Link href="#results" className="btn">See the results</Link>
+              <Link href="/demo" className="btn">View a sample scan</Link>
             </div>
           </div>
           <div className="hero-stats">
@@ -188,10 +188,10 @@ export function Landing() {
       </section>
       <footer className="foot">
         <div className="foot-links">
-          <div><h4>Product</h4><ul><li><Link href="/app">Open app</Link></li><li><Link href="/#results">Results</Link></li><li><Link href="/#scanners">Scanners</Link></li></ul></div>
-          <div><h4>Developers</h4><ul><li><a href={`${API_URL}/docs`}>API reference</a></li><li>CLI: bulwark scan</li><li>WebSocket progress</li></ul></div>
-          <div><h4>Security</h4><ul><li>Sandboxed runners</li><li>SSRF + zip-slip guards</li><li>Secret redaction</li></ul></div>
-          <div><h4>Project</h4><ul><li>Apache-2.0</li><li>Open-source scanners</li><li>Benchmarks published</li></ul></div>
+          <div><h3>Product</h3><ul><li><Link href="/app">Open app</Link></li><li><Link href="/#results">Results</Link></li><li><Link href="/#scanners">Scanners</Link></li></ul></div>
+          <div><h3>Developers</h3><ul><li><a href={`${API_URL}/docs`}>API reference</a></li><li>CLI: bulwark scan</li><li>WebSocket progress</li></ul></div>
+          <div><h3>Security</h3><ul><li>Sandboxed runners</li><li>SSRF + zip-slip guards</li><li>Secret redaction</li></ul></div>
+          <div><h3>Project</h3><ul><li>Apache-2.0</li><li>Open-source scanners</li><li>Benchmarks published</li></ul></div>
         </div>
         <Stripes seed={11} groups={16} rows={3} />
       </footer>
