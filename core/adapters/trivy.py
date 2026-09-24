@@ -47,6 +47,10 @@ class TrivyAdapter(ToolAdapter):
             "--skip-db-update",
             "--skip-check-update",
             "--offline-scan",
+            # OSV-Scanner reports dev dependencies; Trivy skips them by default. Scanning the same
+            # scope lets cross-tool agreement mean something (NodeGoat: 83 -> 291 of 292 OSV
+            # findings matched). Risk scoring can later down-weight dev-only dependencies.
+            "--include-dev-deps",
             "--scanners", "vuln,misconfig",
             "--format", "json",
             "--output", str(output),

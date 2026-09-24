@@ -3,4 +3,4 @@
 # the git clones. Results are written to benchmarks/results/ as versioned JSON.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-python -m benchmarks.dedup
+python -m benchmarks.dedup "${1:-run}"   # optional label for the results file

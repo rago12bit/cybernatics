@@ -1,0 +1,183 @@
+{
+  "measured_on": "2026-09-25",
+  "corpus": "5 public repos (see repos[].source), scanned at default branch HEAD",
+  "correlation_params": {
+    "line_window": 3,
+    "snippet_overlap": 0.8,
+    "min_tokens": 4
+  },
+  "images": {
+    "bandit": "bulwark/bandit:1.7.10",
+    "semgrep": "bulwark/semgrep:1.90.0",
+    "gitleaks": "zricethezav/gitleaks:v8.21.0",
+    "trivy": "bulwark/trivy:0.55.2",
+    "osv-scanner": "bulwark/osv-scanner:2.6.0"
+  },
+  "repos": [
+    {
+      "repo": "VAmPI",
+      "source": "https://github.com/erev0s/VAmPI",
+      "languages": [
+        "python"
+      ],
+      "wall_seconds": 45.0,
+      "tool_status": {
+        "bandit": "ok",
+        "semgrep": "ok",
+        "gitleaks": "ok",
+        "trivy": "ok",
+        "osv-scanner": "ok"
+      },
+      "raw_findings": 23,
+      "unique_findings": 21,
+      "dedup_rate": 0.087,
+      "raw_per_tool": {
+        "bandit": 6,
+        "semgrep": 1,
+        "gitleaks": 1,
+        "trivy": 8,
+        "osv-scanner": 7
+      },
+      "cross_tool_merged": 2,
+      "by_category": {
+        "container": 2,
+        "sast": 7,
+        "secrets": 1,
+        "sca": 11
+      }
+    },
+    {
+      "repo": "NodeGoat",
+      "source": "https://github.com/OWASP/NodeGoat",
+      "languages": [
+        "javascript"
+      ],
+      "wall_seconds": 79.1,
+      "tool_status": {
+        "bandit": "skipped",
+        "semgrep": "ok",
+        "gitleaks": "ok",
+        "trivy": "ok",
+        "osv-scanner": "ok"
+      },
+      "raw_findings": 545,
+      "unique_findings": 453,
+      "dedup_rate": 0.1688,
+      "raw_per_tool": {
+        "bandit": 0,
+        "semgrep": 162,
+        "gitleaks": 3,
+        "trivy": 88,
+        "osv-scanner": 292
+      },
+      "cross_tool_merged": 83,
+      "by_category": {
+        "sca": 295,
+        "sast": 154,
+        "secrets": 3,
+        "container": 1
+      }
+    },
+    {
+      "repo": "nodejs-goof",
+      "source": "https://github.com/snyk-labs/nodejs-goof",
+      "languages": [
+        "javascript"
+      ],
+      "wall_seconds": 24.9,
+      "tool_status": {
+        "bandit": "skipped",
+        "semgrep": "ok",
+        "gitleaks": "ok",
+        "trivy": "ok",
+        "osv-scanner": "ok"
+      },
+      "raw_findings": 524,
+      "unique_findings": 304,
+      "dedup_rate": 0.4198,
+      "raw_per_tool": {
+        "bandit": 0,
+        "semgrep": 11,
+        "gitleaks": 0,
+        "trivy": 228,
+        "osv-scanner": 285
+      },
+      "cross_tool_merged": 211,
+      "by_category": {
+        "sca": 294,
+        "container": 2,
+        "sast": 8
+      }
+    },
+    {
+      "repo": "Vulnerable-Flask-App",
+      "source": "https://github.com/we45/Vulnerable-Flask-App",
+      "languages": [
+        "javascript",
+        "python"
+      ],
+      "wall_seconds": 89.2,
+      "tool_status": {
+        "bandit": "ok",
+        "semgrep": "ok",
+        "gitleaks": "ok",
+        "trivy": "ok",
+        "osv-scanner": "ok"
+      },
+      "raw_findings": 212,
+      "unique_findings": 155,
+      "dedup_rate": 0.2689,
+      "raw_per_tool": {
+        "bandit": 17,
+        "semgrep": 48,
+        "gitleaks": 0,
+        "trivy": 72,
+        "osv-scanner": 75
+      },
+      "cross_tool_merged": 48,
+      "by_category": {
+        "sca": 101,
+        "container": 2,
+        "sast": 52
+      }
+    },
+    {
+      "repo": "terragoat",
+      "source": "https://github.com/bridgecrewio/terragoat",
+      "languages": [],
+      "wall_seconds": 234.2,
+      "tool_status": {
+        "bandit": "skipped",
+        "semgrep": "skipped",
+        "gitleaks": "ok",
+        "trivy": "ok",
+        "osv-scanner": "ok"
+      },
+      "raw_findings": 784,
+      "unique_findings": 753,
+      "dedup_rate": 0.0395,
+      "raw_per_tool": {
+        "bandit": 0,
+        "semgrep": 0,
+        "gitleaks": 5,
+        "trivy": 645,
+        "osv-scanner": 134
+      },
+      "cross_tool_merged": 31,
+      "by_category": {
+        "sca": 503,
+        "iac": 243,
+        "secrets": 5,
+        "container": 2
+      }
+    }
+  ],
+  "aggregate": {
+    "repos_scanned": 5,
+    "raw_findings": 2088,
+    "unique_findings": 1686,
+    "dedup_rate": 0.1925
+  },
+  "label": "v1-trivy-default-scope",
+  "notes": "Trivy ran with its default of EXCLUDING dev dependencies while OSV-Scanner includes them, so the two SCA tools were not comparing like with like: on NodeGoat only 83 of OSV's 292 findings had a Trivy match. Diagnosed 2026-09-25; superseded by the aligned-scope run."
+}

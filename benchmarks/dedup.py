@@ -56,11 +56,13 @@ def measure(name: str, source: str) -> dict[str, object]:
 
 
 def main() -> None:
+    label = sys.argv[1] if len(sys.argv) > 1 else "run"
     rows = [measure(n, u) for n, u in REPOS]
     ok = [r for r in rows if "error" not in r]
     raw = sum(int(r["raw_findings"]) for r in ok)  # type: ignore[call-overload]
     uniq = sum(int(r["unique_findings"]) for r in ok)  # type: ignore[call-overload]
     out = {
+        "label": label,
         "measured_on": date.today().isoformat(),
         "corpus": "5 public repos (see repos[].source), scanned at default branch HEAD",
         "correlation_params": {
@@ -77,7 +79,7 @@ def main() -> None:
             "dedup_rate": round(1 - uniq / raw, 4) if raw else None,
         },
     }
-    path = ROOT / "results" / f"dedup-baseline-{out['measured_on']}.json"
+    path = ROOT / "results" / f"dedup-{out['measured_on']}-{label}.json"
     path.write_text(json.dumps(out, indent=2) + "\n")
     print(json.dumps(out["aggregate"], indent=2), file=sys.stderr)
     print(f"wrote {path}", file=sys.stderr)

@@ -14,6 +14,22 @@ pip install -e ".[dev]"
 ruff check . && black --check . && mypy && pytest
 ```
 
+## Results so far
+
+Cross-tool deduplication over five public repositories (details and caveats in
+[benchmarks/README.md](benchmarks/README.md); design in [ADR-004](docs/adr/0004-fingerprinting-and-correlation.md)):
+
+| Repository | Languages | Raw findings | Unique findings | Dedup rate | Merged across tools | Wall time |
+|---|---|---:|---:|---:|---:|---:|
+| VAmPI | python | 23 | 21 | **8.7%** | 2 | 40s |
+| NodeGoat | javascript | 771 | 463 | **40.0%** | 291 | 78s |
+| nodejs-goof | javascript | 601 | 305 | **49.2%** | 284 | 24s |
+| Vulnerable-Flask-App | javascript, python | 212 | 155 | **26.9%** | 48 | 89s |
+| terragoat | Terraform / Docker | 945 | 880 | **6.9%** | 65 | 224s |
+| **All 5** | | **2552** | **1824** | **28.5%** | | |
+
+Measured 2026-09-25. This measures duplicate reduction, not accuracy; precision/recall benchmarks come in Phase 6.
+
 License: Apache-2.0
 
 ## Run the full stack (API + worker + Postgres + Redis + object store)

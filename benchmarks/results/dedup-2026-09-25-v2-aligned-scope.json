@@ -1,0 +1,182 @@
+{
+  "label": "v2-aligned-scope",
+  "measured_on": "2026-09-25",
+  "corpus": "5 public repos (see repos[].source), scanned at default branch HEAD",
+  "correlation_params": {
+    "line_window": 3,
+    "snippet_overlap": 0.8,
+    "min_tokens": 4
+  },
+  "images": {
+    "bandit": "bulwark/bandit:1.7.10",
+    "semgrep": "bulwark/semgrep:1.90.0",
+    "gitleaks": "zricethezav/gitleaks:v8.21.0",
+    "trivy": "bulwark/trivy:0.55.2",
+    "osv-scanner": "bulwark/osv-scanner:2.6.0"
+  },
+  "repos": [
+    {
+      "repo": "VAmPI",
+      "source": "https://github.com/erev0s/VAmPI",
+      "languages": [
+        "python"
+      ],
+      "wall_seconds": 39.6,
+      "tool_status": {
+        "bandit": "ok",
+        "semgrep": "ok",
+        "gitleaks": "ok",
+        "trivy": "ok",
+        "osv-scanner": "ok"
+      },
+      "raw_findings": 23,
+      "unique_findings": 21,
+      "dedup_rate": 0.087,
+      "raw_per_tool": {
+        "bandit": 6,
+        "semgrep": 1,
+        "gitleaks": 1,
+        "trivy": 8,
+        "osv-scanner": 7
+      },
+      "cross_tool_merged": 2,
+      "by_category": {
+        "container": 2,
+        "sast": 7,
+        "secrets": 1,
+        "sca": 11
+      }
+    },
+    {
+      "repo": "NodeGoat",
+      "source": "https://github.com/OWASP/NodeGoat",
+      "languages": [
+        "javascript"
+      ],
+      "wall_seconds": 78.4,
+      "tool_status": {
+        "bandit": "skipped",
+        "semgrep": "ok",
+        "gitleaks": "ok",
+        "trivy": "ok",
+        "osv-scanner": "ok"
+      },
+      "raw_findings": 771,
+      "unique_findings": 463,
+      "dedup_rate": 0.3995,
+      "raw_per_tool": {
+        "bandit": 0,
+        "semgrep": 162,
+        "gitleaks": 3,
+        "trivy": 314,
+        "osv-scanner": 292
+      },
+      "cross_tool_merged": 291,
+      "by_category": {
+        "sca": 305,
+        "sast": 154,
+        "secrets": 3,
+        "container": 1
+      }
+    },
+    {
+      "repo": "nodejs-goof",
+      "source": "https://github.com/snyk-labs/nodejs-goof",
+      "languages": [
+        "javascript"
+      ],
+      "wall_seconds": 24.0,
+      "tool_status": {
+        "bandit": "skipped",
+        "semgrep": "ok",
+        "gitleaks": "ok",
+        "trivy": "ok",
+        "osv-scanner": "ok"
+      },
+      "raw_findings": 601,
+      "unique_findings": 305,
+      "dedup_rate": 0.4925,
+      "raw_per_tool": {
+        "bandit": 0,
+        "semgrep": 11,
+        "gitleaks": 0,
+        "trivy": 305,
+        "osv-scanner": 285
+      },
+      "cross_tool_merged": 284,
+      "by_category": {
+        "sca": 295,
+        "container": 2,
+        "sast": 8
+      }
+    },
+    {
+      "repo": "Vulnerable-Flask-App",
+      "source": "https://github.com/we45/Vulnerable-Flask-App",
+      "languages": [
+        "javascript",
+        "python"
+      ],
+      "wall_seconds": 89.3,
+      "tool_status": {
+        "bandit": "ok",
+        "semgrep": "ok",
+        "gitleaks": "ok",
+        "trivy": "ok",
+        "osv-scanner": "ok"
+      },
+      "raw_findings": 212,
+      "unique_findings": 155,
+      "dedup_rate": 0.2689,
+      "raw_per_tool": {
+        "bandit": 17,
+        "semgrep": 48,
+        "gitleaks": 0,
+        "trivy": 72,
+        "osv-scanner": 75
+      },
+      "cross_tool_merged": 48,
+      "by_category": {
+        "sca": 101,
+        "container": 2,
+        "sast": 52
+      }
+    },
+    {
+      "repo": "terragoat",
+      "source": "https://github.com/bridgecrewio/terragoat",
+      "languages": [],
+      "wall_seconds": 223.9,
+      "tool_status": {
+        "bandit": "skipped",
+        "semgrep": "skipped",
+        "gitleaks": "ok",
+        "trivy": "ok",
+        "osv-scanner": "ok"
+      },
+      "raw_findings": 945,
+      "unique_findings": 880,
+      "dedup_rate": 0.0688,
+      "raw_per_tool": {
+        "bandit": 0,
+        "semgrep": 0,
+        "gitleaks": 5,
+        "trivy": 806,
+        "osv-scanner": 134
+      },
+      "cross_tool_merged": 65,
+      "by_category": {
+        "sca": 630,
+        "iac": 243,
+        "secrets": 5,
+        "container": 2
+      }
+    }
+  ],
+  "aggregate": {
+    "repos_scanned": 5,
+    "raw_findings": 2552,
+    "unique_findings": 1824,
+    "dedup_rate": 0.2853
+  }
+}

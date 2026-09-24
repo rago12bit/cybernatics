@@ -48,3 +48,17 @@ def test_semgrep_loads_only_the_rules_for_languages_present() -> None:
     ]
     assert configs(set()) == ["/rules"] and configs(None) == ["/rules"]  # unknown -> everything
     assert configs({"ruby"}) == ["/rules"]  # no rules for it -> fall back, never scan nothing
+
+
+def test_trivy_and_osv_scan_the_same_dependency_scope() -> None:
+    """Regression: Trivy skips dev deps by default while OSV includes them, which made ~70% of OSV's
+    findings look 'unique' on NodeGoat. Both must cover dev dependencies."""
+    from core.adapters.osv_scanner import OsvScannerAdapter
+    from core.adapters.trivy import TrivyAdapter
+
+    trivy = TrivyAdapter().build_command(Path("/target"), Path("/out/r.json"))
+    assert "--include-dev-deps" in trivy
+    osv = OsvScannerAdapter().build_command(Path("/target"), Path("/out/r.json"))
+    assert (
+        "--no-resolve" in osv and "--offline-vulnerabilities" in osv
+    )  # offline, no network resolution
