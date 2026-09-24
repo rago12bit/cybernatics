@@ -30,8 +30,8 @@ export function SubmitForm() {
   }
 
   return (
-    <form className="card" onSubmit={submit} aria-labelledby="submit-h">
-      <h1 id="submit-h">Scan a codebase</h1>
+    <form className="cell stack" onSubmit={submit} aria-labelledby="submit-h">
+      <span className="eyebrow" id="submit-h">New scan</span>
       <div className="seg" role="group" aria-label="Source type">
         <button type="button" aria-pressed={mode === "git"} onClick={() => setMode("git")}>Public Git URL</button>
         <button type="button" aria-pressed={mode === "upload"} onClick={() => setMode("upload")}>Upload archive</button>
@@ -64,7 +64,7 @@ export function SubmitForm() {
       </fieldset>
 
       {error && <p className="error" role="alert">{error}</p>}
-      <button className="primary" disabled={!ready || busy}>{busy ? "Starting…" : "Start scan"}</button>
+      <button className="btn primary" disabled={!ready || busy}>{busy ? "Starting…" : "Start scan →"}</button>
     </form>
   );
 }

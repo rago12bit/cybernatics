@@ -44,12 +44,11 @@ export function FindingDetail({
     <aside ref={sheetRef} className="sheet" data-state={shown ? "open" : "closed"} aria-label="Finding details" aria-hidden={!open}>
       <div className="sheet-head">
         <SeverityBadge severity={f.scoring.normalized_severity} />
-        <button ref={closeRef} className="link" onClick={onClose} aria-label="Close details" tabIndex={open ? 0 : -1}>Close</button>
+        <button ref={closeRef} className="linkbtn" onClick={onClose} aria-label="Close details" tabIndex={open ? 0 : -1}>Close</button>
       </div>
       {/* All scanner-derived strings below are rendered as React text nodes: never as HTML. */}
       <h3>{f.title}</h3>
-      <p className="agree"><strong>{agreementLabel(f, scan)}</strong>{" "}
-        <span className="muted">· confidence {Math.round(f.scoring.confidence * 100)}%</span></p>
+      <p className="agree">{agreementLabel(f, scan)} · confidence {Math.round(f.scoring.confidence * 100)}%</p>
       {f.evidence.agreement_count > 1 && <p className="muted small">Independent scanners agreed, which raises confidence. Their reports were merged into this one finding.</p>}
 
       <dl>

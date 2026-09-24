@@ -37,11 +37,11 @@ export function TokenGate({ children }: { children: ReactNode }) {
     }
   }
 
-  if (state === "checking") return <p className="muted" role="status">Connecting…</p>;
+  if (state === "checking") return <p className="cell muted" role="status">Connecting…</p>;
   if (state === "ok") return <>{children}</>;
   return (
-    <form className="card gate" onSubmit={submit}>
-      <h2>Sign in</h2>
+    <form className="gate" onSubmit={submit}>
+      <span className="eyebrow">Sign in</span>
       <p className="muted">
         Enter your API token (<code>BULWARK_API_TOKEN</code> from <code>.env</code>). It is kept only for
         this browser tab.
@@ -49,7 +49,7 @@ export function TokenGate({ children }: { children: ReactNode }) {
       <label htmlFor="token">API token</label>
       <input id="token" type="password" autoComplete="off" value={value} onChange={(e) => setValue(e.target.value)} required />
       {error && <p className="error" role="alert">{error}</p>}
-      <button className="primary" disabled={busy || !value.trim()}>{busy ? "Checking…" : "Continue"}</button>
+      <button className="btn primary" disabled={busy || !value.trim()}>{busy ? "Checking…" : "Continue →"}</button>
     </form>
   );
 }

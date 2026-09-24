@@ -1,10 +1,7 @@
 "use client";
 
-import { ScanPage } from "@/components/ScanPage";
-import { FindingsTable } from "@/components/FindingsTable";
-import { SeverityCounts, StatusBadge } from "@/components/Badges";
-import { ToolCards } from "@/components/ToolCards";
-import { dedupSummary, findingsQueryString, PAGE_SIZE, severityRank } from "@/lib/format";
+import { ScanReport } from "@/components/ScanReport";
+import { PAGE_SIZE, severityRank } from "@/lib/format";
 import type { Finding, FindingsPage, FindingsQuery, ScanView } from "@/lib/types";
 import data from "./data.json";
 
@@ -13,7 +10,6 @@ const all = data.findings as unknown as Finding[];
 
 // Mirrors the API's filtering/sorting so the table behaves like the real thing.
 async function fetchFindings(_id: string, q: FindingsQuery): Promise<FindingsPage> {
-  void findingsQueryString;
   let rows = all.filter(
     (f) =>
       (q.severity.length === 0 || q.severity.includes(f.scoring.normalized_severity)) &&
@@ -33,36 +29,15 @@ async function fetchFindings(_id: string, q: FindingsQuery): Promise<FindingsPag
 export function PreviewClient() {
   const running: ScanView = {
     ...scan,
+    source_label: "github.com/owner/repo",
     status: "running",
     finished_at: null,
     tool_status: { bandit: scan.tool_status["bandit"]!, gitleaks: scan.tool_status["gitleaks"]! },
   };
-  void ScanPage;
   return (
-    <>
-      <section className="card" aria-label="In progress (preview)">
-        <div className="scan-head">
-          <h1>github.com/owner/repo</h1>
-          <StatusBadge status="running" />
-        </div>
-        <p className="muted small">Live: updates arrive as each scanner finishes.</p>
-        <ToolCards scan={running} />
-      </section>
-
-      <section className="card" aria-labelledby="scan-h">
-        <div className="scan-head">
-          <h1 id="scan-h">{scan.source_label}</h1>
-          <StatusBadge status="completed" />
-        </div>
-        <p className="muted small">Finished 25 Sep 2026, 00:00</p>
-        <ToolCards scan={scan} />
-        <div className="summary">
-          <div><span className="muted small">Severity</span><br /><SeverityCounts counts={scan.severity_counts} /></div>
-          <p className="dedup">{dedupSummary(scan)}</p>
-          <p className="muted small">Raw scanner output was not stored for this scan because secrets were found; it could echo them.</p>
-        </div>
-      </section>
-      <FindingsTable scan={scan} version={0} fetchFindings={fetchFindings} />
-    </>
+    <div className="page">
+      <ScanReport scan={running} connection="live" version={0} />
+      <ScanReport scan={scan} connection="done" version={0} fetchFindings={fetchFindings} />
+    </div>
   );
 }

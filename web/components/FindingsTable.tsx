@@ -69,9 +69,9 @@ export function FindingsTable({
   const pages = pageCount(page?.total ?? 0);
 
   return (
-    <section aria-labelledby="findings-h" className="card findings">
+    <section aria-labelledby="findings-h" className="section findings">
       <div className="list">
-        <h2 id="findings-h">Findings {page && <span className="muted">({page.total})</span>}</h2>
+        <div className="app-head"><span className="eyebrow">Findings</span><h2 id="findings-h" className="h1">{page ? page.total : "…"} <span className="muted">to review</span></h2></div>
 
         <div className="filters" role="search" aria-label="Filter findings">
           <div className="chips" role="group" aria-label="Severity">
@@ -103,8 +103,8 @@ export function FindingsTable({
           </label>
         </div>
 
-        {error && <p className="error" role="alert">{error}</p>}
-        {page && page.items.length === 0 && <p className="muted">{page.total === 0 && scan.unique_findings === 0 ? "No findings." : "No findings match these filters."}</p>}
+        {error && <p className="f-empty error" role="alert">{error}</p>}
+        {page && page.items.length === 0 && <p className="f-empty muted">{page.total === 0 && scan.unique_findings === 0 ? "No findings." : "No findings match these filters."}</p>}
         {page && page.items.length > 0 && (
           <div className="scroll">
             <table className="findings-table">
@@ -114,9 +114,9 @@ export function FindingsTable({
                   <tr key={f.id} className={selected?.id === f.id ? "selected" : ""}>
                     <td><SeverityBadge severity={f.scoring.normalized_severity} /></td>
                     <td>
-                      <button type="button" className="link row-title" onClick={(e) => select(f, e.currentTarget)} aria-pressed={selected?.id === f.id}><span className="clamp">{f.title}</span></button>
+                      <button type="button" className="row-title" onClick={(e) => select(f, e.currentTarget)} aria-pressed={selected?.id === f.id}><span className="clamp">{f.title}</span></button>
                     </td>
-                    <td><code className="small">{locationLabel(f)}</code></td>
+                    <td><code className="loc">{locationLabel(f)}</code></td>
                     <td>
                       <span title={f.evidence.reported_by.join(", ")}>{f.evidence.agreement_count > 1 ? `${f.evidence.agreement_count} agree` : f.evidence.reported_by[0]}</span>
                     </td>

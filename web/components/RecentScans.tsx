@@ -15,8 +15,8 @@ export function RecentScans() {
   }, []);
 
   return (
-    <section className="card" aria-labelledby="recent-h">
-      <h2 id="recent-h">Recent scans</h2>
+    <section className="cell stack" aria-labelledby="recent-h">
+      <span className="eyebrow" id="recent-h">Recent scans</span>
       {error && <p className="error" role="alert">{error}</p>}
       {rows === null && !error && <p className="muted">Loading…</p>}
       {rows?.length === 0 && <p className="muted">No scans yet. Start one above.</p>}
