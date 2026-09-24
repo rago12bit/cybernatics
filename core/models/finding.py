@@ -49,6 +49,7 @@ class Taxonomy:
     cwe: tuple[str, ...] = ()
     owasp_top_10_2021: tuple[str, ...] = ()
     cve: tuple[str, ...] = ()
+    aliases: tuple[str, ...] = ()  # every vulnerability id seen (CVE, GHSA, PYSEC, ...)
 
 
 _ECOSYSTEMS = {
@@ -92,7 +93,7 @@ class Scoring:
 class Evidence:
     reported_by: list[str] = field(default_factory=list)
     agreement_count: int = 1
-    rule_ids: dict[str, str] = field(default_factory=dict)
+    rule_ids: dict[str, list[str]] = field(default_factory=dict)  # tool -> rules that fired
 
 
 @dataclass
@@ -156,6 +157,7 @@ def finding_from_dict(d: dict[str, Any]) -> Finding:
             cwe=tuple(tax["cwe"]),
             owasp_top_10_2021=tuple(tax["owasp_top_10_2021"]),
             cve=tuple(tax["cve"]),
+            aliases=tuple(tax.get("aliases", ())),
         ),
         scoring=Scoring(
             **{**sc, "normalized_severity": Severity(sc["normalized_severity"])},

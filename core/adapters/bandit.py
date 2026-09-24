@@ -16,13 +16,12 @@ from core.models import (
     Location,
     Remediation,
     Scoring,
-    Severity,
     Taxonomy,
 )
+from core.scoring.severity import normalize
 
 log = logging.getLogger(__name__)
 
-_SEVERITY = {"HIGH": Severity.HIGH, "MEDIUM": Severity.MEDIUM, "LOW": Severity.LOW}
 # B105-B107 echo the hardcoded value in their message; never carry it into a Finding (T7).
 _HARDCODED_PW_RULES = {"B105", "B106", "B107"}
 _QUOTED = re.compile(r"(['\"]).*?\1")
@@ -77,10 +76,10 @@ class BanditAdapter(ToolAdapter):
                 taxonomy=Taxonomy(Category.SAST, cwe=(f"CWE-{cwe['id']}",) if "id" in cwe else ()),
                 scoring=Scoring(
                     native_severity={"bandit": native},
-                    normalized_severity=_SEVERITY.get(native, Severity.INFO),
+                    normalized_severity=normalize("bandit", native),
                     confidence=_CONFIDENCE.get(str(r.get("issue_confidence", "")).upper(), 0.5),
                 ),
-                evidence=Evidence(reported_by=["bandit"], rule_ids={"bandit": str(r["test_id"])}),
+                evidence=Evidence(reported_by=["bandit"], rule_ids={"bandit": [str(r["test_id"])]}),
                 remediation=Remediation(references=[r["more_info"]] if r.get("more_info") else []),
             )
         except (KeyError, TypeError, ValueError) as exc:

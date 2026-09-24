@@ -252,3 +252,57 @@ def test_colliding_finding_ids_are_disambiguated_not_dropped(
         repo.add_findings(s, sid, [finding("t", Category.SAST, fid="same") for _ in range(3)])
         ids = sorted(r.finding_id for r in s.query(FindingRow).all())
     assert ids == ["same", "same#2", "same#3"]
+
+
+def _code(tool: str, rule: str, line: int, snippet: str, cwe: str = "CWE-89") -> Finding:
+    f = finding(tool, Category.SAST, line=line, fid=f"{tool}:{rule}:{line}")
+    f.taxonomy = Taxonomy(Category.SAST, cwe=(cwe,))
+    f.location = Location("a.py", line, line, snippet, "h")
+    f.evidence.rule_ids = {tool: [rule]}
+    return f
+
+
+def test_pipeline_stores_correlated_findings_and_reports_dedup(
+    sessions: sessionmaker[Session], sample_repo: Path
+) -> None:
+    with sessions() as s:
+        sid = make_scan(s, ["bandit", "semgrep"], str(sample_repo))
+    same = "query = db.execute(build(user_input))"
+    table = {
+        "bandit": ToolOutcome("bandit", "ok", [_code("bandit", "B608", 5, same)]),
+        "semgrep": ToolOutcome("semgrep", "ok", [_code("semgrep", "sqli", 6, same)]),
+    }
+    bus = MemoryPublisher()
+    run_scan_job(sid, sessions, MemoryStore(), bus, executor_from(table))
+    with sessions() as s:
+        rows = s.query(FindingRow).all()
+        assert len(rows) == 1  # 2 raw -> 1 stored
+        data = rows[0].data
+        assert data["evidence"]["reported_by"] == ["bandit", "semgrep"]
+        assert data["evidence"]["agreement_count"] == 2
+        assert rows[0].fingerprint.startswith("sha256:") and rows[0].tools == ["bandit", "semgrep"]
+    done = bus.events[-1][1]
+    assert (done["findings"], done["raw_findings"], done["dedup_rate"]) == (1, 2, 0.5)
+
+
+def test_correlation_runs_before_redaction(
+    sessions: sessionmaker[Session], sample_repo: Path
+) -> None:
+    """Redacted snippets all look alike; if we redacted first, two DIFFERENT defects that sit
+    next to a secret would collapse into one. Correlating first keeps them apart."""
+    with sessions() as s:
+        sid = make_scan(s, ["bandit", "semgrep", "gitleaks"], str(sample_repo))
+    secret = finding("gitleaks", Category.SECRETS, line=6)
+    secret.taxonomy = Taxonomy(Category.SECRETS, cwe=("CWE-798",))
+    table = {
+        "bandit": ToolOutcome("bandit", "ok", [_code("bandit", "B608", 5, "x = a(1) + b")]),
+        "semgrep": ToolOutcome(
+            "semgrep", "ok", [_code("semgrep", "sqli", 6, "render(template, payload); audit(z)")]
+        ),
+        "gitleaks": ToolOutcome("gitleaks", "ok", [secret]),
+    }
+    run_scan_job(sid, sessions, MemoryStore(), MemoryPublisher(), executor_from(table))
+    with sessions() as s:
+        rows = s.query(FindingRow).all()
+        assert len(rows) == 3, "distinct defects must not be merged by redaction placeholders"
+        assert all("withheld" in r.data["location"]["snippet"] or r.category == "secrets" for r in rows)  # fmt: skip

@@ -19,7 +19,10 @@ def _docker_ready() -> bool:
 def test_bandit_end_to_end() -> None:
     r = scan(FIXTURE, ["bandit"])
     assert r.tool_status["bandit"]["status"] == "ok"
-    assert {f.evidence.rule_ids["bandit"] for f in r.findings} >= {"B608", "B602"}
+    assert {x for f in r.findings for x in f.evidence.rule_ids.get("bandit", [])} >= {
+        "B608",
+        "B602",
+    }
 
 
 @pytest.mark.skipif(not _docker_ready(), reason="docker not available")

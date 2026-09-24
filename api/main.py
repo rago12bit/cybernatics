@@ -59,6 +59,9 @@ def _view(s: Session, scan: Scan) -> ScanView:
         )
         for r in scan.tool_runs
     }
+    counts = repo.severity_counts(s, scan.id)
+    raw = sum(r.findings_count for r in scan.tool_runs)
+    unique = sum(counts.values())
     return ScanView(
         id=scan.id,
         status=scan.status,
@@ -70,7 +73,10 @@ def _view(s: Session, scan: Scan) -> ScanView:
         finished_at=scan.finished_at,
         error=scan.error,
         tool_status=tool_status,
-        severity_counts=repo.severity_counts(s, scan.id),
+        severity_counts=counts,
+        raw_findings=raw,
+        unique_findings=unique,
+        dedup_rate=round(1 - unique / raw, 3) if raw and unique <= raw else 0.0,
     )
 
 

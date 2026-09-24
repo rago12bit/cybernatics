@@ -21,20 +21,11 @@ from core.models import (
     Package,
     Remediation,
     Scoring,
-    Severity,
     Taxonomy,
 )
+from core.scoring.severity import normalize
 
 log = logging.getLogger(__name__)
-
-# Trivy already speaks CRITICAL/HIGH/MEDIUM/LOW; UNKNOWN is the only one that needs a decision.
-_SEVERITY = {
-    "CRITICAL": Severity.CRITICAL,
-    "HIGH": Severity.HIGH,
-    "MEDIUM": Severity.MEDIUM,
-    "LOW": Severity.LOW,
-    "UNKNOWN": Severity.INFO,
-}
 
 
 class TrivyAdapter(ToolAdapter):
@@ -122,14 +113,15 @@ class TrivyAdapter(ToolAdapter):
                     Category.SCA,
                     cwe=tuple(str(c) for c in v.get("CweIDs") or []),
                     cve=(vid,) if vid.startswith("CVE-") else (),
+                    aliases=(vid,),
                 ),
                 scoring=Scoring(
                     native_severity={"trivy": native},
-                    normalized_severity=_SEVERITY.get(native, Severity.INFO),
+                    normalized_severity=normalize("trivy", native),
                     cvss_v3_1=_best_cvss(v.get("CVSS") or {}),
                     confidence=0.9,
                 ),
-                evidence=Evidence(reported_by=["trivy"], rule_ids={"trivy": vid}),
+                evidence=Evidence(reported_by=["trivy"], rule_ids={"trivy": [vid]}),
                 remediation=Remediation(
                     summary=(
                         f"Upgrade {name} to {fixed} or later."
@@ -162,10 +154,10 @@ class TrivyAdapter(ToolAdapter):
                 taxonomy=Taxonomy(category),
                 scoring=Scoring(
                     native_severity={"trivy": native},
-                    normalized_severity=_SEVERITY.get(native, Severity.INFO),
+                    normalized_severity=normalize("trivy", native),
                     confidence=0.8,
                 ),
-                evidence=Evidence(reported_by=["trivy"], rule_ids={"trivy": rule}),
+                evidence=Evidence(reported_by=["trivy"], rule_ids={"trivy": [rule]}),
                 remediation=Remediation(
                     summary=str(m.get("Resolution") or ""),
                     references=[u for u in [m.get("PrimaryURL")] if u],

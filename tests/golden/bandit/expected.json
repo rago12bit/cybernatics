@@ -7,17 +7,19 @@
         "bandit"
       ],
       "rule_ids": {
-        "bandit": "B404"
+        "bandit": [
+          "B404"
+        ]
       }
     },
     "fingerprint": "",
-    "id": "bandit:B404:src/users.py:1",
+    "id": "bandit:B404:src/users.py:2",
     "location": {
-      "end_line": 1,
+      "end_line": 2,
       "path": "src/users.py",
-      "snippet": "1 import sqlite3, subprocess, hashlib\n2 \n3 def get_user(conn, user_id):\n",
-      "snippet_hash": "sha256:8c85866ad8677061d07dab8d107662a1b186fbde5125273a54e01c8b5c445245",
-      "start_line": 1
+      "snippet": "1 import hashlib\n2 import subprocess\n3 \n",
+      "snippet_hash": "sha256:c3e2514d4492344926f72954be8ad1a0ac55b10f14f65b37b17c9eb03a020fbe",
+      "start_line": 2
     },
     "package": null,
     "remediation": {
@@ -42,6 +44,7 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [],
       "category": "sast",
       "cve": [],
       "cwe": [
@@ -64,17 +67,19 @@
         "bandit"
       ],
       "rule_ids": {
-        "bandit": "B608"
+        "bandit": [
+          "B608"
+        ]
       }
     },
     "fingerprint": "",
-    "id": "bandit:B608:src/users.py:4",
+    "id": "bandit:B608:src/users.py:6",
     "location": {
-      "end_line": 4,
+      "end_line": 6,
       "path": "src/users.py",
-      "snippet": "3 def get_user(conn, user_id):\n4     query = \"SELECT * FROM users WHERE id=\" + user_id\n5     return conn.execute(query).fetchall()\n",
-      "snippet_hash": "sha256:cd3feac9eb28c8fe25a30a75997041ec5fd69c7bc13211548aea3184fc9207bb",
-      "start_line": 4
+      "snippet": "5 def get_user(conn, user_id):\n6     query = \"SELECT * FROM users WHERE id=\" + user_id\n7     return conn.execute(query).fetchall()\n",
+      "snippet_hash": "sha256:4dd0d38c7c7950ff5850408183a703833b4a23ccf55cef83fb15977eb1413406",
+      "start_line": 6
     },
     "package": null,
     "remediation": {
@@ -99,6 +104,7 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [],
       "category": "sast",
       "cve": [],
       "cwe": [
@@ -121,17 +127,19 @@
         "bandit"
       ],
       "rule_ids": {
-        "bandit": "B602"
+        "bandit": [
+          "B602"
+        ]
       }
     },
     "fingerprint": "",
-    "id": "bandit:B602:src/users.py:8",
+    "id": "bandit:B602:src/users.py:11",
     "location": {
-      "end_line": 8,
+      "end_line": 11,
       "path": "src/users.py",
-      "snippet": "7 def run(cmd):\n8     return subprocess.call(cmd, shell=True)\n9 \n",
-      "snippet_hash": "sha256:9ccd26cd08b8f8559d2fdd59a81998535124ab7b85049891abb1b9b87fc8d7b4",
-      "start_line": 8
+      "snippet": "10 def run(cmd):\n11     return subprocess.call(cmd, shell=True)\n12 \n",
+      "snippet_hash": "sha256:a5495e3b85d2c04150ea50bb554b421a85599824a693fb5449edc1792cb7c6ce",
+      "start_line": 11
     },
     "package": null,
     "remediation": {
@@ -156,6 +164,7 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [],
       "category": "sast",
       "cve": [],
       "cwe": [
@@ -178,17 +187,19 @@
         "bandit"
       ],
       "rule_ids": {
-        "bandit": "B324"
+        "bandit": [
+          "B324"
+        ]
       }
     },
     "fingerprint": "",
-    "id": "bandit:B324:src/users.py:11",
+    "id": "bandit:B324:src/users.py:15",
     "location": {
-      "end_line": 11,
+      "end_line": 15,
       "path": "src/users.py",
-      "snippet": "10 def digest(pw):\n11     return hashlib.md5(pw.encode()).hexdigest()\n12 \n",
-      "snippet_hash": "sha256:239ec418559942d33d48e68d89ab8af125cb142358848cc20380edda2d92b989",
-      "start_line": 11
+      "snippet": "14 def digest(pw):\n15     return hashlib.md5(pw.encode()).hexdigest()\n16 \n",
+      "snippet_hash": "sha256:23ca88a7663af2e8b0adbd128469d6eb0d69e9aa41d0d2346c104b33fca246c5",
+      "start_line": 15
     },
     "package": null,
     "remediation": {
@@ -213,6 +224,7 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [],
       "category": "sast",
       "cve": [],
       "cwe": [
@@ -235,17 +247,19 @@
         "bandit"
       ],
       "rule_ids": {
-        "bandit": "B105"
+        "bandit": [
+          "B105"
+        ]
       }
     },
     "fingerprint": "",
-    "id": "bandit:B105:src/users.py:13",
+    "id": "bandit:B105:src/users.py:18",
     "location": {
-      "end_line": 13,
+      "end_line": 18,
       "path": "src/users.py",
       "snippet": "[snippet withheld: hardcoded credential]",
       "snippet_hash": "sha256:bd100294b444d14e7f49f0b8be9b82a82a08e5f220148ee85add4777ebdbba71",
-      "start_line": 13
+      "start_line": 18
     },
     "package": null,
     "remediation": {
@@ -270,6 +284,67 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [],
+      "category": "sast",
+      "cve": [],
+      "cwe": [
+        "CWE-259"
+      ],
+      "owasp_top_10_2021": []
+    },
+    "title": "Possible hardcoded password: '[redacted]'",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  },
+  {
+    "description": "hardcoded_password_string (B105): Possible hardcoded password: '[redacted]'",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "bandit"
+      ],
+      "rule_ids": {
+        "bandit": [
+          "B105"
+        ]
+      }
+    },
+    "fingerprint": "",
+    "id": "bandit:B105:src/users.py:20",
+    "location": {
+      "end_line": 20,
+      "path": "src/users.py",
+      "snippet": "[snippet withheld: hardcoded credential]",
+      "snippet_hash": "sha256:bd100294b444d14e7f49f0b8be9b82a82a08e5f220148ee85add4777ebdbba71",
+      "start_line": 20
+    },
+    "package": null,
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [
+        "https://bandit.readthedocs.io/en/1.7.10/plugins/b105_hardcoded_password_string.html"
+      ],
+      "suggested_patch": null,
+      "summary": ""
+    },
+    "scoring": {
+      "confidence": 0.6,
+      "cvss_v3_1": null,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "bandit": "LOW"
+      },
+      "normalized_severity": "LOW",
+      "reachable": null,
+      "risk_score": null
+    },
+    "taxonomy": {
+      "aliases": [],
       "category": "sast",
       "cve": [],
       "cwe": [

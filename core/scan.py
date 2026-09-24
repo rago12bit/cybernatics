@@ -15,6 +15,7 @@ from core.adapters.gitleaks import GitleaksAdapter
 from core.adapters.osv_scanner import OsvScannerAdapter
 from core.adapters.semgrep import SemgrepAdapter
 from core.adapters.trivy import TrivyAdapter
+from core.correlation import CorrelationStats, correlate
 from core.models import Finding, finding_from_dict
 from core.redact import redact_near_secrets
 from core.runner import RunnerError, run_tool
@@ -143,6 +144,7 @@ def threaded_executor(tools: list[str], target: Path) -> list[ToolOutcome]:
 @dataclass
 class ScanResult:
     findings: list[Finding] = field(default_factory=list)
+    stats: CorrelationStats = field(default_factory=lambda: CorrelationStats(0, 0))
     tool_status: dict[str, dict[str, Any]] = field(default_factory=dict)
 
 
@@ -163,5 +165,7 @@ def scan(target: Path, tools: list[str], executor: Executor = threaded_executor)
         o = outcomes.get(name) or ToolOutcome(name, "error", error="executor returned no result")
         result.tool_status[name] = o.status_block()
         result.findings.extend(o.findings)
-    result.findings = redact_near_secrets(result.findings)
+    # Correlate BEFORE redacting: redaction placeholders look identical and would over-merge.
+    correlated, result.stats = correlate(result.findings)
+    result.findings = redact_near_secrets(correlated)
     return result

@@ -7,7 +7,9 @@
         "gitleaks"
       ],
       "rule_ids": {
-        "gitleaks": "generic-api-key"
+        "gitleaks": [
+          "generic-api-key"
+        ]
       }
     },
     "fingerprint": "",
@@ -42,6 +44,7 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [],
       "category": "secrets",
       "cve": [],
       "cwe": [

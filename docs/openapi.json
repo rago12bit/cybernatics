@@ -506,6 +506,21 @@
             },
             "type": "object",
             "title": "Severity Counts"
+          },
+          "raw_findings": {
+            "type": "integer",
+            "title": "Raw Findings",
+            "description": "Sum of every tool's findings before correlation."
+          },
+          "unique_findings": {
+            "type": "integer",
+            "title": "Unique Findings",
+            "description": "Findings after cross-tool deduplication."
+          },
+          "dedup_rate": {
+            "type": "number",
+            "title": "Dedup Rate",
+            "description": "1 - unique/raw; 0 when there were no findings."
           }
         },
         "type": "object",
@@ -520,7 +535,10 @@
           "finished_at",
           "error",
           "tool_status",
-          "severity_counts"
+          "severity_counts",
+          "raw_findings",
+          "unique_findings",
+          "dedup_rate"
         ],
         "title": "ScanView"
       },

@@ -7,7 +7,9 @@
         "osv-scanner"
       ],
       "rule_ids": {
-        "osv-scanner": "GHSA-29mw-wpgm-hmr9"
+        "osv-scanner": [
+          "GHSA-29mw-wpgm-hmr9"
+        ]
       }
     },
     "fingerprint": "",
@@ -46,6 +48,10 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [
+        "CVE-2020-28500",
+        "GHSA-29mw-wpgm-hmr9"
+      ],
       "category": "sca",
       "cve": [
         "CVE-2020-28500"
@@ -71,7 +77,9 @@
         "osv-scanner"
       ],
       "rule_ids": {
-        "osv-scanner": "GHSA-35jh-r3h4-6jhm"
+        "osv-scanner": [
+          "GHSA-35jh-r3h4-6jhm"
+        ]
       }
     },
     "fingerprint": "",
@@ -110,6 +118,12 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [
+        "CVE-2021-23337",
+        "CVE-2026-4800",
+        "GHSA-35jh-r3h4-6jhm",
+        "GHSA-r5fr-rjxr-66jc"
+      ],
       "category": "sca",
       "cve": [
         "CVE-2021-23337",
@@ -136,7 +150,9 @@
         "osv-scanner"
       ],
       "rule_ids": {
-        "osv-scanner": "GHSA-4xc9-xhrj-v574"
+        "osv-scanner": [
+          "GHSA-4xc9-xhrj-v574"
+        ]
       }
     },
     "fingerprint": "",
@@ -175,6 +191,10 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [
+        "CVE-2018-16487",
+        "GHSA-4xc9-xhrj-v574"
+      ],
       "category": "sca",
       "cve": [
         "CVE-2018-16487"
@@ -199,7 +219,9 @@
         "osv-scanner"
       ],
       "rule_ids": {
-        "osv-scanner": "GHSA-f23m-r3pf-42rh"
+        "osv-scanner": [
+          "GHSA-f23m-r3pf-42rh"
+        ]
       }
     },
     "fingerprint": "",
@@ -238,6 +260,12 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [
+        "CVE-2025-13465",
+        "CVE-2026-2950",
+        "GHSA-f23m-r3pf-42rh",
+        "GHSA-xxjr-mmjv-4gpg"
+      ],
       "category": "sca",
       "cve": [
         "CVE-2025-13465",
@@ -263,7 +291,9 @@
         "osv-scanner"
       ],
       "rule_ids": {
-        "osv-scanner": "GHSA-fvqr-27wr-82fm"
+        "osv-scanner": [
+          "GHSA-fvqr-27wr-82fm"
+        ]
       }
     },
     "fingerprint": "",
@@ -302,6 +332,10 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [
+        "CVE-2018-3721",
+        "GHSA-fvqr-27wr-82fm"
+      ],
       "category": "sca",
       "cve": [
         "CVE-2018-3721"
@@ -327,7 +361,9 @@
         "osv-scanner"
       ],
       "rule_ids": {
-        "osv-scanner": "GHSA-jf85-cpcp-j695"
+        "osv-scanner": [
+          "GHSA-jf85-cpcp-j695"
+        ]
       }
     },
     "fingerprint": "",
@@ -366,6 +402,11 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [
+        "CVE-2019-10744",
+        "GHSA-jf85-cpcp-j695",
+        "SNYK-JS-LODASH-450202"
+      ],
       "category": "sca",
       "cve": [
         "CVE-2019-10744"
@@ -391,7 +432,9 @@
         "osv-scanner"
       ],
       "rule_ids": {
-        "osv-scanner": "GHSA-p6mc-m468-83gw"
+        "osv-scanner": [
+          "GHSA-p6mc-m468-83gw"
+        ]
       }
     },
     "fingerprint": "",
@@ -430,6 +473,10 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [
+        "CVE-2020-8203",
+        "GHSA-p6mc-m468-83gw"
+      ],
       "category": "sca",
       "cve": [
         "CVE-2020-8203"
@@ -455,7 +502,9 @@
         "osv-scanner"
       ],
       "rule_ids": {
-        "osv-scanner": "GHSA-x5rq-j2xg-h7qm"
+        "osv-scanner": [
+          "GHSA-x5rq-j2xg-h7qm"
+        ]
       }
     },
     "fingerprint": "",
@@ -494,6 +543,11 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [
+        "CVE-2019-1010266",
+        "GHSA-x5rq-j2xg-h7qm",
+        "SNYK-JS-LODASH-73639"
+      ],
       "category": "sca",
       "cve": [
         "CVE-2019-1010266"
@@ -518,7 +572,9 @@
         "osv-scanner"
       ],
       "rule_ids": {
-        "osv-scanner": "GHSA-562c-5r94-xh97"
+        "osv-scanner": [
+          "GHSA-562c-5r94-xh97"
+        ]
       }
     },
     "fingerprint": "",
@@ -557,6 +613,11 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [
+        "CVE-2018-1000656",
+        "GHSA-562c-5r94-xh97",
+        "PYSEC-2018-66"
+      ],
       "category": "sca",
       "cve": [
         "CVE-2018-1000656"
@@ -581,7 +642,9 @@
         "osv-scanner"
       ],
       "rule_ids": {
-        "osv-scanner": "GHSA-5wv5-4vpf-pj6m"
+        "osv-scanner": [
+          "GHSA-5wv5-4vpf-pj6m"
+        ]
       }
     },
     "fingerprint": "",
@@ -620,6 +683,11 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [
+        "CVE-2019-1010083",
+        "GHSA-5wv5-4vpf-pj6m",
+        "PYSEC-2019-179"
+      ],
       "category": "sca",
       "cve": [
         "CVE-2019-1010083"
@@ -644,7 +712,9 @@
         "osv-scanner"
       ],
       "rule_ids": {
-        "osv-scanner": "GHSA-68rp-wp8r-4726"
+        "osv-scanner": [
+          "GHSA-68rp-wp8r-4726"
+        ]
       }
     },
     "fingerprint": "",
@@ -683,6 +753,11 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [
+        "CVE-2026-27205",
+        "GHSA-68rp-wp8r-4726",
+        "PYSEC-2026-2151"
+      ],
       "category": "sca",
       "cve": [
         "CVE-2026-27205"
@@ -707,7 +782,9 @@
         "osv-scanner"
       ],
       "rule_ids": {
-        "osv-scanner": "GHSA-m2qf-hxjv-5gpq"
+        "osv-scanner": [
+          "GHSA-m2qf-hxjv-5gpq"
+        ]
       }
     },
     "fingerprint": "",
@@ -746,6 +823,11 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [
+        "CVE-2023-30861",
+        "GHSA-m2qf-hxjv-5gpq",
+        "PYSEC-2023-62"
+      ],
       "category": "sca",
       "cve": [
         "CVE-2023-30861"
@@ -770,7 +852,9 @@
         "osv-scanner"
       ],
       "rule_ids": {
-        "osv-scanner": "GHSA-9hjg-9r4m-mvj7"
+        "osv-scanner": [
+          "GHSA-9hjg-9r4m-mvj7"
+        ]
       }
     },
     "fingerprint": "",
@@ -809,6 +893,11 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [
+        "CVE-2024-47081",
+        "GHSA-9hjg-9r4m-mvj7",
+        "PYSEC-2026-1872"
+      ],
       "category": "sca",
       "cve": [
         "CVE-2024-47081"
@@ -833,7 +922,9 @@
         "osv-scanner"
       ],
       "rule_ids": {
-        "osv-scanner": "GHSA-9wx4-h78v-vm56"
+        "osv-scanner": [
+          "GHSA-9wx4-h78v-vm56"
+        ]
       }
     },
     "fingerprint": "",
@@ -872,6 +963,11 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [
+        "CVE-2024-35195",
+        "GHSA-9wx4-h78v-vm56",
+        "PYSEC-2026-1873"
+      ],
       "category": "sca",
       "cve": [
         "CVE-2024-35195"
@@ -896,7 +992,9 @@
         "osv-scanner"
       ],
       "rule_ids": {
-        "osv-scanner": "GHSA-gc5v-m9x4-r6x2"
+        "osv-scanner": [
+          "GHSA-gc5v-m9x4-r6x2"
+        ]
       }
     },
     "fingerprint": "",
@@ -935,6 +1033,11 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [
+        "CVE-2026-25645",
+        "GHSA-gc5v-m9x4-r6x2",
+        "PYSEC-2026-2275"
+      ],
       "category": "sca",
       "cve": [
         "CVE-2026-25645"
@@ -959,7 +1062,9 @@
         "osv-scanner"
       ],
       "rule_ids": {
-        "osv-scanner": "GHSA-j8r2-6x86-q33q"
+        "osv-scanner": [
+          "GHSA-j8r2-6x86-q33q"
+        ]
       }
     },
     "fingerprint": "",
@@ -998,6 +1103,11 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [
+        "CVE-2023-32681",
+        "GHSA-j8r2-6x86-q33q",
+        "PYSEC-2023-74"
+      ],
       "category": "sca",
       "cve": [
         "CVE-2023-32681"
@@ -1022,7 +1132,9 @@
         "osv-scanner"
       ],
       "rule_ids": {
-        "osv-scanner": "GHSA-x84v-xcm2-53pg"
+        "osv-scanner": [
+          "GHSA-x84v-xcm2-53pg"
+        ]
       }
     },
     "fingerprint": "",
@@ -1061,6 +1173,11 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [
+        "CVE-2018-18074",
+        "GHSA-x84v-xcm2-53pg",
+        "PYSEC-2018-28"
+      ],
       "category": "sca",
       "cve": [
         "CVE-2018-18074"

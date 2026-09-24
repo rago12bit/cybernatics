@@ -17,6 +17,19 @@ class _NoSub:
         raise NotImplementedError
 
 
+def severity_doc() -> str:
+    from core.scoring.severity import as_markdown
+
+    return (
+        "# Severity normalization matrix\n\n"
+        "_Generated from `core/scoring/severity.py` by `scripts/gen-api-docs.py`; do not edit._\n\n"
+        "Tool severity vocabularies are not comparable. This table is a **judgment call**, not a "
+        "derived truth: it maps each tool's native label to one shared scale.\n\n"
+        + as_markdown()
+        + "\n"
+    )
+
+
 def main() -> None:
     base = Settings.from_env()
     settings = Settings(**{**base.__dict__, "api_token": "x" * 32})
@@ -49,6 +62,7 @@ def main() -> None:
         "",
     ]
     (ROOT / "docs" / "api.md").write_text("\n".join(lines))
+    (ROOT / "docs" / "severity-matrix.md").write_text(severity_doc())
 
 
 if __name__ == "__main__":

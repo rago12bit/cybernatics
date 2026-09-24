@@ -21,9 +21,9 @@ from core.models import (
     Location,
     Remediation,
     Scoring,
-    Severity,
     Taxonomy,
 )
+from core.scoring.severity import normalize
 
 log = logging.getLogger(__name__)
 
@@ -82,10 +82,10 @@ class GitleaksAdapter(ToolAdapter):
                 taxonomy=Taxonomy(Category.SECRETS, cwe=("CWE-798",)),
                 scoring=Scoring(
                     native_severity={"gitleaks": "ALL"},
-                    normalized_severity=Severity.HIGH,  # matrix: Gitleaks (all) -> HIGH
+                    normalized_severity=normalize("gitleaks", "ANY"),
                     confidence=0.7,
                 ),
-                evidence=Evidence(reported_by=["gitleaks"], rule_ids={"gitleaks": rule_id}),
+                evidence=Evidence(reported_by=["gitleaks"], rule_ids={"gitleaks": [rule_id]}),
                 remediation=Remediation(
                     summary="Rotate this credential and load it from the environment or a "
                     "secrets manager; committed secrets should be treated as compromised.",

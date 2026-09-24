@@ -45,6 +45,11 @@ def scan_cmd(
         json.dumps(
             {
                 "tool_status": result.tool_status,
+                "stats": {
+                    "raw_findings": result.stats.raw,
+                    "unique_findings": result.stats.unique,
+                    "dedup_rate": round(result.stats.dedup_rate, 3),
+                },
                 "findings": [f.to_dict() for f in result.findings],
             },
             indent=2,

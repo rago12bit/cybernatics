@@ -10,6 +10,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any
 
+from core.correlation import correlate
 from core.ingest import IngestError
 from core.models import Category
 from core.persistence import repo
@@ -87,7 +88,9 @@ def run_scan_job(
         log.exception("scan %s crashed", scan_id)
         return fail("internal error while running the scan")
 
-    findings = redact_near_secrets([f for o in outcomes for f in o.findings])
+    # Correlate BEFORE redacting: redaction placeholders look identical and would over-merge.
+    correlated, stats = correlate([f for o in outcomes for f in o.findings])
+    findings = redact_near_secrets(correlated)
     has_secrets = any(f.taxonomy.category is Category.SECRETS for f in findings)
     _store_raw(sessions, store, scan_id, outcomes, raws, has_secrets)
     status = _final_status(outcomes)
@@ -96,7 +99,9 @@ def run_scan_job(
         repo.finish_scan(s, scan_id, status)
         counts = repo.severity_counts(s, scan_id)
     bus.publish(scan_id, {"type": "scan.finished", "scan_id": scan_id, "status": status,
-                          "findings": len(findings), "severity_counts": counts})  # fmt: skip
+                          "findings": len(findings), "raw_findings": stats.raw,
+                          "dedup_rate": round(stats.dedup_rate, 3),
+                          "severity_counts": counts})  # fmt: skip
     _cleanup_upload(source_type, source_ref)
     return status
 

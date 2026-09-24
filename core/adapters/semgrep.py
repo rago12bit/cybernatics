@@ -5,12 +5,8 @@ from __future__ import annotations
 from pathlib import Path
 
 from core.adapters.base import RepoContext, ToolAdapter, ToolSpec
-from core.models import Category, Finding, Severity
+from core.models import Category, Finding
 from core.sarif import parse_sarif
-
-# Judgment call, not derived truth (design doc §6.2): Semgrep ERROR ~ HIGH, WARNING ~ MEDIUM.
-LEVEL_MAP = {"error": Severity.HIGH, "warning": Severity.MEDIUM, "note": Severity.LOW}
-
 
 # detected language -> rule directories baked into the image. Loading only what the repo contains
 # roughly halves scan time (measured: 71s -> 32s on a small Python repo, identical findings).
@@ -62,6 +58,5 @@ class SemgrepAdapter(ToolAdapter):
             raw,
             tool="semgrep",
             category=Category.SAST,
-            level_map=LEVEL_MAP,
             strip_rule_prefix="rules.",
         )

@@ -20,32 +20,11 @@ from core.models import (
     Package,
     Remediation,
     Scoring,
-    Severity,
     Taxonomy,
 )
+from core.scoring.severity import from_cvss, normalize
 
 log = logging.getLogger(__name__)
-
-_LABEL_SEVERITY = {
-    "CRITICAL": Severity.CRITICAL,
-    "HIGH": Severity.HIGH,
-    "MODERATE": Severity.MEDIUM,
-    "MEDIUM": Severity.MEDIUM,
-    "LOW": Severity.LOW,
-}
-
-
-def severity_from_cvss(score: float) -> Severity:
-    """CVSS v3.1 base score bands (design doc §6.2)."""
-    if score >= 9.0:
-        return Severity.CRITICAL
-    if score >= 7.0:
-        return Severity.HIGH
-    if score >= 4.0:
-        return Severity.MEDIUM
-    if score > 0:
-        return Severity.LOW
-    return Severity.INFO
 
 
 class OsvScannerAdapter(ToolAdapter):
@@ -105,9 +84,9 @@ class OsvScannerAdapter(ToolAdapter):
                 db = rep.get("database_specific") or {}
                 score = _to_float(group.get("max_severity"))
                 sev = (
-                    severity_from_cvss(score)
+                    from_cvss(score)
                     if score is not None
-                    else _LABEL_SEVERITY.get(str(db.get("severity", "")).upper(), Severity.INFO)
+                    else normalize("osv-scanner", str(db.get("severity", "")))
                 )
                 fixed = _fixed_versions(rep, name)
                 text = f"{name}@{version}"
@@ -121,6 +100,7 @@ class OsvScannerAdapter(ToolAdapter):
                             Category.SCA,
                             cwe=tuple(str(c) for c in db.get("cwe_ids") or []),
                             cve=cves,
+                            aliases=tuple(sorted(aliases)),
                         ),
                         scoring=Scoring(
                             native_severity={"osv-scanner": str(group.get("max_severity", ""))},
@@ -129,7 +109,7 @@ class OsvScannerAdapter(ToolAdapter):
                             confidence=0.9,
                         ),
                         evidence=Evidence(
-                            reported_by=["osv-scanner"], rule_ids={"osv-scanner": ids[0]}
+                            reported_by=["osv-scanner"], rule_ids={"osv-scanner": [ids[0]]}
                         ),
                         remediation=Remediation(
                             summary=(

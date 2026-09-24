@@ -1,0 +1,69 @@
+"""Severity normalization matrix (design doc §6.2).
+
+Tool severity vocabularies are not comparable: Semgrep's ERROR is not Trivy's HIGH. This table is
+an explicit *judgment call*, not a derived truth, and lives in one place so it can be reviewed.
+"""
+
+from __future__ import annotations
+
+from core.models import Severity
+
+S = Severity
+
+# tool -> {native label (upper-case) -> normalized severity}. "*" matches any label.
+MATRIX: dict[str, dict[str, Severity]] = {
+    "semgrep": {"ERROR": S.HIGH, "WARNING": S.MEDIUM, "INFO": S.LOW},
+    "bandit": {"HIGH": S.HIGH, "MEDIUM": S.MEDIUM, "LOW": S.LOW},
+    "trivy": {
+        "CRITICAL": S.CRITICAL,
+        "HIGH": S.HIGH,
+        "MEDIUM": S.MEDIUM,
+        "LOW": S.LOW,
+        "UNKNOWN": S.INFO,
+    },
+    "gitleaks": {"*": S.HIGH},  # a committed credential is always treated as high
+    # OSV-Scanner reports CVSS scores where available (see from_cvss), else GitHub-style labels:
+    "osv-scanner": {
+        "CRITICAL": S.CRITICAL,
+        "HIGH": S.HIGH,
+        "MODERATE": S.MEDIUM,
+        "MEDIUM": S.MEDIUM,
+        "LOW": S.LOW,
+    },
+}
+
+# CVSS v3.1 base-score bands (FIRST.org qualitative severity rating scale).
+CVSS_BANDS: tuple[tuple[float, Severity], ...] = (
+    (9.0, S.CRITICAL),
+    (7.0, S.HIGH),
+    (4.0, S.MEDIUM),
+    (0.1, S.LOW),
+)
+
+
+def normalize(tool: str, native: str, default: Severity = S.INFO) -> Severity:
+    table = MATRIX.get(tool, {})
+    return table.get(native.strip().upper(), table.get("*", default))
+
+
+def from_cvss(score: float) -> Severity:
+    for floor, sev in CVSS_BANDS:
+        if score >= floor:
+            return sev
+    return S.INFO
+
+
+def as_markdown() -> str:
+    cols = [S.CRITICAL, S.HIGH, S.MEDIUM, S.LOW, S.INFO]
+    rows = ["| Tool | " + " | ".join(c.value for c in cols) + " |", "|---|" + "---|" * len(cols)]
+    for tool, table in MATRIX.items():
+        cells = []
+        for c in cols:
+            labels = [k if k != "*" else "(any)" for k, v in table.items() if v is c]
+            cells.append(", ".join(labels) or "—")
+        rows.append(f"| {tool} | " + " | ".join(cells) + " |")
+    bands = {S.CRITICAL: "≥ 9.0", S.HIGH: "7.0–8.9", S.MEDIUM: "4.0–6.9", S.LOW: "0.1–3.9"}
+    rows.append(
+        "| OSV via CVSS v3.1 | " + " | ".join(bands.get(c, "0 / none") for c in cols) + " |"
+    )
+    return "\n".join(rows)

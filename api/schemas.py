@@ -42,6 +42,9 @@ class ScanView(BaseModel):
     error: str | None
     tool_status: dict[str, ToolStatus]
     severity_counts: dict[str, int]
+    raw_findings: int = Field(description="Sum of every tool's findings before correlation.")
+    unique_findings: int = Field(description="Findings after cross-tool deduplication.")
+    dedup_rate: float = Field(description="1 - unique/raw; 0 when there were no findings.")
 
 
 class FindingsPage(BaseModel):

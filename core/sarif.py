@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 import logging
 import re
-from collections.abc import Mapping
 from typing import Any
 
 from core.adapters.base import TARGET_PREFIX
@@ -16,24 +15,18 @@ from core.models import (
     Location,
     Remediation,
     Scoring,
-    Severity,
     Taxonomy,
 )
+from core.scoring.severity import normalize
 
 log = logging.getLogger(__name__)
 
 _CWE_RE = re.compile(r"\bCWE-\d+\b")
 _OWASP_2021_RE = re.compile(r"\bOWASP-(A\d{2}:2021)\b")
 _CONFIDENCE_RE = re.compile(r"\b(LOW|MEDIUM|HIGH) CONFIDENCE\b", re.IGNORECASE)
+# SARIF levels -> the tool's own vocabulary in the matrix (Semgrep says ERROR/WARNING/INFO).
+_SARIF_LEVELS = {"error": "ERROR", "warning": "WARNING", "note": "INFO", "none": "INFO"}
 _CONFIDENCE = {"LOW": 0.3, "MEDIUM": 0.6, "HIGH": 0.9}
-
-# Tool-specific level -> severity matrix lives with the adapter; this is the SARIF-spec fallback.
-DEFAULT_LEVEL_MAP: Mapping[str, Severity] = {
-    "error": Severity.HIGH,
-    "warning": Severity.MEDIUM,
-    "note": Severity.LOW,
-    "none": Severity.INFO,
-}
 
 
 def parse_sarif(
@@ -41,7 +34,6 @@ def parse_sarif(
     *,
     tool: str,
     category: Category,
-    level_map: Mapping[str, Severity] = DEFAULT_LEVEL_MAP,
     strip_rule_prefix: str = "",
 ) -> list[Finding]:
     """SARIF bytes -> Findings. Never raises on malformed input."""
@@ -51,7 +43,7 @@ def parse_sarif(
         for run in doc["runs"]:
             rules = {r["id"]: r for r in run.get("tool", {}).get("driver", {}).get("rules", [])}
             for result in run.get("results", []):
-                f = _to_finding(result, rules, tool, category, level_map, strip_rule_prefix)
+                f = _to_finding(result, rules, tool, category, strip_rule_prefix)
                 if f is not None:
                     findings.append(f)
         return findings
@@ -65,7 +57,6 @@ def _to_finding(
     rules: dict[str, dict[str, Any]],
     tool: str,
     category: Category,
-    level_map: Mapping[str, Severity],
     strip_prefix: str,
 ) -> Finding | None:
     try:
@@ -96,10 +87,10 @@ def _to_finding(
             ),
             scoring=Scoring(
                 native_severity={tool: level.upper()},
-                normalized_severity=level_map.get(level.lower(), Severity.INFO),
+                normalized_severity=normalize(tool, _SARIF_LEVELS.get(level.lower(), level)),
                 confidence=_CONFIDENCE[conf.group(1).upper()] if conf else 0.5,
             ),
-            evidence=Evidence(reported_by=[tool], rule_ids={tool: rule_id}),
+            evidence=Evidence(reported_by=[tool], rule_ids={tool: [rule_id]}),
             remediation=Remediation(references=[rule["helpUri"]] if rule.get("helpUri") else []),
         )
     except (KeyError, IndexError, TypeError, ValueError) as exc:

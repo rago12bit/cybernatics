@@ -249,3 +249,14 @@ def test_queue_outage_fails_the_scan_and_removes_the_upload(env) -> None:  # typ
 
         scans = s.query(Scan).all()
         assert len(scans) == 2 and {x.status for x in scans} == {"failed"}  # nothing stuck "queued"
+
+
+def test_scan_view_reports_raw_unique_and_dedup_rate(env) -> None:  # type: ignore[no-untyped-def]
+    client, _, sessions, *_ = env
+    sid = _seed(sessions)  # tool_runs claim 2 raw findings (bandit=2), 2 unique stored
+    v = client.get(f"/scans/{sid}", headers=AUTH).json()
+    assert (v["raw_findings"], v["unique_findings"], v["dedup_rate"]) == (2, 2, 0.0)
+    with sessions() as s:
+        repo.add_tool_run(s, sid, "semgrep", {"status": "ok", "findings": 2})
+    v = client.get(f"/scans/{sid}", headers=AUTH).json()
+    assert (v["raw_findings"], v["unique_findings"], v["dedup_rate"]) == (4, 2, 0.5)

@@ -1,39 +1,39 @@
 {
   "errors": [],
-  "generated_at": "2026-09-24T16:10:53Z",
+  "generated_at": "2026-09-24T18:28:35Z",
   "metrics": {
     "/target/src/users.py": {
       "CONFIDENCE.HIGH": 3,
       "CONFIDENCE.LOW": 1,
-      "CONFIDENCE.MEDIUM": 1,
+      "CONFIDENCE.MEDIUM": 2,
       "CONFIDENCE.UNDEFINED": 0,
       "SEVERITY.HIGH": 2,
-      "SEVERITY.LOW": 2,
+      "SEVERITY.LOW": 3,
       "SEVERITY.MEDIUM": 1,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 9,
+      "loc": 11,
       "nosec": 0,
       "skipped_tests": 0
     },
     "_totals": {
       "CONFIDENCE.HIGH": 3,
       "CONFIDENCE.LOW": 1,
-      "CONFIDENCE.MEDIUM": 1,
+      "CONFIDENCE.MEDIUM": 2,
       "CONFIDENCE.UNDEFINED": 0,
       "SEVERITY.HIGH": 2,
-      "SEVERITY.LOW": 2,
+      "SEVERITY.LOW": 3,
       "SEVERITY.MEDIUM": 1,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 9,
+      "loc": 11,
       "nosec": 0,
       "skipped_tests": 0
     }
   },
   "results": [
     {
-      "code": "1 import sqlite3, subprocess, hashlib\n2 \n3 def get_user(conn, user_id):\n",
+      "code": "1 import hashlib\n2 import subprocess\n3 \n",
       "col_offset": 0,
-      "end_col_offset": 35,
+      "end_col_offset": 17,
       "filename": "/target/src/users.py",
       "issue_confidence": "HIGH",
       "issue_cwe": {
@@ -42,16 +42,16 @@
       },
       "issue_severity": "LOW",
       "issue_text": "Consider possible security implications associated with the subprocess module.",
-      "line_number": 1,
+      "line_number": 2,
       "line_range": [
-        1
+        2
       ],
       "more_info": "https://bandit.readthedocs.io/en/1.7.10/blacklists/blacklist_imports.html#b404-import-subprocess",
       "test_id": "B404",
       "test_name": "blacklist"
     },
     {
-      "code": "3 def get_user(conn, user_id):\n4     query = \"SELECT * FROM users WHERE id=\" + user_id\n5     return conn.execute(query).fetchall()\n",
+      "code": "5 def get_user(conn, user_id):\n6     query = \"SELECT * FROM users WHERE id=\" + user_id\n7     return conn.execute(query).fetchall()\n",
       "col_offset": 12,
       "end_col_offset": 43,
       "filename": "/target/src/users.py",
@@ -62,16 +62,16 @@
       },
       "issue_severity": "MEDIUM",
       "issue_text": "Possible SQL injection vector through string-based query construction.",
-      "line_number": 4,
+      "line_number": 6,
       "line_range": [
-        4
+        6
       ],
       "more_info": "https://bandit.readthedocs.io/en/1.7.10/plugins/b608_hardcoded_sql_expressions.html",
       "test_id": "B608",
       "test_name": "hardcoded_sql_expressions"
     },
     {
-      "code": "7 def run(cmd):\n8     return subprocess.call(cmd, shell=True)\n9 \n",
+      "code": "10 def run(cmd):\n11     return subprocess.call(cmd, shell=True)\n12 \n",
       "col_offset": 11,
       "end_col_offset": 43,
       "filename": "/target/src/users.py",
@@ -82,16 +82,16 @@
       },
       "issue_severity": "HIGH",
       "issue_text": "subprocess call with shell=True identified, security issue.",
-      "line_number": 8,
+      "line_number": 11,
       "line_range": [
-        8
+        11
       ],
       "more_info": "https://bandit.readthedocs.io/en/1.7.10/plugins/b602_subprocess_popen_with_shell_equals_true.html",
       "test_id": "B602",
       "test_name": "subprocess_popen_with_shell_equals_true"
     },
     {
-      "code": "10 def digest(pw):\n11     return hashlib.md5(pw.encode()).hexdigest()\n12 \n",
+      "code": "14 def digest(pw):\n15     return hashlib.md5(pw.encode()).hexdigest()\n16 \n",
       "col_offset": 11,
       "end_col_offset": 35,
       "filename": "/target/src/users.py",
@@ -102,16 +102,16 @@
       },
       "issue_severity": "HIGH",
       "issue_text": "Use of weak MD5 hash for security. Consider usedforsecurity=False",
-      "line_number": 11,
+      "line_number": 15,
       "line_range": [
-        11
+        15
       ],
       "more_info": "https://bandit.readthedocs.io/en/1.7.10/plugins/b324_hashlib.html",
       "test_id": "B324",
       "test_name": "hashlib"
     },
     {
-      "code": "12 \n13 PASSWORD = \"hunter2\"\n",
+      "code": "17 \n18 PASSWORD = \"hunter2\"\n19 \n",
       "col_offset": 11,
       "end_col_offset": 20,
       "filename": "/target/src/users.py",
@@ -122,9 +122,29 @@
       },
       "issue_severity": "LOW",
       "issue_text": "Possible hardcoded password: 'hunter2'",
-      "line_number": 13,
+      "line_number": 18,
       "line_range": [
-        13
+        18
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.7.10/plugins/b105_hardcoded_password_string.html",
+      "test_id": "B105",
+      "test_name": "hardcoded_password_string"
+    },
+    {
+      "code": "19 \n20 SECRET_KEY = \"8f3b9c1d7e2a4f6b9d0c3e5a7b1f2d4c9e8a7b6c\"\n",
+      "col_offset": 13,
+      "end_col_offset": 55,
+      "filename": "/target/src/users.py",
+      "issue_confidence": "MEDIUM",
+      "issue_cwe": {
+        "id": 259,
+        "link": "https://cwe.mitre.org/data/definitions/259.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "Possible hardcoded password: '8f3b9c1d7e2a4f6b9d0c3e5a7b1f2d4c9e8a7b6c'",
+      "line_number": 20,
+      "line_range": [
+        20
       ],
       "more_info": "https://bandit.readthedocs.io/en/1.7.10/plugins/b105_hardcoded_password_string.html",
       "test_id": "B105",

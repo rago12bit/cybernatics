@@ -7,7 +7,9 @@
         "trivy"
       ],
       "rule_ids": {
-        "trivy": "CVE-2019-10744"
+        "trivy": [
+          "CVE-2019-10744"
+        ]
       }
     },
     "fingerprint": "",
@@ -46,6 +48,9 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [
+        "CVE-2019-10744"
+      ],
       "category": "sca",
       "cve": [
         "CVE-2019-10744"
@@ -70,7 +75,9 @@
         "trivy"
       ],
       "rule_ids": {
-        "trivy": "CVE-2018-16487"
+        "trivy": [
+          "CVE-2018-16487"
+        ]
       }
     },
     "fingerprint": "",
@@ -109,6 +116,9 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [
+        "CVE-2018-16487"
+      ],
       "category": "sca",
       "cve": [
         "CVE-2018-16487"
@@ -133,7 +143,9 @@
         "trivy"
       ],
       "rule_ids": {
-        "trivy": "CVE-2020-8203"
+        "trivy": [
+          "CVE-2020-8203"
+        ]
       }
     },
     "fingerprint": "",
@@ -172,6 +184,9 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [
+        "CVE-2020-8203"
+      ],
       "category": "sca",
       "cve": [
         "CVE-2020-8203"
@@ -197,7 +212,9 @@
         "trivy"
       ],
       "rule_ids": {
-        "trivy": "CVE-2021-23337"
+        "trivy": [
+          "CVE-2021-23337"
+        ]
       }
     },
     "fingerprint": "",
@@ -236,6 +253,9 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [
+        "CVE-2021-23337"
+      ],
       "category": "sca",
       "cve": [
         "CVE-2021-23337"
@@ -260,7 +280,9 @@
         "trivy"
       ],
       "rule_ids": {
-        "trivy": "CVE-2026-4800"
+        "trivy": [
+          "CVE-2026-4800"
+        ]
       }
     },
     "fingerprint": "",
@@ -299,6 +321,9 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [
+        "CVE-2026-4800"
+      ],
       "category": "sca",
       "cve": [
         "CVE-2026-4800"
@@ -323,7 +348,9 @@
         "trivy"
       ],
       "rule_ids": {
-        "trivy": "CVE-2019-1010266"
+        "trivy": [
+          "CVE-2019-1010266"
+        ]
       }
     },
     "fingerprint": "",
@@ -362,6 +389,9 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [
+        "CVE-2019-1010266"
+      ],
       "category": "sca",
       "cve": [
         "CVE-2019-1010266"
@@ -387,7 +417,9 @@
         "trivy"
       ],
       "rule_ids": {
-        "trivy": "CVE-2020-28500"
+        "trivy": [
+          "CVE-2020-28500"
+        ]
       }
     },
     "fingerprint": "",
@@ -426,6 +458,9 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [
+        "CVE-2020-28500"
+      ],
       "category": "sca",
       "cve": [
         "CVE-2020-28500"
@@ -448,7 +483,9 @@
         "trivy"
       ],
       "rule_ids": {
-        "trivy": "CVE-2025-13465"
+        "trivy": [
+          "CVE-2025-13465"
+        ]
       }
     },
     "fingerprint": "",
@@ -487,6 +524,9 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [
+        "CVE-2025-13465"
+      ],
       "category": "sca",
       "cve": [
         "CVE-2025-13465"
@@ -511,7 +551,9 @@
         "trivy"
       ],
       "rule_ids": {
-        "trivy": "CVE-2026-2950"
+        "trivy": [
+          "CVE-2026-2950"
+        ]
       }
     },
     "fingerprint": "",
@@ -550,6 +592,9 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [
+        "CVE-2026-2950"
+      ],
       "category": "sca",
       "cve": [
         "CVE-2026-2950"
@@ -574,7 +619,9 @@
         "trivy"
       ],
       "rule_ids": {
-        "trivy": "CVE-2018-3721"
+        "trivy": [
+          "CVE-2018-3721"
+        ]
       }
     },
     "fingerprint": "",
@@ -613,6 +660,9 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [
+        "CVE-2018-3721"
+      ],
       "category": "sca",
       "cve": [
         "CVE-2018-3721"
@@ -638,7 +688,9 @@
         "trivy"
       ],
       "rule_ids": {
-        "trivy": "CVE-2018-1000656"
+        "trivy": [
+          "CVE-2018-1000656"
+        ]
       }
     },
     "fingerprint": "",
@@ -677,6 +729,9 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [
+        "CVE-2018-1000656"
+      ],
       "category": "sca",
       "cve": [
         "CVE-2018-1000656"
@@ -701,7 +756,9 @@
         "trivy"
       ],
       "rule_ids": {
-        "trivy": "CVE-2019-1010083"
+        "trivy": [
+          "CVE-2019-1010083"
+        ]
       }
     },
     "fingerprint": "",
@@ -740,6 +797,9 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [
+        "CVE-2019-1010083"
+      ],
       "category": "sca",
       "cve": [
         "CVE-2019-1010083"
@@ -762,7 +822,9 @@
         "trivy"
       ],
       "rule_ids": {
-        "trivy": "CVE-2023-30861"
+        "trivy": [
+          "CVE-2023-30861"
+        ]
       }
     },
     "fingerprint": "",
@@ -801,6 +863,9 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [
+        "CVE-2023-30861"
+      ],
       "category": "sca",
       "cve": [
         "CVE-2023-30861"
@@ -825,7 +890,9 @@
         "trivy"
       ],
       "rule_ids": {
-        "trivy": "CVE-2026-27205"
+        "trivy": [
+          "CVE-2026-27205"
+        ]
       }
     },
     "fingerprint": "",
@@ -864,6 +931,9 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [
+        "CVE-2026-27205"
+      ],
       "category": "sca",
       "cve": [
         "CVE-2026-27205"
@@ -888,7 +958,9 @@
         "trivy"
       ],
       "rule_ids": {
-        "trivy": "CVE-2018-18074"
+        "trivy": [
+          "CVE-2018-18074"
+        ]
       }
     },
     "fingerprint": "",
@@ -927,6 +999,9 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [
+        "CVE-2018-18074"
+      ],
       "category": "sca",
       "cve": [
         "CVE-2018-18074"
@@ -951,7 +1026,9 @@
         "trivy"
       ],
       "rule_ids": {
-        "trivy": "CVE-2023-32681"
+        "trivy": [
+          "CVE-2023-32681"
+        ]
       }
     },
     "fingerprint": "",
@@ -990,6 +1067,9 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [
+        "CVE-2023-32681"
+      ],
       "category": "sca",
       "cve": [
         "CVE-2023-32681"
@@ -1014,7 +1094,9 @@
         "trivy"
       ],
       "rule_ids": {
-        "trivy": "CVE-2024-35195"
+        "trivy": [
+          "CVE-2024-35195"
+        ]
       }
     },
     "fingerprint": "",
@@ -1053,6 +1135,9 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [
+        "CVE-2024-35195"
+      ],
       "category": "sca",
       "cve": [
         "CVE-2024-35195"
@@ -1077,7 +1162,9 @@
         "trivy"
       ],
       "rule_ids": {
-        "trivy": "CVE-2024-47081"
+        "trivy": [
+          "CVE-2024-47081"
+        ]
       }
     },
     "fingerprint": "",
@@ -1116,6 +1203,9 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [
+        "CVE-2024-47081"
+      ],
       "category": "sca",
       "cve": [
         "CVE-2024-47081"
@@ -1140,7 +1230,9 @@
         "trivy"
       ],
       "rule_ids": {
-        "trivy": "CVE-2026-25645"
+        "trivy": [
+          "CVE-2026-25645"
+        ]
       }
     },
     "fingerprint": "",
@@ -1179,6 +1271,9 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [
+        "CVE-2026-25645"
+      ],
       "category": "sca",
       "cve": [
         "CVE-2026-25645"
@@ -1203,7 +1298,9 @@
         "trivy"
       ],
       "rule_ids": {
-        "trivy": "DS002"
+        "trivy": [
+          "DS002"
+        ]
       }
     },
     "fingerprint": "",
@@ -1238,6 +1335,7 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [],
       "category": "container",
       "cve": [],
       "cwe": [],
@@ -1258,7 +1356,9 @@
         "trivy"
       ],
       "rule_ids": {
-        "trivy": "DS026"
+        "trivy": [
+          "DS026"
+        ]
       }
     },
     "fingerprint": "",
@@ -1293,6 +1393,7 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [],
       "category": "container",
       "cve": [],
       "cwe": [],
@@ -1313,7 +1414,9 @@
         "trivy"
       ],
       "rule_ids": {
-        "trivy": "DS029"
+        "trivy": [
+          "DS029"
+        ]
       }
     },
     "fingerprint": "",
@@ -1348,6 +1451,7 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [],
       "category": "container",
       "cve": [],
       "cwe": [],
@@ -1368,7 +1472,9 @@
         "trivy"
       ],
       "rule_ids": {
-        "trivy": "AVD-AWS-0086"
+        "trivy": [
+          "AVD-AWS-0086"
+        ]
       }
     },
     "fingerprint": "",
@@ -1403,6 +1509,7 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [],
       "category": "iac",
       "cve": [],
       "cwe": [],
@@ -1423,7 +1530,9 @@
         "trivy"
       ],
       "rule_ids": {
-        "trivy": "AVD-AWS-0087"
+        "trivy": [
+          "AVD-AWS-0087"
+        ]
       }
     },
     "fingerprint": "",
@@ -1458,6 +1567,7 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [],
       "category": "iac",
       "cve": [],
       "cwe": [],
@@ -1478,7 +1588,9 @@
         "trivy"
       ],
       "rule_ids": {
-        "trivy": "AVD-AWS-0088"
+        "trivy": [
+          "AVD-AWS-0088"
+        ]
       }
     },
     "fingerprint": "",
@@ -1513,6 +1625,7 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [],
       "category": "iac",
       "cve": [],
       "cwe": [],
@@ -1533,7 +1646,9 @@
         "trivy"
       ],
       "rule_ids": {
-        "trivy": "s3-bucket-logging"
+        "trivy": [
+          "s3-bucket-logging"
+        ]
       }
     },
     "fingerprint": "",
@@ -1568,6 +1683,7 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [],
       "category": "iac",
       "cve": [],
       "cwe": [],
@@ -1588,7 +1704,9 @@
         "trivy"
       ],
       "rule_ids": {
-        "trivy": "AVD-AWS-0090"
+        "trivy": [
+          "AVD-AWS-0090"
+        ]
       }
     },
     "fingerprint": "",
@@ -1623,6 +1741,7 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [],
       "category": "iac",
       "cve": [],
       "cwe": [],
@@ -1643,7 +1762,9 @@
         "trivy"
       ],
       "rule_ids": {
-        "trivy": "AVD-AWS-0091"
+        "trivy": [
+          "AVD-AWS-0091"
+        ]
       }
     },
     "fingerprint": "",
@@ -1678,6 +1799,7 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [],
       "category": "iac",
       "cve": [],
       "cwe": [],
@@ -1698,7 +1820,9 @@
         "trivy"
       ],
       "rule_ids": {
-        "trivy": "AVD-AWS-0092"
+        "trivy": [
+          "AVD-AWS-0092"
+        ]
       }
     },
     "fingerprint": "",
@@ -1733,6 +1857,7 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [],
       "category": "iac",
       "cve": [],
       "cwe": [],
@@ -1753,7 +1878,9 @@
         "trivy"
       ],
       "rule_ids": {
-        "trivy": "AVD-AWS-0093"
+        "trivy": [
+          "AVD-AWS-0093"
+        ]
       }
     },
     "fingerprint": "",
@@ -1788,6 +1915,7 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [],
       "category": "iac",
       "cve": [],
       "cwe": [],
@@ -1808,7 +1936,9 @@
         "trivy"
       ],
       "rule_ids": {
-        "trivy": "AVD-AWS-0094"
+        "trivy": [
+          "AVD-AWS-0094"
+        ]
       }
     },
     "fingerprint": "",
@@ -1843,6 +1973,7 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [],
       "category": "iac",
       "cve": [],
       "cwe": [],
@@ -1863,7 +1994,9 @@
         "trivy"
       ],
       "rule_ids": {
-        "trivy": "AVD-AWS-0107"
+        "trivy": [
+          "AVD-AWS-0107"
+        ]
       }
     },
     "fingerprint": "",
@@ -1898,6 +2031,7 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [],
       "category": "iac",
       "cve": [],
       "cwe": [],
@@ -1918,7 +2052,9 @@
         "trivy"
       ],
       "rule_ids": {
-        "trivy": "AVD-AWS-0124"
+        "trivy": [
+          "AVD-AWS-0124"
+        ]
       }
     },
     "fingerprint": "",
@@ -1953,6 +2089,7 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [],
       "category": "iac",
       "cve": [],
       "cwe": [],
@@ -1973,7 +2110,9 @@
         "trivy"
       ],
       "rule_ids": {
-        "trivy": "AVD-AWS-0132"
+        "trivy": [
+          "AVD-AWS-0132"
+        ]
       }
     },
     "fingerprint": "",
@@ -2008,6 +2147,7 @@
       "risk_score": null
     },
     "taxonomy": {
+      "aliases": [],
       "category": "iac",
       "cve": [],
       "cwe": [],
