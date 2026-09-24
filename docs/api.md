@@ -11,6 +11,12 @@ and then streams `snapshot`, `tool.finished` and `scan.finished` events.
 Create Scan
 
 
+## `GET /scans`
+
+List Scans
+
+- `limit` (query)
+
 ## `POST /scans/upload`
 
 Upload Scan

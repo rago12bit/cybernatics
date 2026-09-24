@@ -10,15 +10,20 @@
       "post": {
         "summary": "Create Scan",
         "operationId": "create_scan_scans_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/ScanRequest"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "202": {
@@ -41,12 +46,56 @@
               }
             }
           }
-        },
+        }
+      },
+      "get": {
+        "summary": "List Scans",
+        "operationId": "list_scans_scans_get",
         "security": [
           {
             "HTTPBearer": []
           }
-        ]
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ScanSummary"
+                  },
+                  "title": "Response List Scans Scans Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/scans/upload": {
@@ -427,6 +476,66 @@
           "source"
         ],
         "title": "ScanRequest"
+      },
+      "ScanSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "source_type": {
+            "type": "string",
+            "title": "Source Type"
+          },
+          "source_label": {
+            "type": "string",
+            "title": "Source Label"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "unique_findings": {
+            "type": "integer",
+            "title": "Unique Findings"
+          },
+          "severity_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Severity Counts"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "source_type",
+          "source_label",
+          "created_at",
+          "finished_at",
+          "unique_findings",
+          "severity_counts"
+        ],
+        "title": "ScanSummary"
       },
       "ScanView": {
         "properties": {

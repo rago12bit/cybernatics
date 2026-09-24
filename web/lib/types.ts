@@ -1,0 +1,99 @@
+// Mirrors the Bulwark API schemas (docs/openapi.json). Anything a scanned repository can influence
+// (titles, snippets, paths, URLs) is untrusted and must only ever be rendered as text.
+
+export type Severity = "CRITICAL" | "HIGH" | "MEDIUM" | "LOW" | "INFO";
+export type ScanStatus = "queued" | "running" | "completed" | "partial" | "failed";
+export type ToolState = "ok" | "timeout" | "error" | "skipped";
+
+export const SEVERITIES: Severity[] = ["CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO"];
+export const CATEGORIES = ["sast", "sca", "secrets", "iac", "container"] as const;
+export const TOOLS = ["bandit", "semgrep", "gitleaks", "trivy", "osv-scanner"] as const;
+export const TERMINAL: ScanStatus[] = ["completed", "partial", "failed"];
+
+export interface ToolStatus {
+  status: ToolState;
+  findings: number;
+  exit_code: number | null;
+  duration_seconds: number | null;
+  error: string | null;
+  raw_artifact: "available" | "withheld" | null;
+}
+
+export interface ScanView {
+  id: string;
+  status: ScanStatus;
+  source_type: string;
+  source_label: string;
+  tools: string[];
+  created_at: string;
+  started_at: string | null;
+  finished_at: string | null;
+  error: string | null;
+  tool_status: Record<string, ToolStatus>;
+  severity_counts: Partial<Record<Severity, number>>;
+  raw_findings: number;
+  unique_findings: number;
+  dedup_rate: number;
+}
+
+export interface ScanSummary {
+  id: string;
+  status: ScanStatus;
+  source_type: string;
+  source_label: string;
+  created_at: string;
+  finished_at: string | null;
+  unique_findings: number;
+  severity_counts: Partial<Record<Severity, number>>;
+}
+
+export interface Finding {
+  id: string;
+  fingerprint: string;
+  title: string;
+  description: string;
+  location: { path: string; start_line: number; end_line: number; snippet: string };
+  taxonomy: {
+    category: string;
+    cwe: string[];
+    owasp_top_10_2021: string[];
+    cve: string[];
+    aliases: string[];
+  };
+  scoring: {
+    native_severity: Record<string, string>;
+    normalized_severity: Severity;
+    cvss_v3_1: number | null;
+    risk_score: number | null;
+    confidence: number;
+  };
+  evidence: {
+    reported_by: string[];
+    agreement_count: number;
+    rule_ids: Record<string, string[]>;
+  };
+  remediation: { summary: string; references: string[]; generated_by: string };
+  package: { name: string; version: string; ecosystem: string } | null;
+}
+
+export interface FindingsPage {
+  total: number;
+  limit: number;
+  offset: number;
+  items: Finding[];
+}
+
+export interface FindingsQuery {
+  severity: Severity[];
+  category: string;
+  tool: string;
+  path: string;
+  sort: "severity" | "path" | "risk";
+  page: number; // zero-based
+}
+
+export type ProgressEvent =
+  | { type: "snapshot" }
+  | { type: "scan.started"; tools: string[] }
+  | ({ type: "tool.finished"; tool: string } & Partial<ToolStatus>)
+  | { type: "scan.finished"; status: ScanStatus; findings?: number; error?: string };

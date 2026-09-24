@@ -20,6 +20,7 @@ class Settings:
     workdir: Path
     upload_dir: Path
     max_upload_bytes: int
+    cors_origins: tuple[str, ...] = ("http://localhost:3000",)
 
     @staticmethod
     def from_env() -> Settings:
@@ -35,6 +36,11 @@ class Settings:
             workdir=workdir,
             upload_dir=workdir / "uploads",
             max_upload_bytes=int(os.environ.get("BULWARK_MAX_UPLOAD_BYTES", 100 * 1024 * 1024)),
+            cors_origins=tuple(
+                o.strip()
+                for o in os.environ.get("BULWARK_CORS_ORIGINS", "http://localhost:3000").split(",")
+                if o.strip()
+            ),
         )
 
 

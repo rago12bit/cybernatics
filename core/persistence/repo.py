@@ -33,6 +33,10 @@ def create_scan(
     return scan
 
 
+def list_scans(s: Session, limit: int = 20) -> list[Scan]:
+    return list(s.scalars(select(Scan).order_by(Scan.created_at.desc()).limit(limit)))
+
+
 def get_scan(s: Session, scan_id: str) -> Scan | None:
     return s.get(Scan, scan_id)
 

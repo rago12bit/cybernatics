@@ -41,6 +41,9 @@ class OsvScannerAdapter(ToolAdapter):
     ) -> list[str]:
         return [
             "--experimental-offline-vulnerabilities",
+            # Manifests (package.json, pom.xml, ...) otherwise trigger transitive dependency
+            # resolution over the network; the sandbox has none, so each file stalls until timeout.
+            "--experimental-no-resolve",
             "--format", "json",
             "--output", str(output),
             "-r", str(target),

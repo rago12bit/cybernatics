@@ -99,6 +99,17 @@ services:
       objectstore: { condition: service_healthy }
       socket-proxy: { condition: service_started }
 
+  web:
+    build:
+      context: web
+      args:
+        NEXT_PUBLIC_API_URL: ${BULWARK_PUBLIC_API_URL:-http://localhost:8000}
+    image: bulwark/web:dev
+    ports: ["127.0.0.1:3000:3000"]
+    depends_on:
+      api: { condition: service_healthy }
+    restart: unless-stopped
+
   # Scanner images are built (not run) here so one command builds the whole system.
   scanner-bandit:
     profiles: [scanners]

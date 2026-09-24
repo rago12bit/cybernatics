@@ -13,11 +13,12 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Query, UploadFile, WebSocket
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.websockets import WebSocketDisconnect
 from sqlalchemy.orm import Session
 
 from api.deps import AppState, EventSubscriber, db, require_auth, state, token_ok
-from api.schemas import FindingsPage, ScanCreated, ScanRequest, ScanView, ToolStatus
+from api.schemas import FindingsPage, ScanCreated, ScanRequest, ScanSummary, ScanView, ToolStatus
 from core.config import Settings
 from core.gitfetch import GitUrlError, validate_git_url
 from core.persistence import repo
@@ -103,6 +104,13 @@ def create_app(app_state: AppState) -> FastAPI:
         description="Unified security scanning: submit a scan, watch progress, read findings.",
     )
     app.state.bulwark = app_state
+    # Explicit origin allowlist (never "*"): only the configured UI origins may call the API.
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=list(app_state.settings.cors_origins),
+        allow_methods=["GET", "POST"],
+        allow_headers=["Authorization", "Content-Type"],
+    )
 
     @app.get("/healthz", include_in_schema=False)
     def healthz() -> dict[str, str]:
@@ -161,6 +169,23 @@ def create_app(app_state: AppState) -> FastAPI:
         )
         _dispatch(st, s, scan)
         return ScanCreated(id=scan.id, status=scan.status)
+
+    @app.get("/scans", response_model=list[ScanSummary], dependencies=[Depends(require_auth)])
+    def list_scans(
+        limit: int = Query(default=20, ge=1, le=50), s: Session = Depends(db)
+    ) -> list[ScanSummary]:
+        out: list[ScanSummary] = []
+        for scan in repo.list_scans(s, limit):
+            counts = repo.severity_counts(s, scan.id)
+            out.append(
+                ScanSummary(
+                    id=scan.id, status=scan.status, source_type=scan.source_type,
+                    source_label=scan.source_label, created_at=scan.created_at,
+                    finished_at=scan.finished_at, unique_findings=sum(counts.values()),
+                    severity_counts=counts,
+                )
+            )  # fmt: skip
+        return out
 
     @app.get("/scans/{scan_id}", response_model=ScanView, dependencies=[Depends(require_auth)])
     def get_scan(scan_id: str, s: Session = Depends(db)) -> ScanView:

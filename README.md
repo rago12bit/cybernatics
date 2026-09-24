@@ -24,6 +24,11 @@ docker compose --profile scanners build     # builds the app image and the 4 cus
 docker compose up -d
 ```
 
+Open **http://localhost:3000** for the web UI: paste your API token once, submit a Git URL or an
+archive, watch scanners report live, then filter and sort the merged findings and open any finding for
+the code, per-scanner severities and fix guidance. The UI is served with a strict per-request-nonce
+CSP and renders all scanner data as text, never HTML (threat T9; covered by `web/tests/xss.test.tsx`).
+
 The API listens on `http://127.0.0.1:8000` (interactive docs at `/docs`). Every endpoint except
 `/healthz` needs `Authorization: Bearer $BULWARK_API_TOKEN` (see `.env`).
 
@@ -73,3 +78,11 @@ bulwark scan ./my-project --distributed
 
 Gitleaks uses the upstream image. Semgrep's rules are fetched at build time and are for your own
 internal use only — see [ADR-006](docs/adr/0006-semgrep-rules-licensing.md).
+
+## Web UI development
+
+```bash
+cd web && npm ci
+npm run dev          # http://localhost:3000, expects the API on :8000 (NEXT_PUBLIC_API_URL)
+npm test && npm run typecheck && npm run build
+```

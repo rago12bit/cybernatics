@@ -260,3 +260,24 @@ def test_scan_view_reports_raw_unique_and_dedup_rate(env) -> None:  # type: igno
         repo.add_tool_run(s, sid, "semgrep", {"status": "ok", "findings": 2})
     v = client.get(f"/scans/{sid}", headers=AUTH).json()
     assert (v["raw_findings"], v["unique_findings"], v["dedup_rate"]) == (4, 2, 0.5)
+
+
+def test_list_scans_newest_first_with_counts(env) -> None:  # type: ignore[no-untyped-def]
+    client, _, sessions, *_ = env
+    first = _seed(sessions)
+    with sessions() as s:
+        second = repo.create_scan(s, source_type="git", source_ref="u2", source_label="second", tools=["bandit"]).id  # fmt: skip
+    rows = client.get("/scans", headers=AUTH).json()
+    assert [r["id"] for r in rows] == [second, first]
+    assert rows[1]["unique_findings"] == 2 and rows[1]["severity_counts"] == {"HIGH": 1, "LOW": 1}
+    assert "source_ref" not in rows[0]
+    assert client.get("/scans", params={"limit": 51}, headers=AUTH).status_code == 422
+    assert client.get("/scans").status_code == 401
+
+
+def test_cors_allows_only_configured_origins(env) -> None:  # type: ignore[no-untyped-def]
+    client = env[0]
+    ok = client.options("/scans", headers={"Origin": "http://localhost:3000", "Access-Control-Request-Method": "GET", "Access-Control-Request-Headers": "authorization"})  # fmt: skip
+    assert ok.headers.get("access-control-allow-origin") == "http://localhost:3000"
+    bad = client.options("/scans", headers={"Origin": "https://evil.example", "Access-Control-Request-Method": "GET"})  # fmt: skip
+    assert "access-control-allow-origin" not in bad.headers

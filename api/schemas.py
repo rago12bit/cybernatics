@@ -52,3 +52,14 @@ class FindingsPage(BaseModel):
     limit: int
     offset: int
     items: list[dict[str, Any]]
+
+
+class ScanSummary(BaseModel):
+    id: str
+    status: str
+    source_type: str
+    source_label: str
+    created_at: datetime
+    finished_at: datetime | None
+    unique_findings: int
+    severity_counts: dict[str, int]
