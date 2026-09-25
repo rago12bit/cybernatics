@@ -11,7 +11,7 @@ import typer
 
 from core.ignore import IgnoreRules
 from core.ingest import IngestError
-from core.scan import ADAPTERS, scan
+from core.scan import ADAPTERS, DEFAULT_TOOLS, scan
 from core.source import materialize
 
 app = typer.Typer(help="Bulwark: unified security scanning.", no_args_is_help=True)
@@ -25,7 +25,10 @@ def _root() -> None:
 @app.command("scan")
 def scan_cmd(
     source: str = typer.Argument(..., help="Directory, .zip/.tar.gz archive, or public Git URL."),
-    tools: str = typer.Option(",".join(ADAPTERS), help="Comma-separated tool names."),
+    tools: str = typer.Option(
+        ",".join(DEFAULT_TOOLS),
+        help=f"Comma-separated tools. Also available: {', '.join(t for t in ADAPTERS if t not in DEFAULT_TOOLS)}.",
+    ),
     fmt: str = typer.Option("json", "--format", help="json (default), sarif, html or pdf."),
     output: Path | None = typer.Option(
         None, "--output", "-o", help="Write here instead of stdout."
@@ -354,6 +357,58 @@ def ci_comment(
         typer.echo(f"warning: comment not posted: {exc}", err=True)
         if strict:
             raise typer.Exit(1) from exc
+
+
+@app.command("scan-image")
+def scan_image_cmd(
+    image: str = typer.Argument(
+        ..., help="A LOCAL image, e.g. myapp:latest (never pulled for you)."
+    ),
+    fmt: str = typer.Option("json", "--format", help="json (default) or sarif."),
+    output: Path | None = typer.Option(
+        None, "--output", "-o", help="Write here instead of stdout."
+    ),
+) -> None:
+    """Lint a built container image with Dockle (CIS Docker benchmark)."""
+    import re
+    import subprocess
+    import tempfile
+
+    from core.adapters.dockle import IMAGE_ARCHIVE
+    from core.config import scratch_dir
+
+    if fmt not in ("json", "sarif"):
+        raise typer.BadParameter("use json or sarif", param_hint="--format")
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._/:@-]{0,200}", image):
+        raise typer.BadParameter("not a valid image reference", param_hint="IMAGE")
+    with tempfile.TemporaryDirectory(prefix="bulwark-image-", dir=scratch_dir()) as tmp:
+        saved = subprocess.run(
+            ["docker", "save", "--output", str(Path(tmp) / IMAGE_ARCHIVE), "--", image],
+            capture_output=True,
+            check=False,
+        )
+        if saved.returncode != 0:
+            msg = saved.stderr.decode(errors="replace").strip()[-300:] or "docker save failed"
+            typer.echo(f"error: {msg} (pull or build the image first)", err=True)
+            raise typer.Exit(2)
+        result = scan(Path(tmp), ["dockle"], ignore=IgnoreRules())
+    if fmt == "sarif":
+        from core.ci.compare import Comparison, Scan
+        from core.ci.report import report_data
+        from core.export import render
+
+        scan_ = Scan([f.to_dict() for f in result.findings], result.tool_status)
+        data = render("sarif", report_data(image, Comparison(head=scan_)))
+    else:
+        data = json.dumps(
+            {"tool_status": result.tool_status, "findings": [f.to_dict() for f in result.findings]},
+            indent=2,
+        ).encode()
+    if output:
+        output.write_bytes(data)
+        typer.echo(f"wrote {output}", err=True)
+    else:
+        typer.echo(data.decode())
 
 
 @app.command("sbom")

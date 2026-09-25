@@ -24,6 +24,8 @@ class ToolSpec:
     memory_limit: str = "2g"
     native_sarif: bool = False
     writable_volumes: tuple[str, ...] = ()  # container paths needing a throwaway rw volume
+    output_name: str = "result.json"  # the file the tool writes inside the output directory
+    tmp_size: str = "64m"  # size of the throwaway /tmp (Go's build cache needs more)
 
 
 @dataclass(frozen=True)
@@ -35,6 +37,7 @@ class RepoContext:
     has_dockerfile: bool = False
     has_iac: bool = False
     lockfiles: tuple[str, ...] = ()
+    has_image_archive: bool = False  # a `docker save` archive named bulwark-image.tar is present
 
 
 class ToolAdapter(ABC):

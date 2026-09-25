@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { ApiError, createGitScan, uploadScan } from "@/lib/api";
-import { TOOLS } from "@/lib/types";
+import { OPTIONAL_TOOLS, TOOLS } from "@/lib/types";
 
 export function SubmitForm() {
   const router = useRouter();
@@ -61,7 +61,7 @@ export function SubmitForm() {
       <fieldset>
         <legend>Scanners</legend>
         <div className="checks">
-          {TOOLS.map((t) => (
+          {[...TOOLS, ...OPTIONAL_TOOLS].map((t) => (
             <label key={t} className="check">
               <input type="checkbox" checked={tools.includes(t)} onChange={(e) => setTools((cur) => (e.target.checked ? [...cur, t] : cur.filter((x) => x !== t)))} />
               {t}

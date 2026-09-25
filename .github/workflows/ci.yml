@@ -60,6 +60,39 @@ jobs:
       - run: npm test
       - run: npm run build
 
+  tier2-adapters:
+    # Heavier scanner images (Grype bakes in its vulnerability database): built separately from the main job.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[dev]"
+      - run: docker build -t bulwark/grype:0.119.0 docker/grype
+      - run: docker build -t bulwark/checkov:3.3.19 docker/checkov
+      - run: docker build -t bulwark/gosec:2.29.0 docker/gosec
+      - run: docker build -t bulwark/dockle:0.4.15 docker/dockle
+      - run: docker build -t bulwark/trivy:0.55.2 docker/trivy
+      - run: docker build -t bulwark/osv-scanner:2.6.0 docker/osv-scanner
+      - run: pytest tests/unit/test_tier2_adapters.py tests/integration/test_tier2_docker.py --no-cov
+
+  licenses:
+    # Regenerates THIRD_PARTY_LICENSES.md (kept as an artifact) and fails on an unknown or denied license.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[llm,otel]"
+      - run: python scripts/gen-licenses.py --check
+      - run: python scripts/gen-licenses.py --out "$RUNNER_TEMP/THIRD_PARTY_LICENSES.md"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: third-party-licenses
+          path: ${{ runner.temp }}/THIRD_PARTY_LICENSES.md
+
   commitlint:
     # Conventional Commits (design doc §11.2): the CHANGELOG and versioning are generated from these.
     if: github.event_name == 'pull_request'

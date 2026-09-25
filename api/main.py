@@ -58,7 +58,7 @@ from core.persistence.models import FindingRow, Scan
 from core.rag.retrieve import context_for
 from core.rag.store import KnowledgeBase
 from core.risk import is_stale, read_meta
-from core.scan import ADAPTERS
+from core.scan import ADAPTERS, DEFAULT_TOOLS
 
 log = logging.getLogger(__name__)
 _SCAN_IN_PATH = re.compile(r"^/scans/([0-9a-f-]{36})(?:/|$)")
@@ -68,7 +68,7 @@ MIN_TOKEN_LEN = 16
 
 
 def _tools(requested: list[str] | None) -> list[str]:
-    names = requested or list(ADAPTERS)
+    names = requested or list(DEFAULT_TOOLS)
     unknown = [t for t in names if t not in ADAPTERS]
     if unknown:
         raise HTTPException(422, f"unknown tool(s): {', '.join(unknown)}; valid: {list(ADAPTERS)}")

@@ -5,7 +5,11 @@ import pytest
 
 from core.adapters import ToolAdapter
 from core.adapters.bandit import BanditAdapter
+from core.adapters.checkov import CheckovAdapter
+from core.adapters.dockle import DockleAdapter
 from core.adapters.gitleaks import GitleaksAdapter
+from core.adapters.gosec import GosecAdapter
+from core.adapters.grype import GrypeAdapter
 from core.adapters.osv_scanner import OsvScannerAdapter
 from core.adapters.semgrep import SemgrepAdapter
 from core.adapters.trivy import TrivyAdapter
@@ -18,6 +22,10 @@ ADAPTERS: list[ToolAdapter] = [
     GitleaksAdapter(),
     TrivyAdapter(),
     OsvScannerAdapter(),
+    GrypeAdapter(),
+    CheckovAdapter(),
+    GosecAdapter(),
+    DockleAdapter(),
 ]
 
 

@@ -154,13 +154,20 @@ Tools run in parallel; a tool that fails or times out is reported in `tool_statu
 the scan. To fan tools out to Celery workers instead of local threads:
 
 ```bash
-docker run -d -p 6379:6379 redis:7-alpine
+docker run -d -p 6379:6379 redis:7.2-alpine
 celery -A core.tasks worker -P threads -c 5     # threads: work is subprocess-bound
 bulwark scan ./my-project --distributed
 ```
 
 Gitleaks uses the upstream image. Semgrep's rules are fetched at build time and are for your own
 internal use only — see [ADR-006](docs/adr/0006-semgrep-rules-licensing.md).
+
+## Adding scanners
+
+Five scanners run by default; Grype, Checkov, gosec and Dockle are opt-in (`--tools grype,checkov,gosec`,
+`bulwark scan-image myapp:latest`). What adding them taught about the adapter design:
+[docs/adding-a-scanner.md](docs/adding-a-scanner.md). Licenses of everything Bulwark uses or ships:
+[THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
 
 ## Observability
 

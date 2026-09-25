@@ -56,7 +56,17 @@ FINDINGS = Counter(
     registry=REGISTRY,
 )
 
-TOOLS = ("bandit", "semgrep", "gitleaks", "trivy", "osv-scanner")
+TOOLS = (
+    "bandit",
+    "semgrep",
+    "gitleaks",
+    "trivy",
+    "osv-scanner",
+    "grype",
+    "checkov",
+    "gosec",
+    "dockle",
+)
 SEVERITIES = ("CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO")
 _STATUSES = ("ok", "error", "timeout", "skipped")
 _SCAN_STATUSES = ("completed", "partial", "failed")

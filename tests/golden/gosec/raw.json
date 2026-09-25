@@ -1,0 +1,156 @@
+{
+	"Golang errors": {},
+	"Issues": [
+		{
+			"severity": "HIGH",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "89",
+				"url": "https://cwe.mitre.org/data/definitions/89.html"
+			},
+			"rule_id": "G701",
+			"details": "SQL injection via taint analysis",
+			"file": "/target/main.go",
+			"code": "14: \tname := r.URL.Query().Get(\"name\")\n15: \trows, _ := db.Query(\"SELECT * FROM users WHERE name = '\" + name + \"'\")\n16: \tdefer rows.Close()\n",
+			"line": "15",
+			"column": "21",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "HIGH",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "78",
+				"url": "https://cwe.mitre.org/data/definitions/78.html"
+			},
+			"rule_id": "G702",
+			"details": "Command injection via taint analysis",
+			"file": "/target/main.go",
+			"code": "16: \tdefer rows.Close()\n17: \tout, _ := exec.Command(\"sh\", \"-c\", \"echo \"+name).Output()\n18: \tfmt.Fprintf(w, \"%x %s\", md5.Sum(out), password)\n",
+			"line": "17",
+			"column": "24",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "MEDIUM",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "79",
+				"url": "https://cwe.mitre.org/data/definitions/79.html"
+			},
+			"rule_id": "G705",
+			"details": "XSS via taint analysis",
+			"file": "/target/main.go",
+			"code": "17: \tout, _ := exec.Command(\"sh\", \"-c\", \"echo \"+name).Output()\n18: \tfmt.Fprintf(w, \"%x %s\", md5.Sum(out), password)\n19: }\n",
+			"line": "18",
+			"column": "13",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "MEDIUM",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "328",
+				"url": "https://cwe.mitre.org/data/definitions/328.html"
+			},
+			"rule_id": "G401",
+			"details": "Use of weak cryptographic primitive",
+			"file": "/target/main.go",
+			"code": "17: \tout, _ := exec.Command(\"sh\", \"-c\", \"echo \"+name).Output()\n18: \tfmt.Fprintf(w, \"%x %s\", md5.Sum(out), password)\n19: }\n",
+			"line": "18",
+			"column": "26",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "MEDIUM",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "676",
+				"url": "https://cwe.mitre.org/data/definitions/676.html"
+			},
+			"rule_id": "G114",
+			"details": "Use of net/http serve function that has no support for setting timeouts",
+			"file": "/target/main.go",
+			"code": "22: \thttp.HandleFunc(\"/\", func(w http.ResponseWriter, r *http.Request) { handler(nil, w, r) })\n23: \thttp.ListenAndServe(\"0.0.0.0:8080\", nil)\n24: }\n",
+			"line": "23",
+			"column": "2",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "MEDIUM",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "78",
+				"url": "https://cwe.mitre.org/data/definitions/78.html"
+			},
+			"rule_id": "G204",
+			"details": "Subprocess launched with a potential tainted input or cmd arguments",
+			"file": "/target/main.go",
+			"code": "16: \tdefer rows.Close()\n17: \tout, _ := exec.Command(\"sh\", \"-c\", \"echo \"+name).Output()\n18: \tfmt.Fprintf(w, \"%x %s\", md5.Sum(out), password)\n",
+			"line": "17",
+			"column": "12",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "MEDIUM",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "89",
+				"url": "https://cwe.mitre.org/data/definitions/89.html"
+			},
+			"rule_id": "G202",
+			"details": "SQL string concatenation",
+			"file": "/target/main.go",
+			"code": "14: \tname := r.URL.Query().Get(\"name\")\n15: \trows, _ := db.Query(\"SELECT * FROM users WHERE name = '\" + name + \"'\")\n16: \tdefer rows.Close()\n",
+			"line": "15",
+			"column": "22",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "MEDIUM",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "327",
+				"url": "https://cwe.mitre.org/data/definitions/327.html"
+			},
+			"rule_id": "G501",
+			"details": "Blocklisted import crypto/md5: weak cryptographic primitive",
+			"file": "/target/main.go",
+			"code": "3: import (\n4: \t\"crypto/md5\"\n5: \t\"database/sql\"\n",
+			"line": "4",
+			"column": "2",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "LOW",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "703",
+				"url": "https://cwe.mitre.org/data/definitions/703.html"
+			},
+			"rule_id": "G104",
+			"details": "Errors unhandled",
+			"file": "/target/main.go",
+			"code": "22: \thttp.HandleFunc(\"/\", func(w http.ResponseWriter, r *http.Request) { handler(nil, w, r) })\n23: \thttp.ListenAndServe(\"0.0.0.0:8080\", nil)\n24: }\n",
+			"line": "23",
+			"column": "2",
+			"nosec": false,
+			"suppressions": null
+		}
+	],
+	"Stats": {
+		"files": 1,
+		"lines": 24,
+		"nosec": 0,
+		"found": 9
+	},
+	"GosecVersion": "dev"
+}

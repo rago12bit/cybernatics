@@ -182,8 +182,15 @@ describe("new scan form", () => {
     const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!;
     await act(async () => { set.call(url, "github.com/owner/repo"); url.dispatchEvent(new Event("input", { bubbles: true })); });
     expect(h.querySelector("[data-testid=form-hint], .hint")?.textContent ?? "").toMatch(/https:\/\//);
-    for (const c of h.querySelectorAll<HTMLInputElement>(".checks input")) await act(async () => c.click());
+    for (const c of h.querySelectorAll<HTMLInputElement>(".checks input:checked")) await act(async () => c.click()); // the default-on scanners
     expect(h.textContent).toMatch(/at least one scanner/i);
+  });
+
+  it("offers the tier-2 scanners but leaves them off by default", async () => {
+    vi.stubGlobal("fetch", vi.fn());
+    const h = await mount(<SubmitForm />);
+    const state = Object.fromEntries([...h.querySelectorAll<HTMLInputElement>(".checks label")].map((l) => [l.textContent!.trim(), l.querySelector("input")!.checked]));
+    expect(state).toMatchObject({ bandit: true, semgrep: true, gitleaks: true, trivy: true, "osv-scanner": true, grype: false, checkov: false, gosec: false });
   });
 });
 

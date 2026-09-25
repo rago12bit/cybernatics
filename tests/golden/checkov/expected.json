@@ -1,0 +1,743 @@
+[
+  {
+    "description": "Ensure that COPY is used instead of ADD in Dockerfiles",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "checkov"
+      ],
+      "rule_ids": {
+        "checkov": [
+          "CKV_DOCKER_4"
+        ]
+      }
+    },
+    "fingerprint": "",
+    "id": "checkov:CKV_DOCKER_4:Dockerfile:3",
+    "location": {
+      "end_line": 3,
+      "path": "Dockerfile",
+      "snippet": "/Dockerfile.ADD",
+      "snippet_hash": "sha256:eeba9f18e240bd7527c6a9ff53d1daaa4c7f0acee2d0f92bf3225e34b29609a5",
+      "start_line": 3
+    },
+    "package": null,
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [],
+      "suggested_patch": null,
+      "summary": ""
+    },
+    "scoring": {
+      "confidence": 0.6,
+      "cvss_v3_1": null,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "checkov": "MEDIUM"
+      },
+      "normalized_severity": "MEDIUM",
+      "reachable": null,
+      "risk_factors": [],
+      "risk_score": null
+    },
+    "taxonomy": {
+      "aliases": [],
+      "category": "iac",
+      "cve": [],
+      "cwe": [],
+      "owasp_top_10_2021": []
+    },
+    "title": "Ensure that COPY is used instead of ADD in Dockerfiles",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  },
+  {
+    "description": "Ensure the last USER is not root",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "checkov"
+      ],
+      "rule_ids": {
+        "checkov": [
+          "CKV_DOCKER_8"
+        ]
+      }
+    },
+    "fingerprint": "",
+    "id": "checkov:CKV_DOCKER_8:Dockerfile:2",
+    "location": {
+      "end_line": 2,
+      "path": "Dockerfile",
+      "snippet": "/Dockerfile.USER",
+      "snippet_hash": "sha256:d1dcf7c3f2e4f279faf625047dcee7c12d7ea6b1fa76e3e80a04e4ccb779f707",
+      "start_line": 2
+    },
+    "package": null,
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [],
+      "suggested_patch": null,
+      "summary": ""
+    },
+    "scoring": {
+      "confidence": 0.6,
+      "cvss_v3_1": null,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "checkov": "MEDIUM"
+      },
+      "normalized_severity": "MEDIUM",
+      "reachable": null,
+      "risk_factors": [],
+      "risk_score": null
+    },
+    "taxonomy": {
+      "aliases": [],
+      "category": "iac",
+      "cve": [],
+      "cwe": [],
+      "owasp_top_10_2021": []
+    },
+    "title": "Ensure the last USER is not root",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  },
+  {
+    "description": "Ensure that HEALTHCHECK instructions have been added to container images",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "checkov"
+      ],
+      "rule_ids": {
+        "checkov": [
+          "CKV_DOCKER_2"
+        ]
+      }
+    },
+    "fingerprint": "",
+    "id": "checkov:CKV_DOCKER_2:Dockerfile:1",
+    "location": {
+      "end_line": 5,
+      "path": "Dockerfile",
+      "snippet": "/Dockerfile.",
+      "snippet_hash": "sha256:2ebd910207582b40ace02e9ffd7bc59cccb4f4cc629c534f623ca952c31c0ffc",
+      "start_line": 1
+    },
+    "package": null,
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [],
+      "suggested_patch": null,
+      "summary": ""
+    },
+    "scoring": {
+      "confidence": 0.6,
+      "cvss_v3_1": null,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "checkov": "MEDIUM"
+      },
+      "normalized_severity": "MEDIUM",
+      "reachable": null,
+      "risk_factors": [],
+      "risk_score": null
+    },
+    "taxonomy": {
+      "aliases": [],
+      "category": "iac",
+      "cve": [],
+      "cwe": [],
+      "owasp_top_10_2021": []
+    },
+    "title": "Ensure that HEALTHCHECK instructions have been added to container images",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  },
+  {
+    "description": "Ensure no security groups allow ingress from 0.0.0.0:0 to port 22",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "checkov"
+      ],
+      "rule_ids": {
+        "checkov": [
+          "CKV_AWS_24"
+        ]
+      }
+    },
+    "fingerprint": "",
+    "id": "checkov:CKV_AWS_24:main.tf:6",
+    "location": {
+      "end_line": 13,
+      "path": "main.tf",
+      "snippet": "aws_security_group_rule.r",
+      "snippet_hash": "sha256:69a58ee82f8e5e4d626ac2b2fb159c7148a056ec9363fea8a80611ce34a2eb8b",
+      "start_line": 6
+    },
+    "package": null,
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [],
+      "suggested_patch": null,
+      "summary": ""
+    },
+    "scoring": {
+      "confidence": 0.6,
+      "cvss_v3_1": null,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "checkov": "MEDIUM"
+      },
+      "normalized_severity": "MEDIUM",
+      "reachable": null,
+      "risk_factors": [],
+      "risk_score": null
+    },
+    "taxonomy": {
+      "aliases": [],
+      "category": "iac",
+      "cve": [],
+      "cwe": [],
+      "owasp_top_10_2021": []
+    },
+    "title": "Ensure no security groups allow ingress from 0.0.0.0:0 to port 22",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  },
+  {
+    "description": "Ensure every security group and rule has a description",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "checkov"
+      ],
+      "rule_ids": {
+        "checkov": [
+          "CKV_AWS_23"
+        ]
+      }
+    },
+    "fingerprint": "",
+    "id": "checkov:CKV_AWS_23:main.tf:6",
+    "location": {
+      "end_line": 13,
+      "path": "main.tf",
+      "snippet": "aws_security_group_rule.r",
+      "snippet_hash": "sha256:69a58ee82f8e5e4d626ac2b2fb159c7148a056ec9363fea8a80611ce34a2eb8b",
+      "start_line": 6
+    },
+    "package": null,
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [],
+      "suggested_patch": null,
+      "summary": ""
+    },
+    "scoring": {
+      "confidence": 0.6,
+      "cvss_v3_1": null,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "checkov": "MEDIUM"
+      },
+      "normalized_severity": "MEDIUM",
+      "reachable": null,
+      "risk_factors": [],
+      "risk_score": null
+    },
+    "taxonomy": {
+      "aliases": [],
+      "category": "iac",
+      "cve": [],
+      "cwe": [],
+      "owasp_top_10_2021": []
+    },
+    "title": "Ensure every security group and rule has a description",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  },
+  {
+    "description": "Ensure that S3 bucket has cross-region replication enabled",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "checkov"
+      ],
+      "rule_ids": {
+        "checkov": [
+          "CKV_AWS_144"
+        ]
+      }
+    },
+    "fingerprint": "",
+    "id": "checkov:CKV_AWS_144:main.tf:1",
+    "location": {
+      "end_line": 4,
+      "path": "main.tf",
+      "snippet": "aws_s3_bucket.b",
+      "snippet_hash": "sha256:08e15df06990619037bedac8bcc0d321e5cf1bd9203eb7674f765eb2b9fe86ac",
+      "start_line": 1
+    },
+    "package": null,
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [],
+      "suggested_patch": null,
+      "summary": ""
+    },
+    "scoring": {
+      "confidence": 0.6,
+      "cvss_v3_1": null,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "checkov": "MEDIUM"
+      },
+      "normalized_severity": "MEDIUM",
+      "reachable": null,
+      "risk_factors": [],
+      "risk_score": null
+    },
+    "taxonomy": {
+      "aliases": [],
+      "category": "iac",
+      "cve": [],
+      "cwe": [],
+      "owasp_top_10_2021": []
+    },
+    "title": "Ensure that S3 bucket has cross-region replication enabled",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  },
+  {
+    "description": "Ensure that S3 bucket has a Public Access block",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "checkov"
+      ],
+      "rule_ids": {
+        "checkov": [
+          "CKV2_AWS_6"
+        ]
+      }
+    },
+    "fingerprint": "",
+    "id": "checkov:CKV2_AWS_6:main.tf:1",
+    "location": {
+      "end_line": 4,
+      "path": "main.tf",
+      "snippet": "aws_s3_bucket.b",
+      "snippet_hash": "sha256:08e15df06990619037bedac8bcc0d321e5cf1bd9203eb7674f765eb2b9fe86ac",
+      "start_line": 1
+    },
+    "package": null,
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [],
+      "suggested_patch": null,
+      "summary": ""
+    },
+    "scoring": {
+      "confidence": 0.6,
+      "cvss_v3_1": null,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "checkov": "MEDIUM"
+      },
+      "normalized_severity": "MEDIUM",
+      "reachable": null,
+      "risk_factors": [],
+      "risk_score": null
+    },
+    "taxonomy": {
+      "aliases": [],
+      "category": "iac",
+      "cve": [],
+      "cwe": [],
+      "owasp_top_10_2021": []
+    },
+    "title": "Ensure that S3 bucket has a Public Access block",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  },
+  {
+    "description": "Ensure S3 buckets should have event notifications enabled",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "checkov"
+      ],
+      "rule_ids": {
+        "checkov": [
+          "CKV2_AWS_62"
+        ]
+      }
+    },
+    "fingerprint": "",
+    "id": "checkov:CKV2_AWS_62:main.tf:1",
+    "location": {
+      "end_line": 4,
+      "path": "main.tf",
+      "snippet": "aws_s3_bucket.b",
+      "snippet_hash": "sha256:08e15df06990619037bedac8bcc0d321e5cf1bd9203eb7674f765eb2b9fe86ac",
+      "start_line": 1
+    },
+    "package": null,
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [],
+      "suggested_patch": null,
+      "summary": ""
+    },
+    "scoring": {
+      "confidence": 0.6,
+      "cvss_v3_1": null,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "checkov": "MEDIUM"
+      },
+      "normalized_severity": "MEDIUM",
+      "reachable": null,
+      "risk_factors": [],
+      "risk_score": null
+    },
+    "taxonomy": {
+      "aliases": [],
+      "category": "iac",
+      "cve": [],
+      "cwe": [],
+      "owasp_top_10_2021": []
+    },
+    "title": "Ensure S3 buckets should have event notifications enabled",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  },
+  {
+    "description": "S3 Bucket has an ACL defined which allows public READ access.",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "checkov"
+      ],
+      "rule_ids": {
+        "checkov": [
+          "CKV_AWS_20"
+        ]
+      }
+    },
+    "fingerprint": "",
+    "id": "checkov:CKV_AWS_20:main.tf:1",
+    "location": {
+      "end_line": 4,
+      "path": "main.tf",
+      "snippet": "aws_s3_bucket.b",
+      "snippet_hash": "sha256:08e15df06990619037bedac8bcc0d321e5cf1bd9203eb7674f765eb2b9fe86ac",
+      "start_line": 1
+    },
+    "package": null,
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [],
+      "suggested_patch": null,
+      "summary": ""
+    },
+    "scoring": {
+      "confidence": 0.6,
+      "cvss_v3_1": null,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "checkov": "MEDIUM"
+      },
+      "normalized_severity": "MEDIUM",
+      "reachable": null,
+      "risk_factors": [],
+      "risk_score": null
+    },
+    "taxonomy": {
+      "aliases": [],
+      "category": "iac",
+      "cve": [],
+      "cwe": [],
+      "owasp_top_10_2021": []
+    },
+    "title": "S3 Bucket has an ACL defined which allows public READ access.",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  },
+  {
+    "description": "Ensure the S3 bucket has access logging enabled",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "checkov"
+      ],
+      "rule_ids": {
+        "checkov": [
+          "CKV_AWS_18"
+        ]
+      }
+    },
+    "fingerprint": "",
+    "id": "checkov:CKV_AWS_18:main.tf:1",
+    "location": {
+      "end_line": 4,
+      "path": "main.tf",
+      "snippet": "aws_s3_bucket.b",
+      "snippet_hash": "sha256:08e15df06990619037bedac8bcc0d321e5cf1bd9203eb7674f765eb2b9fe86ac",
+      "start_line": 1
+    },
+    "package": null,
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [],
+      "suggested_patch": null,
+      "summary": ""
+    },
+    "scoring": {
+      "confidence": 0.6,
+      "cvss_v3_1": null,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "checkov": "MEDIUM"
+      },
+      "normalized_severity": "MEDIUM",
+      "reachable": null,
+      "risk_factors": [],
+      "risk_score": null
+    },
+    "taxonomy": {
+      "aliases": [],
+      "category": "iac",
+      "cve": [],
+      "cwe": [],
+      "owasp_top_10_2021": []
+    },
+    "title": "Ensure the S3 bucket has access logging enabled",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  },
+  {
+    "description": "Ensure all data stored in the S3 bucket have versioning enabled",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "checkov"
+      ],
+      "rule_ids": {
+        "checkov": [
+          "CKV_AWS_21"
+        ]
+      }
+    },
+    "fingerprint": "",
+    "id": "checkov:CKV_AWS_21:main.tf:1",
+    "location": {
+      "end_line": 4,
+      "path": "main.tf",
+      "snippet": "aws_s3_bucket.b",
+      "snippet_hash": "sha256:08e15df06990619037bedac8bcc0d321e5cf1bd9203eb7674f765eb2b9fe86ac",
+      "start_line": 1
+    },
+    "package": null,
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [],
+      "suggested_patch": null,
+      "summary": ""
+    },
+    "scoring": {
+      "confidence": 0.6,
+      "cvss_v3_1": null,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "checkov": "MEDIUM"
+      },
+      "normalized_severity": "MEDIUM",
+      "reachable": null,
+      "risk_factors": [],
+      "risk_score": null
+    },
+    "taxonomy": {
+      "aliases": [],
+      "category": "iac",
+      "cve": [],
+      "cwe": [],
+      "owasp_top_10_2021": []
+    },
+    "title": "Ensure all data stored in the S3 bucket have versioning enabled",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  },
+  {
+    "description": "Ensure that S3 buckets are encrypted with KMS by default",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "checkov"
+      ],
+      "rule_ids": {
+        "checkov": [
+          "CKV_AWS_145"
+        ]
+      }
+    },
+    "fingerprint": "",
+    "id": "checkov:CKV_AWS_145:main.tf:1",
+    "location": {
+      "end_line": 4,
+      "path": "main.tf",
+      "snippet": "aws_s3_bucket.b",
+      "snippet_hash": "sha256:08e15df06990619037bedac8bcc0d321e5cf1bd9203eb7674f765eb2b9fe86ac",
+      "start_line": 1
+    },
+    "package": null,
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [],
+      "suggested_patch": null,
+      "summary": ""
+    },
+    "scoring": {
+      "confidence": 0.6,
+      "cvss_v3_1": null,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "checkov": "MEDIUM"
+      },
+      "normalized_severity": "MEDIUM",
+      "reachable": null,
+      "risk_factors": [],
+      "risk_score": null
+    },
+    "taxonomy": {
+      "aliases": [],
+      "category": "iac",
+      "cve": [],
+      "cwe": [],
+      "owasp_top_10_2021": []
+    },
+    "title": "Ensure that S3 buckets are encrypted with KMS by default",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  },
+  {
+    "description": "Ensure that an S3 bucket has a lifecycle configuration",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "checkov"
+      ],
+      "rule_ids": {
+        "checkov": [
+          "CKV2_AWS_61"
+        ]
+      }
+    },
+    "fingerprint": "",
+    "id": "checkov:CKV2_AWS_61:main.tf:1",
+    "location": {
+      "end_line": 4,
+      "path": "main.tf",
+      "snippet": "aws_s3_bucket.b",
+      "snippet_hash": "sha256:08e15df06990619037bedac8bcc0d321e5cf1bd9203eb7674f765eb2b9fe86ac",
+      "start_line": 1
+    },
+    "package": null,
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [],
+      "suggested_patch": null,
+      "summary": ""
+    },
+    "scoring": {
+      "confidence": 0.6,
+      "cvss_v3_1": null,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "checkov": "MEDIUM"
+      },
+      "normalized_severity": "MEDIUM",
+      "reachable": null,
+      "risk_factors": [],
+      "risk_score": null
+    },
+    "taxonomy": {
+      "aliases": [],
+      "category": "iac",
+      "cve": [],
+      "cwe": [],
+      "owasp_top_10_2021": []
+    },
+    "title": "Ensure that an S3 bucket has a lifecycle configuration",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  }
+]

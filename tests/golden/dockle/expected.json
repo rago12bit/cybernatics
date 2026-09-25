@@ -1,0 +1,185 @@
+[
+  {
+    "description": "Create a user for the container: Last user should not be root",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "dockle"
+      ],
+      "rule_ids": {
+        "dockle": [
+          "CIS-DI-0001"
+        ]
+      }
+    },
+    "fingerprint": "",
+    "id": "dockle:CIS-DI-0001:bulwark-image.tar:1",
+    "location": {
+      "end_line": 1,
+      "path": "bulwark-image.tar",
+      "snippet": "Last user should not be root",
+      "snippet_hash": "sha256:e81aa987d8a904c194080b6d8652d015efa7ff008915785ee9e94c2f21b225f4",
+      "start_line": 1
+    },
+    "package": null,
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [
+        "https://github.com/goodwithtech/dockle/blob/master/CHECKPOINT.md#cis-di-0001"
+      ],
+      "suggested_patch": null,
+      "summary": ""
+    },
+    "scoring": {
+      "confidence": 0.8,
+      "cvss_v3_1": null,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "dockle": "WARN"
+      },
+      "normalized_severity": "MEDIUM",
+      "reachable": null,
+      "risk_factors": [],
+      "risk_score": null
+    },
+    "taxonomy": {
+      "aliases": [
+        "CIS-DI-0001"
+      ],
+      "category": "container",
+      "cve": [],
+      "cwe": [],
+      "owasp_top_10_2021": []
+    },
+    "title": "Create a user for the container",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  },
+  {
+    "description": "Enable Content trust for Docker: export DOCKER_CONTENT_TRUST=1 before docker pull/build",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "dockle"
+      ],
+      "rule_ids": {
+        "dockle": [
+          "CIS-DI-0005"
+        ]
+      }
+    },
+    "fingerprint": "",
+    "id": "dockle:CIS-DI-0005:bulwark-image.tar:1",
+    "location": {
+      "end_line": 1,
+      "path": "bulwark-image.tar",
+      "snippet": "export DOCKER_CONTENT_TRUST=1 before docker pull/build",
+      "snippet_hash": "sha256:198b1837103c08f1f468d1a2f44b48927c952c1cb6bbb6b44405b8a7d909ddfe",
+      "start_line": 1
+    },
+    "package": null,
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [
+        "https://github.com/goodwithtech/dockle/blob/master/CHECKPOINT.md#cis-di-0005"
+      ],
+      "suggested_patch": null,
+      "summary": ""
+    },
+    "scoring": {
+      "confidence": 0.8,
+      "cvss_v3_1": null,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "dockle": "INFO"
+      },
+      "normalized_severity": "LOW",
+      "reachable": null,
+      "risk_factors": [],
+      "risk_score": null
+    },
+    "taxonomy": {
+      "aliases": [
+        "CIS-DI-0005"
+      ],
+      "category": "container",
+      "cve": [],
+      "cwe": [],
+      "owasp_top_10_2021": []
+    },
+    "title": "Enable Content trust for Docker",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  },
+  {
+    "description": "Add HEALTHCHECK instruction to the container image: not found HEALTHCHECK statement",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "dockle"
+      ],
+      "rule_ids": {
+        "dockle": [
+          "CIS-DI-0006"
+        ]
+      }
+    },
+    "fingerprint": "",
+    "id": "dockle:CIS-DI-0006:bulwark-image.tar:1",
+    "location": {
+      "end_line": 1,
+      "path": "bulwark-image.tar",
+      "snippet": "not found HEALTHCHECK statement",
+      "snippet_hash": "sha256:586e6729922fca2d12178837dcbd317828ff9138c31cf9d63ef27b8c95d3a6b4",
+      "start_line": 1
+    },
+    "package": null,
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [
+        "https://github.com/goodwithtech/dockle/blob/master/CHECKPOINT.md#cis-di-0006"
+      ],
+      "suggested_patch": null,
+      "summary": ""
+    },
+    "scoring": {
+      "confidence": 0.8,
+      "cvss_v3_1": null,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "dockle": "INFO"
+      },
+      "normalized_severity": "LOW",
+      "reachable": null,
+      "risk_factors": [],
+      "risk_score": null
+    },
+    "taxonomy": {
+      "aliases": [
+        "CIS-DI-0006"
+      ],
+      "category": "container",
+      "cve": [],
+      "cwe": [],
+      "owasp_top_10_2021": []
+    },
+    "title": "Add HEALTHCHECK instruction to the container image",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  }
+]

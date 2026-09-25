@@ -8,7 +8,7 @@ import pytest
 from core.correlation import correlate, fingerprint, same_defect
 from core.correlation import normalize as norm
 from core.models import Category, Finding, Location, Package, Severity, Taxonomy
-from core.scan import ADAPTERS
+from core.scan import ADAPTERS, DEFAULT_TOOLS
 
 
 def code(
@@ -288,7 +288,7 @@ def test_placeholder_detection() -> None:
 # ---- real scanner output (regression snapshot) ----------------------------------------
 def _real() -> list[Finding]:
     out: list[Finding] = []
-    for name in ADAPTERS:
+    for name in DEFAULT_TOOLS:  # the published snapshot covers the original five scanners
         out += ADAPTERS[name].parse(Path(f"tests/golden/{name}/raw.json").read_bytes())
     return out
 

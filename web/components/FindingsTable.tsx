@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState, type KeyboardEvent as ReactKe
 import { getFindings } from "@/lib/api";
 import { collectAll, exportFilename, exportPayload, saveBlob } from "@/lib/export";
 import { defaultQuery, isDefaultQuery, locationLabel, pageCount, queryToSearch, rangeLabel, searchToQuery } from "@/lib/format";
-import { CATEGORIES, SEVERITIES, TOOLS, type Finding, type FindingsPage, type FindingsQuery, type GuidanceApi, type ScanView, type Severity } from "@/lib/types";
+import { CATEGORIES, FILTER_TOOLS, SEVERITIES, type Finding, type FindingsPage, type FindingsQuery, type GuidanceApi, type ScanView, type Severity } from "@/lib/types";
 import { RiskSignals, SeverityBadge } from "./Badges";
 import { FindingDetail } from "./FindingDetail";
 import { FixFirst } from "./FixFirst";
@@ -168,7 +168,7 @@ export function FindingsTable({ scan, version, fetchFindings = getFindings, guid
           <label className="inline">Scanner
             <select value={q.tool} onChange={(e) => update({ tool: e.target.value })}>
               <option value="">All</option>
-              {TOOLS.map((t) => <option key={t} value={t}>{t}</option>)}
+              {FILTER_TOOLS.map((t) => <option key={t} value={t}>{t}</option>)}
             </select>
           </label>
           <label className="inline">Sort

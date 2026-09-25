@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from core.scan import ADAPTERS
+from core.scan import ADAPTERS, DEFAULT_TOOLS
 
 ROOT = Path(__file__).resolve().parents[2]
 ACTION = yaml.safe_load((ROOT / "action.yml").read_text())
@@ -48,7 +48,9 @@ def test_third_party_actions_are_pinned_to_commit_shas() -> None:
 
 def test_build_script_tags_match_the_adapters() -> None:
     script = (ROOT / "action" / "build-images.sh").read_text()
-    for name, adapter in ADAPTERS.items():
+    for name, adapter in (
+        (n, ADAPTERS[n]) for n in DEFAULT_TOOLS
+    ):  # tier 2 images are built separately
         image = adapter.info.image if hasattr(adapter, "info") else adapter.spec.image  # type: ignore[attr-defined]
         assert image in script, f"{name}: {image}"
 

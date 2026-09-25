@@ -1,5 +1,5 @@
 import type { Finding, FindingsQuery, ScanView, Severity } from "./types";
-import { SEVERITIES } from "./types";
+import { FILTER_TOOLS, SEVERITIES } from "./types";
 
 export const PAGE_SIZE = 50;
 
@@ -31,11 +31,11 @@ export function pageCount(total: number): number {
 // Which scanners could even have found each kind of issue. "2 of 5" would understate agreement:
 // Trivy cannot find a SQL injection, so it is not a scanner that "missed" one.
 const CATEGORY_TOOLS: Record<string, string[]> = {
-  sast: ["bandit", "semgrep"],
-  sca: ["trivy", "osv-scanner"],
+  sast: ["bandit", "semgrep", "gosec"],
+  sca: ["trivy", "osv-scanner", "grype"],
   secrets: ["gitleaks"],
-  iac: ["trivy"],
-  container: ["trivy"],
+  iac: ["trivy", "checkov"],
+  container: ["trivy", "dockle"],
 };
 const CATEGORY_NOUN: Record<string, string> = {
   sast: "code scanners", sca: "dependency scanners", secrets: "secret scanners", iac: "scanners", container: "scanners",
@@ -110,7 +110,7 @@ export function searchToQuery(search: string): FindingsQuery {
   const cat = p.get("cat") ?? "";
   q.category = ["sast", "sca", "secrets", "iac", "container"].includes(cat) ? cat : "";
   const tool = p.get("tool") ?? "";
-  q.tool = ["bandit", "semgrep", "gitleaks", "trivy", "osv-scanner"].includes(tool) ? tool : "";
+  q.tool = (FILTER_TOOLS as readonly string[]).includes(tool) ? tool : "";
   q.path = (p.get("q") ?? "").slice(0, 200);
   const sort = p.get("sort") as (typeof SORTS)[number] | null;
   q.sort = sort && SORTS.includes(sort) ? sort : "severity";

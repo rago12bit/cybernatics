@@ -12,7 +12,11 @@ from typing import Any
 
 from core.adapters import RepoContext, ToolAdapter
 from core.adapters.bandit import BanditAdapter
+from core.adapters.checkov import CheckovAdapter
+from core.adapters.dockle import IMAGE_ARCHIVE, DockleAdapter
 from core.adapters.gitleaks import GitleaksAdapter
+from core.adapters.gosec import GosecAdapter
+from core.adapters.grype import GrypeAdapter
 from core.adapters.osv_scanner import OsvScannerAdapter
 from core.adapters.semgrep import SemgrepAdapter
 from core.adapters.trivy import TrivyAdapter
@@ -33,8 +37,14 @@ ADAPTERS: dict[str, ToolAdapter] = {
         GitleaksAdapter(),
         TrivyAdapter(),
         OsvScannerAdapter(),
+        # Tier 2: selectable with --tools, not run by default (heavier images, overlap with tier 1).
+        GrypeAdapter(),
+        CheckovAdapter(),
+        GosecAdapter(),
+        DockleAdapter(),
     )
 }
+DEFAULT_TOOLS: tuple[str, ...] = ("bandit", "semgrep", "gitleaks", "trivy", "osv-scanner")
 
 _EXT_LANG = {
     ".py": "python",
@@ -56,7 +66,7 @@ log = logging.getLogger(__name__)
 def detect_context(root: Path) -> RepoContext:
     langs: set[str] = set()
     lockfiles: list[str] = []
-    has_dockerfile = has_iac = False
+    has_dockerfile = has_iac = has_image = False
     for p in root.rglob("*"):
         rel = p.relative_to(root)
         if any(part in _SKIP_DIRS for part in rel.parts) or not p.is_file():
@@ -69,12 +79,15 @@ def detect_context(root: Path) -> RepoContext:
             has_dockerfile = True
         if p.suffix in _IAC_SUFFIXES:
             has_iac = True
+        if rel.as_posix() == IMAGE_ARCHIVE:
+            has_image = True
     return RepoContext(
         root=root,
         languages=frozenset(langs),
         has_dockerfile=has_dockerfile,
         has_iac=has_iac,
         lockfiles=tuple(sorted(lockfiles)),
+        has_image_archive=has_image,
     )
 
 

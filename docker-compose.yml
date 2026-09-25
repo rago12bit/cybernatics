@@ -36,7 +36,7 @@ services:
     restart: unless-stopped
 
   redis:
-    image: redis:7-alpine
+    image: redis:7.2-alpine # 7.2 is the last BSD-licensed line; 7.4+ is RSALv2/SSPLv1 (docs/adr/0011-redis-license.md)
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 3s
@@ -139,6 +139,22 @@ services:
     profiles: [scanners]
     build: docker/osv-scanner
     image: bulwark/osv-scanner:2.6.0
+  scanner-grype:
+    profiles: [scanners]
+    build: docker/grype
+    image: bulwark/grype:0.119.0
+  scanner-checkov:
+    profiles: [scanners]
+    build: docker/checkov
+    image: bulwark/checkov:3.3.19
+  scanner-gosec:
+    profiles: [scanners]
+    build: docker/gosec
+    image: bulwark/gosec:2.29.0
+  scanner-dockle:
+    profiles: [scanners]
+    build: docker/dockle
+    image: bulwark/dockle:0.4.15
   scanner-syft:
     profiles: [scanners]
     build: docker/syft

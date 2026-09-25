@@ -8,6 +8,9 @@ export type ToolState = "ok" | "timeout" | "error" | "skipped";
 export const SEVERITIES: Severity[] = ["CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO"];
 export const CATEGORIES = ["sast", "sca", "secrets", "iac", "container"] as const;
 export const TOOLS = ["bandit", "semgrep", "gitleaks", "trivy", "osv-scanner"] as const;
+// Tier 2: available but off by default (heavier images). Dockle needs a built image: CLI `scan-image` only.
+export const OPTIONAL_TOOLS = ["grype", "checkov", "gosec"] as const;
+export const FILTER_TOOLS = [...TOOLS, ...OPTIONAL_TOOLS, "dockle"] as const;
 export const TERMINAL: ScanStatus[] = ["completed", "partial", "failed"];
 
 export interface ToolStatus {

@@ -42,7 +42,9 @@ def build_docker_argv(
     ctx: RepoContext | None = None,
 ) -> list[str]:
     spec = adapter.spec
-    tool_cmd = adapter.build_command(Path(CONTAINER_TARGET), Path(CONTAINER_OUT) / OUTPUT_NAME, ctx)
+    tool_cmd = adapter.build_command(
+        Path(CONTAINER_TARGET), Path(CONTAINER_OUT) / spec.output_name, ctx
+    )
     return [
         "docker",
         "run",
@@ -58,7 +60,7 @@ def build_docker_argv(
         "--cpus=1.0",
         "--pids-limit=256",
         "--label=bulwark.managed=1",
-        "--tmpfs=/tmp:rw,noexec,nosuid,size=64m",
+        f"--tmpfs=/tmp:rw,noexec,nosuid,size={spec.tmp_size}",
         *[a for vol in spec.writable_volumes for a in ("-v", vol)],
         "-v",
         f"{target.resolve()}:{CONTAINER_TARGET}:ro",
@@ -87,7 +89,7 @@ def run_tool(adapter: ToolAdapter, target: Path, ctx: RepoContext | None = None)
         except FileNotFoundError as exc:
             raise RunnerError("docker is not installed or not on PATH") from exc
 
-        out_file = out_dir / OUTPUT_NAME
+        out_file = out_dir / spec.output_name
         raw = out_file.read_bytes() if out_file.exists() else b""
         stderr = proc.stderr.decode("utf-8", errors="replace")[-2000:]
         # Scanners commonly exit non-zero when findings exist; output presence is the signal.

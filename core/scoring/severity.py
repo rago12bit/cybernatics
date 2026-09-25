@@ -21,6 +21,18 @@ MATRIX: dict[str, dict[str, Severity]] = {
         "LOW": S.LOW,
         "UNKNOWN": S.INFO,
     },
+    "grype": {  # Grype's own label case differs from Trivy's; NEGLIGIBLE is its lowest, not "none"
+        "CRITICAL": S.CRITICAL,
+        "HIGH": S.HIGH,
+        "MEDIUM": S.MEDIUM,
+        "LOW": S.LOW,
+        "NEGLIGIBLE": S.INFO,
+        "UNKNOWN": S.INFO,
+    },
+    "gosec": {"HIGH": S.HIGH, "MEDIUM": S.MEDIUM, "LOW": S.LOW},
+    # Open-source Checkov attaches no severity, so every check arrives as MEDIUM (see the adapter).
+    "checkov": {"CRITICAL": S.CRITICAL, "HIGH": S.HIGH, "MEDIUM": S.MEDIUM, "LOW": S.LOW},
+    "dockle": {"FATAL": S.HIGH, "WARN": S.MEDIUM, "INFO": S.LOW},
     "gitleaks": {"*": S.HIGH},  # a committed credential is always treated as high
     # OSV-Scanner reports CVSS scores where available (see from_cvss), else GitHub-style labels:
     "osv-scanner": {

@@ -1,0 +1,551 @@
+[
+  {
+    "description": "SQL injection via taint analysis",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "gosec"
+      ],
+      "rule_ids": {
+        "gosec": [
+          "G701"
+        ]
+      }
+    },
+    "fingerprint": "",
+    "id": "gosec:G701:main.go:15",
+    "location": {
+      "end_line": 15,
+      "path": "main.go",
+      "snippet": "\trows, _ := db.Query(\"SELECT * FROM users WHERE name = '\" + name + \"'\")",
+      "snippet_hash": "sha256:d744d0deb02180f4eea35141c570cd5c57b23cb9c44dc7eba18cc65053084a80",
+      "start_line": 15
+    },
+    "package": null,
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [
+        "https://cwe.mitre.org/data/definitions/89.html"
+      ],
+      "suggested_patch": null,
+      "summary": ""
+    },
+    "scoring": {
+      "confidence": 0.9,
+      "cvss_v3_1": null,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "gosec": "HIGH"
+      },
+      "normalized_severity": "HIGH",
+      "reachable": null,
+      "risk_factors": [],
+      "risk_score": null
+    },
+    "taxonomy": {
+      "aliases": [],
+      "category": "sast",
+      "cve": [],
+      "cwe": [
+        "CWE-89"
+      ],
+      "owasp_top_10_2021": []
+    },
+    "title": "SQL injection via taint analysis",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  },
+  {
+    "description": "Command injection via taint analysis",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "gosec"
+      ],
+      "rule_ids": {
+        "gosec": [
+          "G702"
+        ]
+      }
+    },
+    "fingerprint": "",
+    "id": "gosec:G702:main.go:17",
+    "location": {
+      "end_line": 17,
+      "path": "main.go",
+      "snippet": "\tout, _ := exec.Command(\"sh\", \"-c\", \"echo \"+name).Output()",
+      "snippet_hash": "sha256:7cccae0e4038f6909b45ec393a7ca9f902dabeaea254751531ba0aed37750d65",
+      "start_line": 17
+    },
+    "package": null,
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [
+        "https://cwe.mitre.org/data/definitions/78.html"
+      ],
+      "suggested_patch": null,
+      "summary": ""
+    },
+    "scoring": {
+      "confidence": 0.9,
+      "cvss_v3_1": null,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "gosec": "HIGH"
+      },
+      "normalized_severity": "HIGH",
+      "reachable": null,
+      "risk_factors": [],
+      "risk_score": null
+    },
+    "taxonomy": {
+      "aliases": [],
+      "category": "sast",
+      "cve": [],
+      "cwe": [
+        "CWE-78"
+      ],
+      "owasp_top_10_2021": []
+    },
+    "title": "Command injection via taint analysis",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  },
+  {
+    "description": "XSS via taint analysis",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "gosec"
+      ],
+      "rule_ids": {
+        "gosec": [
+          "G705"
+        ]
+      }
+    },
+    "fingerprint": "",
+    "id": "gosec:G705:main.go:18",
+    "location": {
+      "end_line": 18,
+      "path": "main.go",
+      "snippet": "\tfmt.Fprintf(w, \"%x %s\", md5.Sum(out), password)",
+      "snippet_hash": "sha256:34f8c7fa5e2e5a3a21e1d0eeb89204ed9e343c071b84efc50dd07fc4f1d86f66",
+      "start_line": 18
+    },
+    "package": null,
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [
+        "https://cwe.mitre.org/data/definitions/79.html"
+      ],
+      "suggested_patch": null,
+      "summary": ""
+    },
+    "scoring": {
+      "confidence": 0.9,
+      "cvss_v3_1": null,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "gosec": "MEDIUM"
+      },
+      "normalized_severity": "MEDIUM",
+      "reachable": null,
+      "risk_factors": [],
+      "risk_score": null
+    },
+    "taxonomy": {
+      "aliases": [],
+      "category": "sast",
+      "cve": [],
+      "cwe": [
+        "CWE-79"
+      ],
+      "owasp_top_10_2021": []
+    },
+    "title": "XSS via taint analysis",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  },
+  {
+    "description": "Use of weak cryptographic primitive",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "gosec"
+      ],
+      "rule_ids": {
+        "gosec": [
+          "G401"
+        ]
+      }
+    },
+    "fingerprint": "",
+    "id": "gosec:G401:main.go:18",
+    "location": {
+      "end_line": 18,
+      "path": "main.go",
+      "snippet": "\tfmt.Fprintf(w, \"%x %s\", md5.Sum(out), password)",
+      "snippet_hash": "sha256:34f8c7fa5e2e5a3a21e1d0eeb89204ed9e343c071b84efc50dd07fc4f1d86f66",
+      "start_line": 18
+    },
+    "package": null,
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [
+        "https://cwe.mitre.org/data/definitions/328.html"
+      ],
+      "suggested_patch": null,
+      "summary": ""
+    },
+    "scoring": {
+      "confidence": 0.9,
+      "cvss_v3_1": null,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "gosec": "MEDIUM"
+      },
+      "normalized_severity": "MEDIUM",
+      "reachable": null,
+      "risk_factors": [],
+      "risk_score": null
+    },
+    "taxonomy": {
+      "aliases": [],
+      "category": "sast",
+      "cve": [],
+      "cwe": [
+        "CWE-328"
+      ],
+      "owasp_top_10_2021": []
+    },
+    "title": "Use of weak cryptographic primitive",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  },
+  {
+    "description": "Use of net/http serve function that has no support for setting timeouts",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "gosec"
+      ],
+      "rule_ids": {
+        "gosec": [
+          "G114"
+        ]
+      }
+    },
+    "fingerprint": "",
+    "id": "gosec:G114:main.go:23",
+    "location": {
+      "end_line": 23,
+      "path": "main.go",
+      "snippet": "\thttp.ListenAndServe(\"0.0.0.0:8080\", nil)",
+      "snippet_hash": "sha256:6fd6d93e4f6590729dc8b6eddea6c90a321cef5f5e92664d29ea893322232efa",
+      "start_line": 23
+    },
+    "package": null,
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [
+        "https://cwe.mitre.org/data/definitions/676.html"
+      ],
+      "suggested_patch": null,
+      "summary": ""
+    },
+    "scoring": {
+      "confidence": 0.9,
+      "cvss_v3_1": null,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "gosec": "MEDIUM"
+      },
+      "normalized_severity": "MEDIUM",
+      "reachable": null,
+      "risk_factors": [],
+      "risk_score": null
+    },
+    "taxonomy": {
+      "aliases": [],
+      "category": "sast",
+      "cve": [],
+      "cwe": [
+        "CWE-676"
+      ],
+      "owasp_top_10_2021": []
+    },
+    "title": "Use of net/http serve function that has no support for setting timeouts",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  },
+  {
+    "description": "Subprocess launched with a potential tainted input or cmd arguments",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "gosec"
+      ],
+      "rule_ids": {
+        "gosec": [
+          "G204"
+        ]
+      }
+    },
+    "fingerprint": "",
+    "id": "gosec:G204:main.go:17",
+    "location": {
+      "end_line": 17,
+      "path": "main.go",
+      "snippet": "\tout, _ := exec.Command(\"sh\", \"-c\", \"echo \"+name).Output()",
+      "snippet_hash": "sha256:7cccae0e4038f6909b45ec393a7ca9f902dabeaea254751531ba0aed37750d65",
+      "start_line": 17
+    },
+    "package": null,
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [
+        "https://cwe.mitre.org/data/definitions/78.html"
+      ],
+      "suggested_patch": null,
+      "summary": ""
+    },
+    "scoring": {
+      "confidence": 0.9,
+      "cvss_v3_1": null,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "gosec": "MEDIUM"
+      },
+      "normalized_severity": "MEDIUM",
+      "reachable": null,
+      "risk_factors": [],
+      "risk_score": null
+    },
+    "taxonomy": {
+      "aliases": [],
+      "category": "sast",
+      "cve": [],
+      "cwe": [
+        "CWE-78"
+      ],
+      "owasp_top_10_2021": []
+    },
+    "title": "Subprocess launched with a potential tainted input or cmd arguments",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  },
+  {
+    "description": "SQL string concatenation",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "gosec"
+      ],
+      "rule_ids": {
+        "gosec": [
+          "G202"
+        ]
+      }
+    },
+    "fingerprint": "",
+    "id": "gosec:G202:main.go:15",
+    "location": {
+      "end_line": 15,
+      "path": "main.go",
+      "snippet": "\trows, _ := db.Query(\"SELECT * FROM users WHERE name = '\" + name + \"'\")",
+      "snippet_hash": "sha256:d744d0deb02180f4eea35141c570cd5c57b23cb9c44dc7eba18cc65053084a80",
+      "start_line": 15
+    },
+    "package": null,
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [
+        "https://cwe.mitre.org/data/definitions/89.html"
+      ],
+      "suggested_patch": null,
+      "summary": ""
+    },
+    "scoring": {
+      "confidence": 0.9,
+      "cvss_v3_1": null,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "gosec": "MEDIUM"
+      },
+      "normalized_severity": "MEDIUM",
+      "reachable": null,
+      "risk_factors": [],
+      "risk_score": null
+    },
+    "taxonomy": {
+      "aliases": [],
+      "category": "sast",
+      "cve": [],
+      "cwe": [
+        "CWE-89"
+      ],
+      "owasp_top_10_2021": []
+    },
+    "title": "SQL string concatenation",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  },
+  {
+    "description": "Blocklisted import crypto/md5: weak cryptographic primitive",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "gosec"
+      ],
+      "rule_ids": {
+        "gosec": [
+          "G501"
+        ]
+      }
+    },
+    "fingerprint": "",
+    "id": "gosec:G501:main.go:4",
+    "location": {
+      "end_line": 4,
+      "path": "main.go",
+      "snippet": "\t\"crypto/md5\"",
+      "snippet_hash": "sha256:727da4096983b659a57459ca49adf8c3bc4d23ef1692a1d62edb9bf96aad98b2",
+      "start_line": 4
+    },
+    "package": null,
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [
+        "https://cwe.mitre.org/data/definitions/327.html"
+      ],
+      "suggested_patch": null,
+      "summary": ""
+    },
+    "scoring": {
+      "confidence": 0.9,
+      "cvss_v3_1": null,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "gosec": "MEDIUM"
+      },
+      "normalized_severity": "MEDIUM",
+      "reachable": null,
+      "risk_factors": [],
+      "risk_score": null
+    },
+    "taxonomy": {
+      "aliases": [],
+      "category": "sast",
+      "cve": [],
+      "cwe": [
+        "CWE-327"
+      ],
+      "owasp_top_10_2021": []
+    },
+    "title": "Blocklisted import crypto/md5: weak cryptographic primitive",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  },
+  {
+    "description": "Errors unhandled",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "gosec"
+      ],
+      "rule_ids": {
+        "gosec": [
+          "G104"
+        ]
+      }
+    },
+    "fingerprint": "",
+    "id": "gosec:G104:main.go:23",
+    "location": {
+      "end_line": 23,
+      "path": "main.go",
+      "snippet": "\thttp.ListenAndServe(\"0.0.0.0:8080\", nil)",
+      "snippet_hash": "sha256:6fd6d93e4f6590729dc8b6eddea6c90a321cef5f5e92664d29ea893322232efa",
+      "start_line": 23
+    },
+    "package": null,
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [
+        "https://cwe.mitre.org/data/definitions/703.html"
+      ],
+      "suggested_patch": null,
+      "summary": ""
+    },
+    "scoring": {
+      "confidence": 0.9,
+      "cvss_v3_1": null,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "gosec": "LOW"
+      },
+      "normalized_severity": "LOW",
+      "reachable": null,
+      "risk_factors": [],
+      "risk_score": null
+    },
+    "taxonomy": {
+      "aliases": [],
+      "category": "sast",
+      "cve": [],
+      "cwe": [
+        "CWE-703"
+      ],
+      "owasp_top_10_2021": []
+    },
+    "title": "Errors unhandled",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  }
+]
