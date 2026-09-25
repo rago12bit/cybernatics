@@ -299,3 +299,46 @@ def test_risk_feeds_status_requires_auth_and_reflects_the_cache(env) -> None:  #
     )
     got = client.get("/risk/feeds", headers=AUTH).json()
     assert got["stale"] is False and got["epss"] == {"rows": 5} and got["errors"] == {"kev": "x"}
+
+
+def test_export_downloads_every_finding_in_each_format(env) -> None:  # type: ignore[no-untyped-def]
+    import json
+
+    client, _, sessions, _, _ = env
+    sid = _seed(sessions)
+    total = client.get(f"/scans/{sid}", headers=AUTH).json()["unique_findings"]
+    sarif = client.get(f"/scans/{sid}/export?format=sarif", headers=AUTH)
+    assert sarif.status_code == 200 and sarif.headers["content-type"].startswith(
+        "application/sarif+json"
+    )
+    assert f'filename="bulwark-{sid[:8]}.sarif"' in sarif.headers["content-disposition"]
+    assert sarif.headers["x-content-type-options"] == "nosniff"
+    assert len(json.loads(sarif.content)["runs"][0]["results"]) == total > 0
+    html = client.get(f"/scans/{sid}/export?format=html", headers=AUTH)
+    assert (
+        html.headers["content-type"].startswith("text/html")
+        and "sandbox" in html.headers["content-security-policy"]
+    )
+    assert client.get(f"/scans/{sid}/export?format=pdf", headers=AUTH).content.startswith(b"%PDF-")
+    assert (
+        len(
+            json.loads(client.get(f"/scans/{sid}/export?format=json", headers=AUTH).content)[
+                "findings"
+            ]
+        )
+        == total
+    )
+    assert (
+        "sarif" in client.get(f"/scans/{sid}/export", headers=AUTH).headers["content-disposition"]
+    )  # default
+
+
+def test_export_rejects_bad_requests(env) -> None:  # type: ignore[no-untyped-def]
+    client, _, sessions, _, _ = env
+    sid = _seed(sessions)
+    assert client.get(f"/scans/{sid}/export").status_code == 401
+    assert client.get(f"/scans/{sid}/export?format=docx", headers=AUTH).status_code == 422
+    assert client.get("/scans/not-a-uuid/export", headers=AUTH).status_code == 404
+    with sessions() as s:
+        queued = repo.create_scan(s, source_type="git", source_ref="u", source_label="u", tools=["bandit"]).id  # fmt: skip
+    assert client.get(f"/scans/{queued}/export?format=sarif", headers=AUTH).status_code == 409

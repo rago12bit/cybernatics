@@ -357,6 +357,61 @@
           }
         }
       }
+    },
+    "/scans/{scan_id}/export": {
+      "get": {
+        "summary": "Export Scan",
+        "description": "Download the whole scan (every finding, ranked) as SARIF 2.1.0, HTML, PDF or JSON.",
+        "operationId": "export_scan_scans__scan_id__export_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "scan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Scan Id"
+            }
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "sarif | html | pdf | json",
+              "default": "sarif",
+              "title": "Format"
+            },
+            "description": "sarif | html | pdf | json"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {

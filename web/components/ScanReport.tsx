@@ -5,6 +5,7 @@ import type { FindingsPage, FindingsQuery, ScanView, Severity } from "@/lib/type
 import { SeverityCounts, StatusBadge } from "./Badges";
 import { LocalTime } from "./LocalTime";
 import { FindingsTable } from "./FindingsTable";
+import { ReportDownloads } from "./ReportDownloads";
 import { ToolCards } from "./ToolCards";
 
 const ORDER: Severity[] = ["CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO"];
@@ -17,12 +18,14 @@ export function ScanReport({
   version,
   fetchFindings,
   crumb = { href: "/app", label: "← All scans" },
+  downloads,
 }: {
   scan: ScanView;
   connection: Connection;
   version: number;
   fetchFindings?: (id: string, q: FindingsQuery, limit?: number) => Promise<FindingsPage>;
   crumb?: { href: string; label: string };
+  downloads?: boolean; // whole-scan PDF/HTML/SARIF downloads; needs the API, so off for the sample scan
 }) {
   const done = isTerminal(scan.status);
   const max = Math.max(...ORDER.map((s) => scan.severity_counts[s] ?? 0));
@@ -44,6 +47,7 @@ export function ScanReport({
               : connection === "live" ? "Live: updates arrive as each scanner finishes"
               : connection === "polling" ? "Refreshing every few seconds" : "Connecting"}
           </p>
+          {downloads && done && scan.status !== "failed" && <ReportDownloads scanId={scan.id} />}
           {scan.error && <p className="error" role="alert">{scan.error}</p>}
         </div>
         <ToolCards scan={scan} />

@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+from collections import Counter
+from pathlib import Path
 
 import typer
 
@@ -22,11 +24,16 @@ def _root() -> None:
 def scan_cmd(
     source: str = typer.Argument(..., help="Directory, .zip/.tar.gz archive, or public Git URL."),
     tools: str = typer.Option(",".join(ADAPTERS), help="Comma-separated tool names."),
-    fmt: str = typer.Option("json", "--format", help="Output format: json."),
+    fmt: str = typer.Option("json", "--format", help="json (default), sarif, html or pdf."),
+    output: Path | None = typer.Option(
+        None, "--output", "-o", help="Write here instead of stdout."
+    ),
     distributed: bool = typer.Option(False, "--distributed", help="Run tools on Celery workers."),
 ) -> None:
-    if fmt != "json":
-        raise typer.BadParameter("only 'json' is supported so far", param_hint="--format")
+    if fmt not in ("json", "sarif", "html", "pdf"):
+        raise typer.BadParameter("use json, sarif, html or pdf", param_hint="--format")
+    if fmt == "pdf" and output is None:
+        raise typer.BadParameter("pdf is binary: pass --output report.pdf", param_hint="--output")
     names = [t.strip() for t in tools.split(",") if t.strip()]
     try:
         with materialize(source) as workspace:
@@ -41,8 +48,8 @@ def scan_cmd(
     except IngestError as exc:
         typer.echo(f"error: {exc}", err=True)
         raise typer.Exit(2) from exc
-    typer.echo(
-        json.dumps(
+    if fmt == "json":
+        text = json.dumps(
             {
                 "tool_status": result.tool_status,
                 "stats": {
@@ -54,7 +61,32 @@ def scan_cmd(
             },
             indent=2,
         )
-    )
+        data = text.encode()
+    else:
+        from core.export import ReportData, render
+
+        counts = Counter(f.scoring.normalized_severity.value for f in result.findings)
+        failed = any(t.get("status") not in ("ok", "skipped") for t in result.tool_status.values())
+        report = ReportData(
+            scan_id="local",
+            source_label=source if "://" in source else Path(source).name or source,
+            status="partial" if failed else "completed",
+            finished_at=None,
+            tool_status={
+                k: {**v, "findings": v.get("findings", 0)} for k, v in result.tool_status.items()
+            },
+            raw_findings=result.stats.raw,
+            unique_findings=result.stats.unique,
+            dedup_rate=result.stats.dedup_rate,
+            severity_counts=dict(counts),
+            findings=[f.to_dict() for f in result.findings],
+        )
+        data = render(fmt, report)
+    if output:
+        output.write_bytes(data)
+        typer.echo(f"wrote {output} ({len(data)} bytes)", err=True)
+    else:
+        typer.echo(data.decode())
 
 
 @app.command("update-feeds")

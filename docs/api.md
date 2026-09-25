@@ -46,6 +46,13 @@ Get Findings
 - `limit` (query)
 - `offset` (query)
 
+## `GET /scans/{scan_id}/export`
+
+Export Scan
+
+- `scan_id` (path, required)
+- `format` (query)
+
 ## Live progress (WebSocket)
 
 `GET /scans/{scan_id}/ws` (not part of OpenAPI).

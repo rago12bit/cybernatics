@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { getFindings } from "@/lib/api";
-import { collectAll, exportFilename, exportPayload } from "@/lib/export";
+import { collectAll, exportFilename, exportPayload, saveBlob } from "@/lib/export";
 import { defaultQuery, isDefaultQuery, locationLabel, pageCount, queryToSearch, rangeLabel, searchToQuery } from "@/lib/format";
 import { CATEGORIES, SEVERITIES, TOOLS, type Finding, type FindingsPage, type FindingsQuery, type ScanView, type Severity } from "@/lib/types";
 import { RiskSignals, SeverityBadge } from "./Badges";
@@ -119,14 +119,7 @@ export function FindingsTable({ scan, version, fetchFindings = getFindings }: { 
     try {
       const all = await collectAll((qq, limit) => fetchFindings(scan.id, qq, limit), q);
       const blob = new Blob([JSON.stringify(exportPayload(scan, all, q), null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = exportFilename(scan);
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 10_000);
+      saveBlob(blob, exportFilename(scan));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Export failed");
     } finally {

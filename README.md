@@ -3,8 +3,8 @@
 **One scan, one deduplicated list of findings.** Bulwark runs five open-source security scanners against
 a repository, merges what they agree on, and shows you a single list you can actually work through.
 
-> Status: pre-alpha. Weeks 1-9 of the plan are done (scanners, correlation, API, UI, CWE/OWASP mapping, docs, risk
-> ranking with EPSS and CISA KEV). Not ready for untrusted multi-user hosting yet:
+> Status: pre-alpha. Weeks 1-10 of the plan are done (scanners, correlation, API, UI, CWE/OWASP mapping, risk ranking,
+> exports, threat model). `v0.1.0` is the first tagged release. Not ready for untrusted multi-user hosting yet:
 > auth is a single shared token (see [Limits](#limits)).
 
 ## The problem
@@ -22,7 +22,7 @@ up as a Bandit finding, a Semgrep finding and a CWE entry; one vulnerable npm pa
 4. **Map** each finding to its CWE and [OWASP Top 10:2021](docs/taxonomy.md) category.
 5. **Rank** by [risk](docs/risk-score.md): severity combined with EPSS and CISA's known-exploited list, so the UI can
    show the ten things to fix first.
-6. **Show** it in a web UI, API, CLI or JSON.
+6. **Show and export** it: web UI, API, CLI, and downloadable SARIF, HTML and PDF reports.
 
 ## Architecture
 
@@ -129,7 +129,23 @@ bulwark scan ./my-project                                # directory
 bulwark scan project.zip                                 # archive (zip / tar.gz), extracted safely
 bulwark scan https://github.com/owner/repo               # public Git URL (github/gitlab/bitbucket)
 bulwark scan ./my-project --tools bandit,trivy           # subset of tools
+bulwark scan ./my-project --format sarif -o results.sarif   # also: html, pdf (needs -o)
 ```
+
+### Reports and GitHub Code Scanning
+
+A finished scan can be downloaded from the web UI (PDF, HTML, SARIF buttons) or the API:
+`GET /scans/{id}/export?format=sarif|html|pdf|json`. The HTML report is one self-contained file with no
+scripts. The SARIF file is validated against the official 2.1.0 schema and carries `security-severity` and
+stable fingerprints, so it can go straight into GitHub Code Scanning:
+
+```yaml
+- run: bulwark scan . --format sarif -o results.sarif
+- uses: github/codeql-action/upload-sarif@v3
+  with: { sarif_file: results.sarif }
+```
+
+The YAML above is the standard upload step; it has not been run in a real GitHub workflow yet.
 
 Tools run in parallel; a tool that fails or times out is reported in `tool_status` and never fails
 the scan. To fan tools out to Celery workers instead of local threads:
@@ -158,7 +174,8 @@ npm test && npm run typecheck && npm run build
 
 ## Contributing and security
 
-See [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md) and the [CHANGELOG](CHANGELOG.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md), the [threat model](docs/THREAT-MODEL.md)
+and the [CHANGELOG](CHANGELOG.md).
 
 ## Commit convention
 

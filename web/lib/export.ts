@@ -41,3 +41,15 @@ export function exportFilename(scan: ScanView): string {
   const slug = scan.source_label.replace(/^https?:\/\//, "").replace(/[^A-Za-z0-9._-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 48) || "scan";
   return `bulwark-${slug}-findings.json`;
 }
+
+/** Trigger a browser download of a Blob. The object URL is revoked after the download has started. */
+export function saveBlob(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
+}

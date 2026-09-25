@@ -77,3 +77,29 @@ export function uploadScan(file: File, tools: string[]) {
 }
 
 export const wsUrl = (id: string) => `${API_URL.replace(/^http/, "ws")}/scans/${encodeURIComponent(id)}/ws`;
+
+export type ReportFormat = "sarif" | "html" | "pdf";
+
+/** Fetch a full-scan report with the bearer token (a plain link could not send it) as a Blob. */
+export async function fetchReport(id: string, format: ReportFormat): Promise<Blob> {
+  const token = getToken();
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}/scans/${encodeURIComponent(id)}/export?format=${format}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+  } catch {
+    throw new ApiError(0, `Cannot reach the Bulwark API at ${API_URL}. Is it running?`);
+  }
+  if (!res.ok) {
+    let detail = res.statusText;
+    try {
+      const body = await res.json();
+      if (typeof body?.detail === "string") detail = body.detail;
+    } catch {
+      /* non-JSON error body */
+    }
+    throw new ApiError(res.status, detail);
+  }
+  return res.blob();
+}

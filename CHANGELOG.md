@@ -5,7 +5,9 @@ versions will follow [SemVer](https://semver.org) once `v0.1.0` is tagged (plann
 
 ## [Unreleased]
 
-Pre-alpha: everything below is unreleased.
+## [0.1.0] - 2026-09-25
+
+First tagged release (pre-alpha: single shared token, not for untrusted multi-user hosting).
 
 ### Added
 - **Scanning:** sandboxed runners for Bandit, Semgrep CE, Gitleaks, Trivy and OSV-Scanner; one canonical
@@ -23,7 +25,10 @@ Pre-alpha: everything below is unreleased.
 - **Risk ranking:** EPSS (FIRST.org) and CISA KEV feeds, validated and cached, refreshed daily; a 0-100
   `risk_score` with plain-language `risk_factors`; a **Fix these first** top-10 panel; `bulwark update-feeds`;
   `GET /risk/feeds`. See [docs/risk-score.md](docs/risk-score.md).
-- **Docs:** README with architecture diagram, ADRs 0001-0008, API reference, severity matrix,
+- **Exports:** whole-scan **SARIF 2.1.0** (validated against the official schema; GitHub Code Scanning
+  shaped), a self-contained script-free **HTML** report, and a **PDF**; `GET /scans/{id}/export`,
+  `bulwark scan --format sarif|html|pdf -o FILE`, and download buttons in the UI.
+- **Docs:** [threat model](docs/THREAT-MODEL.md) with per-threat status; README with architecture diagram, ADRs 0001-0008, API reference, severity matrix,
   `SECURITY.md`, `CONTRIBUTING.md`.
 
 ### Fixed

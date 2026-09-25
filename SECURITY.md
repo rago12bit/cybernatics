@@ -13,12 +13,12 @@ so fixes are best effort, but every credible report gets a written answer.
 
 ## Supported versions
 
-Only the latest commit on `main` (pre-alpha, `0.0.x`). There are no backports yet.
+Only the latest release and `main` (pre-alpha, `0.1.x`). There are no backports yet.
 
 ## What Bulwark defends against
 
-The threat model is being written up (planned for Week 10, `docs/THREAT-MODEL.md`). The controls that
-exist today:
+The full threat model, with the status of every threat, is in [docs/THREAT-MODEL.md](docs/THREAT-MODEL.md).
+The main controls that exist today:
 
 | Threat | Control |
 |---|---|

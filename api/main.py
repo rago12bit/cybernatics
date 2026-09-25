@@ -14,6 +14,7 @@ from typing import Any
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Query, UploadFile, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 from fastapi.websockets import WebSocketDisconnect
 from sqlalchemy.orm import Session
 
@@ -28,6 +29,7 @@ from api.schemas import (
     ToolStatus,
 )
 from core.config import Settings
+from core.export import FORMATS, ReportData, render
 from core.gitfetch import GitUrlError, validate_git_url
 from core.persistence import repo
 from core.persistence.models import Scan
@@ -53,6 +55,15 @@ def _get_scan(s: Session, scan_id: str) -> Scan:
     if scan is None:
         raise HTTPException(404, "scan not found")
     return scan
+
+
+def _all_findings(s: Session, scan_id: str) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    while True:
+        page = repo.query_findings(s, scan_id, sort="risk", limit=500, offset=len(out))
+        out.extend(page.items)
+        if not page.items or len(out) >= page.total:
+            return out
 
 
 def _view(s: Session, scan: Scan) -> ScanView:
@@ -233,6 +244,42 @@ def create_app(app_state: AppState) -> FastAPI:
             path_contains=path, sort=sort, limit=limit, offset=offset,
         )  # fmt: skip
         return FindingsPage(total=page.total, limit=limit, offset=offset, items=page.items)
+
+    @app.get("/scans/{scan_id}/export", dependencies=[Depends(require_auth)])
+    def export_scan(
+        scan_id: str,
+        format: str = Query(default="sarif", description="sarif | html | pdf | json"),
+        s: Session = Depends(db),
+    ) -> Response:
+        """Download the whole scan (every finding, ranked) as SARIF 2.1.0, HTML, PDF or JSON."""
+        if format not in FORMATS:
+            raise HTTPException(422, f"format must be one of: {', '.join(FORMATS)}")
+        scan = _get_scan(s, scan_id)
+        if scan.status not in ("completed", "partial"):
+            raise HTTPException(409, "the scan has not finished, or it failed")
+        view = _view(s, scan)
+        report = ReportData(
+            scan_id=scan.id,
+            source_label=scan.source_label,
+            status=scan.status,
+            finished_at=scan.finished_at.isoformat() if scan.finished_at else None,
+            tool_status={k: v.model_dump() for k, v in view.tool_status.items()},
+            raw_findings=view.raw_findings,
+            unique_findings=view.unique_findings,
+            dedup_rate=view.dedup_rate,
+            severity_counts=view.severity_counts,
+            findings=_all_findings(s, scan.id),
+        )
+        media, ext = FORMATS[format]
+        return Response(
+            render(format, report),
+            media_type=media,
+            headers={
+                "Content-Disposition": f'attachment; filename="bulwark-{scan.id[:8]}.{ext}"',
+                "X-Content-Type-Options": "nosniff",
+                "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; sandbox",
+            },
+        )
 
     @app.websocket("/scans/{scan_id}/ws")
     async def scan_ws(ws: WebSocket, scan_id: str) -> None:
