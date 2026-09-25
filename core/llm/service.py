@@ -1,0 +1,114 @@
+"""Suggest a remediation for one finding. Never raises, never changes the finding, always returns something.
+
+    finding + RAG context + code  ->  prompt  ->  model  ->  contract check  ->  AI suggestion
+                                          any failure (or no model configured)  ->  static CWE/cheat-sheet text
+
+The result is a separate object: `Finding.scoring`, `.triage` and `.taxonomy` are never touched, so the model
+cannot downgrade, suppress or relabel a finding whatever it returns (design doc 7.1; test_llm proves it).
+Prompt and reply text are never logged: they can contain source code.
+"""
+
+from __future__ import annotations
+
+import logging
+from dataclasses import dataclass, field
+from typing import Literal
+
+from core.llm.client import LLMClient
+from core.llm.contract import ContractError, Suggestion, parse_response
+from core.llm.prompt import CodeContext, build_prompt
+from core.models import Finding
+from core.rag.retrieve import RemediationContext, context_for
+from core.rag.store import KnowledgeBase
+
+log = logging.getLogger(__name__)
+LABEL = "AI suggestion: review before applying"
+STATIC_LABEL = "Reference guidance (not AI-generated)"
+
+
+@dataclass
+class RemediationResult:
+    source: Literal["ai", "static"]
+    label: str
+    explanation: str
+    impact: str
+    fix_summary: str
+    suggested_patch: str | None
+    confidence: str
+    model: str | None = None
+    degraded_reason: str | None = None  # why static text was used instead of a model's
+    warnings: list[str] = field(default_factory=list)
+    references: list[dict[str, str]] = field(default_factory=list)
+
+
+def _refs(ctx: RemediationContext) -> list[dict[str, str]]:
+    return [{"title": r.title, "url": r.url} for r in [*ctx.cwe_entries, *ctx.guidance]]
+
+
+def _first_sentences(text: str, limit: int) -> str:
+    text = " ".join(text.split())
+    if len(text) <= limit:
+        return text
+    cut = text[:limit].rsplit(". ", 1)[0]
+    return (cut if len(cut) > limit // 3 else text[:limit].rstrip()) + (
+        "." if not cut.endswith(".") else ""
+    )
+
+
+def static_suggestion(finding: Finding, ctx: RemediationContext, reason: str) -> RemediationResult:
+    """Deterministic fallback built only from the reference corpus: no model, nothing invented."""
+    cwe = ctx.cwe_entries[0] if ctx.cwe_entries else None
+    explanation = _first_sentences(cwe.text, 700) if cwe else finding.description or finding.title
+    impact = "See the CWE entry linked below for the consequences of this weakness."
+    fix = ""
+    if ctx.guidance:
+        fix = _first_sentences(ctx.guidance[0].text, 700)
+    elif finding.remediation.summary:
+        fix = finding.remediation.summary
+    else:
+        fix = "No specific guidance is available for this finding. See the linked references."
+    return RemediationResult(
+        source="static", label=STATIC_LABEL, explanation=explanation, impact=impact, fix_summary=fix,
+        suggested_patch=None, confidence="low", degraded_reason=reason, references=_refs(ctx),
+    )  # fmt: skip
+
+
+def suggest(
+    finding: Finding,
+    kb: KnowledgeBase,
+    client: LLMClient | None,
+    code: CodeContext | None = None,
+) -> RemediationResult:
+    ctx = context_for(finding, kb)
+    if client is None:
+        return static_suggestion(finding, ctx, "no model configured")
+    prompt = build_prompt(finding, ctx, code)
+    warnings: list[str] = []
+    if prompt.signals:
+        warnings.append(
+            "The scanned code contained text that looks like instructions to an AI "
+            f"({', '.join(prompt.signals)}). It was treated as data."
+        )
+    if prompt.secrets_scrubbed:
+        warnings.append(
+            f"{prompt.secrets_scrubbed} possible secret(s) were removed before the code was sent."
+        )
+    try:
+        raw = client.complete(prompt.system, prompt.user)
+    except Exception as exc:  # noqa: BLE001 - any failure degrades, none propagates
+        log.warning("remediation model call failed: %s", type(exc).__name__)
+        res = static_suggestion(finding, ctx, f"model call failed ({type(exc).__name__})")
+        res.warnings = warnings
+        return res
+    try:
+        s: Suggestion = parse_response(raw, path=finding.location.path)
+    except ContractError as exc:
+        log.warning("remediation reply rejected: %s", exc)
+        res = static_suggestion(finding, ctx, f"model reply rejected: {exc}")
+        res.warnings = warnings
+        return res
+    return RemediationResult(
+        source="ai", label=LABEL, explanation=s.explanation, impact=s.impact, fix_summary=s.fix_summary,
+        suggested_patch=s.suggested_patch, confidence=s.confidence, model=client.model,
+        warnings=warnings, references=_refs(ctx),
+    )  # fmt: skip

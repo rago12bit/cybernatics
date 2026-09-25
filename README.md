@@ -164,7 +164,14 @@ internal use only — see [ADR-006](docs/adr/0006-semgrep-rules-licensing.md).
 ## Remediation knowledge base
 
 A local corpus of CWE definitions and OWASP cheat-sheet guidance is searchable in PostgreSQL (pgvector) to ground
-the upcoming LLM remediation layer. No model is called yet. See [docs/rag.md](docs/rag.md).
+the LLM remediation layer. See [docs/rag.md](docs/rag.md).
+
+## LLM remediation (off by default)
+
+An opt-in layer can explain a finding and suggest a fix, with strict output validation and prompt-injection
+defences; it never changes a finding and never applies a patch. It is built but not yet wired into scans or the
+UI, and no real model has been evaluated against it. Read [docs/llm-remediation.md](docs/llm-remediation.md)
+(including what data it would send) before enabling.
 
 ## Public sample site
 

@@ -34,7 +34,7 @@ render text, never to run scan-derived markup.
 | T5 | SSRF via Git URL | Information disclosure | Done |
 | T6 | Resource exhaustion | Denial of service | Partial |
 | T7 | Secret leakage via findings | Information disclosure | Partial |
-| T8 | Prompt injection into remediation LLM | Tampering | N/A yet |
+| T8 | Prompt injection into remediation LLM | Tampering | Partial |
 | T9 | Stored XSS in the report UI and exports | Tampering / Elevation | Done |
 | T10 | Malicious or compromised scanner image | Tampering | Open |
 | T11 | Unauthorized API access | Spoofing | Partial |
@@ -85,12 +85,20 @@ disabled (`core/gitfetch.py`). The API never scans server-side paths: only Git U
   redactions above). Rely on disk or volume encryption for now.
 - **Note:** redaction before any LLM call applies when the LLM features exist (see T8).
 
-### T8 Prompt injection (N/A yet)
-No LLM is called anywhere in v0.1.0. The retrieval half exists (Week 11, [docs/rag.md](rag.md)) and already follows
-two of the rules: its search query is built from the finding's title and description and **never the code
-snippet**, and everything it returns is public reference text intended to be passed as data. When remediation suggestions are built the requirements are:
-delimited untrusted-data blocks, schema-validated output, and the model must not be able to suppress or
-downgrade a finding. Suggestions will be labelled AI-generated.
+### T8 Prompt injection (Partial)
+The remediation layer (Week 12, [docs/llm-remediation.md](llm-remediation.md), [ADR-010](adr/0010-llm-remediation-design.md))
+is built but **off by default and not yet wired into scans or the UI**.
+- **Done and tested:** instructions only in the system message; repository text in random-nonce fenced data
+  blocks with the task reminder after them; strict schema validation of the reply (extra keys, dismissal
+  language, control/bidi characters and patches outside the finding's file are rejected whole); the model has
+  no way to change severity, triage or taxonomy and the `Finding` object is never modified; any failure degrades
+  to static CWE/cheat-sheet text; secrets findings send no code, other code is scrubbed first; the retrieval
+  query never uses the code snippet; injection-like text in a repository is reported to the user. Tested with 20
+  hostile payloads across four placements and with simulated hijacked models (135 tests).
+- **Open:** no real model has been run against these defences, so real-world resistance is **unmeasured** (Week
+  14). A well-formed reply can still be a wrong or misleading fix; patches are labelled and never applied. The
+  secret scrubber is pattern-based and can miss unusual formats. The dismissal filter is phrase-based.
+- **Privacy:** enabling the feature sends finding text and about 40 lines of code to the configured provider.
 
 ### T9 Stored XSS (Done)
 Scanner-derived text is rendered as React text nodes, never HTML; the UI runs under a per-request-nonce

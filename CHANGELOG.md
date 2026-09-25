@@ -6,6 +6,14 @@ versions will follow [SemVer](https://semver.org) once `v0.1.0` is tagged (plann
 ## [Unreleased]
 
 ### Added
+- **LLM remediation design (Week 12), off by default:** a provider-agnostic `LLMClient` (Anthropic behind the
+  optional `llm` extra); a prompt with random-nonce data fences and instructions only in the system message; a
+  strict output contract (five fields, unified-diff patch limited to the finding's file, rejects severity or
+  triage keys and "false positive" language); secret scrubbing before any code is sent; static fallback text for
+  every failure; `bulwark llm status|prompt|suggest`. 135 tests including 20 hostile payloads and simulated
+  hijacked models. No real model has been run against it yet. See [docs/llm-remediation.md](docs/llm-remediation.md), ADR-010.
+
+### Added
 - **Remediation knowledge base (Week 11):** a committed corpus of 211 CWE entries and 1,697 OWASP cheat-sheet
   chunks; pgvector (`vector(1024)`, HNSW) in the existing PostgreSQL via migration `0002`; a model-free hashed
   TF-IDF embedder; `context_for(finding)` retrieval; `bulwark kb load|stats|search`. Measured: right sheet in

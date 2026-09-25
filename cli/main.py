@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from collections import Counter
 from pathlib import Path
+from typing import Any
 
 import typer
 
@@ -129,6 +130,99 @@ def kb_search(
             typer.echo(
                 f"{h.score:.3f}  {h.chunk.title} | {h.chunk.section[:70]}\n        {h.chunk.url}"
             )
+
+
+llm_app = typer.Typer(
+    help="LLM remediation suggestions (off by default; see docs/llm-remediation.md)."
+)
+app.add_typer(llm_app, name="llm")
+
+
+def _load_finding(path: Path, index: int) -> Any:
+    from core.models import finding_from_dict
+
+    doc = json.loads(path.read_text())
+    item = doc["findings"][index] if isinstance(doc, dict) and "findings" in doc else doc
+    return finding_from_dict(item)
+
+
+def _code_for(finding: Any, source: Path | None) -> Any:
+    from core.llm.prompt import extract_context
+
+    if source is None:
+        return None
+    loc = finding.location
+    return extract_context(source.read_text(errors="replace"), loc.start_line, loc.end_line)
+
+
+@llm_app.command("status")
+def llm_status() -> None:
+    """Is the feature on, which model, is a key set (never the key itself)."""
+    from core.llm.client import LLMConfig
+
+    typer.echo(json.dumps(LLMConfig.from_env().status(), indent=2))
+
+
+@llm_app.command("prompt")
+def llm_prompt(
+    finding_json: Path = typer.Argument(
+        ..., help="A finding, or the output of `bulwark scan` (use --index)."
+    ),
+    source: Path | None = typer.Option(
+        None, help="The source file the finding is in (adds +/-20 lines of code)."
+    ),
+    index: int = typer.Option(0, help="Which finding, when the file is a full scan result."),
+) -> None:
+    """Print exactly what would be sent to a model. Nothing is sent; no key needed."""
+    from core.llm.prompt import build_prompt
+    from core.persistence.db import get_session_factory
+    from core.rag.retrieve import RemediationContext, context_for
+    from core.rag.store import KnowledgeBase
+
+    finding = _load_finding(finding_json, index)
+    try:
+        with get_session_factory()() as s:
+            ctx = context_for(finding, KnowledgeBase(s))
+    except (
+        Exception
+    ):  # noqa: BLE001 - no knowledge base yet: show the prompt without reference text
+        ctx = RemediationContext(basis="none")
+        typer.echo(
+            "(knowledge base not loaded: reference text omitted; run `bulwark kb load`)", err=True
+        )
+    p = build_prompt(finding, ctx, _code_for(finding, source))
+    typer.echo(f"### SYSTEM\n{p.system}\n\n### USER\n{p.user}")
+    typer.echo(
+        f"\n[code sent: {p.code_included}; secrets removed: {p.secrets_scrubbed}; "
+        f"injection-like text: {p.signals or 'none'}]",
+        err=True,
+    )
+
+
+@llm_app.command("suggest")
+def llm_suggest(
+    finding_json: Path = typer.Argument(...),
+    source: Path | None = typer.Option(None, help="The source file the finding is in."),
+    index: int = typer.Option(0),
+) -> None:
+    """Ask the configured model for a suggestion (sends data off this machine); else static text."""
+    from dataclasses import asdict
+
+    from core.llm.client import LLMConfig, make_client
+    from core.llm.service import suggest
+    from core.persistence.db import get_session_factory
+    from core.rag.store import KnowledgeBase
+
+    cfg = LLMConfig.from_env()
+    if not cfg.enabled:
+        typer.echo(
+            "LLM off: set BULWARK_LLM_ENABLED=1 and BULWARK_LLM_API_KEY to enable.",
+            err=True,
+        )
+    finding = _load_finding(finding_json, index)
+    with get_session_factory()() as s:
+        result = suggest(finding, KnowledgeBase(s), make_client(cfg), _code_for(finding, source))
+    typer.echo(json.dumps(asdict(result), indent=2))
 
 
 @app.command("update-feeds")
