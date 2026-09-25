@@ -5,7 +5,7 @@ fix, open an issue first so we can agree on the approach.
 
 ## Setup
 
-Needs Python 3.10+, Node 20+ and Docker.
+Needs Python 3.10+, Node 22 and Docker.
 
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
