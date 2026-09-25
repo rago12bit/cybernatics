@@ -18,6 +18,7 @@ from core.adapters.trivy import TrivyAdapter
 from core.correlation import CorrelationStats, correlate
 from core.models import Finding, finding_from_dict
 from core.postprocess import finalize
+from core.reachability import analyze_or_none
 from core.runner import RunnerError, run_tool
 
 ADAPTERS: dict[str, ToolAdapter] = {
@@ -167,5 +168,5 @@ def scan(target: Path, tools: list[str], executor: Executor = threaded_executor)
         result.findings.extend(o.findings)
     # Correlate BEFORE redacting: redaction placeholders look identical and would over-merge.
     correlated, result.stats = correlate(result.findings)
-    result.findings = finalize(correlated)
+    result.findings = finalize(correlated, reach=analyze_or_none(target))
     return result

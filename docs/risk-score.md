@@ -24,6 +24,8 @@ likelihood = 1.0                             CVE is in KEV
            = merged confidence               code, secrets and IaC findings (no CVE exists)
 risk       = round(100 * impact * (0.5 + 0.5 * likelihood))
 risk       = max(risk, 90)                   if in KEV
+risk       = round(risk * 0.85)              if reachability says the application does not import it
+                                             (KEV floor becomes 80 instead of 90)
 ```
 
 Impact sets the ceiling; exploit evidence decides where between 50% and 100% of it a score lands. EPSS values are heavily skewed (most CVEs sit below 1%), which is why the square-root
@@ -54,7 +56,8 @@ Sources: <https://www.first.org/epss/> (score files) and
 
 - **A heuristic for ordering work, not a probability and not validated against real outcomes.** The
   weights and the KEV floor are judgment calls, kept in one place (`core/risk/score.py`) for review.
-- **No reachability yet.** A vulnerable library the code never calls scores the same as one it does.
+- **Reachability is coarse.** It tells whether the application's own code imports a package, not whether the
+  vulnerable function is called (see [reachability.md](reachability.md)).
 - A dependency advisory without a CVE id (GitHub-only advisories) cannot be looked up, so it scores as
   "unknown".
 - EPSS and KEV describe the whole internet, not your environment.

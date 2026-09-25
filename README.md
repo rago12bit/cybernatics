@@ -23,7 +23,8 @@ up as a Bandit finding, a Semgrep finding and a CWE entry; one vulnerable npm pa
    family and code within a few lines), keep every tool's evidence, take the highest severity.
 4. **Map** each finding to its CWE and [OWASP Top 10:2021](docs/taxonomy.md) category.
 5. **Rank** by [risk](docs/risk-score.md): severity combined with EPSS and CISA's known-exploited list, so the UI can
-   show the ten things to fix first.
+   show the ten things to fix first. For npm and PyPI dependencies it also checks whether your code
+   [imports the package](docs/reachability.md) at all (coarse: import, not call).
 6. **Show and export** it: web UI, API, CLI, and downloadable SARIF, HTML and PDF reports.
 
 ## Architecture

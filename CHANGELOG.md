@@ -6,6 +6,15 @@ versions will follow [SemVer](https://semver.org) once `v0.1.0` is tagged (plann
 ## [Unreleased]
 
 ### Added
+- **Reachability v1 (Week 15):** for npm and PyPI dependency findings, Bulwark now checks whether the scanned
+  code imports the vulnerable package (Python via `ast`, JavaScript/TypeScript via tree-sitter; CommonJS, ESM,
+  dynamic `import()`, `importlib`, and test vs application code). `scoring.reachable` is `true`, `false` or unknown,
+  the reason appears under "Why this ranks here", and an unimported package's risk is reduced by 15% (KEV floor 90 → 80).
+  It is deliberately coarse and never turns "cannot tell" (transitive dependency, plugin loaded by name, unparsable
+  files, other ecosystems) into "unreachable": see docs/reachability.md. New threat T14 (parsing untrusted source
+  in the worker) recorded as Partial. New runtime dependencies: `tree-sitter` and its JavaScript/TypeScript grammars.
+
+### Added
 - **Patch checking (Week 14):** suggested patches are checked against the code the model saw: line numbers are
   corrected, hunk context is balanced so `patch`/`git apply` accept minimal model-style hunks (tested against the
   real `patch` tool), and a patch that does not match the code or changes nothing is discarded with a reason.

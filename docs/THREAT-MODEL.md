@@ -40,6 +40,7 @@ render text, never to run scan-derived markup.
 | T11 | Unauthorized API access | Spoofing | Partial |
 | T12 | Worker's Docker access abused | Elevation of privilege | Partial |
 | T13 | Poisoned or unavailable exploit-data feeds | Tampering | Partial |
+| T14 | Parser bug or resource exhaustion while analysing scanned source for reachability | Denial of service / Elevation | Partial |
 
 ## Detail
 
@@ -138,6 +139,17 @@ network). Downloads are size-capped, structurally validated with minimum-size sa
 cache atomically; a bad file leaves the previous one in place; a missing feed degrades scores to "unknown"
 rather than failing scans. **Open:** the files are trusted on TLS alone; there is no signature to verify. A
 compromised feed could distort ranking, not execute code.
+
+### T14: reachability analysis parses untrusted source outside the sandbox
+
+Unlike the scanners, `core/reachability` runs in the API/worker process. It never executes scanned code:
+Python is parsed with the standard `ast` module and JavaScript/TypeScript with tree-sitter (native code).
+Mitigations: symlinks are not followed and dependency/build directories are skipped, at most 20,000 files and
+1 MB per file are read, parse errors (including `RecursionError`/`MemoryError`) mark the file unparsed instead of
+failing the scan, and any failure of the whole analysis leaves findings without reachability rather than failing the
+scan. **Residual:** a memory-safety bug in tree-sitter or CPython's parser triggered by a hostile file would run in
+the worker, which is the one component with (proxied) Docker access. Moving the analysis into a sandboxed container
+is the fix and is not done. Status: Partial.
 
 ## Out of scope
 DAST ([ADR-003](adr/0003-no-dast-in-v1.md)); the security of the upstream scanners themselves; multi-tenant

@@ -344,7 +344,7 @@ def test_risk_is_scored_stored_and_drives_sort(
         epss={"CVE-2021-44228": 0.94}, kev={"CVE-2021-44228"}, epss_loaded=True, kev_loaded=True
     )
     real = pp.apply_risk
-    monkeypatch.setattr(pp, "apply_risk", lambda fs, _=None: real(fs, feeds))
+    monkeypatch.setattr(pp, "apply_risk", lambda fs, _=None, assess=None: real(fs, feeds, assess))
     (sample_repo / "requirements.txt").write_text("x==1\n")
     with sessions() as s:
         sid = make_scan(s, ["trivy", "bandit"], str(sample_repo))

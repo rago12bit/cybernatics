@@ -17,6 +17,7 @@ from core.persistence import repo
 from core.persistence.db import SessionFactory
 from core.persistence.storage import ObjectStore
 from core.postprocess import finalize
+from core.reachability import analyze_or_none
 from core.risk import ensure_fresh
 from core.scan import ADAPTERS, ToolOutcome, detect_context, execute_tool
 from core.source import materialize
@@ -60,6 +61,7 @@ def run_scan_job(
     try:
         with materialize(source_ref) as workspace:
             ctx = detect_context(workspace)
+            reach = analyze_or_none(workspace)
             runnable: list[str] = []
             outcomes: list[ToolOutcome] = []
             for name in tools:
@@ -92,7 +94,7 @@ def run_scan_job(
     # Correlate BEFORE redacting: redaction placeholders look identical and would over-merge.
     correlated, stats = correlate([f for o in outcomes for f in o.findings])
     ensure_fresh()
-    findings = finalize(correlated)
+    findings = finalize(correlated, reach=reach)
     has_secrets = any(f.taxonomy.category is Category.SECRETS for f in findings)
     _store_raw(sessions, store, scan_id, outcomes, raws, has_secrets)
     status = _final_status(outcomes)
