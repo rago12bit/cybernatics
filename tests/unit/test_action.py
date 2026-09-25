@@ -83,3 +83,14 @@ def test_shell_scripts_have_valid_syntax() -> None:
     for step in STEPS:
         if "run" in step:
             subprocess.run(["bash", "-n"], input=step["run"].encode(), check=True)
+
+
+def test_inputs_are_wired_to_the_steps_that_use_them() -> None:
+    env = {s["id"]: s["env"] for s in STEPS if s.get("id") in ("scan", "compare")}
+    assert env["scan"]["SCAN_PATH"] == "${{ inputs.path }}"
+    assert env["scan"]["TOOLS"] == "${{ inputs.tools }}"
+    assert env["scan"]["COMPARE_BASE"] == "${{ inputs.compare-base }}"
+    assert env["compare"]["FAIL_ON"] == "${{ inputs.fail-on }}"
+    comment = next(s for s in STEPS if s.get("name", "").startswith("Comment"))
+    assert comment["env"]["GITHUB_TOKEN"] == "${{ inputs.github-token }}"
+    assert comment["env"]["PR_NUMBER"] == "${{ github.event.pull_request.number }}"
