@@ -5,6 +5,10 @@ versions will follow [SemVer](https://semver.org) once `v0.1.0` is tagged (plann
 
 ## [Unreleased]
 
+### Added
+- **Sample-only web build** (`NEXT_PUBLIC_DEMO_ONLY=1`) for public hosting: no API or scanning, `/app` redirects to a
+  `/self-host` page, tighter CSP, HSTS; `web/fly.toml` and [docs/deploy-demo.md](docs/deploy-demo.md).
+
 ## [0.1.0] - 2026-09-25
 
 First tagged release (pre-alpha: single shared token, not for untrusted multi-user hosting).

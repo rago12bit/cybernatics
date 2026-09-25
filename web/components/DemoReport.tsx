@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { APP_HREF, DEMO_ONLY } from "@/lib/site";
 import { ScanReport } from "@/components/ScanReport";
 import { PAGE_SIZE, severityRank } from "@/lib/format";
 import type { Finding, FindingsPage, FindingsQuery, ScanView } from "@/lib/types";
@@ -40,7 +41,7 @@ export function DemoReport() {
           <span className="eyebrow plain">Sample data</span>
           <p className="small muted">A real scan of a small test project, so you can explore the report without an API token.</p>
         </div>
-        <Link href="/app" className="btn primary sm">Scan your own →</Link>
+        <Link href={APP_HREF} className="btn primary sm">{DEMO_ONLY ? "Run it yourself →" : "Scan your own →"}</Link>
       </div>
       <ScanReport scan={scan} connection="done" version={0} fetchFindings={fetchFindings} crumb={{ href: "/about", label: "← About Bulwark" }} />
     </div>

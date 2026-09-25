@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { clearToken, getToken } from "@/lib/api";
+import { APP_HREF, APP_NAV, DEMO_ONLY } from "@/lib/site";
 import { BrandMark } from "./graphics";
 
 const LINKS = [
@@ -11,7 +12,7 @@ const LINKS = [
   { href: "/about#results", label: "Results", id: "results" },
   { href: "/about#scanners", label: "Scanners", id: "scanners" },
   { href: "/", label: "Sample scan" },
-  { href: "/app", label: "App" },
+  { href: APP_HREF, label: APP_NAV },
 ];
 
 export function SiteHeader() {
@@ -60,7 +61,7 @@ export function SiteHeader() {
         <nav aria-label="Primary" className="nav-desktop">{links}</nav>
         <span className="spacer" />
         {signedIn && inApp && <button type="button" className="btn sm" onClick={signOut}>Sign out</button>}
-        {!inApp && <Link href="/app" className="btn primary sm nav-cta">Open app →</Link>}
+        {!inApp && <Link href={APP_HREF} className="btn primary sm nav-cta">{DEMO_ONLY ? "Run it yourself →" : "Open app →"}</Link>}
         <button type="button" className="btn sm menu-btn" aria-expanded={menu} aria-controls="mobile-nav" onClick={() => setMenu((m) => !m)}>{menu ? "Close" : "Menu"}</button>
       </div>
       <nav id="mobile-nav" aria-label="Mobile" className="nav-mobile" hidden={!menu}>

@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { API_URL } from "@/lib/api";
 import { BENCHMARK } from "@/lib/benchmark";
+import { APP_CTA, APP_HREF, DEMO_ONLY, DOCS_HREF } from "@/lib/site";
 import { Blueprint, DedupChart, DedupDiagram, PipelineDiagram, StepChart, Stripes } from "./graphics";
 import { StackSection } from "./StackSection";
 import { Scanners } from "./Scanners";
@@ -25,7 +25,7 @@ export function Landing() {
               results into one report, and shows you which scanners agree.
             </p>
             <div className="hero-actions">
-              <Link href="/app" className="btn primary">Open the app →</Link>
+              <Link href={APP_HREF} className="btn primary">{APP_CTA}</Link>
               <Link href="/" className="btn">View a sample scan</Link>
             </div>
           </div>
@@ -56,8 +56,8 @@ export function Landing() {
           <div className="sec-head">
             <h2 id="more-h">Do more with Bulwark</h2>
             <div className="actions">
-              <Link href="/app" className="btn primary sm">Try Bulwark →</Link>
-              <a href={`${API_URL}/docs`} className="btn sm">API reference</a>
+              <Link href={APP_HREF} className="btn primary sm">{DEMO_ONLY ? "Run it yourself →" : "Try Bulwark →"}</Link>
+              <a href={DOCS_HREF} className="btn sm">API reference</a>
             </div>
           </div>
           <div className="feature-grid">
@@ -182,14 +182,14 @@ export function Landing() {
         <div className="cta-copy">
           <span className="eyebrow">Get started</span>
           <h2 className="display">Scan your first repo in a minute.</h2>
-          <div className="hero-actions"><Link href="/app" className="btn primary">Open the app →</Link></div>
+          <div className="hero-actions"><Link href={APP_HREF} className="btn primary">{APP_CTA}</Link></div>
           <span className="tagline">[ Bulwark ] local-first / sandboxed_</span>
         </div>
       </section>
       <footer className="foot">
         <div className="foot-links">
-          <div><h3>Product</h3><ul><li><Link href="/app">Open app</Link></li><li><Link href="/about#results">Results</Link></li><li><Link href="/about#scanners">Scanners</Link></li></ul></div>
-          <div><h3>Developers</h3><ul><li><a href={`${API_URL}/docs`}>API reference</a></li><li>CLI: bulwark scan</li><li>WebSocket progress</li></ul></div>
+          <div><h3>Product</h3><ul><li><Link href={APP_HREF}>{DEMO_ONLY ? "Run it yourself" : "Open app"}</Link></li><li><Link href="/about#results">Results</Link></li><li><Link href="/about#scanners">Scanners</Link></li></ul></div>
+          <div><h3>Developers</h3><ul><li><a href={DOCS_HREF}>API reference</a></li><li>CLI: bulwark scan</li><li>WebSocket progress</li></ul></div>
           <div><h3>Security</h3><ul><li>Sandboxed runners</li><li>SSRF + zip-slip guards</li><li>Secret redaction</li></ul></div>
           <div><h3>Project</h3><ul><li>Apache-2.0</li><li>Open-source scanners</li><li>Benchmarks published</li></ul></div>
         </div>
