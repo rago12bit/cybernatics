@@ -3,7 +3,7 @@
 **One scan, one deduplicated list of findings.** Bulwark runs five open-source security scanners against
 a repository, merges what they agree on, and shows you a single list you can actually work through.
 
-> Status: pre-alpha. Weeks 1-7 of the plan are done (scanners, correlation, API, UI, CWE/OWASP mapping).
+> Status: pre-alpha. Weeks 1-8 of the plan are done (scanners, correlation, API, UI, CWE/OWASP mapping, docs).
 > Risk ranking with EPSS and CISA KEV is next (Week 9). Not ready for untrusted multi-user hosting yet:
 > auth is a single shared token (see [Limits](#limits)).
 
@@ -24,22 +24,7 @@ up as a Bandit finding, a Semgrep finding and a CWE entry; one vulnerable npm pa
 
 ## Architecture
 
-```mermaid
-flowchart LR
-    U[Web UI / CLI / API client] -->|Git URL or archive| API[FastAPI]
-    API --> DB[(Postgres)]
-    API -->|enqueue| Q[(Redis)]
-    Q --> W[Celery worker]
-    W -->|via socket proxy| D{{Docker}}
-    D --> B[Bandit] & S[Semgrep] & G[Gitleaks] & T[Trivy] & O[OSV-Scanner]
-    B & S & G & T & O -->|tool output| N[Adapters: canonical Finding]
-    N --> C[Correlation + dedup]
-    C --> M[CWE / OWASP mapping]
-    M --> R[Redaction]
-    R --> DB
-    W -->|raw output, no secrets| S3[(S3 store)]
-    API -.->|live progress| U
-```
+![Bulwark architecture: a client submits a repository to the API; a worker runs five sandboxed scanners; results are normalized, merged, mapped to CWE/OWASP, redacted and stored](docs/architecture.svg)
 
 Scanners never see the network or the host: each runs with `--network=none --read-only --cap-drop=ALL
 --user=10001 --memory=2g --pids-limit=256` and the target mounted read-only. Design decisions are recorded
@@ -168,6 +153,10 @@ cd web && npm ci
 npm run dev          # http://localhost:3000, expects the API on :8000 (NEXT_PUBLIC_API_URL)
 npm test && npm run typecheck && npm run build
 ```
+
+## Contributing and security
+
+See [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md) and the [CHANGELOG](CHANGELOG.md).
 
 ## Commit convention
 
