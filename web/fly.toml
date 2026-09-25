@@ -1,19 +1,24 @@
 # Public sample site on Fly.io: `cd web && fly launch --no-deploy --copy-config` then `fly deploy`.
-# Change `app` to a name that is free on Fly. No secrets, no volumes, no database: it only serves the sample report.
-app = "bulwark-demo"
+# `app` must be unique on Fly (fly launch errors if it is taken: just pick another). No secrets, no volumes,
+# no database: it only serves the sample report.
+app = "bulwark-scan-demo"
 primary_region = "fra"
 
 [build]
   dockerfile = "Dockerfile"
   [build.args]
     NEXT_PUBLIC_DEMO_ONLY = "1"
+    # Shown in the site footer when set (https URL, or mailto: for contact). Leave empty to show nothing.
+    NEXT_PUBLIC_REPO_URL = ""
+    NEXT_PUBLIC_CONTACT_URL = ""
 
 [http_service]
   internal_port = 3000
   force_https = true
-  auto_stop_machines = "stop"
+  # Always keep one machine running so the first visitor never waits for a cold start.
+  auto_stop_machines = "off"
   auto_start_machines = true
-  min_machines_running = 0
+  min_machines_running = 1
 
   [[http_service.checks]]
     method = "GET"

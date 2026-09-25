@@ -38,3 +38,31 @@ describe("public sample build (NEXT_PUBLIC_DEMO_ONLY=1)", () => {
     expect(html).toMatch(/licence/);
   });
 });
+
+describe("public links are opt-in and validated", () => {
+  it("accepts https repo links and mailto contacts, rejects everything else", async () => {
+    const { safePublicLink } = await import("../lib/site");
+    expect(safePublicLink("https://example.com/me/bulwark", false)).toBe("https://example.com/me/bulwark");
+    expect(safePublicLink("mailto:someone@example.com", true)).toBe("mailto:someone@example.com");
+    for (const bad of ["", undefined, "javascript:alert(1)", "http://example.com", "https://u:p@example.com", "data:text/html,x", "not a url"]) {
+      expect(safePublicLink(bad, true)).toBeNull();
+    }
+    expect(safePublicLink("mailto:someone@example.com", false)).toBeNull(); // repo links are never mailto
+    expect(safePublicLink("mailto:a b@example.com", true)).toBeNull();
+  });
+
+  it("shows no repo or contact link unless configured", async () => {
+    const html = await markup("1");
+    expect(html).not.toContain("Source code");
+    expect(html).not.toContain("Contact");
+  });
+
+  it("shows them, as external links, when configured", async () => {
+    vi.stubEnv("NEXT_PUBLIC_REPO_URL", "https://example.com/me/bulwark");
+    vi.stubEnv("NEXT_PUBLIC_CONTACT_URL", "mailto:me@example.com");
+    const html = await markup("1");
+    expect(html).toContain('href="https://example.com/me/bulwark"');
+    expect(html).toContain('href="mailto:me@example.com"');
+    expect(html).toContain('rel="noopener noreferrer"');
+  });
+});

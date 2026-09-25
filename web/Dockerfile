@@ -9,6 +9,10 @@ ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 # Public sample-only build (no API, no scanning, no sign-in): --build-arg NEXT_PUBLIC_DEMO_ONLY=1
 ARG NEXT_PUBLIC_DEMO_ONLY=0
 ENV NEXT_PUBLIC_DEMO_ONLY=$NEXT_PUBLIC_DEMO_ONLY
+# Optional public links shown in the footer (https URL / mailto:); empty means not shown.
+ARG NEXT_PUBLIC_REPO_URL=
+ARG NEXT_PUBLIC_CONTACT_URL=
+ENV NEXT_PUBLIC_REPO_URL=$NEXT_PUBLIC_REPO_URL NEXT_PUBLIC_CONTACT_URL=$NEXT_PUBLIC_CONTACT_URL
 RUN npm run build
 
 FROM node:22-alpine

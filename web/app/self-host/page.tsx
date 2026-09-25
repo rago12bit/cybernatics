@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { CONTACT_URL, REPO_URL } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Run it yourself · Bulwark",
@@ -34,6 +35,8 @@ bulwark scan ./my-project --format html -o report.html`}</code></pre>
         <div className="hero-actions">
           <Link href="/" className="btn primary">Back to the sample report</Link>
           <Link href="/about" className="btn">About Bulwark</Link>
+          {REPO_URL && <a href={REPO_URL} className="btn" rel="noopener noreferrer">Source code</a>}
+          {CONTACT_URL && <a href={CONTACT_URL} className="btn" rel="noopener noreferrer">Contact</a>}
         </div>
       </div>
     </div>

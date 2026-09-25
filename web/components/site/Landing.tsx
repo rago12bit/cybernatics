@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { BENCHMARK } from "@/lib/benchmark";
-import { APP_CTA, APP_HREF, DEMO_ONLY, DOCS_HREF } from "@/lib/site";
+import { APP_CTA, APP_HREF, CONTACT_URL, DEMO_ONLY, DOCS_HREF, REPO_URL } from "@/lib/site";
 import { Blueprint, DedupChart, DedupDiagram, PipelineDiagram, StepChart, Stripes } from "./graphics";
 import { StackSection } from "./StackSection";
 import { Scanners } from "./Scanners";
@@ -191,7 +191,7 @@ export function Landing() {
           <div><h3>Product</h3><ul><li><Link href={APP_HREF}>{DEMO_ONLY ? "Run it yourself" : "Open app"}</Link></li><li><Link href="/about#results">Results</Link></li><li><Link href="/about#scanners">Scanners</Link></li></ul></div>
           <div><h3>Developers</h3><ul><li><a href={DOCS_HREF}>API reference</a></li><li>CLI: bulwark scan</li><li>WebSocket progress</li></ul></div>
           <div><h3>Security</h3><ul><li>Sandboxed runners</li><li>SSRF + zip-slip guards</li><li>Secret redaction</li></ul></div>
-          <div><h3>Project</h3><ul><li>Apache-2.0</li><li>Open-source scanners</li><li>Benchmarks published</li></ul></div>
+          <div><h3>Project</h3><ul><li>Apache-2.0</li>{REPO_URL && <li><a href={REPO_URL} rel="noopener noreferrer">Source code</a></li>}{CONTACT_URL && <li><a href={CONTACT_URL} rel="noopener noreferrer">Contact</a></li>}<li>Benchmarks published</li></ul></div>
         </div>
         <Stripes seed={11} groups={16} rows={3} />
       </footer>

@@ -45,8 +45,19 @@ fly launch --no-deploy --copy-config    # pick a free app name when asked (edit 
 fly deploy
 ```
 
-It runs one 256 MB shared-CPU machine that stops when idle and starts on the next request (the first visit
-after idle takes a few seconds). Fly terminates TLS and redirects http to https.
+It runs one always-on 256 MB shared-CPU machine, so there is no cold start for the first visitor. That is a
+small recurring cost (Fly has no free tier for new accounts; check their current pricing). To pay nothing when
+idle instead, set `auto_stop_machines = "stop"` and `min_machines_running = 0` and accept a few seconds on the
+first visit after idle. Fly terminates TLS and redirects http to https.
+
+**App name:** `app` in `fly.toml` must be unique across Fly. It is set to `bulwark-scan-demo`; if that is taken,
+`fly launch` says so and you pick another. I could not check availability from here (no `flyctl`, no account).
+
+**Footer links:** the site shows a "Source code" and a "Contact" link only if you set them. Put an https
+repository URL and an https or `mailto:` contact in `web/fly.toml` under `[build.args]`
+(`NEXT_PUBLIC_REPO_URL`, `NEXT_PUBLIC_CONTACT_URL`), or pass them as `--build-arg` to `docker build`. Other
+schemes are ignored. They are baked in at build time and visible to everyone, so use an address you are happy
+to publish.
 
 ## Railway, Render, a VPS
 
@@ -64,5 +75,5 @@ without TLS: the app sets HSTS assuming it is served over https.
 
 - [ ] Open the URL: the sample report loads and `/app` lands on "Scanning happens on your machine".
 - [ ] `curl -sI https://YOUR-URL/ | grep -i content-security-policy` shows `connect-src 'self'`.
-- [ ] The repository link and contact details you put on the site are ones you want public.
+- [ ] The repository link and contact you set (if any) appear in the footer and are ones you want public.
 - [ ] Consider a custom domain; the default `*.fly.dev` name is fine for a CV.
