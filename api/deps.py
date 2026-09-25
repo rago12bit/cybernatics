@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hmac
 from collections.abc import AsyncIterator, Callable, Iterator
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Protocol
 
 from fastapi import Depends, HTTPException, Request
@@ -12,6 +12,8 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from core.config import Settings
+from core.llm.client import LLMClient
+from core.llm.limits import UsageLimiter
 from core.persistence.db import SessionFactory
 
 _bearer = HTTPBearer(auto_error=False)
@@ -27,6 +29,8 @@ class AppState:
     sessions: SessionFactory
     enqueue: Callable[[str], None]  # dispatches a scan job to the worker
     subscriber: EventSubscriber
+    llm: LLMClient | None = None  # None: AI suggestions are off; guidance is static reference text
+    limiter: UsageLimiter = field(default_factory=UsageLimiter)  # caps real model calls (cost)
 
 
 def state(request: Request) -> AppState:

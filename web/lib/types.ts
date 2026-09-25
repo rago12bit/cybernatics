@@ -36,6 +36,36 @@ export interface ScanView {
   dedup_rate: number;
 }
 
+/** Guidance for one finding. `source` says whether a model wrote it; `label` is always displayed with it. */
+export interface Remediation {
+  source: "ai" | "static";
+  label: string;
+  explanation: string;
+  impact: string;
+  fix_summary: string;
+  suggested_patch: string | null; // a unified diff, shown as text: Bulwark never applies it
+  confidence: string; // confidence in the fix, not in whether the finding is real
+  model: string | null;
+  degraded_reason: string | null;
+  warnings: string[];
+  references: { title: string; url: string }[];
+  from_cache: boolean;
+  generated_at: string | null;
+}
+
+export interface Guidance {
+  finding_id: string;
+  static: Remediation;
+  ai: Remediation | null;
+  ai_enabled: boolean;
+  model: string | null;
+}
+
+export interface GuidanceApi {
+  get(scanId: string, findingId: string): Promise<Guidance>;
+  request(scanId: string, findingId: string): Promise<Remediation>;
+}
+
 export interface ScanSummary {
   id: string;
   status: ScanStatus;

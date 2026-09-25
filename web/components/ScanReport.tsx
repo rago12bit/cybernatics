@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { dedupSummary, isTerminal } from "@/lib/format";
 import type { Connection } from "@/lib/useScan";
-import type { FindingsPage, FindingsQuery, ScanView, Severity } from "@/lib/types";
+import type { FindingsPage, FindingsQuery, GuidanceApi, ScanView, Severity } from "@/lib/types";
 import { SeverityCounts, StatusBadge } from "./Badges";
 import { LocalTime } from "./LocalTime";
 import { FindingsTable } from "./FindingsTable";
@@ -19,12 +19,14 @@ export function ScanReport({
   fetchFindings,
   crumb = { href: "/app", label: "← All scans" },
   downloads,
+  guidance,
 }: {
   scan: ScanView;
   connection: Connection;
   version: number;
   fetchFindings?: (id: string, q: FindingsQuery, limit?: number) => Promise<FindingsPage>;
   crumb?: { href: string; label: string };
+  guidance?: GuidanceApi;
   downloads?: boolean; // whole-scan PDF/HTML/SARIF downloads; needs the API, so off for the sample scan
 }) {
   const done = isTerminal(scan.status);
@@ -82,7 +84,7 @@ export function ScanReport({
         )}
         {scan.status === "partial" && <p className="warn">Some scanners failed or timed out. Results below are from the scanners that finished.</p>}
       </section>
-      {done && scan.status !== "failed" && <FindingsTable scan={scan} version={version} fetchFindings={fetchFindings} />}
+      {done && scan.status !== "failed" && <FindingsTable scan={scan} version={version} fetchFindings={fetchFindings} guidance={guidance} />}
     </>
   );
 }

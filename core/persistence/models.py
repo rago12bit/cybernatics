@@ -96,3 +96,23 @@ class FindingRow(Base):
         Index("ix_findings_scan_sev", "scan_id", "severity_rank"),
         Index("ix_findings_scan_category", "scan_id", "category"),
     )
+
+
+class RemediationCache(Base):
+    """AI remediation text shared across scans: the same SQLi in fifty repos costs one model call.
+
+    Keyed by (rule, snippet hash or package, model, prompt version); see core/llm/cache.py.
+    Only successful model replies are stored, never static fallbacks or failures.
+    """
+
+    __tablename__ = "remediation_cache"
+
+    key: Mapped[str] = mapped_column(String(64), primary_key=True)
+    rule_id: Mapped[str] = mapped_column(String(300), index=True)
+    model: Mapped[str] = mapped_column(String(100))
+    prompt_version: Mapped[str] = mapped_column(String(16))
+    path: Mapped[str] = mapped_column(Text)  # where the patch (if any) applies
+    start_line: Mapped[int] = mapped_column(Integer)
+    payload: Mapped[dict[str, Any]] = mapped_column(JsonType)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+    hits: Mapped[int] = mapped_column(Integer, default=0)

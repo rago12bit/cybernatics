@@ -169,8 +169,8 @@ the LLM remediation layer. See [docs/rag.md](docs/rag.md).
 ## LLM remediation (off by default)
 
 An opt-in layer can explain a finding and suggest a fix, with strict output validation and prompt-injection
-defences; it never changes a finding and never applies a patch. It is built but not yet wired into scans or the
-UI, and no real model has been evaluated against it. Read [docs/llm-remediation.md](docs/llm-remediation.md)
+defences; it never changes a finding and never applies a patch. It runs only when you click "Generate AI suggestion" on a finding, results are cached and
+rate-limited, and every AI block is labelled. No real model has been evaluated against it yet. Read [docs/llm-remediation.md](docs/llm-remediation.md)
 (including what data it would send) before enabling.
 
 ## Public sample site

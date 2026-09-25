@@ -20,6 +20,13 @@ from core.models import Finding
 from core.rag.store import Hit, KnowledgeBase
 from core.taxonomy import cwe_name, normalize_cwe
 
+_ABSTRACTION_RANK = {
+    "Variant": 0,
+    "Base": 1,
+    "Compound": 1,
+    "Class": 3,
+    "Pillar": 4,
+}  # specific -> broad
 MAX_PER_SHEET = 2  # diversity: do not hand the model three sections of the same document
 CWE_SHARE = (
     0.25  # each CWE entry may use at most this share of the budget; the rest is for guidance
@@ -63,15 +70,15 @@ def context_for(
     owasp = set(f.taxonomy.owasp_top_10_2021)
     ctx = RemediationContext(basis="none")
 
-    for cid in sorted(cwes, key=lambda c: int(c.split("-")[1]))[:2]:
-        doc = kb.cwe(cid)
-        if doc:
-            cap = int(
-                max_chars * CWE_SHARE
-            )  # CWE-20 alone is many pages: never let it starve the guidance
-            ctx.cwe_entries.append(
-                Reference("cwe", doc.title, doc.section, doc.url, doc.text[:cap])
-            )
+    # The most SPECIFIC weakness first: a prototype-pollution finding tagged CWE-20 (a broad class) and
+    # CWE-1321 (the exact weakness) must be explained by 1321. `Chunk.section` holds the CWE abstraction.
+    docs = [d for d in (kb.cwe(c) for c in cwes) if d]
+    docs.sort(key=lambda d: (_ABSTRACTION_RANK.get(d.section, 2), int(d.id.split("-")[1])))
+    for doc in docs[:2]:
+        cap = int(
+            max_chars * CWE_SHARE
+        )  # CWE-20 alone is many pages: never let it starve the guidance
+        ctx.cwe_entries.append(Reference("cwe", doc.title, doc.section, doc.url, doc.text[:cap]))
 
     ids = kb.candidates(cwes, owasp)
     if ids:

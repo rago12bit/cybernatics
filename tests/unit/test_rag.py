@@ -234,3 +234,11 @@ def test_kb_cli_load_stats_and_search(monkeypatch: pytest.MonkeyPatch) -> None:
         app, ["kb", "search", "prototype pollution", "-k", "2", "--kind", "cheatsheet"]
     )
     assert found.exit_code == 0 and "Prototype Pollution Prevention" in found.output
+
+
+def test_the_most_specific_cwe_explains_a_finding_not_the_broadest(kb: KnowledgeBase) -> None:
+    """Regression: CWE-20 (class) sorted before CWE-1321 (the exact weakness) and crowded it out."""
+    ctx = context_for(_finding("prototype pollution", cwe=("CWE-1321", "CWE-20", "CWE-915")), kb)
+    assert ctx.cwe_entries[0].title.startswith("CWE-1321"), [r.title for r in ctx.cwe_entries]
+    assert ctx.cwe_entries[0].section in {"Variant", "Base"}
+    assert len(ctx.cwe_entries) == 2 and not any(r.title.startswith("CWE-20:") for r in ctx.cwe_entries[:1])

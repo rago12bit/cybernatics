@@ -1,8 +1,9 @@
 # LLM remediation suggestions
 
 For a finding a scanner already produced, ask a model to explain it in plain English and propose a fix.
-**Off by default. Not yet wired into scans or the UI (Week 13).** This document covers the design built in
-Week 12: the prompt, the output contract, and the defences against prompt injection (threat T8).
+**Off by default.** Week 12 built the prompt, the output contract and the injection defences; Week 13 added the
+response cache, the API endpoints, the spend limit and the UI. AI text is never generated automatically: only
+when someone clicks "Generate AI suggestion" on a finding.
 
 Design rules from the plan, and how each is met:
 
@@ -13,7 +14,50 @@ Design rules from the plan, and how each is met:
 | Output is schema-validated; malformed degrades to static text | `core/llm/contract.py`; any failure returns CWE/cheat-sheet text |
 | Visible AI marker | Every result carries `label` ("AI suggestion: review before applying" or "Reference guidance (not AI-generated)") |
 | Patches never auto-applied | A patch is text in a field; nothing in Bulwark applies it |
-| Cached by `(rule_id, snippet_hash)` | Week 13 |
+| Cached by `(rule_id, snippet_hash)` | `core/llm/cache.py`; see [Caching](#caching) |
+
+## In the app
+
+Opening a finding shows a **Fix guidance** section:
+
+1. **Reference guidance**, always, labelled "Reference guidance (not AI-generated)": the CWE description and the
+   matching OWASP cheat-sheet advice, with source links. No model is involved, and nothing leaves the server.
+2. **AI suggestion**, only if the server has it enabled: a **Generate AI suggestion** button whose small print says
+   what will be sent and to which model. Nothing is sent until you click. The result appears in a dashed,
+   separately labelled block: "AI suggestion. Review before applying.", with the model, its confidence in the fix,
+   any warnings (injection-like text found in the code, secrets removed), the patch as text, and a Copy button.
+   There is no apply button: Bulwark never changes your code.
+3. If the model's answer fails validation, you see the reference guidance plus the reason, never a broken or
+   partly trusted AI answer.
+
+The public sample site shows reference guidance only (precomputed by the same code) and says AI is off.
+
+## API
+
+| Endpoint | What it does |
+|---|---|
+| `GET /scans/{id}/guidance?finding_id=` | Reference guidance, plus a cached AI suggestion if one exists. Calls no model. |
+| `POST /scans/{id}/suggestion` `{finding_id}` | Generate (or reuse from cache) an AI suggestion. `409` if AI is off, `429` with `Retry-After` over the spend limit, `503` if the knowledge base is not loaded. |
+
+Both need the bearer token. Neither modifies the stored finding.
+
+## Caching
+
+Plan rule: the same Django SQL injection in fifty repositories should cost one model call.
+
+- **Key**: rule (the CVE for dependencies, else the first scanner rule) + the snippet hash (for dependencies the
+  package and version) + model + prompt version. Change the model or edit the prompt and old entries stop
+  matching.
+- **Stored**: only successful model replies. Static fallbacks and failures are never cached, so a transient error
+  is retried.
+- **Not cached at all**: findings whose snippet is empty or was withheld near a secret (a shared key would merge
+  unrelated code).
+- **Patches are location-specific.** A cached patch is only shown for the same file and line; elsewhere the
+  explanation and fix summary are reused but the patch is dropped, with a note.
+- **Single flight**: simultaneous requests for the same finding share one model call.
+- **Spend limit**: real model calls (not cache hits) are limited to `BULWARK_LLM_MAX_PER_MINUTE` (default 10) and
+  `BULWARK_LLM_MAX_PER_DAY` (default 200). It is per API process and resets on restart. With one shared token,
+  this is what stops a click-happy user from running up your bill.
 
 ## Turning it on
 
@@ -33,7 +77,10 @@ Only when enabled, per finding, to the provider you configured:
 
 - the finding's **title, description, category, CWE and OWASP ids, file path and line numbers**, and the
   package name and version for dependency findings;
-- **about 40 lines of source code** around the finding (20 either side), after secret scrubbing;
+- **the code snippet the scanner recorded** for the finding (usually a few lines), after secret scrubbing. Through
+  the API this is all there is: the scan workspace is deleted after a scan, so the +/-20 lines of context the
+  design describes are only available from the CLI (`--source FILE`). Storing wider context would mean keeping
+  source code in the database, which is a separate decision;
 - **reference text**: the matching CWE entry and OWASP cheat-sheet sections (public documents).
 
 Never sent: secrets. Findings in the `secrets` category send no source at all. For other findings, credentials
@@ -96,3 +143,7 @@ raises.
   it still cannot change the finding.
 - The scrubber can miss unusual secret formats (see above).
 - Sending code to a third party is a policy decision Bulwark leaves to you, which is why it is opt-in.
+- Cache entries are shared across every scan on the server, so a suggestion written for one repository's code can
+  be shown for another repository's finding with the same rule and snippet. That is the point, but it means text
+  derived from one user's code is visible to others on a shared server.
+- The reference guidance quotes public CWE and OWASP text; the AI block is only as good as the model.

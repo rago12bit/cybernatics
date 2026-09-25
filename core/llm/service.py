@@ -39,6 +39,10 @@ class RemediationResult:
     degraded_reason: str | None = None  # why static text was used instead of a model's
     warnings: list[str] = field(default_factory=list)
     references: list[dict[str, str]] = field(default_factory=list)
+    from_cache: bool = False
+    generated_at: str | None = (
+        None  # when the model produced it (cache hits keep the original time)
+    )
 
 
 def _refs(ctx: RemediationContext) -> list[dict[str, str]]:

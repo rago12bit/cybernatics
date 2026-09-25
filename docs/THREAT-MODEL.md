@@ -87,7 +87,9 @@ disabled (`core/gitfetch.py`). The API never scans server-side paths: only Git U
 
 ### T8 Prompt injection (Partial)
 The remediation layer (Week 12, [docs/llm-remediation.md](llm-remediation.md), [ADR-010](adr/0010-llm-remediation-design.md))
-is built but **off by default and not yet wired into scans or the UI**.
+is **off by default** and, once enabled, runs only when a user clicks "Generate AI suggestion" on a finding
+(`POST /scans/{id}/suggestion`); reading guidance never contacts a model. Model calls are capped per minute and
+per day, and results are cached by rule and snippet.
 - **Done and tested:** instructions only in the system message; repository text in random-nonce fenced data
   blocks with the task reminder after them; strict schema validation of the reply (extra keys, dismissal
   language, control/bidi characters and patches outside the finding's file are rejected whole); the model has
@@ -98,7 +100,10 @@ is built but **off by default and not yet wired into scans or the UI**.
 - **Open:** no real model has been run against these defences, so real-world resistance is **unmeasured** (Week
   14). A well-formed reply can still be a wrong or misleading fix; patches are labelled and never applied. The
   secret scrubber is pattern-based and can miss unusual formats. The dismissal filter is phrase-based.
-- **Privacy:** enabling the feature sends finding text and about 40 lines of code to the configured provider.
+- **Privacy:** enabling the feature sends finding text and the scanner's code snippet to the configured provider
+  (the CLI can add +/-20 lines). Cache entries are shared across scans on a server.
+- **Cost abuse:** the per-process spend limit bounds a shared-token holder's spend but resets on restart and is
+  not per user (there are no users yet).
 
 ### T9 Stored XSS (Done)
 Scanner-derived text is rendered as React text nodes, never HTML; the UI runs under a per-request-nonce

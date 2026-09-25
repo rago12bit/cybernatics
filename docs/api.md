@@ -22,6 +22,19 @@ List Scans
 Upload Scan
 
 
+## `GET /scans/{scan_id}/guidance`
+
+Get Guidance
+
+- `scan_id` (path, required)
+- `finding_id` (query, required)
+
+## `POST /scans/{scan_id}/suggestion`
+
+Create Suggestion
+
+- `scan_id` (path, required)
+
 ## `GET /risk/feeds`
 
 Risk Feeds

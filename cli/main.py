@@ -95,13 +95,22 @@ app.add_typer(kb_app, name="kb")
 
 
 @kb_app.command("load")
-def kb_load() -> None:
-    """(Re)build the search index from the committed corpus. Idempotent; takes about a second."""
+def kb_load(
+    if_empty: bool = typer.Option(
+        False, "--if-empty", help="Do nothing when the index already exists."
+    ),
+) -> None:
+    """(Re)build the search index from the committed corpus. Idempotent; takes a few seconds."""
+    from sqlalchemy import select
+
     from core.persistence.db import get_session_factory
     from core.rag.corpus_io import read_corpus
-    from core.rag.store import load_corpus
+    from core.rag.store import KbMeta, load_corpus
 
     with get_session_factory()() as s:
+        if if_empty and s.scalar(select(KbMeta.key).where(KbMeta.key == "embedder")):
+            typer.echo(json.dumps({"skipped": "knowledge base already loaded"}))
+            return
         info = load_corpus(s, read_corpus())
     typer.echo(json.dumps(info))
 

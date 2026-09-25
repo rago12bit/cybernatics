@@ -14,6 +14,7 @@ Defences, all structural (none depends on the model behaving):
 
 from __future__ import annotations
 
+import hashlib
 import secrets
 from dataclasses import dataclass, field
 
@@ -37,6 +38,10 @@ Rules, in priority order:
    "suggested_patch": a unified diff that fixes the code, or null when you are not sure or the fix spans more than this file. The diff must modify only the file named in the FINDING block, use "--- a/<path>" and "+++ b/<path>" headers with that exact path, and contain only the hunks needed. The CODE block shows line numbers as "  12 | code"; do not copy those prefixes into the diff. Never invent code you cannot see.
    "confidence": "high", "medium" or "low": how confident you are that fix_summary and suggested_patch are correct for this exact code.
 4. Be honest about uncertainty: prefer null and "low" over a guess."""
+
+PROMPT_VERSION = hashlib.sha256(SYSTEM.encode()).hexdigest()[
+    :12
+]  # cache entries die when the rules change
 
 USER_TASK = "Annotate the finding described in the data blocks above."
 USER_TAIL = "Reply with the single JSON object described in the system message, and nothing else."

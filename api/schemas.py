@@ -79,3 +79,45 @@ class FeedsStatus(BaseModel):
     errors: dict[str, str] = Field(
         default_factory=dict, description="Last download error per feed."
     )
+
+
+class SuggestionRequest(BaseModel):
+    finding_id: str = Field(
+        min_length=1, max_length=500, description="A finding's `id` within the scan."
+    )
+
+
+class RemediationView(BaseModel):
+    """Guidance for one finding. `source` says whether a model wrote it."""
+
+    source: str = Field(
+        description="'ai' (written by a model) or 'static' (reference text, no model)."
+    )
+    label: str = Field(
+        description="Always shown with the content, e.g. 'AI suggestion: review before applying'."
+    )
+    explanation: str
+    impact: str
+    fix_summary: str
+    suggested_patch: str | None = Field(
+        description="A unified diff as TEXT. Bulwark never applies it."
+    )
+    confidence: str = Field(
+        description="Confidence in the fix, not in whether the finding is real."
+    )
+    model: str | None = None
+    degraded_reason: str | None = None
+    warnings: list[str] = Field(default_factory=list)
+    references: list[dict[str, str]] = Field(default_factory=list)
+    from_cache: bool = False
+    generated_at: str | None = None
+
+
+class GuidanceView(BaseModel):
+    finding_id: str
+    static: RemediationView = Field(description="Deterministic reference guidance; always present.")
+    ai: RemediationView | None = Field(
+        description="A previously generated AI suggestion, if one is cached."
+    )
+    ai_enabled: bool = Field(description="Whether this server can generate AI suggestions.")
+    model: str | None = None

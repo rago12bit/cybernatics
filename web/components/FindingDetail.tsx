@@ -2,7 +2,8 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { agreementLabel, locationLabel, nativeSeverities } from "@/lib/format";
 import { owaspLabel } from "@/lib/owasp";
 import { cveUrl, cweUrl, owaspUrl, safeHttpsUrl } from "@/lib/safe";
-import type { Finding, ScanView } from "@/lib/types";
+import type { Finding, GuidanceApi, ScanView } from "@/lib/types";
+import { FindingGuidance } from "./FindingGuidance";
 import { RiskSignals, SeverityBadge } from "./Badges";
 
 function Ref({ href, label }: { href: string | null; label: string }) {
@@ -40,6 +41,7 @@ export function FindingDetail({
   position,
   onPrev,
   onNext,
+  guidance,
 }: {
   finding: Finding;
   scan: ScanView | null;
@@ -48,6 +50,7 @@ export function FindingDetail({
   position?: { index: number; total: number };
   onPrev?: () => void;
   onNext?: () => void;
+  guidance?: GuidanceApi; // where the fix guidance comes from; absent = none shown
 }) {
   const refs = f.remediation.references.map((r) => ({ raw: r, url: safeHttpsUrl(r) }));
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -114,6 +117,7 @@ export function FindingDetail({
       )}
 
       {f.description && (<><h4>What it means</h4><p className="prose">{f.description}</p></>)}
+      {guidance && scan && <FindingGuidance scanId={scan.id} findingId={f.id} api={guidance} />}
       {f.remediation.summary && (<><h4>How to fix</h4><p className="prose">{f.remediation.summary}</p></>)}
 
       <div className="chips">

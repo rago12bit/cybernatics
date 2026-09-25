@@ -6,6 +6,23 @@ versions will follow [SemVer](https://semver.org) once `v0.1.0` is tagged (plann
 ## [Unreleased]
 
 ### Added
+- **AI suggestions in the app (Week 13), off by default:** a **Fix guidance** section in the finding panel with
+  always-available reference guidance (CWE + OWASP, labelled "not AI-generated") and, when a server enables it, an
+  explicit **Generate AI suggestion** click; AI text sits in its own dashed block labelled "AI suggestion. Review
+  before applying." with model, confidence, warnings and a text-only patch (no apply button). `GET
+  /scans/{id}/guidance` (no model call), `POST /scans/{id}/suggestion`.
+- **Response cache** keyed by rule + snippet hash (package + version for dependencies) + model + prompt version, shared
+  across scans; only successful replies are stored; a cached patch is shown only at its own file and line;
+  concurrent identical requests make one model call. **Spend limit** per minute and per day (`429` + `Retry-After`).
+- Migrations `0003` (cache table); the migrate step now also loads the knowledge base if empty; the sample site ships
+  precomputed reference guidance.
+
+### Fixed
+- Retrieval explained a finding by its most general CWE (CWE-20 "Improper Input Validation") instead of the exact one
+  (CWE-1321 prototype pollution); it now prefers the most specific weakness.
+- Corrected the Week 12 docs: through the API only the stored snippet is available to send, not +/-20 lines.
+
+### Added
 - **LLM remediation design (Week 12), off by default:** a provider-agnostic `LLMClient` (Anthropic behind the
   optional `llm` extra); a prompt with random-nonce data fences and instructions only in the system message; a
   strict output contract (five fields, unified-diff patch limited to the finding's file, rejects severity or

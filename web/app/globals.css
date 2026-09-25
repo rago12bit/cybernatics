@@ -530,3 +530,21 @@ kbd { font: 500 0.6875rem/1 var(--mono); border: 1px solid var(--line-strong); p
   .fix-side { grid-column: 2; justify-content: flex-start; }
 }
 .downloads { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+
+/* ---------- Fix guidance and AI suggestions ---------- */
+.guidance { margin: 1.25rem 0; display: grid; gap: 0.9rem; }
+.guide { padding: 0.9rem 1rem; border: 1px solid var(--line-strong); display: grid; gap: 0.6rem; background: var(--panel); }
+.guide .prose { margin: 0; }
+.tag.ref { color: var(--khaki); }
+/* The AI block is set apart on purpose: a different border, and words (not just colour) say what it is. */
+.guide.ai { border: 1px dashed var(--sev-medium); background: rgba(232, 183, 79, 0.06); }
+.ai-head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; }
+.tag.ai-tag { color: var(--sev-medium); }
+.ai-warn { margin: 0; padding-left: 1.1rem; color: var(--sev-medium); font-size: 0.8125rem; display: grid; gap: 0.25rem; }
+.guide.ai-ask { border-style: dashed; }
+.ai-off { margin: 0; }
+.patch { display: grid; gap: 0.5rem; }
+.patch-head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
+.diff .d-add { color: var(--mint); }
+.diff .d-del { color: var(--sev-high); }
+.diff .d-hunk { color: var(--muted); }

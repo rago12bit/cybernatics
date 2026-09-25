@@ -1,0 +1,1142 @@
+{
+ "bandit:B105:src/users.py:18": {
+  "confidence": "low",
+  "degraded_reason": "reference guidance",
+  "explanation": "The product contains a hard-coded password, which it uses for its own inbound authentication or for outbound communication to external components. There are two main variations of a hard-coded password: Inbound: the product contains an authentication mechanism that checks for a hard-coded password. Outbound: the product connects to another system or component, and it contains a hard-coded password for connecting to that component.",
+  "fix_summary": "Convergent Encryption ensures that a given plaintext and its key results in the same ciphertext. This can help detect possible reuse of secrets, resulting in the same ciphertext. The challenge with enabling convergent encryption is that it allows attackers to use the system to generate a set of cryptographic strings that might end up in the same secret, allowing the attacker to derive the plaintext secret. Given the algorithm and key, you can mitigate this risk if the convergent crypto system you use has sufficient resource challenges during encryption.",
+  "from_cache": false,
+  "generated_at": null,
+  "impact": "See the CWE entry linked below for the consequences of this weakness.",
+  "label": "Reference guidance (not AI-generated)",
+  "model": null,
+  "references": [
+   {
+    "title": "CWE-259: Use of Hard-coded Password",
+    "url": "https://cwe.mitre.org/data/definitions/259.html"
+   },
+   {
+    "title": "Secrets Management",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Secrets_Management_Cheat_Sheet.html"
+   },
+   {
+    "title": "Secrets Management",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Secrets_Management_Cheat_Sheet.html"
+   }
+  ],
+  "source": "static",
+  "suggested_patch": null,
+  "warnings": []
+ },
+ "bandit:B324:src/users.py:15": {
+  "confidence": "low",
+  "degraded_reason": "reference guidance",
+  "explanation": "The product uses a broken or risky cryptographic algorithm or protocol. Cryptographic algorithms are the methods by which data is scrambled to prevent observation or influence by unauthorized actors. Insecure cryptography can be exploited to expose sensitive information, modify data in unexpected ways, spoof identities of other users or devices, or other impacts. It is very difficult to produce a secure algorithm, and even high-profile algorithms by accomplished cryptographic experts have been broken. Well-known techniques exist to break or weaken various kinds of cryptography.",
+  "fix_summary": "Upgrade Method Two: Use the existing password hashes as inputs for a more secure algorithm. For example, if the application originally stored passwords as `md5($password)`, this could be easily upgraded to `bcrypt(md5($password))`. Layering the hashes avoids the need to know the original password; however, it can make the hashes easier to crack. These hashes should be replaced with direct hashes of the users' passwords next time the user logs in. Remember that once your password hashing method is selected, it will have to be upgraded in the future, so ensure that upgrading your hashing algorithm is as easy as possible.",
+  "from_cache": false,
+  "generated_at": null,
+  "impact": "See the CWE entry linked below for the consequences of this weakness.",
+  "label": "Reference guidance (not AI-generated)",
+  "model": null,
+  "references": [
+   {
+    "title": "CWE-327: Use of a Broken or Risky Cryptographic Algorithm",
+    "url": "https://cwe.mitre.org/data/definitions/327.html"
+   },
+   {
+    "title": "Password Storage",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html"
+   },
+   {
+    "title": "Password Storage",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html"
+   },
+   {
+    "title": "Cryptographic Storage",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Cryptographic_Storage_Cheat_Sheet.html"
+   }
+  ],
+  "source": "static",
+  "suggested_patch": null,
+  "warnings": []
+ },
+ "bandit:B404:src/users.py:2": {
+  "confidence": "low",
+  "degraded_reason": "reference guidance",
+  "explanation": "The product constructs all or part of an OS command using externally-influenced input from an upstream component, but it does not neutralize or incorrectly neutralizes special elements that could modify the intended OS command when it is sent to a downstream component. This weakness can lead to a vulnerability in environments in which the attacker does not have direct access to the operating system, such as in web applications. Alternately, if the weakness occurs in a privileged program, it could allow the attacker to specify commands that normally would not be accessible, or to call alternate commands with privileges that the attacker does not have.",
+  "fix_summary": "The primary defense is to avoid calling OS commands directly. Built-in library functions are a very good alternative to OS Commands, as they cannot be manipulated to perform tasks other than those it is intended to do. For example use `mkdir()` instead of `system(\"mkdir /dir_name\")`. If there are available libraries or APIs for the language you use, this is the preferred method.",
+  "from_cache": false,
+  "generated_at": null,
+  "impact": "See the CWE entry linked below for the consequences of this weakness.",
+  "label": "Reference guidance (not AI-generated)",
+  "model": null,
+  "references": [
+   {
+    "title": "CWE-78: Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection')",
+    "url": "https://cwe.mitre.org/data/definitions/78.html"
+   },
+   {
+    "title": "OS Command Injection Defense",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/OS_Command_Injection_Defense_Cheat_Sheet.html"
+   },
+   {
+    "title": "OS Command Injection Defense",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/OS_Command_Injection_Defense_Cheat_Sheet.html"
+   },
+   {
+    "title": "Injection Prevention",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Injection_Prevention_Cheat_Sheet.html"
+   }
+  ],
+  "source": "static",
+  "suggested_patch": null,
+  "warnings": []
+ },
+ "bandit:B602:src/users.py:11": {
+  "confidence": "low",
+  "degraded_reason": "reference guidance",
+  "explanation": "The product constructs all or part of an OS command using externally-influenced input from an upstream component, but it does not neutralize or incorrectly neutralizes special elements that could modify the intended OS command when it is sent to a downstream component. This weakness can lead to a vulnerability in environments in which the attacker does not have direct access to the operating system, such as in web applications. Alternately, if the weakness occurs in a privileged program, it could allow the attacker to specify commands that normally would not be accessible, or to call alternate commands with privileges that the attacker does not have.",
+  "fix_summary": "If calling a system command that incorporates user-supplied cannot be avoided, the following two layers of defense should be used within software to prevent attacks:",
+  "from_cache": false,
+  "generated_at": null,
+  "impact": "See the CWE entry linked below for the consequences of this weakness.",
+  "label": "Reference guidance (not AI-generated)",
+  "model": null,
+  "references": [
+   {
+    "title": "CWE-78: Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection')",
+    "url": "https://cwe.mitre.org/data/definitions/78.html"
+   },
+   {
+    "title": "OS Command Injection Defense",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/OS_Command_Injection_Defense_Cheat_Sheet.html"
+   },
+   {
+    "title": "OS Command Injection Defense",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/OS_Command_Injection_Defense_Cheat_Sheet.html"
+   },
+   {
+    "title": "Injection Prevention",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Injection_Prevention_Cheat_Sheet.html"
+   }
+  ],
+  "source": "static",
+  "suggested_patch": null,
+  "warnings": []
+ },
+ "gitleaks:df8c6cb92ed6": {
+  "confidence": "low",
+  "degraded_reason": "reference guidance",
+  "explanation": "The product contains a hard-coded password, which it uses for its own inbound authentication or for outbound communication to external components. There are two main variations of a hard-coded password: Inbound: the product contains an authentication mechanism that checks for a hard-coded password. Outbound: the product connects to another system or component, and it contains a hard-coded password for connecting to that component.",
+  "fix_summary": "For Azure, the recommended service is Key Vault. Contrary to other clouds, permissions are granted at the _**Key Vault**_ level. This means secrets for separate workloads and separate sensitivity levels should be in separated Key Vaults accordingly. Check out the Key Vault best practices. ##### 4.1.3.1 Azure Confidential Computing With Azure Confidential Computing, you can create trusted execution environments. This technology isolates sensitive data within a protected container, ensuring that it is encrypted both at rest, in transit, and in use.",
+  "from_cache": false,
+  "generated_at": null,
+  "impact": "See the CWE entry linked below for the consequences of this weakness.",
+  "label": "Reference guidance (not AI-generated)",
+  "model": null,
+  "references": [
+   {
+    "title": "CWE-259: Use of Hard-coded Password",
+    "url": "https://cwe.mitre.org/data/definitions/259.html"
+   },
+   {
+    "title": "CWE-798: Use of Hard-coded Credentials",
+    "url": "https://cwe.mitre.org/data/definitions/798.html"
+   },
+   {
+    "title": "Secrets Management",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Secrets_Management_Cheat_Sheet.html"
+   },
+   {
+    "title": "Secrets Management",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Secrets_Management_Cheat_Sheet.html"
+   }
+  ],
+  "source": "static",
+  "suggested_patch": null,
+  "warnings": []
+ },
+ "osv-scanner:GHSA-fvqr-27wr-82fm:package-lock.json:lodash@4.17.4": {
+  "confidence": "low",
+  "degraded_reason": "reference guidance",
+  "explanation": "The product receives input from an upstream component that specifies attributes that are to be initialized or updated in an object, but it does not properly control modifications of attributes of the object prototype. Consequences: Confidentiality, Integrity, Availability: Read Application Data, Modify Application Data; Availability: DoS: Crash, Exit, or Restart Mitigations: [Implementation] By freezing the object prototype first (for example, Object.freeze(Object.prototype)), modification of the prototype becomes impossible. [Architecture and Design] By blocking modifications of attributes that resolve to object prototype, such as proto or prototype, this weakness can be mitigated.",
+  "fix_summary": "Prototype Pollution is a critical vulnerability that can allow attackers to manipulate an application's JavaScript objects and properties, leading to serious security issues such as unauthorized access to data, privilege escalation, and even remote code execution. For examples of why this is dangerous, see the links in the Other resources section below.",
+  "from_cache": false,
+  "generated_at": null,
+  "impact": "See the CWE entry linked below for the consequences of this weakness.",
+  "label": "Reference guidance (not AI-generated)",
+  "model": null,
+  "references": [
+   {
+    "title": "CWE-1321: Improperly Controlled Modification of Object Prototype Attributes ('Prototype Pollution')",
+    "url": "https://cwe.mitre.org/data/definitions/1321.html"
+   },
+   {
+    "title": "CWE-471: Modification of Assumed-Immutable Data (MAID)",
+    "url": "https://cwe.mitre.org/data/definitions/471.html"
+   },
+   {
+    "title": "Prototype Pollution Prevention",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Prototype_Pollution_Prevention_Cheat_Sheet.html"
+   },
+   {
+    "title": "Prototype Pollution Prevention",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Prototype_Pollution_Prevention_Cheat_Sheet.html"
+   }
+  ],
+  "source": "static",
+  "suggested_patch": null,
+  "warnings": []
+ },
+ "semgrep:python.sqlalchemy.security.sqlalchemy-execute-raw-query:src/users.py:7": {
+  "confidence": "low",
+  "degraded_reason": "reference guidance",
+  "explanation": "The product constructs all or part of an SQL command using externally-influenced input from an upstream component, but it does not neutralize or incorrectly neutralizes special elements that could modify the intended SQL command when it is sent to a downstream component. Without sufficient removal or quoting of SQL syntax in user-controllable inputs, the generated SQL query can cause those inputs to be interpreted as SQL instead of ordinary user data.",
+  "fix_summary": "When developers are taught how to write database queries, they should be told to use prepared statements with variable binding (aka parameterized queries). Prepared statements are simple to write and easier to understand than dynamic queries, and parameterized queries force the developer to define all SQL code first and pass in each parameter to the query later. If database queries use this coding style, the database will always distinguish between code and data, regardless of what user input is supplied. Also, prepared statements ensure that an attacker cannot change the intent of a query, even if SQL commands are inserted by an attacker.",
+  "from_cache": false,
+  "generated_at": null,
+  "impact": "See the CWE entry linked below for the consequences of this weakness.",
+  "label": "Reference guidance (not AI-generated)",
+  "model": null,
+  "references": [
+   {
+    "title": "CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')",
+    "url": "https://cwe.mitre.org/data/definitions/89.html"
+   },
+   {
+    "title": "SQL Injection Prevention",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html"
+   },
+   {
+    "title": "SQL Injection Prevention",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html"
+   },
+   {
+    "title": "Injection Prevention",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Injection_Prevention_Cheat_Sheet.html"
+   }
+  ],
+  "source": "static",
+  "suggested_patch": null,
+  "warnings": []
+ },
+ "trivy:AVD-AWS-0086:main.tf:1": {
+  "confidence": "low",
+  "degraded_reason": "reference guidance",
+  "explanation": "No public access block so not blocking public acls",
+  "fix_summary": "Public subnets house components which will have an internet facing presence. The subnet will contain network routing elements to allow components within the subnet to connect directly to the internet. Some use cases include: - Public facing resources, like front-end web applications. - Initial touch points for applications, like load balancers and routers. - Developer access points, like bastions (note, these can be very insecure if engineered/deployed incorrectly).",
+  "from_cache": false,
+  "generated_at": null,
+  "impact": "See the CWE entry linked below for the consequences of this weakness.",
+  "label": "Reference guidance (not AI-generated)",
+  "model": null,
+  "references": [
+   {
+    "title": "Secure Cloud Architecture",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Secure_Cloud_Architecture_Cheat_Sheet.html"
+   },
+   {
+    "title": "Secure Cloud Architecture",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Secure_Cloud_Architecture_Cheat_Sheet.html"
+   },
+   {
+    "title": "Nodejs Security",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Nodejs_Security_Cheat_Sheet.html"
+   }
+  ],
+  "source": "static",
+  "suggested_patch": null,
+  "warnings": []
+ },
+ "trivy:AVD-AWS-0087:main.tf:1": {
+  "confidence": "low",
+  "degraded_reason": "reference guidance",
+  "explanation": "No public access block so not blocking public policies",
+  "fix_summary": "**This is not an advisable method for resource storage and distribution**, and should only be used for public, non-sensitive, generic resources. This storage approach will provide threat actors additional reconnaissance into a cloud environment, and any data which is stored in this configuration for any period of time must be considered publicly accessed (leaked to the public). | Pros | Cons | |:-----------------------------------:|:------------------------------------:| | Efficient access to many resources | Anyone can access/No privacy | | Simple public file share | Unauthenticated access to objects | | | Visibility into full file system | | | Accidentally leak stored info |",
+  "from_cache": false,
+  "generated_at": null,
+  "impact": "See the CWE entry linked below for the consequences of this weakness.",
+  "label": "Reference guidance (not AI-generated)",
+  "model": null,
+  "references": [
+   {
+    "title": "Secure Cloud Architecture",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Secure_Cloud_Architecture_Cheat_Sheet.html"
+   },
+   {
+    "title": "Content Security Policy",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Content_Security_Policy_Cheat_Sheet.html"
+   },
+   {
+    "title": "HTTP Headers",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/HTTP_Headers_Cheat_Sheet.html"
+   }
+  ],
+  "source": "static",
+  "suggested_patch": null,
+  "warnings": []
+ },
+ "trivy:AVD-AWS-0088:main.tf:1": {
+  "confidence": "low",
+  "degraded_reason": "reference guidance",
+  "explanation": "Bucket does not have encryption enabled",
+  "fix_summary": "Most applications will use a trust boundary configuration like this. Using knowledge from a risk and attack surface analysis, security can reasonably assign trust to low risk components or processes, and verify only when necessary. This prevents wasting valuable security resources, but also limits the complexity and efficiency loss due to additional security overhead. Notice in this example, that the API gateway checks the auth/identity of a user, then immediately passes the request on to the compute instance. The instance doesn't need to re-verify, and performs it's operation.",
+  "from_cache": false,
+  "generated_at": null,
+  "impact": "See the CWE entry linked below for the consequences of this weakness.",
+  "label": "Reference guidance (not AI-generated)",
+  "model": null,
+  "references": [
+   {
+    "title": "Secure Cloud Architecture",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Secure_Cloud_Architecture_Cheat_Sheet.html"
+   },
+   {
+    "title": "Secure Cloud Architecture",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Secure_Cloud_Architecture_Cheat_Sheet.html"
+   },
+   {
+    "title": "Kubernetes Security",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Kubernetes_Security_Cheat_Sheet.html"
+   }
+  ],
+  "source": "static",
+  "suggested_patch": null,
+  "warnings": []
+ },
+ "trivy:AVD-AWS-0090:main.tf:1": {
+  "confidence": "low",
+  "degraded_reason": "reference guidance",
+  "explanation": "Bucket does not have versioning enabled",
+  "fix_summary": "Trust boundaries are connections between components within a system where a trust decision has to be made by the components. Another way to phrase it, this boundary is a point where two components with potentially different trust levels meet. These boundaries can range in scale, from the degrees of trust given to users interacting with an application, to trusting or verifying specific claims between code functions or components within a cloud architecture. Generally speaking however, trusting each component to perform its function correctly and securely, suffices.",
+  "from_cache": false,
+  "generated_at": null,
+  "impact": "See the CWE entry linked below for the consequences of this weakness.",
+  "label": "Reference guidance (not AI-generated)",
+  "model": null,
+  "references": [
+   {
+    "title": "Secure Cloud Architecture",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Secure_Cloud_Architecture_Cheat_Sheet.html"
+   },
+   {
+    "title": "XML External Entity Prevention",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/XML_External_Entity_Prevention_Cheat_Sheet.html"
+   },
+   {
+    "title": "Secure Cloud Architecture",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Secure_Cloud_Architecture_Cheat_Sheet.html"
+   }
+  ],
+  "source": "static",
+  "suggested_patch": null,
+  "warnings": []
+ },
+ "trivy:AVD-AWS-0091:main.tf:1": {
+  "confidence": "low",
+  "degraded_reason": "reference guidance",
+  "explanation": "No public access block so not blocking public acls",
+  "fix_summary": "**This is not an advisable method for resource storage and distribution**, and should only be used for public, non-sensitive, generic resources. This storage approach will provide threat actors additional reconnaissance into a cloud environment, and any data which is stored in this configuration for any period of time must be considered publicly accessed (leaked to the public). | Pros | Cons | |:-----------------------------------:|:------------------------------------:| | Efficient access to many resources | Anyone can access/No privacy | | Simple public file share | Unauthenticated access to objects | | | Visibility into full file system | | | Accidentally leak stored info |",
+  "from_cache": false,
+  "generated_at": null,
+  "impact": "See the CWE entry linked below for the consequences of this weakness.",
+  "label": "Reference guidance (not AI-generated)",
+  "model": null,
+  "references": [
+   {
+    "title": "Secure Cloud Architecture",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Secure_Cloud_Architecture_Cheat_Sheet.html"
+   },
+   {
+    "title": "Secure Cloud Architecture",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Secure_Cloud_Architecture_Cheat_Sheet.html"
+   },
+   {
+    "title": "Nodejs Security",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Nodejs_Security_Cheat_Sheet.html"
+   }
+  ],
+  "source": "static",
+  "suggested_patch": null,
+  "warnings": []
+ },
+ "trivy:AVD-AWS-0092:main.tf:3": {
+  "confidence": "low",
+  "degraded_reason": "reference guidance",
+  "explanation": "Bucket has a public ACL: \"public-read\"",
+  "fix_summary": "Trust boundaries are connections between components within a system where a trust decision has to be made by the components. Another way to phrase it, this boundary is a point where two components with potentially different trust levels meet. These boundaries can range in scale, from the degrees of trust given to users interacting with an application, to trusting or verifying specific claims between code functions or components within a cloud architecture. Generally speaking however, trusting each component to perform its function correctly and securely, suffices.",
+  "from_cache": false,
+  "generated_at": null,
+  "impact": "See the CWE entry linked below for the consequences of this weakness.",
+  "label": "Reference guidance (not AI-generated)",
+  "model": null,
+  "references": [
+   {
+    "title": "Secure Cloud Architecture",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Secure_Cloud_Architecture_Cheat_Sheet.html"
+   },
+   {
+    "title": "Nodejs Security",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Nodejs_Security_Cheat_Sheet.html"
+   },
+   {
+    "title": "DotNet Security",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/DotNet_Security_Cheat_Sheet.html"
+   }
+  ],
+  "source": "static",
+  "suggested_patch": null,
+  "warnings": []
+ },
+ "trivy:AVD-AWS-0093:main.tf:1": {
+  "confidence": "low",
+  "degraded_reason": "reference guidance",
+  "explanation": "No public access block so not restricting public buckets",
+  "fix_summary": "VPC's are used to create network boundaries within an application, where-in components can talk to each other, much like a physical network in a data center. The VPC will be made up of some number of subnets, both public and private. VPCs can be used to: - Separate entire applications within the same cloud account. - Separate large components of application into distinct VPCs with isolated networks. - Create separations between duplicate applications used for different customers or data sets.",
+  "from_cache": false,
+  "generated_at": null,
+  "impact": "See the CWE entry linked below for the consequences of this weakness.",
+  "label": "Reference guidance (not AI-generated)",
+  "model": null,
+  "references": [
+   {
+    "title": "Secure Cloud Architecture",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Secure_Cloud_Architecture_Cheat_Sheet.html"
+   },
+   {
+    "title": "Secure Cloud Architecture",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Secure_Cloud_Architecture_Cheat_Sheet.html"
+   },
+   {
+    "title": "Kubernetes Security",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Kubernetes_Security_Cheat_Sheet.html"
+   }
+  ],
+  "source": "static",
+  "suggested_patch": null,
+  "warnings": []
+ },
+ "trivy:AVD-AWS-0094:main.tf:1": {
+  "confidence": "low",
+  "degraded_reason": "reference guidance",
+  "explanation": "Bucket does not have a corresponding public access block.",
+  "fix_summary": "Architects have to select a trust configuration between components, using quantitative factors like risk score/tolerance, velocity of project, as well as subjective security goals. Each example below details trust boundary relationships to better explain the implications of trusting a certain resource. The threat level of a specific resource as a color from green (safe) to red (dangerous) will outline which resources shouldn't be trusted.",
+  "from_cache": false,
+  "generated_at": null,
+  "impact": "See the CWE entry linked below for the consequences of this weakness.",
+  "label": "Reference guidance (not AI-generated)",
+  "model": null,
+  "references": [
+   {
+    "title": "Secure Cloud Architecture",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Secure_Cloud_Architecture_Cheat_Sheet.html"
+   },
+   {
+    "title": "Content Security Policy",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Content_Security_Policy_Cheat_Sheet.html"
+   },
+   {
+    "title": "Secure Cloud Architecture",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Secure_Cloud_Architecture_Cheat_Sheet.html"
+   }
+  ],
+  "source": "static",
+  "suggested_patch": null,
+  "warnings": []
+ },
+ "trivy:AVD-AWS-0107:main.tf:11": {
+  "confidence": "low",
+  "degraded_reason": "reference guidance",
+  "explanation": "Security group rule allows ingress from public internet.",
+  "fix_summary": "We see that a service mesh has a lot of value of enterprise companies, because a mesh allows you to see whether mTLS is enabled and working between each of your services. Also, you can get immediate alerts if the security status changes. 4. Ingress & egress control It allows you to monitor and address compromising traffic as it passes through the mesh. For example, if Istio integrates with Kubernetes as an ingress controller, it can take care of load balancing for ingress. This allows defenders to add a level of security at the perimeter with ingress rules, while egress control allows you to see and manage external services and control how your services interact with traffic. 5.",
+  "from_cache": false,
+  "generated_at": null,
+  "impact": "See the CWE entry linked below for the consequences of this weakness.",
+  "label": "Reference guidance (not AI-generated)",
+  "model": null,
+  "references": [
+   {
+    "title": "Kubernetes Security",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Kubernetes_Security_Cheat_Sheet.html"
+   },
+   {
+    "title": "Docker Security",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Docker_Security_Cheat_Sheet.html"
+   },
+   {
+    "title": "Secure Cloud Architecture",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Secure_Cloud_Architecture_Cheat_Sheet.html"
+   }
+  ],
+  "source": "static",
+  "suggested_patch": null,
+  "warnings": []
+ },
+ "trivy:AVD-AWS-0124:main.tf:6": {
+  "confidence": "low",
+  "degraded_reason": "reference guidance",
+  "explanation": "Security group rule does not have a description.",
+  "fix_summary": "The control plane's components make global decisions about the cluster, as well as detecting and responding to cluster events. It consists of components such as kube-apiserver, etcd, kube-scheduler, kube-controller-manager and cloud-controller-manager. **Component:** kube-apiserver **Description:** Exposes the Kubernetes API. The API server is the front end for the Kubernetes control plane. **Component:** etcd **Description:** A consistent and highly-available key-value store used as Kubernetes' backing store for all cluster data. **Component:** kube-scheduler **Description:** Watches for newly created Pods with no assigned node, and selects a node for them to run on.",
+  "from_cache": false,
+  "generated_at": null,
+  "impact": "See the CWE entry linked below for the consequences of this weakness.",
+  "label": "Reference guidance (not AI-generated)",
+  "model": null,
+  "references": [
+   {
+    "title": "Kubernetes Security",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Kubernetes_Security_Cheat_Sheet.html"
+   },
+   {
+    "title": "Content Security Policy",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Content_Security_Policy_Cheat_Sheet.html"
+   },
+   {
+    "title": "Docker Security",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Docker_Security_Cheat_Sheet.html"
+   }
+  ],
+  "source": "static",
+  "suggested_patch": null,
+  "warnings": []
+ },
+ "trivy:AVD-AWS-0132:main.tf:1": {
+  "confidence": "low",
+  "degraded_reason": "reference guidance",
+  "explanation": "Bucket does not encrypt data with a customer managed key.",
+  "fix_summary": "Identifying XXE vulnerability in the `javax.xml.parsers.SAXParserFactory` library. The official registry rule is saxparserfactory-disallow-doctype-decl-missing.",
+  "from_cache": false,
+  "generated_at": null,
+  "impact": "See the CWE entry linked below for the consequences of this weakness.",
+  "label": "Reference guidance (not AI-generated)",
+  "model": null,
+  "references": [
+   {
+    "title": "XML External Entity Prevention",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/XML_External_Entity_Prevention_Cheat_Sheet.html"
+   },
+   {
+    "title": "DotNet Security",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/DotNet_Security_Cheat_Sheet.html"
+   },
+   {
+    "title": "Kubernetes Security",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Kubernetes_Security_Cheat_Sheet.html"
+   }
+  ],
+  "source": "static",
+  "suggested_patch": null,
+  "warnings": []
+ },
+ "trivy:CVE-2018-1000656:requirements.txt:flask@0.12": {
+  "confidence": "low",
+  "degraded_reason": "reference guidance",
+  "explanation": "The product receives input or data, but it does not validate or incorrectly validates that the input has the properties that are required to process the data safely and correctly. Input validation is a frequently-used technique for checking potentially dangerous inputs in order to ensure that the inputs are safe for processing within the code, or when communicating with other components. Input can consist of: raw data - strings, numbers, parameters, file contents, etc. metadata - information about the raw data, such as headers or size Data can be simple or structured.",
+  "fix_summary": "Input validation is performed to ensure only properly formed data is entering the workflow in an information system, preventing malformed data from persisting in the database and triggering malfunction of various downstream components. Input validation should happen as early as possible in the data flow, preferably as soon as the data is received from the external party. Data from all potentially untrusted sources should be subject to input validation, including not only Internet-facing web clients but also backend feeds over extranets, from suppliers, partners, vendors or regulators, each of which may be compromised on their own and start sending malformed data.",
+  "from_cache": false,
+  "generated_at": null,
+  "impact": "See the CWE entry linked below for the consequences of this weakness.",
+  "label": "Reference guidance (not AI-generated)",
+  "model": null,
+  "references": [
+   {
+    "title": "CWE-20: Improper Input Validation",
+    "url": "https://cwe.mitre.org/data/definitions/20.html"
+   },
+   {
+    "title": "Input Validation",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Input_Validation_Cheat_Sheet.html"
+   },
+   {
+    "title": "Input Validation",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Input_Validation_Cheat_Sheet.html"
+   }
+  ],
+  "source": "static",
+  "suggested_patch": null,
+  "warnings": []
+ },
+ "trivy:CVE-2018-16487:package-lock.json:lodash@4.17.4": {
+  "confidence": "low",
+  "degraded_reason": "reference guidance",
+  "explanation": "The product does not properly control the allocation and maintenance of a limited resource. Consequences: Availability: DoS: Crash, Exit, or Restart, DoS: Resource Consumption (CPU), DoS: Resource Consumption (Memory), DoS: Resource Consumption (Other); Access Control, Other: Bypass Protection Mechanism, Other Mitigations: [Architecture and Design] Design throttling mechanisms into the system architecture. The best protection is to limit the amount of resources that an unauthorized user can cause to be expended. A strong authentication and access control model will help prevent such attacks from occurring in the first place.",
+  "fix_summary": "- **Authentication as a means to expose functionality**: The principle of least privilege can play a key role in preventing DoS attacks by denying attackers the ability to access potentially damaging functions with DoS techniques. - **User lockout** is a scenario where an attacker can take advantage of the application security mechanisms to cause DoS by abusing the login failure.",
+  "from_cache": false,
+  "generated_at": null,
+  "impact": "See the CWE entry linked below for the consequences of this weakness.",
+  "label": "Reference guidance (not AI-generated)",
+  "model": null,
+  "references": [
+   {
+    "title": "CWE-400: Uncontrolled Resource Consumption",
+    "url": "https://cwe.mitre.org/data/definitions/400.html"
+   },
+   {
+    "title": "Denial of Service",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Denial_of_Service_Cheat_Sheet.html"
+   },
+   {
+    "title": "Denial of Service",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Denial_of_Service_Cheat_Sheet.html"
+   }
+  ],
+  "source": "static",
+  "suggested_patch": null,
+  "warnings": []
+ },
+ "trivy:CVE-2018-18074:requirements.txt:requests@2.19.0": {
+  "confidence": "low",
+  "degraded_reason": "reference guidance",
+  "explanation": "The product transmits or stores authentication credentials, but it uses an insecure method that is susceptible to unauthorized interception and/or retrieval. Consequences: Access Control: Gain Privileges or Assume Identity Mitigations: [Architecture and Design] Use an appropriate security mechanism to protect the credentials. [Architecture and Design] Make appropriate use of cryptography to protect the credentials. [Implementation] Use industry standards to protect the credentials (e.g. LDAP, keystore, etc.).",
+  "fix_summary": "- **Limit file upload size and extensions**: This tactic prevents DoS on file space storage or other web application functions which will use the upload as input (e.g. image resizing, PDF creation, etc. (resource exhaustion) - Checklist. - **Limit total request size**: To make it harder for resource-consuming DoS attacks to succeed. (resource exhaustion) - **Prevent input based resource allocation**: Again, to make it harder for resource-consuming DoS attacks to succeed. (resource exhaustion) - **Prevent input based function and threading interaction**: User input can influence how many times a function needs to be executed, or how intensive the CPU consumption becomes.",
+  "from_cache": false,
+  "generated_at": null,
+  "impact": "See the CWE entry linked below for the consequences of this weakness.",
+  "label": "Reference guidance (not AI-generated)",
+  "model": null,
+  "references": [
+   {
+    "title": "CWE-522: Insufficiently Protected Credentials",
+    "url": "https://cwe.mitre.org/data/definitions/522.html"
+   },
+   {
+    "title": "Denial of Service",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Denial_of_Service_Cheat_Sheet.html"
+   },
+   {
+    "title": "Error Handling",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Error_Handling_Cheat_Sheet.html"
+   },
+   {
+    "title": "Business Logic Security",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Business_Logic_Security_Cheat_Sheet.html"
+   }
+  ],
+  "source": "static",
+  "suggested_patch": null,
+  "warnings": []
+ },
+ "trivy:CVE-2019-1010083:requirements.txt:flask@0.12": {
+  "confidence": "low",
+  "degraded_reason": "reference guidance",
+  "explanation": "The product does not properly control the allocation and maintenance of a limited resource. Consequences: Availability: DoS: Crash, Exit, or Restart, DoS: Resource Consumption (CPU), DoS: Resource Consumption (Memory), DoS: Resource Consumption (Other); Access Control, Other: Bypass Protection Mechanism, Other Mitigations: [Architecture and Design] Design throttling mechanisms into the system architecture. The best protection is to limit the amount of resources that an unauthorized user can cause to be expended. A strong authentication and access control model will help prevent such attacks from occurring in the first place.",
+  "fix_summary": "In this cheat sheet, we will use the DDOS classification as documented by CERT-EU to examine DoS system vulnerabilities. It uses the seven OSI model and focuses three main attack surfaces, namely Application, Session and Network.",
+  "from_cache": false,
+  "generated_at": null,
+  "impact": "See the CWE entry linked below for the consequences of this weakness.",
+  "label": "Reference guidance (not AI-generated)",
+  "model": null,
+  "references": [
+   {
+    "title": "CWE-400: Uncontrolled Resource Consumption",
+    "url": "https://cwe.mitre.org/data/definitions/400.html"
+   },
+   {
+    "title": "Denial of Service",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Denial_of_Service_Cheat_Sheet.html"
+   },
+   {
+    "title": "Denial of Service",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Denial_of_Service_Cheat_Sheet.html"
+   }
+  ],
+  "source": "static",
+  "suggested_patch": null,
+  "warnings": []
+ },
+ "trivy:CVE-2019-1010266:package-lock.json:lodash@4.17.4": {
+  "confidence": "low",
+  "degraded_reason": "reference guidance",
+  "explanation": "The product allocates a reusable resource or group of resources on behalf of an actor without imposing any intended restrictions on the size or number of resources that can be allocated. Consequences: Availability: DoS: Resource Consumption (CPU), DoS: Resource Consumption (Memory), DoS: Resource Consumption (Other) Mitigations: [Requirements] Clearly specify the minimum and maximum expectations for capabilities, and dictate which behaviors are acceptable when resource allocation reaches limits. [Architecture and Design] Limit the amount of resources that are accessible to unprivileged users. Set per-user limits for resources. Allow the system administrator to define these limits.",
+  "fix_summary": "- **Authentication as a means to expose functionality**: The principle of least privilege can play a key role in preventing DoS attacks by denying attackers the ability to access potentially damaging functions with DoS techniques. - **User lockout** is a scenario where an attacker can take advantage of the application security mechanisms to cause DoS by abusing the login failure.",
+  "from_cache": false,
+  "generated_at": null,
+  "impact": "See the CWE entry linked below for the consequences of this weakness.",
+  "label": "Reference guidance (not AI-generated)",
+  "model": null,
+  "references": [
+   {
+    "title": "CWE-770: Allocation of Resources Without Limits or Throttling",
+    "url": "https://cwe.mitre.org/data/definitions/770.html"
+   },
+   {
+    "title": "CWE-400: Uncontrolled Resource Consumption",
+    "url": "https://cwe.mitre.org/data/definitions/400.html"
+   },
+   {
+    "title": "Denial of Service",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Denial_of_Service_Cheat_Sheet.html"
+   },
+   {
+    "title": "Denial of Service",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Denial_of_Service_Cheat_Sheet.html"
+   }
+  ],
+  "source": "static",
+  "suggested_patch": null,
+  "warnings": []
+ },
+ "trivy:CVE-2019-10744:package-lock.json:lodash@4.17.4": {
+  "confidence": "low",
+  "degraded_reason": "reference guidance",
+  "explanation": "The product receives input from an upstream component that specifies attributes that are to be initialized or updated in an object, but it does not properly control modifications of attributes of the object prototype. Consequences: Confidentiality, Integrity, Availability: Read Application Data, Modify Application Data; Availability: DoS: Crash, Exit, or Restart Mitigations: [Implementation] By freezing the object prototype first (for example, Object.freeze(Object.prototype)), modification of the prototype becomes impossible. [Architecture and Design] By blocking modifications of attributes that resolve to object prototype, such as proto or prototype, this weakness can be mitigated.",
+  "fix_summary": "Prototype Pollution is a critical vulnerability that can allow attackers to manipulate an application's JavaScript objects and properties, leading to serious security issues such as unauthorized access to data, privilege escalation, and even remote code execution. For examples of why this is dangerous, see the links in the Other resources section below.",
+  "from_cache": false,
+  "generated_at": null,
+  "impact": "See the CWE entry linked below for the consequences of this weakness.",
+  "label": "Reference guidance (not AI-generated)",
+  "model": null,
+  "references": [
+   {
+    "title": "CWE-1321: Improperly Controlled Modification of Object Prototype Attributes ('Prototype Pollution')",
+    "url": "https://cwe.mitre.org/data/definitions/1321.html"
+   },
+   {
+    "title": "CWE-20: Improper Input Validation",
+    "url": "https://cwe.mitre.org/data/definitions/20.html"
+   },
+   {
+    "title": "Prototype Pollution Prevention",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Prototype_Pollution_Prevention_Cheat_Sheet.html"
+   },
+   {
+    "title": "Prototype Pollution Prevention",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Prototype_Pollution_Prevention_Cheat_Sheet.html"
+   },
+   {
+    "title": "Input Validation",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Input_Validation_Cheat_Sheet.html"
+   }
+  ],
+  "source": "static",
+  "suggested_patch": null,
+  "warnings": []
+ },
+ "trivy:CVE-2020-28500:package-lock.json:lodash@4.17.4": {
+  "confidence": "low",
+  "degraded_reason": "reference guidance",
+  "explanation": "The product uses a regular expression with a worst-case computational complexity that is inefficient and possibly exponential. Consequences: Availability: DoS: Resource Consumption (CPU) Mitigations: [Architecture and Design] Use regular expressions that do not support backtracking, e.g. by removing nested quantifiers. [System Configuration] Set backtracking limits in the configuration of the regular expression implementation, such as PHP's pcre.backtrack_limit. Also consider limits on execution time for the process. [Implementation] Do not use regular expressions with untrusted input. If regular expressions must be used, avoid using backtracking in the expression.",
+  "fix_summary": "- **Filter invalid sender addresses using edge routers**, in accordance with RFC 2267, to filter out IP-spoofing attacks done with the goal of bypassing block lists. - **Check your ISP services in terms of DDOS beforehand** (support for multiple internet access points, enough bandwidth (xx-xxx Gbit/s) and special hardware for traffic analysis and defense on application level",
+  "from_cache": false,
+  "generated_at": null,
+  "impact": "See the CWE entry linked below for the consequences of this weakness.",
+  "label": "Reference guidance (not AI-generated)",
+  "model": null,
+  "references": [
+   {
+    "title": "CWE-1333: Inefficient Regular Expression Complexity",
+    "url": "https://cwe.mitre.org/data/definitions/1333.html"
+   },
+   {
+    "title": "CWE-400: Uncontrolled Resource Consumption",
+    "url": "https://cwe.mitre.org/data/definitions/400.html"
+   },
+   {
+    "title": "Denial of Service",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Denial_of_Service_Cheat_Sheet.html"
+   },
+   {
+    "title": "Denial of Service",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Denial_of_Service_Cheat_Sheet.html"
+   }
+  ],
+  "source": "static",
+  "suggested_patch": null,
+  "warnings": []
+ },
+ "trivy:CVE-2020-8203:package-lock.json:lodash@4.17.4": {
+  "confidence": "low",
+  "degraded_reason": "reference guidance",
+  "explanation": "The product receives input from an upstream component that specifies attributes that are to be initialized or updated in an object, but it does not properly control modifications of attributes of the object prototype. Consequences: Confidentiality, Integrity, Availability: Read Application Data, Modify Application Data; Availability: DoS: Crash, Exit, or Restart Mitigations: [Implementation] By freezing the object prototype first (for example, Object.freeze(Object.prototype)), modification of the prototype becomes impossible. [Architecture and Design] By blocking modifications of attributes that resolve to object prototype, such as proto or prototype, this weakness can be mitigated.",
+  "fix_summary": "Node.js also offers the ability to remove the `__proto__` property completely using the `--disable-proto=delete` flag. Note this is a defense in depth measure. Prototype pollution is still possible using `constructor.prototype` properties but removing `__proto__` helps reduce attack surface and prevent certain attacks.",
+  "from_cache": false,
+  "generated_at": null,
+  "impact": "See the CWE entry linked below for the consequences of this weakness.",
+  "label": "Reference guidance (not AI-generated)",
+  "model": null,
+  "references": [
+   {
+    "title": "CWE-1321: Improperly Controlled Modification of Object Prototype Attributes ('Prototype Pollution')",
+    "url": "https://cwe.mitre.org/data/definitions/1321.html"
+   },
+   {
+    "title": "CWE-770: Allocation of Resources Without Limits or Throttling",
+    "url": "https://cwe.mitre.org/data/definitions/770.html"
+   },
+   {
+    "title": "Prototype Pollution Prevention",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Prototype_Pollution_Prevention_Cheat_Sheet.html"
+   },
+   {
+    "title": "Prototype Pollution Prevention",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Prototype_Pollution_Prevention_Cheat_Sheet.html"
+   },
+   {
+    "title": "Denial of Service",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Denial_of_Service_Cheat_Sheet.html"
+   }
+  ],
+  "source": "static",
+  "suggested_patch": null,
+  "warnings": []
+ },
+ "trivy:CVE-2021-23337:package-lock.json:lodash@4.17.4": {
+  "confidence": "low",
+  "degraded_reason": "reference guidance",
+  "explanation": "The product constructs all or part of a code segment using externally-influenced input from an upstream component, but it does not neutralize or incorrectly neutralizes special elements that could modify the syntax or behavior of the intended code segment. Consequences: Access Control: Bypass Protection Mechanism; Access Control: Gain Privileges or Assume Identity; Integrity, Confidentiality, Availability: Execute Unauthorized Code or Commands; Non-Repudiation: Hide Activities Mitigations: [Architecture and Design] Refactor your program so that you do not have to dynamically generate code.",
+  "fix_summary": "**Parameterization:** If available, use structured mechanisms that automatically enforce the separation between data and command. These mechanisms can help provide the relevant quoting and encoding.",
+  "from_cache": false,
+  "generated_at": null,
+  "impact": "See the CWE entry linked below for the consequences of this weakness.",
+  "label": "Reference guidance (not AI-generated)",
+  "model": null,
+  "references": [
+   {
+    "title": "CWE-94: Improper Control of Generation of Code ('Code Injection')",
+    "url": "https://cwe.mitre.org/data/definitions/94.html"
+   },
+   {
+    "title": "CWE-77: Improper Neutralization of Special Elements used in a Command ('Command Injection')",
+    "url": "https://cwe.mitre.org/data/definitions/77.html"
+   },
+   {
+    "title": "OS Command Injection Defense",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/OS_Command_Injection_Defense_Cheat_Sheet.html"
+   },
+   {
+    "title": "OS Command Injection Defense",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/OS_Command_Injection_Defense_Cheat_Sheet.html"
+   },
+   {
+    "title": "Injection Prevention",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Injection_Prevention_Cheat_Sheet.html"
+   }
+  ],
+  "source": "static",
+  "suggested_patch": null,
+  "warnings": []
+ },
+ "trivy:CVE-2023-30861:requirements.txt:flask@0.12": {
+  "confidence": "low",
+  "degraded_reason": "reference guidance",
+  "explanation": "The web application uses persistent cookies, but the cookies contain sensitive information. Cookies are small bits of data that are sent by the web application but stored locally in the browser. This lets the application use the cookie to pass information between pages and store variable information. The web application controls what information is stored in a cookie and how it is used. Typical types of information stored in cookies are session identifiers, personalization and customization information, and in rare cases even usernames to enable automated logins. There are two different types of cookies: session cookies and persistent cookies.",
+  "fix_summary": "/// <summary> /// Class used to represent the generic response send /// </summary> private class GenericResult : IHttpActionResult { /// <summary> /// Method in charge of creating the generic response /// </summary> /// <param name=\"cancellationToken\">Object to cancel the task</param> /// <returns>A task in charge of sending the generic response</returns> public Task<HttpResponseMessage> ExecuteAsync(CancellationToken cancellationToken) { //We build a generic response with a JSON format because we are in a REST API app context //We also add an HTTP response header to indicate to the client app that the response //is an error var responseBody = new Dictionary<String, String>{ { \"message\", \"An.",
+  "from_cache": false,
+  "generated_at": null,
+  "impact": "See the CWE entry linked below for the consequences of this weakness.",
+  "label": "Reference guidance (not AI-generated)",
+  "model": null,
+  "references": [
+   {
+    "title": "CWE-539: Use of Persistent Cookies Containing Sensitive Information",
+    "url": "https://cwe.mitre.org/data/definitions/539.html"
+   },
+   {
+    "title": "Error Handling",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Error_Handling_Cheat_Sheet.html"
+   },
+   {
+    "title": "Denial of Service",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Denial_of_Service_Cheat_Sheet.html"
+   },
+   {
+    "title": "Error Handling",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Error_Handling_Cheat_Sheet.html"
+   }
+  ],
+  "source": "static",
+  "suggested_patch": null,
+  "warnings": []
+ },
+ "trivy:CVE-2023-32681:requirements.txt:requests@2.19.0": {
+  "confidence": "low",
+  "degraded_reason": "reference guidance",
+  "explanation": "The product exposes sensitive information to an actor that is not explicitly authorized to have access to that information. There are many different kinds of mistakes that introduce information exposures. The severity of the error can range widely, depending on the context in which the product operates, the type of sensitive information that is revealed, and the benefits it may provide to an attacker.",
+  "fix_summary": "This defense relies on the CORS preflight mechanism which sends an `OPTIONS` request to verify CORS compliance with the destination server. All modern browsers designate requests with custom headers as \"to be preflighted\". When the API verifies that the custom header is there, you know that the request must have been preflighted if it came from a browser.",
+  "from_cache": false,
+  "generated_at": null,
+  "impact": "See the CWE entry linked below for the consequences of this weakness.",
+  "label": "Reference guidance (not AI-generated)",
+  "model": null,
+  "references": [
+   {
+    "title": "CWE-200: Exposure of Sensitive Information to an Unauthorized Actor",
+    "url": "https://cwe.mitre.org/data/definitions/200.html"
+   },
+   {
+    "title": "Cross-Site Request Forgery Prevention",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html"
+   },
+   {
+    "title": "Cross-Site Request Forgery Prevention",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html"
+   },
+   {
+    "title": "Django REST Framework",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Django_REST_Framework_Cheat_Sheet.html"
+   }
+  ],
+  "source": "static",
+  "suggested_patch": null,
+  "warnings": []
+ },
+ "trivy:CVE-2024-35195:requirements.txt:requests@2.19.0": {
+  "confidence": "low",
+  "degraded_reason": "reference guidance",
+  "explanation": "Requests is a HTTP library. Prior to 2.32.0, when making requests through a Requests `Session`, if the first request is made with `verify=False` to disable cert verification, all subsequent requests to the same host will continue to ignore cert verification regardless of changes to the value of `verify`. This behavior will continue for the lifecycle of the connection in the connection pool. This vulnerability is fixed in 2.32.0.",
+  "fix_summary": "- Run `npm view <package-name>` before installing any AI-suggested package to confirm it exists. - Check the package download count — legitimate packages have thousands or millions of downloads while newly published malicious ones have very few. - Verify the package has a real GitHub repository with genuine code, commits and contributors. - Be suspicious of packages created very recently with no release history. - Never blindly run `npm install` on packages suggested by AI tools without independent verification. - In team environments, add `npm view <package-name>` as a CI check for any new AI-suggested dependencies before they reach production.",
+  "from_cache": false,
+  "generated_at": null,
+  "impact": "See the CWE entry linked below for the consequences of this weakness.",
+  "label": "Reference guidance (not AI-generated)",
+  "model": null,
+  "references": [
+   {
+    "title": "NPM Security",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/NPM_Security_Cheat_Sheet.html"
+   },
+   {
+    "title": "Vulnerable Dependency Management",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Vulnerable_Dependency_Management_Cheat_Sheet.html"
+   },
+   {
+    "title": "NPM Security",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/NPM_Security_Cheat_Sheet.html"
+   }
+  ],
+  "source": "static",
+  "suggested_patch": null,
+  "warnings": []
+ },
+ "trivy:CVE-2024-47081:requirements.txt:requests@2.19.0": {
+  "confidence": "low",
+  "degraded_reason": "reference guidance",
+  "explanation": "The product transmits or stores authentication credentials, but it uses an insecure method that is susceptible to unauthorized interception and/or retrieval. Consequences: Access Control: Gain Privileges or Assume Identity Mitigations: [Architecture and Design] Use an appropriate security mechanism to protect the credentials. [Architecture and Design] Make appropriate use of cryptography to protect the credentials. [Implementation] Use industry standards to protect the credentials (e.g. LDAP, keystore, etc.).",
+  "fix_summary": "- **Limit file upload size and extensions**: This tactic prevents DoS on file space storage or other web application functions which will use the upload as input (e.g. image resizing, PDF creation, etc. (resource exhaustion) - Checklist. - **Limit total request size**: To make it harder for resource-consuming DoS attacks to succeed. (resource exhaustion) - **Prevent input based resource allocation**: Again, to make it harder for resource-consuming DoS attacks to succeed. (resource exhaustion) - **Prevent input based function and threading interaction**: User input can influence how many times a function needs to be executed, or how intensive the CPU consumption becomes.",
+  "from_cache": false,
+  "generated_at": null,
+  "impact": "See the CWE entry linked below for the consequences of this weakness.",
+  "label": "Reference guidance (not AI-generated)",
+  "model": null,
+  "references": [
+   {
+    "title": "CWE-522: Insufficiently Protected Credentials",
+    "url": "https://cwe.mitre.org/data/definitions/522.html"
+   },
+   {
+    "title": "Denial of Service",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Denial_of_Service_Cheat_Sheet.html"
+   },
+   {
+    "title": "File Upload",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/File_Upload_Cheat_Sheet.html"
+   },
+   {
+    "title": "Mass Assignment",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Mass_Assignment_Cheat_Sheet.html"
+   }
+  ],
+  "source": "static",
+  "suggested_patch": null,
+  "warnings": []
+ },
+ "trivy:CVE-2025-13465:package-lock.json:lodash@4.17.4": {
+  "confidence": "low",
+  "degraded_reason": "reference guidance",
+  "explanation": "The product receives input from an upstream component that specifies attributes that are to be initialized or updated in an object, but it does not properly control modifications of attributes of the object prototype. Consequences: Confidentiality, Integrity, Availability: Read Application Data, Modify Application Data; Availability: DoS: Crash, Exit, or Restart Mitigations: [Implementation] By freezing the object prototype first (for example, Object.freeze(Object.prototype)), modification of the prototype becomes impossible. [Architecture and Design] By blocking modifications of attributes that resolve to object prototype, such as proto or prototype, this weakness can be mitigated.",
+  "fix_summary": "Node.js also offers the ability to remove the `__proto__` property completely using the `--disable-proto=delete` flag. Note this is a defense in depth measure. Prototype pollution is still possible using `constructor.prototype` properties but removing `__proto__` helps reduce attack surface and prevent certain attacks.",
+  "from_cache": false,
+  "generated_at": null,
+  "impact": "See the CWE entry linked below for the consequences of this weakness.",
+  "label": "Reference guidance (not AI-generated)",
+  "model": null,
+  "references": [
+   {
+    "title": "CWE-1321: Improperly Controlled Modification of Object Prototype Attributes ('Prototype Pollution')",
+    "url": "https://cwe.mitre.org/data/definitions/1321.html"
+   },
+   {
+    "title": "Prototype Pollution Prevention",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Prototype_Pollution_Prevention_Cheat_Sheet.html"
+   },
+   {
+    "title": "Prototype Pollution Prevention",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Prototype_Pollution_Prevention_Cheat_Sheet.html"
+   }
+  ],
+  "source": "static",
+  "suggested_patch": null,
+  "warnings": []
+ },
+ "trivy:CVE-2026-25645:requirements.txt:requests@2.19.0": {
+  "confidence": "low",
+  "degraded_reason": "reference guidance",
+  "explanation": "Creating and using insecure temporary files can leave application and system data vulnerable to attack. Consequences: Confidentiality, Integrity: Read Files or Directories, Modify Files or Directories",
+  "fix_summary": "**Vulnerability:** In this snippet, the program invokes a function `ajaxLoad()` upon the page load, which is responsible for loading various webpage elements. The function reads the value of the URL hash fragment (line 4), and extracts two pieces of information from it (i.e., request method and endpoint) to generate an asynchronous HTTP request (lines 11-13). The vulnerability occurs in lines 15-22, when the JavaScript program uses URL fragments to obtain the server-side endpoint for the asynchronous HTTP request (line 15) and the request method.",
+  "from_cache": false,
+  "generated_at": null,
+  "impact": "See the CWE entry linked below for the consequences of this weakness.",
+  "label": "Reference guidance (not AI-generated)",
+  "model": null,
+  "references": [
+   {
+    "title": "CWE-377: Insecure Temporary File",
+    "url": "https://cwe.mitre.org/data/definitions/377.html"
+   },
+   {
+    "title": "Cross-Site Request Forgery Prevention",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html"
+   },
+   {
+    "title": "Insecure Direct Object Reference Prevention",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Insecure_Direct_Object_Reference_Prevention_Cheat_Sheet.html"
+   },
+   {
+    "title": "Cross-Site Request Forgery Prevention",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html"
+   }
+  ],
+  "source": "static",
+  "suggested_patch": null,
+  "warnings": []
+ },
+ "trivy:CVE-2026-27205:requirements.txt:flask@0.12": {
+  "confidence": "low",
+  "degraded_reason": "reference guidance",
+  "explanation": "Flask is a web server gateway interface (WSGI) web application framework. In versions 3.1.2 and below, when the session object is accessed, Flask should set the Vary: Cookie header., resulting in a Use of Cache Containing Sensitive Information vulnerability. The logic instructs caches not to cache the response, as it may contain information specific to a logged in user. This is handled in most cases, but some forms of access such as the Python in operator were overlooked. The severity and risk depend on the application being hosted behind a caching proxy that doesn't ignore responses with cookies, not setting a Cache-Control header to mark pages as private or non-cacheable, and accessing the session in a way that only touches keys without reading values or mutating the session. The issue has been fixed in version 3.1.3.",
+  "fix_summary": "Rushing to constantly upgrade dependencies to their latest releases is not necessarily a good practice if it is done without reviewing release notes, the code changes, and generally testing new upgrades in a comprehensive manner. With that said, staying out of date and not upgrading at all, or after a long time, is a source for trouble as well. The npm CLI can provide information about the freshness of dependencies you use with regards to their semantic versioning offset. By running `npm outdated`, you can see which packages are out of date.",
+  "from_cache": false,
+  "generated_at": null,
+  "impact": "See the CWE entry linked below for the consequences of this weakness.",
+  "label": "Reference guidance (not AI-generated)",
+  "model": null,
+  "references": [
+   {
+    "title": "NPM Security",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/NPM_Security_Cheat_Sheet.html"
+   },
+   {
+    "title": "Dependency Graph SBOM",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Dependency_Graph_SBOM_Cheat_Sheet.html"
+   },
+   {
+    "title": "NPM Security",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/NPM_Security_Cheat_Sheet.html"
+   }
+  ],
+  "source": "static",
+  "suggested_patch": null,
+  "warnings": []
+ },
+ "trivy:DS002:Dockerfile:2": {
+  "confidence": "low",
+  "degraded_reason": "reference guidance",
+  "explanation": "Last USER command in Dockerfile should not be 'root'",
+  "fix_summary": "Configuring the container to use an unprivileged user is the best way to prevent privilege escalation attacks. This can be accomplished in three different ways as follows: 1. During runtime using `-u` option of `docker run` command e.g.: ```bash docker run -u 4000 alpine ``` 2. During build time. Simply add user in Dockerfile and use it. For example: ```dockerfile FROM alpine RUN groupadd -r myuser && useradd -r -g myuser myuser # <HERE DO WHAT YOU HAVE TO DO AS A ROOT USER LIKE INSTALLING PACKAGES ETC.> USER myuser ``` 3. Enable user namespace support (`--userns-remap=default`) in Docker daemon More information about this topic can be found at Docker official documentation.",
+  "from_cache": false,
+  "generated_at": null,
+  "impact": "See the CWE entry linked below for the consequences of this weakness.",
+  "label": "Reference guidance (not AI-generated)",
+  "model": null,
+  "references": [
+   {
+    "title": "Docker Security",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Docker_Security_Cheat_Sheet.html"
+   },
+   {
+    "title": "XML External Entity Prevention",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/XML_External_Entity_Prevention_Cheat_Sheet.html"
+   },
+   {
+    "title": "Key Management",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Key_Management_Cheat_Sheet.html"
+   }
+  ],
+  "source": "static",
+  "suggested_patch": null,
+  "warnings": []
+ },
+ "trivy:DS026:Dockerfile:1": {
+  "confidence": "low",
+  "degraded_reason": "reference guidance",
+  "explanation": "Add HEALTHCHECK instruction in your Dockerfile",
+  "fix_summary": "```javascript function escapeHTML(str) { str = str + \"''\"; var out = \"''\"; for(var i=0; i<str.length; i++) { if(str[i] === '<') { out += '&lt;'; } else if(str[i] === '>') { out += '&gt;'; } else if(str[i] === \"'\") { out += '&#39;'; } else if(str[i] === '\"') { out += '&quot;'; } else { out += str[i]; } } return out; } ```",
+  "from_cache": false,
+  "generated_at": null,
+  "impact": "See the CWE entry linked below for the consequences of this weakness.",
+  "label": "Reference guidance (not AI-generated)",
+  "model": null,
+  "references": [
+   {
+    "title": "DOM based XSS Prevention",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/DOM_based_XSS_Prevention_Cheat_Sheet.html"
+   },
+   {
+    "title": "Content Security Policy",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Content_Security_Policy_Cheat_Sheet.html"
+   },
+   {
+    "title": "Java Security",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Java_Security_Cheat_Sheet.html"
+   }
+  ],
+  "source": "static",
+  "suggested_patch": null,
+  "warnings": []
+ },
+ "trivy:DS029:Dockerfile:4": {
+  "confidence": "low",
+  "degraded_reason": "reference guidance",
+  "explanation": "'--no-install-recommends' flag is missed: 'apt-get update && apt-get install -y curl'",
+  "fix_summary": "Insecure Direct Object Reference (IDOR) is a vulnerability that arises when attackers can access or modify objects by manipulating identifiers used in a web application's URLs or parameters. It occurs due to missing access control checks, which fail to verify whether a user should be allowed to access specific data. There are three ingredients to an IDOR: 1. An **object** such as an account, document, support ticket, transaction or partner profile. 2. A **reference** to that object in the form of an ID, UUID, account number, token or slug. 3. A **missing object-level authorization check** that allows a user to access or manipulate an object they should not be able to access.",
+  "from_cache": false,
+  "generated_at": null,
+  "impact": "See the CWE entry linked below for the consequences of this weakness.",
+  "label": "Reference guidance (not AI-generated)",
+  "model": null,
+  "references": [
+   {
+    "title": "Insecure Direct Object Reference Prevention",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Insecure_Direct_Object_Reference_Prevention_Cheat_Sheet.html"
+   },
+   {
+    "title": "Pinning",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Pinning_Cheat_Sheet.html"
+   },
+   {
+    "title": "Logging Vocabulary",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Logging_Vocabulary_Cheat_Sheet.html"
+   }
+  ],
+  "source": "static",
+  "suggested_patch": null,
+  "warnings": []
+ },
+ "trivy:s3-bucket-logging:main.tf:1": {
+  "confidence": "low",
+  "degraded_reason": "reference guidance",
+  "explanation": "Bucket has logging disabled",
+  "fix_summary": "Logging application activity is an encouraged good practice. It makes it easier to debug any errors encountered during application runtime. It is also useful for security concerns, since it can be used during incident response. In addition, these logs can be used to feed Intrusion Detection/Prevention Systems (IDS/IPS). In Node.js, there are modules such as Winston, Bunyan, or Pino to perform application activity logging. These modules enable streaming and querying logs, and they provide a way to handle uncaught exceptions.",
+  "from_cache": false,
+  "generated_at": null,
+  "impact": "See the CWE entry linked below for the consequences of this weakness.",
+  "label": "Reference guidance (not AI-generated)",
+  "model": null,
+  "references": [
+   {
+    "title": "Nodejs Security",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Nodejs_Security_Cheat_Sheet.html"
+   },
+   {
+    "title": "Secure Cloud Architecture",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Secure_Cloud_Architecture_Cheat_Sheet.html"
+   },
+   {
+    "title": "Secure Cloud Architecture",
+    "url": "https://cheatsheetseries.owasp.org/cheatsheets/Secure_Cloud_Architecture_Cheat_Sheet.html"
+   }
+  ],
+  "source": "static",
+  "suggested_patch": null,
+  "warnings": []
+ }
+}

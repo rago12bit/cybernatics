@@ -1,4 +1,4 @@
-import type { FindingsPage, FindingsQuery, ScanSummary, ScanView } from "./types";
+import type { FindingsPage, FindingsQuery, Guidance, GuidanceApi, Remediation, ScanSummary, ScanView } from "./types";
 import { findingsQueryString } from "./format";
 
 export const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/$/, "");
@@ -119,3 +119,17 @@ export async function fetchReport(id: string, format: ReportFormat): Promise<Blo
   }
   return res.blob();
 }
+
+/** Reference guidance plus any cached AI suggestion. Calls no model, so it is safe to load on open. */
+export const getGuidance = (scanId: string, findingId: string) =>
+  request<Guidance>(`/scans/${encodeURIComponent(scanId)}/guidance?finding_id=${encodeURIComponent(findingId)}`);
+
+/** Generate an AI suggestion. This sends data to the model provider, so it only ever runs on a click. */
+export const requestSuggestion = (scanId: string, findingId: string) =>
+  request<Remediation>(`/scans/${encodeURIComponent(scanId)}/suggestion`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ finding_id: findingId }),
+  });
+
+export const liveGuidance: GuidanceApi = { get: getGuidance, request: requestSuggestion };

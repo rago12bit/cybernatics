@@ -141,6 +141,117 @@
         ]
       }
     },
+    "/scans/{scan_id}/guidance": {
+      "get": {
+        "summary": "Get Guidance",
+        "description": "Reference guidance (CWE + OWASP) and any cached AI suggestion. Calls no model.",
+        "operationId": "get_guidance_scans__scan_id__guidance_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "scan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Scan Id"
+            }
+          },
+          {
+            "name": "finding_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500,
+              "title": "Finding Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuidanceView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/scans/{scan_id}/suggestion": {
+      "post": {
+        "summary": "Create Suggestion",
+        "description": "Generate (or fetch cached) an AI suggestion. Sends data to the model provider.",
+        "operationId": "create_suggestion_scans__scan_id__suggestion_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "scan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Scan Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SuggestionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemediationView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/risk/feeds": {
       "get": {
         "summary": "Risk Feeds",
@@ -554,6 +665,53 @@
         ],
         "title": "GitSource"
       },
+      "GuidanceView": {
+        "properties": {
+          "finding_id": {
+            "type": "string",
+            "title": "Finding Id"
+          },
+          "static": {
+            "$ref": "#/components/schemas/RemediationView",
+            "description": "Deterministic reference guidance; always present."
+          },
+          "ai": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RemediationView"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A previously generated AI suggestion, if one is cached."
+          },
+          "ai_enabled": {
+            "type": "boolean",
+            "title": "Ai Enabled",
+            "description": "Whether this server can generate AI suggestions."
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          }
+        },
+        "type": "object",
+        "required": [
+          "finding_id",
+          "static",
+          "ai",
+          "ai_enabled"
+        ],
+        "title": "GuidanceView"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -566,6 +724,116 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "RemediationView": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "title": "Source",
+            "description": "'ai' (written by a model) or 'static' (reference text, no model)."
+          },
+          "label": {
+            "type": "string",
+            "title": "Label",
+            "description": "Always shown with the content, e.g. 'AI suggestion: review before applying'."
+          },
+          "explanation": {
+            "type": "string",
+            "title": "Explanation"
+          },
+          "impact": {
+            "type": "string",
+            "title": "Impact"
+          },
+          "fix_summary": {
+            "type": "string",
+            "title": "Fix Summary"
+          },
+          "suggested_patch": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Suggested Patch",
+            "description": "A unified diff as TEXT. Bulwark never applies it."
+          },
+          "confidence": {
+            "type": "string",
+            "title": "Confidence",
+            "description": "Confidence in the fix, not in whether the finding is real."
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "degraded_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Degraded Reason"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
+          },
+          "references": {
+            "items": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "type": "array",
+            "title": "References"
+          },
+          "from_cache": {
+            "type": "boolean",
+            "title": "From Cache",
+            "default": false
+          },
+          "generated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Generated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "label",
+          "explanation",
+          "impact",
+          "fix_summary",
+          "suggested_patch",
+          "confidence"
+        ],
+        "title": "RemediationView",
+        "description": "Guidance for one finding. `source` says whether a model wrote it."
       },
       "ScanCreated": {
         "properties": {
@@ -785,6 +1053,22 @@
           "dedup_rate"
         ],
         "title": "ScanView"
+      },
+      "SuggestionRequest": {
+        "properties": {
+          "finding_id": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Finding Id",
+            "description": "A finding's `id` within the scan."
+          }
+        },
+        "type": "object",
+        "required": [
+          "finding_id"
+        ],
+        "title": "SuggestionRequest"
       },
       "ToolStatus": {
         "properties": {

@@ -4,8 +4,9 @@ import Link from "next/link";
 import { APP_HREF, DEMO_ONLY } from "@/lib/site";
 import { ScanReport } from "@/components/ScanReport";
 import { PAGE_SIZE, severityRank } from "@/lib/format";
-import type { Finding, FindingsPage, FindingsQuery, ScanView } from "@/lib/types";
+import type { Finding, FindingsPage, FindingsQuery, GuidanceApi, Remediation, ScanView } from "@/lib/types";
 import data from "@/lib/demo-data.json";
+import guidanceData from "@/lib/demo-guidance.json";
 
 // A real scan of the small test fixture (Bandit + Semgrep + Gitleaks + Trivy + OSV-Scanner), captured once.
 // Lets anyone explore the full report UI without an API token. No network calls are made.
@@ -34,6 +35,20 @@ async function fetchFindings(_id: string, q: FindingsQuery, limit: number = PAGE
   return { total: rows.length, limit, offset: q.page * limit, items: rows.slice(q.page * limit, (q.page + 1) * limit) };
 }
 
+// The sample site has no API. Guidance was precomputed by the real retrieval code (scripts/gen-demo-guidance.py);
+// it contains reference text only, and AI suggestions are off, because this site runs no model.
+const staticGuidance = guidanceData as unknown as Record<string, Remediation>;
+const demoGuidance: GuidanceApi = {
+  get: async (_scanId, findingId) => {
+    const r = staticGuidance[findingId];
+    if (!r) throw new Error("No guidance for this finding in the sample.");
+    return { finding_id: findingId, static: r, ai: null, ai_enabled: false, model: null };
+  },
+  request: async () => {
+    throw new Error("AI suggestions are not available in the sample.");
+  },
+};
+
 export function DemoReport() {
   return (
     <div className="page">
@@ -44,7 +59,7 @@ export function DemoReport() {
         </div>
         <Link href={APP_HREF} className="btn primary sm">{DEMO_ONLY ? "Run it yourself →" : "Scan your own →"}</Link>
       </div>
-      <ScanReport scan={scan} connection="done" version={0} fetchFindings={fetchFindings} crumb={{ href: "/about", label: "← About Bulwark" }} />
+      <ScanReport scan={scan} connection="done" version={0} fetchFindings={fetchFindings} guidance={demoGuidance} crumb={{ href: "/about", label: "← About Bulwark" }} />
     </div>
   );
 }

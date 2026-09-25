@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState, type KeyboardEvent as ReactKe
 import { getFindings } from "@/lib/api";
 import { collectAll, exportFilename, exportPayload, saveBlob } from "@/lib/export";
 import { defaultQuery, isDefaultQuery, locationLabel, pageCount, queryToSearch, rangeLabel, searchToQuery } from "@/lib/format";
-import { CATEGORIES, SEVERITIES, TOOLS, type Finding, type FindingsPage, type FindingsQuery, type ScanView, type Severity } from "@/lib/types";
+import { CATEGORIES, SEVERITIES, TOOLS, type Finding, type FindingsPage, type FindingsQuery, type GuidanceApi, type ScanView, type Severity } from "@/lib/types";
 import { RiskSignals, SeverityBadge } from "./Badges";
 import { FindingDetail } from "./FindingDetail";
 import { FixFirst } from "./FixFirst";
@@ -13,7 +13,7 @@ type Fetcher = (id: string, q: FindingsQuery, limit?: number) => Promise<Finding
 
 const isTyping = (t: EventTarget | null) => t instanceof HTMLElement && /^(INPUT|SELECT|TEXTAREA)$/.test(t.tagName);
 
-export function FindingsTable({ scan, version, fetchFindings = getFindings }: { scan: ScanView; version: number; fetchFindings?: Fetcher }) {
+export function FindingsTable({ scan, version, fetchFindings = getFindings, guidance }: { scan: ScanView; version: number; fetchFindings?: Fetcher; guidance?: GuidanceApi }) {
   const [q, setQ] = useState<FindingsQuery>(defaultQuery());
   const [pathInput, setPathInput] = useState("");
   const [hydrated, setHydrated] = useState(false);
@@ -236,6 +236,7 @@ export function FindingsTable({ scan, version, fetchFindings = getFindings }: { 
           position={index >= 0 ? { index: index + 1, total: items.length } : undefined}
           onPrev={index > 0 ? () => go(-1) : undefined}
           onNext={index >= 0 && index < items.length - 1 ? () => go(1) : undefined}
+          guidance={guidance}
         />
       )}
     </section>

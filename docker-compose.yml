@@ -67,7 +67,7 @@ services:
 
   migrate:
     <<: *app
-    command: ["alembic", "upgrade", "head"]
+    command: ["sh", "-c", "alembic upgrade head && bulwark kb load --if-empty"]
     restart: "no"
     depends_on:
       postgres: { condition: service_healthy }
@@ -75,6 +75,13 @@ services:
   api:
     <<: *app
     command: ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    environment:
+      <<: *app-env
+      # Optional AI suggestions (off by default). Only the API needs the key, never the worker.
+      # Enabling sends finding text and code snippets to your model provider: see docs/llm-remediation.md.
+      BULWARK_LLM_ENABLED: ${BULWARK_LLM_ENABLED:-0}
+      BULWARK_LLM_API_KEY: ${BULWARK_LLM_API_KEY:-}
+      BULWARK_LLM_MODEL: ${BULWARK_LLM_MODEL:-claude-sonnet-5}
     ports: ["127.0.0.1:8000:8000"]
     volumes: ["${BULWARK_WORKDIR}:${BULWARK_WORKDIR}"]
     depends_on:

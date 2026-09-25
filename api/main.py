@@ -9,6 +9,7 @@ import logging
 import re
 import uuid
 from collections.abc import AsyncIterator
+from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
@@ -16,23 +17,34 @@ from fastapi import Depends, FastAPI, File, Form, HTTPException, Query, UploadFi
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from fastapi.websockets import WebSocketDisconnect
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from api.deps import AppState, EventSubscriber, db, require_auth, state, token_ok
 from api.schemas import (
     FeedsStatus,
     FindingsPage,
+    GuidanceView,
+    RemediationView,
     ScanCreated,
     ScanRequest,
     ScanSummary,
     ScanView,
+    SuggestionRequest,
     ToolStatus,
 )
 from core.config import Settings
 from core.export import FORMATS, ReportData, render
 from core.gitfetch import GitUrlError, validate_git_url
+from core.llm import cache as llm_cache
+from core.llm.limits import LimitExceeded, UsageLimiter
+from core.llm.prompt import CodeContext
+from core.llm.service import static_suggestion
+from core.models import finding_from_dict
 from core.persistence import repo
-from core.persistence.models import Scan
+from core.persistence.models import FindingRow, Scan
+from core.rag.retrieve import context_for
+from core.rag.store import KnowledgeBase
 from core.risk import is_stale, read_meta
 from core.scan import ADAPTERS
 
@@ -64,6 +76,33 @@ def _all_findings(s: Session, scan_id: str) -> list[dict[str, Any]]:
         out.extend(page.items)
         if not page.items or len(out) >= page.total:
             return out
+
+
+def _find(s: Session, scan_id: str, finding_id: str) -> Any:
+    _get_scan(s, scan_id)
+    row = s.scalar(
+        select(FindingRow).where(FindingRow.scan_id == scan_id, FindingRow.finding_id == finding_id)
+    )
+    if row is None:
+        raise HTTPException(404, "finding not found in this scan")
+    return finding_from_dict(row.data)
+
+
+def _kb(s: Session) -> KnowledgeBase:
+    try:
+        return KnowledgeBase(s)
+    except RuntimeError as exc:
+        raise HTTPException(
+            503, "the remediation knowledge base is not loaded (run `bulwark kb load`)"
+        ) from exc
+
+
+def _code_of(f: Any) -> CodeContext | None:
+    """The code we still have: the scanner's snippet (the scan workspace is deleted afterwards)."""
+    sn = f.location.snippet
+    if not sn.strip() or "[snippet withheld" in sn or "[secret redacted]" in sn:
+        return None
+    return CodeContext(sn, f.location.start_line)
 
 
 def _view(s: Session, scan: Scan) -> ScanView:
@@ -207,6 +246,54 @@ def create_app(app_state: AppState) -> FastAPI:
             )  # fmt: skip
         return out
 
+    @app.get(
+        "/scans/{scan_id}/guidance",
+        response_model=GuidanceView,
+        dependencies=[Depends(require_auth)],
+    )
+    def get_guidance(
+        scan_id: str,
+        finding_id: str = Query(min_length=1, max_length=500),
+        s: Session = Depends(db),
+    ) -> GuidanceView:
+        """Reference guidance (CWE + OWASP) and any cached AI suggestion. Calls no model."""
+        f = _find(s, scan_id, finding_id)
+        kb = _kb(s)
+        static = static_suggestion(f, context_for(f, kb), "reference guidance")
+        client = app_state.llm
+        ai = llm_cache.lookup(s, f, client.model) if client else None
+        return GuidanceView(
+            finding_id=finding_id,
+            static=RemediationView(**asdict(static)),
+            ai=RemediationView(**asdict(ai)) if ai else None,
+            ai_enabled=client is not None,
+            model=client.model if client else None,
+        )
+
+    @app.post(
+        "/scans/{scan_id}/suggestion",
+        response_model=RemediationView,
+        dependencies=[Depends(require_auth)],
+    )
+    def create_suggestion(
+        scan_id: str, body: SuggestionRequest, s: Session = Depends(db)
+    ) -> RemediationView:
+        """Generate (or fetch cached) an AI suggestion. Sends data to the model provider."""
+        client = app_state.llm
+        if client is None:
+            raise HTTPException(409, "AI suggestions are not enabled on this server")
+        f = _find(s, scan_id, body.finding_id)
+        kb = _kb(s)
+        try:
+            res = llm_cache.suggest_cached(
+                f, kb, client, s, _code_of(f), before_call=app_state.limiter.acquire
+            )
+        except LimitExceeded as exc:
+            raise HTTPException(
+                429, str(exc), headers={"Retry-After": str(exc.retry_after)}
+            ) from exc
+        return RemediationView(**asdict(res))
+
     @app.get("/risk/feeds", response_model=FeedsStatus, dependencies=[Depends(require_auth)])
     def risk_feeds() -> FeedsStatus:
         meta = read_meta(app_state.settings.workdir / "feeds")
@@ -342,6 +429,7 @@ class RedisSubscriber:
 
 def build_default_app() -> FastAPI:
     """Production wiring, used by `uvicorn api.main:app`."""
+    from core.llm.client import make_client
     from core.persistence.db import get_session_factory
     from core.persistence.storage import S3Store
     from core.tasks import run_scan_task
@@ -355,6 +443,8 @@ def build_default_app() -> FastAPI:
             sessions=get_session_factory(),
             enqueue=lambda scan_id: run_scan_task.delay(scan_id),
             subscriber=RedisSubscriber(settings.redis_url),
+            llm=make_client(),  # None unless BULWARK_LLM_ENABLED=1 and a key is set
+            limiter=UsageLimiter.from_env(),
         )
     )
 
