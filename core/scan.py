@@ -16,6 +16,7 @@ from core.adapters.osv_scanner import OsvScannerAdapter
 from core.adapters.semgrep import SemgrepAdapter
 from core.adapters.trivy import TrivyAdapter
 from core.correlation import CorrelationStats, correlate
+from core.ignore import IGNORE_FILE, IgnoreRules, apply_ignore
 from core.models import Finding, finding_from_dict
 from core.postprocess import finalize
 from core.reachability import analyze_or_none
@@ -147,9 +148,15 @@ class ScanResult:
     findings: list[Finding] = field(default_factory=list)
     stats: CorrelationStats = field(default_factory=lambda: CorrelationStats(0, 0))
     tool_status: dict[str, dict[str, Any]] = field(default_factory=dict)
+    ignored: int = 0  # findings dropped by .bulwarkignore, reported so ignoring is never silent
 
 
-def scan(target: Path, tools: list[str], executor: Executor = threaded_executor) -> ScanResult:
+def scan(
+    target: Path,
+    tools: list[str],
+    executor: Executor = threaded_executor,
+    ignore: IgnoreRules | None = None,
+) -> ScanResult:
     unknown = [t for t in tools if t not in ADAPTERS]
     if unknown:
         raise ValueError(f"unknown tool(s): {', '.join(unknown)}")
@@ -168,5 +175,7 @@ def scan(target: Path, tools: list[str], executor: Executor = threaded_executor)
         result.findings.extend(o.findings)
     # Correlate BEFORE redacting: redaction placeholders look identical and would over-merge.
     correlated, result.stats = correlate(result.findings)
+    rules = ignore if ignore is not None else IgnoreRules.load(target / IGNORE_FILE)
+    correlated, result.ignored = apply_ignore(correlated, rules)
     result.findings = finalize(correlated, reach=analyze_or_none(target))
     return result

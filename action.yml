@@ -57,13 +57,13 @@ runs:
       shell: bash
       env:
         ACTION_PATH: ${{ github.action_path }}
-      run: pip install --quiet "$ACTION_PATH/.."
+      run: pip install --quiet "$ACTION_PATH"
 
     - name: Build scanner images
       shell: bash
       env:
         ACTION_PATH: ${{ github.action_path }}
-      run: bash "$ACTION_PATH/build-images.sh"
+      run: bash "$ACTION_PATH/action/build-images.sh"
 
     - name: Scan
       id: scan
@@ -77,12 +77,26 @@ runs:
       run: |
         set -euo pipefail
         cd "$GITHUB_WORKSPACE"
-        bulwark scan "$SCAN_PATH" --tools "$TOOLS" --format json --output "$RUNNER_TEMP/head.json"
-        if [ "$EVENT_NAME" = "pull_request" ] && [ "$COMPARE_BASE" = "true" ] && [ -n "$BASE_SHA" ]; then
+        ignore_args=()
+        pr=false
+        if [ "$EVENT_NAME" = "pull_request" ] && [ -n "$BASE_SHA" ]; then
+          pr=true
+          # The ignore file comes from the BASE commit: a change must not be able to hide its own
+          # findings by adding a .bulwarkignore. If the base cannot be fetched, nothing is ignored.
+          : > "$RUNNER_TEMP/ignore"
+          if git fetch --quiet --depth=1 origin "$BASE_SHA"; then
+            git show "$BASE_SHA:${SCAN_PATH%/}/.bulwarkignore" > "$RUNNER_TEMP/ignore" 2>/dev/null || : > "$RUNNER_TEMP/ignore"
+          else
+            echo "::warning::Could not fetch the base commit; ignore rules and the baseline are unavailable."
+            pr=false
+          fi
+          ignore_args=(--ignore-file "$RUNNER_TEMP/ignore")
+        fi
+        bulwark scan "$SCAN_PATH" --tools "$TOOLS" --format json ${ignore_args[@]+"${ignore_args[@]}"} --output "$RUNNER_TEMP/head.json"
+        if [ "$pr" = true ] && [ "$COMPARE_BASE" = "true" ]; then
           # A failed baseline is not fatal: the comment then says every finding is listed.
-          if git fetch --quiet --depth=1 origin "$BASE_SHA" \
-             && git worktree add --quiet --detach "$RUNNER_TEMP/base" "$BASE_SHA" \
-             && bulwark scan "$RUNNER_TEMP/base/$SCAN_PATH" --tools "$TOOLS" --format json --output "$RUNNER_TEMP/base.json"; then
+          if git worktree add --quiet --detach "$RUNNER_TEMP/base" "$BASE_SHA" \
+             && bulwark scan "$RUNNER_TEMP/base/$SCAN_PATH" --tools "$TOOLS" --format json ${ignore_args[@]+"${ignore_args[@]}"} --output "$RUNNER_TEMP/base.json"; then
             echo "baseline scan done"
           else
             echo "::warning::Could not scan the base commit; reporting all findings instead of only new ones."

@@ -162,6 +162,11 @@ bulwark scan ./my-project --distributed
 Gitleaks uses the upstream image. Semgrep's rules are fetched at build time and are for your own
 internal use only — see [ADR-006](docs/adr/0006-semgrep-rules-licensing.md).
 
+## Scanning itself
+
+Bulwark's own [self-scan workflow](.github/workflows/bulwark.yml) and [what it found](docs/dogfooding.md).
+Release steps for the Marketplaces: [docs/releasing.md](docs/releasing.md).
+
 ## GitHub Action (early)
 
 `action/` scans on every push and pull request, uploads SARIF to Code Scanning, comments only the findings a PR

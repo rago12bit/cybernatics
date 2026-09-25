@@ -11,7 +11,7 @@ import yaml
 from core.scan import ADAPTERS
 
 ROOT = Path(__file__).resolve().parents[2]
-ACTION = yaml.safe_load((ROOT / "action" / "action.yml").read_text())
+ACTION = yaml.safe_load((ROOT / "action.yml").read_text())
 STEPS = ACTION["runs"]["steps"]
 
 
@@ -94,3 +94,23 @@ def test_inputs_are_wired_to_the_steps_that_use_them() -> None:
     comment = next(s for s in STEPS if s.get("name", "").startswith("Comment"))
     assert comment["env"]["GITHUB_TOKEN"] == "${{ inputs.github-token }}"
     assert comment["env"]["PR_NUMBER"] == "${{ github.event.pull_request.number }}"
+
+
+def test_pull_requests_take_ignore_rules_from_the_base_commit_not_the_change() -> None:
+    scan = next(s for s in STEPS if s.get("id") == "scan")["run"]
+    assert 'git show "$BASE_SHA:' in scan and "--ignore-file" in scan
+    assert scan.index("--ignore-file") < scan.index("bulwark scan")  # set up before the first scan
+
+
+def test_the_self_scan_workflow_uses_this_action_and_gates_only_pull_requests() -> None:
+    wf = yaml.safe_load((ROOT / ".github" / "workflows" / "bulwark.yml").read_text())
+    trigger = wf.get("on") or wf[True]  # PyYAML parses a bare `on` key as boolean True
+    assert "pull_request" in trigger and trigger["push"]["branches"] == ["main"]
+    steps = wf["jobs"]["scan"]["steps"]
+    assert re.fullmatch(r"actions/checkout@[0-9a-f]{40}", steps[0]["uses"].split(" ")[0])
+    assert steps[1]["uses"] == "./"
+    fail_on = steps[1]["with"]["fail-on"]
+    assert "pull_request" in fail_on and "'high'" in fail_on and "'none'" in fail_on
+    assert (
+        wf["permissions"]["security-events"] == "write" and wf["permissions"]["contents"] == "read"
+    )

@@ -6,6 +6,19 @@ versions will follow [SemVer](https://semver.org) once `v0.1.0` is tagged (plann
 ## [Unreleased]
 
 ### Added
+- **Dogfooding and release prep (Week 19):** `.github/workflows/bulwark.yml` runs the action on this repository
+  (blocks pull requests on new HIGH findings; reports on pushes). `.bulwarkignore` (with `--ignore-file`, counted
+  in `stats.ignored_findings` and shown in the PR comment); in CI the ignore file is taken from the **base** commit
+  so a change cannot hide its own findings. The action is now at the repository root (`uses: Rag2102/cyberimp@...`)
+  as the GitHub Marketplace requires. `docs/releasing.md` lists the Marketplace steps (yours to run);
+  the extension packages to a 21 KB `.vsix`. See docs/dogfooding.md for what the self-scan found.
+
+### Fixed
+- Scanning a directory that contains `node_modules`, a virtualenv or tool caches no longer fails on the size limit;
+  those directories are skipped (lockfiles are still scanned). Found by scanning this repository.
+- The extension's dev dependencies (vitest/vite/esbuild) upgraded: no known advisories remain in its lockfile.
+
+### Added
 - **GitHub Action (Week 18), `action/`:** composite action that scans, uploads SARIF to Code Scanning, comments
   the findings a pull request **introduces** (base and head scans compared by fingerprint; one comment updated in
   place) and fails at a configurable severity (`fail-on`, counting only new findings on pull requests). New CLI:

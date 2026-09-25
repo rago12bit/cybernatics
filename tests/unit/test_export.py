@@ -22,7 +22,7 @@ from core.scan import ScanResult
 ROOT = Path(__file__).resolve().parents[2]
 DEMO = json.loads((ROOT / "web/lib/demo-data.json").read_text())
 SCHEMA = json.loads((ROOT / "tests/fixtures/sarif-schema-2.1.0.json").read_text())
-HOSTILE = "<img src=x onerror=alert(1)></para><b>&amp;</b>‮中文\x00\x07 \"'"
+HOSTILE = "<img src=x onerror=alert(1)></para><b>&amp;</b>\u202e中文\x00\x07 \"'"
 
 
 def report(findings: list[dict[str, Any]] | None = None) -> ReportData:

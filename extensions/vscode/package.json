@@ -6,8 +6,13 @@
   "publisher": "bulwark-scan",
   "license": "Apache-2.0",
   "private": true,
-  "engines": { "vscode": "^1.90.0" },
-  "categories": ["Linters", "Other"],
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Linters",
+    "Other"
+  ],
   "main": "./out/extension.js",
   "activationEvents": [],
   "capabilities": {
@@ -18,9 +23,18 @@
   },
   "contributes": {
     "commands": [
-      { "command": "bulwark.scanWorkspace", "title": "Bulwark: Scan Workspace" },
-      { "command": "bulwark.clearFindings", "title": "Bulwark: Clear Findings" },
-      { "command": "bulwark.showOutput", "title": "Bulwark: Show Output" }
+      {
+        "command": "bulwark.scanWorkspace",
+        "title": "Bulwark: Scan Workspace"
+      },
+      {
+        "command": "bulwark.clearFindings",
+        "title": "Bulwark: Clear Findings"
+      },
+      {
+        "command": "bulwark.showOutput",
+        "title": "Bulwark: Show Output"
+      }
     ],
     "configuration": {
       "title": "Bulwark",
@@ -33,14 +47,35 @@
         },
         "bulwark.tools": {
           "type": "array",
-          "items": { "type": "string", "enum": ["bandit", "semgrep", "gitleaks", "trivy", "osv-scanner"] },
+          "items": {
+            "type": "string",
+            "enum": [
+              "bandit",
+              "semgrep",
+              "gitleaks",
+              "trivy",
+              "osv-scanner"
+            ]
+          },
           "uniqueItems": true,
-          "default": ["bandit", "semgrep", "gitleaks", "trivy", "osv-scanner"],
+          "default": [
+            "bandit",
+            "semgrep",
+            "gitleaks",
+            "trivy",
+            "osv-scanner"
+          ],
           "description": "Which scanners to run. An empty list runs all of them."
         },
         "bulwark.minimumSeverity": {
           "type": "string",
-          "enum": ["INFO", "LOW", "MEDIUM", "HIGH", "CRITICAL"],
+          "enum": [
+            "INFO",
+            "LOW",
+            "MEDIUM",
+            "HIGH",
+            "CRITICAL"
+          ],
           "default": "INFO",
           "description": "Hide findings below this severity."
         },
@@ -56,12 +91,33 @@
   "scripts": {
     "build": "tsc -p .",
     "typecheck": "tsc -p . --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "package": "vsce package --no-dependencies --out bulwark-vscode.vsix"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
     "@types/vscode": "^1.90.0",
+    "@vscode/vsce": "^4.0.0",
     "typescript": "^5.6.0",
-    "vitest": "^2.1.0"
-  }
+    "vitest": "^4.1.11"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Rag2102/cyberimp.git",
+    "directory": "extensions/vscode"
+  },
+  "homepage": "https://github.com/Rag2102/cyberimp#vs-code-extension-early",
+  "bugs": {
+    "url": "https://github.com/Rag2102/cyberimp/issues"
+  },
+  "keywords": [
+    "security",
+    "sast",
+    "sca",
+    "secrets",
+    "bandit",
+    "semgrep",
+    "trivy",
+    "gitleaks"
+  ]
 }

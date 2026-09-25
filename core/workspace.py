@@ -15,6 +15,20 @@ from pathlib import Path
 from core.ingest import IngestError, Limits
 
 _SKIP_DIRS = {".git", ".hg", ".svn"}
+# Installed dependencies and tool caches are not the project code: copying them made a normal
+# working directory (node_modules, a virtualenv) exceed the size limit. Lockfiles are still scanned.
+_DEPENDENCY_DIRS = {
+    "node_modules", "__pycache__", ".mypy_cache", ".pytest_cache", ".ruff_cache", ".tox",
+    ".next", ".nuxt",
+}  # fmt: skip
+
+
+def _skip_dir(parent: str, name: str) -> bool:
+    if name in _SKIP_DIRS or name in _DEPENDENCY_DIRS:
+        return True
+    return os.path.isfile(
+        os.path.join(parent, name, "pyvenv.cfg")
+    )  # any virtualenv, whatever its name
 
 
 def prepare_workspace(src: Path, dest: Path, limits: Limits | None = None) -> Path:
@@ -24,7 +38,7 @@ def prepare_workspace(src: Path, dest: Path, limits: Limits | None = None) -> Pa
     total = count = 0
     root = src.resolve()
     for dirpath, dirnames, filenames in os.walk(root, followlinks=False):
-        dirnames[:] = [d for d in dirnames if d not in _SKIP_DIRS]
+        dirnames[:] = [d for d in dirnames if not _skip_dir(dirpath, d)]
         rel = Path(dirpath).relative_to(root)
         (dest / rel).mkdir(parents=True, exist_ok=True)
         os.chmod(dest / rel, 0o755)

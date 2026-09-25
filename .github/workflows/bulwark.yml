@@ -1,0 +1,26 @@
+name: Bulwark self-scan
+# Bulwark scans its own repository. On pull requests it blocks on NEW findings of severity HIGH or worse
+# (findings already on the base branch do not count); on pushes it only reports.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  security-events: write # upload SARIF to Code Scanning
+  pull-requests: write # the PR comment
+
+concurrency:
+  group: bulwark-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: ./
+        with:
+          fail-on: ${{ github.event_name == 'pull_request' && 'high' || 'none' }}

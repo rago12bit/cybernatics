@@ -60,3 +60,23 @@ def test_materialize_archive(tmp_path: Path) -> None:
     with materialize(str(z)) as ws:
         assert (ws / "app" / "main.py").exists()
     assert os.path.exists(z)
+
+
+def test_installed_dependencies_caches_and_virtualenvs_are_not_copied(tmp_path: Path) -> None:
+    src = tmp_path / "src"
+    (src / "node_modules" / "left-pad").mkdir(parents=True)
+    (src / "node_modules" / "left-pad" / "index.js").write_text("x")
+    (src / "web" / "node_modules" / "a").mkdir(parents=True)
+    (src / "web" / "node_modules" / "a" / "i.js").write_text("x")
+    (src / "myenv" / "lib").mkdir(parents=True)
+    (src / "myenv" / "pyvenv.cfg").write_text("home = /usr/bin")
+    (src / "myenv" / "lib" / "big.py").write_text("x")
+    (src / "__pycache__").mkdir()
+    (src / "__pycache__" / "a.pyc").write_text("x")
+    (src / "app.py").write_text("print(1)")
+    (src / "package-lock.json").write_text("{}")
+    (src / "notvenv").mkdir()
+    (src / "notvenv" / "real.py").write_text("y")  # a plain directory is still scanned
+    out = prepare_workspace(src, tmp_path / "ws")
+    found = sorted(str(p.relative_to(out)) for p in out.rglob("*") if p.is_file())
+    assert found == ["app.py", "notvenv/real.py", "package-lock.json"]

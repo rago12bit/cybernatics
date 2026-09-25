@@ -21,6 +21,7 @@ class Scan:
     raw_findings: int = 0
     unique_findings: int = 0
     dedup_rate: float = 0.0
+    ignored: int = 0
 
 
 @dataclass
@@ -53,6 +54,7 @@ def load_scan(path: Path) -> Scan:
             raw_findings=int(stats.get("raw_findings", len(findings))),
             unique_findings=int(stats.get("unique_findings", len(findings))),
             dedup_rate=float(stats.get("dedup_rate", 0.0)),
+            ignored=int(stats.get("ignored_findings", 0)),
         )
     except (OSError, ValueError, KeyError, TypeError) as exc:
         raise ValueError(f"{path.name} is not valid Bulwark scan output: {exc}") from exc

@@ -13,7 +13,7 @@ COMMENT_MARKER = "<!-- bulwark-scan-comment -->"
 MAX_LISTED = 20
 MAX_COMMENT_CHARS = 60_000  # GitHub's limit is 65,536
 SEV_ORDER = ["CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO"]
-_CONTROL = re.compile(r"[\x00-\x08\x0b-\x1f\x7f‪-‮⁦-⁩]")
+_CONTROL = re.compile(r"[\x00-\x08\x0b-\x1f\x7f\u202a-\u202e\u2066-\u2069]")
 
 
 def md(text: object, limit: int = 160) -> str:
@@ -83,6 +83,8 @@ def markdown_comment(cmp: Comparison, fail_on: str, failed: bool, run_url: str =
             f"> Scanner(s) that did not complete: {', '.join(md(t, 40) for t in failing)}. "
             "Results may be incomplete."
         )
+    if cmp.head.ignored:
+        lines.append(f"{cmp.head.ignored} finding(s) hidden by `.bulwarkignore`.")
     if fail_on != "none":
         lines.append(
             f"\nThreshold: fail on **{fail_on}** or higher. "

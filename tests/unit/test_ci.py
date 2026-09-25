@@ -171,7 +171,7 @@ def test_untrusted_text_cannot_inject_markdown_links_mentions_or_html() -> None:
 
 
 def test_md_strips_control_and_bidi_characters() -> None:
-    assert md("a‮b\x00c") == "abc"
+    assert md("a\u202eb\x00c") == "abc"
 
 
 def test_run_url_is_only_linked_when_https() -> None:

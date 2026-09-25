@@ -3,7 +3,7 @@
 # (tests/unit/test_action.py checks that they do).
 set -euo pipefail
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-docker_dir="$here/../docker"
+docker_dir="$here/../docker"  # action/ sits next to docker/ in the repository
 
 build() { docker build --quiet --tag "$1" "$docker_dir/$2" >/dev/null && echo "built $1"; }
 

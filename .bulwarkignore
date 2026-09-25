@@ -1,0 +1,14 @@
+# Paths whose findings Bulwark should not report when it scans its own repository.
+# Everything here is deliberate; nothing is hidden because it was inconvenient.
+
+# Intentionally vulnerable projects used as scanner test inputs, and raw scanner outputs.
+tests/fixtures/
+tests/golden/
+# An old lockfile kept on purpose so the offline OSV database can be seeded.
+docker/osv-scanner/seed/
+# Text of the OWASP cheat sheets and CWE entries: contains example keys and vulnerable snippets.
+core/rag/corpus/
+# Tests that need realistic-looking fake secrets to prove they are redacted or refused.
+tests/unit/test_llm.py
+tests/unit/test_llm_cache.py
+tests/unit/test_redact.py

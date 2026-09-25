@@ -64,7 +64,7 @@ def rule_key(f: dict[str, Any]) -> str:
 
 
 def item_id(repo: str, finding_id: str) -> str:
-    return hashlib.sha1(f"{repo}\x00{finding_id}".encode()).hexdigest()[:10]
+    return hashlib.sha1(f"{repo}\x00{finding_id}".encode(), usedforsecurity=False).hexdigest()[:10]
 
 
 def _round_robin(

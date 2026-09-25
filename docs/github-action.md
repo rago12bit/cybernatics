@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: Rag2102/cyberimp/action@main   # a release tag once one is published
+      - uses: Rag2102/cyberimp@main   # pin a release tag or commit SHA once one is published
         with:
           fail-on: high
 ```
@@ -58,6 +58,18 @@ Upload and comment run **before** the check fails, so a red run still shows the 
 to fail (forks, missing permissions) without hiding the gate result; the comment is skipped with a warning when
 the token cannot write. The run summary always contains the same table.
 
+## Ignoring paths: `.bulwarkignore`
+
+Put a `.bulwarkignore` at the scan root (see this repository's own for an example): one glob per line, `#` for
+comments. `tests/fixtures/` (anchored at the root), `fixtures/` (any directory of that name), `*.lock`, `docs/**/*.md`.
+Ignored findings are dropped from the report **but counted**, and the count appears in the comment and JSON
+(`stats.ignored_findings`), so ignoring is never silent.
+
+**A change cannot hide its own findings.** On pull requests the action reads the ignore file from the **base**
+commit and passes it to both scans; a `.bulwarkignore` added or edited by the pull request has no effect until it is
+merged (checked by running the action's scan step against a real repository whose head tried to ignore its own new
+file). If the base commit cannot be fetched, nothing is ignored. On pushes the file in the checkout applies.
+
 ## Security notes
 
 - Use the `pull_request` trigger. **Do not use `pull_request_target` with a checkout of the PR head**: that runs
@@ -79,4 +91,4 @@ the token cannot write. The run summary always contains the same table.
   reported, the gate failed), by unit tests, and by static checks of `action.yml`. Expect first-run surprises around
   runner permissions and Docker.
 - No image caching, so every run rebuilds the scanner images.
-- Publishing to the Marketplace needs the action at the root of its own repository and is planned for Week 19.
+- Marketplace listing is a manual step: see [releasing.md](releasing.md).

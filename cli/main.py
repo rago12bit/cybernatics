@@ -9,6 +9,7 @@ from typing import Any
 
 import typer
 
+from core.ignore import IgnoreRules
 from core.ingest import IngestError
 from core.scan import ADAPTERS, scan
 from core.source import materialize
@@ -30,6 +31,11 @@ def scan_cmd(
         None, "--output", "-o", help="Write here instead of stdout."
     ),
     distributed: bool = typer.Option(False, "--distributed", help="Run tools on Celery workers."),
+    ignore_file: Path | None = typer.Option(
+        None,
+        "--ignore-file",
+        help="Ignore file to use instead of the source's own (CI: the base branch's).",
+    ),
 ) -> None:
     if fmt not in ("json", "sarif", "html", "pdf"):
         raise typer.BadParameter("use json, sarif, html or pdf", param_hint="--format")
@@ -37,13 +43,17 @@ def scan_cmd(
         raise typer.BadParameter("pdf is binary: pass --output report.pdf", param_hint="--output")
     names = [t.strip() for t in tools.split(",") if t.strip()]
     try:
+        rules = IgnoreRules.load(ignore_file) if ignore_file is not None else None
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc), param_hint="--ignore-file") from exc
+    try:
         with materialize(source) as workspace:
             if distributed:
                 from core.tasks import celery_executor
 
-                result = scan(workspace, names, celery_executor)
+                result = scan(workspace, names, celery_executor, rules)
             else:
-                result = scan(workspace, names)
+                result = scan(workspace, names, ignore=rules)
     except ValueError as exc:
         raise typer.BadParameter(str(exc), param_hint="--tools") from exc
     except IngestError as exc:
@@ -57,6 +67,7 @@ def scan_cmd(
                     "raw_findings": result.stats.raw,
                     "unique_findings": result.stats.unique,
                     "dedup_rate": round(result.stats.dedup_rate, 3),
+                    "ignored_findings": result.ignored,
                 },
                 "findings": [f.to_dict() for f in result.findings],
             },

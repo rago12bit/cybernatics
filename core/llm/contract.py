@@ -21,7 +21,9 @@ FIELDS = ("explanation", "impact", "fix_summary", "suggested_patch", "confidence
 LIMITS = {"explanation": 1500, "impact": 800, "fix_summary": 1200, "suggested_patch": 6000}
 MAX_PATCH_LINES = 120
 MAX_REPLY_CHARS = 20_000  # the five fields at their limits fit in well under this
-_CTRL = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f‪-‮⁦-⁩]")  # incl. bidi overrides
+_CTRL = re.compile(
+    r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f\u202a-\u202e\u2066-\u2069]"
+)  # incl. bidi overrides
 _FENCE = re.compile(r"\A```(?:json)?\s*\n(.*)\n```\s*\Z", re.S)
 _DISMISS = re.compile(
     r"(?i)\b(?:false[- ]positive|not\s+(?:actually\s+)?(?:a\s+)?(?:real\s+)?(?:vulnerab|security\s+(?:issue|risk|problem))"
