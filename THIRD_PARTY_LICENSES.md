@@ -36,6 +36,7 @@ optional separate container.
 
 | Data | License / terms | Use |
 |---|---|---|
+| OWASP Benchmark v1.2beta | GPL-2.0 | benchmark input, downloaded at run time only, never committed or redistributed |
 | CWE | MITRE CWE Terms of Use | reference text in core/rag/corpus (attribution in NOTICE.md) |
 | OWASP Cheat Sheet Series | CC BY-SA 4.0 | adapted chunks in core/rag/corpus; share-alike applies to those files |
 | EPSS scores | FIRST.org, free to use with attribution | downloaded at run time, never redistributed |

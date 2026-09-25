@@ -55,6 +55,11 @@ TOOLS: dict[str, tuple[str, str, str]] = {
 }  # fmt: skip
 DATA: list[tuple[str, str, str]] = [
     (
+        "OWASP Benchmark v1.2beta",
+        "GPL-2.0",
+        "benchmark input, downloaded at run time only, never committed or redistributed",
+    ),
+    (
         "CWE",
         "MITRE CWE Terms of Use",
         "reference text in core/rag/corpus (attribution in NOTICE.md)",

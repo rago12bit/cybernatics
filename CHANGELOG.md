@@ -6,6 +6,18 @@ versions will follow [SemVer](https://semver.org) once `v0.1.0` is tagged (plann
 ## [Unreleased]
 
 ### Added
+- **OWASP Benchmark evaluation (Week 23):** `benchmarks/owasp` fetches the pinned corpus, scans it through the real
+  sandbox runner one tool at a time, and scores per test case (recall, false-positive rate, precision, F1, and the
+  Benchmark's TPR - FPR) with Wilson intervals, per category, under three CWE matchers published together. First
+  result: Semgrep recall 88.2%, false-positive rate 43.7%, F1 77.0% (`related` matcher); strong on pattern-shaped
+  weaknesses, near a coin flip on injection categories. No ensemble result: only one scanner analyses Java. See
+  docs/evaluation-owasp.md for method and limits.
+
+### Fixed
+- `pom.xml` now marks a repository as having dependencies, so Trivy and OSV-Scanner run on Maven projects.
+- The dedup benchmark runs the original five scanners again (it had picked up the tier-2 tools).
+
+### Added
 - **Tier-2 scanners (Week 22):** Grype (SCA), Checkov (IaC), gosec (Go SAST) and Dockle (container image lint),
   opt-in with `--tools` (`DEFAULT_TOOLS` is still the original five) and selectable in the web form. `bulwark scan-image
   REF` lints a local image. Each was run for real in its sandbox against a fixture; golden files are real output.

@@ -162,6 +162,13 @@ bulwark scan ./my-project --distributed
 Gitleaks uses the upstream image. Semgrep's rules are fetched at build time and are for your own
 internal use only — see [ADR-006](docs/adr/0006-semgrep-rules-licensing.md).
 
+## Evaluation
+
+On the OWASP Benchmark (2,740 labelled Java cases) Semgrep finds 88% of real vulnerabilities and flags 44% of the safe
+look-alikes (score +0.445; near-perfect on pattern-shaped weaknesses, close to a coin flip on injection). One scanner
+analyses Java, so there is no ensemble result yet. Method, per-category table and limits:
+[docs/evaluation-owasp.md](docs/evaluation-owasp.md).
+
 ## Adding scanners
 
 Five scanners run by default; Grype, Checkov, gosec and Dockle are opt-in (`--tools grype,checkov,gosec`,

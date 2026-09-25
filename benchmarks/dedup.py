@@ -16,7 +16,7 @@ from pathlib import Path
 
 from core.correlation import correlate
 from core.correlation import engine as eng
-from core.scan import ADAPTERS, ScanResult, detect_context, scan
+from core.scan import ADAPTERS, DEFAULT_TOOLS, ScanResult, detect_context, scan
 from core.source import materialize
 
 REPOS = [
@@ -34,7 +34,7 @@ def measure(name: str, source: str) -> dict[str, object]:
     try:
         with materialize(source) as ws:
             ctx = detect_context(ws)
-            result: ScanResult = scan(ws, list(ADAPTERS))
+            result: ScanResult = scan(ws, list(DEFAULT_TOOLS))
             # scan() already correlated; recompute raw per tool from tool_status.
     except Exception as exc:  # noqa: BLE001 - a repo that can't be scanned is a data point
         return {"repo": name, "source": source, "error": f"{type(exc).__name__}: {exc}"}

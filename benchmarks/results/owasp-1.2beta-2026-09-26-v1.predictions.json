@@ -1,0 +1,7048 @@
+{
+ "benchmark": {
+  "cases": 2740,
+  "commit": "2734ae486356765ea4e45393a28e20bcb5047f8c",
+  "name": "OWASP Benchmark",
+  "tag": "1.2beta",
+  "truth_sha256": "ae8e9386b13ec0164500f1a6fa3d0fa981495911a0f29e88a611e9a9df1b4567"
+ },
+ "label": "v1",
+ "measured": "2026-09-26",
+ "tools": {
+  "bandit": {
+   "predictions": {},
+   "status": "not-applicable",
+   "unattributed_findings": 0
+  },
+  "gitleaks": {
+   "duration_seconds": 4.5,
+   "error": null,
+   "findings": 0,
+   "image": "zricethezav/gitleaks:v8.21.0",
+   "predictions": {},
+   "status": "ok",
+   "unattributed_findings": 0
+  },
+  "osv-scanner": {
+   "predictions": {},
+   "status": "not-applicable",
+   "unattributed_findings": 0
+  },
+  "semgrep": {
+   "duration_seconds": 201.6,
+   "error": null,
+   "findings": 3169,
+   "image": "bulwark/semgrep:1.90.0",
+   "predictions": {
+    "BenchmarkTest00001": [
+     "CWE-22"
+    ],
+    "BenchmarkTest00002": [
+     "CWE-22"
+    ],
+    "BenchmarkTest00004": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00005": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00006": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00007": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00008": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00010": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00011": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest00012": [
+     "CWE-79",
+     "CWE-90"
+    ],
+    "BenchmarkTest00013": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00014": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00015": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00016": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00017": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00018": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00019": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00020": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00021": [
+     "CWE-79",
+     "CWE-90"
+    ],
+    "BenchmarkTest00023": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00024": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00025": [
+     "CWE-79",
+     "CWE-89"
+    ],
+    "BenchmarkTest00026": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00027": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00028": [
+     "CWE-22"
+    ],
+    "BenchmarkTest00030": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00031": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest00032": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00033": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00034": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00035": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00036": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00037": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00038": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00039": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00040": [
+     "CWE-22"
+    ],
+    "BenchmarkTest00042": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00043": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00044": [
+     "CWE-79",
+     "CWE-90"
+    ],
+    "BenchmarkTest00045": [
+     "CWE-22"
+    ],
+    "BenchmarkTest00046": [
+     "CWE-328"
+    ],
+    "BenchmarkTest00047": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00048": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00049": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00050": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00051": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00053": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00055": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00056": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00057": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00059": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00060": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest00061": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest00063": [
+     "CWE-22"
+    ],
+    "BenchmarkTest00064": [
+     "CWE-22"
+    ],
+    "BenchmarkTest00066": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00067": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00068": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00070": [
+     "CWE-328"
+    ],
+    "BenchmarkTest00071": [
+     "CWE-328"
+    ],
+    "BenchmarkTest00073": [
+     "CWE-328"
+    ],
+    "BenchmarkTest00077": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00078": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00079": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00080": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00081": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00082": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00083": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00084": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00085": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00086": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00087": [
+     "CWE-1004",
+     "CWE-614"
+    ],
+    "BenchmarkTest00088": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00089": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00090": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00091": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00092": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00094": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00095": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00096": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00097": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00098": [
+     "CWE-501"
+    ],
+    "BenchmarkTest00102": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00103": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00104": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00105": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00106": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00107": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00108": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00109": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00110": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00111": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00112": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00113": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00114": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00115": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00117": [
+     "CWE-643",
+     "CWE-79"
+    ],
+    "BenchmarkTest00118": [
+     "CWE-643",
+     "CWE-79"
+    ],
+    "BenchmarkTest00119": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00120": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00123": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00124": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00125": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00127": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00128": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00129": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00130": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00131": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest00132": [
+     "CWE-22"
+    ],
+    "BenchmarkTest00133": [
+     "CWE-22"
+    ],
+    "BenchmarkTest00135": [
+     "CWE-22"
+    ],
+    "BenchmarkTest00136": [
+     "CWE-22"
+    ],
+    "BenchmarkTest00138": [
+     "CWE-79",
+     "CWE-90"
+    ],
+    "BenchmarkTest00140": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00141": [
+     "CWE-328"
+    ],
+    "BenchmarkTest00146": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00148": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00149": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00150": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00152": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00154": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00155": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00157": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00158": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00159": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00160": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00161": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00162": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00163": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00164": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00165": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00166": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00167": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00168": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00169": [
+     "CWE-1004",
+     "CWE-614"
+    ],
+    "BenchmarkTest00170": [
+     "CWE-1004",
+     "CWE-614"
+    ],
+    "BenchmarkTest00174": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00176": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00177": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00178": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00179": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00180": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00181": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00182": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00183": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00184": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00185": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00186": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00187": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00188": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00191": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00192": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00193": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00194": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00195": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00196": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00198": [
+     "CWE-79",
+     "CWE-89"
+    ],
+    "BenchmarkTest00199": [
+     "CWE-79",
+     "CWE-89"
+    ],
+    "BenchmarkTest00202": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00203": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00204": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00205": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00206": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00207": [
+     "CWE-643",
+     "CWE-79"
+    ],
+    "BenchmarkTest00208": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00210": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00213": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00214": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00215": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest00216": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest00218": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest00219": [
+     "CWE-22"
+    ],
+    "BenchmarkTest00221": [
+     "CWE-22"
+    ],
+    "BenchmarkTest00222": [
+     "CWE-22"
+    ],
+    "BenchmarkTest00223": [
+     "CWE-328"
+    ],
+    "BenchmarkTest00230": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00231": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00232": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00233": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00234": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00235": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00236": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00237": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00238": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00239": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00240": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00241": [
+     "CWE-1004",
+     "CWE-614"
+    ],
+    "BenchmarkTest00242": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00243": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00244": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00245": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00246": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00247": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00248": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00249": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00250": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00251": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest00253": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest00254": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00256": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00257": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00258": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00262": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest00263": [
+     "CWE-22"
+    ],
+    "BenchmarkTest00264": [
+     "CWE-22"
+    ],
+    "BenchmarkTest00266": [
+     "CWE-328"
+    ],
+    "BenchmarkTest00267": [
+     "CWE-328"
+    ],
+    "BenchmarkTest00268": [
+     "CWE-328"
+    ],
+    "BenchmarkTest00269": [
+     "CWE-328"
+    ],
+    "BenchmarkTest00272": [
+     "CWE-328"
+    ],
+    "BenchmarkTest00276": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00280": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00281": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00284": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00287": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00290": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00291": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00292": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00293": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00294": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00295": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00296": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00297": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00298": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00299": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00300": [
+     "CWE-1004",
+     "CWE-614"
+    ],
+    "BenchmarkTest00302": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00303": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00306": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00308": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00310": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00311": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00312": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00313": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00314": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00315": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00316": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00317": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00318": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00319": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00320": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00323": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest00324": [
+     "CWE-501"
+    ],
+    "BenchmarkTest00325": [
+     "CWE-501"
+    ],
+    "BenchmarkTest00326": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00327": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest00328": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00329": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00333": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00335": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00336": [
+     "CWE-79",
+     "CWE-89"
+    ],
+    "BenchmarkTest00338": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00339": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00340": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00341": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00342": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00343": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00344": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00346": [
+     "CWE-328"
+    ],
+    "BenchmarkTest00347": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00348": [
+     "CWE-1004",
+     "CWE-614"
+    ],
+    "BenchmarkTest00349": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00354": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00355": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00356": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00357": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00358": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00359": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest00360": [
+     "CWE-22"
+    ],
+    "BenchmarkTest00361": [
+     "CWE-22"
+    ],
+    "BenchmarkTest00362": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest00363": [
+     "CWE-22"
+    ],
+    "BenchmarkTest00368": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00369": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00371": [
+     "CWE-328"
+    ],
+    "BenchmarkTest00372": [
+     "CWE-328"
+    ],
+    "BenchmarkTest00375": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00376": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00378": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00380": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00384": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00387": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00388": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00390": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00392": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00393": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00395": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00396": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00397": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00398": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00399": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00400": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00401": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00402": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00403": [
+     "CWE-1004",
+     "CWE-614"
+    ],
+    "BenchmarkTest00404": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00405": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00406": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00408": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00409": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00413": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00414": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00415": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00416": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00417": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00418": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00419": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00420": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00421": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00422": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00423": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00424": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest00425": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest00426": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00429": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00430": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00431": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00433": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00434": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00435": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00436": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00437": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00438": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00439": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00440": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00441": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00442": [
+     "CWE-643",
+     "CWE-79"
+    ],
+    "BenchmarkTest00445": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00446": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00448": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00449": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00450": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00451": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00452": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest00453": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest00454": [
+     "CWE-22"
+    ],
+    "BenchmarkTest00455": [
+     "CWE-22"
+    ],
+    "BenchmarkTest00458": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest00459": [
+     "CWE-22"
+    ],
+    "BenchmarkTest00461": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00462": [
+     "CWE-328"
+    ],
+    "BenchmarkTest00464": [
+     "CWE-328"
+    ],
+    "BenchmarkTest00465": [
+     "CWE-328"
+    ],
+    "BenchmarkTest00469": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00472": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00473": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00475": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00476": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00477": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00478": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00480": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00481": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00482": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00483": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00484": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00485": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00486": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00487": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00488": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00489": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00490": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00491": [
+     "CWE-1004",
+     "CWE-614"
+    ],
+    "BenchmarkTest00492": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00496": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00497": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00498": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00499": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00500": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00501": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00502": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00503": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00504": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00505": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00506": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00507": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00508": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest00510": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00512": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00513": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00514": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00515": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00516": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00517": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00518": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00519": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00520": [
+     "CWE-643",
+     "CWE-79"
+    ],
+    "BenchmarkTest00521": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00522": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00524": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00526": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest00527": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest00529": [
+     "CWE-22"
+    ],
+    "BenchmarkTest00530": [
+     "CWE-79",
+     "CWE-90"
+    ],
+    "BenchmarkTest00531": [
+     "CWE-328"
+    ],
+    "BenchmarkTest00532": [
+     "CWE-328"
+    ],
+    "BenchmarkTest00533": [
+     "CWE-328"
+    ],
+    "BenchmarkTest00534": [
+     "CWE-328"
+    ],
+    "BenchmarkTest00536": [
+     "CWE-328"
+    ],
+    "BenchmarkTest00537": [
+     "CWE-328"
+    ],
+    "BenchmarkTest00541": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00542": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00547": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00549": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00551": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00553": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00554": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00555": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00556": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00557": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00558": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00559": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00560": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00561": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00562": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00563": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00564": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00565": [
+     "CWE-1004",
+     "CWE-614"
+    ],
+    "BenchmarkTest00566": [
+     "CWE-1004",
+     "CWE-614"
+    ],
+    "BenchmarkTest00567": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00568": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00571": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00572": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00573": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00574": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00576": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00577": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00578": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00579": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00580": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00581": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00582": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00583": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00584": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00585": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00588": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00590": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00591": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00593": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00595": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00597": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00598": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00600": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00601": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00602": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00603": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00604": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00605": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00606": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00607": [
+     "CWE-643",
+     "CWE-79"
+    ],
+    "BenchmarkTest00608": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00609": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00610": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00611": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00614": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00615": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00616": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00617": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00618": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00622": [
+     "CWE-22"
+    ],
+    "BenchmarkTest00623": [
+     "CWE-22"
+    ],
+    "BenchmarkTest00624": [
+     "CWE-22"
+    ],
+    "BenchmarkTest00625": [
+     "CWE-22"
+    ],
+    "BenchmarkTest00627": [
+     "CWE-22"
+    ],
+    "BenchmarkTest00630": [
+     "CWE-90"
+    ],
+    "BenchmarkTest00631": [
+     "CWE-328"
+    ],
+    "BenchmarkTest00634": [
+     "CWE-328"
+    ],
+    "BenchmarkTest00635": [
+     "CWE-328"
+    ],
+    "BenchmarkTest00636": [
+     "CWE-328"
+    ],
+    "BenchmarkTest00637": [
+     "CWE-328"
+    ],
+    "BenchmarkTest00652": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00653": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00654": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00655": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00658": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00659": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00660": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00661": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00662": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00663": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00664": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00665": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00666": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00667": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00680": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00681": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00682": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00684": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00685": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00688": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00691": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00692": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00693": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00694": [
+     "CWE-79",
+     "CWE-90"
+    ],
+    "BenchmarkTest00696": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest00697": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest00698": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest00699": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest00700": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest00702": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00703": [
+     "CWE-328"
+    ],
+    "BenchmarkTest00704": [
+     "CWE-328"
+    ],
+    "BenchmarkTest00705": [
+     "CWE-328"
+    ],
+    "BenchmarkTest00708": [
+     "CWE-328"
+    ],
+    "BenchmarkTest00712": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00715": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00719": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00720": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00723": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00724": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00727": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00728": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00729": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00731": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00732": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00733": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00734": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00735": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00736": [
+     "CWE-1004",
+     "CWE-614"
+    ],
+    "BenchmarkTest00738": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00739": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00743": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00744": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00745": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00746": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00747": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00748": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00749": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00750": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00751": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00752": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00753": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00755": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest00756": [
+     "CWE-501"
+    ],
+    "BenchmarkTest00757": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00759": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest00761": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00762": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00763": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00764": [
+     "CWE-79",
+     "CWE-89"
+    ],
+    "BenchmarkTest00765": [
+     "CWE-79",
+     "CWE-89"
+    ],
+    "BenchmarkTest00766": [
+     "CWE-79",
+     "CWE-89"
+    ],
+    "BenchmarkTest00767": [
+     "CWE-79",
+     "CWE-89"
+    ],
+    "BenchmarkTest00768": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00770": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00771": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00772": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00773": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00774": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00779": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00781": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00784": [
+     "CWE-22"
+    ],
+    "BenchmarkTest00787": [
+     "CWE-22"
+    ],
+    "BenchmarkTest00788": [
+     "CWE-22"
+    ],
+    "BenchmarkTest00789": [
+     "CWE-328"
+    ],
+    "BenchmarkTest00790": [
+     "CWE-328"
+    ],
+    "BenchmarkTest00794": [
+     "CWE-328"
+    ],
+    "BenchmarkTest00800": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00801": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00802": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00803": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00804": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00807": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00809": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00810": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00811": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00812": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00813": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00814": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00815": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00816": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00817": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00818": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00819": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00820": [
+     "CWE-1004",
+     "CWE-614"
+    ],
+    "BenchmarkTest00821": [
+     "CWE-1004",
+     "CWE-614"
+    ],
+    "BenchmarkTest00822": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00825": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00826": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00828": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00829": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00830": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00831": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00832": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00833": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest00834": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest00836": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest00838": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00839": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00840": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00841": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00845": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00846": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00847": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00848": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00849": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00850": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00851": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00853": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00855": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00856": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00857": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00859": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00861": [
+     "CWE-90"
+    ],
+    "BenchmarkTest00862": [
+     "CWE-22"
+    ],
+    "BenchmarkTest00863": [
+     "CWE-22"
+    ],
+    "BenchmarkTest00866": [
+     "CWE-22"
+    ],
+    "BenchmarkTest00868": [
+     "CWE-328"
+    ],
+    "BenchmarkTest00869": [
+     "CWE-328"
+    ],
+    "BenchmarkTest00870": [
+     "CWE-328"
+    ],
+    "BenchmarkTest00871": [
+     "CWE-328"
+    ],
+    "BenchmarkTest00872": [
+     "CWE-328"
+    ],
+    "BenchmarkTest00895": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00896": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00897": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00898": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00899": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00900": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00901": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00902": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00903": [
+     "CWE-1004",
+     "CWE-614"
+    ],
+    "BenchmarkTest00904": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00905": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00906": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00907": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00908": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00909": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00910": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00911": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00912": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00913": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00914": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00915": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00916": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00917": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00918": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00919": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00920": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00921": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00937": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00938": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00939": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00940": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00945": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00946": [
+     "CWE-326"
+    ],
+    "BenchmarkTest00947": [
+     "CWE-79",
+     "CWE-90"
+    ],
+    "BenchmarkTest00948": [
+     "CWE-79",
+     "CWE-90"
+    ],
+    "BenchmarkTest00949": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest00950": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest00951": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest00952": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest00953": [
+     "CWE-22"
+    ],
+    "BenchmarkTest00954": [
+     "CWE-22"
+    ],
+    "BenchmarkTest00955": [
+     "CWE-22"
+    ],
+    "BenchmarkTest00956": [
+     "CWE-22"
+    ],
+    "BenchmarkTest00959": [
+     "CWE-79",
+     "CWE-90"
+    ],
+    "BenchmarkTest00960": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00961": [
+     "CWE-328"
+    ],
+    "BenchmarkTest00963": [
+     "CWE-328"
+    ],
+    "BenchmarkTest00968": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00969": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00970": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00971": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00972": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00973": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00974": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00975": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00976": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest00977": [
+     "CWE-1004",
+     "CWE-614"
+    ],
+    "BenchmarkTest00978": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00979": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00980": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00981": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00982": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00983": [
+     "CWE-78"
+    ],
+    "BenchmarkTest00984": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00985": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00986": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00987": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00988": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00989": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00990": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest00991": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00992": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00993": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest00994": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest00995": [
+     "CWE-79"
+    ],
+    "BenchmarkTest00996": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00997": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00998": [
+     "CWE-89"
+    ],
+    "BenchmarkTest00999": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01000": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01001": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01002": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01003": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01004": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01005": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01006": [
+     "CWE-79",
+     "CWE-89"
+    ],
+    "BenchmarkTest01007": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01008": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01009": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01010": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01011": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01012": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01013": [
+     "CWE-643",
+     "CWE-79"
+    ],
+    "BenchmarkTest01014": [
+     "CWE-643",
+     "CWE-79"
+    ],
+    "BenchmarkTest01015": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01016": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01017": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01018": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01020": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01021": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01022": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01023": [
+     "CWE-79",
+     "CWE-90"
+    ],
+    "BenchmarkTest01024": [
+     "CWE-79",
+     "CWE-90"
+    ],
+    "BenchmarkTest01025": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest01026": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest01027": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest01028": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest01029": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest01030": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest01031": [
+     "CWE-22"
+    ],
+    "BenchmarkTest01032": [
+     "CWE-22"
+    ],
+    "BenchmarkTest01033": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest01034": [
+     "CWE-22"
+    ],
+    "BenchmarkTest01035": [
+     "CWE-22"
+    ],
+    "BenchmarkTest01038": [
+     "CWE-328"
+    ],
+    "BenchmarkTest01046": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01047": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01048": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01049": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01050": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01051": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01052": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01053": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01054": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01055": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01056": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01057": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01058": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01059": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01060": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01061": [
+     "CWE-1004",
+     "CWE-614"
+    ],
+    "BenchmarkTest01062": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01063": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01064": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01065": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01066": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01067": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01068": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01069": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01070": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01071": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01072": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01073": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01074": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01075": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01076": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01077": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01078": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01079": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01080": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01081": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01082": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01083": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01084": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01085": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01086": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01087": [
+     "CWE-79",
+     "CWE-89"
+    ],
+    "BenchmarkTest01088": [
+     "CWE-79",
+     "CWE-89"
+    ],
+    "BenchmarkTest01089": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01090": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01091": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01092": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01093": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01094": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01095": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01096": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01097": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01098": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01099": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01102": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01103": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01105": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01106": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01107": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01108": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01109": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest01110": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest01111": [
+     "CWE-22"
+    ],
+    "BenchmarkTest01112": [
+     "CWE-22"
+    ],
+    "BenchmarkTest01113": [
+     "CWE-22"
+    ],
+    "BenchmarkTest01114": [
+     "CWE-22"
+    ],
+    "BenchmarkTest01115": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest01116": [
+     "CWE-22"
+    ],
+    "BenchmarkTest01117": [
+     "CWE-22"
+    ],
+    "BenchmarkTest01119": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01123": [
+     "CWE-328"
+    ],
+    "BenchmarkTest01127": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01128": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01129": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01130": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01131": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01132": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01133": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01134": [
+     "CWE-1004",
+     "CWE-614"
+    ],
+    "BenchmarkTest01135": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01136": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01137": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01138": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01139": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01140": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01141": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01142": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest01143": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest01144": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest01145": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest01146": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest01148": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01149": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01150": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01153": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01154": [
+     "CWE-79",
+     "CWE-90"
+    ],
+    "BenchmarkTest01155": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest01156": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest01157": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest01158": [
+     "CWE-22"
+    ],
+    "BenchmarkTest01159": [
+     "CWE-22"
+    ],
+    "BenchmarkTest01160": [
+     "CWE-22"
+    ],
+    "BenchmarkTest01161": [
+     "CWE-22"
+    ],
+    "BenchmarkTest01162": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01163": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01165": [
+     "CWE-328"
+    ],
+    "BenchmarkTest01166": [
+     "CWE-328"
+    ],
+    "BenchmarkTest01167": [
+     "CWE-328"
+    ],
+    "BenchmarkTest01171": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01172": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01173": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01174": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01175": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01176": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01177": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01178": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01179": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01180": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01181": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01182": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01183": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01184": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01185": [
+     "CWE-1004",
+     "CWE-614"
+    ],
+    "BenchmarkTest01186": [
+     "CWE-1004",
+     "CWE-614"
+    ],
+    "BenchmarkTest01187": [
+     "CWE-1004",
+     "CWE-614"
+    ],
+    "BenchmarkTest01188": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01189": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01190": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01191": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01192": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01193": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01194": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01195": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01196": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01197": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01198": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01199": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01200": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01201": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01202": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01203": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest01204": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest01205": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest01206": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest01207": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01208": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01209": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01210": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01211": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01212": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01213": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01214": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01215": [
+     "CWE-79",
+     "CWE-89"
+    ],
+    "BenchmarkTest01216": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01217": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01218": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01219": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01220": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01221": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01222": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01223": [
+     "CWE-643",
+     "CWE-79"
+    ],
+    "BenchmarkTest01224": [
+     "CWE-643",
+     "CWE-79"
+    ],
+    "BenchmarkTest01225": [
+     "CWE-643",
+     "CWE-79"
+    ],
+    "BenchmarkTest01228": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01229": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01230": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01231": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest01232": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest01233": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest01234": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest01235": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest01236": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest01237": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest01238": [
+     "CWE-22"
+    ],
+    "BenchmarkTest01239": [
+     "CWE-22"
+    ],
+    "BenchmarkTest01240": [
+     "CWE-22"
+    ],
+    "BenchmarkTest01241": [
+     "CWE-79",
+     "CWE-90"
+    ],
+    "BenchmarkTest01242": [
+     "CWE-79",
+     "CWE-90"
+    ],
+    "BenchmarkTest01243": [
+     "CWE-79",
+     "CWE-90"
+    ],
+    "BenchmarkTest01244": [
+     "CWE-328"
+    ],
+    "BenchmarkTest01246": [
+     "CWE-328"
+    ],
+    "BenchmarkTest01247": [
+     "CWE-328"
+    ],
+    "BenchmarkTest01251": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01252": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01253": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01254": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01255": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01256": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01257": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01258": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01259": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01260": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01261": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01262": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01263": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01264": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01265": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01266": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01267": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01268": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01269": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01270": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01271": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01272": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01273": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01274": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01275": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01276": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01277": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01278": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01279": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01280": [
+     "CWE-1004",
+     "CWE-614"
+    ],
+    "BenchmarkTest01281": [
+     "CWE-1004",
+     "CWE-614"
+    ],
+    "BenchmarkTest01282": [
+     "CWE-1004",
+     "CWE-614"
+    ],
+    "BenchmarkTest01283": [
+     "CWE-1004",
+     "CWE-614"
+    ],
+    "BenchmarkTest01284": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01285": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01286": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01287": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01288": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01289": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01290": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01291": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01292": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01293": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01294": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01295": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01296": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01297": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01298": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01299": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest01300": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest01301": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01302": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01303": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01304": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01305": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01306": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01307": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01308": [
+     "CWE-79",
+     "CWE-89"
+    ],
+    "BenchmarkTest01309": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01310": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01311": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01312": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01313": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01314": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01315": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01316": [
+     "CWE-643",
+     "CWE-79"
+    ],
+    "BenchmarkTest01317": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01318": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01320": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01322": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01323": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01325": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01326": [
+     "CWE-79",
+     "CWE-90"
+    ],
+    "BenchmarkTest01327": [
+     "CWE-79",
+     "CWE-90"
+    ],
+    "BenchmarkTest01328": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest01329": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest01330": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest01331": [
+     "CWE-22"
+    ],
+    "BenchmarkTest01333": [
+     "CWE-328"
+    ],
+    "BenchmarkTest01334": [
+     "CWE-328"
+    ],
+    "BenchmarkTest01335": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01336": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01337": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01338": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01339": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01340": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01341": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01342": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01343": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01344": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01345": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01346": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01347": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01348": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01349": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01350": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01351": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01352": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01353": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01354": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01355": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01356": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01357": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01358": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01359": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01360": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01361": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01362": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01363": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01364": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01365": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01366": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01367": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01368": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01369": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01370": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01371": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01372": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01373": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01374": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01375": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest01376": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest01377": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest01378": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01379": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01380": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01381": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01382": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01383": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01384": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01385": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01386": [
+     "CWE-79",
+     "CWE-89"
+    ],
+    "BenchmarkTest01387": [
+     "CWE-79",
+     "CWE-89"
+    ],
+    "BenchmarkTest01388": [
+     "CWE-79",
+     "CWE-89"
+    ],
+    "BenchmarkTest01389": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01390": [
+     "CWE-79",
+     "CWE-89"
+    ],
+    "BenchmarkTest01391": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01392": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01393": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01394": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01395": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01396": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01397": [
+     "CWE-643",
+     "CWE-79"
+    ],
+    "BenchmarkTest01398": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01401": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01402": [
+     "CWE-79",
+     "CWE-90"
+    ],
+    "BenchmarkTest01403": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest01404": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest01405": [
+     "CWE-22"
+    ],
+    "BenchmarkTest01406": [
+     "CWE-22"
+    ],
+    "BenchmarkTest01407": [
+     "CWE-22"
+    ],
+    "BenchmarkTest01408": [
+     "CWE-22"
+    ],
+    "BenchmarkTest01411": [
+     "CWE-328"
+    ],
+    "BenchmarkTest01417": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01418": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01419": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01420": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01421": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01422": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01423": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01424": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01425": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01426": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01427": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01428": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01429": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01430": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01431": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01432": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01433": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01434": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01435": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01436": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01437": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01438": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01439": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01440": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01441": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01442": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01443": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01444": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01445": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01446": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01447": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01448": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01449": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01450": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01451": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01452": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01453": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01454": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest01455": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest01456": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest01457": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest01458": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01459": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01460": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01461": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01462": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01463": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01464": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01465": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01466": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01467": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01468": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01469": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01470": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01471": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01472": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01473": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01474": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01475": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01476": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01477": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01478": [
+     "CWE-643",
+     "CWE-79"
+    ],
+    "BenchmarkTest01479": [
+     "CWE-643",
+     "CWE-79"
+    ],
+    "BenchmarkTest01480": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01483": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01484": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01486": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01489": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01490": [
+     "CWE-90"
+    ],
+    "BenchmarkTest01491": [
+     "CWE-90"
+    ],
+    "BenchmarkTest01492": [
+     "CWE-90"
+    ],
+    "BenchmarkTest01493": [
+     "CWE-22"
+    ],
+    "BenchmarkTest01494": [
+     "CWE-22"
+    ],
+    "BenchmarkTest01495": [
+     "CWE-22"
+    ],
+    "BenchmarkTest01496": [
+     "CWE-22"
+    ],
+    "BenchmarkTest01497": [
+     "CWE-22"
+    ],
+    "BenchmarkTest01498": [
+     "CWE-22"
+    ],
+    "BenchmarkTest01499": [
+     "CWE-22"
+    ],
+    "BenchmarkTest01501": [
+     "CWE-90"
+    ],
+    "BenchmarkTest01502": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01503": [
+     "CWE-328"
+    ],
+    "BenchmarkTest01504": [
+     "CWE-328"
+    ],
+    "BenchmarkTest01516": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01517": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01518": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01519": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01520": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01521": [
+     "CWE-1004",
+     "CWE-614"
+    ],
+    "BenchmarkTest01522": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01523": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01524": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01526": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01527": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01528": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01529": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01530": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01531": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01532": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01533": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01534": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01535": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01536": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01537": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01538": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01539": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01540": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01541": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01542": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01543": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01544": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01545": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01557": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01558": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01559": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01560": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01565": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01566": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01567": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01568": [
+     "CWE-79",
+     "CWE-90"
+    ],
+    "BenchmarkTest01569": [
+     "CWE-79",
+     "CWE-90"
+    ],
+    "BenchmarkTest01570": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest01571": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest01572": [
+     "CWE-22"
+    ],
+    "BenchmarkTest01573": [
+     "CWE-22"
+    ],
+    "BenchmarkTest01574": [
+     "CWE-22"
+    ],
+    "BenchmarkTest01575": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01577": [
+     "CWE-328"
+    ],
+    "BenchmarkTest01583": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01584": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01585": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01586": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01587": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01588": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01589": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01590": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01591": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01592": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01593": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01594": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01595": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01596": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01597": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01598": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01599": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01600": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01601": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01602": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01603": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01604": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01605": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01606": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01607": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01608": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01609": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01610": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01611": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01612": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01613": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01614": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01615": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01616": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest01617": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01618": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest01619": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest01620": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01621": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01622": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01623": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01624": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01625": [
+     "CWE-79",
+     "CWE-89"
+    ],
+    "BenchmarkTest01626": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01627": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01628": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01629": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01630": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01631": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01632": [
+     "CWE-643",
+     "CWE-79"
+    ],
+    "BenchmarkTest01633": [
+     "CWE-643",
+     "CWE-79"
+    ],
+    "BenchmarkTest01634": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01637": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01638": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01639": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01641": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01642": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest01643": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest01644": [
+     "CWE-22"
+    ],
+    "BenchmarkTest01645": [
+     "CWE-22"
+    ],
+    "BenchmarkTest01646": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest01647": [
+     "CWE-22"
+    ],
+    "BenchmarkTest01648": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01649": [
+     "CWE-328"
+    ],
+    "BenchmarkTest01650": [
+     "CWE-328"
+    ],
+    "BenchmarkTest01651": [
+     "CWE-328"
+    ],
+    "BenchmarkTest01653": [
+     "CWE-328"
+    ],
+    "BenchmarkTest01657": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01658": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01659": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01660": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01661": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01662": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01663": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01664": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01665": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01666": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01667": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01668": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01669": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01670": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01671": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01672": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01673": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01674": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01675": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01676": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01677": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01678": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01679": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01680": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01681": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01682": [
+     "CWE-1004",
+     "CWE-614"
+    ],
+    "BenchmarkTest01683": [
+     "CWE-1004",
+     "CWE-614"
+    ],
+    "BenchmarkTest01684": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01685": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01686": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01687": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01688": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01689": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01690": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01691": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01692": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01693": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01694": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01695": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01696": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01697": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01698": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01699": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01700": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01701": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01702": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01703": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01704": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01705": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01706": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01707": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01708": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01709": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest01710": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest01711": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest01712": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01713": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01714": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01715": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01716": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01717": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01718": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01719": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01720": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01721": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01722": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01723": [
+     "CWE-79",
+     "CWE-89"
+    ],
+    "BenchmarkTest01724": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01725": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01726": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01727": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01728": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01729": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01730": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01731": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01732": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01733": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01734": [
+     "CWE-643",
+     "CWE-79"
+    ],
+    "BenchmarkTest01735": [
+     "CWE-643",
+     "CWE-79"
+    ],
+    "BenchmarkTest01736": [
+     "CWE-643",
+     "CWE-79"
+    ],
+    "BenchmarkTest01740": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01741": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01742": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01743": [
+     "CWE-90"
+    ],
+    "BenchmarkTest01744": [
+     "CWE-22"
+    ],
+    "BenchmarkTest01745": [
+     "CWE-22"
+    ],
+    "BenchmarkTest01746": [
+     "CWE-22"
+    ],
+    "BenchmarkTest01747": [
+     "CWE-22"
+    ],
+    "BenchmarkTest01748": [
+     "CWE-22"
+    ],
+    "BenchmarkTest01749": [
+     "CWE-22"
+    ],
+    "BenchmarkTest01750": [
+     "CWE-22"
+    ],
+    "BenchmarkTest01751": [
+     "CWE-22"
+    ],
+    "BenchmarkTest01752": [
+     "CWE-22"
+    ],
+    "BenchmarkTest01753": [
+     "CWE-90"
+    ],
+    "BenchmarkTest01754": [
+     "CWE-90"
+    ],
+    "BenchmarkTest01755": [
+     "CWE-90"
+    ],
+    "BenchmarkTest01756": [
+     "CWE-90"
+    ],
+    "BenchmarkTest01757": [
+     "CWE-328"
+    ],
+    "BenchmarkTest01761": [
+     "CWE-328"
+    ],
+    "BenchmarkTest01778": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01779": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01780": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01781": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01782": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01783": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01784": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01785": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01786": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01787": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01788": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01789": [
+     "CWE-1004",
+     "CWE-614"
+    ],
+    "BenchmarkTest01791": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01792": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01793": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01794": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01795": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01796": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01797": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01798": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01799": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01800": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01801": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01815": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01816": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01817": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01818": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01819": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01820": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01822": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01823": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01829": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01830": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01831": [
+     "CWE-79",
+     "CWE-90"
+    ],
+    "BenchmarkTest01832": [
+     "CWE-79",
+     "CWE-90"
+    ],
+    "BenchmarkTest01833": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest01834": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest01835": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest01836": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest01837": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest01838": [
+     "CWE-22"
+    ],
+    "BenchmarkTest01839": [
+     "CWE-22"
+    ],
+    "BenchmarkTest01840": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest01841": [
+     "CWE-22"
+    ],
+    "BenchmarkTest01842": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01843": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01844": [
+     "CWE-328"
+    ],
+    "BenchmarkTest01845": [
+     "CWE-328"
+    ],
+    "BenchmarkTest01846": [
+     "CWE-328"
+    ],
+    "BenchmarkTest01850": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01851": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01852": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01853": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01854": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01855": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01856": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01857": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01858": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01859": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01860": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01861": [
+     "CWE-1004",
+     "CWE-614"
+    ],
+    "BenchmarkTest01862": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01863": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01864": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01865": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01866": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01867": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01868": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01869": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01870": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01871": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01872": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01873": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest01874": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01875": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01876": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest01877": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01878": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01879": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01880": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01881": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01882": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01883": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01884": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01885": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01886": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01887": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01888": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01889": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01890": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01891": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01892": [
+     "CWE-643",
+     "CWE-79"
+    ],
+    "BenchmarkTest01893": [
+     "CWE-643",
+     "CWE-79"
+    ],
+    "BenchmarkTest01894": [
+     "CWE-643",
+     "CWE-79"
+    ],
+    "BenchmarkTest01895": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01897": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01898": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01900": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01901": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01902": [
+     "CWE-79",
+     "CWE-90"
+    ],
+    "BenchmarkTest01903": [
+     "CWE-79",
+     "CWE-90"
+    ],
+    "BenchmarkTest01904": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest01905": [
+     "CWE-22"
+    ],
+    "BenchmarkTest01906": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest01907": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest01909": [
+     "CWE-79",
+     "CWE-90"
+    ],
+    "BenchmarkTest01910": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01911": [
+     "CWE-328"
+    ],
+    "BenchmarkTest01914": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01915": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01916": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01917": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01918": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01919": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01920": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01921": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01922": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01923": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01924": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01925": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01926": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01927": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01928": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01929": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01930": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01931": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01932": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01933": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01934": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01935": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01936": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01937": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01938": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01939": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01940": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01941": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01942": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01943": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01944": [
+     "CWE-78"
+    ],
+    "BenchmarkTest01945": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01946": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01947": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01948": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01949": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01950": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01951": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01952": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01953": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01954": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest01955": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01956": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01957": [
+     "CWE-79"
+    ],
+    "BenchmarkTest01958": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest01959": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest01960": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest01961": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01962": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01963": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01964": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01965": [
+     "CWE-79",
+     "CWE-89"
+    ],
+    "BenchmarkTest01966": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01967": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01968": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01969": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01970": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01971": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01972": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01973": [
+     "CWE-89"
+    ],
+    "BenchmarkTest01974": [
+     "CWE-643",
+     "CWE-79"
+    ],
+    "BenchmarkTest01978": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01980": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01981": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01982": [
+     "CWE-326"
+    ],
+    "BenchmarkTest01983": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest01984": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest01985": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest01986": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest01987": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest01988": [
+     "CWE-22"
+    ],
+    "BenchmarkTest01989": [
+     "CWE-22"
+    ],
+    "BenchmarkTest01990": [
+     "CWE-22"
+    ],
+    "BenchmarkTest01992": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest01999": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02000": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02001": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02002": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02003": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02004": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02005": [
+     "CWE-1004",
+     "CWE-614"
+    ],
+    "BenchmarkTest02006": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02007": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02008": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02009": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02010": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02011": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02012": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02013": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02014": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02015": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02016": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest02017": [
+     "CWE-326"
+    ],
+    "BenchmarkTest02018": [
+     "CWE-326"
+    ],
+    "BenchmarkTest02019": [
+     "CWE-326"
+    ],
+    "BenchmarkTest02020": [
+     "CWE-326"
+    ],
+    "BenchmarkTest02022": [
+     "CWE-326"
+    ],
+    "BenchmarkTest02023": [
+     "CWE-326"
+    ],
+    "BenchmarkTest02024": [
+     "CWE-326"
+    ],
+    "BenchmarkTest02025": [
+     "CWE-79",
+     "CWE-90"
+    ],
+    "BenchmarkTest02026": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest02027": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest02028": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest02029": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest02030": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest02031": [
+     "CWE-22"
+    ],
+    "BenchmarkTest02032": [
+     "CWE-22"
+    ],
+    "BenchmarkTest02033": [
+     "CWE-22"
+    ],
+    "BenchmarkTest02034": [
+     "CWE-22"
+    ],
+    "BenchmarkTest02036": [
+     "CWE-79",
+     "CWE-90"
+    ],
+    "BenchmarkTest02037": [
+     "CWE-79",
+     "CWE-90"
+    ],
+    "BenchmarkTest02038": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02039": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02040": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02042": [
+     "CWE-328"
+    ],
+    "BenchmarkTest02045": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02046": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02047": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02048": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02049": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02050": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02051": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02052": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02053": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02054": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02055": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02056": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02057": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02058": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02059": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02060": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02061": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02062": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02063": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02064": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02065": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02066": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02067": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02068": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02069": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02070": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02071": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02072": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02073": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02074": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02075": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02076": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02077": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02078": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02079": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02080": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02081": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02082": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02083": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02084": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest02085": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest02086": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest02087": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02088": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02089": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02090": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02091": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02092": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02093": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02094": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02095": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02096": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02097": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02098": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02099": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02100": [
+     "CWE-643",
+     "CWE-79"
+    ],
+    "BenchmarkTest02101": [
+     "CWE-326"
+    ],
+    "BenchmarkTest02103": [
+     "CWE-326"
+    ],
+    "BenchmarkTest02104": [
+     "CWE-79",
+     "CWE-90"
+    ],
+    "BenchmarkTest02105": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest02106": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest02107": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest02108": [
+     "CWE-22"
+    ],
+    "BenchmarkTest02109": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest02110": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest02111": [
+     "CWE-22"
+    ],
+    "BenchmarkTest02112": [
+     "CWE-22"
+    ],
+    "BenchmarkTest02114": [
+     "CWE-79",
+     "CWE-90"
+    ],
+    "BenchmarkTest02115": [
+     "CWE-79",
+     "CWE-90"
+    ],
+    "BenchmarkTest02116": [
+     "CWE-79",
+     "CWE-90"
+    ],
+    "BenchmarkTest02117": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02118": [
+     "CWE-328"
+    ],
+    "BenchmarkTest02122": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02123": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02124": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02125": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02126": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02127": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02128": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02129": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02130": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02131": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02132": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02133": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02134": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02135": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02136": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02137": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02138": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02139": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02140": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02141": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02142": [
+     "CWE-1004",
+     "CWE-614"
+    ],
+    "BenchmarkTest02143": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02144": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02145": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02146": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02147": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02148": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02149": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02150": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02151": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02152": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02153": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02154": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02155": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02156": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02157": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02158": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02159": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02160": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02161": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02162": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02163": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02164": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02165": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02166": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest02167": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest02168": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest02169": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02170": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02171": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02172": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02173": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02174": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02175": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02176": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02177": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02178": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02179": [
+     "CWE-79",
+     "CWE-89"
+    ],
+    "BenchmarkTest02180": [
+     "CWE-79",
+     "CWE-89"
+    ],
+    "BenchmarkTest02181": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02182": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02183": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02184": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02185": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02186": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02187": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02188": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02189": [
+     "CWE-643",
+     "CWE-79"
+    ],
+    "BenchmarkTest02192": [
+     "CWE-326"
+    ],
+    "BenchmarkTest02193": [
+     "CWE-326"
+    ],
+    "BenchmarkTest02194": [
+     "CWE-326"
+    ],
+    "BenchmarkTest02195": [
+     "CWE-326"
+    ],
+    "BenchmarkTest02196": [
+     "CWE-79",
+     "CWE-90"
+    ],
+    "BenchmarkTest02197": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest02198": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest02199": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest02200": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest02201": [
+     "CWE-22"
+    ],
+    "BenchmarkTest02202": [
+     "CWE-22"
+    ],
+    "BenchmarkTest02203": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest02204": [
+     "CWE-22"
+    ],
+    "BenchmarkTest02205": [
+     "CWE-22"
+    ],
+    "BenchmarkTest02208": [
+     "CWE-79",
+     "CWE-90"
+    ],
+    "BenchmarkTest02209": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02211": [
+     "CWE-328"
+    ],
+    "BenchmarkTest02212": [
+     "CWE-328"
+    ],
+    "BenchmarkTest02213": [
+     "CWE-328"
+    ],
+    "BenchmarkTest02217": [
+     "CWE-328"
+    ],
+    "BenchmarkTest02221": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02222": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02223": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02224": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02225": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02226": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02227": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02228": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02229": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02230": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02231": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02232": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02233": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02234": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02235": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02236": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02237": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02238": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02239": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02240": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02241": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02242": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02243": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02244": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02245": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02246": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02247": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02248": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02249": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02250": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02251": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02252": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02253": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02254": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02255": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02256": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02257": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02258": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02259": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02260": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02261": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02262": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest02263": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02264": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02265": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02266": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02267": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02268": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02269": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02270": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02271": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02272": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02273": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02274": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02275": [
+     "CWE-79",
+     "CWE-89"
+    ],
+    "BenchmarkTest02276": [
+     "CWE-79",
+     "CWE-89"
+    ],
+    "BenchmarkTest02277": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02278": [
+     "CWE-79",
+     "CWE-89"
+    ],
+    "BenchmarkTest02279": [
+     "CWE-79",
+     "CWE-89"
+    ],
+    "BenchmarkTest02280": [
+     "CWE-79",
+     "CWE-89"
+    ],
+    "BenchmarkTest02281": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02282": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02283": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02284": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02285": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02286": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02287": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02288": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02290": [
+     "CWE-326"
+    ],
+    "BenchmarkTest02291": [
+     "CWE-326"
+    ],
+    "BenchmarkTest02292": [
+     "CWE-326"
+    ],
+    "BenchmarkTest02293": [
+     "CWE-326"
+    ],
+    "BenchmarkTest02294": [
+     "CWE-326"
+    ],
+    "BenchmarkTest02295": [
+     "CWE-326"
+    ],
+    "BenchmarkTest02296": [
+     "CWE-326"
+    ],
+    "BenchmarkTest02297": [
+     "CWE-326"
+    ],
+    "BenchmarkTest02298": [
+     "CWE-326"
+    ],
+    "BenchmarkTest02299": [
+     "CWE-79",
+     "CWE-90"
+    ],
+    "BenchmarkTest02300": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest02301": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest02302": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest02303": [
+     "CWE-22"
+    ],
+    "BenchmarkTest02304": [
+     "CWE-22"
+    ],
+    "BenchmarkTest02305": [
+     "CWE-79",
+     "CWE-90"
+    ],
+    "BenchmarkTest02306": [
+     "CWE-79",
+     "CWE-90"
+    ],
+    "BenchmarkTest02307": [
+     "CWE-328"
+    ],
+    "BenchmarkTest02308": [
+     "CWE-328"
+    ],
+    "BenchmarkTest02311": [
+     "CWE-328"
+    ],
+    "BenchmarkTest02313": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02314": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02315": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02316": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02317": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02318": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02319": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02320": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02321": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02322": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02323": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02324": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02325": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02326": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02327": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02328": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02329": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02330": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02331": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02332": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02333": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02334": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02335": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02336": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02337": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02338": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02339": [
+     "CWE-1004",
+     "CWE-614"
+    ],
+    "BenchmarkTest02340": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02341": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02342": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02343": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02344": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02345": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02346": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02347": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02348": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02349": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02350": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02351": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02352": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02353": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02354": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02355": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02356": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02357": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02358": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02359": [
+     "CWE-79",
+     "CWE-89"
+    ],
+    "BenchmarkTest02360": [
+     "CWE-79",
+     "CWE-89"
+    ],
+    "BenchmarkTest02361": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02362": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02363": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02364": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02365": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02366": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02367": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02368": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02369": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02370": [
+     "CWE-643",
+     "CWE-79"
+    ],
+    "BenchmarkTest02373": [
+     "CWE-326"
+    ],
+    "BenchmarkTest02374": [
+     "CWE-326"
+    ],
+    "BenchmarkTest02375": [
+     "CWE-326"
+    ],
+    "BenchmarkTest02376": [
+     "CWE-90"
+    ],
+    "BenchmarkTest02377": [
+     "CWE-22"
+    ],
+    "BenchmarkTest02378": [
+     "CWE-22"
+    ],
+    "BenchmarkTest02379": [
+     "CWE-22"
+    ],
+    "BenchmarkTest02380": [
+     "CWE-22"
+    ],
+    "BenchmarkTest02381": [
+     "CWE-22"
+    ],
+    "BenchmarkTest02382": [
+     "CWE-22"
+    ],
+    "BenchmarkTest02383": [
+     "CWE-22"
+    ],
+    "BenchmarkTest02384": [
+     "CWE-90"
+    ],
+    "BenchmarkTest02385": [
+     "CWE-328"
+    ],
+    "BenchmarkTest02386": [
+     "CWE-328"
+    ],
+    "BenchmarkTest02387": [
+     "CWE-328"
+    ],
+    "BenchmarkTest02388": [
+     "CWE-328"
+    ],
+    "BenchmarkTest02411": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02412": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02413": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02414": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02415": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02416": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02417": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02418": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02419": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02420": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02421": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02422": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02423": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02424": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02425": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02426": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02427": [
+     "CWE-1004",
+     "CWE-614"
+    ],
+    "BenchmarkTest02428": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02429": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02430": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02431": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02432": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02433": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02434": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02435": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02436": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02437": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02438": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02439": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02440": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02441": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02442": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02443": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02444": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02445": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02454": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02455": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02456": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02458": [
+     "CWE-326"
+    ],
+    "BenchmarkTest02462": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest02463": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest02464": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest02465": [
+     "CWE-22"
+    ],
+    "BenchmarkTest02466": [
+     "CWE-22"
+    ],
+    "BenchmarkTest02467": [
+     "CWE-22"
+    ],
+    "BenchmarkTest02468": [
+     "CWE-22"
+    ],
+    "BenchmarkTest02469": [
+     "CWE-22"
+    ],
+    "BenchmarkTest02470": [
+     "CWE-22"
+    ],
+    "BenchmarkTest02472": [
+     "CWE-79",
+     "CWE-90"
+    ],
+    "BenchmarkTest02473": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02474": [
+     "CWE-328"
+    ],
+    "BenchmarkTest02475": [
+     "CWE-328"
+    ],
+    "BenchmarkTest02476": [
+     "CWE-328"
+    ],
+    "BenchmarkTest02480": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02481": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02482": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02483": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02484": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02485": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02486": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02487": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02488": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02489": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02490": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02491": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02492": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02493": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02494": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02495": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02496": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02497": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02498": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02499": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02500": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02501": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02502": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02503": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02504": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02505": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02506": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02507": [
+     "CWE-1004",
+     "CWE-614"
+    ],
+    "BenchmarkTest02508": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02509": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02510": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02511": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02512": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02513": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02514": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02515": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02516": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02517": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02518": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02519": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02520": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02521": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02522": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02523": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02524": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest02525": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest02526": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest02527": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02528": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02529": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02530": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02531": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02532": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02533": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02534": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02535": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02536": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02537": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02538": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02539": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02540": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02541": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02542": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02543": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02544": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02545": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02546": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02548": [
+     "CWE-326"
+    ],
+    "BenchmarkTest02549": [
+     "CWE-326"
+    ],
+    "BenchmarkTest02550": [
+     "CWE-326"
+    ],
+    "BenchmarkTest02552": [
+     "CWE-326"
+    ],
+    "BenchmarkTest02553": [
+     "CWE-79",
+     "CWE-90"
+    ],
+    "BenchmarkTest02554": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest02555": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest02556": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest02557": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest02558": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest02559": [
+     "CWE-22",
+     "CWE-79"
+    ],
+    "BenchmarkTest02560": [
+     "CWE-22"
+    ],
+    "BenchmarkTest02561": [
+     "CWE-22"
+    ],
+    "BenchmarkTest02562": [
+     "CWE-22"
+    ],
+    "BenchmarkTest02563": [
+     "CWE-22"
+    ],
+    "BenchmarkTest02564": [
+     "CWE-22"
+    ],
+    "BenchmarkTest02565": [
+     "CWE-22"
+    ],
+    "BenchmarkTest02566": [
+     "CWE-22"
+    ],
+    "BenchmarkTest02567": [
+     "CWE-22"
+    ],
+    "BenchmarkTest02568": [
+     "CWE-22"
+    ],
+    "BenchmarkTest02569": [
+     "CWE-22"
+    ],
+    "BenchmarkTest02571": [
+     "CWE-79",
+     "CWE-90"
+    ],
+    "BenchmarkTest02572": [
+     "CWE-79",
+     "CWE-90"
+    ],
+    "BenchmarkTest02573": [
+     "CWE-328"
+    ],
+    "BenchmarkTest02574": [
+     "CWE-328"
+    ],
+    "BenchmarkTest02575": [
+     "CWE-328"
+    ],
+    "BenchmarkTest02578": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02579": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02580": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02581": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02582": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02583": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02584": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02585": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02586": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02587": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02588": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02589": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02590": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02591": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02592": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02593": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02594": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02595": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02596": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02597": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02598": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02599": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02600": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02601": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02602": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02603": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02604": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02605": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02606": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02607": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02608": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02609": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02610": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02611": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02612": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02613": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02614": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02615": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02616": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02617": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02618": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02619": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02620": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02621": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02622": [
+     "CWE-79"
+    ],
+    "BenchmarkTest02623": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest02624": [
+     "CWE-501",
+     "CWE-79"
+    ],
+    "BenchmarkTest02625": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02626": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02627": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02628": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02629": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02630": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02631": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02632": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02633": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02634": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02635": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02636": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02637": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02638": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02639": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02640": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02641": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02642": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02643": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02644": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02645": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02646": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02647": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02648": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02649": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02650": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02651": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02652": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02653": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02654": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02655": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02656": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02657": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02658": [
+     "CWE-326"
+    ],
+    "BenchmarkTest02660": [
+     "CWE-326"
+    ],
+    "BenchmarkTest02661": [
+     "CWE-326"
+    ],
+    "BenchmarkTest02663": [
+     "CWE-326"
+    ],
+    "BenchmarkTest02664": [
+     "CWE-22"
+    ],
+    "BenchmarkTest02665": [
+     "CWE-22"
+    ],
+    "BenchmarkTest02666": [
+     "CWE-22"
+    ],
+    "BenchmarkTest02667": [
+     "CWE-22"
+    ],
+    "BenchmarkTest02668": [
+     "CWE-22"
+    ],
+    "BenchmarkTest02669": [
+     "CWE-22"
+    ],
+    "BenchmarkTest02670": [
+     "CWE-328"
+    ],
+    "BenchmarkTest02671": [
+     "CWE-328"
+    ],
+    "BenchmarkTest02674": [
+     "CWE-328"
+    ],
+    "BenchmarkTest02675": [
+     "CWE-328"
+    ],
+    "BenchmarkTest02697": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02698": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02699": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02700": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02701": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02702": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02703": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02704": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02705": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02706": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02707": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02708": [
+     "CWE-1004",
+     "CWE-330"
+    ],
+    "BenchmarkTest02709": [
+     "CWE-1004",
+     "CWE-614"
+    ],
+    "BenchmarkTest02710": [
+     "CWE-1004",
+     "CWE-614"
+    ],
+    "BenchmarkTest02711": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02713": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02714": [
+     "CWE-78"
+    ],
+    "BenchmarkTest02715": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02716": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02717": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02718": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02719": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02720": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02721": [
+     "CWE-1004"
+    ],
+    "BenchmarkTest02738": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02739": [
+     "CWE-89"
+    ],
+    "BenchmarkTest02740": [
+     "CWE-89"
+    ]
+   },
+   "status": "ok",
+   "unattributed_findings": 0
+  },
+  "trivy": {
+   "predictions": {},
+   "status": "not-applicable",
+   "unattributed_findings": 0
+  }
+ }
+}

@@ -56,7 +56,8 @@ _EXT_LANG = {
 _SKIP_DIRS = {".git", "node_modules", ".venv", "venv", "__pycache__"}
 _LOCKFILES = {
     "package-lock.json", "yarn.lock", "pnpm-lock.yaml", "poetry.lock", "Pipfile.lock",
-    "requirements.txt", "go.mod", "go.sum", "Cargo.lock", "Gemfile.lock", "composer.lock",
+    "requirements.txt", "pom.xml", "go.mod", "go.sum", "Cargo.lock", "Gemfile.lock",
+    "composer.lock",
 }  # fmt: skip
 _IAC_SUFFIXES = {".tf", ".tfvars"}
 

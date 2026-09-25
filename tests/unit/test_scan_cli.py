@@ -34,3 +34,8 @@ def test_detect_context_finds_lockfiles_docker_and_iac(tmp_path: Path) -> None:
     ctx = detect_context(tmp_path)
     assert ctx.has_dockerfile and ctx.has_iac
     assert ctx.lockfiles == ("sub/package-lock.json",)
+
+
+def test_a_maven_project_triggers_the_dependency_scanners(tmp_path: Path) -> None:
+    (tmp_path / "pom.xml").write_text("<project/>")
+    assert "pom.xml" in detect_context(tmp_path).lockfiles
