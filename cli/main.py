@@ -249,3 +249,97 @@ def update_feeds_cmd() -> None:
 
 if __name__ == "__main__":
     app()
+
+
+ci_app = typer.Typer(
+    help="Continuous-integration helpers: compare scans, gate, comment on pull requests."
+)
+app.add_typer(ci_app, name="ci")
+
+
+def _gh_output(path: Path | None, values: dict[str, str]) -> None:
+    if path:
+        with path.open("a", encoding="utf-8") as fh:
+            for k, v in values.items():
+                fh.write(f"{k}={v}\n")
+
+
+@ci_app.command("compare")
+def ci_compare(
+    head: Path = typer.Option(..., help="`bulwark scan --format json` output for the change."),
+    base: Path | None = typer.Option(
+        None, help="The same for the base branch (for new-findings-only)."
+    ),
+    fail_on: str = typer.Option("none", help="none, low, medium, high or critical."),
+    label: str = typer.Option("repository", help="Name shown in reports."),
+    sarif_out: Path | None = typer.Option(None, help="Write the head scan as SARIF 2.1.0."),
+    comment_out: Path | None = typer.Option(
+        None, help="Write the pull-request comment (markdown)."
+    ),
+    summary_out: Path | None = typer.Option(
+        None, help="Append a job summary (e.g. $GITHUB_STEP_SUMMARY)."
+    ),
+    run_url: str = typer.Option("", help="Link to the workflow run, shown in the comment."),
+    github_output: Path | None = typer.Option(None, help="Append outputs (e.g. $GITHUB_OUTPUT)."),
+) -> None:
+    """Exit 0 if the change passes the threshold, 1 if it does not, 2 on unusable input."""
+    from core.ci import breaches, compare, load_scan, markdown_comment, report_data
+    from core.export import render
+
+    try:
+        head_scan = load_scan(head)
+        base_scan = load_scan(base) if base and base.exists() else None
+        cmp = compare(head_scan, base_scan)
+        bad = breaches(cmp.gate_set(), fail_on)
+    except (ValueError, OSError) as exc:
+        typer.echo(f"error: {exc}", err=True)
+        raise typer.Exit(2) from exc
+    failed = bool(bad)
+    comment = markdown_comment(cmp, fail_on, failed, run_url)
+    if sarif_out:
+        sarif_out.write_bytes(render("sarif", report_data(label, cmp)))
+    if comment_out:
+        comment_out.write_text(comment, encoding="utf-8")
+    if summary_out:
+        with summary_out.open("a", encoding="utf-8") as fh:
+            fh.write(comment + "\n")
+    shown = len(cmp.gate_set())
+    _gh_output(
+        github_output,
+        {
+            "new-findings": str(shown),
+            "total-findings": str(len(cmp.head.findings)),
+            "failed": str(failed).lower(),
+            "baseline": str(cmp.baseline_available).lower(),
+        },
+    )
+    scope = "new" if cmp.baseline_available else "total"
+    typer.echo(
+        f"{shown} {scope} finding(s); {len(bad)} at or above '{fail_on}'"
+        + ("; failing the check" if failed else "")
+    )
+    raise typer.Exit(1 if failed else 0)
+
+
+@ci_app.command("comment")
+def ci_comment(
+    body: Path = typer.Option(..., help="Markdown file from `bulwark ci compare --comment-out`."),
+    repo: str = typer.Option(..., help="owner/name"),
+    pr: int = typer.Option(..., help="Pull request number."),
+    api_url: str = typer.Option("https://api.github.com", help="GitHub API base URL (Enterprise)."),
+    strict: bool = typer.Option(False, help="Fail if the comment cannot be posted."),
+) -> None:
+    """Create or update the one Bulwark comment (token: GITHUB_TOKEN; forks cannot comment)."""
+    import os
+
+    from core.ci.github import CommentError, upsert_comment
+
+    try:
+        action = upsert_comment(
+            repo, pr, body.read_text("utf-8"), os.environ.get("GITHUB_TOKEN", ""), api_url
+        )
+        typer.echo(f"comment {action}")
+    except (CommentError, OSError) as exc:
+        typer.echo(f"warning: comment not posted: {exc}", err=True)
+        if strict:
+            raise typer.Exit(1) from exc

@@ -1,0 +1,137 @@
+name: Bulwark security scan
+description: >
+  Runs Bulwark (Bandit, Semgrep, Gitleaks, Trivy, OSV-Scanner) on your repository, uploads SARIF to GitHub
+  Code Scanning, comments the findings a pull request introduces, and can fail the check by severity.
+author: Bulwark
+branding:
+  icon: shield
+  color: blue
+
+inputs:
+  path:
+    description: Directory to scan, relative to the workspace.
+    default: "."
+  tools:
+    description: Comma-separated scanners.
+    default: "bandit,semgrep,gitleaks,trivy,osv-scanner"
+  fail-on:
+    description: >
+      Fail the check when a finding at or above this severity exists (none, low, medium, high, critical).
+      On pull requests this counts only findings the change introduced.
+    default: "high"
+  upload-sarif:
+    description: "Upload results to GitHub Code Scanning (needs `security-events: write`)."
+    default: "true"
+  comment:
+    description: "Comment the new findings on pull requests (needs `pull-requests: write`; not possible on forks)."
+    default: "true"
+  compare-base:
+    description: On pull requests, also scan the base commit so only new findings are reported and gated.
+    default: "true"
+  github-token:
+    description: Token used for the pull-request comment.
+    default: ${{ github.token }}
+  python-version:
+    description: Python used to run Bulwark.
+    default: "3.12"
+
+outputs:
+  new-findings:
+    description: Findings the change introduced (or all findings when there is no baseline).
+    value: ${{ steps.compare.outputs.new-findings }}
+  total-findings:
+    description: All findings in the scanned tree.
+    value: ${{ steps.compare.outputs.total-findings }}
+  sarif-file:
+    description: Path of the SARIF report.
+    value: ${{ steps.compare.outputs.sarif-file }}
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install Bulwark
+      shell: bash
+      env:
+        ACTION_PATH: ${{ github.action_path }}
+      run: pip install --quiet "$ACTION_PATH/.."
+
+    - name: Build scanner images
+      shell: bash
+      env:
+        ACTION_PATH: ${{ github.action_path }}
+      run: bash "$ACTION_PATH/build-images.sh"
+
+    - name: Scan
+      id: scan
+      shell: bash
+      env:
+        SCAN_PATH: ${{ inputs.path }}
+        TOOLS: ${{ inputs.tools }}
+        COMPARE_BASE: ${{ inputs.compare-base }}
+        EVENT_NAME: ${{ github.event_name }}
+        BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      run: |
+        set -euo pipefail
+        cd "$GITHUB_WORKSPACE"
+        bulwark scan "$SCAN_PATH" --tools "$TOOLS" --format json --output "$RUNNER_TEMP/head.json"
+        if [ "$EVENT_NAME" = "pull_request" ] && [ "$COMPARE_BASE" = "true" ] && [ -n "$BASE_SHA" ]; then
+          # A failed baseline is not fatal: the comment then says every finding is listed.
+          if git fetch --quiet --depth=1 origin "$BASE_SHA" \
+             && git worktree add --quiet --detach "$RUNNER_TEMP/base" "$BASE_SHA" \
+             && bulwark scan "$RUNNER_TEMP/base/$SCAN_PATH" --tools "$TOOLS" --format json --output "$RUNNER_TEMP/base.json"; then
+            echo "baseline scan done"
+          else
+            echo "::warning::Could not scan the base commit; reporting all findings instead of only new ones."
+            rm -f "$RUNNER_TEMP/base.json"
+          fi
+        fi
+
+    - name: Compare and gate
+      id: compare
+      shell: bash
+      env:
+        FAIL_ON: ${{ inputs.fail-on }}
+        RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      run: |
+        set -uo pipefail
+        args=(ci compare --head "$RUNNER_TEMP/head.json" --fail-on "$FAIL_ON"
+              --label "$GITHUB_REPOSITORY" --run-url "$RUN_URL"
+              --sarif-out "$RUNNER_TEMP/bulwark.sarif" --comment-out "$RUNNER_TEMP/comment.md"
+              --summary-out "$GITHUB_STEP_SUMMARY" --github-output "$GITHUB_OUTPUT")
+        [ -f "$RUNNER_TEMP/base.json" ] && args+=(--base "$RUNNER_TEMP/base.json")
+        bulwark "${args[@]}"
+        rc=$?
+        echo "gate-exit=$rc" >> "$GITHUB_OUTPUT"
+        echo "sarif-file=$RUNNER_TEMP/bulwark.sarif" >> "$GITHUB_OUTPUT"
+        # 1 means "threshold breached": reported after the upload and comment steps. 2 is a real error.
+        [ "$rc" -le 1 ] || exit "$rc"
+
+    - name: Upload SARIF to Code Scanning
+      if: ${{ always() && inputs.upload-sarif == 'true' && steps.compare.outputs.sarif-file != '' }}
+      continue-on-error: true # forks and missing permissions must not hide the gate result
+      uses: github/codeql-action/upload-sarif@1190a975f95ce23525efb6a3fc21ea29567c1b52 # v3.38.2
+      with:
+        sarif_file: ${{ steps.compare.outputs.sarif-file }}
+        category: bulwark
+
+    - name: Comment on the pull request
+      if: ${{ always() && github.event_name == 'pull_request' && inputs.comment == 'true' && steps.compare.outputs.sarif-file != '' }}
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+        API_URL: ${{ github.api_url }}
+      run: |
+        bulwark ci comment --body "$RUNNER_TEMP/comment.md" --repo "$GITHUB_REPOSITORY" \
+          --pr "$PR_NUMBER" --api-url "$API_URL"
+
+    - name: Enforce the threshold
+      if: ${{ steps.compare.outputs.gate-exit == '1' }}
+      shell: bash
+      run: |
+        echo "::error::Bulwark found findings at or above the configured severity threshold."
+        exit 1

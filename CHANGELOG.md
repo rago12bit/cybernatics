@@ -6,6 +6,14 @@ versions will follow [SemVer](https://semver.org) once `v0.1.0` is tagged (plann
 ## [Unreleased]
 
 ### Added
+- **GitHub Action (Week 18), `action/`:** composite action that scans, uploads SARIF to Code Scanning, comments
+  the findings a pull request **introduces** (base and head scans compared by fingerprint; one comment updated in
+  place) and fails at a configurable severity (`fail-on`, counting only new findings on pull requests). New CLI:
+  `bulwark ci compare` (exit 0/1/2, writes SARIF, comment, job summary and outputs) and `bulwark ci comment`.
+  A baseline where a scanner failed is not trusted; the comment then lists everything and says so. Not yet run on
+  GitHub: the step scripts were run locally against a real base/head git repository. See docs/github-action.md.
+
+### Added
 - **VS Code hover and Quick Fix (Week 17):** hovering a finding shows severity, risk score and why, description,
   CWE/OWASP, the fix summary, references and the reporting scanners (plain, untrusted markdown built from escaped
   text). **Quick Fix** offers "apply scanner-suggested fix" when the finding carries a patch, and "open CWE

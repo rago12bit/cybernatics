@@ -162,6 +162,12 @@ bulwark scan ./my-project --distributed
 Gitleaks uses the upstream image. Semgrep's rules are fetched at build time and are for your own
 internal use only — see [ADR-006](docs/adr/0006-semgrep-rules-licensing.md).
 
+## GitHub Action (early)
+
+`action/` scans on every push and pull request, uploads SARIF to Code Scanning, comments only the findings a PR
+introduces and can fail the check by severity. See [docs/github-action.md](docs/github-action.md) for the
+workflow, inputs and what has and has not been tested.
+
 ## VS Code extension (early)
 
 `extensions/vscode` runs the `bulwark` CLI on your workspace folder and shows the findings in the Problems panel
