@@ -39,6 +39,7 @@
       },
       "normalized_severity": "HIGH",
       "reachable": null,
+      "risk_factors": [],
       "risk_score": null
     },
     "taxonomy": {
@@ -99,6 +100,7 @@
       },
       "normalized_severity": "HIGH",
       "reachable": null,
+      "risk_factors": [],
       "risk_score": null
     },
     "taxonomy": {
@@ -159,6 +161,7 @@
       },
       "normalized_severity": "HIGH",
       "reachable": null,
+      "risk_factors": [],
       "risk_score": null
     },
     "taxonomy": {
@@ -219,6 +222,7 @@
       },
       "normalized_severity": "MEDIUM",
       "reachable": null,
+      "risk_factors": [],
       "risk_score": null
     },
     "taxonomy": {

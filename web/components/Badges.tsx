@@ -20,3 +20,14 @@ export function SeverityCounts({ counts }: { counts: Partial<Record<Severity, nu
     </span>
   );
 }
+
+/** Risk 0-100 plus the two exploit signals that matter most. */
+export function RiskSignals({ score, kev, epss }: { score: number | null; kev?: boolean; epss?: number | null }) {
+  return (
+    <span className="signals">
+      {score !== null && <span className="risk" title="Risk score, 0 to 100">{score}</span>}
+      {kev && <span className="tag kev" title="Listed in CISA's Known Exploited Vulnerabilities catalog">KEV</span>}
+      {!kev && typeof epss === "number" && epss >= 0.1 && <span className="tag epss" title="EPSS: chance of exploitation in the next 30 days">EPSS {Math.round(epss * 100)}%</span>}
+    </span>
+  );
+}

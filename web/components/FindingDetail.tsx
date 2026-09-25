@@ -3,7 +3,7 @@ import { agreementLabel, locationLabel, nativeSeverities } from "@/lib/format";
 import { owaspLabel } from "@/lib/owasp";
 import { cveUrl, cweUrl, owaspUrl, safeHttpsUrl } from "@/lib/safe";
 import type { Finding, ScanView } from "@/lib/types";
-import { SeverityBadge } from "./Badges";
+import { RiskSignals, SeverityBadge } from "./Badges";
 
 function Ref({ href, label }: { href: string | null; label: string }) {
   // Untrusted ids without a valid URL render as plain text, never as a link.
@@ -79,6 +79,14 @@ export function FindingDetail({
       {/* All scanner-derived strings below are rendered as React text nodes: never as HTML. */}
       <h3>{f.title}</h3>
       <p className="agree">{agreementLabel(f, scan)} · confidence {Math.round(f.scoring.confidence * 100)}%</p>
+      {f.scoring.risk_score != null && (
+        <div className="why" role="group" aria-label="Why this ranks here">
+          <div className="why-head"><span className="eyebrow plain">Risk</span><RiskSignals score={f.scoring.risk_score} kev={f.scoring.in_cisa_kev} epss={f.scoring.epss_score} /></div>
+          {f.scoring.risk_factors && f.scoring.risk_factors.length > 0 && (
+            <ul>{f.scoring.risk_factors.map((r) => <li key={r}>{r}</li>)}</ul>
+          )}
+        </div>
+      )}
       {f.evidence.agreement_count > 1 && <p className="muted small">Independent scanners agreed, which raises confidence. Their reports were merged into this one finding.</p>}
 
       <dl>

@@ -35,6 +35,7 @@ celery_app.conf.update(
 
 celery_app.conf.beat_schedule = {
     "housekeeping": {"task": "bulwark.maintenance", "schedule": 300.0},  # every 5 minutes
+    "risk-feeds": {"task": "bulwark.update_feeds", "schedule": 86400.0},  # EPSS is published daily
 }
 
 # Wall-clock margin above the tool's own timeout before Celery steps in as a backstop.
@@ -70,6 +71,14 @@ def run_scan_task(self: Any, scan_id: str) -> str:
     return run_scan_job(
         scan_id, get_session_factory(), S3Store(settings), RedisPublisher(settings.redis_url)
     )
+
+
+@celery_app.task(name="bulwark.update_feeds", ignore_result=True)  # type: ignore[untyped-decorator]
+def update_feeds_task() -> dict[str, str]:
+    """Refresh the EPSS and CISA KEV caches; failures are recorded in meta.json, never raised."""
+    from core.risk import update_feeds
+
+    return dict(update_feeds()["errors"])
 
 
 @celery_app.task(name="bulwark.maintenance", ignore_result=True)  # type: ignore[untyped-decorator]

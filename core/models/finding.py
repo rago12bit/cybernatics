@@ -86,6 +86,7 @@ class Scoring:
     in_cisa_kev: bool = False
     reachable: bool | None = None
     risk_score: int | None = None
+    risk_factors: list[str] = field(default_factory=list)  # why the score is what it is
     confidence: float = 0.5
 
 

@@ -141,6 +141,29 @@
         ]
       }
     },
+    "/risk/feeds": {
+      "get": {
+        "summary": "Risk Feeds",
+        "operationId": "risk_feeds_risk_feeds_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedsStatus"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/scans/{scan_id}": {
       "get": {
         "summary": "Get Scan",
@@ -363,6 +386,63 @@
           "archive"
         ],
         "title": "Body_upload_scan_scans_upload_post"
+      },
+      "FeedsStatus": {
+        "properties": {
+          "fetched_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fetched At"
+          },
+          "stale": {
+            "type": "boolean",
+            "title": "Stale",
+            "default": true
+          },
+          "epss": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Epss",
+            "description": "FIRST.org EPSS: score date, rows."
+          },
+          "kev": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kev",
+            "description": "CISA KEV: catalog version, entries."
+          },
+          "errors": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Errors",
+            "description": "Last download error per feed."
+          }
+        },
+        "type": "object",
+        "title": "FeedsStatus",
+        "description": "State of the exploit-likelihood feeds behind risk scores. Empty until the first download."
       },
       "FindingsPage": {
         "properties": {

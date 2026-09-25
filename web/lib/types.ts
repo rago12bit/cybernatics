@@ -65,6 +65,9 @@ export interface Finding {
     normalized_severity: Severity;
     cvss_v3_1: number | null;
     risk_score: number | null;
+    epss_score?: number | null; // chance of exploitation in 30 days (FIRST.org EPSS)
+    in_cisa_kev?: boolean; // known exploited in the wild (CISA KEV)
+    risk_factors?: string[]; // human-readable reasons behind risk_score
     confidence: number;
   };
   evidence: {

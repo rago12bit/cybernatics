@@ -18,11 +18,20 @@ from fastapi.websockets import WebSocketDisconnect
 from sqlalchemy.orm import Session
 
 from api.deps import AppState, EventSubscriber, db, require_auth, state, token_ok
-from api.schemas import FindingsPage, ScanCreated, ScanRequest, ScanSummary, ScanView, ToolStatus
+from api.schemas import (
+    FeedsStatus,
+    FindingsPage,
+    ScanCreated,
+    ScanRequest,
+    ScanSummary,
+    ScanView,
+    ToolStatus,
+)
 from core.config import Settings
 from core.gitfetch import GitUrlError, validate_git_url
 from core.persistence import repo
 from core.persistence.models import Scan
+from core.risk import is_stale, read_meta
 from core.scan import ADAPTERS
 
 log = logging.getLogger(__name__)
@@ -186,6 +195,17 @@ def create_app(app_state: AppState) -> FastAPI:
                 )
             )  # fmt: skip
         return out
+
+    @app.get("/risk/feeds", response_model=FeedsStatus, dependencies=[Depends(require_auth)])
+    def risk_feeds() -> FeedsStatus:
+        meta = read_meta(app_state.settings.workdir / "feeds")
+        return FeedsStatus(
+            fetched_at=meta.get("fetched_at"),
+            stale=is_stale(meta),
+            epss=meta.get("epss"),
+            kev=meta.get("kev"),
+            errors=meta.get("errors", {}),
+        )
 
     @app.get("/scans/{scan_id}", response_model=ScanView, dependencies=[Depends(require_auth)])
     def get_scan(scan_id: str, s: Session = Depends(db)) -> ScanView:

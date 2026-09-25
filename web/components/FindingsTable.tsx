@@ -5,8 +5,9 @@ import { getFindings } from "@/lib/api";
 import { collectAll, exportFilename, exportPayload } from "@/lib/export";
 import { defaultQuery, isDefaultQuery, locationLabel, pageCount, queryToSearch, rangeLabel, searchToQuery } from "@/lib/format";
 import { CATEGORIES, SEVERITIES, TOOLS, type Finding, type FindingsPage, type FindingsQuery, type ScanView, type Severity } from "@/lib/types";
-import { SeverityBadge } from "./Badges";
+import { RiskSignals, SeverityBadge } from "./Badges";
 import { FindingDetail } from "./FindingDetail";
+import { FixFirst } from "./FixFirst";
 
 type Fetcher = (id: string, q: FindingsQuery, limit?: number) => Promise<FindingsPage>;
 
@@ -137,6 +138,7 @@ export function FindingsTable({ scan, version, fetchFindings = getFindings }: { 
   return (
     <section aria-labelledby="findings-h" className="section findings">
       <div className="list">
+        <FixFirst scanId={scan.id} version={version} fetchFindings={fetchFindings} onOpen={(f, el) => select(f, el)} />
         <div className="app-head">
           <span className="eyebrow">Findings</span>
           <div className="head-row">
@@ -201,7 +203,7 @@ export function FindingsTable({ scan, version, fetchFindings = getFindings }: { 
               <tbody ref={tbody} onKeyDown={onRowKeys}>
                 {page.items.map((f) => (
                   <tr key={f.id} className={selected?.id === f.id ? "selected" : ""}>
-                    <td><SeverityBadge severity={f.scoring.normalized_severity} /></td>
+                    <td><span className="sevcell"><SeverityBadge severity={f.scoring.normalized_severity} /><RiskSignals score={f.scoring.risk_score} kev={f.scoring.in_cisa_kev} epss={f.scoring.epss_score} /></span></td>
                     <td>
                       <button type="button" className="row-title" data-fid={f.id} onClick={(e) => select(f, e.currentTarget)} aria-pressed={selected?.id === f.id}><span className="clamp">{f.title}</span></button>
                     </td>

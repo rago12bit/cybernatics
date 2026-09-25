@@ -20,6 +20,9 @@ Pre-alpha: everything below is unreleased.
   finding detail panel with keyboard navigation, `/about` page, accessibility tests.
 - **Taxonomy:** CWE normalization and OWASP Top 10:2021 mapping from OWASP's own table, with documented
   defaults for dependency and misconfiguration findings.
+- **Risk ranking:** EPSS (FIRST.org) and CISA KEV feeds, validated and cached, refreshed daily; a 0-100
+  `risk_score` with plain-language `risk_factors`; a **Fix these first** top-10 panel; `bulwark update-feeds`;
+  `GET /risk/feeds`. See [docs/risk-score.md](docs/risk-score.md).
 - **Docs:** README with architecture diagram, ADRs 0001-0008, API reference, severity matrix,
   `SECURITY.md`, `CONTRIBUTING.md`.
 
@@ -29,7 +32,8 @@ Pre-alpha: everything below is unreleased.
 - Bandit output could echo secrets into titles and snippets; it is now scrubbed.
 - Scans no longer stay orphaned when the job queue is unreachable (the API returns 503).
 - Findings no longer disappear silently when a scanner emits colliding ids.
-- API pipeline now applies the CWE/OWASP mapping (the CLI path already did).
+- API pipeline now applies the CWE/OWASP mapping (the CLI path already did); both paths now share one
+  `finalize()` step so they cannot drift again.
 
 ### Known issues
 - Single shared bearer token; no users or rate limiting.

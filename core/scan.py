@@ -17,9 +17,8 @@ from core.adapters.semgrep import SemgrepAdapter
 from core.adapters.trivy import TrivyAdapter
 from core.correlation import CorrelationStats, correlate
 from core.models import Finding, finding_from_dict
-from core.redact import redact_near_secrets
+from core.postprocess import finalize
 from core.runner import RunnerError, run_tool
-from core.taxonomy import enrich_all
 
 ADAPTERS: dict[str, ToolAdapter] = {
     a.spec.name: a
@@ -168,5 +167,5 @@ def scan(target: Path, tools: list[str], executor: Executor = threaded_executor)
         result.findings.extend(o.findings)
     # Correlate BEFORE redacting: redaction placeholders look identical and would over-merge.
     correlated, result.stats = correlate(result.findings)
-    result.findings = redact_near_secrets(enrich_all(correlated))
+    result.findings = finalize(correlated)
     return result

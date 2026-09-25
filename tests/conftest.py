@@ -17,6 +17,7 @@ def _isolated_workdir(
 ) -> None:
     """Keep every test's scratch/upload files out of the real temp dir."""
     monkeypatch.setenv("BULWARK_WORKDIR", str(tmp_path_factory.mktemp("work")))
+    monkeypatch.setenv("BULWARK_OFFLINE", "1")  # tests never touch the network for EPSS/KEV
 
 
 @pytest.fixture

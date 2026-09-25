@@ -3,8 +3,8 @@
 **One scan, one deduplicated list of findings.** Bulwark runs five open-source security scanners against
 a repository, merges what they agree on, and shows you a single list you can actually work through.
 
-> Status: pre-alpha. Weeks 1-8 of the plan are done (scanners, correlation, API, UI, CWE/OWASP mapping, docs).
-> Risk ranking with EPSS and CISA KEV is next (Week 9). Not ready for untrusted multi-user hosting yet:
+> Status: pre-alpha. Weeks 1-9 of the plan are done (scanners, correlation, API, UI, CWE/OWASP mapping, docs, risk
+> ranking with EPSS and CISA KEV). Not ready for untrusted multi-user hosting yet:
 > auth is a single shared token (see [Limits](#limits)).
 
 ## The problem
@@ -20,7 +20,9 @@ up as a Bandit finding, a Semgrep finding and a CWE entry; one vulnerable npm pa
 3. **Correlate**: merge duplicates across tools (same dependency + shared advisory id; same file, weakness
    family and code within a few lines), keep every tool's evidence, take the highest severity.
 4. **Map** each finding to its CWE and [OWASP Top 10:2021](docs/taxonomy.md) category.
-5. **Show** it in a web UI, API, CLI or JSON.
+5. **Rank** by [risk](docs/risk-score.md): severity combined with EPSS and CISA's known-exploited list, so the UI can
+   show the ten things to fix first.
+6. **Show** it in a web UI, API, CLI or JSON.
 
 ## Architecture
 

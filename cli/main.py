@@ -57,5 +57,18 @@ def scan_cmd(
     )
 
 
+@app.command("update-feeds")
+def update_feeds_cmd() -> None:
+    """Download the EPSS and CISA KEV feeds behind risk scores (the worker also does this daily)."""
+    from core.risk import update_feeds
+
+    meta = update_feeds()
+    for name, detail in (("epss", meta.get("epss")), ("kev", meta.get("kev"))):
+        err = meta["errors"].get(name)
+        typer.echo(f"{name}: {'FAILED ' + err if err else detail}")
+    if meta["errors"]:
+        raise typer.Exit(1)
+
+
 if __name__ == "__main__":
     app()

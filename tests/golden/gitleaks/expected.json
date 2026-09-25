@@ -41,6 +41,7 @@
       },
       "normalized_severity": "HIGH",
       "reachable": null,
+      "risk_factors": [],
       "risk_score": null
     },
     "taxonomy": {

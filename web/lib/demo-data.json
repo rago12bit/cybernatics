@@ -97,7 +97,11 @@
         "epss_score": null,
         "in_cisa_kev": false,
         "reachable": null,
-        "risk_score": null,
+        "risk_score": 86,
+        "risk_factors": [
+          "Critical severity",
+          "Flagged by 1 scanner, confidence 80%"
+        ],
         "confidence": 0.8
       },
       "evidence": {
@@ -164,10 +168,14 @@
         },
         "normalized_severity": "CRITICAL",
         "cvss_v3_1": 9.1,
-        "epss_score": null,
+        "epss_score": 0.05006,
         "in_cisa_kev": false,
         "reachable": null,
-        "risk_score": null,
+        "risk_score": 60,
+        "risk_factors": [
+          "CVSS 9.1",
+          "EPSS 5.0%: chance of exploitation in the next 30 days"
+        ],
         "confidence": 0.99
       },
       "evidence": {
@@ -234,7 +242,11 @@
         "epss_score": null,
         "in_cisa_kev": false,
         "reachable": null,
-        "risk_score": null,
+        "risk_score": 68,
+        "risk_factors": [
+          "High severity",
+          "Flagged by 1 scanner, confidence 80%"
+        ],
         "confidence": 0.8
       },
       "evidence": {
@@ -292,7 +304,11 @@
         "epss_score": null,
         "in_cisa_kev": false,
         "reachable": null,
-        "risk_score": null,
+        "risk_score": 68,
+        "risk_factors": [
+          "High severity",
+          "Flagged by 1 scanner, confidence 80%"
+        ],
         "confidence": 0.8
       },
       "evidence": {
@@ -352,7 +368,11 @@
         "epss_score": null,
         "in_cisa_kev": false,
         "reachable": null,
-        "risk_score": null,
+        "risk_score": 68,
+        "risk_factors": [
+          "High severity",
+          "Flagged by 1 scanner, confidence 80%"
+        ],
         "confidence": 0.8
       },
       "evidence": {
@@ -412,7 +432,11 @@
         "epss_score": null,
         "in_cisa_kev": false,
         "reachable": null,
-        "risk_score": null,
+        "risk_score": 68,
+        "risk_factors": [
+          "High severity",
+          "Flagged by 1 scanner, confidence 80%"
+        ],
         "confidence": 0.8
       },
       "evidence": {
@@ -472,7 +496,11 @@
         "epss_score": null,
         "in_cisa_kev": false,
         "reachable": null,
-        "risk_score": null,
+        "risk_score": 68,
+        "risk_factors": [
+          "High severity",
+          "Flagged by 1 scanner, confidence 80%"
+        ],
         "confidence": 0.8
       },
       "evidence": {
@@ -532,7 +560,11 @@
         "epss_score": null,
         "in_cisa_kev": false,
         "reachable": null,
-        "risk_score": null,
+        "risk_score": 68,
+        "risk_factors": [
+          "High severity",
+          "Flagged by 1 scanner, confidence 80%"
+        ],
         "confidence": 0.8
       },
       "evidence": {
@@ -592,7 +624,11 @@
         "epss_score": null,
         "in_cisa_kev": false,
         "reachable": null,
-        "risk_score": null,
+        "risk_score": 68,
+        "risk_factors": [
+          "High severity",
+          "Flagged by 1 scanner, confidence 80%"
+        ],
         "confidence": 0.8
       },
       "evidence": {
@@ -652,7 +688,11 @@
         "epss_score": null,
         "in_cisa_kev": false,
         "reachable": null,
-        "risk_score": null,
+        "risk_score": 68,
+        "risk_factors": [
+          "High severity",
+          "Flagged by 1 scanner, confidence 80%"
+        ],
         "confidence": 0.8
       },
       "evidence": {
@@ -712,7 +752,11 @@
         "epss_score": null,
         "in_cisa_kev": false,
         "reachable": null,
-        "risk_score": null,
+        "risk_score": 68,
+        "risk_factors": [
+          "High severity",
+          "Flagged by 1 scanner, confidence 80%"
+        ],
         "confidence": 0.8
       },
       "evidence": {
@@ -777,10 +821,14 @@
         },
         "normalized_severity": "HIGH",
         "cvss_v3_1": 5.6,
-        "epss_score": null,
+        "epss_score": 0.01553,
         "in_cisa_kev": false,
         "reachable": null,
-        "risk_score": null,
+        "risk_score": 33,
+        "risk_factors": [
+          "CVSS 5.6",
+          "EPSS 1.6%: chance of exploitation in the next 30 days"
+        ],
         "confidence": 0.99
       },
       "evidence": {
@@ -855,10 +903,14 @@
         },
         "normalized_severity": "HIGH",
         "cvss_v3_1": 7.4,
-        "epss_score": null,
+        "epss_score": 0.05213,
         "in_cisa_kev": false,
         "reachable": null,
-        "risk_score": null,
+        "risk_score": 49,
+        "risk_factors": [
+          "CVSS 7.4",
+          "EPSS 5.2%: chance of exploitation in the next 30 days"
+        ],
         "confidence": 0.99
       },
       "evidence": {
@@ -936,10 +988,14 @@
         },
         "normalized_severity": "HIGH",
         "cvss_v3_1": 9.8,
-        "epss_score": null,
+        "epss_score": 0.21333,
         "in_cisa_kev": false,
         "reachable": null,
-        "risk_score": null,
+        "risk_score": 81,
+        "risk_factors": [
+          "CVSS 9.8",
+          "EPSS 21.3%: chance of exploitation in the next 30 days"
+        ],
         "confidence": 0.99
       },
       "evidence": {
@@ -1016,10 +1072,14 @@
         },
         "normalized_severity": "HIGH",
         "cvss_v3_1": 8.7,
-        "epss_score": null,
+        "epss_score": 0.03855,
         "in_cisa_kev": false,
         "reachable": null,
-        "risk_score": null,
+        "risk_score": 56,
+        "risk_factors": [
+          "CVSS 8.7",
+          "EPSS 3.9%: chance of exploitation in the next 30 days"
+        ],
         "confidence": 0.99
       },
       "evidence": {
@@ -1094,10 +1154,14 @@
         },
         "normalized_severity": "HIGH",
         "cvss_v3_1": 7.5,
-        "epss_score": null,
+        "epss_score": 0.07443,
         "in_cisa_kev": false,
         "reachable": null,
-        "risk_score": null,
+        "risk_score": 52,
+        "risk_factors": [
+          "CVSS 7.5",
+          "EPSS 7.4%: chance of exploitation in the next 30 days"
+        ],
         "confidence": 0.99
       },
       "evidence": {
@@ -1172,10 +1236,14 @@
         },
         "normalized_severity": "HIGH",
         "cvss_v3_1": 8.7,
-        "epss_score": null,
+        "epss_score": 0.01884,
         "in_cisa_kev": false,
         "reachable": null,
-        "risk_score": null,
+        "risk_score": 52,
+        "risk_factors": [
+          "CVSS 8.7",
+          "EPSS 1.9%: chance of exploitation in the next 30 days"
+        ],
         "confidence": 0.99
       },
       "evidence": {
@@ -1250,10 +1318,14 @@
         },
         "normalized_severity": "HIGH",
         "cvss_v3_1": 8.7,
-        "epss_score": null,
+        "epss_score": 0.01261,
         "in_cisa_kev": false,
         "reachable": null,
-        "risk_score": null,
+        "risk_score": 50,
+        "risk_factors": [
+          "CVSS 8.7",
+          "EPSS 1.3%: chance of exploitation in the next 30 days"
+        ],
         "confidence": 0.99
       },
       "evidence": {
@@ -1325,7 +1397,11 @@
         "epss_score": null,
         "in_cisa_kev": false,
         "reachable": null,
-        "risk_score": null,
+        "risk_score": 57,
+        "risk_factors": [
+          "High severity",
+          "Flagged by 2 scanners, confidence 51%"
+        ],
         "confidence": 0.51
       },
       "evidence": {
@@ -1392,7 +1468,11 @@
         "epss_score": null,
         "in_cisa_kev": false,
         "reachable": null,
-        "risk_score": null,
+        "risk_score": 74,
+        "risk_factors": [
+          "High severity",
+          "Flagged by 2 scanners, confidence 97%"
+        ],
         "confidence": 0.972
       },
       "evidence": {
@@ -1460,7 +1540,11 @@
         "epss_score": null,
         "in_cisa_kev": false,
         "reachable": null,
-        "risk_score": null,
+        "risk_score": 74,
+        "risk_factors": [
+          "High severity",
+          "Flagged by 2 scanners, confidence 96%"
+        ],
         "confidence": 0.96
       },
       "evidence": {
@@ -1529,7 +1613,11 @@
         "epss_score": null,
         "in_cisa_kev": false,
         "reachable": null,
-        "risk_score": null,
+        "risk_score": 70,
+        "risk_factors": [
+          "High severity",
+          "Flagged by 2 scanners, confidence 88%"
+        ],
         "confidence": 0.88
       },
       "evidence": {
@@ -1594,7 +1682,11 @@
         "epss_score": null,
         "in_cisa_kev": false,
         "reachable": null,
-        "risk_score": null,
+        "risk_score": 45,
+        "risk_factors": [
+          "Medium severity",
+          "Flagged by 1 scanner, confidence 80%"
+        ],
         "confidence": 0.8
       },
       "evidence": {
@@ -1660,10 +1752,14 @@
         },
         "normalized_severity": "MEDIUM",
         "cvss_v3_1": 6.5,
-        "epss_score": null,
+        "epss_score": 0.02384,
         "in_cisa_kev": false,
         "reachable": null,
-        "risk_score": null,
+        "risk_score": 40,
+        "risk_factors": [
+          "CVSS 6.5",
+          "EPSS 2.4%: chance of exploitation in the next 30 days"
+        ],
         "confidence": 0.99
       },
       "evidence": {
@@ -1739,10 +1835,14 @@
         },
         "normalized_severity": "MEDIUM",
         "cvss_v3_1": 6.5,
-        "epss_score": null,
+        "epss_score": 0.03162,
         "in_cisa_kev": false,
         "reachable": null,
-        "risk_score": null,
+        "risk_score": 41,
+        "risk_factors": [
+          "CVSS 6.5",
+          "EPSS 3.2%: chance of exploitation in the next 30 days"
+        ],
         "confidence": 0.99
       },
       "evidence": {
@@ -1817,10 +1917,14 @@
         },
         "normalized_severity": "MEDIUM",
         "cvss_v3_1": 5.3,
-        "epss_score": null,
+        "epss_score": 0.07336,
         "in_cisa_kev": false,
         "reachable": null,
-        "risk_score": null,
+        "risk_score": 37,
+        "risk_factors": [
+          "CVSS 5.3",
+          "EPSS 7.3%: chance of exploitation in the next 30 days"
+        ],
         "confidence": 0.99
       },
       "evidence": {
@@ -1897,10 +2001,14 @@
         },
         "normalized_severity": "MEDIUM",
         "cvss_v3_1": 6.5,
-        "epss_score": null,
+        "epss_score": 0.0185,
         "in_cisa_kev": false,
         "reachable": null,
-        "risk_score": null,
+        "risk_score": 39,
+        "risk_factors": [
+          "CVSS 6.5",
+          "EPSS 1.8%: chance of exploitation in the next 30 days"
+        ],
         "confidence": 0.99
       },
       "evidence": {
@@ -1977,10 +2085,14 @@
         },
         "normalized_severity": "MEDIUM",
         "cvss_v3_1": 6.1,
-        "epss_score": null,
+        "epss_score": 0.02974,
         "in_cisa_kev": false,
         "reachable": null,
-        "risk_score": null,
+        "risk_score": 38,
+        "risk_factors": [
+          "CVSS 6.1",
+          "EPSS 3.0%: chance of exploitation in the next 30 days"
+        ],
         "confidence": 0.99
       },
       "evidence": {
@@ -2055,10 +2167,14 @@
         },
         "normalized_severity": "MEDIUM",
         "cvss_v3_1": 5.6,
-        "epss_score": null,
+        "epss_score": 0.0034,
         "in_cisa_kev": false,
         "reachable": null,
-        "risk_score": null,
+        "risk_score": 30,
+        "risk_factors": [
+          "CVSS 5.6",
+          "EPSS 0.3%: chance of exploitation in the next 30 days"
+        ],
         "confidence": 0.99
       },
       "evidence": {
@@ -2133,10 +2249,14 @@
         },
         "normalized_severity": "MEDIUM",
         "cvss_v3_1": 5.3,
-        "epss_score": null,
+        "epss_score": 0.0098,
         "in_cisa_kev": false,
         "reachable": null,
-        "risk_score": null,
+        "risk_score": 30,
+        "risk_factors": [
+          "CVSS 5.3",
+          "EPSS 1.0%: chance of exploitation in the next 30 days"
+        ],
         "confidence": 0.99
       },
       "evidence": {
@@ -2211,10 +2331,14 @@
         },
         "normalized_severity": "MEDIUM",
         "cvss_v3_1": 5.5,
-        "epss_score": null,
+        "epss_score": 0.00185,
         "in_cisa_kev": false,
         "reachable": null,
-        "risk_score": null,
+        "risk_score": 29,
+        "risk_factors": [
+          "CVSS 5.5",
+          "EPSS 0.2%: chance of exploitation in the next 30 days"
+        ],
         "confidence": 0.99
       },
       "evidence": {
@@ -2281,7 +2405,11 @@
         "epss_score": null,
         "in_cisa_kev": false,
         "reachable": null,
-        "risk_score": null,
+        "risk_score": 22,
+        "risk_factors": [
+          "Low severity",
+          "Flagged by 1 scanner, confidence 80%"
+        ],
         "confidence": 0.8
       },
       "evidence": {
@@ -2341,7 +2469,11 @@
         "epss_score": null,
         "in_cisa_kev": false,
         "reachable": null,
-        "risk_score": null,
+        "risk_score": 22,
+        "risk_factors": [
+          "Low severity",
+          "Flagged by 1 scanner, confidence 80%"
+        ],
         "confidence": 0.8
       },
       "evidence": {
@@ -2401,7 +2533,11 @@
         "epss_score": null,
         "in_cisa_kev": false,
         "reachable": null,
-        "risk_score": null,
+        "risk_score": 22,
+        "risk_factors": [
+          "Low severity",
+          "Flagged by 1 scanner, confidence 80%"
+        ],
         "confidence": 0.8
       },
       "evidence": {
@@ -2461,7 +2597,11 @@
         "epss_score": null,
         "in_cisa_kev": false,
         "reachable": null,
-        "risk_score": null,
+        "risk_score": 22,
+        "risk_factors": [
+          "Low severity",
+          "Flagged by 1 scanner, confidence 80%"
+        ],
         "confidence": 0.8
       },
       "evidence": {
@@ -2527,10 +2667,14 @@
         },
         "normalized_severity": "LOW",
         "cvss_v3_1": 4.3,
-        "epss_score": null,
+        "epss_score": 0.00423,
         "in_cisa_kev": false,
         "reachable": null,
-        "risk_score": null,
+        "risk_score": 23,
+        "risk_factors": [
+          "CVSS 4.3",
+          "EPSS 0.4%: chance of exploitation in the next 30 days"
+        ],
         "confidence": 0.99
       },
       "evidence": {
@@ -2601,7 +2745,11 @@
         "epss_score": null,
         "in_cisa_kev": false,
         "reachable": null,
-        "risk_score": null,
+        "risk_score": 24,
+        "risk_factors": [
+          "Low severity",
+          "Flagged by 1 scanner, confidence 90%"
+        ],
         "confidence": 0.9
       },
       "evidence": {
@@ -2664,7 +2812,11 @@
         "epss_score": null,
         "in_cisa_kev": false,
         "reachable": null,
-        "risk_score": null,
+        "risk_score": 20,
+        "risk_factors": [
+          "Low severity",
+          "Flagged by 1 scanner, confidence 60%"
+        ],
         "confidence": 0.6
       },
       "evidence": {
@@ -2695,5 +2847,9 @@
       "fingerprint": "sha256:819c9b8961370b3ef057a044cea123a58b6c3b27468127bd57e2873c32bbfb04",
       "package": null
     }
-  ]
+  ],
+  "risk_feeds": {
+    "epss_date": "2026-09-24",
+    "kev_version": "2026.09.24"
+  }
 }

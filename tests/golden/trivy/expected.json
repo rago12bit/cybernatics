@@ -45,6 +45,7 @@
       },
       "normalized_severity": "CRITICAL",
       "reachable": null,
+      "risk_factors": [],
       "risk_score": null
     },
     "taxonomy": {
@@ -113,6 +114,7 @@
       },
       "normalized_severity": "HIGH",
       "reachable": null,
+      "risk_factors": [],
       "risk_score": null
     },
     "taxonomy": {
@@ -181,6 +183,7 @@
       },
       "normalized_severity": "HIGH",
       "reachable": null,
+      "risk_factors": [],
       "risk_score": null
     },
     "taxonomy": {
@@ -250,6 +253,7 @@
       },
       "normalized_severity": "HIGH",
       "reachable": null,
+      "risk_factors": [],
       "risk_score": null
     },
     "taxonomy": {
@@ -318,6 +322,7 @@
       },
       "normalized_severity": "HIGH",
       "reachable": null,
+      "risk_factors": [],
       "risk_score": null
     },
     "taxonomy": {
@@ -386,6 +391,7 @@
       },
       "normalized_severity": "MEDIUM",
       "reachable": null,
+      "risk_factors": [],
       "risk_score": null
     },
     "taxonomy": {
@@ -455,6 +461,7 @@
       },
       "normalized_severity": "MEDIUM",
       "reachable": null,
+      "risk_factors": [],
       "risk_score": null
     },
     "taxonomy": {
@@ -521,6 +528,7 @@
       },
       "normalized_severity": "MEDIUM",
       "reachable": null,
+      "risk_factors": [],
       "risk_score": null
     },
     "taxonomy": {
@@ -589,6 +597,7 @@
       },
       "normalized_severity": "MEDIUM",
       "reachable": null,
+      "risk_factors": [],
       "risk_score": null
     },
     "taxonomy": {
@@ -657,6 +666,7 @@
       },
       "normalized_severity": "LOW",
       "reachable": null,
+      "risk_factors": [],
       "risk_score": null
     },
     "taxonomy": {
@@ -726,6 +736,7 @@
       },
       "normalized_severity": "HIGH",
       "reachable": null,
+      "risk_factors": [],
       "risk_score": null
     },
     "taxonomy": {
@@ -794,6 +805,7 @@
       },
       "normalized_severity": "HIGH",
       "reachable": null,
+      "risk_factors": [],
       "risk_score": null
     },
     "taxonomy": {
@@ -860,6 +872,7 @@
       },
       "normalized_severity": "HIGH",
       "reachable": null,
+      "risk_factors": [],
       "risk_score": null
     },
     "taxonomy": {
@@ -928,6 +941,7 @@
       },
       "normalized_severity": "LOW",
       "reachable": null,
+      "risk_factors": [],
       "risk_score": null
     },
     "taxonomy": {
@@ -996,6 +1010,7 @@
       },
       "normalized_severity": "HIGH",
       "reachable": null,
+      "risk_factors": [],
       "risk_score": null
     },
     "taxonomy": {
@@ -1064,6 +1079,7 @@
       },
       "normalized_severity": "MEDIUM",
       "reachable": null,
+      "risk_factors": [],
       "risk_score": null
     },
     "taxonomy": {
@@ -1132,6 +1148,7 @@
       },
       "normalized_severity": "MEDIUM",
       "reachable": null,
+      "risk_factors": [],
       "risk_score": null
     },
     "taxonomy": {
@@ -1200,6 +1217,7 @@
       },
       "normalized_severity": "MEDIUM",
       "reachable": null,
+      "risk_factors": [],
       "risk_score": null
     },
     "taxonomy": {
@@ -1268,6 +1286,7 @@
       },
       "normalized_severity": "MEDIUM",
       "reachable": null,
+      "risk_factors": [],
       "risk_score": null
     },
     "taxonomy": {
@@ -1332,6 +1351,7 @@
       },
       "normalized_severity": "HIGH",
       "reachable": null,
+      "risk_factors": [],
       "risk_score": null
     },
     "taxonomy": {
@@ -1390,6 +1410,7 @@
       },
       "normalized_severity": "LOW",
       "reachable": null,
+      "risk_factors": [],
       "risk_score": null
     },
     "taxonomy": {
@@ -1448,6 +1469,7 @@
       },
       "normalized_severity": "HIGH",
       "reachable": null,
+      "risk_factors": [],
       "risk_score": null
     },
     "taxonomy": {
@@ -1506,6 +1528,7 @@
       },
       "normalized_severity": "HIGH",
       "reachable": null,
+      "risk_factors": [],
       "risk_score": null
     },
     "taxonomy": {
@@ -1564,6 +1587,7 @@
       },
       "normalized_severity": "HIGH",
       "reachable": null,
+      "risk_factors": [],
       "risk_score": null
     },
     "taxonomy": {
@@ -1622,6 +1646,7 @@
       },
       "normalized_severity": "HIGH",
       "reachable": null,
+      "risk_factors": [],
       "risk_score": null
     },
     "taxonomy": {
@@ -1680,6 +1705,7 @@
       },
       "normalized_severity": "LOW",
       "reachable": null,
+      "risk_factors": [],
       "risk_score": null
     },
     "taxonomy": {
@@ -1738,6 +1764,7 @@
       },
       "normalized_severity": "MEDIUM",
       "reachable": null,
+      "risk_factors": [],
       "risk_score": null
     },
     "taxonomy": {
@@ -1796,6 +1823,7 @@
       },
       "normalized_severity": "HIGH",
       "reachable": null,
+      "risk_factors": [],
       "risk_score": null
     },
     "taxonomy": {
@@ -1854,6 +1882,7 @@
       },
       "normalized_severity": "HIGH",
       "reachable": null,
+      "risk_factors": [],
       "risk_score": null
     },
     "taxonomy": {
@@ -1912,6 +1941,7 @@
       },
       "normalized_severity": "HIGH",
       "reachable": null,
+      "risk_factors": [],
       "risk_score": null
     },
     "taxonomy": {
@@ -1970,6 +2000,7 @@
       },
       "normalized_severity": "LOW",
       "reachable": null,
+      "risk_factors": [],
       "risk_score": null
     },
     "taxonomy": {
@@ -2028,6 +2059,7 @@
       },
       "normalized_severity": "CRITICAL",
       "reachable": null,
+      "risk_factors": [],
       "risk_score": null
     },
     "taxonomy": {
@@ -2086,6 +2118,7 @@
       },
       "normalized_severity": "LOW",
       "reachable": null,
+      "risk_factors": [],
       "risk_score": null
     },
     "taxonomy": {
@@ -2144,6 +2177,7 @@
       },
       "normalized_severity": "HIGH",
       "reachable": null,
+      "risk_factors": [],
       "risk_score": null
     },
     "taxonomy": {

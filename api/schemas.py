@@ -63,3 +63,19 @@ class ScanSummary(BaseModel):
     finished_at: datetime | None
     unique_findings: int
     severity_counts: dict[str, int]
+
+
+class FeedsStatus(BaseModel):
+    """State of the exploit-likelihood feeds behind risk scores. Empty until the first download."""
+
+    fetched_at: str | None = None
+    stale: bool = True
+    epss: dict[str, Any] | None = Field(
+        default=None, description="FIRST.org EPSS: score date, rows."
+    )
+    kev: dict[str, Any] | None = Field(
+        default=None, description="CISA KEV: catalog version, entries."
+    )
+    errors: dict[str, str] = Field(
+        default_factory=dict, description="Last download error per feed."
+    )

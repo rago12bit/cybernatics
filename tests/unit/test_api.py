@@ -281,3 +281,21 @@ def test_cors_allows_only_configured_origins(env) -> None:  # type: ignore[no-un
     assert ok.headers.get("access-control-allow-origin") == "http://localhost:3000"
     bad = client.options("/scans", headers={"Origin": "https://evil.example", "Access-Control-Request-Method": "GET"})  # fmt: skip
     assert "access-control-allow-origin" not in bad.headers
+
+
+def test_risk_feeds_status_requires_auth_and_reflects_the_cache(env) -> None:  # type: ignore[no-untyped-def]
+    import json
+
+    client, _, _, _, settings = env
+    assert client.get("/risk/feeds").status_code == 401
+    empty = client.get("/risk/feeds", headers=AUTH).json()
+    assert empty["fetched_at"] is None and empty["stale"] is True  # nothing downloaded yet
+    d = settings.workdir / "feeds"
+    d.mkdir()
+    (d / "meta.json").write_text(
+        json.dumps(
+            {"fetched_at": "2999-01-01T00:00:00+00:00", "epss": {"rows": 5}, "errors": {"kev": "x"}}
+        )
+    )
+    got = client.get("/risk/feeds", headers=AUTH).json()
+    assert got["stale"] is False and got["epss"] == {"rows": 5} and got["errors"] == {"kev": "x"}

@@ -22,6 +22,11 @@ List Scans
 Upload Scan
 
 
+## `GET /risk/feeds`
+
+Risk Feeds
+
+
 ## `GET /scans/{scan_id}`
 
 Get Scan

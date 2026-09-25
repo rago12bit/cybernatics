@@ -331,3 +331,35 @@ def test_stored_findings_carry_cwe_and_owasp_mapping(
     assert tax["sast"]["cwe"] == ["CWE-89"] and tax["sast"]["owasp_top_10_2021"] == ["A03:2021"]
     assert tax["sca"]["owasp_top_10_2021"] == ["A06:2021"]
     assert tax["secrets"]["owasp_top_10_2021"] == ["A07:2021"]
+
+
+def test_risk_is_scored_stored_and_drives_sort(
+    sessions: sessionmaker[Session], sample_repo: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """KEV/EPSS lifts a finding above a same-severity one, end to end through the API path."""
+    import core.postprocess as pp
+    from core.risk import Feeds
+
+    feeds = Feeds(
+        epss={"CVE-2021-44228": 0.94}, kev={"CVE-2021-44228"}, epss_loaded=True, kev_loaded=True
+    )
+    real = pp.apply_risk
+    monkeypatch.setattr(pp, "apply_risk", lambda fs, _=None: real(fs, feeds))
+    (sample_repo / "requirements.txt").write_text("x==1\n")
+    with sessions() as s:
+        sid = make_scan(s, ["trivy", "bandit"], str(sample_repo))
+    hot = finding("trivy", Category.SCA, path="requirements.txt", fid="hot")
+    hot.taxonomy = Taxonomy(Category.SCA, cve=("CVE-2021-44228",))
+    cold = finding("bandit", Category.SAST, fid="cold")  # same HIGH severity, no exploit data
+    table = {
+        "trivy": ToolOutcome("trivy", "ok", [hot]),
+        "bandit": ToolOutcome("bandit", "ok", [cold]),
+    }
+    run_scan_job(sid, sessions, MemoryStore(), MemoryPublisher(), executor_from(table))
+    with sessions() as s:
+        page = repo.query_findings(s, sid, sort="risk", limit=10)
+    assert [f["id"] for f in page.items] == ["hot", "cold"]
+    top = page.items[0]["scoring"]
+    assert top["in_cisa_kev"] is True and top["epss_score"] == 0.94 and top["risk_score"] >= 90
+    assert any("KEV" in x for x in top["risk_factors"])
+    assert page.items[1]["scoring"]["risk_score"] < top["risk_score"]
