@@ -14,6 +14,7 @@ from typing import Any
 
 from celery import Celery, group
 from celery.exceptions import SoftTimeLimitExceeded
+from celery.signals import setup_logging, worker_ready, worker_shutdown
 
 from core.runner import RunnerError
 from core.scan import ADAPTERS, ToolOutcome
@@ -37,6 +38,31 @@ celery_app.conf.beat_schedule = {
     "housekeeping": {"task": "bulwark.maintenance", "schedule": 300.0},  # every 5 minutes
     "risk-feeds": {"task": "bulwark.update_feeds", "schedule": 86400.0},  # EPSS is published daily
 }
+
+
+@setup_logging.connect  # type: ignore[untyped-decorator]  # connecting here stops Celery from installing its own log handlers
+def _configure_worker_logging(**_: Any) -> None:
+    from core.observability import configure_logging
+
+    configure_logging()
+
+
+@worker_ready.connect  # type: ignore[untyped-decorator]
+def _start_observability(**_: Any) -> None:
+    """Start tracing (when OTEL_EXPORTER_OTLP_ENDPOINT is set) and serve metrics."""
+    from core.observability import setup_tracing
+    from core.observability.metrics import start_metrics_server
+
+    setup_tracing("bulwark-worker")
+    start_metrics_server(redis_url=_BROKER)
+
+
+@worker_shutdown.connect  # type: ignore[untyped-decorator]
+def _stop_observability(**_: Any) -> None:
+    from core.observability import shutdown_tracing
+
+    shutdown_tracing()
+
 
 # Wall-clock margin above the tool's own timeout before Celery steps in as a backstop.
 SOFT_MARGIN, HARD_MARGIN = 20, 40

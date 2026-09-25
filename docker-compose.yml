@@ -10,6 +10,9 @@ x-app-env: &app-env
   BULWARK_S3_SECRET_KEY: ${S3_SECRET_KEY:?run scripts/init-env.sh}
   BULWARK_API_TOKEN: ${BULWARK_API_TOKEN:?run scripts/init-env.sh}
   BULWARK_WORKDIR: ${BULWARK_WORKDIR:?run scripts/init-env.sh}
+  # Structured JSON logs carry scan_id. Traces are exported only if you set an OTLP endpoint (see docs/observability.md).
+  BULWARK_LOG_FORMAT: ${BULWARK_LOG_FORMAT:-json}
+  OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
 
 x-app: &app
   build: { context: ., dockerfile: docker/app/Dockerfile }
@@ -74,7 +77,7 @@ services:
 
   api:
     <<: *app
-    command: ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    command: ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000", "--log-config", "api/log_config.json", "--no-access-log"]
     environment:
       <<: *app-env
       # Optional AI suggestions (off by default). Only the API needs the key, never the worker.
@@ -99,6 +102,7 @@ services:
     environment:
       <<: *app-env
       DOCKER_HOST: tcp://socket-proxy:2375
+      BULWARK_METRICS_ADDR: 0.0.0.0 # reachable by Prometheus on the compose network; not published to the host
     # Same path inside and outside: scanner containers bind-mount these via the host daemon.
     volumes: ["${BULWARK_WORKDIR}:${BULWARK_WORKDIR}"]
     depends_on:
@@ -139,6 +143,39 @@ services:
     profiles: [scanners]
     build: docker/syft
     image: bulwark/syft:1.52.0
+
+  # ---- optional: metrics, dashboard and traces (docker compose --profile observability up -d) ----
+  prometheus:
+    profiles: [observability]
+    image: prom/prometheus:v3.6.0
+    command: ["--config.file=/etc/prometheus/prometheus.yml", "--storage.tsdb.retention.time=7d"]
+    volumes: ["./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro"]
+    ports: ["127.0.0.1:9090:9090"]
+    depends_on: [worker]
+    restart: unless-stopped
+  jaeger:
+    profiles: [observability]
+    image: jaegertracing/all-in-one:1.76.0
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports: ["127.0.0.1:16686:16686"] # UI. OTLP (4318) stays on the compose network.
+    restart: unless-stopped
+  grafana:
+    profiles: [observability]
+    image: grafana/grafana:12.2.0
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin} # local use only: the port is bound to localhost
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/bulwark.json
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports: ["127.0.0.1:3001:3000"]
+    depends_on: [prometheus, jaeger]
+    restart: unless-stopped
 
 volumes:
   pgdata:

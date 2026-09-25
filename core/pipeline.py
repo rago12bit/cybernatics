@@ -6,13 +6,17 @@ The database is the source of truth; events are best-effort progress signals for
 from __future__ import annotations
 
 import logging
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from contextlib import ExitStack
 from pathlib import Path
 from typing import Any
 
 from core.correlation import correlate
 from core.ingest import IngestError
 from core.models import Category
+from core.observability import bind_scan, in_context, mark_error, set_attributes, span
+from core.observability import metrics as obs
 from core.persistence import repo
 from core.persistence.db import SessionFactory
 from core.persistence.storage import ObjectStore
@@ -41,7 +45,40 @@ def run_scan_job(
     bus: Any,
     executor: Any = execute_tool,
 ) -> str:
-    """Run one scan end to end. Returns the final status. Never raises for scan-level problems."""
+    """Run one scan end to end. Returns the final status. Never raises for scan-level problems.
+
+    Log lines inside carry the scan id. Stages are spans of one trace: ingest, per-tool spans (which
+    run in parallel), correlate, finalize, persist.
+    """
+    started = time.monotonic()
+    obs.SCANS_RUNNING.inc()
+    status = "failed"
+    counts: dict[str, int] = {}
+    try:
+        with bind_scan(scan_id), span("scan", scan_id=scan_id) as sp:
+            log.info("scan started")
+            status, counts = _run_scan_job(scan_id, sessions, store, bus, executor)
+            set_attributes(sp, status=status, findings=sum(counts.values()))
+            if status == "failed":
+                mark_error(sp, "scan failed")
+            log.info(
+                "scan finished",
+                extra={"status": status, "findings": sum(counts.values()),
+                       "duration_s": round(time.monotonic() - started, 2)},
+            )  # fmt: skip
+        return status
+    finally:
+        obs.SCANS_RUNNING.dec()
+        obs.observe_scan(status, time.monotonic() - started, counts)
+
+
+def _run_scan_job(
+    scan_id: str,
+    sessions: SessionFactory,
+    store: ObjectStore,
+    bus: Any,
+    executor: Any,
+) -> tuple[str, dict[str, int]]:
     with sessions() as s:
         scan = repo.get_scan(s, scan_id)
         if scan is None:
@@ -51,17 +88,20 @@ def run_scan_job(
         repo.mark_running(s, scan_id)
     bus.publish(scan_id, {"type": "scan.started", "scan_id": scan_id, "tools": tools})
 
-    def fail(message: str) -> str:
+    def fail(message: str) -> tuple[str, dict[str, int]]:
         with sessions() as s:
             repo.finish_scan(s, scan_id, "failed", message)
         bus.publish(scan_id, {"type": "scan.finished", "scan_id": scan_id, "status": "failed",
                               "error": message})  # fmt: skip
-        return "failed"
+        return "failed", {}
 
     try:
-        with materialize(source_ref) as workspace:
-            ctx = detect_context(workspace)
-            reach = analyze_or_none(workspace)
+        with ExitStack() as stack:
+            with span("ingest", source_type=source_type):
+                workspace = stack.enter_context(materialize(source_ref))
+                ctx = detect_context(workspace)
+            with span("reachability"):
+                reach = analyze_or_none(workspace)
             runnable: list[str] = []
             outcomes: list[ToolOutcome] = []
             for name in tools:
@@ -70,44 +110,53 @@ def run_scan_job(
                     continue
                 skipped = ToolOutcome(name, "skipped", error="no relevant files")
                 outcomes.append(skipped)
+                obs.observe_tool(name, "skipped", None)
                 _record(sessions, bus, scan_id, skipped)
 
             raws: dict[str, bytes] = {}
-            with ThreadPoolExecutor(max_workers=max(len(runnable), 1)) as pool:
-                futures = {pool.submit(executor, t, workspace): t for t in runnable}
-                for fut in as_completed(futures):
-                    tool = futures[fut]
-                    try:
-                        outcome = fut.result()
-                    except Exception as exc:  # noqa: BLE001 - a dying tool is data, not a crash
-                        outcome = ToolOutcome(tool, "error", error=f"{type(exc).__name__}: {exc}")
-                    outcomes.append(outcome)
-                    raws[tool] = outcome.raw
-                    _record(sessions, bus, scan_id, outcome)
+            with span("tools", tools=",".join(runnable)):
+                with ThreadPoolExecutor(max_workers=max(len(runnable), 1)) as pool:
+                    futures = {pool.submit(in_context(executor), t, workspace): t for t in runnable}
+                    for fut in as_completed(futures):
+                        tool = futures[fut]
+                        try:
+                            outcome = fut.result()
+                        except Exception as exc:  # noqa: BLE001 - a dying tool is data, not a crash
+                            outcome = ToolOutcome(
+                                tool, "error", error=f"{type(exc).__name__}: {exc}"
+                            )
+                            obs.observe_tool(tool, "error", None)
+                        outcomes.append(outcome)
+                        raws[tool] = outcome.raw
+                        _record(sessions, bus, scan_id, outcome)
     except IngestError as exc:
-        log.warning("scan %s ingestion failed: %s", scan_id, exc)
+        log.warning("ingestion failed: %s", exc)
         return fail(str(exc))
     except Exception:
-        log.exception("scan %s crashed", scan_id)
+        log.exception("scan crashed")
         return fail("internal error while running the scan")
 
     # Correlate BEFORE redacting: redaction placeholders look identical and would over-merge.
-    correlated, stats = correlate([f for o in outcomes for f in o.findings])
-    ensure_fresh()
-    findings = finalize(correlated, reach=reach)
+    with span("correlate") as sp:
+        correlated, stats = correlate([f for o in outcomes for f in o.findings])
+        set_attributes(sp, raw=stats.raw, unique=stats.unique)
+    with span("finalize"):
+        ensure_fresh()
+        findings = finalize(correlated, reach=reach)
     has_secrets = any(f.taxonomy.category is Category.SECRETS for f in findings)
-    _store_raw(sessions, store, scan_id, outcomes, raws, has_secrets)
-    status = _final_status(outcomes)
-    with sessions() as s:
-        repo.add_findings(s, scan_id, findings)
-        repo.finish_scan(s, scan_id, status)
-        counts = repo.severity_counts(s, scan_id)
+    with span("persist", findings=len(findings)):
+        _store_raw(sessions, store, scan_id, outcomes, raws, has_secrets)
+        status = _final_status(outcomes)
+        with sessions() as s:
+            repo.add_findings(s, scan_id, findings)
+            repo.finish_scan(s, scan_id, status)
+            counts = repo.severity_counts(s, scan_id)
     bus.publish(scan_id, {"type": "scan.finished", "scan_id": scan_id, "status": status,
                           "findings": len(findings), "raw_findings": stats.raw,
                           "dedup_rate": round(stats.dedup_rate, 3),
                           "severity_counts": counts})  # fmt: skip
     _cleanup_upload(source_type, source_ref)
-    return status
+    return status, counts
 
 
 def _record(sessions: SessionFactory, bus: Any, scan_id: str, o: ToolOutcome) -> None:

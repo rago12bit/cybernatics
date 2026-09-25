@@ -13,5 +13,5 @@ COPY core core
 COPY cli cli
 COPY api api
 COPY migrations migrations
-RUN pip install --no-cache-dir '.[llm]'  # llm extra: the optional Anthropic SDK (off unless enabled)
+RUN pip install --no-cache-dir '.[llm,otel]'  # llm: optional Anthropic SDK (off unless enabled); otel: trace export
 USER bulwark

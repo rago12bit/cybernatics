@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "disable_existing_loggers": false,
+  "filters": {"ctx": {"()": "core.observability.logs.ContextFilter"}},
+  "formatters": {"json": {"()": "core.observability.logs.JsonFormatter"}},
+  "handlers": {
+    "default": {"class": "logging.StreamHandler", "formatter": "json", "filters": ["ctx"], "stream": "ext://sys.stderr"}
+  },
+  "loggers": {
+    "uvicorn": {"handlers": ["default"], "level": "INFO", "propagate": false},
+    "uvicorn.error": {"level": "INFO"},
+    "uvicorn.access": {"handlers": [], "level": "WARNING", "propagate": false}
+  }
+}

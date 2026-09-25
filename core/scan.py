@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import time
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
@@ -18,6 +19,8 @@ from core.adapters.trivy import TrivyAdapter
 from core.correlation import CorrelationStats, correlate
 from core.ignore import IGNORE_FILE, IgnoreRules, apply_ignore
 from core.models import Finding, finding_from_dict
+from core.observability import bind_tool, in_context, mark_error, set_attributes, span
+from core.observability import metrics as obs
 from core.postprocess import finalize
 from core.reachability import analyze_or_none
 from core.runner import RunnerError, run_tool
@@ -46,6 +49,8 @@ _LOCKFILES = {
     "requirements.txt", "go.mod", "go.sum", "Cargo.lock", "Gemfile.lock", "composer.lock",
 }  # fmt: skip
 _IAC_SUFFIXES = {".tf", ".tfvars"}
+
+log = logging.getLogger(__name__)
 
 
 def detect_context(root: Path) -> RepoContext:
@@ -114,6 +119,22 @@ class ToolOutcome:
 
 def execute_tool(name: str, target: Path) -> ToolOutcome:
     """The unit of work: run one tool in its sandbox and parse. Used by threads and Celery."""
+    with bind_tool(name), span(f"tool.{name}", tool=name, image=ADAPTERS[name].spec.image) as sp:
+        outcome = _execute_tool(name, target)
+        set_attributes(sp, status=outcome.status, findings=len(outcome.findings),
+                       exit_code=outcome.exit_code)  # fmt: skip
+        if outcome.status != "ok":
+            mark_error(sp, outcome.error or outcome.status)
+        obs.observe_tool(name, outcome.status, outcome.duration_seconds)
+        log.info(
+            "tool finished",
+            extra={"status": outcome.status, "findings": len(outcome.findings),
+                   "duration_s": round(outcome.duration_seconds or 0.0, 2)},
+        )  # fmt: skip
+        return outcome
+
+
+def _execute_tool(name: str, target: Path) -> ToolOutcome:
     adapter = ADAPTERS[name]
     start = time.monotonic()
     try:
@@ -133,7 +154,7 @@ Executor = Callable[[list[str], Path], list[ToolOutcome]]
 
 def threaded_executor(tools: list[str], target: Path) -> list[ToolOutcome]:
     with ThreadPoolExecutor(max_workers=max(len(tools), 1)) as pool:
-        futures = [pool.submit(execute_tool, t, target) for t in tools]
+        futures = [pool.submit(in_context(execute_tool), t, target) for t in tools]
     outcomes: list[ToolOutcome] = []
     for tool, fut in zip(tools, futures, strict=True):
         try:

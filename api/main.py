@@ -7,13 +7,24 @@ import contextlib
 import json
 import logging
 import re
+import time
 import uuid
 from collections.abc import AsyncIterator
 from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
-from fastapi import Depends, FastAPI, File, Form, HTTPException, Query, UploadFile, WebSocket
+from fastapi import (
+    Depends,
+    FastAPI,
+    File,
+    Form,
+    HTTPException,
+    Query,
+    Request,
+    UploadFile,
+    WebSocket,
+)
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from fastapi.websockets import WebSocketDisconnect
@@ -41,6 +52,7 @@ from core.llm.limits import LimitExceeded, UsageLimiter
 from core.llm.prompt import CodeContext
 from core.llm.service import static_suggestion
 from core.models import finding_from_dict
+from core.observability import bind_scan, configure_logging, setup_tracing
 from core.persistence import repo
 from core.persistence.models import FindingRow, Scan
 from core.rag.retrieve import context_for
@@ -49,6 +61,7 @@ from core.risk import is_stale, read_meta
 from core.scan import ADAPTERS
 
 log = logging.getLogger(__name__)
+_SCAN_IN_PATH = re.compile(r"^/scans/([0-9a-f-]{36})(?:/|$)")
 _UUID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
 _ARCHIVE_EXT = (".zip", ".tar", ".tar.gz", ".tgz")
 MIN_TOKEN_LEN = 16
@@ -170,6 +183,39 @@ def create_app(app_state: AppState) -> FastAPI:
         allow_methods=["GET", "POST"],
         allow_headers=["Authorization", "Content-Type"],
     )
+
+    def _startup() -> None:
+        configure_logging()  # JSON lines with scan_id; BULWARK_LOG_FORMAT=text for humans
+        setup_tracing("bulwark-api")
+
+    app.router.add_event_handler("startup", _startup)
+
+    @app.middleware("http")
+    async def access_log(request: Request, call_next: Any) -> Response:
+        """One structured line per request, tagged with the scan id when the path names one.
+
+        Logs the route TEMPLATE (`/scans/{scan_id}`), never the raw path or query string (which can
+        carry search text); the scan id is validated as a UUID before it is trusted.
+        """
+        if request.url.path == "/healthz":
+            return await call_next(request)  # type: ignore[no-any-return]
+        m = _SCAN_IN_PATH.match(request.url.path)
+        scan_id = m.group(1) if m and _UUID.match(m.group(1)) else None
+        start = time.monotonic()
+        with bind_scan(scan_id) if scan_id else contextlib.nullcontext():
+            try:
+                response: Response = await call_next(request)
+            except Exception:
+                log.exception("request crashed", extra={"method": request.method})
+                raise
+            route = request.scope.get("route")
+            log.info(
+                "request",
+                extra={"method": request.method, "route": getattr(route, "path", "unmatched"),
+                       "status": response.status_code,
+                       "duration_ms": round((time.monotonic() - start) * 1000, 1)},
+            )  # fmt: skip
+        return response
 
     @app.get("/healthz", include_in_schema=False)
     def healthz() -> dict[str, str]:

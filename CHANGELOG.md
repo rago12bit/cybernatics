@@ -6,6 +6,14 @@ versions will follow [SemVer](https://semver.org) once `v0.1.0` is tagged (plann
 ## [Unreleased]
 
 ### Added
+- **Observability (Week 21):** structured JSON logs with `scan_id` (and trace ids) on every line of a scan, including
+  the parallel scanner threads; OpenTelemetry traces with one span per pipeline stage and per scanner (optional,
+  export with `OTEL_EXPORTER_OTLP_ENDPOINT`); Prometheus metrics from the worker (scan and scanner outcomes,
+  durations, findings, queue depth); and an optional `observability` compose profile with Prometheus, Grafana (a
+  provisioned dashboard) and Jaeger. Verified with real scans: the trace shows the scanners running in parallel and
+  every dashboard query returns data. Not viewed in a browser, so no screenshot yet. See docs/observability.md.
+
+### Added
 - **SBOM, signing and provenance (Week 20):** `bulwark sbom` writes a CycloneDX 1.6 SBOM from Syft (pinned by
   digest, same sandbox as every scanner; dev dependencies included; validated against the official CycloneDX
   schema in a test). `bulwark attest sign | provenance | verify` sign reports with cosign (key-based, container with

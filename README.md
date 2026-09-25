@@ -162,6 +162,12 @@ bulwark scan ./my-project --distributed
 Gitleaks uses the upstream image. Semgrep's rules are fetched at build time and are for your own
 internal use only — see [ADR-006](docs/adr/0006-semgrep-rules-licensing.md).
 
+## Observability
+
+JSON logs with `scan_id`, OpenTelemetry traces (one span per stage and per scanner) and Prometheus metrics, plus an
+optional Grafana dashboard and Jaeger via `docker compose --profile observability up -d`. See
+[docs/observability.md](docs/observability.md).
+
 ## SBOM, signing and provenance
 
 `bulwark sbom` writes a CycloneDX SBOM (Syft); `bulwark attest` signs reports with cosign and attests which scanner

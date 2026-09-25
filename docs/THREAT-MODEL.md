@@ -162,6 +162,14 @@ log, so they prove who held the key but not when the signature was made; a stole
 (OIDC) signing is not implemented; nothing yet stops an attacker with the key from attesting a scan they did not
 run, and the attestation says nothing about whether the findings are correct. Status: Partial.
 
+### Observability endpoints
+
+The worker's `/metrics` (port 9101) has no authentication and is not published to the host; only the compose network
+reaches it. Grafana's default admin password (`admin`) and anonymous viewer access are for localhost use only (the
+port is bound to 127.0.0.1); change the password and remove anonymous access before exposing it anywhere. Logs are
+scrubbed of credentials by pattern, which is best effort, and traces carry tool names, statuses and counts but never
+code or findings.
+
 ## Out of scope
 DAST ([ADR-003](adr/0003-no-dast-in-v1.md)); the security of the upstream scanners themselves; multi-tenant
 isolation between users (there are no users yet); physical and cloud-account security of wherever it runs.
