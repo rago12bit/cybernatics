@@ -5,6 +5,13 @@ versions will follow [SemVer](https://semver.org) once `v0.1.0` is tagged (plann
 
 ## [Unreleased]
 
+### Added
+- **Remediation knowledge base (Week 11):** a committed corpus of 211 CWE entries and 1,697 OWASP cheat-sheet
+  chunks; pgvector (`vector(1024)`, HNSW) in the existing PostgreSQL via migration `0002`; a model-free hashed
+  TF-IDF embedder; `context_for(finding)` retrieval; `bulwark kb load|stats|search`. Measured: right sheet in
+  the top 5 for 84% of real findings without metadata. See [docs/rag.md](docs/rag.md), ADR-009.
+- Postgres image is now built locally with pgvector on the same Alpine base (`docker/postgres`).
+
 ### Fixed (UI behaviour)
 - A scan that finished while the live socket was connecting stayed on "Running" forever; the socket's
   snapshot is now honoured, and any close before the scan finishes falls back to polling.

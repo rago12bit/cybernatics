@@ -19,7 +19,8 @@ x-app: &app
 
 services:
   postgres:
-    image: postgres:16-alpine
+    build: docker/postgres
+    image: bulwark/postgres:16-pgvector
     environment:
       POSTGRES_USER: bulwark
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?run scripts/init-env.sh}

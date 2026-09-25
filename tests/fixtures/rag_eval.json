@@ -1,0 +1,914 @@
+[
+ {
+  "title": "mem 1.1.0: Denial of Service in mem",
+  "description": "Versions of `mem` prior to 4.0.0 are vulnerable to Denial of Service (DoS).  The package fails to remove old values from the cache even after a value passes its `maxAge` property. This may allow attackers to exhaust the system's memory if they are able to abuse the application logging.\n\n\n## Recommendation\n\nUpgrade to version 4.0.0 or later.",
+  "cwes": [
+   "CWE-400"
+  ],
+  "owasp": [
+   "A06:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "tough-cookie 2.4.3: tough-cookie: prototype pollution in cookie memstore",
+  "description": "Versions of the package tough-cookie before 4.1.3 are vulnerable to Prototype Pollution due to improper handling of Cookies when using CookieJar in rejectPublicSuffixes=false mode. This issue arises from the manner in which the objects are initialized.",
+  "cwes": [
+   "CWE-1321"
+  ],
+  "owasp": [
+   "A06:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "send 0.12.3: send vulnerable to template injection that can lead to XSS",
+  "description": "### Impact\n\npassing untrusted user input - even after sanitizing it - to `SendStream.redirect()` may execute untrusted code\n\n### Patches\n\nthis issue is patched in send 0.19.0\n\n### Workarounds\n\nusers are encouraged to upgrade to the patched version of express, but otherwise can workaround this issue by making sure any untrusted inputs are safe, ideally by validating them against an explicit allowli",
+  "cwes": [
+   "CWE-79"
+  ],
+  "owasp": [
+   "A03:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "minimist 0.0.10: minimist: prototype pollution",
+  "description": "Minimist <=1.2.5 is vulnerable to Prototype Pollution via file index.js, function setKey() (lines 69-95).",
+  "cwes": [
+   "CWE-1321"
+  ],
+  "owasp": [
+   "A06:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "elliptic 6.4.1: Elliptic allows BER-encoded signatures",
+  "description": "In the Elliptic package 6.5.6 for Node.js, ECDSA signature malleability occurs because BER-encoded signatures are allowed.",
+  "cwes": [
+   "CWE-347"
+  ],
+  "owasp": [
+   "A02:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "cipher-base 1.0.4: cipher-base: Cipher-base hash manipulation",
+  "description": "Improper Input Validation vulnerability in cipher-base allows Input Data Manipulation.This issue affects cipher-base: through 1.0.4.",
+  "cwes": [
+   "CWE-20"
+  ],
+  "owasp": [
+   "A03:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "parse-url 5.0.1: Cross site scripting in parse-url",
+  "description": "Cross-site Scripting (XSS) - Stored in GitHub repository ionicabizau/parse-url prior to 7.0.0.",
+  "cwes": [
+   "CWE-79"
+  ],
+  "owasp": [
+   "A03:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "brace-expansion 1.1.11: brace-expansion: juliangruber brace-expansion index.js expand redos",
+  "description": "A vulnerability was found in juliangruber brace-expansion up to 1.1.11/2.0.1/3.0.0/4.0.0. It has been rated as problematic. Affected by this issue is the function expand of the file index.js. The manipulation leads to inefficient regular expression complexity. The attack may be launched remotely. The complexity of an attack is rather high. The exploitation is known to be difficult. The exploit has",
+  "cwes": [
+   "CWE-400",
+   "CWE-1333"
+  ],
+  "owasp": [
+   "A06:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "marked 0.3.5: marked is an application that is meant to parse and compile markdown.  ...",
+  "description": "marked is an application that is meant to parse and compile markdown. Due to the way that marked 0.3.5 and earlier parses input, specifically HTML entities, it's possible to bypass marked's content injection protection (`sanitize: true`) to inject a `javascript:` URL. This flaw exists because `&#xNNanything;` gets parsed to what it could and leaves the rest behind, resulting in just `anything;` be",
+  "cwes": [
+   "CWE-79"
+  ],
+  "owasp": [
+   "A03:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "ip 1.1.5: nodejs-ip: arbitrary code execution via the isPublic() function",
+  "description": "The ip package before 1.1.9 for Node.js might allow SSRF because some IP addresses (such as 0x7f.1) are improperly categorized as globally routable via isPublic.",
+  "cwes": [
+   "CWE-918"
+  ],
+  "owasp": [
+   "A10:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "ejs 0.8.8: nodejs ejs versions older than 2.5.3 is vulnerable to remote code exec ...",
+  "description": "nodejs ejs versions older than 2.5.3 is vulnerable to remote code execution due to weak input validation in ejs.renderFile() function",
+  "cwes": [
+   "CWE-20"
+  ],
+  "owasp": [
+   "A03:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "fresh 0.2.4: nodejs-fresh: Regular expression denial of service when parsing crafted user input",
+  "description": "Fresh is a module used by the Express.js framework for HTTP response freshness testing. It is vulnerable to a regular expression denial of service when it is passed specially crafted input to parse. This causes the event loop to be blocked causing a denial of service condition.",
+  "cwes": [
+   "CWE-400"
+  ],
+  "owasp": [
+   "A06:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "parse-url 5.0.1: npm: XSS in parse-url",
+  "description": "Cross-site Scripting (XSS) - Generic in GitHub repository ionicabizau/parse-url prior to 7.0.0.",
+  "cwes": [
+   "CWE-79"
+  ],
+  "owasp": [
+   "A03:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "lodash 4.17.21: lodash: lodash: Arbitrary code execution via untrusted input in template imports",
+  "description": "Impact:\n\nThe fix for CVE-2021-23337 (https://github.com/advisories/GHSA-35jh-r3h4-6jhm) added validation for the variable option in _.template but did not apply the same validation to options.imports key names. Both paths flow into the same Function() constructor sink.\n\nWhen an application passes untrusted input as options.imports key names, an attacker can inject default-parameter expressions tha",
+  "cwes": [
+   "CWE-94"
+  ],
+  "owasp": [
+   "A03:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "parse-path 4.0.1: Authorization Bypass in parse-path",
+  "description": "Authorization Bypass Through User-Controlled Key in GitHub repository ionicabizau/parse-path prior to 5.0.0.",
+  "cwes": [
+   "CWE-639"
+  ],
+  "owasp": [
+   "A01:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "qs 2.2.4: qs: qs: Denial of Service via improper input validation in array parsing",
+  "description": "Improper Input Validation vulnerability in qs (parse modules) allows HTTP DoS.This issue affects qs: < 6.14.1.\n\n\nSummary\n\nThe arrayLimit option in qs did not enforce limits for bracket notation (a[]=1&a[]=2), only for indexed notation (a[0]=1). This is a consistency bug; arrayLimit should apply uniformly across all array notations.\n\nNote: The default parameterLimit of 1000 effectively mitigates th",
+  "cwes": [
+   "CWE-20"
+  ],
+  "owasp": [
+   "A03:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "nconf 0.10.0: nconf: Prototype pollution in memory store",
+  "description": "This affects the package nconf before 0.11.4. When using the memory engine, it is possible to store a nested JSON representation of the configuration. The .set() function, that is responsible for setting the configuration properties, is vulnerable to Prototype Pollution. By providing a crafted property, it is possible to modify the properties on the Object.prototype.",
+  "cwes": [
+   "CWE-1321"
+  ],
+  "owasp": [
+   "A06:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "moment 2.15.1: nodejs-moment: Regular expression denial of service",
+  "description": "The moment module before 2.19.3 for Node.js is prone to a regular expression denial of service via a crafted date string, a different vulnerability than CVE-2016-4055.",
+  "cwes": [
+   "CWE-400"
+  ],
+  "owasp": [
+   "A06:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "typeorm 0.2.24: TypeORM vulnerable to MAID and Prototype Pollution",
+  "description": "Prototype pollution vulnerability in the TypeORM package < 0.2.25 may allow attackers to add or modify Object properties leading to further denial of service or SQL injection attacks.",
+  "cwes": [
+   "CWE-471",
+   "CWE-1321"
+  ],
+  "owasp": [
+   "A03:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "handlebars 4.0.11: nodejs-handlebars: lookup helper fails to properly validate templates allowing for arbitrary JavaScript execution",
+  "description": "Handlebars before 3.0.8 and 4.x before 4.5.3 is vulnerable to Arbitrary Code Execution. The lookup helper fails to properly validate templates, allowing attackers to submit templates that execute arbitrary JavaScript. This can be used to run arbitrary code on a server processing Handlebars templates or in a victim's browser (effectively serving as XSS).",
+  "cwes": [
+   "CWE-94"
+  ],
+  "owasp": [
+   "A03:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "yargs-parser 8.1.0: nodejs-yargs-parser: prototype pollution vulnerability",
+  "description": "yargs-parser could be tricked into adding or modifying properties of Object.prototype using a \"__proto__\" payload.",
+  "cwes": [
+   "CWE-1321",
+   "CWE-915"
+  ],
+  "owasp": [
+   "A08:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "y18n 3.2.1: nodejs-y18n: prototype pollution vulnerability",
+  "description": "The package y18n before 3.2.2, 4.0.1 and 5.0.5, is vulnerable to Prototype Pollution.",
+  "cwes": [
+   "CWE-1321",
+   "CWE-20",
+   "CWE-915"
+  ],
+  "owasp": [
+   "A03:2021",
+   "A08:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "toml 3.0.0: toml-node: toml-node: Arbitrary Code Execution via Prototype Pollution in TOML Parsing",
+  "description": "toml-node is a TOML parser for Node.js and the browser. Prior to 4.1.2, toml.parse() in lib/compiler.js can be tricked by a table path such as a.b.y.__proto__.__proto__, allowing traversal from a scalar value into Number.prototype and Object.prototype. The currentPath tracking value uses both arrays and strings, so valueAssignments records a comma-joined path such as a,b.y while deepRef checks the",
+  "cwes": [
+   "CWE-1321"
+  ],
+  "owasp": [
+   "A06:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "braces 2.3.2: braces: fails to limit the number of characters it can handle",
+  "description": "The NPM package `braces`, versions prior to 3.0.3, fails to limit the number of characters it can handle, which could lead to Memory Exhaustion. In `lib/parse.js,` if a malicious user sends \"imbalanced braces\" as input, the parsing will enter a loop, which will cause the program to start allocating heap memory without freeing it at any moment of the loop. Eventually, the JavaScript heap limit is r",
+  "cwes": [
+   "CWE-1050",
+   "CWE-400"
+  ],
+  "owasp": [
+   "A06:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "express 4.12.4: express: cause malformed URLs to be evaluated",
+  "description": "Express.js minimalist web framework for node. Versions of Express.js prior to 4.19.0 and all pre-release alpha and beta versions of 5.0 are affected by an open redirect vulnerability using malformed URLs. When a user of Express performs a redirect using a user-provided URL Express performs an encode [using `encodeurl`](https://github.com/pillarjs/encodeurl) on the contents before passing it to the",
+  "cwes": [
+   "CWE-601",
+   "CWE-1286"
+  ],
+  "owasp": [
+   "A01:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "st 0.2.4: Open Redirect in st",
+  "description": "st is a module for serving static files. An attacker is able to craft a request that results in an HTTP 301 (redirect) to an entirely different domain. A request for: http://some.server.com//nodesecurity.org/%2e%2e would result in a 301 to //nodesecurity.org/%2e%2e which most browsers treat as a proper redirect as // is translated into the current schema being used. Mitigating factor: In order for",
+  "cwes": [
+   "CWE-601"
+  ],
+  "owasp": [
+   "A01:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "picomatch 2.3.0: picomatch: Picomatch: Data integrity compromised via method injection with crafted POSIX bracket expressions",
+  "description": "Picomatch is a glob matcher written JavaScript. Versions prior to 4.0.4, 3.0.2, and 2.3.2 are vulnerable to a method injection vulnerability affecting the `POSIX_REGEX_SOURCE` object. Because the object inherits from `Object.prototype`, specially crafted POSIX bracket expressions (e.g., `[[:constructor:]]`) can reference inherited method names. These methods are implicitly converted to strings and",
+  "cwes": [
+   "CWE-1321"
+  ],
+  "owasp": [
+   "A06:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "ejs 0.8.8: ejs: server-side template injection in outputFunctionName",
+  "description": "The ejs (aka Embedded JavaScript templates) package 3.1.6 for Node.js allows server-side template injection in settings[view options][outputFunctionName]. This is parsed as an internal option, and overwrites the outputFunctionName option with an arbitrary OS command (which is executed upon template compilation).",
+  "cwes": [
+   "CWE-94",
+   "CWE-74"
+  ],
+  "owasp": [
+   "A03:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "typeorm 0.2.24: SQL injection in typeORM",
+  "description": "The findOne function in TypeORM before 0.3.0 can either be supplied with a string or a FindOneOptions object. When input to the function is a user-controlled parsed JSON object, supplying a crafted FindOneOptions instead of an id string leads to SQL injection. NOTE: the vendor's position is that the user's application is responsible for input validation",
+  "cwes": [
+   "CWE-89"
+  ],
+  "owasp": [
+   "A03:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "snyk-python-plugin 1.16.0: snyk: snyk-hex-plugin: command injection",
+  "description": "The package snyk before 1.1064.0; the package snyk-mvn-plugin before 2.31.3; the package snyk-gradle-plugin before 3.24.5; the package @snyk/snyk-cocoapods-plugin before 2.5.3; the package snyk-sbt-plugin before 2.16.2; the package snyk-python-plugin before 1.24.2; the package snyk-docker-plugin before 5.6.5; the package @snyk/snyk-hex-plugin before 1.1.6 are vulnerable to Command Injection due to",
+  "cwes": [
+   "CWE-78"
+  ],
+  "owasp": [
+   "A03:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "lodash 4.17.10: lodash: Prototype pollution in utilities function",
+  "description": "A prototype pollution vulnerability was found in lodash <4.17.11 where the functions merge, mergeWith, and defaultsDeep can be tricked into adding or modifying properties of Object.prototype.",
+  "cwes": [
+   "CWE-400"
+  ],
+  "owasp": [
+   "A06:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "flask 0.12: python-flask: unexpected memory usage can lead to denial of service via crafted encoded JSON data",
+  "description": "The Pallets Project Flask before 1.0 is affected by: unexpected memory usage. The impact is: denial of service. The attack vector is: crafted encoded JSON data. The fixed version is: 1. NOTE: this may overlap CVE-2018-1000656.",
+  "cwes": [
+   "CWE-400"
+  ],
+  "owasp": [
+   "A06:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "mpath 0.1.1: nodejs-mpath: prototype pollution in Object.prototype",
+  "description": "A prototype pollution vulnerability was found in module mpath <0.5.1 that allows an attacker to inject arbitrary properties onto Object.prototype.",
+  "cwes": [
+   "CWE-400",
+   "CWE-74",
+   "CWE-1321"
+  ],
+  "owasp": [
+   "A03:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "lodash 4.17.10: nodejs-lodash: ReDoS via the toNumber, trim and trimEnd functions",
+  "description": "Lodash versions prior to 4.17.21 are vulnerable to Regular Expression Denial of Service (ReDoS) via the toNumber, trim and trimEnd functions.",
+  "cwes": [
+   "CWE-1333",
+   "CWE-400"
+  ],
+  "owasp": [
+   "A06:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "parse-url 5.0.1: Server-Side Request Forgery in parse-url",
+  "description": "Server-Side Request Forgery (SSRF) in GitHub repository ionicabizau/parse-url prior to 7.0.0.",
+  "cwes": [
+   "CWE-918"
+  ],
+  "owasp": [
+   "A10:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "pac-resolver 3.0.0: nodejs-pac-resolver: remote code execution when used with untrusted input due to unsafe PAC file handling",
+  "description": "This affects the package pac-resolver before 5.0.0. This can occur when used with untrusted input, due to unsafe PAC file handling. **NOTE:** The fix for this vulnerability is applied in the node-degenerator library, a dependency written by the same maintainer.",
+  "cwes": [
+   "CWE-94"
+  ],
+  "owasp": [
+   "A03:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "minimist 0.0.10: nodejs-minimist: prototype pollution allows adding or modifying properties of Object.prototype using a constructor or __proto__ payload",
+  "description": "minimist before 1.2.2 could be tricked into adding or modifying properties of Object.prototype using a \"constructor\" or \"__proto__\" payload.",
+  "cwes": [
+   "CWE-1321"
+  ],
+  "owasp": [
+   "A06:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "morgan 1.10.0: morgan: morgan: Log forgery due to unneutralized control characters",
+  "description": "Impact: The morgan logging middleware's :remote-user token extracts the Basic auth username from the Authorization request header and writes it to the log stream without neutralizing control characters. An unauthenticated attacker can send a crafted Authorization Basic header containing CR or LF bytes to inject forged log lines, breaking the one-request-per-line structure of access logs and enabli",
+  "cwes": [
+   "CWE-117"
+  ],
+  "owasp": [
+   "A09:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "cached-path-relative 1.0.2: cached-path-relative: Prototype Pollution via the cache variable",
+  "description": "The package cached-path-relative before 1.1.0 are vulnerable to Prototype Pollution via the cache variable that is set as {} instead of Object.create(null) in the cachedPathRelative function, which allows access to the parent prototype properties when the object is used to create the cached relative path. When using the origin path as __proto__, the attribute of the object is accessed instead of a",
+  "cwes": [
+   "CWE-1321"
+  ],
+  "owasp": [
+   "A06:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "handlebars 4.0.11: handlebars.js: Handlebars.js: Arbitrary code execution via crafted template context",
+  "description": "Handlebars provides the power necessary to let users build semantic templates. In versions 4.0.0 through 4.7.8, a crafted object placed in the template context can bypass all conditional guards in `resolvePartial()` and cause `invokePartial()` to return `undefined`. The Handlebars runtime then treats the unresolved partial as a source that needs to be compiled, passing the crafted object to `env.c",
+  "cwes": [
+   "CWE-94",
+   "CWE-843"
+  ],
+  "owasp": [
+   "A03:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "jquery 2.2.4: jquery: Prototype pollution in object's prototype leading to denial of service, remote code execution, or property injection",
+  "description": "jQuery before 3.4.0, as used in Drupal, Backdrop CMS, and other products, mishandles jQuery.extend(true, {}, ...) because of Object.prototype pollution. If an unsanitized source object contained an enumerable __proto__ property, it could extend the native Object.prototype.",
+  "cwes": [
+   "CWE-1321",
+   "CWE-79"
+  ],
+  "owasp": [
+   "A03:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "negotiator 0.2.8: negotiator is an HTTP content negotiator for Node.js and is used by ma ...",
+  "description": "negotiator is an HTTP content negotiator for Node.js and is used by many modules and frameworks including Express and Koa. The header for \"Accept-Language\", when parsed by negotiator 0.6.0 and earlier is vulnerable to Regular Expression Denial of Service via a specially crafted string.",
+  "cwes": [
+   "CWE-400",
+   "CWE-20"
+  ],
+  "owasp": [
+   "A03:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "minimatch 3.0.4: nodejs-minimatch: ReDoS via the braceExpand function",
+  "description": "A vulnerability was found in the minimatch package. This flaw allows a Regular Expression Denial of Service (ReDoS) when calling the braceExpand function with specific arguments, resulting in a Denial of Service.",
+  "cwes": [
+   "CWE-400",
+   "CWE-1333"
+  ],
+  "owasp": [
+   "A06:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "Possible hardcoded password: '[redacted]'",
+  "description": "hardcoded_password_string (B105): Possible hardcoded password: '[redacted]'",
+  "cwes": [
+   "CWE-259"
+  ],
+  "owasp": [
+   "A02:2021",
+   "A07:2021"
+  ],
+  "category": "sast"
+ },
+ {
+  "title": "jquery 2.2.4: jquery: Cross-site scripting via cross-domain ajax requests",
+  "description": "jQuery before 3.0.0 is vulnerable to Cross-site Scripting (XSS) attacks when a cross-domain Ajax request is performed without the dataType option, causing text/javascript responses to be executed.",
+  "cwes": [
+   "CWE-79"
+  ],
+  "owasp": [
+   "A03:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "ini 1.1.0: nodejs-ini: Prototype pollution via malicious INI file",
+  "description": "This affects the package ini before 1.3.6. If an attacker submits a malicious INI file to an application that parses it with ini.parse, they will pollute the prototype on the application. This can be exploited further depending on the context.",
+  "cwes": [
+   "CWE-1321"
+  ],
+  "owasp": [
+   "A06:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "lodash 4.17.10: lodash: prototype pollution in _.unset and _.omit functions",
+  "description": "Lodash versions 4.0.0 through 4.17.22 are vulnerable to prototype pollution in the _.unset and _.omit functions. An attacker can pass crafted paths which cause Lodash to delete methods from global prototypes.\n\nThe issue permits deletion of properties but does not allow overwriting their original behavior.\n\nThis issue is patched on 4.17.23",
+  "cwes": [
+   "CWE-1321"
+  ],
+  "owasp": [
+   "A06:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "ajv 6.10.2: nodejs-ajv: prototype pollution via crafted JSON schema in ajv.validate function",
+  "description": "An issue was discovered in ajv.validate() in Ajv (aka Another JSON Schema Validator) 6.12.2. A carefully crafted JSON schema could be provided that allows execution of other code by prototype pollution. (While untrusted schemas are recommended against, the worst case of an untrusted schema should be a denial of service, not execution of code.)",
+  "cwes": [
+   "CWE-1321",
+   "CWE-915"
+  ],
+  "owasp": [
+   "A08:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "snyk-sbt-plugin 2.11.0: snyk: snyk-hex-plugin: command injection",
+  "description": "The package snyk before 1.1064.0; the package snyk-mvn-plugin before 2.31.3; the package snyk-gradle-plugin before 3.24.5; the package @snyk/snyk-cocoapods-plugin before 2.5.3; the package snyk-sbt-plugin before 2.16.2; the package snyk-python-plugin before 1.24.2; the package snyk-docker-plugin before 5.6.5; the package @snyk/snyk-hex-plugin before 1.1.6 are vulnerable to Command Injection due to",
+  "cwes": [
+   "CWE-78"
+  ],
+  "owasp": [
+   "A03:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "subprocess call with shell=True identified, security issue.",
+  "description": "subprocess_popen_with_shell_equals_true (B602): subprocess call with shell=True identified, security issue.",
+  "cwes": [
+   "CWE-78"
+  ],
+  "owasp": [
+   "A03:2021"
+  ],
+  "category": "sast"
+ },
+ {
+  "title": "@snyk/snyk-cocoapods-plugin 2.0.1: snyk: snyk-hex-plugin: command injection",
+  "description": "The package snyk before 1.1064.0; the package snyk-mvn-plugin before 2.31.3; the package snyk-gradle-plugin before 3.24.5; the package @snyk/snyk-cocoapods-plugin before 2.5.3; the package snyk-sbt-plugin before 2.16.2; the package snyk-python-plugin before 1.24.2; the package snyk-docker-plugin before 5.6.5; the package @snyk/snyk-hex-plugin before 1.1.6 are vulnerable to Command Injection due to",
+  "cwes": [
+   "CWE-78"
+  ],
+  "owasp": [
+   "A03:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "mongoose 4.2.4: Mongoose search injection vulnerability",
+  "description": "Mongoose before 8.9.5 can improperly use a nested $where filter with a populate() match, leading to search injection. NOTE: this issue exists because of an incomplete fix for CVE-2024-53900.",
+  "cwes": [
+   "CWE-94"
+  ],
+  "owasp": [
+   "A03:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "mongoose 4.2.4: automattic/mongoose vulnerable to Prototype pollution via Schema.path",
+  "description": "Prototype Pollution in GitHub repository automattic/mongoose prior to 6.4.6.",
+  "cwes": [
+   "CWE-1321"
+  ],
+  "owasp": [
+   "A06:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "ajv 6.10.2: ajv: ReDoS via $data reference",
+  "description": "ajv (Another JSON Schema Validator) before 8.18.0 is vulnerable to Regular Expression Denial of Service (ReDoS) when the $data option is enabled. The pattern keyword accepts runtime data via JSON Pointer syntax ($data reference), which is passed directly to the JavaScript RegExp() constructor without validation. An attacker can inject a malicious regex pattern (e.g., \"^(a|a)*$\") combined with craf",
+  "cwes": [
+   "CWE-1333",
+   "CWE-400"
+  ],
+  "owasp": [
+   "A06:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "diff 1.4.0: jsdiff: denial of service vulnerability in parsePatch and applyPatch",
+  "description": "jsdiff is a JavaScript text differencing implementation. Prior to versions 8.0.3, 5.2.2, 4.0.4, and 3.5.1, attempting to parse a patch whose filename headers contain the line break characters `\\r`, `\\u2028`, or `\\u2029` can cause the `parsePatch` method to enter an infinite loop. It then consumes memory without limit until the process crashes due to running out of memory. Applications are therefor",
+  "cwes": [
+   "CWE-400",
+   "CWE-1333"
+  ],
+  "owasp": [
+   "A06:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "snyk-gradle-plugin 3.2.2: OS Command Injection in Snyk gradle plugin",
+  "description": "The package Snyk CLI before 1.1294.0 is vulnerable to Code Injection when scanning an untrusted Gradle project. The vulnerability can be triggered if Snyk test is run inside the untrusted project due to the improper handling of the current working directory name. Snyk recommends only scanning trusted projects.",
+  "cwes": [
+   "CWE-78",
+   "CWE-94"
+  ],
+  "owasp": [
+   "A03:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "mongoose 4.2.4: Mongoose's Improper Sanitization of $nor in sanitizeFilter May Allow NoSQL Injection",
+  "description": "Mongoose is a MongoDB object modeling tool designed to work in an asynchronous environment. Prior to 6.13.9, 7.8.9, 8.22.1, and 9.1.6, a vulnerability allows bypassing Mongoose’s sanitizeFilter query sanitization mechanism via the $nor operator. When sanitizeFilter is enabled, Mongoose wraps query operators in $eq to neutralize them. However, prior to the fix, $nor was not included in the set of l",
+  "cwes": [
+   "CWE-74"
+  ],
+  "owasp": [
+   "A03:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "underscore 1.9.1: Underscore.js: Underscore.js: Denial of Service via recursive data structures in flatten and isEqual functions",
+  "description": "Underscore.js is a utility-belt library for JavaScript. Prior to 1.13.8, the _.flatten and _.isEqual functions use recursion without a depth limit. Under very specific conditions, detailed below, an attacker could exploit this in a Denial of Service (DoS) attack by triggering a stack overflow. Untrusted input must be used to create a recursive datastructure, for example using JSON.parse, with no e",
+  "cwes": [
+   "CWE-770",
+   "CWE-674"
+  ],
+  "owasp": [
+   "A06:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "lodash 4.17.10: nodejs-lodash: prototype pollution in defaultsDeep function leading to modifying properties",
+  "description": "Versions of lodash lower than 4.17.12 are vulnerable to Prototype Pollution. The function defaultsDeep could be tricked into adding or modifying properties of Object.prototype using a constructor payload.",
+  "cwes": [
+   "CWE-1321",
+   "CWE-20"
+  ],
+  "owasp": [
+   "A03:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "jquery 2.2.4: jquery: Untrusted code execution via <option> tag in HTML passed to DOM manipulation methods",
+  "description": "In jQuery versions greater than or equal to 1.0.3 and before 3.5.0, passing HTML containing <option> elements from untrusted sources - even after sanitizing it - to one of jQuery's DOM manipulation methods (i.e. .html(), .append(), and others) may execute untrusted code. This problem is patched in jQuery 3.5.0.",
+  "cwes": [
+   "CWE-79"
+  ],
+  "owasp": [
+   "A03:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "elliptic 6.4.1: Valid ECDSA signatures erroneously rejected in Elliptic",
+  "description": "The Elliptic prior to 6.6.0 for Node.js, in its for ECDSA implementation, does not correctly verify valid signatures if the hash contains at least four leading 0 bytes and when the order of the elliptic curve's base point is smaller than the hash, because of an _truncateToN anomaly. This leads to valid signatures being rejected. Legitimate transactions or communications may be incorrectly flagged ",
+  "cwes": [
+   "CWE-347"
+  ],
+  "owasp": [
+   "A02:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "form-data 2.3.3: form-data: Unsafe random function in form-data",
+  "description": "Use of Insufficiently Random Values vulnerability in form-data allows HTTP Parameter Pollution (HPP). This vulnerability is associated with program files lib/form_data.Js.\n\nThis issue affects form-data: < 2.5.4, 3.0.0 - 3.0.3, 4.0.0 - 4.0.3.",
+  "cwes": [
+   "CWE-330"
+  ],
+  "owasp": [
+   "A02:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "Avoiding SQL string concatenation: untrusted input concatenated with raw SQL query can result in SQL Injection",
+  "description": "Avoiding SQL string concatenation: untrusted input concatenated with raw SQL query can result in SQL Injection. In order to execute raw query safely, prepared statement should be used. SQLAlchemy provides TextualSQL to easily used prepared statement with named parameters. For complex SQL composition, use SQL Expression Language or Schema Definition Language. In most cases, SQLAlchemy ORM will be a",
+  "cwes": [
+   "CWE-89"
+  ],
+  "owasp": [
+   "A03:2021"
+  ],
+  "category": "sast"
+ },
+ {
+  "title": "ms 0.6.2: Regular Expression Denial of Service in ms",
+  "description": "Versions of `ms` prior to 0.7.1 are affected by a regular expression denial of service vulnerability when extremely long version strings are parsed.\n\n## Proof of Concept\n```javascript\nvar ms = require('ms');\nvar genstr = function (len, chr) {\n   var result = \"\";\n   for (i=0; i<=len; i++) {\n       result = result + chr;\n   }\n\n   return result;\n}\n\nms(genstr(process.argv[2], \"5\") + \" minutea\");\n\n```\n",
+  "cwes": [
+   "CWE-1333",
+   "CWE-400"
+  ],
+  "owasp": [
+   "A06:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "brace-expansion 1.1.11: brace-expansion: Brace-expansion: Denial of Service via memory exhaustion in expand() function",
+  "description": "brace-expansion through 5.0.7 is vulnerable to denial of service via memory exhaustion. The expand() function limits the number of results with a max option (default 100,000) but does not bound the length of each result string. By chaining multiple brace groups, an attacker keeps the result count under the limit while making each result progressively longer, so total memory scales with both count ",
+  "cwes": [
+   "CWE-400",
+   "CWE-770"
+  ],
+  "owasp": [
+   "A06:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "js-yaml 3.13.1: js-yaml: js-yaml: Denial of Service via crafted YAML documents",
+  "description": "js-yaml is a JavaScript YAML parser and dumper. From 3.0.0 before 3.15.0 and from 4.0.0 before 4.3.0, js-yaml can spend quadratic CPU time parsing a document whose size grows only linearly when a chain of mappings uses merge keys where each mapping merges the previous one. This issue is fixed in versions 3.15.0 and 4.3.0.",
+  "cwes": [
+   "CWE-407",
+   "CWE-400"
+  ],
+  "owasp": [
+   "A06:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "handlebars 4.0.11: handlebars.js: Handlebars: Remote Code Execution via crafted Abstract Syntax Tree object in compile()",
+  "description": "Handlebars provides the power necessary to let users build semantic templates. In versions 4.0.0 through 4.7.8, `Handlebars.compile()` accepts a pre-parsed AST object in addition to a template string. The `value` field of a `NumberLiteral` AST node is emitted directly into the generated JavaScript without quoting or sanitization. An attacker who can supply a crafted AST to `compile()` can therefor",
+  "cwes": [
+   "CWE-94",
+   "CWE-843"
+  ],
+  "owasp": [
+   "A03:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "marked 0.3.5: marked version 0.3.6 and earlier is vulnerable to an XSS attack in the ...",
+  "description": "marked version 0.3.6 and earlier is vulnerable to an XSS attack in the data: URI parser.",
+  "cwes": [
+   "CWE-79"
+  ],
+  "owasp": [
+   "A03:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "mongoose 4.2.4: Mongoose: Prototype pollution in mongoose update casting via __proto__-prefixed dotted path (Schema._getSchema/path getter)",
+  "description": "Mongoose is a MongoDB object modeling tool designed to work in an asynchronous environment. Prior to 6.13.10, 7.8.10, 8.24.1, and 9.7.2, passing a user-controlled update such as MyModel.updateOne(filter, req.body) can exploit Mongoose update casting with a __proto__.x dotted path under $set. Schema.prototype.path and Schema.prototype._getPathType can treat inherited properties of schema.paths and ",
+  "cwes": [
+   "CWE-1321"
+  ],
+  "owasp": [
+   "A06:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "lodash.set 4.3.2: nodejs-lodash: prototype pollution in zipObjectDeep function",
+  "description": "Prototype pollution attack when using _.zipObjectDeep in lodash before 4.17.20.",
+  "cwes": [
+   "CWE-770",
+   "CWE-1321"
+  ],
+  "owasp": [
+   "A06:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "Detected an explicit unescape in an EJS template, using '<%- ..",
+  "description": "Detected an explicit unescape in an EJS template, using '<%- ... %>' If external data can reach these locations, your application is exposed to a cross-site scripting (XSS) vulnerability. Use '<%= ... %>' to escape this data. If you need escaping, ensure no external data can reach this location.",
+  "cwes": [
+   "CWE-79"
+  ],
+  "owasp": [
+   "A03:2021"
+  ],
+  "category": "sast"
+ },
+ {
+  "title": "Detected an explicit unescape in a Mustache template, using triple braces '{{{...}}}' or ampersand '&'",
+  "description": "Detected an explicit unescape in a Mustache template, using triple braces '{{{...}}}' or ampersand '&'. If external data can reach these locations, your application is exposed to a cross-site scripting (XSS) vulnerability. If you must do this, ensure no external data can reach this location.",
+  "cwes": [
+   "CWE-79"
+  ],
+  "owasp": [
+   "A03:2021"
+  ],
+  "category": "sast"
+ },
+ {
+  "title": "ejs 0.8.8: nodejs-ejs: Cross-site scripting via ejs.renderFile()",
+  "description": "nodejs ejs version older than 2.5.5 is vulnerable to a Cross-site-scripting in the ejs.renderFile() resulting in code injection",
+  "cwes": [
+   "CWE-79"
+  ],
+  "owasp": [
+   "A03:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "elliptic 6.4.1: The package elliptic before 6.5.4 are vulnerable to Cryptographic Issu ...",
+  "description": "The package elliptic before 6.5.4 are vulnerable to Cryptographic Issues via the secp256k1 implementation in elliptic/ec/key.js. There is no check to confirm that the public key point passed into the derive function actually exists on the secp256k1 curve. This results in the potential for the private key used in this implementation to be revealed after a number of ECDH operations are performed.",
+  "cwes": [
+   "CWE-327"
+  ],
+  "owasp": [
+   "A02:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "brace-expansion 1.1.11: brace-expansion: brace-expansion: Denial of Service via zero step value in brace pattern",
+  "description": "The brace-expansion library generates arbitrary strings containing a common prefix and suffix. Prior to versions 5.0.5, 3.0.2, 2.0.3, and 1.1.13, a brace pattern with a zero step value (e.g., `{1..2..0}`) causes the sequence generation loop to run indefinitely, making the process hang for seconds and allocate heaps of memory. Versions 5.0.5, 3.0.2, 2.0.3, and 1.1.13 fix the issue. As a workaround,",
+  "cwes": [
+   "CWE-400"
+  ],
+  "owasp": [
+   "A06:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "snyk-php-plugin 1.7.0: OS Command Injection in Snyk php plugin",
+  "description": "The package Snyk CLI before 1.1294.0 is vulnerable to Code Injection when scanning an untrusted PHP project. The vulnerability can be triggered if Snyk test is run inside the untrusted project due to the improper handling of the current working directory name. Snyk recommends only scanning trusted projects.",
+  "cwes": [
+   "CWE-78"
+  ],
+  "owasp": [
+   "A03:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "express-fileupload 0.0.5: Express-FileUpload Arbitrary File Overwrite",
+  "description": "An arbitrary file write vulnerability in Express-FileUpload v1.3.1 allows attackers to upload multiple files with the same name, causing an overwrite of files in the web application server.",
+  "cwes": [
+   "CWE-434"
+  ],
+  "owasp": [
+   "A04:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "snyk-gradle-plugin 3.2.2: snyk: snyk-hex-plugin: command injection",
+  "description": "The package snyk before 1.1064.0; the package snyk-mvn-plugin before 2.31.3; the package snyk-gradle-plugin before 3.24.5; the package @snyk/snyk-cocoapods-plugin before 2.5.3; the package snyk-sbt-plugin before 2.16.2; the package snyk-python-plugin before 1.24.2; the package snyk-docker-plugin before 5.6.5; the package @snyk/snyk-hex-plugin before 1.1.6 are vulnerable to Command Injection due to",
+  "cwes": [
+   "CWE-78"
+  ],
+  "owasp": [
+   "A03:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "lodash 4.17.10: lodash: uncontrolled resource consumption in Data handler causing denial of service",
+  "description": "lodash prior to 4.17.11 is affected by: CWE-400: Uncontrolled Resource Consumption. The impact is: Denial of service. The component is: Date handler. The attack vector is: Attacker provides very long strings, which the library attempts to match using a regular expression. The fixed version is: 4.17.11.",
+  "cwes": [
+   "CWE-400",
+   "CWE-770"
+  ],
+  "owasp": [
+   "A06:2021"
+  ],
+  "category": "sca"
+ },
+ {
+  "title": "dot-prop 4.2.0: nodejs-dot-prop: prototype pollution",
+  "description": "Prototype pollution vulnerability in dot-prop npm package versions before 4.2.1 and versions 5.x before 5.1.1 allows an attacker to add arbitrary properties to JavaScript language constructs such as objects.",
+  "cwes": [
+   "CWE-471",
+   "CWE-1321",
+   "CWE-425"
+  ],
+  "owasp": [
+   "A01:2021",
+   "A03:2021"
+  ],
+  "category": "sca"
+ }
+]

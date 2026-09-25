@@ -1,0 +1,31 @@
+{
+  "cwe": {
+    "url": "https://cwe.mitre.org/data/xml/cwec_latest.xml.zip",
+    "version": "4.20",
+    "documents": 211,
+    "requested": 226,
+    "not_in_catalog_as_weakness": [
+      2,
+      16,
+      100,
+      255,
+      264,
+      275,
+      310,
+      399,
+      720,
+      818,
+      840,
+      937,
+      1032,
+      1035,
+      1216
+    ]
+  },
+  "cheat_sheets": {
+    "repo": "https://github.com/OWASP/CheatSheetSeries",
+    "commit": "c04039adbe6f727a2198b3a3ea634fec98ac068a",
+    "sheets": 59,
+    "chunks": 1697
+  }
+}

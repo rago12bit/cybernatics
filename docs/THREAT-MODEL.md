@@ -86,7 +86,9 @@ disabled (`core/gitfetch.py`). The API never scans server-side paths: only Git U
 - **Note:** redaction before any LLM call applies when the LLM features exist (see T8).
 
 ### T8 Prompt injection (N/A yet)
-No LLM is called anywhere in v0.1.0. When remediation suggestions are built the requirements are:
+No LLM is called anywhere in v0.1.0. The retrieval half exists (Week 11, [docs/rag.md](rag.md)) and already follows
+two of the rules: its search query is built from the finding's title and description and **never the code
+snippet**, and everything it returns is public reference text intended to be passed as data. When remediation suggestions are built the requirements are:
 delimited untrusted-data blocks, schema-validated output, and the model must not be able to suppress or
 downgrade a finding. Suggestions will be labelled AI-generated.
 

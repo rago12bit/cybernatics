@@ -89,6 +89,48 @@ def scan_cmd(
         typer.echo(data.decode())
 
 
+kb_app = typer.Typer(help="Remediation knowledge base: CWE + OWASP cheat-sheet corpus in pgvector.")
+app.add_typer(kb_app, name="kb")
+
+
+@kb_app.command("load")
+def kb_load() -> None:
+    """(Re)build the search index from the committed corpus. Idempotent; takes about a second."""
+    from core.persistence.db import get_session_factory
+    from core.rag.corpus_io import read_corpus
+    from core.rag.store import load_corpus
+
+    with get_session_factory()() as s:
+        info = load_corpus(s, read_corpus())
+    typer.echo(json.dumps(info))
+
+
+@kb_app.command("stats")
+def kb_stats() -> None:
+    from core.persistence.db import get_session_factory
+    from core.rag.store import KnowledgeBase
+
+    with get_session_factory()() as s:
+        typer.echo(json.dumps(KnowledgeBase(s).stats(), indent=2))
+
+
+@kb_app.command("search")
+def kb_search(
+    query: str = typer.Argument(..., help="What to look for, in plain words."),
+    k: int = typer.Option(5, "-k", help="How many results."),
+    kind: str | None = typer.Option(None, help="cwe or cheatsheet."),
+) -> None:
+    """Semantic search over the corpus (for checking what a finding would be given)."""
+    from core.persistence.db import get_session_factory
+    from core.rag.store import KnowledgeBase
+
+    with get_session_factory()() as s:
+        for h in KnowledgeBase(s).search(query, k, kind=kind):
+            typer.echo(
+                f"{h.score:.3f}  {h.chunk.title} | {h.chunk.section[:70]}\n        {h.chunk.url}"
+            )
+
+
 @app.command("update-feeds")
 def update_feeds_cmd() -> None:
     """Download the EPSS and CISA KEV feeds behind risk scores (the worker also does this daily)."""
