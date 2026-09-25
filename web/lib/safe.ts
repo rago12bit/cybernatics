@@ -1,3 +1,5 @@
+import { OWASP_2021 } from "./owasp";
+
 // Link builders for data that comes from scanned (untrusted) repositories and scanner output.
 // Rule: never put an unvalidated string into an href.
 
@@ -24,6 +26,5 @@ export function cveUrl(id: string): string | null {
 }
 
 export function owaspUrl(id: string): string | null {
-  const m = OWASP.exec(id);
-  return m ? `https://owasp.org/Top10/A${m[1]}_2021/` : null;
+  return OWASP.test(id) ? `https://top10.owasp.org/${OWASP_2021[id]!.slug}/` : null;
 }

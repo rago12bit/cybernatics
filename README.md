@@ -1,17 +1,68 @@
 # Bulwark
 
-Unified security scanning platform. Bulwark orchestrates best-in-class open-source scanners in
-sandboxed containers, normalizes their output to one schema, deduplicates overlapping findings, and
-ranks by realistic exploitability (EPSS, CISA KEV, reachability) rather than raw severity.
+**One scan, one deduplicated list of findings.** Bulwark runs five open-source security scanners against
+a repository, merges what they agree on, and shows you a single list you can actually work through.
 
-> Status: pre-alpha (Week 1 scaffold). Design: see the project design document.
+> Status: pre-alpha. Weeks 1-7 of the plan are done (scanners, correlation, API, UI, CWE/OWASP mapping).
+> Risk ranking with EPSS and CISA KEV is next (Week 9). Not ready for untrusted multi-user hosting yet:
+> auth is a single shared token (see [Limits](#limits)).
 
-## Development
+## The problem
+
+Every scanner covers a different slice, so you run several, and then drown. A single SQL injection shows
+up as a Bandit finding, a Semgrep finding and a CWE entry; one vulnerable npm package appears in Trivy
+*and* OSV-Scanner, each with its own severity. Bulwark treats the pile as one problem:
+
+1. **Run** [Bandit](https://github.com/PyCQA/bandit), [Semgrep CE](https://github.com/semgrep/semgrep),
+   [Gitleaks](https://github.com/gitleaks/gitleaks), [Trivy](https://github.com/aquasecurity/trivy) and
+   [OSV-Scanner](https://github.com/google/osv-scanner), each in a locked-down container.
+2. **Normalize** every result into one `Finding` schema.
+3. **Correlate**: merge duplicates across tools (same dependency + shared advisory id; same file, weakness
+   family and code within a few lines), keep every tool's evidence, take the highest severity.
+4. **Map** each finding to its CWE and [OWASP Top 10:2021](docs/taxonomy.md) category.
+5. **Show** it in a web UI, API, CLI or JSON.
+
+## Architecture
+
+```mermaid
+flowchart LR
+    U[Web UI / CLI / API client] -->|Git URL or archive| API[FastAPI]
+    API --> DB[(Postgres)]
+    API -->|enqueue| Q[(Redis)]
+    Q --> W[Celery worker]
+    W -->|via socket proxy| D{{Docker}}
+    D --> B[Bandit] & S[Semgrep] & G[Gitleaks] & T[Trivy] & O[OSV-Scanner]
+    B & S & G & T & O -->|tool output| N[Adapters: canonical Finding]
+    N --> C[Correlation + dedup]
+    C --> M[CWE / OWASP mapping]
+    M --> R[Redaction]
+    R --> DB
+    W -->|raw output, no secrets| S3[(S3 store)]
+    API -.->|live progress| U
+```
+
+Scanners never see the network or the host: each runs with `--network=none --read-only --cap-drop=ALL
+--user=10001 --memory=2g --pids-limit=256` and the target mounted read-only. Design decisions are recorded
+as [ADRs](docs/adr/) (correlation: [ADR-004](docs/adr/0004-fingerprinting-and-correlation.md)).
+
+## Quickstart
+
+Needs Docker (with Compose) running. The first build downloads scanner databases (about 1.4 GB for Trivy).
 
 ```bash
-python3 -m venv .venv && source .venv/bin/activate
+./scripts/init-env.sh                       # writes .env with random secrets
+docker compose --profile scanners build     # app image + the custom scanner images
+docker compose up -d
+```
+
+Open **http://localhost:3000**. The first page is a real sample report, no sign-in needed. To scan your own
+code, go to **/app**, paste the API token from `.env` (`BULWARK_API_TOKEN`) and submit a Git URL or archive.
+
+Prefer the command line?
+
+```bash
 pip install -e ".[dev]"
-ruff check . && black --check . && mypy && pytest
+bulwark scan https://github.com/OWASP/NodeGoat
 ```
 
 ## Results so far
@@ -30,9 +81,19 @@ Cross-tool deduplication over five public repositories (details and caveats in
 
 Measured 2026-09-25. This measures duplicate reduction, not accuracy; precision/recall benchmarks come in Phase 6.
 
+
+## Limits
+
+- One shared bearer token: no users, roles or rate limiting yet.
+- The worker reaches Docker through a socket proxy; that reduces but does not remove the risk
+  ([ADR-002](docs/adr/0002-docker-isolation-strategy.md)).
+- Semgrep's community rules may not be redistributed or offered as a service
+  ([ADR-006](docs/adr/0006-semgrep-rules-licensing.md)); fine for your own use, undecided for a public demo.
+- Deduplication numbers measure duplicate reduction, not accuracy; precision/recall benchmarks come later.
+
 License: Apache-2.0
 
-## Run the full stack (API + worker + Postgres + Redis + object store)
+## Running the full stack, in detail (API + worker + Postgres + Redis + object store)
 
 ```bash
 ./scripts/init-env.sh                       # writes .env with random secrets; creates the work dir
@@ -40,7 +101,7 @@ docker compose --profile scanners build     # builds the app image and the 4 cus
 docker compose up -d
 ```
 
-Open **http://localhost:3000** for the web UI (no server needed to look around: **/demo** is a full sample report): paste your API token once, submit a Git URL or an
+Open **http://localhost:3000** for the web UI (the first page is a full sample report that needs no server; the product pitch is at **/about**): paste your API token once, submit a Git URL or an
 archive, watch scanners report live, then filter and sort the merged findings and open any finding for
 the code, per-scanner severities and fix guidance. The UI is served with a strict per-request-nonce
 CSP and renders all scanner data as text, never HTML (threat T9; covered by `web/tests/xss.test.tsx`).
@@ -97,7 +158,7 @@ internal use only — see [ADR-006](docs/adr/0006-semgrep-rules-licensing.md).
 
 ## Web UI development
 
-The landing page uses a scroll-driven section stack (each section pins while the next slides over it).
+The `/about` page uses a scroll-driven section stack (each section pins while the next slides over it).
 It is disabled under `prefers-reduced-motion` and below 961px, where sections simply flow; the geometry
 lives in `web/lib/stack.ts` and is unit-tested.
 

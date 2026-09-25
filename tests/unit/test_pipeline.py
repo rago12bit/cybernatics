@@ -306,3 +306,28 @@ def test_correlation_runs_before_redaction(
         rows = s.query(FindingRow).all()
         assert len(rows) == 3, "distinct defects must not be merged by redaction placeholders"
         assert all("withheld" in r.data["location"]["snippet"] or r.category == "secrets" for r in rows)  # fmt: skip
+
+
+def test_stored_findings_carry_cwe_and_owasp_mapping(
+    sessions: sessionmaker[Session], sample_repo: Path
+) -> None:
+    """The API path (not just `scan()`) must enrich: a real run once stored SCA findings with no OWASP."""
+    (sample_repo / "requirements.txt").write_text("requests==2.0.0\n")  # so Trivy applies
+    with sessions() as s:
+        sid = make_scan(s, ["bandit", "trivy", "gitleaks"], str(sample_repo))
+    sast = finding("bandit", Category.SAST, line=3)
+    sast.taxonomy = Taxonomy(Category.SAST, cwe=("89",))  # unnormalized on purpose
+    sca = finding("trivy", Category.SCA, path="requirements.txt")  # no CWE at all
+    secret = finding("gitleaks", Category.SECRETS, line=9)
+    secret.taxonomy = Taxonomy(Category.SECRETS, cwe=("CWE-798",))
+    table = {
+        "bandit": ToolOutcome("bandit", "ok", [sast]),
+        "trivy": ToolOutcome("trivy", "ok", [sca]),
+        "gitleaks": ToolOutcome("gitleaks", "ok", [secret]),
+    }
+    run_scan_job(sid, sessions, MemoryStore(), MemoryPublisher(), executor_from(table))
+    with sessions() as s:
+        tax = {r.category: r.data["taxonomy"] for r in s.query(FindingRow).all()}
+    assert tax["sast"]["cwe"] == ["CWE-89"] and tax["sast"]["owasp_top_10_2021"] == ["A03:2021"]
+    assert tax["sca"]["owasp_top_10_2021"] == ["A06:2021"]
+    assert tax["secrets"]["owasp_top_10_2021"] == ["A07:2021"]

@@ -19,6 +19,7 @@ from core.persistence.storage import ObjectStore
 from core.redact import redact_near_secrets
 from core.scan import ADAPTERS, ToolOutcome, detect_context, execute_tool
 from core.source import materialize
+from core.taxonomy import enrich_all
 
 log = logging.getLogger(__name__)
 
@@ -90,7 +91,7 @@ def run_scan_job(
 
     # Correlate BEFORE redacting: redaction placeholders look identical and would over-merge.
     correlated, stats = correlate([f for o in outcomes for f in o.findings])
-    findings = redact_near_secrets(correlated)
+    findings = redact_near_secrets(enrich_all(correlated))
     has_secrets = any(f.taxonomy.category is Category.SECRETS for f in findings)
     _store_raw(sessions, store, scan_id, outcomes, raws, has_secrets)
     status = _final_status(outcomes)

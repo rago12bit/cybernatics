@@ -51,7 +51,7 @@ describe("axe accessibility audit", () => {
     const { host } = await mount(<TokenGate><p>secret app</p></TokenGate>);
     expect(host.textContent).not.toContain("secret app"); // the wall really blocks the app
     expect(host.querySelector("label[for=token]")).not.toBeNull(); // input has a real label
-    expect(host.querySelector("a[href='/demo']")).not.toBeNull(); // and a way forward without a token
+    expect(host.querySelector("a[href='/']")).not.toBeNull(); // and a way forward without a token
     expect(await violations(host)).toEqual([]);
   });
 
@@ -69,9 +69,9 @@ describe("axe accessibility audit", () => {
   });
 
   it("header marks the current page and shows Sign out only when signed in", async () => {
-    path = "/demo";
+    path = "/";
     const a = await mount(<SiteHeader />);
-    expect(a.host.querySelector("nav a[aria-current='page']")?.textContent).toBe("Demo");
+    expect(a.host.querySelector("nav a[aria-current='page']")?.textContent).toBe("Sample scan");
     expect(a.host.textContent).not.toContain("Sign out");
     await act(async () => a.root.unmount());
     sessionStorage.setItem("bulwark.token", "x".repeat(20));

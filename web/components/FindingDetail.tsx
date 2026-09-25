@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { agreementLabel, locationLabel, nativeSeverities } from "@/lib/format";
+import { owaspLabel } from "@/lib/owasp";
 import { cveUrl, cweUrl, owaspUrl, safeHttpsUrl } from "@/lib/safe";
 import type { Finding, ScanView } from "@/lib/types";
 import { SeverityBadge } from "./Badges";
@@ -110,7 +111,7 @@ export function FindingDetail({
       <div className="chips">
         {f.taxonomy.cwe.map((c) => <Ref key={c} href={cweUrl(c)} label={c} />)}
         {f.taxonomy.cve.map((c) => <Ref key={c} href={cveUrl(c)} label={c} />)}
-        {f.taxonomy.owasp_top_10_2021.map((c) => <Ref key={c} href={owaspUrl(c)} label={`OWASP ${c}`} />)}
+        {f.taxonomy.owasp_top_10_2021.map((c) => <Ref key={c} href={owaspUrl(c)} label={owaspLabel(c)} />)}
       </div>
       {refs.length > 0 && (
         <ul className="refs">

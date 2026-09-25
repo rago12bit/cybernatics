@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { agreementLabel, dedupSummary, defaultQuery, findingsQueryString, formatDuration, locationLabel, pageCount } from "../lib/format";
+import { readFileSync } from "node:fs";
+import { OWASP_2021, owaspLabel } from "../lib/owasp";
 import { cveUrl, cweUrl, owaspUrl, safeHttpsUrl } from "../lib/safe";
 import type { Finding, ScanView } from "../lib/types";
 
@@ -33,7 +35,7 @@ describe("safe links (untrusted scanner data must never become a dangerous href)
   it("builds CWE/CVE/OWASP links only from well-formed ids", () => {
     expect(cweUrl("CWE-89")).toBe("https://cwe.mitre.org/data/definitions/89.html");
     expect(cveUrl("cve-2021-23337")).toBe("https://nvd.nist.gov/vuln/detail/CVE-2021-23337");
-    expect(owaspUrl("A03:2021")).toBe("https://owasp.org/Top10/A03_2021/");
+    expect(owaspUrl("A03:2021")).toBe("https://top10.owasp.org/A03_2021-Injection/");
     for (const bad of ["CWE-89/../x", "CWE-", "javascript:CWE-1", "CWE-999999"]) expect(cweUrl(bad)).toBeNull();
     for (const bad of ["CVE-2021-1", "GHSA-xxxx", 'CVE-2021-23337"><script>']) expect(cveUrl(bad)).toBeNull();
     for (const bad of ["A11:2021", "A03:2017", "A03"]) expect(owaspUrl(bad)).toBeNull();
@@ -150,5 +152,18 @@ describe("export", () => {
     expect(exportFilename(scan)).toBe("bulwark-github.com-OWASP-NodeGoat-findings.json");
     expect(exportFilename({ ...scan, source_label: "../../etc/passwd" })).not.toContain("/");
     expect(exportFilename({ ...scan, source_label: "???" })).toBe("bulwark-scan-findings.json");
+  });
+});
+
+describe("owasp table", () => {
+  it("names and ids match the backend table (single source of truth is core/taxonomy)", () => {
+    const backend = JSON.parse(readFileSync(new URL("../../core/taxonomy/owasp_top10_2021.json", import.meta.url), "utf8")).categories;
+    expect(Object.keys(OWASP_2021)).toEqual(Object.keys(backend));
+    for (const [id, e] of Object.entries(OWASP_2021)) expect(e.name).toBe(backend[id].name);
+  });
+  it("labels known ids with their name and passes unknown ones through as text", () => {
+    expect(owaspLabel("A03:2021")).toBe("OWASP A03 Injection");
+    expect(owaspLabel("__proto__")).toBe("OWASP __proto__");
+    expect(owaspUrl("__proto__")).toBeNull();
   });
 });

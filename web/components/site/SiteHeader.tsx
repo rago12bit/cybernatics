@@ -7,10 +7,10 @@ import { clearToken, getToken } from "@/lib/api";
 import { BrandMark } from "./graphics";
 
 const LINKS = [
-  { href: "/#product", label: "Product", id: "product" },
-  { href: "/#results", label: "Results", id: "results" },
-  { href: "/#scanners", label: "Scanners", id: "scanners" },
-  { href: "/demo", label: "Demo" },
+  { href: "/about#product", label: "Product", id: "product" },
+  { href: "/about#results", label: "Results", id: "results" },
+  { href: "/about#scanners", label: "Scanners", id: "scanners" },
+  { href: "/", label: "Sample scan" },
   { href: "/app", label: "App" },
 ];
 
@@ -20,7 +20,7 @@ export function SiteHeader() {
   const [menu, setMenu] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
   const [active, setActive] = useState("product");
-  const onLanding = path === "/";
+  const onLanding = path === "/about";
   const inApp = path.startsWith("/app") || path.startsWith("/scans");
 
   useEffect(() => { setSignedIn(Boolean(getToken())); setMenu(false); }, [path]);
@@ -45,7 +45,7 @@ export function SiteHeader() {
   }, [menu]);
 
   const current = (l: (typeof LINKS)[number]) =>
-    l.id ? (onLanding && active === l.id ? "location" : undefined) : path.startsWith(l.href) || (l.href === "/app" && inApp) ? "page" : undefined;
+    l.id ? (onLanding && active === l.id ? "location" : undefined) : (l.href === "/" ? path === "/" : path.startsWith(l.href) || (l.href === "/app" && inApp)) ? "page" : undefined;
 
   const signOut = () => { clearToken(); setSignedIn(false); setMenu(false); router.push("/"); };
 
