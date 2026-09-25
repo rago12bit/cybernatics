@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bulwark fix-quality scoring</title>
+<style>
+:root{color-scheme:light dark;--bg:#fff;--fg:#1a1a17;--mut:#5b5c52;--line:#d9d9d0;--card:#f6f6f1;--acc:#0c7a5e;--warn:#8a6100}
+@media (prefers-color-scheme:dark){:root{--bg:#131310;--fg:#ecebe4;--mut:#a3a496;--line:#34352e;--card:#1b1b17;--acc:#12b58b;--warn:#e8b74f}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,sans-serif}
+main{max-width:70rem;margin:0 auto;padding:1rem 1.25rem 4rem}header{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--line);padding:.6rem 0;display:flex;gap:.8rem;align-items:center;flex-wrap:wrap}
+h1{font-size:1.05rem;margin:0}h2{font-size:.8rem;text-transform:uppercase;letter-spacing:.07em;color:var(--mut);margin:1.2rem 0 .4rem}
+button{font:inherit;padding:.35rem .7rem;border:1px solid var(--fg);background:transparent;color:var(--fg);cursor:pointer}button:disabled{opacity:.4;cursor:default}
+pre{background:var(--card);border:1px solid var(--line);padding:.7rem;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;font:12.5px/1.45 ui-monospace,Menlo,monospace;margin:.3rem 0}
+.box{border:1px solid var(--line);background:var(--card);padding:.8rem 1rem;margin:.4rem 0}.mut{color:var(--mut)}.warn{color:var(--warn)}
+fieldset{border:1px solid var(--line);margin:.6rem 0;padding:.6rem .9rem}legend{font-weight:600;padding:0 .3rem}label{margin-right:1rem;white-space:nowrap}
+.done{color:var(--acc)}#msg{min-height:1.2rem}.rub{font-size:.85rem;color:var(--mut);margin:.2rem 0 .4rem}
+</style></head><body><main>
+<header><h1>Fix-quality scoring</h1><span id="progress" class="mut"></span><span style="flex:1"></span>
+<button id="prev">&larr; Prev</button><button id="next">Next &rarr;</button><button id="export">Download scores.json</button></header>
+<p id="msg" role="status" aria-live="polite"></p>
+<div id="item"></div>
+<script id="data" type="application/json">__DATA__</script>
+<script>
+(function(){
+"use strict";
+var DATA = JSON.parse(document.getElementById("data").textContent);
+var items = DATA.items, KEY = "bulwark-scoring-" + DATA.run, cur = 0, scores = {};
+try { scores = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { scores = {}; }
+var SCALES = {
+ explanation_accurate: ["Is the EXPLANATION accurate for this code?", ["0 wrong or misleading","1 partly right","2 accurate"], true],
+ fix_correct: ["Is the FIX correct and specific to this code?", ["0 wrong, or would not fix it, or harmful","1 generic or incomplete","2 correct and specific"], true],
+ patch_correct: ["Is the PATCH correct? (only when a patch is shown)", ["0 wrong or breaks the code","1 helps but needs edits","2 correct as written"], false],
+ unsafe: ["Would following it introduce a NEW vulnerability or a bad practice?", ["0 no","1 yes"], true],
+ hallucination: ["Does it refer to code, APIs or files that are NOT in the snippet?", ["0 no","1 yes"], true],
+ static_fix_correct: ["Optional baseline: is the REFERENCE guidance (below) a correct, specific fix?", ["0 wrong / harmful","1 generic or incomplete","2 correct and specific"], false]
+};
+var REQ = ["explanation_accurate","fix_correct","unsafe","hallucination"];
+function el(tag, cls, text){ var e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = String(text); return e; }
+function pre(text){ return el("pre", "", text); }
+function section(title){ return el("h2", "", title); }
+function complete(id){ var s = scores[id] || {}; return REQ.every(function(k){ return s[k] === 0 || s[k] === 1 || s[k] === 2; }); }
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(scores)); } catch (e) {} }
+function count(){ return items.filter(function(it){ return complete(it.item_id); }).length; }
+function fieldsetFor(id, key, hasPatch){
+  var spec = SCALES[key];
+  if (key === "patch_correct" && !hasPatch) return null;
+  var fs = el("fieldset"); fs.appendChild(el("legend", "", spec[0]));
+  spec[1].forEach(function(label){
+    var val = parseInt(label.charAt(0), 10);
+    var lab = el("label"); var r = el("input"); r.type = "radio"; r.name = key + "-" + id; r.value = String(val);
+    r.checked = (scores[id] || {})[key] === val;
+    r.addEventListener("change", function(){ scores[id] = scores[id] || {}; scores[id][key] = val; save(); refresh(); });
+    lab.appendChild(r); lab.appendChild(document.createTextNode(" " + label)); fs.appendChild(lab);
+  });
+  return fs;
+}
+function render(){
+  var it = items[cur], f = it.finding, r = it.result, root = document.getElementById("item");
+  root.textContent = "";
+  var head = el("div", "box");
+  head.appendChild(el("div", "mut", "Item " + (cur + 1) + " of " + items.length + "  |  " + it.repo + "  |  " + it.rule + "  |  " + f.taxonomy.category));
+  head.appendChild(el("strong", "", f.title));
+  head.appendChild(el("div", "mut", f.location.path + ":" + f.location.start_line + (f.taxonomy.cwe.length ? "  |  " + f.taxonomy.cwe.join(", ") : "")));
+  if (f.description) head.appendChild(el("div", "", f.description));
+  root.appendChild(head);
+  if (f.location.snippet) { root.appendChild(section("Code the model saw")); root.appendChild(pre(f.location.snippet)); }
+  var ai = r.source === "ai";
+  root.appendChild(section("Model answer"));
+  var box = el("div", "box");
+  if (ai) {
+    box.appendChild(el("div", "", r.explanation));
+    box.appendChild(el("div", "", "Impact: " + r.impact));
+    box.appendChild(el("div", "", "How to fix: " + r.fix_summary));
+    if (r.suggested_patch) { box.appendChild(el("div", "mut", "Suggested patch:")); box.appendChild(pre(r.suggested_patch)); }
+  } else {
+    box.appendChild(el("div", "warn", "The model's answer was not usable, so Bulwark showed reference text instead. Score the fix as 0 unless the reference text alone is a correct specific fix; mention it in the notes."));
+  }
+  root.appendChild(box);
+  root.appendChild(section("Reference guidance (the non-AI baseline)"));
+  var b = el("div", "box"); b.appendChild(el("div", "", DATA.static[it.item_id].explanation)); b.appendChild(el("div", "", "How to fix: " + DATA.static[it.item_id].fix_summary)); root.appendChild(b);
+  root.appendChild(section("Your scores"));
+  root.appendChild(el("p", "rub", "Judge the code and the answer, not the model's tone. Confidence and automatic checks are hidden on purpose."));
+  var hasPatch = ai && !!r.suggested_patch;
+  ["explanation_accurate","fix_correct","patch_correct","unsafe","hallucination","static_fix_correct"].forEach(function(k){ var fs = fieldsetFor(it.item_id, k, hasPatch); if (fs) root.appendChild(fs); });
+  var notes = el("textarea"); notes.rows = 3; notes.style.width = "100%"; notes.setAttribute("aria-label", "Notes"); notes.value = (scores[it.item_id] || {}).notes || "";
+  notes.addEventListener("input", function(){ scores[it.item_id] = scores[it.item_id] || {}; scores[it.item_id].notes = notes.value; save(); });
+  root.appendChild(el("h2", "", "Notes (optional)")); root.appendChild(notes);
+  refresh();
+}
+function refresh(){
+  document.getElementById("progress").textContent = count() + " of " + items.length + " scored";
+  document.getElementById("prev").disabled = cur === 0; document.getElementById("next").disabled = cur === items.length - 1;
+}
+function download(){
+  var missing = items.filter(function(it){ return !complete(it.item_id); }).length;
+  var msg = document.getElementById("msg");
+  var out = {};
+  items.forEach(function(it){ var s = scores[it.item_id]; if (s) { out[it.item_id] = s; } });
+  var blob = new Blob([JSON.stringify(out, null, 1)], {type: "application/json"});
+  var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "scores.json"; document.body.appendChild(a); a.click(); a.remove();
+  msg.textContent = missing ? "Downloaded, but " + missing + " item(s) are not fully scored yet: the report will refuse until they are." : "Downloaded scores.json: all items scored.";
+  msg.className = missing ? "warn" : "done";
+}
+document.getElementById("prev").addEventListener("click", function(){ if (cur > 0) { cur--; render(); window.scrollTo(0, 0); } });
+document.getElementById("next").addEventListener("click", function(){ if (cur < items.length - 1) { cur++; render(); window.scrollTo(0, 0); } });
+document.getElementById("export").addEventListener("click", download);
+render();
+})();
+</script></main></body></html>

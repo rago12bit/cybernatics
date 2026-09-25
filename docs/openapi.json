@@ -805,6 +805,18 @@
             "type": "array",
             "title": "References"
           },
+          "patch_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Patch Status",
+            "description": "'verified' (matches the code) or 'unverified'."
+          },
           "from_cache": {
             "type": "boolean",
             "title": "From Cache",

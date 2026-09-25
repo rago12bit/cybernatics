@@ -46,11 +46,12 @@ target-version = "py310"
 select = ["E", "F", "I", "B", "UP"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["E501"]
+"tests/**" = ["E501", "F811"]  # F811: shared pytest fixtures are re-imported by name
 "core/export/*" = ["E501"]  # embedded CSS/HTML string literals
 "core/rag/*" = ["E501"]  # prose-heavy design docstrings
 "core/llm/*" = ["E501"]  # prompts and regexes
 "scripts/*" = ["E501"]
+"benchmarks/*" = ["E501"]
 
 [tool.ruff.lint.flake8-bugbear]
 extend-immutable-calls = [

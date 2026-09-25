@@ -109,6 +109,9 @@ class RemediationView(BaseModel):
     degraded_reason: str | None = None
     warnings: list[str] = Field(default_factory=list)
     references: list[dict[str, str]] = Field(default_factory=list)
+    patch_status: str | None = Field(
+        default=None, description="'verified' (matches the code) or 'unverified'."
+    )
     from_cache: bool = False
     generated_at: str | None = None
 

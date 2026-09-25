@@ -241,4 +241,6 @@ def test_the_most_specific_cwe_explains_a_finding_not_the_broadest(kb: Knowledge
     ctx = context_for(_finding("prototype pollution", cwe=("CWE-1321", "CWE-20", "CWE-915")), kb)
     assert ctx.cwe_entries[0].title.startswith("CWE-1321"), [r.title for r in ctx.cwe_entries]
     assert ctx.cwe_entries[0].section in {"Variant", "Base"}
-    assert len(ctx.cwe_entries) == 2 and not any(r.title.startswith("CWE-20:") for r in ctx.cwe_entries[:1])
+    assert len(ctx.cwe_entries) == 2 and not any(
+        r.title.startswith("CWE-20:") for r in ctx.cwe_entries[:1]
+    )

@@ -48,6 +48,7 @@ export interface Remediation {
   model: string | null;
   degraded_reason: string | null;
   warnings: string[];
+  patch_status: "verified" | "unverified" | null; // was the patch checked against the code it fixes?
   references: { title: string; url: string }[];
   from_cache: boolean;
   generated_at: string | null;

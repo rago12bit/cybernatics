@@ -30,7 +30,9 @@ from core.rag.store import KnowledgeBase, load_corpus  # noqa: E402
 
 def main() -> None:
     demo = json.loads((ROOT / "web/lib/demo-data.json").read_text())
-    engine = create_engine("sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool)
+    engine = create_engine(
+        "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
+    )
     Base.metadata.create_all(engine)
     out: dict[str, dict] = {}
     with Session(engine) as s:
@@ -40,7 +42,9 @@ def main() -> None:
             f = finding_from_dict(raw)
             r = static_suggestion(f, context_for(f, kb), "reference guidance")
             out[f.id] = asdict(r)
-    (ROOT / "web/lib/demo-guidance.json").write_text(json.dumps(out, indent=1, ensure_ascii=False, sort_keys=True) + "\n")
+    (ROOT / "web/lib/demo-guidance.json").write_text(
+        json.dumps(out, indent=1, ensure_ascii=False, sort_keys=True) + "\n"
+    )
     print(f"{len(out)} findings")
 
 

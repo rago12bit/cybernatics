@@ -59,6 +59,27 @@ Plan rule: the same Django SQL injection in fifty repositories should cost one m
   `BULWARK_LLM_MAX_PER_DAY` (default 200). It is per API process and resets on restart. With one shared token,
   this is what stops a click-happy user from running up your bill.
 
+## Patch checking
+
+The contract proves a patch is well formed and targets the right file. `core/llm/patchcheck.py` then checks it
+against the code the model was shown:
+
+- **verified**: every context and removed line matches the code. Line numbers the model got wrong are corrected
+  when the lines are found elsewhere in the snippet, and each hunk's context is balanced (`patch` and `git apply`
+  anchor a hunk with less trailing than leading context to the end of the file, which made minimal model-style
+  hunks fail). Tested against the real `patch` program.
+- **unverified**: the patch reaches outside the snippet Bulwark has, so it could not be checked. Shown, marked
+  "Not fully checked".
+- **rejected**: a hunk does not match the code, or the patch changes nothing. It is **discarded** (the explanation
+  stays) with a warning saying why.
+
+The UI shows a "Checked: matches the code" tag. That means the patch applies, **not** that it is the right fix.
+
+## Evaluation
+
+Fix quality has not been measured yet. The sample, runner, blinded scoring page and report are built; running
+them needs a model key and a person to score. See [evaluation-remediation.md](evaluation-remediation.md).
+
 ## Turning it on
 
 ```bash

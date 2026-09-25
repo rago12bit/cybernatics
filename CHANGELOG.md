@@ -6,6 +6,16 @@ versions will follow [SemVer](https://semver.org) once `v0.1.0` is tagged (plann
 ## [Unreleased]
 
 ### Added
+- **Patch checking (Week 14):** suggested patches are checked against the code the model saw: line numbers are
+  corrected, hunk context is balanced so `patch`/`git apply` accept minimal model-style hunks (tested against the
+  real `patch` tool), and a patch that does not match the code or changes nothing is discarded with a reason.
+  The UI shows "Checked: matches the code" or "Not fully checked".
+- **Fix-quality evaluation harness:** a deterministic 50-finding sample (35 code findings across 35 rules, 15
+  dependency findings), a runner using the product's own path, a blinded offline scoring page, and a report with
+  Wilson intervals that refuses unscored data. **The evaluation itself has not been run** (needs a model key and a
+  human scorer): see docs/evaluation-remediation.md.
+
+### Added
 - **AI suggestions in the app (Week 13), off by default:** a **Fix guidance** section in the finding panel with
   always-available reference guidance (CWE + OWASP, labelled "not AI-generated") and, when a server enables it, an
   explicit **Generate AI suggestion** click; AI text sits in its own dashed block labelled "AI suggestion. Review

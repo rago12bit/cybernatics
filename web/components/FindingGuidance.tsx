@@ -23,7 +23,7 @@ function Refs({ items }: { items: Remediation["references"] }) {
 }
 
 /** A unified diff as text, one line per row, marked by +/- characters as well as colour. */
-function Patch({ patch }: { patch: string }) {
+function Patch({ patch, status }: { patch: string; status: Remediation["patch_status"] }) {
   const [copied, setCopied] = useState(false);
   useEffect(() => {
     if (!copied) return;
@@ -34,6 +34,8 @@ function Patch({ patch }: { patch: string }) {
     <div className="patch">
       <div className="patch-head">
         <span className="label dimmed">Suggested patch (text only)</span>
+        {status === "verified" && <span className="tag ok" title="Every line the patch removes or keeps was found in the code, so it applies cleanly">Checked: matches the code</span>}
+        {status === "unverified" && <span className="tag warn-tag" title="Part of the patch is outside the code Bulwark has, so it could not be checked">Not fully checked</span>}
         <button type="button" className="btn sm" onClick={() => navigator.clipboard?.writeText(patch).then(() => setCopied(true), () => undefined)}>{copied ? "Copied" : "Copy patch"}</button>
       </div>
       <pre className="snippet diff" tabIndex={0} aria-label="Suggested patch"><code>
@@ -44,7 +46,7 @@ function Patch({ patch }: { patch: string }) {
           </Fragment>
         ))}
       </code></pre>
-      <p className="small muted">Bulwark never applies patches. Review it, and test it, before using it.</p>
+      <p className="small muted">{status === "verified" ? "It applies cleanly to the code shown, but that does not make it the right fix. " : ""}Bulwark never applies patches. Review it, and test it, before using it.</p>
     </div>
   );
 }
@@ -75,7 +77,7 @@ export function AiBlock({ r }: { r: Remediation }) {
       <p className="prose">{r.explanation}</p>
       <p className="prose"><b>Impact:</b> {r.impact}</p>
       <p className="prose"><b>How to fix:</b> {r.fix_summary}</p>
-      {r.suggested_patch && <Patch patch={r.suggested_patch} />}
+      {r.suggested_patch && <Patch patch={r.suggested_patch} status={r.patch_status} />}
       <Refs items={r.references} />
     </div>
   );

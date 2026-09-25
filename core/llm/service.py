@@ -16,6 +16,7 @@ from typing import Literal
 
 from core.llm.client import LLMClient
 from core.llm.contract import ContractError, Suggestion, parse_response
+from core.llm.patchcheck import check_patch
 from core.llm.prompt import CodeContext, build_prompt
 from core.models import Finding
 from core.rag.retrieve import RemediationContext, context_for
@@ -39,6 +40,9 @@ class RemediationResult:
     degraded_reason: str | None = None  # why static text was used instead of a model's
     warnings: list[str] = field(default_factory=list)
     references: list[dict[str, str]] = field(default_factory=list)
+    patch_status: str | None = (
+        None  # 'verified' | 'unverified' (never 'rejected': those patches are dropped)
+    )
     from_cache: bool = False
     generated_at: str | None = (
         None  # when the model produced it (cache hits keep the original time)
@@ -111,8 +115,20 @@ def suggest(
         res = static_suggestion(finding, ctx, f"model reply rejected: {exc}")
         res.warnings = warnings
         return res
+    patch, patch_status = s.suggested_patch, None
+    if patch:
+        # The contract proved the patch is well formed; this proves it matches the code we showed the model.
+        chk = check_patch(patch, code)
+        if chk.status == "rejected":
+            log.warning("remediation patch discarded: %s", chk.detail)
+            warnings.append(f"The suggested patch was discarded because {chk.detail}.")
+            patch = None
+        else:
+            patch, patch_status = chk.patch, chk.status
+            if chk.status == "unverified":
+                warnings.append(f"The suggested patch could not be fully checked: {chk.detail}.")
     return RemediationResult(
         source="ai", label=LABEL, explanation=s.explanation, impact=s.impact, fix_summary=s.fix_summary,
-        suggested_patch=s.suggested_patch, confidence=s.confidence, model=client.model,
-        warnings=warnings, references=_refs(ctx),
+        suggested_patch=patch, confidence=s.confidence, model=client.model,
+        warnings=warnings, references=_refs(ctx), patch_status=patch_status,
     )  # fmt: skip

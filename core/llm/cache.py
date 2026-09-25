@@ -93,6 +93,7 @@ def lookup(s: Session, f: Finding, model: str) -> RemediationResult | None:
         "suggested_patch"
     ):
         p["suggested_patch"] = None
+        p["patch_status"] = None
         warnings.append(PATCH_MOVED)
     return RemediationResult(**{**p, "warnings": warnings, "from_cache": True})
 

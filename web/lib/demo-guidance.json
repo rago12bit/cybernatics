@@ -9,6 +9,7 @@
   "impact": "See the CWE entry linked below for the consequences of this weakness.",
   "label": "Reference guidance (not AI-generated)",
   "model": null,
+  "patch_status": null,
   "references": [
    {
     "title": "CWE-259: Use of Hard-coded Password",
@@ -37,6 +38,7 @@
   "impact": "See the CWE entry linked below for the consequences of this weakness.",
   "label": "Reference guidance (not AI-generated)",
   "model": null,
+  "patch_status": null,
   "references": [
    {
     "title": "CWE-327: Use of a Broken or Risky Cryptographic Algorithm",
@@ -69,6 +71,7 @@
   "impact": "See the CWE entry linked below for the consequences of this weakness.",
   "label": "Reference guidance (not AI-generated)",
   "model": null,
+  "patch_status": null,
   "references": [
    {
     "title": "CWE-78: Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection')",
@@ -101,6 +104,7 @@
   "impact": "See the CWE entry linked below for the consequences of this weakness.",
   "label": "Reference guidance (not AI-generated)",
   "model": null,
+  "patch_status": null,
   "references": [
    {
     "title": "CWE-78: Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection')",
@@ -133,6 +137,7 @@
   "impact": "See the CWE entry linked below for the consequences of this weakness.",
   "label": "Reference guidance (not AI-generated)",
   "model": null,
+  "patch_status": null,
   "references": [
    {
     "title": "CWE-259: Use of Hard-coded Password",
@@ -165,6 +170,7 @@
   "impact": "See the CWE entry linked below for the consequences of this weakness.",
   "label": "Reference guidance (not AI-generated)",
   "model": null,
+  "patch_status": null,
   "references": [
    {
     "title": "CWE-1321: Improperly Controlled Modification of Object Prototype Attributes ('Prototype Pollution')",
@@ -197,6 +203,7 @@
   "impact": "See the CWE entry linked below for the consequences of this weakness.",
   "label": "Reference guidance (not AI-generated)",
   "model": null,
+  "patch_status": null,
   "references": [
    {
     "title": "CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')",
@@ -229,6 +236,7 @@
   "impact": "See the CWE entry linked below for the consequences of this weakness.",
   "label": "Reference guidance (not AI-generated)",
   "model": null,
+  "patch_status": null,
   "references": [
    {
     "title": "Secure Cloud Architecture",
@@ -257,6 +265,7 @@
   "impact": "See the CWE entry linked below for the consequences of this weakness.",
   "label": "Reference guidance (not AI-generated)",
   "model": null,
+  "patch_status": null,
   "references": [
    {
     "title": "Secure Cloud Architecture",
@@ -285,6 +294,7 @@
   "impact": "See the CWE entry linked below for the consequences of this weakness.",
   "label": "Reference guidance (not AI-generated)",
   "model": null,
+  "patch_status": null,
   "references": [
    {
     "title": "Secure Cloud Architecture",
@@ -313,6 +323,7 @@
   "impact": "See the CWE entry linked below for the consequences of this weakness.",
   "label": "Reference guidance (not AI-generated)",
   "model": null,
+  "patch_status": null,
   "references": [
    {
     "title": "Secure Cloud Architecture",
@@ -341,6 +352,7 @@
   "impact": "See the CWE entry linked below for the consequences of this weakness.",
   "label": "Reference guidance (not AI-generated)",
   "model": null,
+  "patch_status": null,
   "references": [
    {
     "title": "Secure Cloud Architecture",
@@ -369,6 +381,7 @@
   "impact": "See the CWE entry linked below for the consequences of this weakness.",
   "label": "Reference guidance (not AI-generated)",
   "model": null,
+  "patch_status": null,
   "references": [
    {
     "title": "Secure Cloud Architecture",
@@ -397,6 +410,7 @@
   "impact": "See the CWE entry linked below for the consequences of this weakness.",
   "label": "Reference guidance (not AI-generated)",
   "model": null,
+  "patch_status": null,
   "references": [
    {
     "title": "Secure Cloud Architecture",
@@ -425,6 +439,7 @@
   "impact": "See the CWE entry linked below for the consequences of this weakness.",
   "label": "Reference guidance (not AI-generated)",
   "model": null,
+  "patch_status": null,
   "references": [
    {
     "title": "Secure Cloud Architecture",
@@ -453,6 +468,7 @@
   "impact": "See the CWE entry linked below for the consequences of this weakness.",
   "label": "Reference guidance (not AI-generated)",
   "model": null,
+  "patch_status": null,
   "references": [
    {
     "title": "Kubernetes Security",
@@ -481,6 +497,7 @@
   "impact": "See the CWE entry linked below for the consequences of this weakness.",
   "label": "Reference guidance (not AI-generated)",
   "model": null,
+  "patch_status": null,
   "references": [
    {
     "title": "Kubernetes Security",
@@ -509,6 +526,7 @@
   "impact": "See the CWE entry linked below for the consequences of this weakness.",
   "label": "Reference guidance (not AI-generated)",
   "model": null,
+  "patch_status": null,
   "references": [
    {
     "title": "XML External Entity Prevention",
@@ -537,6 +555,7 @@
   "impact": "See the CWE entry linked below for the consequences of this weakness.",
   "label": "Reference guidance (not AI-generated)",
   "model": null,
+  "patch_status": null,
   "references": [
    {
     "title": "CWE-20: Improper Input Validation",
@@ -565,6 +584,7 @@
   "impact": "See the CWE entry linked below for the consequences of this weakness.",
   "label": "Reference guidance (not AI-generated)",
   "model": null,
+  "patch_status": null,
   "references": [
    {
     "title": "CWE-400: Uncontrolled Resource Consumption",
@@ -593,6 +613,7 @@
   "impact": "See the CWE entry linked below for the consequences of this weakness.",
   "label": "Reference guidance (not AI-generated)",
   "model": null,
+  "patch_status": null,
   "references": [
    {
     "title": "CWE-522: Insufficiently Protected Credentials",
@@ -625,6 +646,7 @@
   "impact": "See the CWE entry linked below for the consequences of this weakness.",
   "label": "Reference guidance (not AI-generated)",
   "model": null,
+  "patch_status": null,
   "references": [
    {
     "title": "CWE-400: Uncontrolled Resource Consumption",
@@ -653,6 +675,7 @@
   "impact": "See the CWE entry linked below for the consequences of this weakness.",
   "label": "Reference guidance (not AI-generated)",
   "model": null,
+  "patch_status": null,
   "references": [
    {
     "title": "CWE-770: Allocation of Resources Without Limits or Throttling",
@@ -685,6 +708,7 @@
   "impact": "See the CWE entry linked below for the consequences of this weakness.",
   "label": "Reference guidance (not AI-generated)",
   "model": null,
+  "patch_status": null,
   "references": [
    {
     "title": "CWE-1321: Improperly Controlled Modification of Object Prototype Attributes ('Prototype Pollution')",
@@ -721,6 +745,7 @@
   "impact": "See the CWE entry linked below for the consequences of this weakness.",
   "label": "Reference guidance (not AI-generated)",
   "model": null,
+  "patch_status": null,
   "references": [
    {
     "title": "CWE-1333: Inefficient Regular Expression Complexity",
@@ -753,6 +778,7 @@
   "impact": "See the CWE entry linked below for the consequences of this weakness.",
   "label": "Reference guidance (not AI-generated)",
   "model": null,
+  "patch_status": null,
   "references": [
    {
     "title": "CWE-1321: Improperly Controlled Modification of Object Prototype Attributes ('Prototype Pollution')",
@@ -789,6 +815,7 @@
   "impact": "See the CWE entry linked below for the consequences of this weakness.",
   "label": "Reference guidance (not AI-generated)",
   "model": null,
+  "patch_status": null,
   "references": [
    {
     "title": "CWE-94: Improper Control of Generation of Code ('Code Injection')",
@@ -825,6 +852,7 @@
   "impact": "See the CWE entry linked below for the consequences of this weakness.",
   "label": "Reference guidance (not AI-generated)",
   "model": null,
+  "patch_status": null,
   "references": [
    {
     "title": "CWE-539: Use of Persistent Cookies Containing Sensitive Information",
@@ -857,6 +885,7 @@
   "impact": "See the CWE entry linked below for the consequences of this weakness.",
   "label": "Reference guidance (not AI-generated)",
   "model": null,
+  "patch_status": null,
   "references": [
    {
     "title": "CWE-200: Exposure of Sensitive Information to an Unauthorized Actor",
@@ -889,6 +918,7 @@
   "impact": "See the CWE entry linked below for the consequences of this weakness.",
   "label": "Reference guidance (not AI-generated)",
   "model": null,
+  "patch_status": null,
   "references": [
    {
     "title": "NPM Security",
@@ -917,6 +947,7 @@
   "impact": "See the CWE entry linked below for the consequences of this weakness.",
   "label": "Reference guidance (not AI-generated)",
   "model": null,
+  "patch_status": null,
   "references": [
    {
     "title": "CWE-522: Insufficiently Protected Credentials",
@@ -949,6 +980,7 @@
   "impact": "See the CWE entry linked below for the consequences of this weakness.",
   "label": "Reference guidance (not AI-generated)",
   "model": null,
+  "patch_status": null,
   "references": [
    {
     "title": "CWE-1321: Improperly Controlled Modification of Object Prototype Attributes ('Prototype Pollution')",
@@ -977,6 +1009,7 @@
   "impact": "See the CWE entry linked below for the consequences of this weakness.",
   "label": "Reference guidance (not AI-generated)",
   "model": null,
+  "patch_status": null,
   "references": [
    {
     "title": "CWE-377: Insecure Temporary File",
@@ -1009,6 +1042,7 @@
   "impact": "See the CWE entry linked below for the consequences of this weakness.",
   "label": "Reference guidance (not AI-generated)",
   "model": null,
+  "patch_status": null,
   "references": [
    {
     "title": "NPM Security",
@@ -1037,6 +1071,7 @@
   "impact": "See the CWE entry linked below for the consequences of this weakness.",
   "label": "Reference guidance (not AI-generated)",
   "model": null,
+  "patch_status": null,
   "references": [
    {
     "title": "Docker Security",
@@ -1065,6 +1100,7 @@
   "impact": "See the CWE entry linked below for the consequences of this weakness.",
   "label": "Reference guidance (not AI-generated)",
   "model": null,
+  "patch_status": null,
   "references": [
    {
     "title": "DOM based XSS Prevention",
@@ -1093,6 +1129,7 @@
   "impact": "See the CWE entry linked below for the consequences of this weakness.",
   "label": "Reference guidance (not AI-generated)",
   "model": null,
+  "patch_status": null,
   "references": [
    {
     "title": "Insecure Direct Object Reference Prevention",
@@ -1121,6 +1158,7 @@
   "impact": "See the CWE entry linked below for the consequences of this weakness.",
   "label": "Reference guidance (not AI-generated)",
   "model": null,
+  "patch_status": null,
   "references": [
    {
     "title": "Nodejs Security",

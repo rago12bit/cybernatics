@@ -173,6 +173,14 @@ defences; it never changes a finding and never applies a patch. It runs only whe
 rate-limited, and every AI block is labelled. No real model has been evaluated against it yet. Read [docs/llm-remediation.md](docs/llm-remediation.md)
 (including what data it would send) before enabling.
 
+## AI fix quality: not yet measured
+
+The plan calls for scoring 50 generated fixes by hand. The sample (50 real findings), the runner, a blinded
+scoring page and the reporting are built and tested, but **no real model has been run and no fixes have been
+scored, so there is no quality number to publish**. Every suggestion is labelled for that reason. The one
+automatic check that exists is whether a suggested patch matches the code it claims to fix. How to run the
+evaluation: [docs/evaluation-remediation.md](docs/evaluation-remediation.md).
+
 ## Public sample site
 
 The web app can be built as a **sample-only site** (no API, no scanning) for public hosting: see

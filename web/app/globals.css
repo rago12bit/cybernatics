@@ -548,3 +548,6 @@ kbd { font: 500 0.6875rem/1 var(--mono); border: 1px solid var(--line-strong); p
 .diff .d-add { color: var(--mint); }
 .diff .d-del { color: var(--sev-high); }
 .diff .d-hunk { color: var(--muted); }
+.tag.ok { color: var(--mint); }
+.tag.warn-tag { color: var(--sev-medium); }
+.patch-head { flex-wrap: wrap; }

@@ -16,7 +16,7 @@ let root: Root | null = null;
 const STATIC: Remediation = {
   source: "static", label: "Reference guidance (not AI-generated)", explanation: "The product builds an SQL command from input.",
   impact: "See the CWE entry.", fix_summary: "Use prepared statements.", suggested_patch: null, confidence: "low", model: null,
-  degraded_reason: "reference guidance", warnings: [], references: [{ title: "CWE-89", url: "https://cwe.mitre.org/data/definitions/89.html" }],
+  degraded_reason: "reference guidance", warnings: [], patch_status: null, references: [{ title: "CWE-89", url: "https://cwe.mitre.org/data/definitions/89.html" }],
   from_cache: false, generated_at: null,
 };
 const PATCH = "--- a/app/users.py\n+++ b/app/users.py\n@@ -1,2 +1,2 @@\n def get(uid):\n-    return q + uid\n+    return q, (uid,)\n";
@@ -192,5 +192,22 @@ describe("in the finding panel", () => {
       expect(r!.suggested_patch).toBeNull();
       expect(r!.label).toContain("not AI-generated");
     }
+  });
+});
+
+describe("patch verification badge", () => {
+  const withStatus = (status: Remediation["patch_status"]) => guidance({ ai: { ...AI, patch_status: status } });
+  it("says when the patch was checked against the code, and never claims it is the right fix", async () => {
+    const h = await mount(view(apiOf(withStatus("verified"))));
+    expect(h.querySelector(".patch .tag.ok")?.textContent).toBe("Checked: matches the code");
+    expect(h.querySelector(".patch")!.textContent).toContain("does not make it the right fix");
+  });
+  it("says when it could not be checked, and shows nothing when the status is unknown", async () => {
+    const h = await mount(view(apiOf(withStatus("unverified"))));
+    expect(h.querySelector(".patch .tag.warn-tag")?.textContent).toBe("Not fully checked");
+    expect(h.querySelector(".patch")!.textContent).not.toContain("applies cleanly");
+    const none = await mount(view(apiOf(withStatus(null))));
+    expect(none.querySelector(".patch .tag")).toBeNull();
+    expect(await axeIssues(none)).toEqual([]);
   });
 });
