@@ -6,6 +6,13 @@ versions will follow [SemVer](https://semver.org) once `v0.1.0` is tagged (plann
 ## [Unreleased]
 
 ### Added
+- **VS Code extension scaffold (Week 16), `extensions/vscode`:** TypeScript extension that runs the CLI without a
+  shell and maps findings to native diagnostics (severity, CWE/rule code, risk score, reporting tools) in the
+  Problems panel. Commands: Scan Workspace (cancellable, with a timeout), Clear Findings, Show Output. Refuses
+  untrusted workspaces, takes the CLI path from machine-scope settings only, and ignores findings whose path
+  escapes the scanned folder. 44 tests; verified against the real CLI, **not yet run inside a real VS Code**.
+
+### Added
 - **Reachability v1 (Week 15):** for npm and PyPI dependency findings, Bulwark now checks whether the scanned
   code imports the vulnerable package (Python via `ast`, JavaScript/TypeScript via tree-sitter; CommonJS, ESM,
   dynamic `import()`, `importlib`, and test vs application code). `scoring.reachable` is `true`, `false` or unknown,

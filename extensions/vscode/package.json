@@ -1,0 +1,59 @@
+{
+  "name": "bulwark-vscode",
+  "displayName": "Bulwark",
+  "description": "Security findings from the Bulwark CLI as native VS Code diagnostics.",
+  "version": "0.1.0",
+  "publisher": "bulwark-scan",
+  "license": "Apache-2.0",
+  "private": true,
+  "engines": { "vscode": "^1.90.0" },
+  "categories": ["Linters", "Other"],
+  "main": "./out/extension.js",
+  "activationEvents": [],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false,
+      "description": "Bulwark runs a local program over the workspace and must not run in an untrusted folder."
+    }
+  },
+  "contributes": {
+    "commands": [
+      { "command": "bulwark.scanWorkspace", "title": "Bulwark: Scan Workspace" },
+      { "command": "bulwark.clearFindings", "title": "Bulwark: Clear Findings" },
+      { "command": "bulwark.showOutput", "title": "Bulwark: Show Output" }
+    ],
+    "configuration": {
+      "title": "Bulwark",
+      "properties": {
+        "bulwark.cliPath": {
+          "type": "string",
+          "default": "bulwark",
+          "scope": "machine",
+          "markdownDescription": "Path to the `bulwark` command. Machine-scoped on purpose: a workspace cannot choose which program runs."
+        },
+        "bulwark.tools": {
+          "type": "string",
+          "default": "bandit,semgrep,gitleaks,trivy,osv-scanner",
+          "markdownDescription": "Comma-separated scanners to run."
+        },
+        "bulwark.timeoutSeconds": {
+          "type": "number",
+          "default": 1800,
+          "minimum": 30,
+          "description": "Stop a scan that runs longer than this."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsc -p .",
+    "typecheck": "tsc -p . --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/vscode": "^1.90.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}

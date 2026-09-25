@@ -41,6 +41,23 @@ jobs:
       - run: npm test
       - run: npm run build
 
+  vscode-extension:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: extensions/vscode
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: extensions/vscode/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
   commitlint:
     # Conventional Commits (design doc §11.2): the CHANGELOG and versioning are generated from these.
     if: github.event_name == 'pull_request'

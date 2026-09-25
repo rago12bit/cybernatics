@@ -162,6 +162,12 @@ bulwark scan ./my-project --distributed
 Gitleaks uses the upstream image. Semgrep's rules are fetched at build time and are for your own
 internal use only — see [ADR-006](docs/adr/0006-semgrep-rules-licensing.md).
 
+## VS Code extension (early)
+
+`extensions/vscode` runs the `bulwark` CLI on your workspace folder and shows the findings in the Problems panel
+(command **Bulwark: Scan Workspace**). Squiggles with hover detail come next; see its
+[README](extensions/vscode/README.md) for install, settings and what has and has not been tested.
+
 ## Remediation knowledge base
 
 A local corpus of CWE definitions and OWASP cheat-sheet guidance is searchable in PostgreSQL (pgvector) to ground
