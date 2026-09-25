@@ -48,7 +48,7 @@ describe("Fix these first", () => {
     const f = withRisk(all[0]!, 70);
     const host = await mount(<FixFirst scanId="s" version={0} fetchFindings={async () => page([f])} onOpen={onOpen} />);
     await act(async () => host.querySelector<HTMLButtonElement>("button.row-title")!.click());
-    expect(onOpen).toHaveBeenCalledWith(f, expect.any(HTMLElement));
+    expect(onOpen).toHaveBeenCalledWith(f, expect.any(HTMLElement), [f]);
   });
 
   it("renders hostile scanner text as text, and passes axe", async () => {

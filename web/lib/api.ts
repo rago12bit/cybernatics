@@ -10,6 +10,20 @@ export class ApiError extends Error {
   }
 }
 
+const AUTH_EVENT = "bulwark:auth";
+const notifyAuth = () => {
+  try {
+    window.dispatchEvent(new Event(AUTH_EVENT));
+  } catch {
+    /* no window (SSR) */
+  }
+};
+/** Run `cb` whenever this tab signs in or out, so the header and the app never disagree about it. */
+export function onAuthChange(cb: () => void): () => void {
+  window.addEventListener(AUTH_EVENT, cb);
+  return () => window.removeEventListener(AUTH_EVENT, cb);
+}
+
 // sessionStorage: the token lives only for this tab and is never written to disk or a URL.
 export function getToken(): string | null {
   try {
@@ -24,6 +38,7 @@ export function setToken(t: string): void {
   } catch {
     /* storage unavailable: the user will be asked again */
   }
+  notifyAuth();
 }
 export function clearToken(): void {
   try {
@@ -31,6 +46,7 @@ export function clearToken(): void {
   } catch {
     /* ignore */
   }
+  notifyAuth();
 }
 
 async function request<T>(path: string, init: RequestInit = {}, token = getToken()): Promise<T> {

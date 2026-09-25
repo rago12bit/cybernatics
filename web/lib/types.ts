@@ -96,7 +96,7 @@ export interface FindingsQuery {
 }
 
 export type ProgressEvent =
-  | { type: "snapshot" }
+  | ({ type: "snapshot" } & ScanView) // the server's full view when the socket connects
   | { type: "scan.started"; tools: string[] }
   | ({ type: "tool.finished"; tool: string } & Partial<ToolStatus>)
   | { type: "scan.finished"; status: ScanStatus; findings?: number; error?: string };

@@ -299,7 +299,7 @@ button.filter[aria-pressed="true"] { opacity: 1; background: color-mix(in srgb, 
 .f-empty { padding: 2rem clamp(1.25rem, 3vw, 2.5rem); }
 
 /* Inspector sheet: flat panel, hairline, enters and exits along one path (interruptible) */
-.sheet { position: fixed; z-index: 50; top: calc(var(--header-h) + 0.75rem); right: 0.75rem; bottom: 0.75rem; width: min(29rem, 44vw); overflow: auto; padding: 1.5rem; background: var(--panel); border: 1px solid var(--line-strong); box-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.7); opacity: 0; transform: translate3d(1.5rem, 0, 0); pointer-events: none; transition: transform 260ms var(--ease-in), opacity 180ms linear; }
+.sheet { position: fixed; z-index: 50; top: calc(var(--header-h) + 0.75rem); right: 0.75rem; bottom: 0.75rem; width: min(29rem, 44vw); overflow: auto; overscroll-behavior: contain; padding: 1.5rem; background: var(--panel); border: 1px solid var(--line-strong); box-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.7); opacity: 0; transform: translate3d(1.5rem, 0, 0); pointer-events: none; transition: transform 260ms var(--ease-in), opacity 180ms linear; }
 .sheet[data-state="open"] { opacity: 1; transform: none; pointer-events: auto; transition: transform 380ms var(--ease-out), opacity 240ms linear; }
 .sheet-head { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; margin-bottom: 1rem; }
 .sheet h3 { font-size: 1.25rem; letter-spacing: -0.02em; font-weight: 400; margin-bottom: 0.6rem; }
@@ -512,7 +512,8 @@ kbd { font: 500 0.6875rem/1 var(--mono); border: 1px solid var(--line-strong); p
 .risk { display: inline-block; min-width: 2.1rem; text-align: center; padding: 0.28rem 0.4rem; font: 500 0.75rem/1 var(--mono); color: var(--bg); background: var(--teal); border-radius: var(--radius); }
 .tag.kev { color: var(--sev-critical); }
 .tag.epss { color: var(--sev-medium); }
-.sevcell { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 0.4rem; }
+.sevcell { display: inline-flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+.hint { margin: 0; padding-left: 1.1rem; }
 .fixfirst { border-bottom: 1px solid var(--line); }
 .fixfirst .app-head p { max-width: 62ch; }
 .fixlist { list-style: none; margin: 0; padding: 0; display: grid; }

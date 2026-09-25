@@ -28,6 +28,7 @@ async function fetchFindings(_id: string, q: FindingsQuery, limit: number = PAGE
       : q.sort === "risk"
         ? risk(b) - risk(a) || a.location.path.localeCompare(b.location.path)
         : severityRank(b.scoring.normalized_severity) - severityRank(a.scoring.normalized_severity) ||
+          risk(b) - risk(a) ||
           a.location.path.localeCompare(b.location.path),
   );
   return { total: rows.length, limit, offset: q.page * limit, items: rows.slice(q.page * limit, (q.page + 1) * limit) };

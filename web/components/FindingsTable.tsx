@@ -23,6 +23,7 @@ export function FindingsTable({ scan, version, fetchFindings = getFindings }: { 
   const [selected, setSelected] = useState<Finding | null>(null);
   const [open, setOpen] = useState(false); // drives the sheet's enter/exit; `selected` outlives it during exit
   const [exporting, setExporting] = useState(false);
+  const [navList, setNavList] = useState<Finding[] | null>(null); // set when opened from "Fix these first"
   const exitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const trigger = useRef<HTMLElement | null>(null);
   const tbody = useRef<HTMLTableSectionElement>(null);
@@ -36,10 +37,12 @@ export function FindingsTable({ scan, version, fetchFindings = getFindings }: { 
   }, []);
   useEffect(() => {
     if (!hydrated) return;
-    window.history.replaceState(null, "", `${window.location.pathname}${queryToSearch(q)}${window.location.hash}`);
+    // Keep Next's own history state: replacing it with null makes Back/Forward reload the page.
+    window.history.replaceState(window.history.state, "", `${window.location.pathname}${queryToSearch(q)}${window.location.hash}`);
   }, [q, hydrated]);
 
-  const select = useCallback((f: Finding, el: HTMLElement | null) => {
+  const select = useCallback((f: Finding, el: HTMLElement | null, list: Finding[] | null = null) => {
+    setNavList(list); // prev/next follow the list the finding was opened from
     // Interruptible: choosing again mid-exit cancels the exit; CSS re-targets from the live position.
     if (exitTimer.current) clearTimeout(exitTimer.current);
     if (el) trigger.current = el;
@@ -54,17 +57,19 @@ export function FindingsTable({ scan, version, fetchFindings = getFindings }: { 
     trigger.current?.focus({ preventScroll: true });
   }, []);
 
-  const items = page?.items ?? [];
+  const tableItems = page?.items ?? [];
+  const items = navList ?? tableItems;
   const index = selected ? items.findIndex((f) => f.id === selected.id) : -1;
   const go = useCallback(
     (delta: number) => {
       const next = items[index + delta];
       if (!next) return;
-      const btn = tbody.current?.querySelector<HTMLElement>(`[data-fid="${CSS.escape(next.id)}"]`) ?? null;
-      select(next, btn);
+      const scope = navList ? document.querySelector(".fixlist") : tbody.current;
+      const btn = scope?.querySelector<HTMLElement>(`[data-fid="${CSS.escape(next.id)}"]`) ?? null;
+      select(next, btn, navList);
       btn?.scrollIntoView({ block: "nearest" });
     },
-    [items, index, select],
+    [items, index, navList, select],
   );
 
   useEffect(() => {
@@ -96,6 +101,11 @@ export function FindingsTable({ scan, version, fetchFindings = getFindings }: { 
     );
     return () => { cancelled = true; };
   }, [scan.id, q, version, fetchFindings, hydrated]);
+
+  // A shared link (or a shrinking result set) can point past the last page: land on the last one instead of "no findings".
+  useEffect(() => {
+    if (page && page.items.length === 0 && page.total > 0 && q.page > 0) setQ((cur) => ({ ...cur, page: pageCount(page.total) - 1 }));
+  }, [page, q.page]);
 
   const update = (patch: Partial<FindingsQuery>) => setQ((cur) => ({ ...cur, ...patch, page: patch.page ?? 0 }));
   const toggleSeverity = (s: Severity) => update({ severity: q.severity.includes(s) ? q.severity.filter((x) => x !== s) : [...q.severity, s] });
@@ -131,7 +141,7 @@ export function FindingsTable({ scan, version, fetchFindings = getFindings }: { 
   return (
     <section aria-labelledby="findings-h" className="section findings">
       <div className="list">
-        <FixFirst scanId={scan.id} version={version} fetchFindings={fetchFindings} onOpen={(f, el) => select(f, el)} />
+        <FixFirst scanId={scan.id} version={version} fetchFindings={fetchFindings} onOpen={(f, el, list) => select(f, el, list)} />
         <div className="app-head">
           <span className="eyebrow">Findings</span>
           <div className="head-row">

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
-import { ApiError, clearToken, getToken, setToken, verifyToken } from "@/lib/api";
+import { ApiError, clearToken, getToken, onAuthChange, setToken, verifyToken } from "@/lib/api";
 
 export function TokenGate({ children }: { children: ReactNode }) {
   const [state, setState] = useState<"checking" | "need" | "ok">("checking");
@@ -23,6 +23,9 @@ export function TokenGate({ children }: { children: ReactNode }) {
       },
     );
   }, []);
+
+  // Signing out (or a token the server rejected) anywhere in this tab returns to the sign-in screen.
+  useEffect(() => onAuthChange(() => { if (!getToken()) setState((cur) => (cur === "ok" ? "need" : cur)); }), []);
 
   async function submit(e: FormEvent) {
     e.preventDefault();

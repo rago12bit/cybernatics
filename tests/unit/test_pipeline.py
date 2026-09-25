@@ -363,3 +363,24 @@ def test_risk_is_scored_stored_and_drives_sort(
     assert top["in_cisa_kev"] is True and top["epss_score"] == 0.94 and top["risk_score"] >= 90
     assert any("KEV" in x for x in top["risk_factors"])
     assert page.items[1]["scoring"]["risk_score"] < top["risk_score"]
+
+
+def test_default_order_is_severity_then_risk_then_path(
+    sessions: sessionmaker[Session],
+) -> None:
+    """Within one severity tier the riskiest finding comes first (both the SQL and the tool-filter path)."""
+    with sessions() as s:
+        sid = make_scan(s, ["trivy"], "u")
+        fs = []
+        for name, risk in [("a.py", 40), ("b.py", 90), ("c.py", None), ("d.py", 65)]:
+            f = finding("trivy", Category.SCA, path=name, fid=name)
+            f.scoring.risk_score = risk
+            fs.append(f)
+        low = finding("trivy", Category.SCA, path="z.py", sev=Severity.LOW, fid="z.py")
+        low.scoring.risk_score = (
+            99  # a high risk number never lifts a finding above a higher severity
+        )
+        repo.add_findings(s, sid, [*fs, low])
+        want = ["b.py", "d.py", "a.py", "c.py", "z.py"]
+        assert [i["id"] for i in repo.query_findings(s, sid).items] == want
+        assert [i["id"] for i in repo.query_findings(s, sid, tool="trivy").items] == want

@@ -5,6 +5,24 @@ versions will follow [SemVer](https://semver.org) once `v0.1.0` is tagged (plann
 
 ## [Unreleased]
 
+### Fixed (UI behaviour)
+- A scan that finished while the live socket was connecting stayed on "Running" forever; the socket's
+  snapshot is now honoured, and any close before the scan finishes falls back to polling.
+- Opening a scan page showed the previous scan's data until the new one loaded; late responses for an old id
+  can no longer leak in.
+- Polling refetched the whole findings table every 3 seconds; results now refresh only when they change.
+- An expired or rejected token now returns to the sign-in screen instead of polling 401s forever.
+- The header's "Sign out" and the app disagreed about being signed in until you navigated.
+- The new-scan form could submit an archive you could no longer see after switching source type, and greyed
+  out "Start" without saying why (now explains: non-https URL, no scanner chosen).
+- Recent scans never updated while a scan ran and its "3 min ago" labels froze; both now stay current, and
+  polling stops when nothing is running.
+- Filter changes replaced the router's history state, so Back/Forward reloaded the page; links to a page past
+  the end now land on the last page.
+- Previous/next in the finding panel followed the table even when opened from "Fix these first"; they now
+  follow the list you opened it from.
+- Within a severity, findings are ordered by risk (they were ordered by file path).
+
 ### Added
 - **Sample-only web build** (`NEXT_PUBLIC_DEMO_ONLY=1`) for public hosting: no API or scanning, `/app` redirects to a
   `/self-host` page, tighter CSP, HSTS; `web/fly.toml` and [docs/deploy-demo.md](docs/deploy-demo.md).

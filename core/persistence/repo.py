@@ -155,7 +155,12 @@ def query_findings(
     elif sort == "risk":
         order = [case((FindingRow.risk_score.is_(None), -1), else_=FindingRow.risk_score).desc()]
     else:
-        order = [FindingRow.severity_rank.desc(), FindingRow.path, FindingRow.start_line]
+        order = [
+            FindingRow.severity_rank.desc(),
+            case((FindingRow.risk_score.is_(None), -1), else_=FindingRow.risk_score).desc(),
+            FindingRow.path,
+            FindingRow.start_line,
+        ]
     rows_q = rows_q.order_by(*order, FindingRow.pk).limit(limit).offset(offset)
     return FindingPage(total, [r.data for r in s.scalars(rows_q)])
 
@@ -167,7 +172,16 @@ def _sort(rows: list[FindingRow], sort: str) -> list[FindingRow]:
         return sorted(
             rows, key=lambda r: (-(r.risk_score if r.risk_score is not None else -1), r.pk)
         )
-    return sorted(rows, key=lambda r: (-r.severity_rank, r.path, r.start_line, r.pk))
+    return sorted(
+        rows,
+        key=lambda r: (
+            -r.severity_rank,
+            -(r.risk_score if r.risk_score is not None else -1),
+            r.path,
+            r.start_line,
+            r.pk,
+        ),
+    )
 
 
 def severity_counts(s: Session, scan_id: str) -> dict[str, int]:

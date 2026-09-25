@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { clearToken, getToken } from "@/lib/api";
+import { clearToken, getToken, onAuthChange } from "@/lib/api";
 import { APP_HREF, APP_NAV, DEMO_ONLY } from "@/lib/site";
 import { BrandMark } from "./graphics";
 
@@ -24,7 +24,12 @@ export function SiteHeader() {
   const onLanding = path === "/about";
   const inApp = path.startsWith("/app") || path.startsWith("/scans");
 
-  useEffect(() => { setSignedIn(Boolean(getToken())); setMenu(false); }, [path]);
+  useEffect(() => { setMenu(false); }, [path]);
+  useEffect(() => {
+    const sync = () => setSignedIn(Boolean(getToken()));
+    sync();
+    return onAuthChange(sync);
+  }, [path]);
 
   // Highlight the landing section being read (scroll spy).
   useEffect(() => {

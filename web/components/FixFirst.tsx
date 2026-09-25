@@ -10,7 +10,7 @@ type Fetcher = (id: string, q: FindingsQuery, limit?: number) => Promise<Finding
 const TOP = 10;
 
 /** The headline view: the ten findings most worth fixing first, ranked by risk (severity x exploit likelihood). */
-export function FixFirst({ scanId, version, fetchFindings, onOpen }: { scanId: string; version: number; fetchFindings: Fetcher; onOpen: (f: Finding, el: HTMLElement) => void }) {
+export function FixFirst({ scanId, version, fetchFindings, onOpen }: { scanId: string; version: number; fetchFindings: Fetcher; onOpen: (f: Finding, el: HTMLElement, list: Finding[]) => void }) {
   const [items, setItems] = useState<Finding[] | null>(null);
   useEffect(() => {
     let cancelled = false;
@@ -35,7 +35,7 @@ export function FixFirst({ scanId, version, fetchFindings, onOpen }: { scanId: s
           <li key={f.id}>
             <span className="rank" aria-hidden="true">{i + 1}</span>
             <div className="fix-main">
-              <button type="button" className="row-title" onClick={(e) => onOpen(f, e.currentTarget)}><span className="clamp">{f.title}</span></button>
+              <button type="button" className="row-title" data-fid={f.id} onClick={(e) => onOpen(f, e.currentTarget, items)}><span className="clamp">{f.title}</span></button>
               <code className="loc">{locationLabel(f)}</code>
             </div>
             <div className="fix-side">
