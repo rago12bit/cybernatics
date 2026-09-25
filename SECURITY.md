@@ -5,8 +5,8 @@ Bulwark scans code you do not trust, so its own security matters. Thank you for 
 ## Reporting a vulnerability
 
 Please **do not open a public issue**. Use GitHub's private vulnerability reporting
-(*Security* tab, *Report a vulnerability*) once the repository is public. Until then, contact the
-maintainer directly. Include what you found, how to reproduce it, and the version or commit.
+(*Security* tab, *Report a vulnerability*) once the repository is public. Until then, email
+ragh.gupta22@gmail.com. Include what you found, how to reproduce it, and the version or commit.
 
 You can expect an acknowledgement within 5 working days. This is a pre-alpha, single-maintainer project,
 so fixes are best effort, but every credible report gets a written answer.
