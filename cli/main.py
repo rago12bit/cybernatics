@@ -354,3 +354,135 @@ def ci_comment(
         typer.echo(f"warning: comment not posted: {exc}", err=True)
         if strict:
             raise typer.Exit(1) from exc
+
+
+@app.command("sbom")
+def sbom_cmd(
+    source: str = typer.Argument(..., help="Directory, archive or public Git URL."),
+    output: Path = typer.Option(
+        ..., "--output", "-o", help="Where to write the CycloneDX 1.6 JSON."
+    ),
+) -> None:
+    """Write a software bill of materials (CycloneDX 1.6, from Syft in the sandbox)."""
+    from core.sbom import SbomError, generate_sbom
+
+    try:
+        with materialize(source) as workspace:
+            sbom = generate_sbom(workspace, source if "://" in source else Path(source).name)
+    except (IngestError, SbomError) as exc:
+        typer.echo(f"error: {exc}", err=True)
+        raise typer.Exit(2) from exc
+    output.write_bytes(sbom.raw)
+    kinds = ", ".join(f"{k} {v}" for k, v in sorted(sbom.ecosystems.items())) or "none"
+    typer.echo(
+        f"wrote {output}: {sbom.components} components (CycloneDX {sbom.spec_version}; {kinds})",
+        err=True,
+    )
+
+
+attest_app = typer.Typer(help="Sign scan artifacts and attest their provenance (cosign key pair).")
+app.add_typer(attest_app, name="attest")
+
+
+def _attest_guard(fn: Any) -> Any:
+    from core.attest import AttestError
+
+    def wrapped(*a: Any, **k: Any) -> Any:
+        try:
+            return fn(*a, **k)
+        except AttestError as exc:
+            typer.echo(f"error: {exc}", err=True)
+            raise typer.Exit(1) from exc
+
+    return wrapped
+
+
+@attest_app.command("sign")
+def attest_sign(
+    file: Path = typer.Argument(
+        ..., exists=True, dir_okay=False, help="Report, SARIF or SBOM to sign."
+    ),
+    key: Path = typer.Option(..., help="cosign private key (password in COSIGN_PASSWORD)."),
+    bundle: Path | None = typer.Option(None, help="Output (default: FILE.sig.bundle)."),
+) -> None:
+    """Sign FILE. The bundle is the signature; no transparency-log entry is made."""
+    from core.attest import sign_blob
+
+    out = bundle or file.with_name(file.name + ".sig.bundle")
+    _attest_guard(sign_blob)(file, key, out)
+    typer.echo(f"signed {file.name} -> {out}")
+
+
+@attest_app.command("provenance")
+def attest_provenance(
+    file: Path = typer.Argument(
+        ..., exists=True, dir_okay=False, help="The artifact the attestation is about."
+    ),
+    scan_json: Path = typer.Option(
+        ..., "--scan", exists=True, help="`bulwark scan --format json` output."
+    ),
+    key: Path = typer.Option(..., help="cosign private key (password in COSIGN_PASSWORD)."),
+    artifact: list[str] = typer.Option(
+        [], help="Extra artifacts to list, NAME=PATH (e.g. sbom=sbom.cdx.json)."
+    ),
+    source_label: str = typer.Option("", help="What was scanned, e.g. owner/repo."),
+    commit: str = typer.Option("", help="Commit that was scanned."),
+    bundle: Path | None = typer.Option(None, help="Output (default: FILE.provenance.bundle)."),
+) -> None:
+    """Sign an in-toto attestation: which Bulwark and scanner images produced FILE, and the result counts."""
+    import json
+
+    from core.attest import PREDICATE_TYPE, attest_blob, build_predicate
+    from core.scan import ADAPTERS
+
+    try:
+        scan_doc = json.loads(scan_json.read_text("utf-8"))
+        extra = dict(a.split("=", 1) for a in artifact)
+    except (ValueError, OSError) as exc:
+        typer.echo(f"error: cannot read the scan output or --artifact: {exc}", err=True)
+        raise typer.Exit(2) from exc
+    arts = {file.name: file, scan_json.name: scan_json, **{n: Path(p) for n, p in extra.items()}}
+    images = {n: a.spec.image for n, a in ADAPTERS.items()}
+    predicate = build_predicate(scan_doc, arts, images, {"label": source_label, "commit": commit})
+    out = bundle or file.with_name(file.name + ".provenance.bundle")
+    _attest_guard(attest_blob)(file, predicate, PREDICATE_TYPE, key, out)
+    typer.echo(f"attested {file.name} -> {out}")
+
+
+@attest_app.command("verify")
+def attest_verify(
+    file: Path = typer.Argument(..., exists=True, dir_okay=False),
+    pub: Path = typer.Option(..., help="cosign public key."),
+    sig_bundle: Path | None = typer.Option(
+        None, help="Signature bundle (default: FILE.sig.bundle if present)."
+    ),
+    provenance_bundle: Path | None = typer.Option(
+        None, help="Attestation bundle (default: FILE.provenance.bundle if present)."
+    ),
+) -> None:
+    """Verify FILE against its signature and/or provenance attestation. Exit 1 if any check fails."""
+    import json
+
+    from core.attest import PREDICATE_TYPE, sha256_file, verify_attestation, verify_blob
+
+    sig = sig_bundle or file.with_name(file.name + ".sig.bundle")
+    prov = provenance_bundle or file.with_name(file.name + ".provenance.bundle")
+    checked = 0
+    if sig.exists():
+        _attest_guard(verify_blob)(file, pub, sig)
+        typer.echo(f"signature OK ({sig.name})")
+        checked += 1
+    if prov.exists():
+        stmt = _attest_guard(verify_attestation)(file, PREDICATE_TYPE, pub, prov)
+        pred = stmt.get("predicate", {})
+        typer.echo(f"attestation OK ({prov.name})")
+        typer.echo(json.dumps({"scanner": pred.get("scanner"), "source": pred.get("source"),
+                               "result": pred.get("result"), "generatedAt": pred.get("generatedAt")}, indent=2))  # fmt: skip
+        listed = {a.get("name"): a.get("sha256") for a in pred.get("artifacts", [])}
+        if listed.get(file.name) not in (None, sha256_file(file)):
+            typer.echo("error: attested digest differs from this file", err=True)
+            raise typer.Exit(1)
+        checked += 1
+    if not checked:
+        typer.echo("error: no signature or attestation bundle found next to the file", err=True)
+        raise typer.Exit(2)

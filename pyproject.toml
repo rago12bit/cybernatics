@@ -57,6 +57,9 @@ select = ["E", "F", "I", "B", "UP"]
 "core/reachability/*" = ["E501"]  # name tables
 "core/ci/*" = ["E501"]  # markdown templates
 "core/ignore.py" = ["E501"]
+"core/attest/*" = ["E501"]
+"core/sbom/*" = ["E501"]
+"cli/main.py" = ["E501"]  # help strings
 "scripts/*" = ["E501"]
 "benchmarks/*" = ["E501"]
 

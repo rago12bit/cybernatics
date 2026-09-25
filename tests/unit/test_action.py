@@ -91,6 +91,8 @@ def test_inputs_are_wired_to_the_steps_that_use_them() -> None:
     assert env["scan"]["TOOLS"] == "${{ inputs.tools }}"
     assert env["scan"]["COMPARE_BASE"] == "${{ inputs.compare-base }}"
     assert env["compare"]["FAIL_ON"] == "${{ inputs.fail-on }}"
+    sbom = next(s for s in STEPS if s.get("id") == "sbom")
+    assert sbom["env"]["SCAN_PATH"] == "${{ inputs.path }}" and "inputs.sbom" in sbom["if"]
     comment = next(s for s in STEPS if s.get("name", "").startswith("Comment"))
     assert comment["env"]["GITHUB_TOKEN"] == "${{ inputs.github-token }}"
     assert comment["env"]["PR_NUMBER"] == "${{ github.event.pull_request.number }}"

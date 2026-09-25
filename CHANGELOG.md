@@ -6,6 +6,16 @@ versions will follow [SemVer](https://semver.org) once `v0.1.0` is tagged (plann
 ## [Unreleased]
 
 ### Added
+- **SBOM, signing and provenance (Week 20):** `bulwark sbom` writes a CycloneDX 1.6 SBOM from Syft (pinned by
+  digest, same sandbox as every scanner; dev dependencies included; validated against the official CycloneDX
+  schema in a test). `bulwark attest sign | provenance | verify` sign reports with cosign (key-based, container with
+  no network, no transparency log) and produce an in-toto attestation of which Bulwark and scanner images
+  (content hashes) made the artifact, with result counts and artifact digests. Verified for real: valid signatures
+  verify; a tampered file, wrong key, wrong subject or wrong predicate type is rejected. The action gained an optional
+  `sbom` input. Not done: keyless (GitHub OIDC) signing, signing inside the action, transparency-log entries. See
+  docs/supply-chain.md; new threat T15.
+
+### Added
 - **Dogfooding and release prep (Week 19):** `.github/workflows/bulwark.yml` runs the action on this repository
   (blocks pull requests on new HIGH findings; reports on pushes). `.bulwarkignore` (with `--ignore-file`, counted
   in `stats.ignored_findings` and shown in the PR comment); in CI the ignore file is taken from the **base** commit

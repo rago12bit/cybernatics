@@ -25,6 +25,9 @@ inputs:
   comment:
     description: "Comment the new findings on pull requests (needs `pull-requests: write`; not possible on forks)."
     default: "true"
+  sbom:
+    description: "Also write a CycloneDX 1.6 SBOM (output sbom-file); upload it with actions/upload-artifact if you want to keep it."
+    default: "false"
   compare-base:
     description: On pull requests, also scan the base commit so only new findings are reported and gated.
     default: "true"
@@ -45,6 +48,9 @@ outputs:
   sarif-file:
     description: Path of the SARIF report.
     value: ${{ steps.compare.outputs.sarif-file }}
+  sbom-file:
+    description: Path of the CycloneDX SBOM (empty unless `sbom` is true).
+    value: ${{ steps.sbom.outputs.sbom-file }}
 
 runs:
   using: composite
@@ -123,6 +129,16 @@ runs:
         echo "sarif-file=$RUNNER_TEMP/bulwark.sarif" >> "$GITHUB_OUTPUT"
         # 1 means "threshold breached": reported after the upload and comment steps. 2 is a real error.
         [ "$rc" -le 1 ] || exit "$rc"
+
+    - name: Generate SBOM
+      id: sbom
+      if: ${{ inputs.sbom == 'true' }}
+      shell: bash
+      env:
+        SCAN_PATH: ${{ inputs.path }}
+      run: |
+        bulwark sbom "$SCAN_PATH" --output "$RUNNER_TEMP/sbom.cdx.json"
+        echo "sbom-file=$RUNNER_TEMP/sbom.cdx.json" >> "$GITHUB_OUTPUT"
 
     - name: Upload SARIF to Code Scanning
       if: ${{ always() && inputs.upload-sarif == 'true' && steps.compare.outputs.sarif-file != '' }}

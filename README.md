@@ -162,6 +162,11 @@ bulwark scan ./my-project --distributed
 Gitleaks uses the upstream image. Semgrep's rules are fetched at build time and are for your own
 internal use only — see [ADR-006](docs/adr/0006-semgrep-rules-licensing.md).
 
+## SBOM, signing and provenance
+
+`bulwark sbom` writes a CycloneDX SBOM (Syft); `bulwark attest` signs reports with cosign and attests which scanner
+builds produced them. See [docs/supply-chain.md](docs/supply-chain.md), including what it does not prove.
+
 ## Scanning itself
 
 Bulwark's own [self-scan workflow](.github/workflows/bulwark.yml) and [what it found](docs/dogfooding.md).

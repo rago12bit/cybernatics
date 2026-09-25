@@ -135,6 +135,10 @@ services:
     profiles: [scanners]
     build: docker/osv-scanner
     image: bulwark/osv-scanner:2.6.0
+  scanner-syft:
+    profiles: [scanners]
+    build: docker/syft
+    image: bulwark/syft:1.52.0
 
 volumes:
   pgdata:

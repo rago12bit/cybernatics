@@ -40,6 +40,7 @@ render text, never to run scan-derived markup.
 | T11 | Unauthorized API access | Spoofing | Partial |
 | T12 | Worker's Docker access abused | Elevation of privilege | Partial |
 | T13 | Poisoned or unavailable exploit-data feeds | Tampering | Partial |
+| T15 | Forged or tampered scan results, reports or SBOM in transit | Tampering / Repudiation | Partial |
 | T14 | Parser bug or resource exhaustion while analysing scanned source for reachability | Denial of service / Elevation | Partial |
 
 ## Detail
@@ -150,6 +151,16 @@ failing the scan, and any failure of the whole analysis leaves findings without 
 scan. **Residual:** a memory-safety bug in tree-sitter or CPython's parser triggered by a hostile file would run in
 the worker, which is the one component with (proxied) Docker access. Moving the analysis into a sandboxed container
 is the fix and is not done. Status: Partial.
+
+### T15: scan results can be altered after the fact
+
+`bulwark attest sign` and `bulwark attest provenance` sign a report, SARIF or SBOM with a cosign key pair and record
+which Bulwark and which scanner images (by content hash) produced it, with the result counts. cosign runs in a
+container with no network and a read-only root filesystem; the key is mounted read-only and its password is passed
+by environment-variable name, never on a command line. **Residual:** signatures are key-based with no transparency
+log, so they prove who held the key but not when the signature was made; a stolen key forges results; keyless
+(OIDC) signing is not implemented; nothing yet stops an attacker with the key from attesting a scan they did not
+run, and the attestation says nothing about whether the findings are correct. Status: Partial.
 
 ## Out of scope
 DAST ([ADR-003](adr/0003-no-dast-in-v1.md)); the security of the upstream scanners themselves; multi-tenant
