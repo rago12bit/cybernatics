@@ -126,7 +126,10 @@ class ReachabilityIndex:
             )
         if not known:
             return Reachability(None, "Import name for this package could not be determined")
-        return Reachability(False, "No source file of the application imports it (another dependency may still load it)")
+        return Reachability(
+            False,
+            "No source file of the application imports it (another dependency may still load it)",
+        )
 
 
 def _py_matcher(names: set[str]) -> Callable[[dict[str, str]], str | None]:

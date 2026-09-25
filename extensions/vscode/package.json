@@ -32,9 +32,17 @@
           "markdownDescription": "Path to the `bulwark` command. Machine-scoped on purpose: a workspace cannot choose which program runs."
         },
         "bulwark.tools": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["bandit", "semgrep", "gitleaks", "trivy", "osv-scanner"] },
+          "uniqueItems": true,
+          "default": ["bandit", "semgrep", "gitleaks", "trivy", "osv-scanner"],
+          "description": "Which scanners to run. An empty list runs all of them."
+        },
+        "bulwark.minimumSeverity": {
           "type": "string",
-          "default": "bandit,semgrep,gitleaks,trivy,osv-scanner",
-          "markdownDescription": "Comma-separated scanners to run."
+          "enum": ["INFO", "LOW", "MEDIUM", "HIGH", "CRITICAL"],
+          "default": "INFO",
+          "description": "Hide findings below this severity."
         },
         "bulwark.timeoutSeconds": {
           "type": "number",

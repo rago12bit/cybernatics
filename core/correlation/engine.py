@@ -199,7 +199,14 @@ def _merge(group: list[Finding]) -> Finding:
         evidence=Evidence(reported_by=tools, agreement_count=len(tools), rule_ids=rule_ids),
         remediation=Remediation(
             summary=summary,
-            suggested_patch=p.remediation.suggested_patch,
+            suggested_patch=next(
+                (
+                    f.remediation.suggested_patch
+                    for f in [p, *group]
+                    if f.remediation.suggested_patch
+                ),
+                None,
+            ),
             references=list(_union(f.remediation.references for f in [p, *group])),
             generated_by=p.remediation.generated_by,
         ),

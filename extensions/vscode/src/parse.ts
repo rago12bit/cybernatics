@@ -23,6 +23,7 @@ export function parseFinding(raw: unknown): BulwarkFinding | null {
   const f = obj(raw);
   const loc = obj(f.location);
   const scoring = obj(f.scoring);
+  const rem = obj(f.remediation);
   const path = str(loc.path, 1000);
   const sev = str(scoring.normalized_severity);
   const start = int(loc.start_line, 0);
@@ -40,7 +41,15 @@ export function parseFinding(raw: unknown): BulwarkFinding | null {
     riskScore: typeof risk === "number" ? risk : null,
     rule: rules[0] ?? "",
     cwe: strings(obj(f.taxonomy).cwe),
+    owasp: strings(obj(f.taxonomy).owasp_top_10_2021),
     tools: strings(obj(f.evidence).reported_by),
+    description: str(f.description, 2000),
+    riskFactors: strings(scoring.risk_factors),
+    references: strings(rem.references).filter((u) => /^https:\/\//.test(u)).slice(0, 5),
+    remediationSummary: str(rem.summary, 1000),
+    suggestedPatch: typeof rem.suggested_patch === "string" && rem.suggested_patch.length <= 20_000 ? rem.suggested_patch : null,
+    patchSource: str(rem.generated_by, 20) || "static",
+    reachable: typeof scoring.reachable === "boolean" ? scoring.reachable : null,
   };
 }
 

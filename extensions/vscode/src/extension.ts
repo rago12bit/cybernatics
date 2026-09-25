@@ -1,11 +1,15 @@
 import * as vscode from "vscode";
 import { runScan } from "./cli";
-import { groupByFile, toSpecs } from "./mapping";
+import { atLeast, groupByFile, toSpecs } from "./mapping";
+import { BulwarkHover, BulwarkQuickFix, SELECTOR } from "./providers";
+import { FindingStore } from "./store";
 
 let collection: vscode.DiagnosticCollection | undefined;
 let output: vscode.OutputChannel | undefined;
 let status: vscode.StatusBarItem | undefined;
 let running: AbortController | undefined;
+const store = new FindingStore();
+const REFERENCE_URL = /^https:\/\/cwe\.mitre\.org\/data\/definitions\/\d{1,6}\.html$/;
 
 function setStatus(text: string, tooltip: string): void {
   if (!status) return;
@@ -23,6 +27,12 @@ async function pickRoot(): Promise<string | undefined> {
   if (folders.length === 1) return folders[0]?.uri.fsPath;
   const chosen = await vscode.window.showWorkspaceFolderPick({ placeHolder: "Folder to scan" });
   return chosen?.uri.fsPath;
+}
+
+export function toolList(v: string[] | string | undefined): string {
+  const all = "bandit,semgrep,gitleaks,trivy,osv-scanner";
+  if (Array.isArray(v)) return v.length ? v.join(",") : all;
+  return typeof v === "string" && v ? v : all;
 }
 
 export async function scanWorkspace(): Promise<void> {
@@ -48,14 +58,18 @@ export async function scanWorkspace(): Promise<void> {
         const result = await runScan({
           cliPath: cfg.get<string>("cliPath", "bulwark"),
           root,
-          tools: cfg.get<string>("tools", "bandit,semgrep,gitleaks,trivy,osv-scanner"),
+          tools: toolList(cfg.get<string[] | string>("tools")),
           timeoutMs: cfg.get<number>("timeoutSeconds", 1800) * 1000,
           signal: ctrl.signal,
           log: (line) => output?.appendLine(line),
         });
-        const { specs, refused } = toSpecs(root, result.findings);
+        const shown = atLeast(result.findings, cfg.get<string>("minimumSeverity", "INFO"));
+        const below = result.findings.length - shown.length;
+        const { specs, refused } = toSpecs(root, shown);
         collection?.clear();
-        for (const [file, list] of groupByFile(specs)) {
+        const grouped = groupByFile(specs);
+        store.replace(grouped);
+        for (const [file, list] of grouped) {
           const uri = vscode.Uri.file(file);
           collection?.set(
             uri,
@@ -76,6 +90,7 @@ export async function scanWorkspace(): Promise<void> {
           failed.length ? `${failed.map(([t]) => t).join(", ")} did not complete` : "",
           result.skipped ? `${result.skipped} unreadable finding(s) ignored` : "",
           refused ? `${refused} finding(s) outside the folder ignored` : "",
+          below ? `${below} below the severity threshold hidden` : "",
         ].filter(Boolean);
         output?.appendLine(`Bulwark: ${specs.length} finding(s) shown${notes.length ? "; " + notes.join("; ") : ""}.`);
         setStatus(`$(shield) Bulwark: ${specs.length}`, notes.join("; ") || "Scan complete");
@@ -104,8 +119,17 @@ export function activate(context: vscode.ExtensionContext): void {
     output,
     status,
     vscode.commands.registerCommand("bulwark.scanWorkspace", scanWorkspace),
+    vscode.languages.registerHoverProvider(SELECTOR, new BulwarkHover(store)),
+    vscode.languages.registerCodeActionsProvider(SELECTOR, new BulwarkQuickFix(store), {
+      providedCodeActionKinds: BulwarkQuickFix.kinds,
+    }),
+    vscode.commands.registerCommand("bulwark.openReference", (url: unknown) => {
+      // Only fixed-shape CWE links are ever opened, whatever a caller passes.
+      if (typeof url === "string" && REFERENCE_URL.test(url)) void vscode.env.openExternal(vscode.Uri.parse(url));
+    }),
     vscode.commands.registerCommand("bulwark.clearFindings", () => {
       collection?.clear();
+      store.clear();
       setStatus("$(shield) Bulwark", "Findings cleared");
     }),
     vscode.commands.registerCommand("bulwark.showOutput", () => output?.show()),

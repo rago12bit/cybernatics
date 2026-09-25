@@ -26,7 +26,7 @@ describe("resolveInside", () => {
 describe("toSpecs", () => {
   it("converts to 0-based lines, prefers the CWE as code, and includes risk and tools", () => {
     const { specs } = toSpecs("/w", [f({ cwe: ["CWE-78"] })]);
-    expect(specs[0]).toEqual({ file: "/w/src/a.py", startLine: 2, endLine: 3, message: "T (risk 70) [bandit]", level: 0, code: "CWE-78" });
+    expect(specs[0]).toMatchObject({ file: "/w/src/a.py", startLine: 2, endLine: 3, message: "T (risk 70) [bandit]", level: 0, code: "CWE-78" });
   });
   it("falls back to the rule id and omits missing risk", () => {
     const { specs } = toSpecs("/w", [f({ riskScore: null, tools: [] })]);

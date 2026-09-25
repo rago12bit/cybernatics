@@ -22,8 +22,20 @@ score in the message.
 | Setting | Default | Notes |
 |---|---|---|
 | `bulwark.cliPath` | `bulwark` | Machine scope: a workspace's `.vscode/settings.json` cannot change which program runs. |
-| `bulwark.tools` | all five | Comma-separated list; validated before use. |
+| `bulwark.tools` | all five | List of scanners to run (empty means all); validated before use. |
+| `bulwark.minimumSeverity` | `INFO` | Findings below it are hidden, and the scan summary says how many. |
 | `bulwark.timeoutSeconds` | 1800 | A longer scan is stopped. |
+
+## Hover and Quick Fix
+
+- **Hover** a squiggle for severity, risk score and why, description, CWE/OWASP, fix summary, references and which
+  scanners reported it. The text comes from scanned files and rule metadata, so it is escaped and shown as untrusted
+  markdown (no HTML, no command links).
+- **Quick Fix** (lightbulb or Cmd/Ctrl + .): **apply scanner-suggested fix** and **open CWE reference**.
+  Suggested fixes today come from Semgrep rules that define an autofix (for example `shell=True` to `shell=False`);
+  many findings have none. A patch is offered only when its context and removed lines match the editor's current
+  text exactly, so editing the file after a scan can remove the option but never corrupts it. Always review the
+  change: a rule's fix can be wrong for your code (a command that genuinely needs a shell, for instance).
 
 ## Safety choices
 
@@ -34,16 +46,21 @@ score in the message.
 
 ## What is verified
 
-- `npm test` (44 tests): output parsing, path safety, severity mapping, CLI runner against fake executables
-  (success, missing, failure, bad JSON, timeout, cancel), and the command flow against an in-memory stand-in for
-  the `vscode` API.
-- The built runner was run against the real `bulwark` CLI on a sample Python file: two Bandit findings came back
-  at the right lines.
+- `npm test` (80 tests): output parsing, path safety, severity mapping and threshold, the patch matcher, hover
+  escaping, CLI runner against fake executables (success, missing, failure, bad JSON, timeout, cancel), and the
+  command, hover and Quick Fix flow against an in-memory stand-in for the `vscode` API. Deliberately breaking six
+  safety checks (patch matching, ambiguity, markdown escaping, untrusted markdown, link allow-list, https-only
+  references) each made a test fail.
+- The built runner was run against the real `bulwark` CLI on a sample Python file: findings came back at the right
+  lines, and Semgrep's real autofix for `shell=True` reached the extension as a patch that planned the correct
+  one-line edit against the real file.
 - **Not verified:** the extension has not been loaded into a real VS Code window (no `code` binary here and no
   automated Extension Host test yet), so the actual squiggles, Problems panel and status bar are untested by
   eye. The stand-in API can hide differences from the real one.
 
 ## Not yet
 
-Hover detail, quick fixes, scanning on save, scanning only changed files and Marketplace packaging (Weeks 17 to 19).
-Findings are full-line ranges for now, and a scan replaces all earlier results.
+Scanning on save, scanning only changed files and Marketplace packaging (Weeks 18 to 19).
+Findings are full-line ranges (the scanners report lines, not columns), diagnostics do not move as you edit and are
+only refreshed by a new scan, and a scan replaces all earlier results. AI-generated patches are not produced by
+the CLI yet; the extension already handles them if a finding carries one.

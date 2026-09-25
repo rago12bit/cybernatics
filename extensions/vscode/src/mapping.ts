@@ -10,6 +10,14 @@ export const SEVERITY_LEVEL: Record<Severity, 0 | 1 | 2 | 3> = {
   INFO: 3, // Hint
 };
 
+const ORDER: Severity[] = ["INFO", "LOW", "MEDIUM", "HIGH", "CRITICAL"];
+
+/** Findings at or above `min`. An unknown threshold keeps everything rather than hiding results. */
+export function atLeast(findings: BulwarkFinding[], min: string): BulwarkFinding[] {
+  const floor = ORDER.indexOf(min as Severity);
+  return floor <= 0 ? findings : findings.filter((f) => ORDER.indexOf(f.severity) >= floor);
+}
+
 export interface DiagnosticSpec {
   file: string; // absolute path
   startLine: number; // 0-based
@@ -17,6 +25,7 @@ export interface DiagnosticSpec {
   message: string;
   level: 0 | 1 | 2 | 3;
   code: string;
+  finding: BulwarkFinding;
 }
 
 /**
@@ -52,6 +61,7 @@ export function toSpecs(root: string, findings: BulwarkFinding[]): { specs: Diag
       message: message(f),
       level: SEVERITY_LEVEL[f.severity],
       code: f.cwe[0] ?? f.rule,
+      finding: f,
     });
   }
   return { specs, refused };

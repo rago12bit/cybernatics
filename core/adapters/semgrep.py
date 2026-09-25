@@ -45,6 +45,8 @@ class SemgrepAdapter(ToolAdapter):
             "scan",
             *configs,
             "--sarif",
+            "--autofix",  # with --dryrun: report the rule's own fix in the SARIF, change nothing
+            "--dryrun",
             "--output",
             str(output),
             "--metrics=off",

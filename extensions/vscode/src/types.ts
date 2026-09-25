@@ -12,7 +12,15 @@ export interface BulwarkFinding {
   riskScore: number | null;
   rule: string;
   cwe: string[];
+  owasp: string[];
   tools: string[];
+  description: string;
+  riskFactors: string[];
+  references: string[]; // https only
+  remediationSummary: string;
+  suggestedPatch: string | null;
+  patchSource: string; // "static" (a scanner's own fix) or "llm"
+  reachable: boolean | null;
 }
 
 export interface ScanOutput {

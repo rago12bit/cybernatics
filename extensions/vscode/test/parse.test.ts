@@ -12,7 +12,7 @@ const good = {
 
 describe("parseFinding", () => {
   it("reads the fields the extension needs", () => {
-    expect(parseFinding(good)).toEqual({
+    expect(parseFinding(good)).toMatchObject({
       id: "bandit:B602:a.py:3", title: "subprocess with shell=True", path: "a.py", startLine: 3, endLine: 5,
       severity: "HIGH", category: "sast", riskScore: 71, rule: "B602", cwe: ["CWE-78"], tools: ["bandit", "semgrep"],
     });
@@ -45,5 +45,24 @@ describe("parseScanOutput", () => {
   it("rejects non-JSON and shapes without findings", () => {
     expect(() => parseScanOutput("Traceback...")).toThrow(/valid JSON/);
     expect(() => parseScanOutput("{}")).toThrow(/no findings/);
+  });
+});
+
+describe("parseFinding: detail fields", () => {
+  const rich = {
+    ...good, description: "d", scoring: { normalized_severity: "HIGH", risk_score: 5, risk_factors: ["a"], reachable: false },
+    taxonomy: { category: "sast", cwe: ["CWE-1"], owasp_top_10_2021: ["A03:2021"] },
+    remediation: { summary: "fix it", references: ["https://ok.test/x", "http://plain.test", "javascript:alert(1)"], suggested_patch: "P", generated_by: "llm" },
+  };
+  it("reads remediation, references (https only), patch, reachability and OWASP", () => {
+    expect(parseFinding(rich)).toMatchObject({
+      description: "d", riskFactors: ["a"], reachable: false, owasp: ["A03:2021"], remediationSummary: "fix it",
+      references: ["https://ok.test/x"], suggestedPatch: "P", patchSource: "llm",
+    });
+  });
+  it("defaults when absent and ignores a non-string or oversized patch", () => {
+    expect(parseFinding(good)).toMatchObject({ suggestedPatch: null, patchSource: "static", reachable: null, references: [] });
+    expect(parseFinding({ ...rich, remediation: { suggested_patch: 5 } })?.suggestedPatch).toBeNull();
+    expect(parseFinding({ ...rich, remediation: { suggested_patch: "x".repeat(20_001) } })?.suggestedPatch).toBeNull();
   });
 });

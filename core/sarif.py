@@ -91,8 +91,47 @@ def _to_finding(
                 confidence=_CONFIDENCE[conf.group(1).upper()] if conf else 0.5,
             ),
             evidence=Evidence(reported_by=[tool], rule_ids={tool: [rule_id]}),
-            remediation=Remediation(references=[rule["helpUri"]] if rule.get("helpUri") else []),
+            remediation=Remediation(
+                references=[rule["helpUri"]] if rule.get("helpUri") else [],
+                suggested_patch=_patch_from_fixes(result, path, start, end, snippet),
+            ),
         )
     except (KeyError, IndexError, TypeError, ValueError) as exc:
         log.warning("%s: skipping malformed SARIF result: %s", tool, exc)
+        return None
+
+
+MAX_PATCH_CHARS = 4000
+
+
+def _patch_from_fixes(
+    result: dict[str, Any], path: str, start: int, end: int, snippet: str
+) -> str | None:
+    """A tool's own autofix as a one-line unified diff, or None when it is not safely convertible.
+
+    Semgrep reports the replaced columns but the WHOLE fixed line as inserted text, so the fix is
+    only converted when the finding is one line and the inserted line keeps the original text
+    before and after the replaced columns. Anything else is dropped: a wrong patch is
+    worse than none.
+    """
+    try:
+        fixes = result.get("fixes") or []
+        if len(fixes) != 1 or start != end or "\n" in snippet.strip("\r\n"):
+            return None
+        changes = fixes[0]["artifactChanges"]
+        if len(changes) != 1 or len(changes[0]["replacements"]) != 1:
+            return None
+        rep = changes[0]["replacements"][0]
+        region = rep["deletedRegion"]
+        sc, ec = int(region["startColumn"]), int(region["endColumn"])
+        if int(region["startLine"]) != start or int(region["endLine"]) != end or not 0 < sc <= ec:
+            return None
+        old = snippet.strip("\r\n")
+        new = str(rep["insertedContent"]["text"]).strip("\r\n")
+        if not old or not new or new == old or "\n" in new or len(new) > MAX_PATCH_CHARS:
+            return None
+        if not (new.startswith(old[: sc - 1]) and new.endswith(old[ec - 1 :])):
+            return None
+        return f"--- a/{path}\n+++ b/{path}\n@@ -{start},1 +{start},1 @@\n-{old}\n+{new}\n"
+    except (KeyError, IndexError, TypeError, ValueError):
         return None

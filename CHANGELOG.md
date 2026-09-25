@@ -6,6 +6,18 @@ versions will follow [SemVer](https://semver.org) once `v0.1.0` is tagged (plann
 ## [Unreleased]
 
 ### Added
+- **VS Code hover and Quick Fix (Week 17):** hovering a finding shows severity, risk score and why, description,
+  CWE/OWASP, the fix summary, references and the reporting scanners (plain, untrusted markdown built from escaped
+  text). **Quick Fix** offers "apply scanner-suggested fix" when the finding carries a patch, and "open CWE
+  reference". A patch is offered only if its context and removed lines equal the text in the editor right now
+  (one file, the finding's own, at most 20 hunks, no ambiguous matches), so a file edited since the scan is never
+  patched blindly. New settings: `bulwark.tools` (list of scanners) and `bulwark.minimumSeverity`.
+- **Semgrep autofix as suggested patches:** Semgrep now runs with `--autofix --dryrun` (nothing is modified) and a
+  rule's own single-line fix is converted to a unified diff in `remediation.suggested_patch` when its shape is safe
+  (`generated_by: static`). Fixes it cannot convert safely are dropped. A merged finding keeps a patch from any
+  reporting tool. Checked against real Semgrep on a sample file.
+
+### Added
 - **VS Code extension scaffold (Week 16), `extensions/vscode`:** TypeScript extension that runs the CLI without a
   shell and maps findings to native diagnostics (severity, CWE/rule code, risk score, reporting tools) in the
   Problems panel. Commands: Scan Workspace (cancellable, with a timeout), Clear Findings, Show Output. Refuses
