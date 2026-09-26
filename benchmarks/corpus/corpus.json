@@ -1,0 +1,156 @@
+{
+  "note": "Public repositories, pinned to a commit by `python -m benchmarks.corpus.run pin`. 12 are deliberately vulnerable teaching projects; 13 are ordinary open-source projects.",
+  "repos": [
+    {
+      "name": "VAmPI",
+      "url": "https://github.com/erev0s/VAmPI",
+      "kind": "vulnerable",
+      "commit": "f16052dce83f05847133ec98f01c5193a41de7d8"
+    },
+    {
+      "name": "Vulnerable-Flask-App",
+      "url": "https://github.com/we45/Vulnerable-Flask-App",
+      "kind": "vulnerable",
+      "commit": "b6a4f97afd466e83e1f60781494252dec1c37039"
+    },
+    {
+      "name": "NodeGoat",
+      "url": "https://github.com/OWASP/NodeGoat",
+      "kind": "vulnerable",
+      "commit": "c5cb68a7084e4ae7dcc60e6a98768720a81841e8"
+    },
+    {
+      "name": "nodejs-goof",
+      "url": "https://github.com/snyk-labs/nodejs-goof",
+      "kind": "vulnerable",
+      "commit": "add14ba59e98240d9e00a235dd7d42cd61ae9912"
+    },
+    {
+      "name": "dvna",
+      "url": "https://github.com/appsecco/dvna",
+      "kind": "vulnerable",
+      "commit": "9ba473add536f66ac9007966acb2a775dd31277a"
+    },
+    {
+      "name": "pygoat",
+      "url": "https://github.com/adeyosemanputra/pygoat",
+      "kind": "vulnerable",
+      "commit": "19d17cc8874861142b330636d068bbde54e86b85"
+    },
+    {
+      "name": "dvpwa",
+      "url": "https://github.com/anxolerd/dvpwa",
+      "kind": "vulnerable",
+      "commit": "a1d8f89fac2e57093189853c6527c2b01fc1d9c1"
+    },
+    {
+      "name": "vulpy",
+      "url": "https://github.com/fportantier/vulpy",
+      "kind": "vulnerable",
+      "commit": "5249cc8b05a1c37f6b2f757b1cf16a509c327122"
+    },
+    {
+      "name": "WebGoat",
+      "url": "https://github.com/OWASP/WebGoat",
+      "kind": "vulnerable",
+      "commit": "5900119921433ecacbb02acde5ef0f2186d2626f"
+    },
+    {
+      "name": "java-sec-code",
+      "url": "https://github.com/JoyChou93/java-sec-code",
+      "kind": "vulnerable",
+      "commit": "4711f4e186258c6e0dd5c3863e7c9592e7e9026a"
+    },
+    {
+      "name": "terragoat",
+      "url": "https://github.com/bridgecrewio/terragoat",
+      "kind": "vulnerable",
+      "commit": "729f8da62c6a85ce4af5ad3d123de97776d954c4"
+    },
+    {
+      "name": "cfngoat",
+      "url": "https://github.com/bridgecrewio/cfngoat",
+      "kind": "vulnerable",
+      "commit": "0c09b69cfc3dbc6cb3ef01883415c35c588ced48"
+    },
+    {
+      "name": "flask",
+      "url": "https://github.com/pallets/flask",
+      "kind": "real",
+      "commit": "d73fa1cdcbd8b1465c151db8924ba58b1dd14e35"
+    },
+    {
+      "name": "requests",
+      "url": "https://github.com/psf/requests",
+      "kind": "real",
+      "commit": "611c6162cbc4ac2020a2f91c7cfa4f3abf9bbb60"
+    },
+    {
+      "name": "click",
+      "url": "https://github.com/pallets/click",
+      "kind": "real",
+      "commit": "06b2a678741131fd577ce170e23e5ca0aeba0309"
+    },
+    {
+      "name": "httpx",
+      "url": "https://github.com/encode/httpx",
+      "kind": "real",
+      "commit": "b5addb64f0161ff6bfe94c124ef76f6a1fba5254"
+    },
+    {
+      "name": "full-stack-fastapi-template",
+      "url": "https://github.com/tiangolo/full-stack-fastapi-template",
+      "kind": "real",
+      "commit": "cb740b656d7a0a6c5e12c7bf8e50343ec94ee9c7"
+    },
+    {
+      "name": "express",
+      "url": "https://github.com/expressjs/express",
+      "kind": "real",
+      "commit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9"
+    },
+    {
+      "name": "koa",
+      "url": "https://github.com/koajs/koa",
+      "kind": "real",
+      "commit": "824c1cf8de9a91a2941973b25dc8a3d3029b9e4f"
+    },
+    {
+      "name": "chalk",
+      "url": "https://github.com/chalk/chalk",
+      "kind": "real",
+      "commit": "8960ada92ca0f9220c8863495bae78dcc0c323ee"
+    },
+    {
+      "name": "gin",
+      "url": "https://github.com/gin-gonic/gin",
+      "kind": "real",
+      "commit": "1bd0ecf2d3e08da37efa270bb7be20c1eddb0d68"
+    },
+    {
+      "name": "cobra",
+      "url": "https://github.com/spf13/cobra",
+      "kind": "real",
+      "commit": "adbc8813901bba65827259daa8e22ff94ec1f30e"
+    },
+    {
+      "name": "gson",
+      "url": "https://github.com/google/gson",
+      "kind": "real",
+      "commit": "854c8255b625cf1e13c701a83ea9ccb4caaa576a"
+    },
+    {
+      "name": "terraform-aws-vpc",
+      "url": "https://github.com/terraform-aws-modules/terraform-aws-vpc",
+      "kind": "real",
+      "commit": "b3abd6df2ecf052451a361ed55b8f06f8742a795"
+    },
+    {
+      "name": "docker-nginx",
+      "url": "https://github.com/nginxinc/docker-nginx",
+      "kind": "real",
+      "commit": "ef5a25a6314e652a2dcfbce6074bef729f4d9639"
+    }
+  ],
+  "pinned_on": "2026-09-26"
+}

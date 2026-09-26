@@ -1,0 +1,1298 @@
+{
+ "label": "v1",
+ "measured": "2026-09-26",
+ "pinned_on": "2026-09-26",
+ "images": {
+  "bandit": "bulwark/bandit:1.7.10",
+  "semgrep": "bulwark/semgrep:1.90.0",
+  "gitleaks": "zricethezav/gitleaks:v8.21.0",
+  "trivy": "bulwark/trivy:0.55.2",
+  "osv-scanner": "bulwark/osv-scanner:2.6.0"
+ },
+ "repos": [
+  {
+   "repo": "VAmPI",
+   "kind": "vulnerable",
+   "commit": "f16052dce83f05847133ec98f01c5193a41de7d8",
+   "languages": [
+    "python"
+   ],
+   "files": 22,
+   "wall_seconds": 40.0,
+   "tool_status": {
+    "bandit": {
+     "status": "ok",
+     "seconds": 3.0,
+     "findings": 6
+    },
+    "semgrep": {
+     "status": "ok",
+     "seconds": 39.98,
+     "findings": 1
+    },
+    "gitleaks": {
+     "status": "ok",
+     "seconds": 0.65,
+     "findings": 1
+    },
+    "trivy": {
+     "status": "ok",
+     "seconds": 6.62,
+     "findings": 8
+    },
+    "osv-scanner": {
+     "status": "ok",
+     "seconds": 5.96,
+     "findings": 7
+    }
+   },
+   "raw_findings": 23,
+   "unique_findings": 21,
+   "dedup_rate": 0.087,
+   "cross_tool_merged": 2,
+   "by_severity": {
+    "HIGH": 9,
+    "MEDIUM": 5,
+    "LOW": 7
+   },
+   "by_category": {
+    "container": 2,
+    "sast": 7,
+    "secrets": 1,
+    "sca": 11
+   }
+  },
+  {
+   "repo": "Vulnerable-Flask-App",
+   "kind": "vulnerable",
+   "commit": "b6a4f97afd466e83e1f60781494252dec1c37039",
+   "languages": [
+    "javascript",
+    "python"
+   ],
+   "files": 19,
+   "wall_seconds": 84.6,
+   "tool_status": {
+    "bandit": {
+     "status": "ok",
+     "seconds": 0.79,
+     "findings": 17
+    },
+    "semgrep": {
+     "status": "ok",
+     "seconds": 84.51,
+     "findings": 48
+    },
+    "gitleaks": {
+     "status": "ok",
+     "seconds": 0.55,
+     "findings": 0
+    },
+    "trivy": {
+     "status": "ok",
+     "seconds": 3.64,
+     "findings": 72
+    },
+    "osv-scanner": {
+     "status": "ok",
+     "seconds": 3.12,
+     "findings": 75
+    }
+   },
+   "raw_findings": 212,
+   "unique_findings": 155,
+   "dedup_rate": 0.2689,
+   "cross_tool_merged": 48,
+   "by_severity": {
+    "CRITICAL": 10,
+    "HIGH": 59,
+    "MEDIUM": 63,
+    "LOW": 22,
+    "INFO": 1
+   },
+   "by_category": {
+    "sca": 101,
+    "container": 2,
+    "sast": 52
+   }
+  },
+  {
+   "repo": "NodeGoat",
+   "kind": "vulnerable",
+   "commit": "c5cb68a7084e4ae7dcc60e6a98768720a81841e8",
+   "languages": [
+    "javascript"
+   ],
+   "files": 111,
+   "wall_seconds": 74.2,
+   "tool_status": {
+    "bandit": {
+     "status": "skipped",
+     "seconds": null,
+     "findings": 0
+    },
+    "semgrep": {
+     "status": "ok",
+     "seconds": 57.11,
+     "findings": 162
+    },
+    "gitleaks": {
+     "status": "ok",
+     "seconds": 1.16,
+     "findings": 3
+    },
+    "trivy": {
+     "status": "ok",
+     "seconds": 5.38,
+     "findings": 314
+    },
+    "osv-scanner": {
+     "status": "ok",
+     "seconds": 16.49,
+     "findings": 292
+    }
+   },
+   "raw_findings": 771,
+   "unique_findings": 463,
+   "dedup_rate": 0.3995,
+   "cross_tool_merged": 291,
+   "by_severity": {
+    "CRITICAL": 30,
+    "HIGH": 168,
+    "MEDIUM": 237,
+    "LOW": 27,
+    "INFO": 1
+   },
+   "by_category": {
+    "sca": 305,
+    "sast": 154,
+    "secrets": 3,
+    "container": 1
+   }
+  },
+  {
+   "repo": "nodejs-goof",
+   "kind": "vulnerable",
+   "commit": "add14ba59e98240d9e00a235dd7d42cd61ae9912",
+   "languages": [
+    "javascript"
+   ],
+   "files": 60,
+   "wall_seconds": 22.1,
+   "tool_status": {
+    "bandit": {
+     "status": "skipped",
+     "seconds": null,
+     "findings": 0
+    },
+    "semgrep": {
+     "status": "ok",
+     "seconds": 22.03,
+     "findings": 11
+    },
+    "gitleaks": {
+     "status": "ok",
+     "seconds": 0.8,
+     "findings": 0
+    },
+    "trivy": {
+     "status": "ok",
+     "seconds": 4.69,
+     "findings": 305
+    },
+    "osv-scanner": {
+     "status": "ok",
+     "seconds": 15.08,
+     "findings": 285
+    }
+   },
+   "raw_findings": 601,
+   "unique_findings": 305,
+   "dedup_rate": 0.4925,
+   "cross_tool_merged": 284,
+   "by_severity": {
+    "CRITICAL": 43,
+    "HIGH": 133,
+    "MEDIUM": 110,
+    "LOW": 19
+   },
+   "by_category": {
+    "sca": 295,
+    "container": 2,
+    "sast": 8
+   }
+  },
+  {
+   "repo": "dvna",
+   "kind": "vulnerable",
+   "commit": "9ba473add536f66ac9007966acb2a775dd31277a",
+   "languages": [
+    "javascript"
+   ],
+   "files": 151,
+   "wall_seconds": 22.2,
+   "tool_status": {
+    "bandit": {
+     "status": "skipped",
+     "seconds": null,
+     "findings": 0
+    },
+    "osv-scanner": {
+     "status": "skipped",
+     "seconds": null,
+     "findings": 0
+    },
+    "semgrep": {
+     "status": "ok",
+     "seconds": 22.02,
+     "findings": 22
+    },
+    "gitleaks": {
+     "status": "ok",
+     "seconds": 1.61,
+     "findings": 0
+    },
+    "trivy": {
+     "status": "ok",
+     "seconds": 3.75,
+     "findings": 2
+    }
+   },
+   "raw_findings": 24,
+   "unique_findings": 17,
+   "dedup_rate": 0.2917,
+   "cross_tool_merged": 0,
+   "by_severity": {
+    "HIGH": 3,
+    "MEDIUM": 12,
+    "LOW": 2
+   },
+   "by_category": {
+    "container": 2,
+    "sast": 15
+   }
+  },
+  {
+   "repo": "pygoat",
+   "kind": "vulnerable",
+   "commit": "19d17cc8874861142b330636d068bbde54e86b85",
+   "languages": [
+    "javascript",
+    "python"
+   ],
+   "files": 276,
+   "wall_seconds": 64.7,
+   "tool_status": {
+    "bandit": {
+     "status": "ok",
+     "seconds": 1.76,
+     "findings": 58
+    },
+    "semgrep": {
+     "status": "ok",
+     "seconds": 64.42,
+     "findings": 235
+    },
+    "gitleaks": {
+     "status": "ok",
+     "seconds": 1.37,
+     "findings": 12
+    },
+    "trivy": {
+     "status": "ok",
+     "seconds": 4.08,
+     "findings": 172
+    },
+    "osv-scanner": {
+     "status": "ok",
+     "seconds": 3.75,
+     "findings": 171
+    }
+   },
+   "raw_findings": 648,
+   "unique_findings": 557,
+   "dedup_rate": 0.1404,
+   "cross_tool_merged": 74,
+   "by_severity": {
+    "CRITICAL": 19,
+    "HIGH": 155,
+    "MEDIUM": 317,
+    "LOW": 65,
+    "INFO": 1
+   },
+   "by_category": {
+    "sca": 274,
+    "container": 8,
+    "secrets": 10,
+    "sast": 265
+   }
+  },
+  {
+   "repo": "dvpwa",
+   "kind": "vulnerable",
+   "commit": "a1d8f89fac2e57093189853c6527c2b01fc1d9c1",
+   "languages": [
+    "javascript",
+    "python"
+   ],
+   "files": 58,
+   "wall_seconds": 108.3,
+   "tool_status": {
+    "bandit": {
+     "status": "ok",
+     "seconds": 1.09,
+     "findings": 2
+    },
+    "semgrep": {
+     "status": "ok",
+     "seconds": 108.09,
+     "findings": 5
+    },
+    "gitleaks": {
+     "status": "ok",
+     "seconds": 1.06,
+     "findings": 0
+    },
+    "trivy": {
+     "status": "ok",
+     "seconds": 4.7,
+     "findings": 62
+    },
+    "osv-scanner": {
+     "status": "ok",
+     "seconds": 3.57,
+     "findings": 55
+    }
+   },
+   "raw_findings": 124,
+   "unique_findings": 65,
+   "dedup_rate": 0.4758,
+   "cross_tool_merged": 57,
+   "by_severity": {
+    "CRITICAL": 3,
+    "HIGH": 26,
+    "MEDIUM": 25,
+    "LOW": 11
+   },
+   "by_category": {
+    "sca": 55,
+    "container": 7,
+    "sast": 3
+   }
+  },
+  {
+   "repo": "vulpy",
+   "kind": "vulnerable",
+   "commit": "5249cc8b05a1c37f6b2f757b1cf16a509c327122",
+   "languages": [
+    "javascript",
+    "python"
+   ],
+   "files": 111,
+   "wall_seconds": 61.5,
+   "tool_status": {
+    "bandit": {
+     "status": "ok",
+     "seconds": 1.3,
+     "findings": 49
+    },
+    "semgrep": {
+     "status": "ok",
+     "seconds": 61.38,
+     "findings": 79
+    },
+    "gitleaks": {
+     "status": "ok",
+     "seconds": 1.52,
+     "findings": 1
+    },
+    "trivy": {
+     "status": "ok",
+     "seconds": 3.43,
+     "findings": 0
+    },
+    "osv-scanner": {
+     "status": "ok",
+     "seconds": 0.72,
+     "findings": 0
+    }
+   },
+   "raw_findings": 129,
+   "unique_findings": 115,
+   "dedup_rate": 0.1085,
+   "cross_tool_merged": 7,
+   "by_severity": {
+    "HIGH": 19,
+    "MEDIUM": 84,
+    "LOW": 12
+   },
+   "by_category": {
+    "sast": 114,
+    "secrets": 1
+   }
+  },
+  {
+   "repo": "WebGoat",
+   "kind": "vulnerable",
+   "commit": "5900119921433ecacbb02acde5ef0f2186d2626f",
+   "languages": [
+    "java",
+    "javascript"
+   ],
+   "files": 1207,
+   "wall_seconds": 56.1,
+   "tool_status": {
+    "bandit": {
+     "status": "skipped",
+     "seconds": null,
+     "findings": 0
+    },
+    "semgrep": {
+     "status": "ok",
+     "seconds": 54.9,
+     "findings": 720
+    },
+    "gitleaks": {
+     "status": "ok",
+     "seconds": 7.52,
+     "findings": 1
+    },
+    "trivy": {
+     "status": "ok",
+     "seconds": 4.21,
+     "findings": 22
+    },
+    "osv-scanner": {
+     "status": "ok",
+     "seconds": 1.11,
+     "findings": 0
+    }
+   },
+   "raw_findings": 743,
+   "unique_findings": 728,
+   "dedup_rate": 0.0202,
+   "cross_tool_merged": 0,
+   "by_severity": {
+    "CRITICAL": 6,
+    "HIGH": 28,
+    "MEDIUM": 693,
+    "LOW": 1
+   },
+   "by_category": {
+    "sca": 22,
+    "sast": 705,
+    "secrets": 1
+   }
+  },
+  {
+   "repo": "java-sec-code",
+   "kind": "vulnerable",
+   "commit": "4711f4e186258c6e0dd5c3863e7c9592e7e9026a",
+   "languages": [
+    "java"
+   ],
+   "files": 102,
+   "wall_seconds": 17.4,
+   "tool_status": {
+    "bandit": {
+     "status": "skipped",
+     "seconds": null,
+     "findings": 0
+    },
+    "semgrep": {
+     "status": "ok",
+     "seconds": 17.34,
+     "findings": 92
+    },
+    "gitleaks": {
+     "status": "ok",
+     "seconds": 0.6,
+     "findings": 2
+    },
+    "trivy": {
+     "status": "ok",
+     "seconds": 3.59,
+     "findings": 147
+    },
+    "osv-scanner": {
+     "status": "ok",
+     "seconds": 0.58,
+     "findings": 0
+    }
+   },
+   "raw_findings": 241,
+   "unique_findings": 239,
+   "dedup_rate": 0.0083,
+   "cross_tool_merged": 0,
+   "by_severity": {
+    "CRITICAL": 31,
+    "HIGH": 88,
+    "MEDIUM": 114,
+    "LOW": 6
+   },
+   "by_category": {
+    "sca": 147,
+    "sast": 91,
+    "secrets": 1
+   }
+  },
+  {
+   "repo": "terragoat",
+   "kind": "vulnerable",
+   "commit": "729f8da62c6a85ce4af5ad3d123de97776d954c4",
+   "languages": [],
+   "files": 72,
+   "wall_seconds": 214.4,
+   "tool_status": {
+    "bandit": {
+     "status": "skipped",
+     "seconds": null,
+     "findings": 0
+    },
+    "semgrep": {
+     "status": "skipped",
+     "seconds": null,
+     "findings": 0
+    },
+    "gitleaks": {
+     "status": "ok",
+     "seconds": 0.67,
+     "findings": 5
+    },
+    "trivy": {
+     "status": "ok",
+     "seconds": 214.34,
+     "findings": 806
+    },
+    "osv-scanner": {
+     "status": "ok",
+     "seconds": 18.34,
+     "findings": 134
+    }
+   },
+   "raw_findings": 945,
+   "unique_findings": 880,
+   "dedup_rate": 0.0688,
+   "cross_tool_merged": 65,
+   "by_severity": {
+    "CRITICAL": 83,
+    "HIGH": 388,
+    "MEDIUM": 316,
+    "LOW": 93
+   },
+   "by_category": {
+    "sca": 630,
+    "iac": 243,
+    "secrets": 5,
+    "container": 2
+   }
+  },
+  {
+   "repo": "cfngoat",
+   "kind": "vulnerable",
+   "commit": "0c09b69cfc3dbc6cb3ef01883415c35c588ced48",
+   "languages": [],
+   "files": 7,
+   "wall_seconds": 0.3,
+   "tool_status": {
+    "bandit": {
+     "status": "skipped",
+     "seconds": null,
+     "findings": 0
+    },
+    "semgrep": {
+     "status": "skipped",
+     "seconds": null,
+     "findings": 0
+    },
+    "trivy": {
+     "status": "skipped",
+     "seconds": null,
+     "findings": 0
+    },
+    "osv-scanner": {
+     "status": "skipped",
+     "seconds": null,
+     "findings": 0
+    },
+    "gitleaks": {
+     "status": "ok",
+     "seconds": 0.25,
+     "findings": 2
+    }
+   },
+   "raw_findings": 2,
+   "unique_findings": 2,
+   "dedup_rate": 0.0,
+   "cross_tool_merged": 0,
+   "by_severity": {
+    "HIGH": 2
+   },
+   "by_category": {
+    "secrets": 2
+   }
+  },
+  {
+   "repo": "flask",
+   "kind": "real",
+   "commit": "d73fa1cdcbd8b1465c151db8924ba58b1dd14e35",
+   "languages": [
+    "python"
+   ],
+   "files": 236,
+   "wall_seconds": 54.3,
+   "tool_status": {
+    "bandit": {
+     "status": "ok",
+     "seconds": 3.01,
+     "findings": 1076
+    },
+    "semgrep": {
+     "status": "ok",
+     "seconds": 53.84,
+     "findings": 352
+    },
+    "gitleaks": {
+     "status": "ok",
+     "seconds": 1.51,
+     "findings": 6
+    },
+    "trivy": {
+     "status": "ok",
+     "seconds": 4.29,
+     "findings": 13
+    },
+    "osv-scanner": {
+     "status": "ok",
+     "seconds": 3.79,
+     "findings": 15
+    }
+   },
+   "raw_findings": 1462,
+   "unique_findings": 1445,
+   "dedup_rate": 0.0116,
+   "cross_tool_merged": 15,
+   "by_severity": {
+    "HIGH": 287,
+    "MEDIUM": 89,
+    "LOW": 1069
+   },
+   "by_category": {
+    "secrets": 6,
+    "sca": 15,
+    "sast": 1424
+   }
+  },
+  {
+   "repo": "requests",
+   "kind": "real",
+   "commit": "611c6162cbc4ac2020a2f91c7cfa4f3abf9bbb60",
+   "languages": [
+    "python"
+   ],
+   "files": 128,
+   "wall_seconds": 53.1,
+   "tool_status": {
+    "bandit": {
+     "status": "ok",
+     "seconds": 1.9,
+     "findings": 708
+    },
+    "semgrep": {
+     "status": "ok",
+     "seconds": 52.47,
+     "findings": 343
+    },
+    "gitleaks": {
+     "status": "ok",
+     "seconds": 1.11,
+     "findings": 4
+    },
+    "trivy": {
+     "status": "ok",
+     "seconds": 3.53,
+     "findings": 0
+    },
+    "osv-scanner": {
+     "status": "ok",
+     "seconds": 3.21,
+     "findings": 0
+    }
+   },
+   "raw_findings": 1055,
+   "unique_findings": 1048,
+   "dedup_rate": 0.0066,
+   "cross_tool_merged": 7,
+   "by_severity": {
+    "HIGH": 9,
+    "MEDIUM": 417,
+    "LOW": 622
+   },
+   "by_category": {
+    "sast": 1044,
+    "secrets": 4
+   }
+  },
+  {
+   "repo": "click",
+   "kind": "real",
+   "commit": "06b2a678741131fd577ce170e23e5ca0aeba0309",
+   "languages": [
+    "python"
+   ],
+   "files": 178,
+   "wall_seconds": 64.8,
+   "tool_status": {
+    "trivy": {
+     "status": "skipped",
+     "seconds": null,
+     "findings": 0
+    },
+    "osv-scanner": {
+     "status": "skipped",
+     "seconds": null,
+     "findings": 0
+    },
+    "bandit": {
+     "status": "ok",
+     "seconds": 2.22,
+     "findings": 1527
+    },
+    "semgrep": {
+     "status": "ok",
+     "seconds": 64.19,
+     "findings": 229
+    },
+    "gitleaks": {
+     "status": "ok",
+     "seconds": 0.83,
+     "findings": 0
+    }
+   },
+   "raw_findings": 1756,
+   "unique_findings": 1743,
+   "dedup_rate": 0.0074,
+   "cross_tool_merged": 12,
+   "by_severity": {
+    "HIGH": 55,
+    "MEDIUM": 177,
+    "LOW": 1511
+   },
+   "by_category": {
+    "sast": 1743
+   }
+  },
+  {
+   "repo": "httpx",
+   "kind": "real",
+   "commit": "b5addb64f0161ff6bfe94c124ef76f6a1fba5254",
+   "languages": [
+    "python"
+   ],
+   "files": 125,
+   "wall_seconds": 52.9,
+   "tool_status": {
+    "bandit": {
+     "status": "ok",
+     "seconds": 3.2,
+     "findings": 1544
+    },
+    "semgrep": {
+     "status": "ok",
+     "seconds": 52.51,
+     "findings": 88
+    },
+    "gitleaks": {
+     "status": "ok",
+     "seconds": 2.21,
+     "findings": 0
+    },
+    "trivy": {
+     "status": "ok",
+     "seconds": 4.09,
+     "findings": 9
+    },
+    "osv-scanner": {
+     "status": "ok",
+     "seconds": 3.98,
+     "findings": 9
+    }
+   },
+   "raw_findings": 1650,
+   "unique_findings": 1632,
+   "dedup_rate": 0.0109,
+   "cross_tool_merged": 18,
+   "by_severity": {
+    "CRITICAL": 1,
+    "HIGH": 14,
+    "MEDIUM": 295,
+    "LOW": 1322
+   },
+   "by_category": {
+    "sca": 9,
+    "sast": 1623
+   }
+  },
+  {
+   "repo": "full-stack-fastapi-template",
+   "kind": "real",
+   "commit": "cb740b656d7a0a6c5e12c7bf8e50343ec94ee9c7",
+   "languages": [
+    "javascript",
+    "python"
+   ],
+   "files": 248,
+   "wall_seconds": 69.9,
+   "tool_status": {
+    "osv-scanner": {
+     "status": "skipped",
+     "seconds": null,
+     "findings": 0
+    },
+    "bandit": {
+     "status": "ok",
+     "seconds": 1.51,
+     "findings": 173
+    },
+    "semgrep": {
+     "status": "ok",
+     "seconds": 69.49,
+     "findings": 340
+    },
+    "gitleaks": {
+     "status": "ok",
+     "seconds": 1.47,
+     "findings": 0
+    },
+    "trivy": {
+     "status": "ok",
+     "seconds": 4.63,
+     "findings": 5
+    }
+   },
+   "raw_findings": 518,
+   "unique_findings": 518,
+   "dedup_rate": 0.0,
+   "cross_tool_merged": 0,
+   "by_severity": {
+    "HIGH": 3,
+    "MEDIUM": 23,
+    "LOW": 492
+   },
+   "by_category": {
+    "container": 5,
+    "sast": 513
+   }
+  },
+  {
+   "repo": "express",
+   "kind": "real",
+   "commit": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
+   "languages": [
+    "javascript"
+   ],
+   "files": 214,
+   "wall_seconds": 46.9,
+   "tool_status": {
+    "bandit": {
+     "status": "skipped",
+     "seconds": null,
+     "findings": 0
+    },
+    "trivy": {
+     "status": "skipped",
+     "seconds": null,
+     "findings": 0
+    },
+    "osv-scanner": {
+     "status": "skipped",
+     "seconds": null,
+     "findings": 0
+    },
+    "semgrep": {
+     "status": "ok",
+     "seconds": 46.65,
+     "findings": 77
+    },
+    "gitleaks": {
+     "status": "ok",
+     "seconds": 0.5,
+     "findings": 0
+    }
+   },
+   "raw_findings": 77,
+   "unique_findings": 52,
+   "dedup_rate": 0.3247,
+   "cross_tool_merged": 0,
+   "by_severity": {
+    "HIGH": 1,
+    "MEDIUM": 50,
+    "LOW": 1
+   },
+   "by_category": {
+    "sast": 52
+   }
+  },
+  {
+   "repo": "koa",
+   "kind": "real",
+   "commit": "824c1cf8de9a91a2941973b25dc8a3d3029b9e4f",
+   "languages": [
+    "javascript"
+   ],
+   "files": 111,
+   "wall_seconds": 30.9,
+   "tool_status": {
+    "bandit": {
+     "status": "skipped",
+     "seconds": null,
+     "findings": 0
+    },
+    "semgrep": {
+     "status": "ok",
+     "seconds": 30.83,
+     "findings": 14
+    },
+    "gitleaks": {
+     "status": "ok",
+     "seconds": 0.81,
+     "findings": 0
+    },
+    "trivy": {
+     "status": "ok",
+     "seconds": 4.27,
+     "findings": 3
+    },
+    "osv-scanner": {
+     "status": "ok",
+     "seconds": 13.72,
+     "findings": 3
+    }
+   },
+   "raw_findings": 20,
+   "unique_findings": 17,
+   "dedup_rate": 0.15,
+   "cross_tool_merged": 3,
+   "by_severity": {
+    "HIGH": 1,
+    "MEDIUM": 2,
+    "LOW": 14
+   },
+   "by_category": {
+    "sca": 3,
+    "sast": 14
+   }
+  },
+  {
+   "repo": "chalk",
+   "kind": "real",
+   "commit": "8960ada92ca0f9220c8863495bae78dcc0c323ee",
+   "languages": [
+    "javascript"
+   ],
+   "files": 35,
+   "wall_seconds": 21.7,
+   "tool_status": {
+    "bandit": {
+     "status": "skipped",
+     "seconds": null,
+     "findings": 0
+    },
+    "trivy": {
+     "status": "skipped",
+     "seconds": null,
+     "findings": 0
+    },
+    "osv-scanner": {
+     "status": "skipped",
+     "seconds": null,
+     "findings": 0
+    },
+    "semgrep": {
+     "status": "ok",
+     "seconds": 21.71,
+     "findings": 12
+    },
+    "gitleaks": {
+     "status": "ok",
+     "seconds": 0.33,
+     "findings": 0
+    }
+   },
+   "raw_findings": 12,
+   "unique_findings": 12,
+   "dedup_rate": 0.0,
+   "cross_tool_merged": 0,
+   "by_severity": {
+    "LOW": 12
+   },
+   "by_category": {
+    "sast": 12
+   }
+  },
+  {
+   "repo": "gin",
+   "kind": "real",
+   "commit": "1bd0ecf2d3e08da37efa270bb7be20c1eddb0d68",
+   "languages": [
+    "go"
+   ],
+   "files": 130,
+   "wall_seconds": 11.5,
+   "tool_status": {
+    "bandit": {
+     "status": "skipped",
+     "seconds": null,
+     "findings": 0
+    },
+    "semgrep": {
+     "status": "ok",
+     "seconds": 11.44,
+     "findings": 27
+    },
+    "gitleaks": {
+     "status": "ok",
+     "seconds": 0.88,
+     "findings": 3
+    },
+    "trivy": {
+     "status": "ok",
+     "seconds": 3.63,
+     "findings": 1
+    },
+    "osv-scanner": {
+     "status": "ok",
+     "seconds": 1.68,
+     "findings": 1
+    }
+   },
+   "raw_findings": 32,
+   "unique_findings": 30,
+   "dedup_rate": 0.0625,
+   "cross_tool_merged": 1,
+   "by_severity": {
+    "HIGH": 3,
+    "MEDIUM": 26,
+    "INFO": 1
+   },
+   "by_category": {
+    "secrets": 3,
+    "sast": 26,
+    "sca": 1
+   }
+  },
+  {
+   "repo": "cobra",
+   "kind": "real",
+   "commit": "adbc8813901bba65827259daa8e22ff94ec1f30e",
+   "languages": [
+    "go"
+   ],
+   "files": 66,
+   "wall_seconds": 10.3,
+   "tool_status": {
+    "bandit": {
+     "status": "skipped",
+     "seconds": null,
+     "findings": 0
+    },
+    "semgrep": {
+     "status": "ok",
+     "seconds": 10.27,
+     "findings": 2
+    },
+    "gitleaks": {
+     "status": "ok",
+     "seconds": 0.84,
+     "findings": 0
+    },
+    "trivy": {
+     "status": "ok",
+     "seconds": 3.21,
+     "findings": 0
+    },
+    "osv-scanner": {
+     "status": "ok",
+     "seconds": 1.76,
+     "findings": 0
+    }
+   },
+   "raw_findings": 2,
+   "unique_findings": 2,
+   "dedup_rate": 0.0,
+   "cross_tool_merged": 0,
+   "by_severity": {
+    "MEDIUM": 2
+   },
+   "by_category": {
+    "sast": 2
+   }
+  },
+  {
+   "repo": "gson",
+   "kind": "real",
+   "commit": "854c8255b625cf1e13c701a83ea9ccb4caaa576a",
+   "languages": [
+    "java"
+   ],
+   "files": 313,
+   "wall_seconds": 31.6,
+   "tool_status": {
+    "bandit": {
+     "status": "skipped",
+     "seconds": null,
+     "findings": 0
+    },
+    "semgrep": {
+     "status": "ok",
+     "seconds": 31.44,
+     "findings": 5
+    },
+    "gitleaks": {
+     "status": "ok",
+     "seconds": 1.67,
+     "findings": 0
+    },
+    "trivy": {
+     "status": "ok",
+     "seconds": 3.58,
+     "findings": 0
+    },
+    "osv-scanner": {
+     "status": "ok",
+     "seconds": 1.04,
+     "findings": 0
+    }
+   },
+   "raw_findings": 5,
+   "unique_findings": 5,
+   "dedup_rate": 0.0,
+   "cross_tool_merged": 0,
+   "by_severity": {
+    "HIGH": 1,
+    "MEDIUM": 4
+   },
+   "by_category": {
+    "sast": 5
+   }
+  },
+  {
+   "repo": "terraform-aws-vpc",
+   "kind": "real",
+   "commit": "b3abd6df2ecf052451a361ed55b8f06f8742a795",
+   "languages": [],
+   "files": 111,
+   "wall_seconds": 16.5,
+   "tool_status": {
+    "bandit": {
+     "status": "skipped",
+     "seconds": null,
+     "findings": 0
+    },
+    "semgrep": {
+     "status": "skipped",
+     "seconds": null,
+     "findings": 0
+    },
+    "osv-scanner": {
+     "status": "skipped",
+     "seconds": null,
+     "findings": 0
+    },
+    "gitleaks": {
+     "status": "ok",
+     "seconds": 0.65,
+     "findings": 0
+    },
+    "trivy": {
+     "status": "ok",
+     "seconds": 16.45,
+     "findings": 46
+    }
+   },
+   "raw_findings": 46,
+   "unique_findings": 46,
+   "dedup_rate": 0.0,
+   "cross_tool_merged": 0,
+   "by_severity": {
+    "CRITICAL": 29,
+    "HIGH": 5,
+    "MEDIUM": 7,
+    "LOW": 5
+   },
+   "by_category": {
+    "iac": 46
+   }
+  },
+  {
+   "repo": "docker-nginx",
+   "kind": "real",
+   "commit": "ef5a25a6314e652a2dcfbce6074bef729f4d9639",
+   "languages": [],
+   "files": 86,
+   "wall_seconds": 4.8,
+   "tool_status": {
+    "bandit": {
+     "status": "skipped",
+     "seconds": null,
+     "findings": 0
+    },
+    "semgrep": {
+     "status": "skipped",
+     "seconds": null,
+     "findings": 0
+    },
+    "osv-scanner": {
+     "status": "skipped",
+     "seconds": null,
+     "findings": 0
+    },
+    "gitleaks": {
+     "status": "ok",
+     "seconds": 0.5,
+     "findings": 6
+    },
+    "trivy": {
+     "status": "ok",
+     "seconds": 4.73,
+     "findings": 51
+    }
+   },
+   "raw_findings": 57,
+   "unique_findings": 57,
+   "dedup_rate": 0.0,
+   "cross_tool_merged": 0,
+   "by_severity": {
+    "HIGH": 23,
+    "MEDIUM": 16,
+    "LOW": 18
+   },
+   "by_category": {
+    "secrets": 6,
+    "container": 51
+   }
+  }
+ ],
+ "aggregate": {
+  "repos": 25,
+  "scanned": 25,
+  "scan_level_failures": [],
+  "tool_runs": 94,
+  "tool_run_failures": [],
+  "crash_rate": 0.0,
+  "raw_findings": 11155,
+  "unique_findings": 10154,
+  "dedup_rate_pooled": 0.0897,
+  "dedup_rate_median": 0.0202,
+  "dedup_rate_by_kind": {
+   "vulnerable": 0.2052,
+   "real": 0.0127
+  },
+  "wall_seconds": {
+   "total": 1235.0,
+   "median": 46.9,
+   "max": 214.4,
+   "p90": 74.2
+  }
+ }
+}

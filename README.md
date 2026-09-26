@@ -169,6 +169,13 @@ look-alikes (score +0.445; near-perfect on pattern-shaped weaknesses, close to a
 analyses Java, so there is no ensemble result yet. Method, per-category table and limits:
 [docs/evaluation-owasp.md](docs/evaluation-owasp.md).
 
+On the Juliet suite (Java, 24 security CWEs, 30,522 method-level cases) Semgrep detects 24% of the flaws, with a 20%
+false-alarm rate: strong on pattern-shaped CWEs, near zero on most taint-style ones. On a corpus of 25 pinned
+repositories the five default scanners had no crashes in 94 runs, and correlation removed 20.5% of raw findings on
+vulnerable apps but only 1.3% on ordinary repositories. Risk-score ranking is ahead of severity-only ranking on top-K
+precision, but not by a statistically significant margin. Tables, limits and what is unmeasured:
+[docs/evaluation-juliet-corpus.md](docs/evaluation-juliet-corpus.md).
+
 ## Adding scanners
 
 Five scanners run by default; Grype, Checkov, gosec and Dockle are opt-in (`--tools grype,checkov,gosec`,

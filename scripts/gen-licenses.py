@@ -60,6 +60,11 @@ DATA: list[tuple[str, str, str]] = [
         "benchmark input, downloaded at run time only, never committed or redistributed",
     ),
     (
+        "Juliet Test Suite for Java 1.3 (NIST SARD)",
+        "public domain (NIST SARD terms)",
+        "benchmark input, downloaded at run time only, never committed or redistributed",
+    ),
+    (
         "CWE",
         "MITRE CWE Terms of Use",
         "reference text in core/rag/corpus (attribution in NOTICE.md)",

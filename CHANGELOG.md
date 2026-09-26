@@ -6,6 +6,13 @@ versions will follow [SemVer](https://semver.org) once `v0.1.0` is tagged (plann
 ## [Unreleased]
 
 ### Added
+- **Juliet, corpus and prioritization evaluation (Week 24):** `benchmarks/juliet` scores Semgrep on the Juliet Java
+  suite per CWE with method-level ground truth (recall 23.8%, false-alarm 19.6%, `related` matcher; 24 CWEs,
+  chunked scan because one scan exceeds the 900 s tool limit). `benchmarks/corpus` scans 25 pinned repositories:
+  0 crashes in 94 tool runs, dedup 20.5% on vulnerable apps vs 1.3% on ordinary repos, median 47 s per repository.
+  `benchmarks/prioritize.py` compares top-K precision of risk score vs severity only on the OWASP Benchmark: ahead at
+  every K but inside the confidence interval. EPSS/KEV/reachability ordering is not evaluated (no ground truth).
+  See docs/evaluation-juliet-corpus.md.
 - **OWASP Benchmark evaluation (Week 23):** `benchmarks/owasp` fetches the pinned corpus, scans it through the real
   sandbox runner one tool at a time, and scores per test case (recall, false-positive rate, precision, F1, and the
   Benchmark's TPR - FPR) with Wilson intervals, per category, under three CWE matchers published together. First
