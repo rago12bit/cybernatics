@@ -27,6 +27,9 @@ class ToolStatus(BaseModel):
     exit_code: int | None = None
     duration_seconds: float | None = None
     error: str | None = None
+    warnings: list[str] = Field(
+        default_factory=list, description="Succeeded but possibly incomplete."
+    )
     raw_artifact: str | None = Field(default=None, description="withheld/available")
 
 

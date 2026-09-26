@@ -5,11 +5,25 @@ versions will follow [SemVer](https://semver.org) once `v0.1.0` is tagged (plann
 
 ## [Unreleased]
 
+### Changed
+- **Performance (Week 25):** median scan of the 25-repository corpus went from 47 s to 6 s (whole corpus 1,235 s to
+  338 s), OWASP Benchmark Semgrep scan 202 s to 30 s. Cause: Semgrep spent ~26 s per scan loading 337 rule files;
+  they are now merged per language at image build time with rule ids unchanged (rebuild `bulwark/semgrep`).
+  Semgrep and Trivy get 4 CPUs each (`ToolSpec.cpus`). Findings are identical except where the old run had lost
+  some (below). Trivy's multi-scanner IaC slowness is upstream and not fixed. See docs/evaluation.md.
+
+### Fixed
+- Semgrep skips a rule/file after 5 s and still exits 0, so slow or CPU-starved runs silently lost findings (dvpwa: 5
+  vs 169). Adapters can now return `warnings`; Semgrep reports timeouts in the tool status (`warnings`, also in the
+  API `ToolStatus`) and on stderr in the CLI. The first corpus run's dvpwa figure was affected; the OWASP and Juliet
+  results were rechecked and were not.
+
 ### Added
+- **Consolidated evaluation doc (Week 25):** docs/evaluation.md and a benchmark table in the README.
 - **Juliet, corpus and prioritization evaluation (Week 24):** `benchmarks/juliet` scores Semgrep on the Juliet Java
   suite per CWE with method-level ground truth (recall 23.8%, false-alarm 19.6%, `related` matcher; 24 CWEs,
   chunked scan because one scan exceeds the 900 s tool limit). `benchmarks/corpus` scans 25 pinned repositories:
-  0 crashes in 94 tool runs, dedup 20.5% on vulnerable apps vs 1.3% on ordinary repos, median 47 s per repository.
+  0 crashes in 94 tool runs, dedup 19.9% on vulnerable apps vs 1.3% on ordinary repos (first-run figures; corrected below in Week 25).
   `benchmarks/prioritize.py` compares top-K precision of risk score vs severity only on the OWASP Benchmark: ahead at
   every K but inside the confidence interval. EPSS/KEV/reachability ordering is not evaluated (no ground truth).
   See docs/evaluation-juliet-corpus.md.

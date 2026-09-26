@@ -164,17 +164,21 @@ internal use only — see [ADR-006](docs/adr/0006-semgrep-rules-licensing.md).
 
 ## Evaluation
 
-On the OWASP Benchmark (2,740 labelled Java cases) Semgrep finds 88% of real vulnerabilities and flags 44% of the safe
-look-alikes (score +0.445; near-perfect on pattern-shaped weaknesses, close to a coin flip on injection). One scanner
-analyses Java, so there is no ensemble result yet. Method, per-category table and limits:
-[docs/evaluation-owasp.md](docs/evaluation-owasp.md).
+Every number below comes from a script in `benchmarks/` and a result file committed in `benchmarks/results/`. They are
+single runs on one laptop (Docker Desktop, 10 CPUs), so treat them as measurements of this version, not guarantees.
 
-On the Juliet suite (Java, 24 security CWEs, 30,522 method-level cases) Semgrep detects 24% of the flaws, with a 20%
-false-alarm rate: strong on pattern-shaped CWEs, near zero on most taint-style ones. On a corpus of 25 pinned
-repositories the five default scanners had no crashes in 94 runs, and correlation removed 20.5% of raw findings on
-vulnerable apps but only 1.3% on ordinary repositories. Risk-score ranking is ahead of severity-only ranking on top-K
-precision, but not by a statistically significant margin. Tables, limits and what is unmeasured:
-[docs/evaluation-juliet-corpus.md](docs/evaluation-juliet-corpus.md).
+| Benchmark | What it measures | Result |
+|---|---|---|
+| OWASP Benchmark 1.2beta (2,740 Java cases) | Semgrep, the only Java analyser | recall 88.2% (CI 86.4–89.8), false-positive rate 43.7%, F1 77.0%, score +0.445 |
+| Juliet 1.3 Java (24 security CWEs, 30,522 method-level cases) | Semgrep detection per CWE | recall 23.8%, false-alarm rate 19.6%, score +0.042 |
+| 25 pinned repositories, five default scanners | crashes | 0 failures in 94 tool runs |
+| same corpus | correlation (dedup) | 19.9% of raw findings merged on vulnerable apps, 1.3% on ordinary repos (8.9% pooled) |
+| same corpus | wall time per repository | median 6 s, 90th percentile 42 s, max 75 s (was 47 s, 74 s, 214 s before the Week 25 optimizations) |
+| OWASP Benchmark findings, top 20 | precision of risk-score ranking vs severity only | 63.3% vs 52.4% (random 48.2%); the difference is not statistically significant |
+
+What these do not show: there is no ensemble result because only one scanner analyses Java; Juliet is synthetic;
+SCA prioritization (EPSS, KEV, reachability) has no ground truth and is unmeasured; AI fix quality is unmeasured.
+Method, per-CWE and per-category tables, and the limits of each: [docs/evaluation.md](docs/evaluation.md).
 
 ## Adding scanners
 

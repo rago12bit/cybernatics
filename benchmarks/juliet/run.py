@@ -127,7 +127,7 @@ def scan(testcases: Path, label: str) -> dict[str, Any]:
         print(f"staged {n} files from {len(selected_dirs(testcases))} CWE directories")
         t0 = time.monotonic()
         files = sorted(staged.rglob("*.java"))
-        findings, statuses = [], []
+        findings, statuses, warnings = [], [], []
         # One scan of everything exceeds the tool's 900 s wall clock, so scan in chunks.
         for i in range(0, len(files), CHUNK):
             chunk = Path(tmp) / f"chunk{i // CHUNK}" / "src" / "testcases"
@@ -140,6 +140,7 @@ def scan(testcases: Path, label: str) -> dict[str, Any]:
             print(f"  chunk {i // CHUNK + 1}: {out.status}, {len(out.findings)} findings, "
                   f"{out.duration_seconds or 0:.0f}s", flush=True)  # fmt: skip
             statuses.append(out.status)
+            warnings += out.warnings
             findings += out.findings
             shutil.rmtree(chunk.parents[1], ignore_errors=True)
         status = (
@@ -156,7 +157,7 @@ def scan(testcases: Path, label: str) -> dict[str, Any]:
         "suite": {"name": "Juliet Test Suite for Java", "version": "1.3", "sha256": SHA256, "source": URL,
                   "files_scanned": n, "cwe_directories": CWES},
         "measured": date.today().isoformat(), "label": label,
-        "tool": {"name": "semgrep", "image": ADAPTERS["semgrep"].spec.image, "status": status, "chunks": len(statuses),
+        "tool": {"name": "semgrep", "image": ADAPTERS["semgrep"].spec.image, "status": status, "chunks": len(statuses), "warnings": warnings,
                  "seconds": round(time.monotonic() - t0, 1), "findings": len(findings), "outside_regions": outside},
         "cases": cases,
     }  # fmt: skip

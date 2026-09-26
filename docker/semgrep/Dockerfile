@@ -9,8 +9,15 @@ RUN apk add --no-cache git \
  && for d in python javascript typescript go java; do cp -R "/src/$d" "/rules/$d"; done \
  && cp /src/LICENSE /rules/LICENSE
 
+# Stage 2: one file per language instead of hundreds (see merge-rules.py: ~25 s less start-up per scan).
+FROM semgrep/semgrep:1.90.0 AS merged
+COPY --from=rules /rules /rules-src
+COPY merge-rules.py /merge-rules.py
+RUN python3 /merge-rules.py /rules-src /rules
+
 FROM semgrep/semgrep:1.90.0
-COPY --from=rules /rules /rules
+COPY --from=merged /rules /rules
+COPY --from=rules /rules/LICENSE /rules/LICENSE
 RUN adduser -D -u 10001 scanner
 USER 10001
 # Sandbox has a read-only rootfs and no network: keep all state in /tmp, never phone home.

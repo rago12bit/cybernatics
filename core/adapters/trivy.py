@@ -35,6 +35,7 @@ class TrivyAdapter(ToolAdapter):
         categories=frozenset({"sca", "iac", "container"}),
         languages=frozenset(),
         timeout_seconds=900,
+        cpus=4,  # IaC misconfig scan of a Terraform repo: 133 s at 1 CPU, 68 s at 4
         writable_volumes=("/db",),  # Trivy opens its DB read-write; volume is copied from image
     )
 

@@ -163,7 +163,7 @@ def test_scan_view_and_findings_endpoints(env) -> None:  # type: ignore[no-untyp
     v = client.get(f"/scans/{sid}", headers=AUTH).json()
     assert v["status"] == "completed" and v["severity_counts"] == {"HIGH": 1, "LOW": 1}
     assert v["tool_status"]["bandit"]["raw_artifact"] == "withheld"
-    assert v["tool_status"]["trivy"] == {"status": "skipped", "findings": 0, "exit_code": None, "duration_seconds": None, "error": "no relevant files", "raw_artifact": None}  # fmt: skip
+    assert v["tool_status"]["trivy"] == {"status": "skipped", "findings": 0, "exit_code": None, "duration_seconds": None, "error": "no relevant files", "warnings": [], "raw_artifact": None}  # fmt: skip
     assert "source_ref" not in v  # internal server path is never exposed
     page = client.get(f"/scans/{sid}/findings", headers=AUTH).json()
     assert page["total"] == 2 and page["items"][0]["scoring"]["normalized_severity"] == "HIGH"

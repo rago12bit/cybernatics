@@ -82,6 +82,9 @@ export function ScanReport({
             </div>
           </div>
         )}
+        {Object.entries(scan.tool_status).flatMap(([tool, t]) => (t.warnings ?? []).map((w) => `${tool}: ${w}`)).map((w) => (
+          <p key={w} className="warn" role="status">{w}</p>
+        ))}
         {scan.status === "partial" && <p className="warn">Some scanners failed or timed out. Results below are from the scanners that finished.</p>}
       </section>
       {done && scan.status !== "failed" && <FindingsTable scan={scan} version={version} fetchFindings={fetchFindings} guidance={guidance} />}

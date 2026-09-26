@@ -1126,6 +1126,14 @@
             ],
             "title": "Error"
           },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings",
+            "description": "Succeeded but possibly incomplete."
+          },
           "raw_artifact": {
             "anyOf": [
               {

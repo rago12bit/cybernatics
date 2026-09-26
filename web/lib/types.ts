@@ -19,6 +19,7 @@ export interface ToolStatus {
   exit_code: number | null;
   duration_seconds: number | null;
   error: string | null;
+  warnings?: string[]; // finished, but possibly incomplete
   raw_artifact: "available" | "withheld" | null;
 }
 

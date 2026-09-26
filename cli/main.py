@@ -62,6 +62,9 @@ def scan_cmd(
     except IngestError as exc:
         typer.echo(f"error: {exc}", err=True)
         raise typer.Exit(2) from exc
+    for tool, st in result.tool_status.items():
+        for w in st.get("warnings", []):
+            typer.echo(f"warning: {tool}: {w}", err=True)
     if fmt == "json":
         text = json.dumps(
             {

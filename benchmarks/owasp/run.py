@@ -108,7 +108,7 @@ def scan_tools(bench: Path, tools: list[str], label: str) -> dict[str, Any]:
                 result[name] = {
                     "status": out.status, "error": out.error, "duration_seconds": round(time.monotonic() - t0, 1),
                     "image": ADAPTERS[name].spec.image, "findings": len(out.findings),
-                    "unattributed_findings": other, "predictions": preds,
+                    "unattributed_findings": other, "warnings": out.warnings, "predictions": preds,
                 }  # fmt: skip
                 print(
                     f"{name}: {out.status}, {len(out.findings)} findings, {len(preds)} test files flagged"

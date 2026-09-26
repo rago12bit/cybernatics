@@ -72,31 +72,40 @@ What this shows, and what it does not:
 `benchmarks/corpus/corpus.json` pins 25 public repositories by commit: 12 deliberately vulnerable (VAmPI, NodeGoat,
 WebGoat, terragoat, ...) and 13 ordinary (flask, requests, express, gin, gson, ...). Each was scanned with the five
 default scanners through the real sandbox, one repository at a time, with nothing else running. The plan asked for
-20 to 30; this is 25. Per-repository numbers: `benchmarks/results/corpus-2026-09-26-v1.json`.
+20 to 30; this is 25. Per-repository numbers: `benchmarks/results/corpus-2026-09-26-v2-optimized.json` (the numbers below; see the correction and
+performance notes after the table).
 
 | Measure | Result |
 |---|---|
 | Repositories scanned | 25 of 25 |
 | Tool runs (skipped tools not counted) | 94 |
 | Crash rate (error or timeout) | 0.0% (0 failures) |
-| Raw findings, before correlation | 11,155 |
-| Unique findings, after correlation | 10,154 |
-| Dedup rate, pooled | 9.0% |
+| Raw findings, before correlation | 11,319 |
+| Unique findings, after correlation | 10,313 |
+| Dedup rate, pooled | 8.9% |
 | Dedup rate, median repository | 2.0% |
-| Dedup rate, vulnerable apps / ordinary repos | 20.5% / 1.3% |
-| Wall time per repository: median / p90 / max | 47 s / 74 s / 214 s |
-| Wall time, whole corpus | 1235 s |
+| Dedup rate, vulnerable apps / ordinary repos | 19.9% / 1.3% |
+| Wall time per repository: median / p90 / max | 6 s / 42 s / 75 s |
+| Wall time, whole corpus | 338 s |
 
 Reading it:
 
 - **Dedup depends on what you scan.** Vulnerable apps have the same flaw reported by several tools (Semgrep and
   Bandit, Trivy and OSV-Scanner on the same lockfile) so about a fifth of findings merge. Ordinary repositories
-  produce mostly single-tool findings and merge about 1%. The pooled 9% is between the two and is not a general
+  produce mostly single-tool findings and merge about 1%. The pooled 8.9% is between the two and is not a general
   figure. Do not quote it without the split.
 - **Crash rate 0% is one run.** It is not a reliability guarantee: zero failures in 94 runs bounds the true
   rate at roughly 3% (rule of three, 95%).
 - **Wall time** includes sandbox start-up for each tool and the correlation step; the machine is one laptop running
-  Docker Desktop. terragoat is the slowest (214 s); I did not profile which tool is responsible.
+  Docker Desktop. terragoat is the slowest (75 s), and that is Trivy's IaC scan (measured in Week 25).
+- **Correction to the first run (`corpus-2026-09-26-v1.json`, kept for the "before" timings).** dvpwa reported 65
+  unique findings there and 224 in the rerun. Semgrep gives up on a rule/file pair after 5 s and still exits
+  successfully, so under CPU pressure it silently returned 5 findings instead of 169. Bulwark now reports this
+  (`warnings` in the tool status, and on stderr in the CLI). I checked whether my other headline numbers were
+  affected by rerunning the OWASP and Juliet scans: predictions were identical and no timeouts were reported.
+  Only the first corpus run's dvpwa figure was wrong.
+- The wall times above are after the Week 25 optimizations ([evaluation.md](evaluation.md#performance)). The
+  first run's were 47 s median and 214 s max; dvpwa and NodeGoat are still slow because of vendored JavaScript.
 - No claim of accuracy comes from this table. The corpus has no ground truth; it measures behaviour and cost.
 - Small oddities: cfngoat yields 2 findings and terragoat's languages show "-" because IaC is not a language. Checkov,
   which would cover them better, is tier 2 and not in the default five.

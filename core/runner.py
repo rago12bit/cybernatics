@@ -57,7 +57,7 @@ def build_docker_argv(
         "--user=10001:10001",
         "--security-opt=no-new-privileges",
         f"--memory={spec.memory_limit}",
-        "--cpus=1.0",
+        f"--cpus={spec.cpus:g}",
         "--pids-limit=256",
         "--label=bulwark.managed=1",
         f"--tmpfs=/tmp:rw,noexec,nosuid,size={spec.tmp_size}",

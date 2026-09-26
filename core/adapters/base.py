@@ -22,6 +22,7 @@ class ToolSpec:
     languages: frozenset[str]  # {"python", "javascript", ...}
     timeout_seconds: int = 900
     memory_limit: str = "2g"
+    cpus: float = 1.0  # CPU quota for the container; most tools are single-threaded
     native_sarif: bool = False
     writable_volumes: tuple[str, ...] = ()  # container paths needing a throwaway rw volume
     output_name: str = "result.json"  # the file the tool writes inside the output directory
@@ -58,6 +59,10 @@ class ToolAdapter(ABC):
 
         Must never raise on malformed input; return [] and log instead.
         """
+
+    def warnings(self, raw: bytes) -> list[str]:
+        """Reasons a run that reported success may still be incomplete (default: none)."""
+        return []
 
     def applies_to(self, ctx: RepoContext) -> bool:
         """Skip this tool when the repo has no relevant files."""

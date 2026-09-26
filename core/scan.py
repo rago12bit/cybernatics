@@ -103,6 +103,7 @@ class ToolOutcome:
     duration_seconds: float = 0.0
     error: str | None = None
     raw: bytes = b""  # not serialized; stored as an artifact only after secret-safety checks
+    warnings: list[str] = field(default_factory=list)  # ok, but possibly incomplete
 
     def status_block(self) -> dict[str, Any]:
         block: dict[str, Any] = {
@@ -113,6 +114,8 @@ class ToolOutcome:
         }
         if self.error:
             block["error"] = self.error
+        if self.warnings:
+            block["warnings"] = self.warnings
         return block
 
     def to_dict(self) -> dict[str, Any]:
@@ -128,6 +131,7 @@ class ToolOutcome:
             exit_code=d["exit_code"],
             duration_seconds=d["duration_seconds"],
             error=d.get("error"),
+            warnings=list(d.get("warnings", [])),
         )
 
 
@@ -158,8 +162,16 @@ def _execute_tool(name: str, target: Path) -> ToolOutcome:
     findings = adapter.parse(run.raw) if run.raw else []
     # No output = failure; output with zero findings = clean pass.
     error = None if run.status == "ok" else (run.stderr.strip() or run.status)[-500:]
+    warnings = adapter.warnings(run.raw) if run.raw and run.status == "ok" else []
     return ToolOutcome(
-        name, run.status, findings, run.exit_code, time.monotonic() - start, error, run.raw
+        name,
+        run.status,
+        findings,
+        run.exit_code,
+        time.monotonic() - start,
+        error,
+        run.raw,
+        warnings,
     )
 
 
