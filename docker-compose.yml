@@ -22,6 +22,12 @@ x-app-env: &app-env
   # Structured JSON logs carry scan_id. Traces are exported only if you set an OTLP endpoint (see docs/observability.md).
   BULWARK_LOG_FORMAT: ${BULWARK_LOG_FORMAT:-json}
   OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+  # GitHub App integration (Week 30, ADR-0017), all optional: unset -> the webhook endpoint 404s and
+  # PR-comment posting is a no-op. `api` receives webhooks; `worker` posts the result comment once a
+  # PR-triggered scan finishes -- both need these.
+  BULWARK_GITHUB_APP_ID: ${BULWARK_GITHUB_APP_ID:-}
+  BULWARK_GITHUB_APP_PRIVATE_KEY: ${BULWARK_GITHUB_APP_PRIVATE_KEY:-}
+  BULWARK_GITHUB_WEBHOOK_SECRET: ${BULWARK_GITHUB_WEBHOOK_SECRET:-}
 
 x-app: &app
   build: { context: ., dockerfile: docker/app/Dockerfile }

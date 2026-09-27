@@ -14,13 +14,18 @@ from core.workspace import prepare_workspace
 
 
 @contextmanager
-def materialize(source: str, limits: Limits | None = None) -> Iterator[Path]:
-    """Yield a sanitized, size-limited workspace for `source`; cleaned up on exit."""
+def materialize(
+    source: str, limits: Limits | None = None, ref: str | None = None
+) -> Iterator[Path]:
+    """Yield a sanitized, size-limited workspace for `source`; cleaned up on exit.
+
+    `ref` (Week 30): only meaningful for a git `source`; see `core.gitfetch.clone_repo`.
+    """
     with tempfile.TemporaryDirectory(prefix="bulwark-ws-", dir=scratch_dir()) as tmp:
         tmp_path = Path(tmp)
         staged: Path
         if source.startswith(("https://", "http://", "git@", "ssh://", "git://", "file://")):
-            staged = clone_repo(source, tmp_path / "clone", limits)
+            staged = clone_repo(source, tmp_path / "clone", limits, ref=ref)
         else:
             p = Path(source).expanduser()
             if p.is_dir():

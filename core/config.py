@@ -21,6 +21,13 @@ class Settings:
     upload_dir: Path
     max_upload_bytes: int
     cors_origins: tuple[str, ...] = ("http://localhost:3000",)
+    # GitHub App integration (Week 30, ADR-0017). All empty by default: the integration is simply
+    # off (the webhook endpoint 404s) until a real App is registered and these are set.
+    github_app_id: str = ""
+    github_app_private_key: str = (
+        ""  # PEM; `\n` escapes are unescaped, since most secret stores flatten them
+    )
+    github_webhook_secret: str = ""
 
     @staticmethod
     def from_env() -> Settings:
@@ -41,6 +48,11 @@ class Settings:
                 for o in os.environ.get("BULWARK_CORS_ORIGINS", "http://localhost:3000").split(",")
                 if o.strip()
             ),
+            github_app_id=os.environ.get("BULWARK_GITHUB_APP_ID", ""),
+            github_app_private_key=os.environ.get("BULWARK_GITHUB_APP_PRIVATE_KEY", "").replace(
+                "\\n", "\n"
+            ),
+            github_webhook_secret=os.environ.get("BULWARK_GITHUB_WEBHOOK_SECRET", ""),
         )
 
 

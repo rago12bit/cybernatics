@@ -36,6 +36,24 @@ CURRENT_ORG_SETTING = "app.current_org"
 ORG_HEADER = "X-Bulwark-Org"
 
 
+def set_session_org(s: Session, org_id: str) -> None:
+    """Set `app.current_org` on an already-open session, for the rest of its life (session-scoped,
+    not transaction-local -- see `api.deps.db`'s docstring for why `true`/local breaks the moment a
+    caller commits more than once in one session, which several `repo.py` functions do). A no-op on
+    SQLite, which has no RLS to set up in the first place.
+
+    Shared by every place that establishes org context for a session: `api.deps.db` (from the
+    request's `X-Bulwark-Org` header), `scoped_sessions` below (from a worker task's payload), and
+    the GitHub webhook handler (from a *resolved* installation -> org mapping, only knowable
+    after looking one up -- see `core.persistence.repo.get_or_create_installation`'s docstring for
+    why that lookup itself must not be RLS-gated)."""
+    if s.bind is not None and s.bind.dialect.name == "postgresql":
+        s.execute(
+            text("SELECT set_config(:key, :org, false)"),
+            {"key": CURRENT_ORG_SETTING, "org": org_id},
+        )
+
+
 def scoped_sessions(factory: SessionFactory, org_id: str) -> SessionFactory:
     """Wrap a session factory so every session it opens has `app.current_org` set for `org_id`
     before the caller runs anything else on it. Mirrors `api.deps.db` for the worker, which has no
@@ -50,11 +68,7 @@ def scoped_sessions(factory: SessionFactory, org_id: str) -> SessionFactory:
 
     def _open() -> Session:
         s = factory()
-        if s.bind is not None and s.bind.dialect.name == "postgresql":
-            s.execute(
-                text("SELECT set_config(:key, :org, false)"),
-                {"key": CURRENT_ORG_SETTING, "org": org_id},
-            )
+        set_session_org(s, org_id)
         return s
 
     return _open

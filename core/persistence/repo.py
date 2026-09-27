@@ -15,7 +15,16 @@ from core.assets import asset_key
 from core.issues import ExistingIssue, IssueUpdate, State, SyncResult, fallback_key
 from core.issues import sync as sync_issues
 from core.models import Finding
-from core.persistence.models import SEVERITY_RANK, Asset, FindingRow, IssueRow, Scan, ToolRun
+from core.persistence.models import (
+    SEVERITY_RANK,
+    Asset,
+    FindingRow,
+    GithubInstallation,
+    IssueRow,
+    Organization,
+    Scan,
+    ToolRun,
+)
 from core.tenancy import DEFAULT_ORG_ID
 
 log = logging.getLogger(__name__)
@@ -57,6 +66,10 @@ def create_scan(
     source_label: str,
     tools: list[str],
     org_id: str = DEFAULT_ORG_ID,
+    ref: str | None = None,
+    github_repo: str | None = None,
+    github_pr_number: int | None = None,
+    github_installation_id: str | None = None,
 ) -> Scan:
     asset = get_or_create_asset(
         s, source_type=source_type, source_label=source_label, org_id=org_id
@@ -68,6 +81,10 @@ def create_scan(
         source_label=source_label,
         tools=tools,
         asset_id=asset.id,
+        ref=ref,
+        github_repo=github_repo,
+        github_pr_number=github_pr_number,
+        github_installation_id=github_installation_id,
     )
     s.add(scan)
     s.commit()
@@ -341,3 +358,54 @@ def issue_counts(s: Session, scan_id: str) -> dict[str, int]:
         .group_by(FindingRow.issue_state)
     ).all()
     return {state: n for state, n in rows}
+
+
+def get_installation(s: Session, installation_id: str) -> GithubInstallation | None:
+    """`github_installations` deliberately carries no Row-Level Security policy (unlike every
+    table that holds actual scan data) -- this lookup is *how* a webhook's org context gets
+    resolved in the first place, so it cannot itself require org context to already be set. It's
+    a directory table,
+    like `organizations` itself, not tenant-owned content: knowing "installation X belongs to org Y"
+    isn't a cross-tenant data leak the way a scan's findings would be. See `set_session_org`'s and
+    `get_or_create_installation`'s docstrings for how the *next* query in the same session gets
+    properly org-scoped, right after this one resolves which org that is."""
+    return s.get(GithubInstallation, installation_id)
+
+
+def get_or_create_installation(
+    s: Session, *, installation_id: str, account_login: str
+) -> GithubInstallation:
+    """A GitHub App installation IS a tenant boundary for now (ADR-0013/ADR-0017): installing the
+    App on an account creates that account's Organization the first time we hear about it, since
+    there is no separate org-management API yet. A `created` webhook redelivered (GitHub retries
+    webhooks it isn't sure were received) must not create a second org, hence get-or-create.
+
+    Callers that go on to write anything else in this same session (an `Asset`/`Scan` for a PR
+    scan, which DO carry RLS) must call `core.tenancy.set_session_org(s, row.org_id)` first -- this
+    function only resolves *which* org, it doesn't set the session's org context, since a plain
+    lookup (the common case: an already-installed app) shouldn't have the side effect of changing
+    it.
+    """
+    row = s.get(GithubInstallation, installation_id)
+    if row is not None:
+        return row
+    org = Organization(name=f"GitHub: {account_login}")
+    s.add(org)
+    s.flush()  # `org.id`'s default (core.persistence.models._uuid) is only assigned on flush, not
+    # at construction -- reading it beforehand (as the FK value below needs to) would insert NULL.
+    row = GithubInstallation(id=installation_id, account_login=account_login, org_id=org.id)
+    s.add(row)
+    s.commit()
+    return row
+
+
+def delete_installation(s: Session, installation_id: str) -> None:
+    """Uninstalling the App only removes the installation mapping -- never the Organization or its
+    scan/issue history, which stays exactly as durable as any other org's (ADR-0013). Reinstalling
+    later (a new installation id, GitHub never reuses one) starts a *new* org rather than resuming
+    the old one; there's no way to prove it's the same account asking, so this doesn't try to guess.
+    """
+    row = s.get(GithubInstallation, installation_id)
+    if row is not None:
+        s.delete(row)
+        s.commit()

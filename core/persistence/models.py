@@ -53,6 +53,20 @@ class Organization(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 
 
+class GithubInstallation(Base):
+    """One GitHub App installation (Week 30, ADR-0017) -- an org or user account that installed
+    Bulwark's GitHub App, on some or all of their repositories. Maps 1:1 onto a Bulwark
+    `Organization` (ADR-0013): installing the App is, in effect, how a tenant is created for now,
+    since there is no separate org-management API yet (ADR-0013's own deferred item)."""
+
+    __tablename__ = "github_installations"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True)  # GitHub's installation id
+    account_login: Mapped[str] = mapped_column(String(200))  # the org/user that installed it
+    org_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
 class Asset(Base):
     """The identity a repeated scan is matched against (ADR-0012): one row per distinct repository
     or archive name, regardless of how many times it's been scanned. See `core/assets.py` for how
@@ -124,6 +138,15 @@ class Scan(Base):
     source_type: Mapped[str] = mapped_column(String(16))  # git | archive
     source_ref: Mapped[str] = mapped_column(Text)  # git URL, or server-side archive path
     source_label: Mapped[str] = mapped_column(String(300))  # safe display name
+    # A specific git ref to check out instead of the default branch (Week 30, ADR-0017) -- today
+    # only ever `refs/pull/<n>/head`, set by a GitHub App pull_request webhook. Null for every
+    # ordinary API-created scan, which still scans the default branch exactly as before.
+    ref: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    # Set together with `ref`, only for a GitHub App pull_request scan: where to post the result
+    # back to when the scan finishes. All three are null for every non-GitHub-triggered scan.
+    github_repo: Mapped[str | None] = mapped_column(String(200), nullable=True)  # "owner/repo"
+    github_pr_number: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    github_installation_id: Mapped[str | None] = mapped_column(String(32), nullable=True)
     tools: Mapped[list[str]] = mapped_column(JsonType)
     asset_id: Mapped[str | None] = mapped_column(
         ForeignKey("assets.id", ondelete="SET NULL"), nullable=True, index=True

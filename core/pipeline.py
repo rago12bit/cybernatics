@@ -94,6 +94,8 @@ def _run_scan_job(
         if scan is None:
             raise LookupError(f"scan {scan_id} not found")
         source_type, source_ref, tools = scan.source_type, scan.source_ref, list(scan.tools)
+        ref = scan.ref
+        github = (scan.github_repo, scan.github_pr_number, scan.github_installation_id)
         repo.reset_scan_results(s, scan_id)
         repo.mark_running(s, scan_id)
     bus.publish(scan_id, {"type": "scan.started", "scan_id": scan_id, "tools": tools})
@@ -108,7 +110,7 @@ def _run_scan_job(
     try:
         with ExitStack() as stack:
             with span("ingest", source_type=source_type):
-                workspace = stack.enter_context(materialize(source_ref))
+                workspace = stack.enter_context(materialize(source_ref, ref=ref))
                 ctx = detect_context(workspace)
             with span("reachability"):
                 reach = analyze_or_none(workspace)
@@ -158,10 +160,14 @@ def _run_scan_job(
         _store_raw(sessions, store, scan_id, outcomes, raws, has_secrets)
         status = _final_status(outcomes)
         with sessions() as s:
-            # Only a full, unfiltered scan can tell an issue is fixed (absence is only meaningful
-            # when the whole asset was actually looked at); a status other than these means some
-            # tool never ran or crashed, so "not seen this time" would be a false "fixed".
-            if status == "completed":
+            # Only a full, unfiltered scan of the actual branch can tell an issue is fixed: absence
+            # is only meaningful when the whole asset was actually looked at (rules out "partial"/
+            # "failed"), AND when what was looked at is the asset's real current state, not a `ref`
+            # override (Week 30) previewing a PR that might never merge. Syncing a PR scan's
+            # findings into the shared asset's Issue history would corrupt it -- a PR-only finding
+            # would show as "new" against the real branch, then falsely "fixed" the next time the
+            # real branch is scanned and it's (correctly) absent there.
+            if status == "completed" and ref is None:
                 issues = repo.sync_issues_for_scan(s, scan_id, findings)
             else:
                 issues = None
@@ -177,7 +183,46 @@ def _run_scan_job(
                           "dedup_rate": round(stats.dedup_rate, 3),
                           "severity_counts": counts, "issues": issue_counts})  # fmt: skip
     _cleanup_upload(source_type, source_ref)
+    github_repo, pr_number, installation_id = github
+    if github_repo and pr_number and installation_id:
+        _post_pr_comment(scan_id, github_repo, pr_number, installation_id, status, counts, findings)
     return status, counts
+
+
+def _post_pr_comment(
+    scan_id: str,
+    github_repo: str,
+    pr_number: int,
+    installation_id: str,
+    status: str,
+    severity_counts: dict[str, int],
+    findings: list[Any],
+) -> None:
+    """Best-effort: a scan that already completed must not be reported as failed just because
+    GitHub's API hiccupped or the App's credentials are momentarily wrong. Logged, not raised."""
+    from core.ci.github import upsert_comment
+    from core.config import Settings
+    from core.github_app import installation_token, pr_comment_body
+
+    settings = Settings.from_env()
+    if not (settings.github_app_id and settings.github_app_private_key):
+        log.warning("scan %s is tied to a GitHub PR but the App isn't configured", scan_id)
+        return
+    try:
+        token = installation_token(
+            installation_id, settings.github_app_id, settings.github_app_private_key
+        )
+        body = pr_comment_body(
+            status=status,
+            severity_counts=severity_counts,
+            findings=[f.to_dict() for f in findings],
+            scan_id=scan_id,
+        )
+        upsert_comment(github_repo, pr_number, body, token)
+    except (
+        Exception
+    ):  # noqa: BLE001 - GitHub/network errors are data, not a reason to fail the scan
+        log.exception("could not post PR comment for scan %s", scan_id)
 
 
 def _record(sessions: SessionFactory, bus: Any, scan_id: str, o: ToolOutcome) -> None:

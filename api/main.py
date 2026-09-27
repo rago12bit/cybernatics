@@ -47,6 +47,7 @@ from api.schemas import (
 from core.config import Settings
 from core.export import FORMATS, ReportData, render
 from core.gitfetch import GitUrlError, validate_git_url
+from core.github_app import parse_pull_request_event, verify_signature
 from core.llm import cache as llm_cache
 from core.llm.limits import LimitExceeded, UsageLimiter
 from core.llm.prompt import CodeContext
@@ -59,7 +60,7 @@ from core.rag.retrieve import context_for
 from core.rag.store import KnowledgeBase
 from core.risk import is_stale, read_meta
 from core.scan import ADAPTERS, DEFAULT_TOOLS
-from core.tenancy import DEFAULT_ORG_ID
+from core.tenancy import DEFAULT_ORG_ID, set_session_org
 
 log = logging.getLogger(__name__)
 _SCAN_IN_PATH = re.compile(r"^/scans/([0-9a-f-]{36})(?:/|$)")
@@ -290,6 +291,67 @@ def create_app(app_state: AppState) -> FastAPI:
         )  # fmt: skip
         _dispatch(st, s, scan)
         return ScanCreated(id=scan.id, status=scan.status)
+
+    @app.post("/integrations/github/webhook", include_in_schema=False)
+    async def github_webhook(request: Request, st: AppState = Depends(state)) -> dict[str, str]:
+        """GitHub App webhook receiver (Week 30, ADR-0017). Not `Depends(require_auth)`: a webhook
+        carries no Bulwark bearer token, only GitHub's own HMAC signature -- a *different* trust
+        mechanism, checked explicitly below rather than reused from the rest of the API. Also not
+        `Depends(db)`: that resolves org context from the `X-Bulwark-Org` header, which a GitHub
+        webhook never sends -- org context here comes from the installation instead (see
+        `core.tenancy.set_session_org`'s docstring).
+        """
+        if not st.settings.github_webhook_secret:
+            raise HTTPException(404, "the GitHub App integration is not configured on this server")
+        body = await request.body()
+        if not verify_signature(
+            body, request.headers.get("X-Hub-Signature-256"), st.settings.github_webhook_secret
+        ):
+            raise HTTPException(401, "invalid webhook signature")
+        try:
+            payload = json.loads(body)
+        except json.JSONDecodeError as exc:
+            raise HTTPException(422, "invalid JSON") from exc
+        event = request.headers.get("X-GitHub-Event", "")
+
+        if event == "ping":
+            return {"status": "pong"}
+
+        with st.sessions() as s:
+            if event == "installation":
+                inst = payload.get("installation") or {}
+                inst_id = str(inst.get("id") or "")
+                if payload.get("action") == "created" and inst_id:
+                    repo.get_or_create_installation(
+                        s, installation_id=inst_id,
+                        account_login=str((inst.get("account") or {}).get("login") or ""),
+                    )  # fmt: skip
+                elif payload.get("action") == "deleted" and inst_id:
+                    repo.delete_installation(s, inst_id)
+                return {"status": "ok"}
+
+            if event == "pull_request":
+                pr = parse_pull_request_event(payload)
+                if pr is None:
+                    return {"status": "ignored"}
+                installation = repo.get_or_create_installation(
+                    s, installation_id=pr.installation_id, account_login=pr.account_login
+                )
+                set_session_org(s, installation.org_id)  # only NOW is the session org-scoped
+                try:
+                    validate_git_url(pr.clone_url)
+                except GitUrlError:
+                    return {"status": "ignored"}  # not a repo we're configured to clone from
+                scan = repo.create_scan(
+                    s, source_type="git", source_ref=pr.clone_url,
+                    source_label=f"{pr.repo_full_name}#{pr.pr_number}", tools=list(DEFAULT_TOOLS),
+                    org_id=installation.org_id, ref=pr.ref, github_repo=pr.repo_full_name,
+                    github_pr_number=pr.pr_number, github_installation_id=pr.installation_id,
+                )  # fmt: skip
+                _dispatch(st, s, scan)
+                return {"status": "queued", "scan_id": scan.id}
+
+        return {"status": "ignored"}
 
     @app.get("/scans", response_model=list[ScanSummary], dependencies=[Depends(require_auth)])
     def list_scans(

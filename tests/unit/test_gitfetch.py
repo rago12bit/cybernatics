@@ -199,3 +199,93 @@ def test_clone_failure_reports_stderr_and_cleans_up(
     with pytest.raises(IngestError, match="repository not found"):
         clone_repo("https://github.com/a/b", tmp_path / "c", resolver=PUBLIC)
     assert not (tmp_path / "c").exists()
+
+
+# ---- clone_repo(ref=...): the GitHub App's PR-head path (Week 30, ADR-0017) ----------------
+
+
+class FakeGitSteps:
+    """Stands in for subprocess.Popen across the ref path's 4 separate git invocations (init,
+    remote add, fetch, checkout). Only the `checkout` step materializes files, matching what git
+    itself does -- `init`/`remote add`/`fetch` don't populate a working tree."""
+
+    instances: list["FakeGitSteps"] = []
+    dest: Path
+    payload = 10
+    code = 0
+    err = b""
+
+    def __init__(self, argv: list[str], **kw: Any) -> None:
+        self.argv, self.env = argv, kw["env"]
+        self.stderr = io.BytesIO(FakeGitSteps.err)
+        self._polls = 0
+        self.killed = False
+        FakeGitSteps.instances.append(self)
+        if "checkout" in argv:
+            (FakeGitSteps.dest / ".git").mkdir(exist_ok=True)
+            (FakeGitSteps.dest / "a.py").write_bytes(b"x" * FakeGitSteps.payload)
+
+    def poll(self) -> int | None:
+        self._polls += 1
+        return None if self._polls < 2 and not self.killed else FakeGitSteps.code
+
+    @property
+    def returncode(self) -> int:
+        return -9 if self.killed else FakeGitSteps.code
+
+    def kill(self) -> None:
+        self.killed = True
+
+    def wait(self) -> int:
+        return self.returncode
+
+
+@pytest.fixture
+def fake_git_steps(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> type[FakeGitSteps]:
+    FakeGitSteps.instances, FakeGitSteps.err, FakeGitSteps.payload, FakeGitSteps.code = (
+        [],
+        b"",
+        10,
+        0,
+    )
+    FakeGitSteps.dest = tmp_path / "c"
+    monkeypatch.setattr("core.gitfetch.subprocess.Popen", FakeGitSteps)
+    monkeypatch.setattr("core.gitfetch.time.sleep", lambda s: None)
+    return FakeGitSteps
+
+
+def test_ref_must_be_a_pull_request_head_or_merge_ref(
+    fake_git_steps: type[FakeGitSteps], tmp_path: Path
+) -> None:
+    for bad in ("main", "refs/heads/main", "refs/pull/1/head; rm -rf /", "--upload-pack=evil"):
+        with pytest.raises(GitUrlError, match="unsupported ref"):
+            clone_repo("https://github.com/a/b", tmp_path / "c", resolver=PUBLIC, ref=bad)
+    assert fake_git_steps.instances == []  # never even shelled out
+
+
+def test_ref_clone_runs_init_remote_fetch_checkout_with_every_hardening_flag(
+    fake_git_steps: type[FakeGitSteps], tmp_path: Path
+) -> None:
+    out = clone_repo(
+        "https://github.com/a/b", tmp_path / "c", resolver=PUBLIC, ref="refs/pull/42/head"
+    )
+    steps = [" ".join(i.argv) for i in fake_git_steps.instances]
+    assert len(steps) == 4
+    assert "init" in steps[0] and "remote" in steps[1] and "add" in steps[1]
+    assert "fetch" in steps[2] and "refs/pull/42/head" in steps[2] and "--depth=1" in steps[2]
+    assert "checkout" in steps[3] and "FETCH_HEAD" in steps[3]
+    for s in steps:
+        assert "http.curloptResolve=github.com:443:140.82.112.3" in s  # SSRF pin, every step
+        assert "credential.helper=" in s
+    assert (out / "a.py").exists() and not (out / ".git").exists()
+
+
+def test_ref_clone_failure_midway_cleans_up(
+    fake_git_steps: type[FakeGitSteps], tmp_path: Path
+) -> None:
+    fake_git_steps.code, fake_git_steps.err = 128, b"fatal: couldn't find remote ref"
+    with pytest.raises(IngestError, match="couldn't find remote ref"):
+        clone_repo(
+            "https://github.com/a/b", tmp_path / "c", resolver=PUBLIC, ref="refs/pull/1/head"
+        )
+    assert not (tmp_path / "c").exists()

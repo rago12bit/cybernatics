@@ -51,6 +51,28 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   one session) and that the worker — connecting as the same non-bypass role — never had an org context
   at all, silently rejecting every write until `org_id` was threaded through the dispatch path from the
   API's enqueue call. Full writeup: docs/v2-week29-verification.md.
+- **Week 30 — GitHub App integration, implemented (ADR-0017):** app-level RS256 JWT auth and cached
+  installation tokens (`core/github_app.py`); a webhook receiver (`POST /integrations/github/
+  webhook`) verifying GitHub's HMAC signature and handling `installation` (created/deleted) and
+  `pull_request` (opened/synchronize/reopened) events; a `GithubInstallation` model mapping each App
+  installation onto a Bulwark `Organization` (ADR-0013) — installing the App is, for now, how a
+  tenant gets created, since there's no org-management API yet. `core/gitfetch.clone_repo` gained a
+  tightly-restricted `ref` parameter (`refs/pull/<n>/head` only) so a PR-triggered scan looks at the
+  PR's actual head commit, not the default branch, keeping every SSRF/hardening flag on all four git
+  invocations the ref path needs (init/remote/fetch/checkout) instead of one. PR-triggered scans
+  deliberately don't feed the asset's Issue lifecycle (ADR-0012) — previewing a PR that might never
+  merge would corrupt fixed/reintroduced detection for the real branch. Results post back as a PR
+  comment, reusing the existing GitHub Action's `upsert_comment` rather than a second HTTP client.
+  Verified live: real RS256 crypto, the full webhook path against the real API and Postgres (including
+  real RLS), and — using an actual public GitHub pull request (`octocat/Hello-World#11297`) — the
+  `ref`-based clone against real GitHub, fetching the PR's real head commit. Explicitly NOT verified
+  live: an installation token actually accepted by GitHub and a comment actually posted, since no
+  GitHub App is registered yet — that's a user action, not something done unilaterally. The
+  best-effort PR-comment path was proven to fail gracefully (logged, scan still `completed`) when App
+  credentials are absent. Two real bugs found and fixed: `org.id` read before a flush had assigned it
+  (same category as Week 28's backfill bug), and an RLS design that would have made resolving a
+  webhook's own org context require already knowing it — fixed by giving `github_installations` no
+  RLS policy at all, by design. Full writeup: docs/v2-week30-verification.md.
 
 ## [1.0.0] - 2026-09-27
 

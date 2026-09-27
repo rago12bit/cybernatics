@@ -27,6 +27,11 @@ ALLOWED_HOSTS = frozenset({"github.com", "gitlab.com", "bitbucket.org"})
 _PATH_RE = re.compile(r"^/[A-Za-z0-9_.-]+(/[A-Za-z0-9_.-]+){1,4}(\.git)?/?$")
 
 Resolver = Callable[[str], list[str]]
+#: Deliberately narrow (Week 30, ADR-0017): the only ref this codebase ever passes today is one
+#: parsed straight out of a GitHub webhook payload for the App integration. Restricting the shape
+#: this tightly, rather than accepting any ref-like string, keeps a malformed or hostile webhook
+#: payload from ever reaching `git fetch` as anything but this one well-understood form.
+_SAFE_REF = re.compile(r"^refs/pull/[0-9]+/(head|merge)$")
 
 
 class GitUrlError(IngestError):
@@ -96,18 +101,49 @@ def _dir_size(path: Path) -> int:
     return total
 
 
+def _run_git(
+    argv: list[str], env: dict[str, str], dest: Path, deadline: float, limits: Limits
+) -> None:
+    """Run one git subprocess, enforcing the same wall-clock and size watchdog every step needs."""
+    proc = subprocess.Popen(argv, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    try:
+        while proc.poll() is None:
+            if time.monotonic() > deadline:
+                raise IngestError("git operation timed out")
+            if dest.exists() and _dir_size(dest) > limits.max_uncompressed_bytes:
+                raise IngestError("repository exceeds max size")
+            time.sleep(0.25)
+    except IngestError:
+        proc.kill()
+        proc.wait()
+        raise
+    if proc.returncode != 0:
+        err = (proc.stderr.read() if proc.stderr else b"").decode("utf-8", "replace")[-500:]
+        raise IngestError(f"git operation failed: {err.strip()}")
+
+
 def clone_repo(
     url: str,
     dest: Path,
     limits: Limits | None = None,
     timeout: float = 120.0,
     resolver: Resolver = default_resolver,
+    ref: str | None = None,
 ) -> Path:
-    """Shallow-clone a validated public repo into dest (without .git). Returns dest."""
+    """Shallow-clone a validated public repo into dest (without .git). Returns dest.
+
+    `ref` (Week 30, ADR-0017): when given, checks out that exact ref instead of the default branch
+    -- specifically `refs/pull/<n>/head`, GitHub's own stable name for a pull request's current
+    head commit, used by the GitHub App integration so a PR-triggered scan looks at the PR's
+    actual code rather than whatever the default branch happens to be. Restricted to that one
+    shape (`_SAFE_REF`) since nothing else constructs this value from anything less trusted than
+    a webhook payload today.
+    """
     limits = limits or Limits()
     repo = validate_git_url(url, resolver)
-    argv = [
-        "git",
+    if ref is not None and not _SAFE_REF.match(ref):
+        raise GitUrlError(f"unsupported ref: {ref!r}")
+    cfg = [
         "-c", "protocol.allow=never",
         "-c", "protocol.https.allow=always",
         "-c", "http.followRedirects=false",
@@ -115,8 +151,6 @@ def clone_repo(
         "-c", "core.symlinks=false",
         "-c", "core.hooksPath=/dev/null",
         "-c", "credential.helper=",
-        "clone", "--depth=1", "--single-branch", "--no-tags", "--no-recurse-submodules",
-        "--", repo.url, str(dest),
     ]  # fmt: skip
     with tempfile.TemporaryDirectory(prefix="bulwark-git-home-") as home:
         env = {
@@ -127,23 +161,33 @@ def clone_repo(
             "GIT_TERMINAL_PROMPT": "0",
             "GIT_ASKPASS": "/bin/false",
         }
-        proc = subprocess.Popen(argv, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         deadline = time.monotonic() + timeout
         try:
-            while proc.poll() is None:
-                if time.monotonic() > deadline:
-                    raise IngestError("git clone timed out")
-                if dest.exists() and _dir_size(dest) > limits.max_uncompressed_bytes:
-                    raise IngestError("repository exceeds max size")
-                time.sleep(0.25)
+            if ref is None:
+                argv = ["git", *cfg, "clone", "--depth=1", "--single-branch", "--no-tags",
+                        "--no-recurse-submodules", "--", repo.url, str(dest)]  # fmt: skip
+                _run_git(argv, env, dest, deadline, limits)
+            else:
+                # A shallow clone can't target an arbitrary ref directly (`clone --branch` only
+                # resolves refs/heads or refs/tags); init + a scoped fetch is the standard way to
+                # shallow-fetch one specific ref like a PR head instead.
+                dest.mkdir(parents=True, exist_ok=True)
+                _run_git(["git", *cfg, "init", "--quiet", str(dest)], env, dest, deadline, limits)
+                _run_git(
+                    ["git", *cfg, "-C", str(dest), "remote", "add", "origin", repo.url],
+                    env, dest, deadline, limits,
+                )  # fmt: skip
+                _run_git(
+                    ["git", *cfg, "-C", str(dest), "fetch", "--depth=1", "--no-tags",
+                     "origin", ref],
+                    env, dest, deadline, limits,
+                )  # fmt: skip
+                _run_git(
+                    ["git", *cfg, "-C", str(dest), "checkout", "--quiet", "FETCH_HEAD"],
+                    env, dest, deadline, limits,
+                )  # fmt: skip
         except IngestError:
-            proc.kill()
-            proc.wait()
             shutil.rmtree(dest, ignore_errors=True)
             raise
-        if proc.returncode != 0:
-            err = (proc.stderr.read() if proc.stderr else b"").decode("utf-8", "replace")[-500:]
-            shutil.rmtree(dest, ignore_errors=True)
-            raise IngestError(f"git clone failed: {err.strip()}")
     shutil.rmtree(dest / ".git", ignore_errors=True)
     return dest
