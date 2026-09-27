@@ -6,6 +6,10 @@ versions will follow [SemVer](https://semver.org) once `v0.1.0` is tagged (plann
 ## [Unreleased]
 
 ### Changed
+- **Landing-page motion:** headline words rise on load (pure CSS), hero and results numbers count up when first seen,
+  feature cards fade in as they scroll into view, feature and diagram panels get a soft pointer spotlight, and a
+  hairline shows reading progress. Dependency-free, CSP-safe (styles set through the CSSOM), and all of it is off under
+  `prefers-reduced-motion`; the server output already shows the final values, so nothing depends on JS.
 - **Performance (Week 25):** median scan of the 25-repository corpus went from 47 s to 6 s (whole corpus 1,235 s to
   338 s), OWASP Benchmark Semgrep scan 202 s to 30 s. Cause: Semgrep spent ~26 s per scan loading 337 rule files;
   they are now merged per language at image build time with rule ids unchanged (rebuild `bulwark/semgrep`).

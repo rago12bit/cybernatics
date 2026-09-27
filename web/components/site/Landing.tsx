@@ -4,6 +4,7 @@ import { APP_CTA, APP_HREF, CONTACT_URL, DEMO_ONLY, DOCS_HREF, REPO_URL } from "
 import { Blueprint, DedupChart, DedupDiagram, PipelineDiagram, StepChart, Stripes } from "./graphics";
 import { StackSection } from "./StackSection";
 import { Scanners } from "./Scanners";
+import { CountUp, Glow, Reveal, RiseText, ScrollProgress } from "./Motion";
 
 const pct = (n: number, d = 1) => `${(n * 100).toFixed(d)}%`;
 const fmt = (n: number) => n.toLocaleString("en-US");
@@ -13,13 +14,14 @@ export function Landing() {
   const confirmed = BENCHMARK.repos.reduce((n, r) => n + r.merged, 0); // findings reported by 2+ scanners
   return (
     <div className="page">
+      <ScrollProgress />
       {/* ---- Hero ---- */}
       <StackSection index={0}>
       <section className="section hero" id="product">
         <div className="hero-copy">
           <div className="hero-main">
             <span className="eyebrow">Security scanning platform</span>
-            <h1 className="display">Security scanning, without the noise.</h1>
+            <h1 className="display"><RiseText text="Security scanning, without the noise." /></h1>
             <p className="lede">
               Bulwark runs best-in-class open-source scanners in locked-down containers, merges their overlapping
               results into one report, and shows you which scanners agree.
@@ -30,13 +32,13 @@ export function Landing() {
             </div>
           </div>
           <div className="hero-stats">
-            <div><span className="numeral">5</span><span className="label dimmed">Scanners, one pipeline</span></div>
-            <div><span className="numeral">{pct(BENCHMARK.dedupRate)}</span><span className="label dimmed">Fewer findings, 5 repos</span></div>
-            <div><span className="numeral">0</span><span className="label dimmed">Network access in sandbox</span></div>
+            <div><span className="numeral"><CountUp value={5} /></span><span className="label dimmed">Scanners, one pipeline</span></div>
+            <div><span className="numeral"><CountUp value={BENCHMARK.dedupRate * 100} decimals={1} suffix="%" /></span><span className="label dimmed">Fewer findings, 5 repos</span></div>
+            <div><span className="numeral"><CountUp value={0} /></span><span className="label dimmed">Network access in sandbox</span></div>
           </div>
         </div>
         <div className="hero-art">
-          <div className="solution">
+          <Glow className="solution">
             <div className="panel-head"><span className="eyebrow plain">Cross-tool dedup</span><span className="label">The solution</span></div>
             <div className="grid-bg">
               <div className="brackets" aria-hidden="true"><i /><i /><i /><i /></div>
@@ -45,7 +47,7 @@ export function Landing() {
             <ul className="rail" aria-label="Scanners feeding the pipeline">
               {["bandit", "semgrep", "gitleaks", "trivy", "osv-scanner"].map((t) => <li key={t}>{t}</li>)}
             </ul>
-          </div>
+          </Glow>
         </div>
       </section>
       </StackSection>
@@ -77,11 +79,11 @@ export function Landing() {
             </div>
             <div className="hatch" aria-hidden="true" />
             <div className="feature-cells">
-              <div className="fcell"><div className="art"><Blueprint shape="a" uid="1" /></div><div className="txt"><span className="label">Sandboxed by default</span><p>Every scanner runs in its own container: no network, read-only filesystem, all capabilities dropped.</p></div></div>
-              <div className="fcell"><div className="art"><Blueprint shape="b" uid="2" /></div><div className="txt"><span className="label">Partial results</span><p>One scanner timing out never fails the scan. You get the rest, plus a status for each.</p></div></div>
-              <div className="fcell"><div className="art"><StepChart seed={3} /></div><div className="txt"><span className="label">Live progress</span><p>Watch each scanner report in over a WebSocket, with a polling fallback.</p></div></div>
-              <div className="fcell half"><div className="art"><Blueprint shape="d" uid="4" /></div><div className="txt"><span className="label">Cross-tool deduplication</span><p>Bandit flags line 6, Semgrep line 7: one SQL injection. Bulwark merges them and shows exactly which scanners agree.</p></div></div>
-              <div className="fcell half"><div className="art"><Blueprint shape="e" uid="5" /></div><div className="txt"><span className="label">Safe ingestion</span><p>Zip-slip and decompression-bomb guards, SSRF-checked Git URLs, and dependencies are never installed.</p></div></div>
+              <Reveal glow className="fcell" delay={1}><div className="art"><Blueprint shape="a" uid="1" /></div><div className="txt"><span className="label">Sandboxed by default</span><p>Every scanner runs in its own container: no network, read-only filesystem, all capabilities dropped.</p></div></Reveal>
+              <Reveal glow className="fcell" delay={2}><div className="art"><Blueprint shape="b" uid="2" /></div><div className="txt"><span className="label">Partial results</span><p>One scanner timing out never fails the scan. You get the rest, plus a status for each.</p></div></Reveal>
+              <Reveal glow className="fcell" delay={3}><div className="art"><StepChart seed={3} /></div><div className="txt"><span className="label">Live progress</span><p>Watch each scanner report in over a WebSocket, with a polling fallback.</p></div></Reveal>
+              <Reveal glow className="fcell half" delay={4}><div className="art"><Blueprint shape="d" uid="4" /></div><div className="txt"><span className="label">Cross-tool deduplication</span><p>Bandit flags line 6, Semgrep line 7: one SQL injection. Bulwark merges them and shows exactly which scanners agree.</p></div></Reveal>
+              <Reveal glow className="fcell half" delay={5}><div className="art"><Blueprint shape="e" uid="5" /></div><div className="txt"><span className="label">Safe ingestion</span><p>Zip-slip and decompression-bomb guards, SSRF-checked Git URLs, and dependencies are never installed.</p></div></Reveal>
             </div>
           </div>
         </section>
@@ -93,7 +95,7 @@ export function Landing() {
           <div className="metric-main">
             <div className="rule"><span className="eyebrow plain">Findings after merging</span></div>
             <div className="stack">
-              <h2 id="results-h" className="big">{pct(BENCHMARK.dedupRate)}</h2>
+              <h2 id="results-h" className="big"><CountUp value={BENCHMARK.dedupRate * 100} decimals={1} suffix="%" /></h2>
               <p className="dedup-note">fewer findings across five public repositories: {fmt(BENCHMARK.raw)} raw reports became {fmt(BENCHMARK.unique)} unique ones.</p>
             </div>
             <DedupChart repos={BENCHMARK.repos} />
@@ -138,11 +140,11 @@ export function Landing() {
             <Scanners />
           </div>
           <div className="hero-art">
-            <div className="solution">
+            <Glow className="solution">
               <div className="panel-head"><span className="eyebrow plain">How a scan flows</span><span className="label">The pipeline</span></div>
               <div className="grid-bg"><div className="brackets" aria-hidden="true"><i /><i /><i /><i /></div><PipelineDiagram /></div>
               <div className="panel-foot"><span>Bulwark</span><span>Sandboxed by default</span></div>
-            </div>
+            </Glow>
           </div>
         </section>
       </StackSection>
