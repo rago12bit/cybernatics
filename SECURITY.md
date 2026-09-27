@@ -8,12 +8,12 @@ Please **do not open a public issue**. Use GitHub's private vulnerability report
 (*Security* tab, *Report a vulnerability*) once the repository is public. Until then, email
 ragh.gupta22@gmail.com. Include what you found, how to reproduce it, and the version or commit.
 
-You can expect an acknowledgement within 5 working days. This is a pre-alpha, single-maintainer project,
-so fixes are best effort, but every credible report gets a written answer.
+You can expect an acknowledgement within 5 working days. This is a single-maintainer project, so fixes are
+best effort, but every credible report gets a written answer.
 
 ## Supported versions
 
-Only the latest release and `main` (pre-alpha, `0.1.x`). There are no backports yet.
+Only the latest release and `main` (currently `1.x`). There are no backports yet.
 
 ## What Bulwark defends against
 

@@ -2,7 +2,7 @@
   "name": "bulwark-vscode",
   "displayName": "Bulwark",
   "description": "Security findings from the Bulwark CLI as native VS Code diagnostics.",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "publisher": "bulwark-scan",
   "license": "Apache-2.0",
   "private": true,

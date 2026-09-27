@@ -1,9 +1,28 @@
 # Changelog
 
-All notable changes are recorded here. Format: [Keep a Changelog](https://keepachangelog.com);
-versions will follow [SemVer](https://semver.org) once `v0.1.0` is tagged (planned for Week 10).
+All notable changes are recorded here. Format: [Keep a Changelog](https://keepachangelog.com), versions follow
+[SemVer](https://semver.org).
 
 ## [Unreleased]
+
+## [1.0.0] - 2026-09-27
+
+All 26 weeks of the plan. `v0.2.0` was tagged in git between `v0.1.0` and this release but was never given its own
+entry here or a version bump in `pyproject.toml`/`package.json`; everything below is therefore the full set of
+changes since `v0.1.0`, not only since `v0.2.0`.
+
+### Added
+- **v1.0.0 (Week 26):** documentation pass across README, docs/rag.md, docs/platform-support.md,
+  docs/github-action.md and the landing page ("Roadmap" listed EPSS/KEV, AI fix suggestions, the VS Code extension,
+  the GitHub Action and SBOMs as "soon" though all five had already shipped; moved to "What ships today"). Extended
+  the accessibility test suite to SubmitForm, RecentScans and the self-host page, which fixed two real ARIA bugs:
+  `role="status"` on a `<ul>` broke its list semantics, and `aria-label` had no effect on three loading `<div>`s
+  with no role. `pyproject.toml`, `web/package.json` and `extensions/vscode/package.json` now say `1.0.0`.
+
+### Fixed
+- The API's OpenAPI description said the `tools` field "defaults to all tools"; it defaults to the same five as
+  the CLI (`api/schemas.py`, `api/main.py`). docs/github-action.md was missing the `sbom` input and `sbom-file`
+  output that `action.yml` has had since Week 20.
 
 ### Changed
 - **Landing-page motion:** headline words rise on load (pure CSS), hero and results numbers count up when first seen,

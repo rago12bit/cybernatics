@@ -13,7 +13,11 @@ class GitSource(BaseModel):
 
 class ScanRequest(BaseModel):
     source: GitSource
-    tools: list[str] | None = Field(default=None, description="Defaults to all tools.")
+    tools: list[str] | None = Field(
+        default=None,
+        description="Defaults to the five default tools: bandit, semgrep, gitleaks, "
+        "trivy, osv-scanner.",
+    )
 
 
 class ScanCreated(BaseModel):

@@ -1,17 +1,23 @@
 # Releasing: tags, the VS Code Marketplace and the GitHub Marketplace
 
-These steps need your accounts and tokens, so they are yours to run. Nothing here has been done.
+Tagging is done from here (see below); the Marketplace steps need your own accounts and tokens, so those are
+yours to run. As of `v1.0.0`, neither Marketplace listing has been created.
+
+`v0.1.0` and `v0.2.0` were tagged in git directly, without bumping `pyproject.toml`/`package.json` or giving
+`v0.2.0` its own CHANGELOG entry (see the note at the top of the `v1.0.0` entry in CHANGELOG.md). `v1.0.0` is
+the first release where the tag, the CHANGELOG and the package versions agree; keep them in sync from here on.
 
 ## 0. Before tagging
 
 - CI is green on `main`, including the **Bulwark self-scan** workflow.
-- `CHANGELOG.md`: move "Unreleased" under the new version.
+- `CHANGELOG.md`: move "Unreleased" under the new version, and bump `pyproject.toml`, `web/package.json` and
+  `extensions/vscode/package.json` to match.
 - Decide the names: the action's `name` in `action.yml` ("Bulwark security scan") and the extension's `publisher`
   (`bulwark-scan` in `extensions/vscode/package.json` is a placeholder). Marketplace names must be unique; neither has
   been checked.
 
 ```bash
-git tag -a v0.3.0 -m "M4: developer surfaces (VS Code extension, GitHub Action)"
+git tag -a v1.0.0 -m "v1.0.0: all 26 weeks of the plan"
 git push --tags
 ```
 
@@ -43,12 +49,12 @@ The repository root already holds `action.yml`, which is what the Marketplace re
 
 1. Repository **Settings > General**: accept the GitHub Marketplace Developer Agreement (first time only) and
    enable two-factor authentication.
-2. **Releases > Draft a new release**, choose tag `v0.3.0`, tick **Publish this Action to the GitHub Marketplace**,
+2. **Releases > Draft a new release**, choose the tag you want to publish (`v1.0.0` or later), tick **Publish this Action to the GitHub Marketplace**,
    pick a category (Security) and publish.
 3. Also move a floating major tag so `uses: Rag2102/cyberimp@v0` works:
 
 ```bash
-git tag -f v0 v0.3.0 && git push -f origin v0
+git tag -f v0 v1.0.0 && git push -f origin v0
 ```
 
 4. Users then write `uses: Rag2102/cyberimp@v0` (or pin the commit SHA, which is safer).

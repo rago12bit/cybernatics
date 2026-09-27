@@ -74,7 +74,7 @@ export function Landing() {
               </div>
               <div className="stack">
                 <span className="label">One engine, several surfaces</span>
-                <p className="small muted">The CLI is the engine. The API, this web app and (soon) editor and CI integrations are thin clients over it.</p>
+                <p className="small muted">The CLI is the engine. The API, this web app, the VS Code extension and the GitHub Action are all thin clients over it.</p>
               </div>
             </div>
             <div className="hatch" aria-hidden="true" />
@@ -158,20 +158,20 @@ export function Landing() {
             <ul className="checklist">
               <li>Sandboxed scanner containers</li>
               <li>Cross-tool correlation and fingerprints</li>
-              <li>REST + WebSocket API</li>
-              <li>This web app and a CLI</li>
+              <li>REST + WebSocket API, CLI, VS Code extension and GitHub Action</li>
+              <li>EPSS + CISA KEV risk score, with reachability analysis</li>
+              <li>Plain-English fixes, labelled as AI suggestions</li>
+              <li>Signed reports, SBOMs and attestations</li>
               <li>Strict CSP, text-only rendering of scanner data</li>
             </ul>
           </div>
           <div className="cell stack">
             <span className="eyebrow plain">Roadmap</span>
-            <h2>Next: ranked by real risk</h2>
+            <h2>Next: broader coverage</h2>
             <ul className="checklist">
-              <li className="soon">EPSS + CISA KEV risk score</li>
-              <li className="soon">Plain-English fixes, labelled as AI suggestions</li>
-              <li className="soon">VS Code extension</li>
-              <li className="soon">GitHub Action</li>
-              <li className="soon">Signed reports and SBOMs</li>
+              <li className="soon">More languages and frameworks per scanner</li>
+              <li className="soon">Multi-user accounts (today: one shared token)</li>
+              <li className="soon">Editor and CI marketplace listings (install from source today)</li>
             </ul>
           </div>
         </section>

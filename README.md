@@ -5,9 +5,9 @@ Source: <https://github.com/Rag2102/cyberimp>
 **One scan, one deduplicated list of findings.** Bulwark runs five open-source security scanners against
 a repository, merges what they agree on, and shows you a single list you can actually work through.
 
-> Status: pre-alpha. Weeks 1-10 of the plan are done (scanners, correlation, API, UI, CWE/OWASP mapping, risk ranking,
-> exports, threat model). `v0.1.0` is the first tagged release. Not ready for untrusted multi-user hosting yet:
-> auth is a single shared token (see [Limits](#limits)).
+> Status: 1.0.0. All 26 weeks of the plan are done: scanners, correlation, risk ranking, LLM-backed fix suggestions,
+> reachability, a VS Code extension and GitHub Action, SBOMs and signed attestations, and the benchmark results
+> below. Not ready for untrusted multi-user hosting yet: auth is a single shared token (see [Limits](#limits)).
 
 ## The problem
 

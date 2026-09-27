@@ -26,8 +26,12 @@ describe("landing page", () => {
     expect(1 - BENCHMARK.unique / BENCHMARK.raw).toBeCloseTo(BENCHMARK.dedupRate, 3);
   });
 
-  it("does not claim roadmap features as shipped", () => {
+  it("lists shipped v1.0 features under 'ships today', not 'Roadmap'", () => {
     const shipped = html.split("What ships today")[1]!.split("Roadmap")[0]!;
-    for (const soon of ["EPSS", "KEV", "VS Code", "GitHub Action", "SBOM"]) expect(shipped).not.toContain(soon);
+    const roadmap = html.split("Roadmap")[1]!;
+    for (const done of ["EPSS", "KEV", "VS Code", "GitHub Action", "SBOM"]) {
+      expect(shipped).toContain(done);
+      expect(roadmap).not.toContain(done);
+    }
   });
 });

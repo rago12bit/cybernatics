@@ -34,11 +34,12 @@ jobs:
 | `fail-on` | `high` | `none`, `low`, `medium`, `high` or `critical`. On a pull request only **new** findings count. |
 | `upload-sarif` | `true` | Needs `security-events: write`. |
 | `comment` | `true` | Needs `pull-requests: write`. |
+| `sbom` | `false` | Also write a CycloneDX 1.6 SBOM (output `sbom-file`); upload it with `actions/upload-artifact` if you want to keep it. |
 | `compare-base` | `true` | On pull requests, also scan the base commit so only new findings are reported and gated. |
 | `github-token` | `github.token` | Used only for the comment. |
 | `python-version` | `3.12` | |
 
-Outputs: `new-findings`, `total-findings`, `sarif-file`.
+Outputs: `new-findings`, `total-findings`, `sarif-file`, `sbom-file` (empty unless `sbom` is `true`).
 
 ## How "new" is decided
 

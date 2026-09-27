@@ -1,8 +1,9 @@
 # Remediation knowledge base (RAG)
 
 Reference text for the LLM remediation layer: CWE definitions and OWASP cheat-sheet guidance, searchable in
-PostgreSQL. **Nothing here calls an LLM yet** (that starts in Week 12); this is the retrieval half. Decision
-record: [ADR-009](adr/0009-remediation-knowledge-base.md).
+PostgreSQL. This page describes only the retrieval half, which calls no LLM; see
+[llm-remediation.md](llm-remediation.md) for the model-calling layer that uses it. Decision record:
+[ADR-009](adr/0009-remediation-knowledge-base.md).
 
 ## Use
 

@@ -20,5 +20,7 @@ Fallback order: arm64-native alternative -> `--platform linux/amd64` under Roset
 | docker-socket-proxy | tecnativa/docker-socket-proxy | yes | verified 2026-09-24 (ran on arm64) |
 | Bandit | built locally from `python:3.12-slim` (`docker/bandit/Dockerfile`) | yes | base image is multi-arch |
 
-No Tier-1 tool needs the Rosetta fallback. Tier-2 (Grype, Checkov, KICS, gosec, Hadolint, Dockle)
-to be checked before Week 22. Digest pinning happens when images are finalised for production.
+No Tier-1 tool needs the Rosetta fallback. Tier-2 (Grype, Checkov, gosec, Dockle) shipped in Week 22 and, checked
+the same way as above, is also arm64-native: `anchore/grype:v0.119.0`, `bridgecrew/checkov:3.3.19` and
+`goodwithtech/dockle:v0.4.15` all publish an arm64 manifest; gosec is built locally from `golang:1.25-alpine`
+(`docker/gosec/Dockerfile`), itself multi-arch. Digest pinning happens when images are finalised for production.

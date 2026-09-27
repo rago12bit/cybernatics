@@ -544,7 +544,7 @@
               }
             ],
             "title": "Tools",
-            "description": "Comma-separated; default all."
+            "description": "Comma-separated; defaults to bandit, semgrep, gitleaks, trivy, osv-scanner."
           }
         },
         "type": "object",
@@ -883,7 +883,7 @@
               }
             ],
             "title": "Tools",
-            "description": "Defaults to all tools."
+            "description": "Defaults to the five default tools: bandit, semgrep, gitleaks, trivy, osv-scanner."
           }
         },
         "type": "object",

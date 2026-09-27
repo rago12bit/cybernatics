@@ -247,7 +247,11 @@ def create_app(app_state: AppState) -> FastAPI:
     )
     async def upload_scan(
         archive: UploadFile = File(...),
-        tools: str | None = Form(default=None, description="Comma-separated; default all."),
+        tools: str | None = Form(
+            default=None,
+            description="Comma-separated; defaults to bandit, semgrep, gitleaks, "
+            "trivy, osv-scanner.",
+        ),
         st: AppState = Depends(state),
         s: Session = Depends(db),
     ) -> ScanCreated:
