@@ -26,6 +26,14 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   way: two findings of different categories can hash identically under ADR-0004's fingerprint when both lack a
   CWE and land on the same redacted line, so Issue identity is scoped to `(asset, category, fingerprint)`, not
   `(asset, fingerprint)`. Full writeup: docs/v2-week28-verification.md.
+- **ADR-0014, ADR-0015, ADR-0016 (design, pre-implementation scope cuts):** before their respective v2 weeks
+  start, three risks were reviewed and scoped down on the record rather than left to slip quietly later —
+  taint analysis narrowed to intra-procedural, single-language (Python), configure-Semgrep-taint-mode-first
+  (ADR-0014); the verified-fix agent's Temporal workflow given an overall *and* a per-attempt wall-clock
+  timeout plus a per-tenant concurrency cap, with cancellation surfaced as a distinct `inconclusive` state
+  rather than folded into `failed` (ADR-0015); scanner adapter drift caught by pinned tool versions plus a
+  weekly CI job that bumps one tool at a time against the existing golden fixtures, rather than a daily
+  schema-poll against upstream repositories that publish no such schema (ADR-0016).
 
 ## [1.0.0] - 2026-09-27
 
