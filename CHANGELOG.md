@@ -5,6 +5,17 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 
 ## [Unreleased]
 
+### Added
+- **Week 27 verification gate:** every v2-plan §16.1 check re-run live against real Docker containers rather than
+  inferred from unit tests — sandbox flags via `docker inspect`, network isolation, 9 adapters × 7 malformed
+  inputs, a container killed mid-scan, zip-bomb/zip-slip/file-count/SSRF ingestion attacks, secret masking
+  end-to-end, and a prompt-injection baseline. All passed; two gaps are real and documented rather than hidden:
+  the VS Code extension has never run in a real VS Code install, and the GitHub Action has never run on GitHub's
+  runners (`origin/main` is well behind local `HEAD`). Full results: docs/v1-verification.md.
+- **ADR-0012, ADR-0013 (design only, no code yet):** the Issue/Occurrence data model split (stable identity
+  across scans, needed for "fixed"/"reintroduced"/incremental scanning) and Postgres Row-Level Security for
+  multi-tenancy, both slated for Weeks 28-29.
+
 ## [1.0.0] - 2026-09-27
 
 All 26 weeks of the plan. `v0.2.0` was tagged in git between `v0.1.0` and this release but was never given its own
