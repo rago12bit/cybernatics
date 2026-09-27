@@ -42,7 +42,7 @@ _SEV_ORDER = [Severity.INFO, Severity.LOW, Severity.MEDIUM, Severity.HIGH, Sever
 _TOOL_PRIORITY = {"trivy": 0, "osv-scanner": 1, "gitleaks": 2, "semgrep": 3, "bandit": 4}
 
 
-def _cwe_family(f: Finding) -> set[str]:
+def cwe_family(f: Finding) -> set[str]:
     return {CWE_FAMILY.get(c, c) for c in f.taxonomy.cwe}
 
 
@@ -71,7 +71,7 @@ def _same_code(a: Finding, b: Finding) -> bool:
         a.taxonomy.category, b.taxonomy.category
     ):
         return False
-    if not (_cwe_family(a) & _cwe_family(b)):
+    if not (cwe_family(a) & cwe_family(b)):
         return False
     dist = _line_distance(a.location, b.location)
     if dist > LINE_WINDOW:
@@ -228,7 +228,7 @@ def fingerprint(f: Finding) -> str:
         ids = sorted(f.taxonomy.cve) or sorted(f.taxonomy.aliases) or [f.id]
         raw = f"{f.package.ecosystem}|{f.package.name}|{f.package.version}|{ids[0].upper()}"
     else:
-        cwe = min(_cwe_family(f) or {"none"})
+        cwe = min(cwe_family(f) or {"none"})
         snip = f.location.snippet
         if norm.is_placeholder(snip):  # nothing comparable in the snippet: anchor on the line
             raw = f"{cwe}|{f.location.path}|placeholder|{f.location.start_line}"

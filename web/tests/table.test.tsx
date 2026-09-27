@@ -62,4 +62,19 @@ describe("findings table behaviour", () => {
     const first = host.querySelector(".findings-table tbody tr")!;
     expect(first.querySelector(".sevcell .risk")?.textContent).toBe("88");
   });
+
+  it("badges new and reintroduced issues, but stays quiet for the steady 'open' state (ADR-0012)", async () => {
+    const rows: Finding[] = [
+      { ...all[0]!, issue: { id: "i1", state: "new" } },
+      { ...all[1]!, issue: { id: "i2", state: "reintroduced" } },
+      { ...all[2]!, issue: { id: "i3", state: "open" } },
+      { ...all[3]! }, // no issue field at all: a scan from before Issue tracking, or with no asset
+    ];
+    const host = await mount(async () => ({ total: rows.length, limit: 50, offset: 0, items: rows }));
+    const cells = [...host.querySelectorAll(".findings-table tbody tr")];
+    expect(cells[0]!.querySelector(".issue-new")?.textContent).toBe("New");
+    expect(cells[1]!.querySelector(".issue-reintroduced")?.textContent).toBe("Reintroduced");
+    expect(cells[2]!.querySelector("[class*=issue-]")).toBeNull();
+    expect(cells[3]!.querySelector("[class*=issue-]")).toBeNull();
+  });
 });

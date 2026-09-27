@@ -5,7 +5,7 @@ import { getFindings } from "@/lib/api";
 import { collectAll, exportFilename, exportPayload, saveBlob } from "@/lib/export";
 import { defaultQuery, isDefaultQuery, locationLabel, pageCount, queryToSearch, rangeLabel, searchToQuery } from "@/lib/format";
 import { CATEGORIES, FILTER_TOOLS, SEVERITIES, type Finding, type FindingsPage, type FindingsQuery, type GuidanceApi, type ScanView, type Severity } from "@/lib/types";
-import { RiskSignals, SeverityBadge } from "./Badges";
+import { IssueBadge, RiskSignals, SeverityBadge } from "./Badges";
 import { FindingDetail } from "./FindingDetail";
 import { FixFirst } from "./FixFirst";
 
@@ -209,6 +209,7 @@ export function FindingsTable({ scan, version, fetchFindings = getFindings, guid
                     <td><span className="sevcell"><SeverityBadge severity={f.scoring.normalized_severity} /><RiskSignals score={f.scoring.risk_score} kev={f.scoring.in_cisa_kev} epss={f.scoring.epss_score} /></span></td>
                     <td>
                       <button type="button" className="row-title" data-fid={f.id} onClick={(e) => select(f, e.currentTarget)} aria-pressed={selected?.id === f.id}><span className="clamp">{f.title}</span></button>
+                      <IssueBadge issue={f.issue} />
                     </td>
                     <td><code className="loc">{locationLabel(f)}</code></td>
                     <td><span className="chips">{f.evidence.reported_by.map((t) => <span key={t} className="chip">{t}</span>)}</span></td>

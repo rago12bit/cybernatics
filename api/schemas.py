@@ -52,6 +52,12 @@ class ScanView(BaseModel):
     raw_findings: int = Field(description="Sum of every tool's findings before correlation.")
     unique_findings: int = Field(description="Findings after cross-tool deduplication.")
     dedup_rate: float = Field(description="1 - unique/raw; 0 when there were no findings.")
+    issue_counts: dict[str, int] = Field(
+        default_factory=dict,
+        description="Findings by Issue lifecycle state (new/open/reintroduced) for this scan's "
+        "asset. Empty for scans that didn't finish 'completed', since only a full scan can "
+        "tell an issue was fixed; see ADR-0012.",
+    )
 
 
 class FindingsPage(BaseModel):

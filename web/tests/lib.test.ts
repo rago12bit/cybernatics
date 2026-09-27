@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { agreementLabel, dedupSummary, defaultQuery, findingsQueryString, formatDuration, locationLabel, pageCount } from "../lib/format";
+import { agreementLabel, dedupSummary, defaultQuery, findingsQueryString, formatDuration, issueSummary, locationLabel, pageCount } from "../lib/format";
 import { readFileSync } from "node:fs";
 import { OWASP_2021, owaspLabel } from "../lib/owasp";
 import { cveUrl, cweUrl, owaspUrl, safeHttpsUrl } from "../lib/safe";
@@ -79,6 +79,16 @@ describe("labels", () => {
     expect(dedupSummary(scan())).toContain("10 raw findings became 6");
     expect(dedupSummary(scan({ raw_findings: 0, unique_findings: 0, dedup_rate: 0 }))).toContain("No findings");
     expect(dedupSummary(scan({ raw_findings: 4, unique_findings: 4, dedup_rate: 0 }))).toContain("no duplicates");
+  });
+  it("issue summary is quiet unless something is new or came back (ADR-0012)", () => {
+    expect(issueSummary(undefined)).toBeNull();
+    expect(issueSummary({})).toBeNull();
+    expect(issueSummary({ open: 40 })).toBeNull(); // steady state alone says nothing
+    expect(issueSummary({ new: 3 })).toBe("3 new since the last scan of this project.");
+    expect(issueSummary({ reintroduced: 1 })).toBe("1 reintroduced since the last scan of this project.");
+    expect(issueSummary({ new: 3, reintroduced: 1, open: 40 })).toBe(
+      "3 new, 1 reintroduced since the last scan of this project.",
+    );
   });
   it("durations and locations", () => {
     expect([0.2, 5.4, 75, null].map(formatDuration)).toEqual(["<1s", "5s", "1m 15s", ""]);

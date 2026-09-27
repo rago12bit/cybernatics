@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { dedupSummary, isTerminal } from "@/lib/format";
+import { dedupSummary, isTerminal, issueSummary } from "@/lib/format";
 import type { Connection } from "@/lib/useScan";
 import type { FindingsPage, FindingsQuery, GuidanceApi, ScanView, Severity } from "@/lib/types";
 import { SeverityCounts, StatusBadge } from "./Badges";
@@ -59,6 +59,9 @@ export function ScanReport({
               <span className="eyebrow plain">Unique findings</span>
               <span className="numeral">{scan.unique_findings}</span>
               <p className="dedup-note">{dedupSummary(scan)}</p>
+              {issueSummary(scan.issue_counts) && (
+                <p className="dedup-note">{issueSummary(scan.issue_counts)}</p>
+              )}
             </div>
             <div>
               <span className="eyebrow plain">By severity</span>

@@ -37,6 +37,58 @@ class Base(DeclarativeBase):
     pass
 
 
+class Asset(Base):
+    """The identity a repeated scan is matched against (ADR-0012): one row per distinct repository
+    or archive name, regardless of how many times it's been scanned. See `core/assets.py` for how
+    the key is derived; this table only stores it."""
+
+    __tablename__ = "assets"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    source_type: Mapped[str] = mapped_column(String(16))  # git | archive
+    key: Mapped[str] = mapped_column(String(500))  # normalized identity, core.assets.asset_key
+    label: Mapped[str] = mapped_column(String(300))  # most recent human-readable label
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+    last_scanned_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+    issues: Mapped[list[IssueRow]] = relationship(
+        back_populates="asset", cascade="all, delete-orphan"
+    )
+
+    __table_args__ = (UniqueConstraint("source_type", "key", name="uq_assets_type_key"),)
+
+
+class IssueRow(Base):
+    """One vulnerability tracked across every scan of one asset (ADR-0012). `core/issues.py` is the
+    pure logic that decides identity and lifecycle; this table just stores the result."""
+
+    __tablename__ = "issues"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    asset_id: Mapped[str] = mapped_column(ForeignKey("assets.id", ondelete="CASCADE"), index=True)
+    fingerprint: Mapped[str] = mapped_column(String(80))
+    fallback_fingerprint: Mapped[str | None] = mapped_column(String(80), nullable=True, index=True)
+    state: Mapped[str] = mapped_column(String(16), index=True)  # new | open | fixed | reintroduced
+    # A snapshot from the most recent occurrence, so issues can be listed without joining back to
+    # findings. The full canonical Finding lives on the Occurrence row (FindingRow).
+    category: Mapped[str] = mapped_column(String(16))
+    severity: Mapped[str] = mapped_column(String(16))
+    path: Mapped[str] = mapped_column(Text)
+    title: Mapped[str] = mapped_column(Text)
+    first_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+    last_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+    fixed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    asset: Mapped[Asset] = relationship(back_populates="issues")
+
+    __table_args__ = (
+        UniqueConstraint(
+            "asset_id", "category", "fingerprint", name="uq_issues_asset_category_fingerprint"
+        ),
+        Index("ix_issues_asset_state", "asset_id", "state"),
+    )
+
+
 class Scan(Base):
     __tablename__ = "scans"
 
@@ -46,6 +98,9 @@ class Scan(Base):
     source_ref: Mapped[str] = mapped_column(Text)  # git URL, or server-side archive path
     source_label: Mapped[str] = mapped_column(String(300))  # safe display name
     tools: Mapped[list[str]] = mapped_column(JsonType)
+    asset_id: Mapped[str | None] = mapped_column(
+        ForeignKey("assets.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     error: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
@@ -90,6 +145,13 @@ class FindingRow(Base):
     start_line: Mapped[int] = mapped_column(Integer)
     tools: Mapped[list[str]] = mapped_column(JsonType)  # evidence.reported_by, for filtering
     data: Mapped[dict[str, Any]] = mapped_column(JsonType)  # full canonical Finding
+    # This row is one Occurrence of an Issue (ADR-0012). Nullable because a scan with no asset (the
+    # API always creates one, but the column must survive an old row from before this existed) has
+    # nothing to attach an Issue to.
+    issue_id: Mapped[str | None] = mapped_column(
+        ForeignKey("issues.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    issue_state: Mapped[str | None] = mapped_column(String(16), nullable=True)
 
     __table_args__ = (
         UniqueConstraint("scan_id", "finding_id", name="uq_findings_scan_finding"),

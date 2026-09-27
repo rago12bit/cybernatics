@@ -1045,6 +1045,14 @@
             "type": "number",
             "title": "Dedup Rate",
             "description": "1 - unique/raw; 0 when there were no findings."
+          },
+          "issue_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Issue Counts",
+            "description": "Findings by Issue lifecycle state (new/open/reintroduced) for this scan's asset. Empty for scans that didn't finish 'completed', since only a full scan can tell an issue was fixed; see ADR-0012."
           }
         },
         "type": "object",

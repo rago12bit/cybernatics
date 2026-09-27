@@ -537,6 +537,8 @@ kbd { font: 500 0.6875rem/1 var(--mono); border: 1px solid var(--line-strong); p
 .risk { display: inline-block; min-width: 2.1rem; text-align: center; padding: 0.28rem 0.4rem; font: 500 0.75rem/1 var(--mono); color: var(--bg); background: var(--teal); border-radius: var(--radius); }
 .tag.kev { color: var(--sev-critical); }
 .tag.epss { color: var(--sev-medium); }
+.tag.issue-new { color: var(--teal); }
+.tag.issue-reintroduced { color: var(--sev-high); }
 .sevcell { display: inline-flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
 .hint { margin: 0; padding-left: 1.1rem; }
 .fixfirst { border-bottom: 1px solid var(--line); }

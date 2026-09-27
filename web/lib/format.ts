@@ -58,6 +58,16 @@ export function dedupSummary(scan: ScanView): string {
   return `${scan.raw_findings} raw findings became ${scan.unique_findings} after merging duplicates across scanners (${Math.round(scan.dedup_rate * 100)}% fewer).`;
 }
 
+/** "3 new, 1 reintroduced since the last scan of this project", or null when there's nothing worth
+ * saying — no tracked history yet, or every issue is just steady-state "open" (ADR-0012). */
+export function issueSummary(counts: ScanView["issue_counts"]): string | null {
+  const n = counts?.new ?? 0;
+  const r = counts?.reintroduced ?? 0;
+  if (n === 0 && r === 0) return null;
+  const parts = [n > 0 && `${n} new`, r > 0 && `${r} reintroduced`].filter(Boolean);
+  return `${parts.join(", ")} since the last scan of this project.`;
+}
+
 export function formatDuration(seconds: number | null): string {
   if (seconds === null || seconds === undefined) return "";
   return seconds < 1 ? "<1s" : seconds < 60 ? `${Math.round(seconds)}s` : `${Math.floor(seconds / 60)}m ${Math.round(seconds % 60)}s`;

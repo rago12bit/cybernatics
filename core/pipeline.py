@@ -148,13 +148,24 @@ def _run_scan_job(
         _store_raw(sessions, store, scan_id, outcomes, raws, has_secrets)
         status = _final_status(outcomes)
         with sessions() as s:
-            repo.add_findings(s, scan_id, findings)
+            # Only a full, unfiltered scan can tell an issue is fixed (absence is only meaningful
+            # when the whole asset was actually looked at); a status other than these means some
+            # tool never ran or crashed, so "not seen this time" would be a false "fixed".
+            if status == "completed":
+                issues = repo.sync_issues_for_scan(s, scan_id, findings)
+            else:
+                issues = None
+            repo.add_findings(s, scan_id, findings, issues.updates if issues else None)
             repo.finish_scan(s, scan_id, status)
             counts = repo.severity_counts(s, scan_id)
+    issue_counts = (
+        {"new": issues.new_count, "reintroduced": issues.reintroduced_count,
+         "fixed": issues.fixed_count} if issues else None
+    )  # fmt: skip
     bus.publish(scan_id, {"type": "scan.finished", "scan_id": scan_id, "status": status,
                           "findings": len(findings), "raw_findings": stats.raw,
                           "dedup_rate": round(stats.dedup_rate, 3),
-                          "severity_counts": counts})  # fmt: skip
+                          "severity_counts": counts, "issues": issue_counts})  # fmt: skip
     _cleanup_upload(source_type, source_ref)
     return status, counts
 

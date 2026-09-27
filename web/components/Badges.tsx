@@ -1,4 +1,4 @@
-import type { ScanStatus, Severity, ToolState } from "@/lib/types";
+import type { IssueRef, ScanStatus, Severity, ToolState } from "@/lib/types";
 
 export function SeverityBadge({ severity }: { severity: Severity }) {
   return <span className={`tag sev-${severity.toLowerCase()}`}>{severity}</span>;
@@ -17,6 +17,25 @@ export function SeverityCounts({ counts }: { counts: Partial<Record<Severity, nu
       {shown.map((s) => (
         <span key={s} className={`tag sev-${s.toLowerCase()}`}>{counts[s]} {s}</span>
       ))}
+    </span>
+  );
+}
+
+/** Whether this finding is new, or came back after being fixed (ADR-0012). Silent for "open" —
+ * the steady state of most findings shouldn't compete for attention with what actually changed. */
+export function IssueBadge({ issue }: { issue?: IssueRef | null }) {
+  if (!issue || issue.state === "open") return null;
+  const label = issue.state === "new" ? "New" : "Reintroduced";
+  return (
+    <span
+      className={`tag issue-${issue.state}`}
+      title={
+        issue.state === "new"
+          ? "First time this issue has been seen on this project"
+          : "This issue was fixed in an earlier scan and has come back"
+      }
+    >
+      {label}
     </span>
   );
 }

@@ -12,9 +12,20 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   end-to-end, and a prompt-injection baseline. All passed; two gaps are real and documented rather than hidden:
   the VS Code extension has never run in a real VS Code install, and the GitHub Action has never run on GitHub's
   runners (`origin/main` is well behind local `HEAD`). Full results: docs/v1-verification.md.
-- **ADR-0012, ADR-0013 (design only, no code yet):** the Issue/Occurrence data model split (stable identity
-  across scans, needed for "fixed"/"reintroduced"/incremental scanning) and Postgres Row-Level Security for
-  multi-tenancy, both slated for Weeks 28-29.
+- **ADR-0012 (design), ADR-0013 (design, Week 29):** the Issue/Occurrence data model split and Postgres
+  Row-Level Security for multi-tenancy.
+- **Week 28 — Issue/Occurrence data model, implemented (ADR-0012):** `core/assets.py` and `core/issues.py`
+  (pure identity + lifecycle logic), `Asset`/`IssueRow` tables, and `core/pipeline.py` now syncs every completed
+  scan's findings against its asset's history: `new` → `open` → `fixed` → `reintroduced`. The API's
+  `GET /scans/{id}` gained `issue_counts`; each finding gained an `issue` field. The web app shows a badge on
+  new/reintroduced findings and a quiet one-line summary, silent otherwise. `scripts/backfill-issues.py`
+  backfills scans from before this shipped (dry-run by default); run for real against this environment's 13
+  pre-existing scans (5 assets, 1,468 issues). Verified live end to end against a real API, worker and
+  Postgres — four real scans of the same uploaded archive through the actual lifecycle, cross-checked directly
+  against the database, not just the API's response. Caught and fixed a real fingerprint collision along the
+  way: two findings of different categories can hash identically under ADR-0004's fingerprint when both lack a
+  CWE and land on the same redacted line, so Issue identity is scoped to `(asset, category, fingerprint)`, not
+  `(asset, fingerprint)`. Full writeup: docs/v2-week28-verification.md.
 
 ## [1.0.0] - 2026-09-27
 

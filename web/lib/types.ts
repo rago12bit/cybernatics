@@ -38,6 +38,18 @@ export interface ScanView {
   raw_findings: number;
   unique_findings: number;
   dedup_rate: number;
+  /** Findings by Issue lifecycle state (ADR-0012): "new" here for the first time, "open" seen
+   * before, "reintroduced" after having been fixed. Empty for scans that aren't "completed", or
+   * from before this tracking existed. */
+  issue_counts?: Partial<Record<"new" | "open" | "reintroduced", number>>;
+}
+
+/** Which side of an Issue's lifecycle a finding is on right now (ADR-0012). Absent ("null") means
+ * this scan predates Issue tracking, or has no asset. A "fixed" issue never appears here — it has
+ * no occurrence in the scan that would carry this field. */
+export interface IssueRef {
+  id: string;
+  state: "new" | "open" | "reintroduced";
 }
 
 /** Guidance for one finding. `source` says whether a model wrote it; `label` is always displayed with it. */
@@ -112,6 +124,7 @@ export interface Finding {
   };
   remediation: { summary: string; references: string[]; generated_by: string };
   package: { name: string; version: string; ecosystem: string } | null;
+  issue?: IssueRef | null;
 }
 
 export interface FindingsPage {

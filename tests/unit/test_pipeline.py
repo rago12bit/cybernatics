@@ -35,9 +35,11 @@ def finding(
     return f
 
 
-def make_scan(s: Session, tools: list[str], ref: str, stype: str = "git") -> str:
+def make_scan(
+    s: Session, tools: list[str], ref: str, stype: str = "git", label: str = "lbl"
+) -> str:
     return repo.create_scan(
-        s, source_type=stype, source_ref=ref, source_label="lbl", tools=tools
+        s, source_type=stype, source_ref=ref, source_label=label, tools=tools
     ).id
 
 
@@ -384,3 +386,54 @@ def test_default_order_is_severity_then_risk_then_path(
         want = ["b.py", "d.py", "a.py", "c.py", "z.py"]
         assert [i["id"] for i in repo.query_findings(s, sid).items] == want
         assert [i["id"] for i in repo.query_findings(s, sid, tool="trivy").items] == want
+
+
+def test_issue_lifecycle_across_real_scans_of_the_same_asset(
+    sessions: sessionmaker[Session], sample_repo: Path
+) -> None:
+    """End-to-end through run_scan_job (ADR-0012): new -> open -> fixed -> reintroduced, and a
+    completely different asset never sees any of it."""
+
+    def scan_with(has_bug: bool) -> tuple[str | None, str | None]:
+        with sessions() as s:
+            sid = make_scan(s, ["bandit"], str(sample_repo), label="same-repo")
+        line = "shell=True" if has_bug else "shell=False"
+        table = {"bandit": ToolOutcome("bandit", "ok", [finding("bandit", Category.SAST, line=1)])}
+        table["bandit"].findings[0].location = Location("a.py", 1, 1, line, "h")
+        run_scan_job(sid, sessions, MemoryStore(), MemoryPublisher(), executor_from(table))
+        with sessions() as s:
+            rows = list(s.query(FindingRow).filter_by(scan_id=sid))
+            return rows[0].issue_id if rows else None, rows[0].issue_state if rows else None
+
+    id1, state1 = scan_with(True)
+    assert state1 == "new"
+    id2, state2 = scan_with(True)
+    assert id2 == id1 and state2 == "open"  # same defect, second sighting: settles to open
+
+    # a scan with a *different* asset label must never see this issue
+    with sessions() as s:
+        other_sid = make_scan(s, ["bandit"], str(sample_repo), label="a-different-repo")
+    table = {"bandit": ToolOutcome("bandit", "ok", [finding("bandit", Category.SAST, line=1)])}
+    run_scan_job(other_sid, sessions, MemoryStore(), MemoryPublisher(), executor_from(table))
+    with sessions() as s:
+        other_row = s.query(FindingRow).filter_by(scan_id=other_sid).one()
+        assert other_row.issue_id != id1 and other_row.issue_state == "new"
+
+    # fix it: bandit no longer reports anything for "same-repo"
+    with sessions() as s:
+        fixed_sid = make_scan(s, ["bandit"], str(sample_repo), label="same-repo")
+    run_scan_job(fixed_sid, sessions, MemoryStore(), MemoryPublisher(), executor_from({"bandit": ToolOutcome("bandit", "ok", [])}))  # fmt: skip
+    with sessions() as s:
+        from core.persistence.models import IssueRow
+
+        issue = s.get(IssueRow, id1)
+        assert issue is not None and issue.state == "fixed" and issue.fixed_at is not None
+
+    # reintroduce it
+    id3, state3 = scan_with(True)
+    assert id3 == id1 and state3 == "reintroduced"
+    with sessions() as s:
+        from core.persistence.models import IssueRow
+
+        issue = s.get(IssueRow, id1)
+        assert issue is not None and issue.fixed_at is None
