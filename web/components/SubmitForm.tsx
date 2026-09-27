@@ -70,7 +70,11 @@ export function SubmitForm() {
         </div>
       </fieldset>
 
-      {hints.length > 0 && <ul className="hint muted small" role="status">{hints.map((h) => <li key={h}>{h}</li>)}</ul>}
+      {hints.length > 0 && (
+        <div role="status">
+          <ul className="hint muted small">{hints.map((h) => <li key={h}>{h}</li>)}</ul>
+        </div>
+      )}
       {error && <p className="error" role="alert">{error}</p>}
       <button className="btn primary" disabled={!ready || busy}>{busy ? "Starting…" : "Start scan →"}</button>
     </form>

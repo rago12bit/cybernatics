@@ -43,7 +43,7 @@ export function RecentScans() {
       <span className="eyebrow" id="recent-h">Recent scans</span>
       {error && rows === null && <p className="error" role="alert">{error}</p>}
       {rows === null && !error && (
-        <div aria-busy="true" aria-label="Loading recent scans" className="skeleton-list">
+        <div role="status" aria-busy="true" aria-label="Loading recent scans" className="skeleton-list">
           {[0, 1, 2].map((i) => <span key={i} className="sk sk-row" />)}
         </div>
       )}

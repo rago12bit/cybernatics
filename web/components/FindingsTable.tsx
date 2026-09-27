@@ -191,7 +191,7 @@ export function FindingsTable({ scan, version, fetchFindings = getFindings, guid
           </div>
         )}
         {!error && !page && loading && (
-          <div className="scroll" aria-busy="true" aria-label="Loading findings">
+          <div className="scroll" role="status" aria-busy="true" aria-label="Loading findings">
             <table className="findings-table skeleton">
               <thead><tr><th>Severity</th><th>Finding</th><th>Location</th><th>Scanners</th></tr></thead>
               <tbody>{Array.from({ length: 8 }, (_, i) => <tr key={i}><td><span className="sk sk-s" /></td><td><span className="sk sk-l" /></td><td><span className="sk sk-m" /></td><td><span className="sk sk-s" /></td></tr>)}</tbody>

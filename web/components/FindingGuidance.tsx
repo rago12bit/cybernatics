@@ -114,7 +114,7 @@ export function FindingGuidance({ scanId, findingId, api }: { scanId: string; fi
   }
 
   if (error) return <section className="guidance" aria-label="Fix guidance"><h4>Fix guidance</h4><p className="error small" role="alert">{error}</p></section>;
-  if (!g) return <section className="guidance" aria-busy="true" aria-label="Fix guidance"><h4>Fix guidance</h4><span className="sk sk-l" /><span className="sk sk-m" /></section>;
+  if (!g) return <section className="guidance" role="status" aria-busy="true" aria-label="Fix guidance"><h4>Fix guidance</h4><span className="sk sk-l" /><span className="sk sk-m" /></section>;
   // A degraded AI attempt (rejected reply, failed call) is shown as what it is: reference text, with the reason.
   const aiOk = ai && ai.source === "ai";
   return (

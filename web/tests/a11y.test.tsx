@@ -6,14 +6,19 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DemoReport } from "../components/DemoReport";
 import { FindingDetail } from "../components/FindingDetail";
+import { RecentScans } from "../components/RecentScans";
+import { SubmitForm } from "../components/SubmitForm";
 import { Landing } from "../components/site/Landing";
 import { SiteHeader } from "../components/site/SiteHeader";
 import { TokenGate } from "../components/TokenGate";
+import SelfHost from "../app/self-host/page";
 import type { Finding } from "../lib/types";
 import demo from "../lib/demo-data.json";
 
 let path = "/";
-vi.mock("next/navigation", () => ({ usePathname: () => path, useRouter: () => ({ push: () => undefined }) }));
+const push = vi.fn();
+vi.mock("next/navigation", () => ({ usePathname: () => path, useRouter: () => ({ push }) }));
+const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
 (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 // jsdom cannot compute colours, so contrast is covered separately (tests/contrast.test.ts).
@@ -28,7 +33,7 @@ async function mount(node: React.ReactNode) {
   await act(async () => root.render(node));
   return { host, root };
 }
-afterEach(() => { document.body.innerHTML = ""; sessionStorage.clear(); path = "/"; });
+afterEach(() => { document.body.innerHTML = ""; sessionStorage.clear(); path = "/"; vi.unstubAllGlobals(); push.mockReset(); });
 
 describe("axe accessibility audit", () => {
   it("landing page", async () => {
@@ -78,5 +83,54 @@ describe("axe accessibility audit", () => {
     path = "/app";
     const b = await mount(<SiteHeader />);
     expect(b.host.textContent).toContain("Sign out");
+  });
+
+  it("submit form: git mode, upload mode, and with a validation hint showing", async () => {
+    const { host, root } = await mount(<SubmitForm />);
+    expect(await violations(host)).toEqual([]);
+    await act(async () => host.querySelector<HTMLButtonElement>("button[aria-pressed='false']")!.click()); // switch to upload
+    expect(await violations(host)).toEqual([]);
+    await act(async () => root.unmount());
+    const b = await mount(<SubmitForm />);
+    const url = b.host.querySelector<HTMLInputElement>("#url")!;
+    const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!;
+    await act(async () => { set.call(url, "not-a-url"); url.dispatchEvent(new Event("input", { bubbles: true })); });
+    expect(b.host.querySelector("[role=status]")).not.toBeNull(); // the hint that fails the check below if missing
+    expect(await violations(b.host)).toEqual([]);
+  });
+
+  it("recent scans: loading, empty, populated and error states", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Promise(() => undefined))); // never resolves: stays in the loading state
+    const loading = await mount(<RecentScans />);
+    expect(loading.host.querySelector("[aria-busy]")).not.toBeNull();
+    expect(await violations(loading.host)).toEqual([]);
+    await act(async () => loading.root.unmount());
+
+    vi.stubGlobal("fetch", vi.fn(async () => json([])));
+    const empty = await mount(<RecentScans />);
+    await act(async () => { await Promise.resolve(); });
+    expect(await violations(empty.host)).toEqual([]);
+    await act(async () => empty.root.unmount());
+
+    vi.stubGlobal("fetch", vi.fn(async () => json([
+      { id: "s1", source_type: "git", source_label: "owner/repo", status: "completed", created_at: "2026-09-25T00:00:00Z", unique_findings: 3, severity_counts: { HIGH: 1, LOW: 2 } },
+      { id: "s2", source_type: "git", source_label: "owner/other", status: "running", created_at: "2026-09-26T00:00:00Z", unique_findings: 0, severity_counts: {} },
+    ])));
+    const rows = await mount(<RecentScans />);
+    await act(async () => { await Promise.resolve(); });
+    expect(rows.host.querySelectorAll("tbody tr").length).toBe(2);
+    expect(await violations(rows.host)).toEqual([]);
+    await act(async () => rows.root.unmount());
+
+    vi.stubGlobal("fetch", vi.fn(async () => { throw new Error("network down"); }));
+    const err = await mount(<RecentScans />);
+    await act(async () => { await Promise.resolve(); });
+    expect(err.host.querySelector("[role=alert]")?.textContent).toContain("Cannot reach the Bulwark API");
+    expect(await violations(err.host)).toEqual([]);
+  });
+
+  it("self-host page", async () => {
+    document.body.innerHTML = `<main>${renderToStaticMarkup(<SelfHost />)}</main>`;
+    expect(await violations()).toEqual([]);
   });
 });
