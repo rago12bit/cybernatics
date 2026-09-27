@@ -1,6 +1,7 @@
 # ADR-0013: Multi-tenancy enforced by Postgres Row-Level Security
 
-Status: Accepted (2026-09-27). Design only — implementation is Week 29.
+Status: Implemented (2026-09-27, Week 29). Verified live end to end; see
+docs/v2-week29-verification.md.
 
 ## Context
 
@@ -54,6 +55,62 @@ weaken.
   fan out per tenant, and it's a much bigger operational jump than a single self-hosted or small-multi-tenant
   deployment needs. Revisit if/when the project ever needs to scale past what one Postgres instance with RLS
   comfortably serves.
+
+## What was actually built, and where it differs from the design above
+
+- **`org_id` lives on `assets` and `scans` only, not on `tool_runs`/`findings`/`issues`.** Those
+  three get a Row-Level Security policy that joins back to the table that does carry it (`EXISTS
+  (SELECT 1 FROM scans WHERE scans.id = findings.scan_id AND scans.org_id = ...)`), which is what
+  "cascades through the foreign key" in the original design actually means in a working policy, not
+  a literal duplicated column. Application-level code enforces the same shape: every client-facing
+  lookup resolves and org-checks the `Scan` first (`api/main.py`'s `_get_scan`), and everything else
+  scoped by that `scan_id` is safe without its own check.
+- **`assets` needed `org_id` too, which the original design didn't mention.** Two organizations
+  scanning the same public repository would otherwise share one `Asset` row (identity is keyed on
+  `(source_type, key)` alone, ADR-0012) — meaning one org's Issue lifecycle history and counts would
+  leak into the other's. Caught by working through the design before writing code, not by a test
+  failure. Fixed by scoping `Asset` identity to `(org_id, source_type, key)`.
+- **The non-superuser API/worker role is real, not a stated intention.** `bulwark_app` (`NOSUPERUSER
+  NOBYPASSRLS`) is created by the migration itself and is what `docker-compose.yml` now points the
+  `api` and `worker` services at; `migrate` keeps connecting as the table-owning role so it can alter
+  schema and manage that role. This is load-bearing, not cosmetic: this project's Postgres image
+  makes its initial role a superuser, and `FORCE ROW LEVEL SECURITY` is a documented no-op against a
+  superuser or any `BYPASSRLS` role regardless of policies — every policy below would have silently
+  protected nothing if the app kept using the original role. Verified directly (see the verification
+  doc): the superuser sees all rows regardless of `app.current_org`; `bulwark_app` with no org set
+  sees zero rows (fails closed, not open); `bulwark_app` with the right org set sees exactly that
+  org's rows.
+- **No org-management API.** There is no endpoint to create an organization, list them, or assign a
+  caller to one — matching the plan's own sequencing (real identity is §19.2). `organizations` rows
+  exist only as the migration's bootstrap default plus whatever is inserted directly for now. A
+  caller selects scope with an `X-Bulwark-Org` header (`core/tenancy.py`); the single shared bearer
+  token still authenticates that a caller may use the API at all, so a caller that knows the token
+  can claim any org id that exists. This is a known, explicit limitation, not an oversight — it
+  proves the isolation mechanism is correct, and real org membership binds to it later without
+  changing RLS or the application-level filtering at all. The header is also not part of the OpenAPI
+  schema (it's read directly from `Request.headers`, not declared as a FastAPI `Header()` parameter),
+  since it isn't a stable public interface yet.
+- **Two real bugs found live, beyond the design itself:**
+  1. `set_config(..., true)` (transaction-local) was the first implementation, matching the ADR's own
+     `SET LOCAL` framing — and it broke the very first real request. Several `repo.py` functions
+     commit internally more than once within one request/session (`create_scan` commits the asset,
+     then commits the scan; the worker's completed-scan path commits issues via
+     `sync_issues_for_scan`, then commits findings via `add_findings` in the same session). A
+     transaction-local setting resets at the *first* of those commits, leaving the rest of the same
+     request running with no org context — which RLS then reads as "see nothing," not "see
+     everything." Fixed by switching to `set_config(..., false)` (session-scoped): safe because
+     every consumer of a session sets it immediately after opening, before any other statement, so a
+     stale value from a previous occupant of a pooled connection can never actually be read.
+  2. The worker was still fully broken after that fix, for a different reason: nothing had ever
+     told it which org a scan belonged to. It connects as the same non-bypass `bulwark_app` role as
+     the API, so every write it made (`mark_running`, `add_tool_run`, `add_findings`, `finish_scan`)
+     would be silently rejected or simply match zero rows under RLS. Reading the scan's own `org_id`
+     first doesn't work either — the worker has no bypass privilege, so it can't `SELECT` a row it
+     hasn't already identified the org for. Fixed by threading `org_id` through the dispatch path
+     the API already has it on: `AppState.enqueue` gained a second argument, `run_scan_task` and
+     `run_scan_job` both gained `org_id`, and `core.tenancy.scoped_sessions` wraps the worker's
+     session factory to set `app.current_org` on every session it opens, the same job `api.deps.db`
+     does for the API.
 
 ## Consequences
 

@@ -25,6 +25,7 @@ from core.reachability import analyze_or_none
 from core.risk import ensure_fresh
 from core.scan import ADAPTERS, ToolOutcome, detect_context, execute_tool
 from core.source import materialize
+from core.tenancy import scoped_sessions
 
 log = logging.getLogger(__name__)
 
@@ -44,12 +45,21 @@ def run_scan_job(
     store: ObjectStore,
     bus: Any,
     executor: Any = execute_tool,
+    *,
+    org_id: str | None = None,
 ) -> str:
     """Run one scan end to end. Returns the final status. Never raises for scan-level problems.
 
     Log lines inside carry the scan id. Stages are spans of one trace: ingest, per-tool spans (which
     run in parallel), correlate, finalize, persist.
+
+    `org_id` (ADR-0013): set by `core.tasks.run_scan_task` from the enqueue call, which already
+    knows it -- the worker has no other safe way to learn it (`core.tenancy.scoped_sessions`).
+    `None` is the trusted-internal/test default (also every SQLite test's implicit case, since
+    SQLite has no RLS to set up in the first place).
     """
+    if org_id is not None:
+        sessions = scoped_sessions(sessions, org_id)
     started = time.monotonic()
     obs.SCANS_RUNNING.inc()
     status = "failed"

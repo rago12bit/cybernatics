@@ -3,7 +3,16 @@
 name: bulwark
 
 x-app-env: &app-env
+  # The table-owning role. `migrate` runs as this (it must be able to create the app role below and
+  # alter schema); `api` and `worker` override BULWARK_DATABASE_URL to the non-superuser app role
+  # instead (ADR-0013) -- Postgres Row-Level Security does nothing against a superuser connection,
+  # policies or not, so those two services must NOT use this URL once migration 0005 has run.
   BULWARK_DATABASE_URL: postgresql://bulwark:${POSTGRES_PASSWORD:?run scripts/init-env.sh}@postgres:5432/bulwark
+  BULWARK_APP_DATABASE_URL: postgresql://bulwark_app:${APP_DB_PASSWORD:?run scripts/init-env.sh}@postgres:5432/bulwark
+  # Bare values too (not just baked into the URLs above): migration 0005 reads APP_DB_PASSWORD
+  # directly via os.environ to create/update the bulwark_app role. A value embedded only inside
+  # another env var's string is not itself a separate environment variable a process can read.
+  APP_DB_PASSWORD: ${APP_DB_PASSWORD:?run scripts/init-env.sh}
   BULWARK_REDIS_URL: redis://redis:6379/0
   BULWARK_S3_ENDPOINT: http://objectstore:9000
   BULWARK_S3_ACCESS_KEY: ${S3_ACCESS_KEY:?run scripts/init-env.sh}
@@ -80,6 +89,10 @@ services:
     command: ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000", "--log-config", "api/log_config.json", "--no-access-log"]
     environment:
       <<: *app-env
+      # Non-superuser role: this is the connection Postgres RLS (ADR-0013) actually enforces against.
+      # (Compose variable substitution can't reference another key's already-substituted value, so
+      # this repeats the same construction as BULWARK_APP_DATABASE_URL above rather than pointing at it.)
+      BULWARK_DATABASE_URL: postgresql://bulwark_app:${APP_DB_PASSWORD:?run scripts/init-env.sh}@postgres:5432/bulwark
       # Optional AI suggestions (off by default). Only the API needs the key, never the worker.
       # Enabling sends finding text and code snippets to your model provider: see docs/llm-remediation.md.
       BULWARK_LLM_ENABLED: ${BULWARK_LLM_ENABLED:-0}
@@ -101,6 +114,8 @@ services:
     command: ["celery", "-A", "core.tasks", "worker", "-B", "-s", "/tmp/celerybeat-schedule", "-P", "threads", "-c", "4", "-l", "info"]  # -B: embedded beat for housekeeping (run ONE worker with -B)
     environment:
       <<: *app-env
+      # Non-superuser role, same reasoning as the api service above (ADR-0013).
+      BULWARK_DATABASE_URL: postgresql://bulwark_app:${APP_DB_PASSWORD:?run scripts/init-env.sh}@postgres:5432/bulwark
       DOCKER_HOST: tcp://socket-proxy:2375
       BULWARK_METRICS_ADDR: 0.0.0.0 # reachable by Prometheus on the compose network; not published to the host
     # Same path inside and outside: scanner containers bind-mount these via the host daemon.

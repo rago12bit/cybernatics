@@ -8,6 +8,10 @@ WORKDIR="${BULWARK_WORKDIR:-/tmp/bulwark}"
 mkdir -p "$WORKDIR" && chmod 1777 "$WORKDIR"
 cat > .env <<EOF
 POSTGRES_PASSWORD=$(rand)
+# Credentials for the non-superuser role the API/worker connect as (ADR-0013); migrations still run
+# as POSTGRES_PASSWORD's role so they can create it and alter schema. Required for Postgres
+# Row-Level Security to do anything at all -- a superuser bypasses RLS regardless of policies.
+APP_DB_PASSWORD=$(rand)
 S3_ACCESS_KEY=bulwark
 S3_SECRET_KEY=$(rand)
 BULWARK_API_TOKEN=$(rand)

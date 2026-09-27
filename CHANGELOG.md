@@ -34,6 +34,23 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   rather than folded into `failed` (ADR-0015); scanner adapter drift caught by pinned tool versions plus a
   weekly CI job that bumps one tool at a time against the existing golden fixtures, rather than a daily
   schema-poll against upstream repositories that publish no such schema (ADR-0016).
+- **Week 29 — multi-tenancy via Postgres Row-Level Security, implemented (ADR-0013):** `Organization`
+  model; `Asset`/`Scan` gained `org_id` (`Asset` identity is now scoped to `(org_id, source_type, key)`
+  so two orgs scanning the same public repo never share Issue history); RLS policies on `assets`,
+  `scans`, `tool_runs`, `findings` and `issues`; a non-superuser `bulwark_app` Postgres role that the
+  API and worker now connect as (the table-owning role is a superuser on this project's Postgres image,
+  and `FORCE ROW LEVEL SECURITY` is a documented no-op against a superuser regardless of policies — the
+  role split is load-bearing, not cosmetic). A caller selects scope with an optional `X-Bulwark-Org`
+  header; absent, every pre-Week-29 client keeps behaving exactly as before. No org-management API yet
+  (matches the plan's own later identity work) and no real per-org authentication — the single shared
+  bearer token still gates API access, only scope selection is new. Verified live: full downgrade/
+  upgrade cycle of the migration, direct role-by-role proof that a superuser bypasses RLS while
+  `bulwark_app` fails closed with no org set, and real cross-org HTTP requests through a real scan the
+  worker ran end to end. Caught and fixed three real bugs along the way, the most significant being
+  that `SET LOCAL`-style scoping doesn't survive a mid-request commit (`create_scan` commits twice in
+  one session) and that the worker — connecting as the same non-bypass role — never had an org context
+  at all, silently rejecting every write until `org_id` was threaded through the dispatch path from the
+  API's enqueue call. Full writeup: docs/v2-week29-verification.md.
 
 ## [1.0.0] - 2026-09-27
 

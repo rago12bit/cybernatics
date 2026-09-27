@@ -16,6 +16,7 @@ from core.issues import ExistingIssue, IssueUpdate, State, SyncResult, fallback_
 from core.issues import sync as sync_issues
 from core.models import Finding
 from core.persistence.models import SEVERITY_RANK, Asset, FindingRow, IssueRow, Scan, ToolRun
+from core.tenancy import DEFAULT_ORG_ID
 
 log = logging.getLogger(__name__)
 
@@ -26,15 +27,21 @@ def _now() -> datetime:
     return datetime.now(timezone.utc)
 
 
-def get_or_create_asset(s: Session, *, source_type: str, source_label: str) -> Asset:
-    """The row a repeated scan is matched against (ADR-0012). Identity is `core.assets.asset_key`;
-    the label is refreshed to the most recent scan's, since that's what a person actually reads."""
+def get_or_create_asset(
+    s: Session, *, source_type: str, source_label: str, org_id: str = DEFAULT_ORG_ID
+) -> Asset:
+    """The row a repeated scan is matched against (ADR-0012). Identity is `core.assets.asset_key`
+    scoped to one organization (ADR-0013) — two orgs scanning the same public repo get separate
+    Assets, so neither sees the other's Issue history. The label is refreshed to the most recent
+    scan's, since that's what a person actually reads."""
     key = asset_key(source_type, source_label)
     asset = s.scalars(
-        select(Asset).where(Asset.source_type == source_type, Asset.key == key)
+        select(Asset).where(
+            Asset.org_id == org_id, Asset.source_type == source_type, Asset.key == key
+        )
     ).one_or_none()
     if asset is None:
-        asset = Asset(source_type=source_type, key=key, label=source_label)
+        asset = Asset(org_id=org_id, source_type=source_type, key=key, label=source_label)
         s.add(asset)
     else:
         asset.label, asset.last_scanned_at = source_label, _now()
@@ -43,10 +50,19 @@ def get_or_create_asset(s: Session, *, source_type: str, source_label: str) -> A
 
 
 def create_scan(
-    s: Session, *, source_type: str, source_ref: str, source_label: str, tools: list[str]
+    s: Session,
+    *,
+    source_type: str,
+    source_ref: str,
+    source_label: str,
+    tools: list[str],
+    org_id: str = DEFAULT_ORG_ID,
 ) -> Scan:
-    asset = get_or_create_asset(s, source_type=source_type, source_label=source_label)
+    asset = get_or_create_asset(
+        s, source_type=source_type, source_label=source_label, org_id=org_id
+    )
     scan = Scan(
+        org_id=org_id,
         source_type=source_type,
         source_ref=source_ref,
         source_label=source_label,
@@ -58,12 +74,26 @@ def create_scan(
     return scan
 
 
-def list_scans(s: Session, limit: int = 20) -> list[Scan]:
-    return list(s.scalars(select(Scan).order_by(Scan.created_at.desc()).limit(limit)))
+def list_scans(s: Session, limit: int = 20, *, org_id: str | None = None) -> list[Scan]:
+    """`org_id=None` is a trusted-internal, unscoped read (no such caller is left in the API; every
+    client-facing endpoint passes the request's real org). Application-level filtering here is
+    belt-and-suspenders alongside Postgres RLS (ADR-0013) — SQLite test runs have no RLS, so this
+    is what actually proves isolation in the fast test suite."""
+    q = select(Scan).order_by(Scan.created_at.desc()).limit(limit)
+    if org_id is not None:
+        q = q.where(Scan.org_id == org_id)
+    return list(s.scalars(q))
 
 
-def get_scan(s: Session, scan_id: str) -> Scan | None:
-    return s.get(Scan, scan_id)
+def get_scan(s: Session, scan_id: str, *, org_id: str | None = None) -> Scan | None:
+    """`org_id=None` is the trusted-internal read the worker uses (it already knows the exact scan
+    id it was dispatched for; there is no cross-tenant question to ask). Every client-facing API
+    lookup passes the request's real org, so a scan in a different org is invisible, not just
+    unauthorized — a 404, never a 403 (ADR-0013)."""
+    scan = s.get(Scan, scan_id)
+    if scan is None or (org_id is not None and scan.org_id != org_id):
+        return None
+    return scan
 
 
 def reset_scan_results(s: Session, scan_id: str) -> None:

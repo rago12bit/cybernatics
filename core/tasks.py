@@ -85,8 +85,13 @@ def run_tool_task(self: Any, tool: str, target: str) -> dict[str, Any]:
 
 
 @celery_app.task(name="bulwark.run_scan", bind=True, acks_late=True, ignore_result=True)  # type: ignore[untyped-decorator]
-def run_scan_task(self: Any, scan_id: str) -> str:
-    """Server-side scan job (used by the API). Idempotent: a redelivered task restarts cleanly."""
+def run_scan_task(self: Any, scan_id: str, org_id: str | None = None) -> str:
+    """Server-side scan job (used by the API). Idempotent: a redelivered task restarts cleanly.
+
+    `org_id` (ADR-0013): passed by the API at enqueue time, which already knows it; see
+    `core.tenancy.scoped_sessions` for why the worker can't just look it up itself. Optional so an
+    already-queued task from before this week (if one were ever redelivered) still runs.
+    """
     from core.config import Settings
     from core.events import RedisPublisher
     from core.persistence.db import get_session_factory
@@ -95,7 +100,11 @@ def run_scan_task(self: Any, scan_id: str) -> str:
 
     settings = Settings.from_env()
     return run_scan_job(
-        scan_id, get_session_factory(), S3Store(settings), RedisPublisher(settings.redis_url)
+        scan_id,
+        get_session_factory(),
+        S3Store(settings),
+        RedisPublisher(settings.redis_url),
+        org_id=org_id,
     )
 
 

@@ -31,7 +31,7 @@ from fastapi.websockets import WebSocketDisconnect
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from api.deps import AppState, EventSubscriber, db, require_auth, state, token_ok
+from api.deps import AppState, EventSubscriber, current_org, db, require_auth, state, token_ok
 from api.schemas import (
     FeedsStatus,
     FindingsPage,
@@ -59,6 +59,7 @@ from core.rag.retrieve import context_for
 from core.rag.store import KnowledgeBase
 from core.risk import is_stale, read_meta
 from core.scan import ADAPTERS, DEFAULT_TOOLS
+from core.tenancy import DEFAULT_ORG_ID
 
 log = logging.getLogger(__name__)
 _SCAN_IN_PATH = re.compile(r"^/scans/([0-9a-f-]{36})(?:/|$)")
@@ -75,8 +76,12 @@ def _tools(requested: list[str] | None) -> list[str]:
     return list(dict.fromkeys(names))
 
 
-def _get_scan(s: Session, scan_id: str) -> Scan:
-    scan = repo.get_scan(s, scan_id) if _UUID.match(scan_id) else None
+def _get_scan(s: Session, scan_id: str, org_id: str) -> Scan:
+    """Every client-facing lookup goes through here, and here alone checks the org (ADR-0013): once
+    this returns, every downstream query scoped by `scan.id` (findings, tool runs) is already safe
+    without its own org filter — a scan in a different org is invisible, not just unauthorized, so
+    this is a 404 and never a 403."""
+    scan = repo.get_scan(s, scan_id, org_id=org_id) if _UUID.match(scan_id) else None
     if scan is None:
         raise HTTPException(404, "scan not found")
     return scan
@@ -91,8 +96,8 @@ def _all_findings(s: Session, scan_id: str) -> list[dict[str, Any]]:
             return out
 
 
-def _find(s: Session, scan_id: str, finding_id: str) -> Any:
-    _get_scan(s, scan_id)
+def _find(s: Session, scan_id: str, org_id: str, finding_id: str) -> Any:
+    _get_scan(s, scan_id, org_id)
     row = s.scalar(
         select(FindingRow).where(FindingRow.scan_id == scan_id, FindingRow.finding_id == finding_id)
     )
@@ -158,7 +163,7 @@ def _view(s: Session, scan: Scan) -> ScanView:
 def _dispatch(st: AppState, s: Session, scan: Scan) -> None:
     """Queue the job; if the queue is unreachable, fail the scan cleanly instead of orphaning it."""
     try:
-        st.enqueue(scan.id)
+        st.enqueue(scan.id, scan.org_id)
     except Exception as exc:  # noqa: BLE001 - broker errors vary by transport
         log.exception("could not enqueue scan %s", scan.id)
         repo.finish_scan(s, scan.id, "failed", "could not queue the scan; try again shortly")
@@ -227,7 +232,10 @@ def create_app(app_state: AppState) -> FastAPI:
         "/scans", status_code=202, response_model=ScanCreated, dependencies=[Depends(require_auth)]
     )
     def create_scan(
-        body: ScanRequest, st: AppState = Depends(state), s: Session = Depends(db)
+        body: ScanRequest,
+        st: AppState = Depends(state),
+        s: Session = Depends(db),
+        org: str = Depends(current_org),
     ) -> ScanCreated:
         tools = _tools(body.tools)
         try:
@@ -236,7 +244,7 @@ def create_app(app_state: AppState) -> FastAPI:
             raise HTTPException(422, str(exc)) from exc
         scan = repo.create_scan(
             s, source_type="git", source_ref=body.source.url,
-            source_label=body.source.url, tools=tools,
+            source_label=body.source.url, tools=tools, org_id=org,
         )  # fmt: skip
         _dispatch(st, s, scan)
         return ScanCreated(id=scan.id, status=scan.status)
@@ -256,6 +264,7 @@ def create_app(app_state: AppState) -> FastAPI:
         ),
         st: AppState = Depends(state),
         s: Session = Depends(db),
+        org: str = Depends(current_org),
     ) -> ScanCreated:
         name = Path(archive.filename or "").name  # never trust client paths
         if not name.lower().endswith(_ARCHIVE_EXT):
@@ -276,17 +285,20 @@ def create_app(app_state: AppState) -> FastAPI:
             dest.unlink(missing_ok=True)
             raise
         scan = repo.create_scan(
-            s, source_type="archive", source_ref=str(dest), source_label=name, tools=wanted
-        )
+            s, source_type="archive", source_ref=str(dest), source_label=name, tools=wanted,
+            org_id=org,
+        )  # fmt: skip
         _dispatch(st, s, scan)
         return ScanCreated(id=scan.id, status=scan.status)
 
     @app.get("/scans", response_model=list[ScanSummary], dependencies=[Depends(require_auth)])
     def list_scans(
-        limit: int = Query(default=20, ge=1, le=50), s: Session = Depends(db)
+        limit: int = Query(default=20, ge=1, le=50),
+        s: Session = Depends(db),
+        org: str = Depends(current_org),
     ) -> list[ScanSummary]:
         out: list[ScanSummary] = []
-        for scan in repo.list_scans(s, limit):
+        for scan in repo.list_scans(s, limit, org_id=org):
             counts = repo.severity_counts(s, scan.id)
             out.append(
                 ScanSummary(
@@ -307,9 +319,10 @@ def create_app(app_state: AppState) -> FastAPI:
         scan_id: str,
         finding_id: str = Query(min_length=1, max_length=500),
         s: Session = Depends(db),
+        org: str = Depends(current_org),
     ) -> GuidanceView:
         """Reference guidance (CWE + OWASP) and any cached AI suggestion. Calls no model."""
-        f = _find(s, scan_id, finding_id)
+        f = _find(s, scan_id, org, finding_id)
         kb = _kb(s)
         static = static_suggestion(f, context_for(f, kb), "reference guidance")
         client = app_state.llm
@@ -328,13 +341,16 @@ def create_app(app_state: AppState) -> FastAPI:
         dependencies=[Depends(require_auth)],
     )
     def create_suggestion(
-        scan_id: str, body: SuggestionRequest, s: Session = Depends(db)
+        scan_id: str,
+        body: SuggestionRequest,
+        s: Session = Depends(db),
+        org: str = Depends(current_org),
     ) -> RemediationView:
         """Generate (or fetch cached) an AI suggestion. Sends data to the model provider."""
         client = app_state.llm
         if client is None:
             raise HTTPException(409, "AI suggestions are not enabled on this server")
-        f = _find(s, scan_id, body.finding_id)
+        f = _find(s, scan_id, org, body.finding_id)
         kb = _kb(s)
         try:
             res = llm_cache.suggest_cached(
@@ -358,8 +374,10 @@ def create_app(app_state: AppState) -> FastAPI:
         )
 
     @app.get("/scans/{scan_id}", response_model=ScanView, dependencies=[Depends(require_auth)])
-    def get_scan(scan_id: str, s: Session = Depends(db)) -> ScanView:
-        return _view(s, _get_scan(s, scan_id))
+    def get_scan(
+        scan_id: str, s: Session = Depends(db), org: str = Depends(current_org)
+    ) -> ScanView:
+        return _view(s, _get_scan(s, scan_id, org))
 
     @app.get(
         "/scans/{scan_id}/findings",
@@ -376,8 +394,9 @@ def create_app(app_state: AppState) -> FastAPI:
         limit: int = Query(default=100, ge=1, le=500),
         offset: int = Query(default=0, ge=0),
         s: Session = Depends(db),
+        org: str = Depends(current_org),
     ) -> FindingsPage:
-        _get_scan(s, scan_id)
+        _get_scan(s, scan_id, org)
         page = repo.query_findings(
             s, scan_id, severities=severity, categories=category, tool=tool,
             path_contains=path, sort=sort, limit=limit, offset=offset,
@@ -389,11 +408,12 @@ def create_app(app_state: AppState) -> FastAPI:
         scan_id: str,
         format: str = Query(default="sarif", description="sarif | html | pdf | json"),
         s: Session = Depends(db),
+        org: str = Depends(current_org),
     ) -> Response:
         """Download the whole scan (every finding, ranked) as SARIF 2.1.0, HTML, PDF or JSON."""
         if format not in FORMATS:
             raise HTTPException(422, f"format must be one of: {', '.join(FORMATS)}")
-        scan = _get_scan(s, scan_id)
+        scan = _get_scan(s, scan_id, org)
         if scan.status not in ("completed", "partial"):
             raise HTTPException(409, "the scan has not finished, or it failed")
         view = _view(s, scan)
@@ -430,15 +450,19 @@ def create_app(app_state: AppState) -> FastAPI:
             if not token_ok(str(hello.get("token", "")), st.settings.api_token):
                 await ws.close(code=4401, reason="unauthorized")
                 return
+            # No FastAPI `Depends(db)` on a WebSocket route, so there's no request-scoped
+            # `SET LOCAL` here (Postgres RLS still applies at the DB level regardless, ADR-0013);
+            # this app-level check is what scopes this path, like every other `repo.py` call site.
+            org = str(hello.get("org") or "").strip() or DEFAULT_ORG_ID
             with st.sessions() as s:
-                if not _UUID.match(scan_id) or repo.get_scan(s, scan_id) is None:
+                if not _UUID.match(scan_id) or repo.get_scan(s, scan_id, org_id=org) is None:
                     await ws.close(code=4404, reason="scan not found")
                     return
             # Subscribe BEFORE reading the snapshot so no event falls in the gap between them.
             events = st.subscriber.subscribe(scan_id)
             async with contextlib.aclosing(events):  # type: ignore[type-var]
                 with st.sessions() as s:
-                    view = _view(s, _get_scan(s, scan_id))
+                    view = _view(s, _get_scan(s, scan_id, org))
                 await ws.send_json({"type": "snapshot", **json.loads(view.model_dump_json())})
                 if view.status in repo.TERMINAL:
                     await ws.close()
@@ -493,7 +517,7 @@ def build_default_app() -> FastAPI:
         AppState(
             settings=settings,
             sessions=get_session_factory(),
-            enqueue=lambda scan_id: run_scan_task.delay(scan_id),
+            enqueue=lambda scan_id, org_id: run_scan_task.delay(scan_id, org_id),
             subscriber=RedisSubscriber(settings.redis_url),
             llm=make_client(),  # None unless BULWARK_LLM_ENABLED=1 and a key is set
             limiter=UsageLimiter.from_env(),

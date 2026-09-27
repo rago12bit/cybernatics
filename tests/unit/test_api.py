@@ -46,7 +46,7 @@ def env(sessions: sessionmaker[Session], tmp_path: Path, monkeypatch: pytest.Mon
         upload_dir=tmp_path / "uploads", max_upload_bytes=1000,
     )  # fmt: skip
     sub = FakeSubscriber()
-    app = create_app(AppState(settings, sessions, enqueued.append, sub))
+    app = create_app(AppState(settings, sessions, lambda sid, org: enqueued.append(sid), sub))  # fmt: skip
     return TestClient(app), enqueued, sessions, sub, settings
 
 
@@ -54,7 +54,7 @@ def test_refuses_to_start_without_a_strong_token(sessions: sessionmaker[Session]
     base = Settings.from_env()
     weak = Settings(**{**base.__dict__, "api_token": "short"})
     with pytest.raises(RuntimeError, match="BULWARK_API_TOKEN"):
-        create_app(AppState(weak, sessions, lambda _: None, FakeSubscriber()))
+        create_app(AppState(weak, sessions, lambda _sid, _org: None, FakeSubscriber()))
 
 
 def test_health_is_public_everything_else_needs_a_token(env) -> None:  # type: ignore[no-untyped-def]
@@ -134,6 +134,36 @@ def test_scan_lookup_404s(env) -> None:  # type: ignore[no-untyped-def]
     for sid in ("not-a-uuid", "00000000-0000-0000-0000-000000000000", "' OR 1=1 --"):
         assert client.get(f"/scans/{sid}", headers=AUTH).status_code == 404
         assert client.get(f"/scans/{sid}/findings", headers=AUTH).status_code == 404
+
+
+def test_a_scan_is_invisible_to_a_different_org_header(env) -> None:  # type: ignore[no-untyped-def]
+    """ADR-0013: `X-Bulwark-Org` selects a scope on top of the (still shared) bearer token. A scan
+    created under one org is a plain 404 for a different org -- never a 403, which would itself leak
+    that the scan exists."""
+    client = env[0]
+    org_a, org_b = {**AUTH, "X-Bulwark-Org": "org-a"}, {**AUTH, "X-Bulwark-Org": "org-b"}
+    sid = client.post(
+        "/scans", headers=org_a, json={"source": {"type": "git", "url": "https://github.com/a/b"}}
+    ).json()["id"]
+    assert client.get(f"/scans/{sid}", headers=org_a).status_code == 200
+    assert client.get(f"/scans/{sid}", headers=org_b).status_code == 404
+    assert client.get(f"/scans/{sid}/findings", headers=org_b).status_code == 404
+    assert sid not in {sc["id"] for sc in client.get("/scans", headers=org_b).json()}
+    assert sid in {sc["id"] for sc in client.get("/scans", headers=org_a).json()}
+
+
+def test_no_org_header_is_the_bootstrap_default_org(env) -> None:  # type: ignore[no-untyped-def]
+    """No `X-Bulwark-Org` header at all (every pre-Week-29 client) behaves exactly as before: it's
+    the one bootstrap org, and it's stable across requests -- not "no scoping"."""
+    client = env[0]
+    sid = client.post(
+        "/scans", headers=AUTH, json={"source": {"type": "git", "url": "https://github.com/a/c"}}
+    ).json()["id"]
+    assert client.get(f"/scans/{sid}", headers=AUTH).status_code == 200
+    # An explicit request for a *different* org still can't see it.
+    assert (
+        client.get(f"/scans/{sid}", headers={**AUTH, "X-Bulwark-Org": "org-a"}).status_code == 404
+    )
 
 
 def _seed(sessions: sessionmaker[Session]) -> str:
@@ -235,7 +265,7 @@ def test_ws_streams_live_events_until_the_scan_finishes(env) -> None:  # type: i
 def test_queue_outage_fails_the_scan_and_removes_the_upload(env) -> None:  # type: ignore[no-untyped-def]
     client, _, sessions, _, settings = env
 
-    def broken(scan_id: str) -> None:
+    def broken(scan_id: str, org_id: str) -> None:
         raise ConnectionError("redis down")
 
     client.app.state.bulwark.enqueue = broken  # type: ignore[attr-defined]

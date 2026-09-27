@@ -59,7 +59,7 @@ def make_client(
     st = AppState(
         settings,
         sessions,
-        lambda _: None,
+        lambda _sid, _org: None,
         FakeSubscriber(),
         llm=model,
         limiter=limiter or UsageLimiter(100, 1000),

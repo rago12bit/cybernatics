@@ -33,7 +33,7 @@ def severity_doc() -> str:
 def main() -> None:
     base = Settings.from_env()
     settings = Settings(**{**base.__dict__, "api_token": "x" * 32})
-    app = create_app(AppState(settings, lambda: None, lambda _: None, _NoSub()))  # type: ignore[arg-type,return-value]
+    app = create_app(AppState(settings, lambda: None, lambda _sid, _org: None, _NoSub()))  # type: ignore[arg-type,return-value]
     spec = app.openapi()
     (ROOT / "docs" / "openapi.json").write_text(json.dumps(spec, indent=2) + "\n")
     lines = [

@@ -20,6 +20,8 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
+from core.tenancy import DEFAULT_ORG_ID
+
 JsonType = JSON().with_variant(JSONB(), "postgresql")
 
 SEVERITY_RANK = {"CRITICAL": 4, "HIGH": 3, "MEDIUM": 2, "LOW": 1, "INFO": 0}
@@ -37,14 +39,34 @@ class Base(DeclarativeBase):
     pass
 
 
+class Organization(Base):
+    """A tenant (ADR-0013). Deliberately minimal: no membership, roles or sign-up flow yet — that's
+    the plan's §19.1/§19.2, separate identity work. This table exists so `org_id` foreign keys have
+    somewhere to point, and so the bootstrap `DEFAULT_ORG_ID` row (every pre-Week-29 record, and
+    every caller that doesn't specify an org) is a real row, not a magic string with nothing behind
+    it."""
+
+    __tablename__ = "organizations"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    name: Mapped[str] = mapped_column(String(200))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
 class Asset(Base):
     """The identity a repeated scan is matched against (ADR-0012): one row per distinct repository
     or archive name, regardless of how many times it's been scanned. See `core/assets.py` for how
-    the key is derived; this table only stores it."""
+    the key is derived; this table only stores it.
+
+    Scoped by `org_id` (ADR-0013): two organizations scanning the same public repository must never
+    share an Asset, or one org's Issue history (and counts) would leak into the other's."""
 
     __tablename__ = "assets"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(
+        ForeignKey("organizations.id"), default=DEFAULT_ORG_ID, index=True
+    )
     source_type: Mapped[str] = mapped_column(String(16))  # git | archive
     key: Mapped[str] = mapped_column(String(500))  # normalized identity, core.assets.asset_key
     label: Mapped[str] = mapped_column(String(300))  # most recent human-readable label
@@ -55,7 +77,9 @@ class Asset(Base):
         back_populates="asset", cascade="all, delete-orphan"
     )
 
-    __table_args__ = (UniqueConstraint("source_type", "key", name="uq_assets_type_key"),)
+    __table_args__ = (
+        UniqueConstraint("org_id", "source_type", "key", name="uq_assets_org_type_key"),
+    )
 
 
 class IssueRow(Base):
@@ -93,6 +117,9 @@ class Scan(Base):
     __tablename__ = "scans"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(
+        ForeignKey("organizations.id"), default=DEFAULT_ORG_ID, index=True
+    )
     status: Mapped[str] = mapped_column(String(16), index=True, default="queued")
     source_type: Mapped[str] = mapped_column(String(16))  # git | archive
     source_ref: Mapped[str] = mapped_column(Text)  # git URL, or server-side archive path
