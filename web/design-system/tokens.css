@@ -1,0 +1,102 @@
+/* Bulwark design system — tokens (plan §29, Week 32).
+   This file is additive: it does not touch app/globals.css or any shipped screen. Weeks 33-35 (App
+   shell, Issues experience, Onboarding) are where these tokens replace the current dark-only
+   "blueprint" styling screen by screen. Storybook (.storybook/) is the only thing that renders
+   against these tokens today.
+
+   Every text/surface pair here is checked against WCAG AA (4.5:1) by
+   tests/design-tokens-contrast.test.ts on every CI run (plan §29.2's "CI script ... fails the build
+   on any regression"). Dark-mode severity tints are derived from the plan's own light values by
+   lightening in HSL until each one clears 4.5:1 on both dark surfaces (see git history of this file
+   for the derivation script) — the plan specifies the light values and says dark is "generated from
+   them," not what the generation function is. */
+
+:root {
+  /* 29.2 Color — light (default) */
+  --ink: #1b2430;
+  --muted: #5b6776;
+  --surface: #f4f6f8;
+  --raised: #ffffff;
+  --rule: #d3dae2;
+  --brand: #1f6f78;
+
+  /* Severity scale — color only; shape lives in severity.tsx, never color alone (29.2) */
+  --sev-critical: #b42318;
+  --sev-high: #c2410c;
+  --sev-medium: #a16207;
+  --sev-low: #3b6ea8;
+  --sev-info: #5f6b79;
+
+  /* 29.3 Typography — self-hosted, see design-system/fonts.css */
+  --font-sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* Type scale: 12, 14, 16, 20, 28, 40 px */
+  --text-1: 0.75rem;
+  --text-2: 0.875rem;
+  --text-3: 1rem;
+  --text-4: 1.25rem;
+  --text-5: 1.75rem;
+  --text-6: 2.5rem;
+
+  /* 29.4 Layout, shape, elevation — 8px grid; radius follows hierarchy, not one value everywhere */
+  --space-1: 0.5rem;
+  --space-2: 1rem;
+  --space-3: 1.5rem;
+  --space-4: 2rem;
+  --space-5: 3rem;
+  --space-6: 4rem;
+  --radius-input: 2px;
+  --radius-panel: 6px;
+  --radius-table: 0;
+  --elevation-float: 0 12px 32px -8px rgb(0 0 0 / 0.28);
+
+  /* 29.6 Motion — only in response to an action, 120-180ms ease-out; live-scan is the one exception */
+  --duration-fast: 120ms;
+  --duration-slow: 180ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Dark mode: attribute wins when set (Storybook toggle, later a user preference); otherwise the
+   system default follows prefers-color-scheme. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ink: #e6eaef;
+    --muted: #9aa6b4;
+    --surface: #161c24;
+    --raised: #1e2630;
+    --rule: #2e3845;
+    --brand: #5db3bb;
+
+    --sev-critical: #e9675d;
+    --sev-high: #f16024;
+    --sev-medium: #d28009;
+    --sev-low: #6292c8;
+    --sev-info: #828f9d;
+
+    --elevation-float: 0 12px 32px -8px rgb(0 0 0 / 0.6);
+  }
+}
+:root[data-theme="dark"] {
+  --ink: #e6eaef;
+  --muted: #9aa6b4;
+  --surface: #161c24;
+  --raised: #1e2630;
+  --rule: #2e3845;
+  --brand: #5db3bb;
+
+  --sev-critical: #e9675d;
+  --sev-high: #f16024;
+  --sev-medium: #d28009;
+  --sev-low: #6292c8;
+  --sev-info: #828f9d;
+
+  --elevation-float: 0 12px 32px -8px rgb(0 0 0 / 0.6);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0ms;
+    --duration-slow: 0ms;
+  }
+}

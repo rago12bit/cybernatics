@@ -6,6 +6,24 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 ## [Unreleased]
 
 ### Added
+- **Week 32 — Design system (plan §29, §32):** the tokens, shapes, and primitives Weeks 33–35 will
+  apply screen by screen — additive only, the live app's own theme is untouched this week (see
+  `docs/v2-week32-verification.md` for why). `web/design-system/tokens.css`: the plan's exact §29.2
+  color tokens (ink/muted/surface/raised/rule/brand) in light and dark, the §29.3 type scale, and
+  §29.4's hierarchical radius (2px inputs/tags, 6px panels/dialogs, 0 tables). Five severity shapes
+  — filled octagon/triangle/diamond/circle/ring, never color alone — with the calm-by-default
+  outline variant for an unreachable critical (`design-system/severity.tsx`). A new
+  `tests/design-tokens-contrast.test.ts` checks all 8 text tokens against both surfaces in both
+  themes against WCAG AA (18 assertions, all passing) — the plan's own "CI script ... fails the
+  build on any regression," now wired into the `web` CI job. Five Radix primitives
+  (Button/Tooltip/DropdownMenu/Dialog/Tabs) restyled entirely from the tokens, with Storybook
+  stories exercising all their variants (`npm run build-storybook`, now also a CI step). Self-hosted
+  IBM Plex Sans and JetBrains Mono via `@fontsource` (no Google Fonts request), ligatures off on the
+  mono face. Live-testing the Storybook theme toggle by hand caught a real bug before it shipped:
+  the dark-mode CSS keys off `:root[data-theme]`, but the toggle was first wired to a wrapper `<div>`
+  instead of `document.documentElement`, so it silently did nothing — fixed and re-verified.
+
+### Added
 - **Week 31 — UX research (plan Phase 8, §32):** a heuristic evaluation of the current live web app
   against Nielsen's ten heuristics, done by actually walking the running product rather than reading
   intent — found a real sync bug (the "Top 10 by risk" widget's list doesn't track `j`/`k`
