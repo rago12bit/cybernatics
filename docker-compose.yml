@@ -104,6 +104,12 @@ services:
       BULWARK_LLM_ENABLED: ${BULWARK_LLM_ENABLED:-0}
       BULWARK_LLM_API_KEY: ${BULWARK_LLM_API_KEY:-}
       BULWARK_LLM_MODEL: ${BULWARK_LLM_MODEL:-claude-sonnet-5}
+      # Defaults to core/config.py's own default (http://localhost:3000), which doesn't match this
+      # compose file's web service below -- published on 3010 here, not 3000 (see that service's own
+      # comment). Without this, the browser's CORS preflight to the API is rejected because the web
+      # UI's actual origin isn't in the allow-list, which the sign-in screen reports as "Cannot reach
+      # the Bulwark API" (a CORS rejection looks like a network failure to fetch()).
+      BULWARK_CORS_ORIGINS: ${BULWARK_CORS_ORIGINS:-http://localhost:3010}
     ports: ["127.0.0.1:8000:8000"]
     volumes: ["${BULWARK_WORKDIR}:${BULWARK_WORKDIR}"]
     depends_on:
