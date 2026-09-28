@@ -5,6 +5,28 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 
 ## [Unreleased]
 
+### Added
+- **Week 35 — Onboarding, states, accessibility, validation (plan §28.2, §30.3, §31):** the live
+  scan screen now shows real elapsed time and an honestly-labelled "raw, not yet deduplicated"
+  progress line while a scan runs (real cross-tool correlation only ever happens once, after every
+  tool finishes — see `docs/v2-week35-verification.md` for why streaming reviewable results earlier
+  isn't safely buildable in one week), plus named failed-scanner copy with a real "start a new scan"
+  action. Every bare "Loading…" screen (`ProjectsList`, `ProjectOverview`, `IssueDetail`,
+  `ScanPage`) is now a real skeleton, not a spinner on a blank page. j/k now moves between issues on
+  the issue detail page (`lib/issue-nav.ts`), completing J3 — a gap Week 34 explicitly flagged.
+  First Playwright end-to-end setup for this project: `scripts/e2e_server.py` (a disposable,
+  self-seeding backend fixture running the real FastAPI app against a real file-backed SQLite
+  database — no Docker/Postgres/Redis needed), real tests for J1 and J3 (J2 honestly not covered:
+  no verified-fix/PR-creation feature exists yet), and visual regression snapshots with Linux
+  baselines independently verified in the official Playwright Docker image. Extended the existing
+  `axe-core` a11y suite (already running in CI from an earlier week) to cover every Week 33/34
+  screen that had none, which found and fixed two real accessibility bugs (unlabelled triage
+  dialog inputs; the new virtualized Issues table had zero ARIA table semantics); a real manual
+  keyboard walkthrough found two more (checkboxes had no visible focus indicator at all; the issue
+  detail page had no heading). The Week 31 baseline usability study still hasn't been run, so
+  Week 35's own follow-up study — a before-and-after comparison — stays deferred; full account in
+  `docs/v2-week35-verification.md`.
+
 ### Fixed
 - **Cross-tool/cross-rule correlation identity (`core/correlation/engine.py`'s `fingerprint()`,
   `core/issues.py`'s `fallback_key()`):** two genuinely different findings could silently share one

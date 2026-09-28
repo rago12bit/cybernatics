@@ -17,11 +17,31 @@ export function ProjectsList() {
   }, []);
 
   if (error) return <div className="ds-ov-empty" role="alert">{error}</div>;
-  if (!assets) return <div className="ds-ov-empty" role="status" aria-live="polite">Loading…</div>;
+  if (!assets) {
+    return (
+      <div role="status" aria-busy="true">
+        <span className="sr-only">Loading projects…</span>
+        <ol className="ds-ov-list" aria-label="Projects">
+          {[0, 1, 2].map((i) => (
+            <li key={i} className="ds-ov-item">
+              <span className="ds-ov-rank" aria-hidden="true">•</span>
+              <div className="ds-ov-item-main">
+                <span className="sk sk-m" />
+                <span className="sk sk-s" style={{ marginTop: "0.4rem" }} />
+              </div>
+            </li>
+          ))}
+        </ol>
+      </div>
+    );
+  }
   if (assets.length === 0) {
     return (
       <div className="ds-ov-empty">
-        <p>No projects scanned yet. Run a scan from the <Link href="/app">Scans</Link> page to see it here.</p>
+        {/* §30.3's own wording ("Connect a repository...") describes a GitHub-App connect flow this
+            build doesn't have yet (no per-user GitHub sign-in exists -- see docs/v2-week33/34
+            verification). The real first action today is the scan submission form. */}
+        <p>Run your first scan to see it here. It takes about two minutes. <Link href="/app">Start a scan →</Link></p>
       </div>
     );
   }

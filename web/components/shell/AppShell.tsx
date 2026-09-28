@@ -192,7 +192,7 @@ const KEYMAP: { keys: string; action: string; status: "active" | "reserved" }[] 
   { keys: "?", action: "Show all shortcuts", status: "active" },
   { keys: "Esc", action: "Close a dialog", status: "active" },
   { keys: "/", action: "Focus search", status: "reserved" },
-  { keys: "j / k", action: "Next / previous issue", status: "reserved" },
+  { keys: "j / k", action: "Next / previous issue, on an issue's own page (Week 35)", status: "active" },
   { keys: "Enter", action: "Open the focused issue", status: "reserved" },
   { keys: "x", action: "Select the focused issue", status: "reserved" },
   { keys: "f", action: "Review its fix", status: "reserved" },
@@ -203,7 +203,7 @@ const KEYMAP: { keys: string; action: string; status: "active" | "reserved" }[] 
 
 function ShortcutsDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   return (
-    <DsDialog open={open} onOpenChange={onOpenChange} title="Keyboard shortcuts" description="The full map from plan §30.1. Rows marked “reserved” belong to the issues table, built in Week 34.">
+    <DsDialog open={open} onOpenChange={onOpenChange} title="Keyboard shortcuts" description="The full map from plan §30.1. Rows marked “reserved” aren't wired on any screen yet.">
       <table className="ds-shortcuts-table">
         <thead>
           <tr>

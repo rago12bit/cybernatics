@@ -201,6 +201,29 @@ def test_clone_failure_reports_stderr_and_cleans_up(
     assert not (tmp_path / "c").exists()
 
 
+def test_clone_failure_leads_with_a_plain_word_summary(
+    fake_git: type[FakeGit], tmp_path: Path
+) -> None:
+    """Plan §30.3: an error says what happened and what to do next, not just a raw git message."""
+    fake_git.code, fake_git.err = 128, b"fatal: repository 'https://github.com/a/b/' not found"
+    with pytest.raises(IngestError) as exc:
+        clone_repo("https://github.com/a/b", tmp_path / "c", resolver=PUBLIC)
+    assert str(exc.value).startswith("Couldn't find this repository.")
+    assert "not found" in str(exc.value)  # the raw detail stays attached, not hidden
+
+
+def test_clone_failure_recognizes_a_private_repository(
+    fake_git: type[FakeGit], tmp_path: Path
+) -> None:
+    fake_git.code, fake_git.err = (
+        128,
+        b"fatal: could not read Username for 'https://github.com': terminal prompts disabled",
+    )
+    with pytest.raises(IngestError) as exc:
+        clone_repo("https://github.com/a/b", tmp_path / "c", resolver=PUBLIC)
+    assert "can only scan public repositories" in str(exc.value)
+
+
 # ---- clone_repo(ref=...): the GitHub App's PR-head path (Week 30, ADR-0017) ----------------
 
 

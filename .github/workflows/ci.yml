@@ -44,6 +44,39 @@ jobs:
       - run: npm run build
       - run: npm run build-storybook
 
+  e2e:
+    # Playwright end-to-end tests for journeys J1 and J3, plus visual regression snapshots (plan
+    # §31's quality gates). Real Next.js app + real FastAPI backend (see scripts/e2e_server.py's
+    # module docstring for the one thing that's stubbed -- actual scanner containers -- and why),
+    # not mocked HTTP. Needs both toolchains: Python for scripts/e2e_server.py, Node for Playwright
+    # itself and the app it drives.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[dev]"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - working-directory: web
+        run: npm ci
+      - working-directory: web
+        run: npx playwright install --with-deps chromium
+      - working-directory: web
+        run: npm run e2e
+        env:
+          E2E_PYTHON: python
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: failure()
+        with:
+          name: playwright-report
+          path: web/playwright-report/
+          retention-days: 14
+
   vscode-extension:
     runs-on: ubuntu-latest
     defaults:

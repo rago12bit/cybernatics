@@ -101,6 +101,27 @@ def _dir_size(path: Path) -> int:
     return total
 
 
+def _friendly_clone_error(stderr: str) -> str:
+    """Plain-word summary of git's own stderr, in front of it (plan §30.3: "say what happened and
+    what to do next", never a raw tool error as the whole message). Falls back to a generic summary
+    for anything not recognized -- the raw stderr always stays attached, so nothing is hidden."""
+    low = stderr.lower()
+    auth_failure = (
+        "could not read username", "terminal prompts disabled", "authentication failed",
+        "invalid username or password", "access denied", "permission denied",
+    )  # fmt: skip
+    if "not found" in low:
+        return "Couldn't find this repository. Check the URL is correct."
+    if any(s in low for s in auth_failure):
+        return (
+            "Couldn't clone this repository. Bulwark can only scan public repositories right "
+            "now -- make sure this one is public."
+        )
+    if "could not resolve host" in low:
+        return "Couldn't reach that host. Check the URL is correct."
+    return "Couldn't clone this repository."
+
+
 def _run_git(
     argv: list[str], env: dict[str, str], dest: Path, deadline: float, limits: Limits
 ) -> None:
@@ -118,8 +139,9 @@ def _run_git(
         proc.wait()
         raise
     if proc.returncode != 0:
-        err = (proc.stderr.read() if proc.stderr else b"").decode("utf-8", "replace")[-500:]
-        raise IngestError(f"git operation failed: {err.strip()}")
+        err = (proc.stderr.read() if proc.stderr else b"").decode("utf-8", "replace")[-500:].strip()
+        msg = f"{_friendly_clone_error(err)} ({err})" if err else "git operation failed"
+        raise IngestError(msg)
 
 
 def clone_repo(

@@ -6,13 +6,20 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DemoReport } from "../components/DemoReport";
 import { FindingDetail } from "../components/FindingDetail";
+import { IssueDetail } from "../components/IssueDetail";
+import { IssuesTable } from "../components/IssuesTable";
+import { ProjectOverview } from "../components/ProjectOverview";
+import { ProjectsList } from "../components/ProjectsList";
 import { RecentScans } from "../components/RecentScans";
+import { ScanReport } from "../components/ScanReport";
 import { SubmitForm } from "../components/SubmitForm";
+import { ModeProvider } from "../design-system/mode";
+import { TooltipProvider } from "../design-system/primitives/Tooltip";
 import { Landing } from "../components/site/Landing";
 import { SiteHeader } from "../components/site/SiteHeader";
 import { TokenGate } from "../components/TokenGate";
 import SelfHost from "../app/self-host/page";
-import type { Finding } from "../lib/types";
+import type { Finding, ScanView } from "../lib/types";
 import demo from "../lib/demo-data.json";
 
 let path = "/";
@@ -132,5 +139,99 @@ describe("axe accessibility audit", () => {
   it("self-host page", async () => {
     document.body.innerHTML = `<main>${renderToStaticMarkup(<SelfHost />)}</main>`;
     expect(await violations()).toEqual([]);
+  });
+});
+
+// Week 33/34's screens (project overview, issues table, issue detail) had no axe coverage until
+// now -- added here rather than a separate file, so "does the whole app get checked" stays one
+// question with one answer.
+describe("axe accessibility audit — Week 33-35 screens", () => {
+  const asset = { id: "a1", label: "acme/payments-api", source_type: "git", last_scanned_at: "2026-09-25T00:00:00Z", latest_scan_id: "s1", latest_scan_status: "completed" as const, open_issue_count: 1 };
+  const issueFinding: Finding = { ...(demo.findings[0] as unknown as Finding), scan_id: "s1", issue: { id: "iss-1", state: "open", triage_status: "open", first_seen_at: "2026-09-20T00:00:00Z" } };
+
+  it("projects list: loading, empty, and populated", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Promise(() => undefined)));
+    const loading = await mount(<ProjectsList />);
+    expect(loading.host.querySelector("[aria-busy]")).not.toBeNull();
+    expect(await violations(loading.host)).toEqual([]);
+    await act(async () => loading.root.unmount());
+
+    vi.stubGlobal("fetch", vi.fn(async () => json([])));
+    const empty = await mount(<ProjectsList />);
+    await act(async () => { await Promise.resolve(); });
+    expect(await violations(empty.host)).toEqual([]);
+    await act(async () => empty.root.unmount());
+
+    vi.stubGlobal("fetch", vi.fn(async () => json([asset])));
+    const rows = await mount(<ProjectsList />);
+    await act(async () => { await Promise.resolve(); });
+    expect(await violations(rows.host)).toEqual([]);
+  });
+
+  it("project overview: loading and populated", async () => {
+    // Real usage always renders this inside AppShell (app/app/projects/[id]/page.tsx), which
+    // provides TooltipProvider for the "why it's ranked" trigger in each fix-first row.
+    vi.stubGlobal("fetch", vi.fn(async () => new Promise(() => undefined)));
+    const loading = await mount(<TooltipProvider><ProjectOverview assetId="a1" /></TooltipProvider>);
+    expect(loading.host.querySelector("[aria-busy]")).not.toBeNull();
+    expect(await violations(loading.host)).toEqual([]);
+    await act(async () => loading.root.unmount());
+
+    const overview = {
+      asset, verdict_count: 1, fix_first: [issueFinding], more_at_lower_risk: 2,
+      since_previous_scan: { fixed: 1, new: 1, returned: 0 },
+      trend: [{ scan_id: "s1", finished_at: "2026-09-25T00:00:00Z", open_count: 3 }],
+      scanned: [{ tool: "trivy", status: "ok" as const, findings: 1 }],
+      latest_scan_id: "s1", latest_scan_finished_at: "2026-09-25T00:00:00Z",
+    };
+    vi.stubGlobal("fetch", vi.fn(async () => json(overview)));
+    const rows = await mount(<TooltipProvider><ProjectOverview assetId="a1" /></TooltipProvider>);
+    await act(async () => { await Promise.resolve(); });
+    expect(await violations(rows.host)).toEqual([]);
+  });
+
+  it("issues table, populated", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => json({ total: 1, limit: 200, offset: 0, items: [issueFinding] })));
+    const { host } = await mount(<ModeProvider><IssuesTable assetId="a1" /></ModeProvider>);
+    await act(async () => { await Promise.resolve(); });
+    expect(await violations(host)).toEqual([]);
+  });
+
+  it("issue detail: loading and populated", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Promise(() => undefined)));
+    const loading = await mount(<ModeProvider><IssueDetail assetId="a1" issueId="iss-1" /></ModeProvider>);
+    expect(loading.host.querySelector("[aria-busy]")).not.toBeNull();
+    expect(await violations(loading.host)).toEqual([]);
+    await act(async () => loading.root.unmount());
+
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      if (url.includes("/history")) return json([{ at: "2026-09-20T00:00:00Z", label: "First seen" }]);
+      if (url.includes("/guidance")) return json({ status: 404 }, 404); // no cached guidance: a real, common case
+      return json(issueFinding);
+    }));
+    const rows = await mount(<ModeProvider><IssueDetail assetId="a1" issueId="iss-1" /></ModeProvider>);
+    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    expect(await violations(rows.host)).toEqual([]);
+
+    // The triage dialogs (opened here) once had a reason textarea and an expiry date input with
+    // only placeholder text and no real <label> -- axe wouldn't catch that from the closed state
+    // above, only from actually opening the dialog, which is why this is its own assertion.
+    // Radix's Dialog portals its content onto document.body, not into `rows.host`.
+    const notARisk = [...rows.host.querySelectorAll("button")].find((b) => b.textContent === "Mark as not a risk")!;
+    await act(async () => notARisk.click());
+    expect(document.querySelector("label[for='triage-reason']")).not.toBeNull();
+    expect(await violations()).toEqual([]);
+  });
+
+  it("live scan screen: running (with the progress banner) and partial (with the stalled-tool banner)", async () => {
+    const scan = demo.scan as unknown as ScanView;
+    const running: ScanView = { ...scan, status: "running", finished_at: null, tool_status: { bandit: scan.tool_status.bandit! } };
+    const runningHost = await mount(<ScanReport scan={running} connection="live" version={0} />);
+    expect(await violations(runningHost.host)).toEqual([]);
+    await act(async () => runningHost.root.unmount());
+
+    const partial: ScanView = { ...scan, status: "partial", tool_status: { ...scan.tool_status, trivy: { status: "timeout", findings: 0, exit_code: null, duration_seconds: 900, error: "wall-clock timeout", raw_artifact: null } } };
+    const partialHost = await mount(<ScanReport scan={partial} connection="done" version={0} />);
+    expect(await violations(partialHost.host)).toEqual([]);
   });
 });

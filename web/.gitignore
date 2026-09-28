@@ -3,3 +3,6 @@ node_modules/
 next-env.d.ts
 *.tsbuildinfo
 storybook-static/
+playwright-report/
+test-results/
+# Committed on purpose: tests-e2e/**/*-snapshots/ (visual regression baselines).

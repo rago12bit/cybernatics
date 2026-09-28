@@ -33,7 +33,34 @@ export function ProjectOverview({ assetId }: { assetId: string }) {
   }, [assetId]);
 
   if (error) return <div className="ds-ov-empty" role="alert">{error}</div>;
-  if (!data) return <div className="ds-ov-empty" role="status" aria-live="polite">Loading…</div>;
+  if (!data) {
+    return (
+      <div className="ds-ov" role="status" aria-busy="true">
+        <span className="sr-only">Loading project overview…</span>
+        <div className="ds-ov-verdict"><span className="sk sk-l" style={{ height: "2rem" }} /></div>
+        <div className="ds-ov-grid">
+          <section className="ds-ov-fixfirst">
+            <ol className="ds-ov-list">
+              {[0, 1, 2].map((i) => (
+                <li key={i} className="ds-ov-item">
+                  <span className="ds-ov-rank" aria-hidden="true">{i + 1}</span>
+                  <div className="ds-ov-item-main">
+                    <span className="sk sk-l" />
+                    <span className="sk sk-s" style={{ marginTop: "0.4rem" }} />
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </section>
+          <aside className="skeleton-list">
+            <span className="sk sk-m" />
+            <span className="sk sk-row" />
+            <span className="sk sk-m" />
+          </aside>
+        </div>
+      </div>
+    );
+  }
 
   if (data.latest_scan_id === null) {
     return (

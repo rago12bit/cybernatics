@@ -3,6 +3,7 @@ import { dedupSummary, isTerminal, issueSummary } from "@/lib/format";
 import type { Connection } from "@/lib/useScan";
 import type { FindingsPage, FindingsQuery, GuidanceApi, ScanView, Severity } from "@/lib/types";
 import { SeverityCounts, StatusBadge } from "./Badges";
+import { ElapsedTime } from "./ElapsedTime";
 import { LocalTime } from "./LocalTime";
 import { FindingsTable } from "./FindingsTable";
 import { ReportDownloads } from "./ReportDownloads";
@@ -31,6 +32,15 @@ export function ScanReport({
 }) {
   const done = isTerminal(scan.status);
   const max = Math.max(...ORDER.map((s) => scan.severity_counts[s] ?? 0));
+  // Raw, pre-correlation signal only: cross-tool deduplication (core/correlation) needs every tool's
+  // output to decide what's a duplicate, so a real, reviewable Finding/Issue doesn't exist in the
+  // database until the whole scan finishes (core/pipeline.py persists once, at the very end). This
+  // is real progress -- each count is live from that scanner's own report -- just not yet the
+  // deduplicated number the finished summary below shows, so it's labelled "raw" rather than implying
+  // reviewable results are already here.
+  const finishedTools = Object.values(scan.tool_status).filter((t) => t.status !== "skipped");
+  const rawSoFar = finishedTools.reduce((n, t) => n + t.findings, 0);
+  const stalled = Object.entries(scan.tool_status).filter(([, t]) => t.status === "error" || t.status === "timeout");
   return (
     <>
       <section className="section" aria-labelledby="scan-h">
@@ -41,7 +51,10 @@ export function ScanReport({
               <span className="eyebrow">Scan</span>
               <h1 id="scan-h" className="wrap">{scan.source_label}</h1>
             </div>
-            <StatusBadge status={scan.status} />
+            <span className="scan-head-right">
+              {!done && (scan.started_at ?? scan.created_at) && <ElapsedTime since={scan.started_at ?? scan.created_at} />}
+              <StatusBadge status={scan.status} />
+            </span>
           </div>
           <p className="label dimmed" role="status" aria-live="polite">
             {done
@@ -49,8 +62,22 @@ export function ScanReport({
               : connection === "live" ? "Live: updates arrive as each scanner finishes"
               : connection === "polling" ? "Refreshing every few seconds" : "Connecting"}
           </p>
+          {!done && finishedTools.length > 0 && (
+            <p className="label dimmed" role="status" aria-live="polite">
+              {finishedTools.length} of {scan.tools.length} scanners reported in, {rawSoFar} raw finding{rawSoFar === 1 ? "" : "s"} so
+              far. Duplicates across scanners aren&apos;t merged yet -- the real count appears once the scan finishes.
+            </p>
+          )}
           {downloads && done && scan.status !== "failed" && <ReportDownloads scanId={scan.id} />}
           {scan.error && <p className="error" role="alert">{scan.error}</p>}
+          {done && stalled.length > 0 && (
+            <p className="warn">
+              {stalled.length === 1 && stalled[0]
+                ? `${stalled[0][0]} ${stalled[0][1].status === "timeout" ? "timed out" : "failed"}, so its results may be incomplete.`
+                : `${stalled.map(([name]) => name).join(", ")} didn't finish, so their results may be incomplete.`}{" "}
+              The other scanners finished. <Link href="/app">Start a new scan →</Link>
+            </p>
+          )}
         </div>
         <ToolCards scan={scan} />
         {done && scan.status !== "failed" && (
@@ -73,7 +100,12 @@ export function ScanReport({
                     <span className="n">{scan.severity_counts[s]}</span>
                   </div>
                 ))}
-                {max === 0 && <span className="muted small">No findings.</span>}
+                {max === 0 && (
+                  <span className="muted small">
+                    {finishedTools.filter((t) => t.status === "ok").length} scanner
+                    {finishedTools.filter((t) => t.status === "ok").length === 1 ? "" : "s"} found no issues.
+                  </span>
+                )}
               </div>
             </div>
             <div>
@@ -88,7 +120,6 @@ export function ScanReport({
         {Object.entries(scan.tool_status).flatMap(([tool, t]) => (t.warnings ?? []).map((w) => `${tool}: ${w}`)).map((w) => (
           <p key={w} className="warn" role="status">{w}</p>
         ))}
-        {scan.status === "partial" && <p className="warn">Some scanners failed or timed out. Results below are from the scanners that finished.</p>}
       </section>
       {done && scan.status !== "failed" && <FindingsTable scan={scan} version={version} fetchFindings={fetchFindings} guidance={guidance} />}
     </>

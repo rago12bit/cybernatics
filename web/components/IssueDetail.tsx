@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ApiError, getIssue, getIssueHistory, liveGuidance, triageIssue } from "@/lib/api";
 import type { Finding, IssueHistoryEvent } from "@/lib/types";
@@ -11,9 +12,13 @@ import { CodeView } from "@/design-system/code-view";
 import { Button } from "@/design-system/primitives/Button";
 import { Dialog } from "@/design-system/primitives/Dialog";
 import { useMode } from "@/design-system/mode";
+import { getIssueNavList } from "@/lib/issue-nav";
 import "./issue-detail.css";
 
+const isTyping = (t: EventTarget | null) => t instanceof HTMLElement && /^(INPUT|SELECT|TEXTAREA)$/.test(t.tagName);
+
 export function IssueDetail({ assetId, issueId }: { assetId: string; issueId: string }) {
+  const router = useRouter();
   const { mode, setMode } = useMode();
   const [finding, setFinding] = useState<Finding | null>(null);
   const [history, setHistory] = useState<IssueHistoryEvent[] | null>(null);
@@ -33,6 +38,24 @@ export function IssueDetail({ assetId, issueId }: { assetId: string; issueId: st
     getIssueHistory(assetId, issueId).then(setHistory, () => setHistory([]));
   }
   useEffect(reload, [assetId, issueId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // j/k (plan §30.1, J3): move to the next/previous issue in whatever order the issues table showed
+  // when this page was opened from it (lib/issue-nav.ts) -- the same list, not a second fetch that
+  // could sort differently and desync (the bug the old scan report's FindingsTable.tsx hit once).
+  // A direct link or a reload has no recorded list, so j/k simply does nothing rather than guessing.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (triageOpen || isTyping(e.target) || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key !== "j" && e.key !== "k") return;
+      const list = getIssueNavList(assetId);
+      const at = list.indexOf(issueId);
+      if (at === -1) return;
+      const next = list[at + (e.key === "j" ? 1 : -1)];
+      if (next) router.push(`/app/projects/${assetId}/issues/${next}`);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [assetId, issueId, triageOpen, router]);
 
   useEffect(() => {
     if (!finding?.scan_id) return;
@@ -61,7 +84,27 @@ export function IssueDetail({ assetId, issueId }: { assetId: string; issueId: st
   }
 
   if (error) return <div className="ds-issue-empty" role="alert">{error}</div>;
-  if (!finding) return <div className="ds-issue-empty" role="status" aria-live="polite">Loading…</div>;
+  if (!finding) {
+    return (
+      <div className="ds-issue" role="status" aria-busy="true">
+        <span className="sr-only">Loading issue…</span>
+        <div className="ds-issue-topline"><span className="sk sk-m" /></div>
+        <div className="ds-issue-grid">
+          <div className="ds-issue-main-col skeleton-list">
+            <span className="sk sk-l" style={{ height: "1.6rem" }} />
+            <span className="sk sk-row" />
+            <span className="sk sk-row" />
+            <span className="sk sk-l" />
+          </div>
+          <aside className="ds-issue-sidebar skeleton-list">
+            <span className="sk sk-m" />
+            <span className="sk sk-s" />
+            <span className="sk sk-row" />
+          </aside>
+        </div>
+      </div>
+    );
+  }
 
   // The taint-path stepper (plan §20.3, §28.3): "static until Phase 9 supplies real taint paths."
   // The one real step available today is the finding's own location -- the sink -- never invented
@@ -74,7 +117,7 @@ export function IssueDetail({ assetId, issueId }: { assetId: string; issueId: st
       <div className="ds-issue-topline">
         <Link href={`/app/projects/${assetId}/issues`}>← Issues</Link>
         <code>{finding.id}</code>
-        <span className="ds-issue-topline-title">{finding.title}</span>
+        <h1 className="ds-issue-topline-title">{finding.title}</h1>
         <div className="ds-issue-topline-spacer" />
         <label className="ds-mode-toggle">
           <input type="checkbox" checked={mode === "expert"} onChange={(e) => setMode(e.target.checked ? "expert" : "novice")} />
@@ -86,7 +129,12 @@ export function IssueDetail({ assetId, issueId }: { assetId: string; issueId: st
         <div className="ds-issue-triage-banner">
           {triageStatus === "not_a_risk" ? "Marked as not a risk" : "Risk accepted"}
           {finding.issue?.triage_reason && <>: {finding.issue.triage_reason}</>}
-          {finding.issue?.triage_expires_at && <> — until {new Date(finding.issue.triage_expires_at).toLocaleDateString()}</>}
+          {finding.issue?.triage_expires_at && (
+            <>
+              {" "}
+              — until <time dateTime={finding.issue.triage_expires_at}>{new Date(finding.issue.triage_expires_at).toLocaleDateString()}</time>
+            </>
+          )}
           <Button onClick={() => runTriage("reopen")} disabled={busy}>Reopen</Button>
         </div>
       )}
@@ -116,7 +164,11 @@ export function IssueDetail({ assetId, issueId }: { assetId: string; issueId: st
           <div>
             <div className="ds-issue-label">Status</div>
             <SeverityBadge severity={finding.scoring.normalized_severity.toLowerCase() as "critical" | "high" | "medium" | "low" | "info"} reachable={finding.scoring.reachable !== false} />
-            {finding.issue?.first_seen_at && <p className="ds-issue-meta">First seen {new Date(finding.issue.first_seen_at).toLocaleDateString()}</p>}
+            {finding.issue?.first_seen_at && (
+              <p className="ds-issue-meta">
+                First seen <time dateTime={finding.issue.first_seen_at}>{new Date(finding.issue.first_seen_at).toLocaleDateString()}</time>
+              </p>
+            )}
           </div>
           {mode === "expert" && (
             <div>
@@ -136,7 +188,7 @@ export function IssueDetail({ assetId, issueId }: { assetId: string; issueId: st
             <div className="ds-issue-label">History</div>
             <ul className="ds-issue-history">
               {(history ?? []).map((h, i) => (
-                <li key={i}><span>{new Date(h.at).toLocaleDateString()}</span> {h.label}</li>
+                <li key={i}><time dateTime={h.at}>{new Date(h.at).toLocaleDateString()}</time> {h.label}</li>
               ))}
             </ul>
           </div>
@@ -144,15 +196,18 @@ export function IssueDetail({ assetId, issueId }: { assetId: string; issueId: st
       </div>
 
       <Dialog open={triageOpen === "not_a_risk"} onOpenChange={(o) => !o && setTriageOpen(null)} title="Mark as not a risk" description="A reason is required, and this is written to the audit log.">
-        <textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={3} placeholder="Why isn't this a risk?" className="ds-issue-input" />
+        <label htmlFor="triage-reason" className="ds-issue-label">Reason</label>
+        <textarea id="triage-reason" value={reason} onChange={(e) => setReason(e.target.value)} rows={3} placeholder="Why isn't this a risk?" className="ds-issue-input" />
         <div style={{ marginTop: "1rem" }}>
           <Button variant="primary" disabled={!reason.trim() || busy} onClick={() => runTriage("not_a_risk")}>Confirm</Button>
         </div>
       </Dialog>
 
       <Dialog open={triageOpen === "accepted"} onOpenChange={(o) => !o && setTriageOpen(null)} title="Accept this risk" description="An expiry date is required — it reappears automatically once it passes. Written to the audit log.">
-        <input type="date" value={expiresAt} onChange={(e) => setExpiresAt(e.target.value)} className="ds-issue-input" />
-        <textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={2} placeholder="Optional note" className="ds-issue-input" style={{ marginTop: "0.5rem" }} />
+        <label htmlFor="triage-expires" className="ds-issue-label">Expires</label>
+        <input id="triage-expires" type="date" value={expiresAt} onChange={(e) => setExpiresAt(e.target.value)} className="ds-issue-input" />
+        <label htmlFor="triage-note" className="ds-issue-label" style={{ marginTop: "0.5rem" }}>Note (optional)</label>
+        <textarea id="triage-note" value={reason} onChange={(e) => setReason(e.target.value)} rows={2} placeholder="Optional note" className="ds-issue-input" />
         <div style={{ marginTop: "1rem" }}>
           <Button variant="primary" disabled={!expiresAt || busy} onClick={() => runTriage("accepted")}>Confirm</Button>
         </div>

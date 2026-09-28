@@ -12,6 +12,7 @@ import { Button } from "@/design-system/primitives/Button";
 import { Dialog } from "@/design-system/primitives/Dialog";
 import { useMode } from "@/design-system/mode";
 import { useSavedViews, type SavedView } from "@/lib/saved-views";
+import { setIssueNavList } from "@/lib/issue-nav";
 import "./issues-table.css";
 
 const ROW_HEIGHT_COMFORTABLE = 56;
@@ -52,6 +53,12 @@ export function IssuesTable({ assetId }: { assetId: string }) {
   useEffect(reload, [reload]);
 
   const items = useMemo(() => page?.items ?? [], [page]);
+
+  // Record this page's order so j/k on the issue detail page (opened from a row below) walks the
+  // same list that's actually on screen here, not a second, independently-sorted fetch.
+  useEffect(() => {
+    setIssueNavList(assetId, items.map((f) => f.issue?.id).filter((id): id is string => !!id));
+  }, [assetId, items]);
 
   const columns = useMemo(
     () => [
@@ -204,15 +211,18 @@ export function IssuesTable({ assetId }: { assetId: string }) {
       {!error && page && page.total === 0 && <p className="ds-issues-empty">Nothing here. Try a different filter, or check the triaged-away issues above.</p>}
 
       {!error && page && page.total > 0 && (
-        <div className="ds-issues-table-wrap">
-          <div className="ds-issues-headrow">
+        // Standard ARIA grid pattern for a virtualized, div-based table (no real <table>: TanStack
+        // Virtual's absolute-positioned rows don't work inside one). Without this, the rows are
+        // invisible to a screen reader as tabular data -- just an unstructured list of text.
+        <div className="ds-issues-table-wrap" role="table" aria-label="Issues" aria-rowcount={rows.length + 1}>
+          <div className="ds-issues-headrow" role="row" aria-rowindex={1}>
             {table.getHeaderGroups()[0]?.headers.map((h) => (
-              <div key={h.id} className={`ds-issues-headcell col-${h.column.id}`}>
+              <div key={h.id} role="columnheader" className={`ds-issues-headcell col-${h.column.id}`}>
                 {flexRender(h.column.columnDef.header, h.getContext())}
               </div>
             ))}
           </div>
-          <div ref={parentRef} className="ds-issues-scroll" style={{ height: "min(70vh, 640px)" }}>
+          <div ref={parentRef} className="ds-issues-scroll" role="rowgroup" style={{ height: "min(70vh, 640px)" }}>
             <div style={{ height: virtualizer.getTotalSize(), position: "relative" }}>
               {virtualizer.getVirtualItems().map((vi) => {
                 const row = rows[vi.index];
@@ -220,11 +230,13 @@ export function IssuesTable({ assetId }: { assetId: string }) {
                 return (
                   <div
                     key={row.id}
+                    role="row"
+                    aria-rowindex={vi.index + 2} // +1 for the header row, +1 because aria-rowindex is 1-based
                     className={`ds-issue-row${mode === "expert" ? " compact" : ""}`}
                     style={{ position: "absolute", top: 0, left: 0, width: "100%", height: vi.size, transform: `translateY(${vi.start}px)` }}
                   >
                     {row.getVisibleCells().map((cell) => (
-                      <div key={cell.id} className={`ds-issues-cell col-${cell.column.id}`}>
+                      <div key={cell.id} role="cell" className={`ds-issues-cell col-${cell.column.id}`}>
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </div>
                     ))}
@@ -259,7 +271,8 @@ export function IssuesTable({ assetId }: { assetId: string }) {
         title="Mark as not a risk"
         description="A reason is required, and this is written to the audit log."
       >
-        <textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={3} placeholder="Why isn't this a risk?" className="ds-palette-input" style={{ width: "100%", resize: "vertical" }} />
+        <label htmlFor="bulk-triage-reason" className="ds-palette-label">Reason</label>
+        <textarea id="bulk-triage-reason" value={reason} onChange={(e) => setReason(e.target.value)} rows={3} placeholder="Why isn't this a risk?" className="ds-palette-input" style={{ width: "100%", resize: "vertical" }} />
         <div style={{ marginTop: "1rem" }}>
           <Button variant="primary" disabled={!reason.trim() || busy} onClick={() => runTriage("not_a_risk")}>Confirm</Button>
         </div>
@@ -271,8 +284,10 @@ export function IssuesTable({ assetId }: { assetId: string }) {
         title="Accept this risk"
         description="An expiry date is required — it reappears automatically once it passes. Written to the audit log."
       >
-        <input type="date" value={expiresAt} onChange={(e) => setExpiresAt(e.target.value)} className="ds-palette-input" />
-        <textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={2} placeholder="Optional note" className="ds-palette-input" style={{ width: "100%", marginTop: "0.5rem", resize: "vertical" }} />
+        <label htmlFor="bulk-triage-expires" className="ds-palette-label">Expires</label>
+        <input id="bulk-triage-expires" type="date" value={expiresAt} onChange={(e) => setExpiresAt(e.target.value)} className="ds-palette-input" />
+        <label htmlFor="bulk-triage-note" className="ds-palette-label" style={{ marginTop: "0.5rem" }}>Note (optional)</label>
+        <textarea id="bulk-triage-note" value={reason} onChange={(e) => setReason(e.target.value)} rows={2} placeholder="Optional note" className="ds-palette-input" style={{ width: "100%", resize: "vertical" }} />
         <div style={{ marginTop: "1rem" }}>
           <Button variant="primary" disabled={!expiresAt || busy} onClick={() => runTriage("accepted")}>Confirm</Button>
         </div>

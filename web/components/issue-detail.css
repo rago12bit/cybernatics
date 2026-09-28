@@ -75,6 +75,7 @@
   min-width: 0;
 }
 .ds-issue-label {
+  display: block;
   font-size: var(--ds-text-1);
   color: var(--ds-muted);
   font-weight: 500;

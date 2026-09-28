@@ -3,6 +3,10 @@ const nextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
   output: "standalone", // small self-contained server for the Docker image
+  // Dev-server only (ignored in the production build above): Playwright's E2E config
+  // (playwright.config.ts) drives the app via 127.0.0.1, which Next 16 otherwise blocks as a
+  // cross-origin dev request by default.
+  allowedDevOrigins: ["127.0.0.1", "localhost"],
   // The sample scan is the home page now; keep old /demo links working with a real HTTP redirect.
   redirects: async () => [
     { source: "/demo", destination: "/", permanent: false },

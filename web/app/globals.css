@@ -115,6 +115,10 @@ input[type="text"], input[type="url"], input[type="password"], input[type="searc
   border: 1px solid var(--line-strong); border-radius: var(--radius); transition: border-color 120ms linear;
 }
 input:focus-visible, select:focus-visible { outline: none; border-color: var(--teal); }
+/* Checkboxes and radios have no visible border box for the rule above to repaint, so removing
+   their native outline (as the blanket `input:focus-visible` rule above does) left them with no
+   focus indicator at all -- a real keyboard-walkthrough finding (Week 35), not a hypothetical. */
+input[type="checkbox"]:focus-visible, input[type="radio"]:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
 input::placeholder { color: var(--dim); }
 input[type="file"] { padding: 0.5rem; }
 fieldset { border: 1px solid var(--line); border-radius: var(--radius); margin: 1.25rem 0 0; padding: 0.5rem 1rem 0.9rem; }
@@ -259,6 +263,8 @@ button.row-title:hover { color: var(--teal); }
 .crumb:hover { color: var(--text); }
 .scan-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
 .scan-head h1 { overflow-wrap: anywhere; }
+.scan-head-right { display: flex; align-items: center; gap: 0.6rem; white-space: nowrap; }
+.elapsed { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 0.9em; }
 
 /* Tool progress: outlined bars, like the reference's stat rows */
 .toolrows { display: grid; }
