@@ -6,6 +6,25 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 ## [Unreleased]
 
 ### Added
+- **Week 31 — UX research (plan Phase 8, §32):** a heuristic evaluation of the current live web app
+  against Nielsen's ten heuristics, done by actually walking the running product rather than reading
+  intent — found a real sync bug (the "Top 10 by risk" widget's list doesn't track `j`/`k`
+  keyboard navigation the way the main findings table does, confirmed live) and a real KB
+  content-quality bug (generic service-mesh/Istio guidance shown for an AWS security-group
+  finding). Journey maps for J1–J5 against what's actually built today, not the plan's v2-aspirational
+  target — J1 still has no GitHub sign-in (API-token paste instead), J3's filter/`j`/`k` half works
+  but its risk-acceptance half doesn't exist yet (ADR-0012), J4/J5 are essentially unbuilt. Two
+  overview layout sketches (a two-column direction matching the plan's own §28.1 wireframe, and a
+  single-column alternative), evaluated against the plan's §25 principles and against the security
+  engineer/team-lead personas (§26.1) — the two-column layout wins on progressive disclosure and
+  keyboard-triage layout stability, recommended as the default with the single-column shape as a
+  narrow-viewport fallback, not a discarded alternative. A ready-to-run baseline usability study
+  protocol (task list reframed to what the current product can actually support, the real 10-item
+  SUS questionnaire, the plan's own confidence question) — **not yet run**: this project has no
+  fabricated participant data; the actual 5-person baseline study remains a pending, deliberately
+  deferred piece of work for whenever real participants can be recruited.
+
+### Added
 - **Week 29/30 backfill — scoped API tokens, tamper-evident audit log, automated tenant-leak test
   (ADR-0018, ADR-0019):** reading the plan's actual §19.1–§19.3 text fresh surfaced that this
   session's earlier "Week 29"/"Week 30" work had drifted from the plan's real scope for those
