@@ -23,6 +23,14 @@ export default defineConfig({
     baseURL: WEB_URL,
     trace: "on-first-retry",
   },
+  // A real GitHub Actions run of these tests (not just this repo's own local Docker
+  // verification, run on Apple Silicon through virtualization -- a different CPU architecture
+  // than GitHub's real x86_64 runners) showed small, consistent ~1% pixel diffs on every visual
+  // snapshot: font hinting/anti-aliasing genuinely isn't guaranteed byte-identical across
+  // different physical machines, even with the identical pinned browser build. A small tolerance
+  // is Playwright's own documented answer to this, not a way to hide a real regression -- a
+  // broken layout produces a far larger diff than 1-2%.
+  expect: { toHaveScreenshot: { maxDiffPixelRatio: 0.02 } },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: [
     {
