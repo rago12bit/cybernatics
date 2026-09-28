@@ -705,7 +705,7 @@ def issue_counts(s: Session, scan_id: str) -> dict[str, int]:
         .where(FindingRow.scan_id == scan_id, FindingRow.issue_state.is_not(None))
         .group_by(FindingRow.issue_state)
     ).all()
-    return {state: n for state, n in rows}
+    return {state: n for state, n in rows if state is not None}
 
 
 def get_installation(s: Session, installation_id: str) -> GithubInstallation | None:
