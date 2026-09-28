@@ -18,7 +18,7 @@ function block(source: string, selector: string): string {
 const lightBlock = block(css, ":root {");
 const darkBlock = block(css, ':root[data-theme="dark"]');
 
-const token = (source: string, name: string) => new RegExp(`--${name}:\\s*(#[0-9a-fA-F]{6})`).exec(source)?.[1] ?? "";
+const token = (source: string, name: string) => new RegExp(`--ds-${name}:\\s*(#[0-9a-fA-F]{6})`).exec(source)?.[1] ?? "";
 
 const lum = (hex: string) => {
   const [r, g, b] = [1, 3, 5]

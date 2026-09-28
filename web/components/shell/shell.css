@@ -1,0 +1,121 @@
+/* The new app shell (Week 33) — built entirely on design-system/tokens.css's --ds-* custom
+   properties, namespaced so nothing here can collide with app/globals.css's own theme (see
+   design-system/tokens.css's header comment for why that matters). */
+
+.ds-shell {
+  min-height: 100vh;
+  background: var(--ds-surface);
+  color: var(--ds-ink);
+  font-family: var(--ds-font-sans);
+}
+
+.ds-shell-top {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-2);
+  padding: var(--ds-space-1) var(--ds-space-3);
+  border-bottom: 1px solid var(--ds-rule);
+  background: var(--ds-raised);
+}
+
+.ds-shell-brand {
+  font-weight: 600;
+  font-size: var(--ds-text-3);
+  color: var(--ds-ink);
+  text-decoration: none;
+}
+
+.ds-shell-crumbs {
+  font-size: var(--ds-text-2);
+  color: var(--ds-muted);
+}
+.ds-shell-crumbs a {
+  color: var(--ds-muted);
+  text-decoration: none;
+}
+.ds-shell-crumbs a:hover {
+  color: var(--ds-brand);
+  text-decoration: underline;
+}
+.ds-shell-crumbs [aria-current="page"] {
+  color: var(--ds-ink);
+}
+
+.ds-shell-spacer {
+  flex: 1;
+}
+
+.ds-shell-main {
+  padding: var(--ds-space-3);
+}
+
+/* Command palette */
+.ds-palette-input {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: var(--ds-font-sans);
+  font-size: var(--ds-text-3);
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--ds-rule);
+  border-radius: var(--ds-radius-input);
+  background: var(--ds-surface);
+  color: var(--ds-ink);
+}
+.ds-palette-input:focus-visible {
+  outline: 2px solid var(--ds-brand);
+  outline-offset: 2px;
+}
+.ds-palette-list {
+  list-style: none;
+  margin: var(--ds-space-1) 0 0;
+  padding: 0;
+  max-height: 16rem;
+  overflow: auto;
+}
+.ds-palette-item {
+  padding: 0.5rem 0.6rem;
+  border-radius: var(--ds-radius-input);
+  cursor: pointer;
+  font-size: var(--ds-text-2);
+}
+.ds-palette-item.active {
+  background: color-mix(in srgb, var(--ds-brand) 10%, var(--ds-raised));
+  color: var(--ds-brand);
+}
+.ds-palette-empty {
+  padding: 0.5rem 0.6rem;
+  color: var(--ds-muted);
+  font-size: var(--ds-text-2);
+}
+
+/* Shortcuts dialog */
+.ds-shortcuts-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--ds-text-2);
+}
+.ds-shortcuts-table th {
+  text-align: left;
+  font-weight: 500;
+  color: var(--ds-muted);
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid var(--ds-rule);
+}
+.ds-shortcuts-table td {
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid var(--ds-rule);
+}
+.ds-shortcuts-table tr.reserved td {
+  color: var(--ds-muted);
+}
+.ds-shortcuts-table kbd {
+  font-family: var(--ds-font-mono);
+  font-size: var(--ds-text-1);
+  border: 1px solid var(--ds-rule);
+  border-radius: var(--ds-radius-input);
+  padding: 0.1rem 0.35rem;
+}
+.ds-shortcuts-tag {
+  color: var(--ds-sev-medium);
+  font-size: var(--ds-text-1);
+}

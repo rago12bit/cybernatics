@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, cast
 
-from sqlalchemy import case, delete, func, select
+from sqlalchemy import case, delete, func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -116,6 +116,133 @@ def get_scan(s: Session, scan_id: str, *, org_id: str | None = None) -> Scan | N
     if scan is None or (org_id is not None and scan.org_id != org_id):
         return None
     return scan
+
+
+# ---------------------------------------------------------------------------------------------
+# Assets as projects (plan §27): the project overview screen (Week 33, §28.1) is built entirely
+# from data that already exists -- Asset (ADR-0012), IssueRow's lifecycle timestamps, and the same
+# risk-sorted FindingRow query the scan-scoped "Fix first" widget already uses. Nothing here is a
+# new source of truth.
+# ---------------------------------------------------------------------------------------------
+
+EPOCH = datetime(1970, 1, 1, tzinfo=timezone.utc)
+
+
+def list_assets(s: Session, *, org_id: str | None = None, limit: int = 50) -> list[Asset]:
+    q = select(Asset).order_by(Asset.last_scanned_at.desc()).limit(limit)
+    if org_id is not None:
+        q = q.where(Asset.org_id == org_id)
+    return list(s.scalars(q))
+
+
+def get_asset(s: Session, asset_id: str, *, org_id: str | None = None) -> Asset | None:
+    asset = s.get(Asset, asset_id)
+    if asset is None or (org_id is not None and asset.org_id != org_id):
+        return None
+    return asset
+
+
+def latest_scan_for_asset(
+    s: Session, asset_id: str, *, org_id: str | None = None, statuses: frozenset[str] = TERMINAL
+) -> Scan | None:
+    """The most recent scan of this asset that actually finished -- a queued or running scan has
+    no findings to build an overview from yet."""
+    q = select(Scan).where(Scan.asset_id == asset_id).order_by(Scan.created_at.desc())
+    if org_id is not None:
+        q = q.where(Scan.org_id == org_id)
+    for scan in s.scalars(q):
+        if scan.status in statuses:
+            return scan
+    return None
+
+
+def previous_scan_for_asset(
+    s: Session,
+    asset_id: str,
+    before: Scan,
+    *,
+    org_id: str | None = None,
+    statuses: frozenset[str] = TERMINAL,
+) -> Scan | None:
+    """The completed scan immediately before `before`, for "since previous scan" deltas."""
+    q = (
+        select(Scan)
+        .where(Scan.asset_id == asset_id, Scan.created_at < before.created_at)
+        .order_by(Scan.created_at.desc())
+    )
+    if org_id is not None:
+        q = q.where(Scan.org_id == org_id)
+    for scan in s.scalars(q):
+        if scan.status in statuses:
+            return scan
+    return None
+
+
+def since_previous_scan_counts(
+    s: Session, asset_id: str, latest_scan_id: str, previous: Scan | None
+) -> dict[str, int]:
+    """Fixed/new/returned since the scan before this one. "new" and "returned" come straight from
+    `issue_counts` (already computed at sync time, ADR-0012's new/reintroduced states); "fixed"
+    isn't in that table (a fixed issue has no row in the *new* scan to count), so it's counted
+    directly: issues that flipped to `fixed` after the previous scan finished. `previous=None`
+    (this is the asset's first scan) floors the window at the epoch, so every currently-fixed issue
+    counts once, not zero."""
+    counts = issue_counts(s, latest_scan_id)
+    since = previous.finished_at if previous is not None and previous.finished_at else EPOCH
+    if since.tzinfo is None:  # SQLite returns naive datetimes even for tz-aware columns
+        since = since.replace(tzinfo=timezone.utc)
+    fixed = (
+        s.scalar(
+            select(func.count())
+            .select_from(IssueRow)
+            .where(
+                IssueRow.asset_id == asset_id,
+                IssueRow.state == "fixed",
+                IssueRow.fixed_at.is_not(None),
+                IssueRow.fixed_at > since,
+            )
+        )
+        or 0
+    )
+    return {"fixed": fixed, "new": counts.get("new", 0), "returned": counts.get("reintroduced", 0)}
+
+
+def open_issue_trend(
+    s: Session, asset_id: str, *, points: int = 7, org_id: str | None = None
+) -> list[dict[str, Any]]:
+    """Open-issue count at each of the last `points` completed scans, oldest first -- reconstructed
+    from IssueRow's first_seen_at/fixed_at rather than stored per-scan, since nothing snapshots that
+    today. An issue counts as open as of a scan if it existed by then and wasn't fixed yet (or was
+    fixed later)."""
+    q = (
+        select(Scan)
+        .where(Scan.asset_id == asset_id, Scan.status.in_(TERMINAL), Scan.finished_at.is_not(None))
+        .order_by(Scan.created_at.desc())
+        .limit(points)
+    )
+    if org_id is not None:
+        q = q.where(Scan.org_id == org_id)
+    scans = list(reversed(list(s.scalars(q))))
+    out: list[dict[str, Any]] = []
+    for scan in scans:
+        finished = scan.finished_at
+        assert finished is not None
+        if finished.tzinfo is None:
+            finished = finished.replace(tzinfo=timezone.utc)
+        open_count = (
+            s.scalar(
+                select(func.count())
+                .select_from(IssueRow)
+                .where(
+                    IssueRow.asset_id == asset_id,
+                    IssueRow.first_seen_at <= finished,
+                    or_(IssueRow.fixed_at.is_(None), IssueRow.fixed_at > finished),
+                )
+            )
+            or 0
+        )
+        out.append({"scan_id": scan.id, "finished_at": scan.finished_at, "open_count": open_count})
+    return out
 
 
 def reset_scan_results(s: Session, scan_id: str) -> None:

@@ -1,0 +1,193 @@
+/* Layout A, chosen in Week 31 (docs/ux-overview-layouts.md): a wide primary column beside a
+   persistent sidebar. Built entirely on design-system/tokens.css's --ds-* properties. */
+
+.ds-ov {
+  display: grid;
+  gap: var(--ds-space-3);
+  max-width: 72rem;
+}
+
+.ds-ov-crumbline {
+  font-size: var(--ds-text-2);
+  color: var(--ds-muted);
+}
+.ds-ov-crumbline a {
+  color: var(--ds-brand);
+}
+
+.ds-ov-verdict {
+  padding-bottom: var(--ds-space-2);
+  border-bottom: 1px solid var(--ds-rule);
+}
+.ds-ov-verdict h1 {
+  font-size: var(--ds-text-6);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  margin: 0;
+}
+.ds-ov-verdict p {
+  font-size: var(--ds-text-3);
+  color: var(--ds-muted);
+  margin: 0.4rem 0 0;
+}
+
+.ds-ov-grid {
+  display: grid;
+  grid-template-columns: 1.7fr 1fr;
+  gap: var(--ds-space-4);
+  align-items: start;
+}
+@media (max-width: 900px) {
+  /* Collapses to Layout B's stacked shape below ~900px, per the Week 31 recommendation. */
+  .ds-ov-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ds-ov-label {
+  font-size: var(--ds-text-1);
+  color: var(--ds-muted);
+  font-weight: 500;
+  margin-bottom: var(--ds-space-1);
+}
+
+.ds-ov-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+.ds-ov-item {
+  display: grid;
+  grid-template-columns: 1.75rem 1fr auto;
+  align-items: center;
+  gap: var(--ds-space-2);
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--ds-rule);
+  border-radius: var(--ds-radius-panel);
+  background: var(--ds-raised);
+}
+.ds-ov-rank {
+  font-family: var(--ds-font-mono);
+  color: var(--ds-muted);
+  font-size: var(--ds-text-4);
+  font-weight: 300;
+}
+.ds-ov-item-main {
+  display: grid;
+  gap: 0.3rem;
+  min-width: 0;
+}
+.ds-ov-item-title {
+  font-size: var(--ds-text-3);
+  font-weight: 500;
+  cursor: default;
+  color: var(--ds-ink);
+  text-decoration: none;
+}
+a.ds-ov-item-title:hover {
+  color: var(--ds-brand);
+  text-decoration: underline;
+}
+.ds-ov-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  font-size: var(--ds-text-1);
+  color: var(--ds-muted);
+}
+.ds-ov-item-meta code {
+  font-family: var(--ds-font-mono);
+  font-size: var(--ds-text-1);
+  color: var(--ds-muted);
+}
+.ds-ov-item-action {
+  font-size: var(--ds-text-2);
+  color: var(--ds-brand);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.ds-ov-item-action:hover {
+  text-decoration: underline;
+}
+.ds-ov-more {
+  font-size: var(--ds-text-2);
+  color: var(--ds-muted);
+  margin: 0.6rem 0 0;
+}
+.ds-ov-more a {
+  color: var(--ds-brand);
+}
+.ds-ov-empty-inline {
+  color: var(--ds-muted);
+  font-size: var(--ds-text-2);
+}
+
+.ds-ov-sidebar {
+  display: grid;
+  gap: var(--ds-space-3);
+  border-left: 1px solid var(--ds-rule);
+  padding-left: var(--ds-space-3);
+}
+@media (max-width: 900px) {
+  .ds-ov-sidebar {
+    border-left: 0;
+    border-top: 1px solid var(--ds-rule);
+    padding-left: 0;
+    padding-top: var(--ds-space-3);
+  }
+}
+.ds-ov-sidebar p {
+  font-size: var(--ds-text-3);
+  margin: 0;
+}
+
+.ds-ov-sparkline {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 2.5rem;
+  margin-top: 0.6rem;
+}
+.ds-ov-sparkline span {
+  flex: 1;
+  min-height: 2px;
+  background: var(--ds-brand);
+  border-radius: 1px;
+}
+
+.ds-ov-scanned {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
+  font-size: var(--ds-text-2);
+}
+.ds-ov-scanned li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+.ds-ov-scanned li span {
+  color: var(--ds-muted);
+  font-family: var(--ds-font-mono);
+  font-size: var(--ds-text-1);
+}
+.ds-ov-scanned-notok span {
+  color: var(--ds-sev-medium);
+}
+
+.ds-ov-footnote {
+  padding-top: var(--ds-space-2);
+  border-top: 1px solid var(--ds-rule);
+}
+
+.ds-ov-empty {
+  padding: var(--ds-space-4);
+  color: var(--ds-muted);
+  font-family: var(--ds-font-sans);
+}

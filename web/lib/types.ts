@@ -115,6 +115,7 @@ export interface Finding {
     epss_score?: number | null; // chance of exploitation in 30 days (FIRST.org EPSS)
     in_cisa_kev?: boolean; // known exploited in the wild (CISA KEV)
     risk_factors?: string[]; // human-readable reasons behind risk_score
+    reachable?: boolean | null; // false only when something positively ruled it out; unknown otherwise
     confidence: number;
   };
   evidence: {
@@ -141,6 +142,43 @@ export interface FindingsQuery {
   path: string;
   sort: "severity" | "path" | "risk";
   page: number; // zero-based
+}
+
+/** A project (plan §27): one distinct repository, most recently scanned first. */
+export interface AssetSummary {
+  id: string;
+  label: string;
+  source_type: string;
+  last_scanned_at: string;
+  latest_scan_id: string | null;
+  latest_scan_status: ScanStatus | null;
+  open_issue_count: number;
+}
+
+export interface ScannedTool {
+  tool: string;
+  status: ToolState;
+  findings: number;
+}
+
+export interface TrendPoint {
+  scan_id: string;
+  finished_at: string;
+  open_count: number;
+}
+
+/** Plan §28.1's project overview screen -- see api/schemas.py's ProjectOverview for how the server
+ * derives each field from existing scan/issue data (nothing here is a new source of truth). */
+export interface ProjectOverview {
+  asset: AssetSummary;
+  verdict_count: number;
+  fix_first: Finding[];
+  more_at_lower_risk: number;
+  since_previous_scan: { fixed: number; new: number; returned: number };
+  trend: TrendPoint[];
+  scanned: ScannedTool[];
+  latest_scan_id: string | null;
+  latest_scan_finished_at: string | null;
 }
 
 export type ProgressEvent =

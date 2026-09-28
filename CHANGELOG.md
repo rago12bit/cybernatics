@@ -6,6 +6,31 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 ## [Unreleased]
 
 ### Added
+- **Week 33 — App shell and project overview (plan §27, §28.1, §30.1, §32):** the first real
+  screens built on Week 32's design system — additive at the route level (`/app/projects`,
+  `/app/projects/[id]`), nothing under the existing `/app` screens changed. New `GET /assets` and
+  `GET /assets/{id}/overview` endpoints (`api/schemas.py`, `core/persistence/repo.py`) turn the
+  existing `Asset`/`IssueRow` data (ADR-0012) — already the plan's §27 "Project" identity under a
+  different name — into a real verdict, risk-sorted fix-first queue, since-previous-scan
+  fixed/new/returned counts, an open-issue trend, and what the latest scan did (and didn't) cover;
+  6 new tests, 859 passed overall. A nav shell (`components/shell/AppShell.tsx`) adds breadcrumbs, a
+  project switcher, a command palette (⌘K, filters and navigates by project name), and a shortcut
+  help dialog listing the full §30.1 keymap with rows honestly marked "reserved" where they belong
+  to the not-yet-built issues table (Week 34). The "why it's ranked" component (C8) ships as
+  `design-system/why-ranked.tsx`, reused as a tooltip on every fix-first row, carrying the same real
+  `risk_factors` text `core/risk/score.py` already computes. Caught two real bugs during a live
+  click-through against a disposable local test server (never the real API token): a `Tooltip`
+  crash from a missing `TooltipProvider`, and a hardcoded English plural — both fixed and
+  re-verified live, not just re-built. Also caught, before any real page combined the two
+  stylesheets: Week 32's design tokens (`--muted`, `--sev-*`, `--font-sans`/`--font-mono`,
+  `--ease-out`) silently collided with the existing app's own theme names — invisible in Storybook's
+  isolated iframe, would have corrupted one theme or the other the instant both loaded on one page.
+  Fixed by prefixing every design-system token with `--ds-`. See `docs/v2-week33-verification.md`
+  for what's real, what's a documented simplification (e.g. "since previous scan," not a literal
+  calendar week), and what's explicitly not attempted (an org switcher, PR-gate status, "not
+  scanned: X" gap detection — no fabricated look-alikes).
+
+### Added
 - **Week 32 — Design system (plan §29, §32):** the tokens, shapes, and primitives Weeks 33–35 will
   apply screen by screen — additive only, the live app's own theme is untouched this week (see
   `docs/v2-week32-verification.md` for why). `web/design-system/tokens.css`: the plan's exact §29.2

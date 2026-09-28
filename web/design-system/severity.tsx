@@ -18,11 +18,11 @@ export const SEVERITY_LABEL: Record<Severity, string> = {
 
 // CSS custom property per severity, defined in tokens.css.
 const SEVERITY_VAR: Record<Severity, string> = {
-  critical: "var(--sev-critical)",
-  high: "var(--sev-high)",
-  medium: "var(--sev-medium)",
-  low: "var(--sev-low)",
-  info: "var(--sev-info)",
+  critical: "var(--ds-sev-critical)",
+  high: "var(--ds-sev-high)",
+  medium: "var(--ds-sev-medium)",
+  low: "var(--ds-sev-low)",
+  info: "var(--ds-sev-info)",
 };
 
 type ShapeProps = { size: number; filled: boolean };
@@ -96,11 +96,11 @@ export function SeverityIcon({ severity, size = 16, filled = true }: { severity:
 export function SeverityBadge({ severity, reachable = true }: { severity: Severity; reachable?: boolean }): ReactElement {
   const showOutline = severity === "critical" && !reachable;
   return (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", fontFamily: "var(--font-sans)", fontSize: "var(--text-2)", color: "var(--ink)" }}>
+    <span style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", fontFamily: "var(--ds-font-sans)", fontSize: "var(--ds-text-2)", color: "var(--ds-ink)" }}>
       <SeverityIcon severity={severity} filled={!showOutline} />
       <span>{SEVERITY_LABEL[severity]}</span>
       {showOutline && (
-        <span style={{ fontSize: "var(--text-1)", color: "var(--muted)", border: "1px solid var(--rule)", borderRadius: "var(--radius-input)", padding: "0.1rem 0.35rem" }}>
+        <span style={{ fontSize: "var(--ds-text-1)", color: "var(--ds-muted)", border: "1px solid var(--ds-rule)", borderRadius: "var(--ds-radius-input)", padding: "0.1rem 0.35rem" }}>
           Not reachable
         </span>
       )}

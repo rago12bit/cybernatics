@@ -40,11 +40,11 @@ const preview: Preview = {
       return (
         <div
           style={{
-            background: "var(--surface)",
-            color: "var(--ink)",
+            background: "var(--ds-surface)",
+            color: "var(--ds-ink)",
             minHeight: "100vh",
             padding: "2rem",
-            fontFamily: "var(--font-sans)",
+            fontFamily: "var(--ds-font-sans)",
           }}
         >
           <TooltipProvider>

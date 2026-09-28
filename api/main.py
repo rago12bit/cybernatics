@@ -42,16 +42,20 @@ from api.deps import (
     token_ok,
 )
 from api.schemas import (
+    AssetSummary,
     FeedsStatus,
     FindingsPage,
     GuidanceView,
+    ProjectOverview,
     RemediationView,
     ScanCreated,
+    ScannedTool,
     ScanRequest,
     ScanSummary,
     ScanView,
     SuggestionRequest,
     ToolStatus,
+    TrendPoint,
 )
 from core.config import Settings
 from core.export import FORMATS, ReportData, render
@@ -95,6 +99,14 @@ def _get_scan(s: Session, scan_id: str, org_id: str) -> Scan:
     if scan is None:
         raise HTTPException(404, "scan not found")
     return scan
+
+
+def _get_asset(s: Session, asset_id: str, org_id: str) -> Any:
+    """Same 404-not-403 pattern as `_get_scan` (ADR-0013)."""
+    asset = repo.get_asset(s, asset_id, org_id=org_id) if _UUID.match(asset_id) else None
+    if asset is None:
+        raise HTTPException(404, "project not found")
+    return asset
 
 
 def _all_findings(s: Session, scan_id: str) -> list[dict[str, Any]]:
@@ -395,6 +407,106 @@ def create_app(app_state: AppState) -> FastAPI:
                 )
             )  # fmt: skip
         return out
+
+    @app.get(
+        "/assets",
+        response_model=list[AssetSummary],
+        dependencies=[Depends(require_scope("scans:read"))],
+    )
+    def list_assets(
+        limit: int = Query(default=50, ge=1, le=100),
+        s: Session = Depends(db),
+        org: str = Depends(current_org),
+    ) -> list[AssetSummary]:
+        """Projects (plan §27): one row per distinct repository, most recently scanned first."""
+        out: list[AssetSummary] = []
+        for asset in repo.list_assets(s, org_id=org, limit=limit):
+            latest = repo.latest_scan_for_asset(s, asset.id, org_id=org)
+            open_count = 0
+            if latest is not None:
+                open_count = sum(repo.issue_counts(s, latest.id).values())
+            out.append(
+                AssetSummary(
+                    id=asset.id, label=asset.label, source_type=asset.source_type,
+                    last_scanned_at=asset.last_scanned_at,
+                    latest_scan_id=latest.id if latest else None,
+                    latest_scan_status=latest.status if latest else None,
+                    open_issue_count=open_count,
+                )
+            )  # fmt: skip
+        return out
+
+    @app.get(
+        "/assets/{asset_id}/overview",
+        response_model=ProjectOverview,
+        dependencies=[Depends(require_scope("scans:read"))],
+    )
+    def get_asset_overview(
+        asset_id: str,
+        fix_first_limit: int = Query(default=10, ge=1, le=25),
+        s: Session = Depends(db),
+        org: str = Depends(current_org),
+    ) -> ProjectOverview:
+        """Plan §28.1's project overview: verdict, fix-first queue, since-previous-scan deltas,
+        the open-issue trend, and what the latest scan did (and didn't) cover. See
+        core/persistence/repo.py's asset-overview functions and docs/v2-week33-verification.md for
+        exactly how each field is derived from existing scan/issue data."""
+        asset = _get_asset(s, asset_id, org)
+        latest = repo.latest_scan_for_asset(s, asset.id, org_id=org)
+
+        summary = AssetSummary(
+            id=asset.id, label=asset.label, source_type=asset.source_type,
+            last_scanned_at=asset.last_scanned_at,
+            latest_scan_id=latest.id if latest else None,
+            latest_scan_status=latest.status if latest else None,
+            open_issue_count=sum(repo.issue_counts(s, latest.id).values()) if latest else 0,
+        )  # fmt: skip
+
+        if latest is None:
+            return ProjectOverview(
+                asset=summary, verdict_count=0, fix_first=[], more_at_lower_risk=0,
+                since_previous_scan={"fixed": 0, "new": 0, "returned": 0}, trend=[], scanned=[],
+                latest_scan_id=None, latest_scan_finished_at=None,
+            )  # fmt: skip
+
+        page = repo.query_findings(s, latest.id, sort="risk", limit=fix_first_limit)
+        # Calm by default (§29.2): a critical/high finding only counts toward the "at real risk"
+        # verdict while it's reachable (or reachability is unknown) -- a finding whose own scoring
+        # says it isn't reachable doesn't inflate the headline, even though it still appears further
+        # down the fix-first list with its "not reachable" tag.
+        fix_first = page.items
+        verdict_count = sum(
+            1
+            for f in fix_first
+            if f.get("scoring", {}).get("normalized_severity") in ("CRITICAL", "HIGH")
+            and f.get("scoring", {}).get("reachable") is not False
+        )
+        total_open = sum(repo.issue_counts(s, latest.id).values())
+
+        previous = repo.previous_scan_for_asset(s, asset.id, latest, org_id=org)
+        since = repo.since_previous_scan_counts(s, asset.id, latest.id, previous)
+        trend = [
+            TrendPoint(
+                scan_id=p["scan_id"], finished_at=p["finished_at"], open_count=p["open_count"]
+            )
+            for p in repo.open_issue_trend(s, asset.id, org_id=org)
+        ]
+        scanned = [
+            ScannedTool(tool=tr.tool, status=tr.status, findings=tr.findings_count)
+            for tr in latest.tool_runs
+        ]
+
+        return ProjectOverview(
+            asset=summary,
+            verdict_count=verdict_count,
+            fix_first=fix_first,
+            more_at_lower_risk=max(total_open - len(fix_first), 0),
+            since_previous_scan=since,
+            trend=trend,
+            scanned=scanned,
+            latest_scan_id=latest.id,
+            latest_scan_finished_at=latest.finished_at,
+        )
 
     @app.get(
         "/scans/{scan_id}/guidance",

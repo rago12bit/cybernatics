@@ -1,4 +1,4 @@
-import type { FindingsPage, FindingsQuery, Guidance, GuidanceApi, Remediation, ScanSummary, ScanView } from "./types";
+import type { AssetSummary, FindingsPage, FindingsQuery, Guidance, GuidanceApi, ProjectOverview, Remediation, ScanSummary, ScanView } from "./types";
 import { findingsQueryString } from "./format";
 
 export const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/$/, "");
@@ -133,3 +133,8 @@ export const requestSuggestion = (scanId: string, findingId: string) =>
   });
 
 export const liveGuidance: GuidanceApi = { get: getGuidance, request: requestSuggestion };
+
+/** Projects (plan §27): §28.1's overview screen (Week 33) is built entirely from these two calls. */
+export const listAssets = () => request<AssetSummary[]>("/assets?limit=50");
+export const getAssetOverview = (id: string) =>
+  request<ProjectOverview>(`/assets/${encodeURIComponent(id)}/overview`);

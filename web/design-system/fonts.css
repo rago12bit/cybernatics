@@ -14,7 +14,7 @@
 code,
 pre,
 kbd {
-  font-family: var(--font-mono);
+  font-family: var(--ds-font-mono);
   font-variant-ligatures: none;
   font-feature-settings: "liga" 0, "calt" 0;
 }

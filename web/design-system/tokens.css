@@ -1,102 +1,109 @@
 /* Bulwark design system — tokens (plan §29, Week 32).
    This file is additive: it does not touch app/globals.css or any shipped screen. Weeks 33-35 (App
    shell, Issues experience, Onboarding) are where these tokens replace the current dark-only
-   "blueprint" styling screen by screen. Storybook (.storybook/) is the only thing that renders
-   against these tokens today.
+   "blueprint" styling screen by screen.
+
+   Every custom property here is prefixed `--ds-`. app/globals.css's own `:root` already defines
+   `--muted`, `--sev-critical/high/medium/low/info`, `--ease-out`, and (via next/font on <html>)
+   `--font-sans`/`--font-mono` — all with different values than this system's. Storybook renders in
+   its own isolated iframe, so that collision was invisible there; it would have silently corrupted
+   one theme or the other the moment both stylesheets loaded on the same real app page, which is
+   exactly what Week 33 does. The prefix makes the two systems collision-proof by construction
+   instead of by coincidence.
 
    Every text/surface pair here is checked against WCAG AA (4.5:1) by
-   tests/design-tokens-contrast.test.ts on every CI run (plan §29.2's "CI script ... fails the build
-   on any regression"). Dark-mode severity tints are derived from the plan's own light values by
-   lightening in HSL until each one clears 4.5:1 on both dark surfaces (see git history of this file
-   for the derivation script) — the plan specifies the light values and says dark is "generated from
-   them," not what the generation function is. */
+   tests/design-tokens-contrast.test.ts on every CI run (plan §29.2's "CI script ... fails the
+   build on any regression"). Dark-mode severity tints are derived from the plan's own light values
+   by lightening in HSL until each one clears 4.5:1 on both dark surfaces (see git history of this
+   file for the derivation script) — the plan specifies the light values and says dark is "generated
+   from them," not what the generation function is. */
 
 :root {
   /* 29.2 Color — light (default) */
-  --ink: #1b2430;
-  --muted: #5b6776;
-  --surface: #f4f6f8;
-  --raised: #ffffff;
-  --rule: #d3dae2;
-  --brand: #1f6f78;
+  --ds-ink: #1b2430;
+  --ds-muted: #5b6776;
+  --ds-surface: #f4f6f8;
+  --ds-raised: #ffffff;
+  --ds-rule: #d3dae2;
+  --ds-brand: #1f6f78;
 
   /* Severity scale — color only; shape lives in severity.tsx, never color alone (29.2) */
-  --sev-critical: #b42318;
-  --sev-high: #c2410c;
-  --sev-medium: #a16207;
-  --sev-low: #3b6ea8;
-  --sev-info: #5f6b79;
+  --ds-sev-critical: #b42318;
+  --ds-sev-high: #c2410c;
+  --ds-sev-medium: #a16207;
+  --ds-sev-low: #3b6ea8;
+  --ds-sev-info: #5f6b79;
 
   /* 29.3 Typography — self-hosted, see design-system/fonts.css */
-  --font-sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --ds-font-sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --ds-font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
 
   /* Type scale: 12, 14, 16, 20, 28, 40 px */
-  --text-1: 0.75rem;
-  --text-2: 0.875rem;
-  --text-3: 1rem;
-  --text-4: 1.25rem;
-  --text-5: 1.75rem;
-  --text-6: 2.5rem;
+  --ds-text-1: 0.75rem;
+  --ds-text-2: 0.875rem;
+  --ds-text-3: 1rem;
+  --ds-text-4: 1.25rem;
+  --ds-text-5: 1.75rem;
+  --ds-text-6: 2.5rem;
 
   /* 29.4 Layout, shape, elevation — 8px grid; radius follows hierarchy, not one value everywhere */
-  --space-1: 0.5rem;
-  --space-2: 1rem;
-  --space-3: 1.5rem;
-  --space-4: 2rem;
-  --space-5: 3rem;
-  --space-6: 4rem;
-  --radius-input: 2px;
-  --radius-panel: 6px;
-  --radius-table: 0;
-  --elevation-float: 0 12px 32px -8px rgb(0 0 0 / 0.28);
+  --ds-space-1: 0.5rem;
+  --ds-space-2: 1rem;
+  --ds-space-3: 1.5rem;
+  --ds-space-4: 2rem;
+  --ds-space-5: 3rem;
+  --ds-space-6: 4rem;
+  --ds-radius-input: 2px;
+  --ds-radius-panel: 6px;
+  --ds-radius-table: 0;
+  --ds-elevation-float: 0 12px 32px -8px rgb(0 0 0 / 0.28);
 
   /* 29.6 Motion — only in response to an action, 120-180ms ease-out; live-scan is the one exception */
-  --duration-fast: 120ms;
-  --duration-slow: 180ms;
-  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ds-duration-fast: 120ms;
+  --ds-duration-slow: 180ms;
+  --ds-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* Dark mode: attribute wins when set (Storybook toggle, later a user preference); otherwise the
    system default follows prefers-color-scheme. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --ink: #e6eaef;
-    --muted: #9aa6b4;
-    --surface: #161c24;
-    --raised: #1e2630;
-    --rule: #2e3845;
-    --brand: #5db3bb;
+    --ds-ink: #e6eaef;
+    --ds-muted: #9aa6b4;
+    --ds-surface: #161c24;
+    --ds-raised: #1e2630;
+    --ds-rule: #2e3845;
+    --ds-brand: #5db3bb;
 
-    --sev-critical: #e9675d;
-    --sev-high: #f16024;
-    --sev-medium: #d28009;
-    --sev-low: #6292c8;
-    --sev-info: #828f9d;
+    --ds-sev-critical: #e9675d;
+    --ds-sev-high: #f16024;
+    --ds-sev-medium: #d28009;
+    --ds-sev-low: #6292c8;
+    --ds-sev-info: #828f9d;
 
-    --elevation-float: 0 12px 32px -8px rgb(0 0 0 / 0.6);
+    --ds-elevation-float: 0 12px 32px -8px rgb(0 0 0 / 0.6);
   }
 }
 :root[data-theme="dark"] {
-  --ink: #e6eaef;
-  --muted: #9aa6b4;
-  --surface: #161c24;
-  --raised: #1e2630;
-  --rule: #2e3845;
-  --brand: #5db3bb;
+  --ds-ink: #e6eaef;
+  --ds-muted: #9aa6b4;
+  --ds-surface: #161c24;
+  --ds-raised: #1e2630;
+  --ds-rule: #2e3845;
+  --ds-brand: #5db3bb;
 
-  --sev-critical: #e9675d;
-  --sev-high: #f16024;
-  --sev-medium: #d28009;
-  --sev-low: #6292c8;
-  --sev-info: #828f9d;
+  --ds-sev-critical: #e9675d;
+  --ds-sev-high: #f16024;
+  --ds-sev-medium: #d28009;
+  --ds-sev-low: #6292c8;
+  --ds-sev-info: #828f9d;
 
-  --elevation-float: 0 12px 32px -8px rgb(0 0 0 / 0.6);
+  --ds-elevation-float: 0 12px 32px -8px rgb(0 0 0 / 0.6);
 }
 
 @media (prefers-reduced-motion: reduce) {
   :root {
-    --duration-fast: 0ms;
-    --duration-slow: 0ms;
+    --ds-duration-fast: 0ms;
+    --ds-duration-slow: 0ms;
   }
 }

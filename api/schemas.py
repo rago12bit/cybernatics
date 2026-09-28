@@ -78,6 +78,56 @@ class ScanSummary(BaseModel):
     severity_counts: dict[str, int]
 
 
+class AssetSummary(BaseModel):
+    """A project (plan §27) — one distinct repository/archive, org-scoped (ADR-0012, ADR-0013)."""
+
+    id: str
+    label: str
+    source_type: str
+    last_scanned_at: datetime
+    latest_scan_id: str | None
+    latest_scan_status: str | None
+    open_issue_count: int = Field(
+        description="Open issues as of the latest completed scan; 0 if no scan has completed yet."
+    )
+
+
+class ScannedTool(BaseModel):
+    tool: str
+    status: str
+    findings: int = 0
+
+
+class TrendPoint(BaseModel):
+    scan_id: str
+    finished_at: datetime
+    open_count: int
+
+
+class ProjectOverview(BaseModel):
+    """Plan §28.1's project overview screen, built entirely from existing scan/issue data —
+    see core/persistence/repo.py's asset-overview functions for how each field is derived."""
+
+    asset: AssetSummary
+    verdict_count: int = Field(
+        description="Critical/high-severity, currently-reachable issues from the latest scan's "
+        "risk-ranked top items — the plan's calm-by-default rule (§29.2): an unreachable critical "
+        "doesn't inflate this count."
+    )
+    fix_first: list[dict[str, Any]] = Field(
+        description="Same Finding shape as FindingsPage.items, risk-sorted, from the latest scan."
+    )
+    more_at_lower_risk: int
+    since_previous_scan: dict[str, int] = Field(
+        description="fixed/new/returned since the scan before this one (ADR-0012's issue states); "
+        "not a literal 7-day calendar window."
+    )
+    trend: list[TrendPoint]
+    scanned: list[ScannedTool]
+    latest_scan_id: str | None
+    latest_scan_finished_at: datetime | None
+
+
 class FeedsStatus(BaseModel):
     """State of the exploit-likelihood feeds behind risk scores. Empty until the first download."""
 

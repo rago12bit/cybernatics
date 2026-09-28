@@ -6,3 +6,4 @@ export { DropdownMenu, DropdownMenuChildren } from "./primitives/DropdownMenu";
 export type { DropdownItem } from "./primitives/DropdownMenu";
 export { Dialog } from "./primitives/Dialog";
 export { Tabs } from "./primitives/Tabs";
+export { WhyRankedPanel, WhyRankedTrigger } from "./why-ranked";
