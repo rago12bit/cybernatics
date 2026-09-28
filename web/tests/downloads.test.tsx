@@ -14,8 +14,27 @@ async function mount() {
   await act(async () => createRoot(host).render(<ReportDownloads scanId={ID} />));
   return host;
 }
+// Poll instead of a fixed sleep: a hardcoded 20ms delay assumed the mocked fetch + blob parsing
+// (a real, multi-microtask async chain, not something `act` flushes synchronously) would always
+// settle in time, which a busier or more parallelized CI runner can't guarantee. Wait for the
+// actual completion signal instead -- the mocked fetch was called (the handler started) and every
+// button is enabled again (its `finally` ran, whichever way the download settled).
+async function waitFor(cond: () => boolean, timeoutMs = 2000, stepMs = 5) {
+  const start = Date.now();
+  while (!cond()) {
+    if (Date.now() - start > timeoutMs) throw new Error("waitFor: timed out");
+    await new Promise((r) => setTimeout(r, stepMs));
+  }
+}
 const click = async (host: HTMLElement, label: string) =>
-  act(async () => { [...host.querySelectorAll("button")].find((b) => b.textContent === label)!.click(); await new Promise((r) => setTimeout(r, 20)); });
+  act(async () => {
+    [...host.querySelectorAll("button")].find((b) => b.textContent === label)!.click();
+    await waitFor(
+      () =>
+        (globalThis.fetch as unknown as { mock: { calls: unknown[] } }).mock.calls.length > 0 &&
+        [...host.querySelectorAll("button")].every((b) => !b.disabled),
+    );
+  });
 afterEach(() => { vi.unstubAllGlobals(); sessionStorage.clear(); document.body.innerHTML = ""; });
 
 describe("report downloads", () => {
