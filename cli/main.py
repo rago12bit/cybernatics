@@ -544,3 +544,179 @@ def attest_verify(
     if not checked:
         typer.echo("error: no signature or attestation bundle found next to the file", err=True)
         raise typer.Exit(2)
+
+
+token_app = typer.Typer(
+    help="Scoped API tokens (Week 29 backfill, ADR-0018): create, list and revoke, per organization."
+)
+app.add_typer(token_app, name="token")
+
+
+@token_app.command("create")
+def token_create(
+    org_id: str = typer.Option(..., help="The organization this token authenticates as."),
+    name: str = typer.Option(..., help="A human label, e.g. 'CI pipeline' or 'laptop'."),
+    scope: list[str] = typer.Option(
+        ..., "--scope", help="Repeatable. Valid: scans:read, scans:write."
+    ),
+    expires_days: int | None = typer.Option(
+        None, help="Expire this many days from now. Omit for a token that never expires."
+    ),
+) -> None:
+    """Mint a token and print it once. It is never shown or stored again -- only its hash is."""
+    from datetime import datetime, timedelta, timezone
+
+    from core.persistence import repo
+    from core.persistence.db import get_session_factory
+    from core.tenancy import set_session_org
+    from core.tokens import TokenError, parse_scopes
+
+    try:
+        scopes = parse_scopes(scope)
+    except TokenError as exc:
+        typer.echo(f"error: {exc}", err=True)
+        raise typer.Exit(1) from exc
+    expires_at = datetime.now(timezone.utc) + timedelta(days=expires_days) if expires_days else None
+    with get_session_factory()() as s:
+        set_session_org(
+            s, org_id
+        )  # this write needs org context set explicitly (no request path here)
+        row, raw = repo.create_api_token(
+            s, org_id=org_id, name=name, scopes=sorted(scopes), expires_at=expires_at
+        )
+        token_id, display_prefix = row.id, row.display_prefix  # read before the session closes
+        repo.append_audit_entry(
+            s, actor="cli:token-create", action="token.created", target=token_id,
+            payload={"org_id": org_id, "name": name, "scopes": sorted(scopes)},
+        )  # fmt: skip
+    typer.echo(f"token: {raw}")
+    typer.echo("(shown once -- store it now; Bulwark never displays it again)")
+    typer.echo(json.dumps({"id": token_id, "display_prefix": display_prefix, "scopes": sorted(scopes)}))  # fmt: skip
+
+
+@token_app.command("list")
+def token_list(
+    org_id: str = typer.Option(..., help="The organization to list tokens for.")
+) -> None:
+    from core.persistence import repo
+    from core.persistence.db import get_session_factory
+
+    with get_session_factory()() as s:
+        rows = repo.list_api_tokens(s, org_id)
+    typer.echo(
+        json.dumps(
+            [
+                {
+                    "id": r.id, "name": r.name, "display_prefix": r.display_prefix,
+                    "scopes": r.scopes, "created_at": r.created_at.isoformat(),
+                    "expires_at": r.expires_at.isoformat() if r.expires_at else None,
+                    "last_used_at": r.last_used_at.isoformat() if r.last_used_at else None,
+                    "revoked_at": r.revoked_at.isoformat() if r.revoked_at else None,
+                }  # fmt: skip
+                for r in rows
+            ],
+            indent=2,
+        )
+    )
+
+
+@token_app.command("revoke")
+def token_revoke(
+    token_id: str = typer.Argument(..., help="The token's id, from `token list`.")
+) -> None:
+    from core.persistence import repo
+    from core.persistence.db import get_session_factory
+
+    with get_session_factory()() as s:
+        ok = repo.revoke_api_token(s, token_id)
+        if ok:
+            repo.append_audit_entry(
+                s, actor="cli:token-revoke", action="token.revoked", target=token_id, payload={}
+            )
+    if not ok:
+        typer.echo("error: no such token, or it was already revoked", err=True)
+        raise typer.Exit(1)
+    typer.echo(f"revoked {token_id}")
+
+
+audit_app = typer.Typer(help="Tamper-evident audit log (Week 30 backfill, ADR-0019).")
+app.add_typer(audit_app, name="audit")
+
+
+@audit_app.command("verify")
+def audit_verify() -> None:
+    """Walk the whole chain and recompute every hash. Exit 1 if anything doesn't match."""
+    import core.audit as audit
+    from core.persistence import repo
+    from core.persistence.db import get_session_factory
+
+    with get_session_factory()() as s:
+        entries = repo.list_audit_entries(s)
+        checkpoints = repo.list_checkpoints(s)
+    result = audit.verify_chain(entries)
+    out = {
+        "entries_checked": result.checked,
+        "chain_ok": result.ok,
+        "checkpoints": len(checkpoints),
+    }
+    if not result.ok:
+        out["broken_at_seq"] = result.broken_at_seq
+        out["reason"] = result.reason
+    typer.echo(json.dumps(out, indent=2))
+    if not result.ok:
+        raise typer.Exit(1)
+    for cp in checkpoints:
+        if cp.seq_end > result.checked:
+            typer.echo(
+                f"warning: checkpoint at seq {cp.seq_end} covers entries beyond the current chain "
+                "(entries were removed since it was published, or the chain was truncated)",
+                err=True,
+            )
+            raise typer.Exit(1)
+
+
+@audit_app.command("checkpoint")
+def audit_checkpoint(
+    key: Path = typer.Option(..., help="cosign private key (password in COSIGN_PASSWORD)."),
+    dry_run: bool = typer.Option(
+        False, "--dry-run", help="Print what would be checkpointed; sign and publish nothing."
+    ),
+) -> None:
+    """Sign the current chain head and publish it to Sigstore's Rekor -- a REAL, public, permanent
+    transparency-log entry. Not run automatically on a schedule yet (a documented Week 30 scope
+    cut); run this by hand or from your own cron/CI until it is."""
+    from core.attest.cosign import AttestError
+    from core.audit_rekor import sign_checkpoint
+    from core.persistence import repo
+    from core.persistence.db import get_session_factory
+
+    with get_session_factory()() as s:
+        entries = repo.list_audit_entries(s)
+        if not entries:
+            typer.echo("nothing to checkpoint: the audit log is empty")
+            return
+        last = entries[-1]
+        latest_cp = repo.latest_checkpoint(s)
+        if latest_cp is not None and latest_cp.seq_end == last.seq:
+            typer.echo(f"already checkpointed at seq {last.seq}")
+            return
+        if dry_run:
+            typer.echo(
+                json.dumps({"would_checkpoint_seq": last.seq, "chain_hash": last.entry_hash})
+            )
+            return
+        try:
+            bundle, log_index = sign_checkpoint(last.seq, last.entry_hash, key)
+        except AttestError as exc:
+            typer.echo(f"error: {exc}", err=True)
+            raise typer.Exit(1) from exc
+        cp = repo.record_checkpoint(
+            s, seq_end=last.seq, chain_hash=last.entry_hash, signature_bundle=bundle,
+            rekor_log_index=log_index,
+        )  # fmt: skip
+        seq_end = last.seq  # read before append_audit_entry's commit expires this instance
+        repo.append_audit_entry(
+            s, actor="cli:audit-checkpoint", action="audit.checkpointed", target=cp.id,
+            payload={"seq_end": seq_end, "rekor_log_index": log_index},
+        )  # fmt: skip
+    typer.echo(json.dumps({"seq_end": seq_end, "rekor_log_index": log_index}))

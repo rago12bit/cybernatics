@@ -67,6 +67,72 @@ class GithubInstallation(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 
 
+class ApiToken(Base):
+    """A scoped, revocable API token (Week 29 backfill, ADR-0018, plan §19.2) -- an alternative to
+    the single shared `BULWARK_API_TOKEN` that authenticates as one specific organization with one
+    specific set of scopes, rather than as "the whole deployment." Like `GithubInstallation`, this
+    table carries no Row-Level Security policy: authenticating a request is what *resolves* org
+    context in the first place (`api/deps.py`'s `require_auth`), so the lookup that does it can't
+    itself require org context to already be set (`core/persistence/repo.py`'s
+    `get_api_token_by_hash` has the full reasoning). Only `token_hash` is ever stored -- the raw
+    token is shown to its creator exactly once (`core/tokens.py`)."""
+
+    __tablename__ = "api_tokens"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"), index=True)
+    name: Mapped[str] = mapped_column(String(200))  # human label ("CI pipeline", "laptop")
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    display_prefix: Mapped[str] = mapped_column(String(20))  # safe to show afterwards
+    scopes: Mapped[list[str]] = mapped_column(JsonType)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class AuditEntry(Base):
+    """One link in the tamper-evident hash chain (Week 30 backfill, ADR-0019, plan §19.3). A
+    single, global, operator-facing ledger -- not per-organization -- since there's no per-org
+    sign-in yet for a per-org audit screen to gate access to; `core/audit.py` has the hash logic.
+
+    `seq` is application-assigned (not a DB autoincrement): the chain needs to know the exact
+    sequence number *before* the row exists, to hash it. `core/persistence/repo.py`'s
+    `append_audit_entry` handles the read-latest-then-insert race with a bounded retry loop rather
+    than a DB lock -- a documented, accepted simplification at this project's current scale (one API
+    process, one worker), not a claim that races are impossible."""
+
+    __tablename__ = "audit_entries"
+
+    seq: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=False)
+    prev_hash: Mapped[str] = mapped_column(String(64))
+    entry_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    actor: Mapped[str] = mapped_column(
+        String(200)
+    )  # e.g. "cli:token-create", "webhook:installation"
+    action: Mapped[str] = mapped_column(String(100), index=True)  # e.g. "token.created"
+    target: Mapped[str] = mapped_column(String(200))  # the affected object's id
+    payload_digest: Mapped[str] = mapped_column(
+        String(64)
+    )  # sha256 of the payload; never the payload
+
+
+class AuditCheckpoint(Base):
+    """A point in the chain whose hash has been signed and published to Sigstore's Rekor
+    transparency log (`core/audit_rekor.py`) -- what makes truncating or rewriting entries *before*
+    this point detectable against a log neither Bulwark nor an attacker controls."""
+
+    __tablename__ = "audit_checkpoints"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    seq_end: Mapped[int] = mapped_column(Integer, index=True)  # last seq this checkpoint covers
+    chain_hash: Mapped[str] = mapped_column(String(64))  # entry_hash of the entry at seq_end
+    signature_bundle: Mapped[str] = mapped_column(Text)  # the cosign Sigstore bundle, JSON
+    rekor_log_index: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
 class Asset(Base):
     """The identity a repeated scan is matched against (ADR-0012): one row per distinct repository
     or archive name, regardless of how many times it's been scanned. See `core/assets.py` for how

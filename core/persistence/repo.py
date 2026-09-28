@@ -9,15 +9,20 @@ from datetime import datetime, timezone
 from typing import Any, cast
 
 from sqlalchemy import case, delete, func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+import core.audit as audit
 from core.assets import asset_key
 from core.issues import ExistingIssue, IssueUpdate, State, SyncResult, fallback_key
 from core.issues import sync as sync_issues
 from core.models import Finding
 from core.persistence.models import (
     SEVERITY_RANK,
+    ApiToken,
     Asset,
+    AuditCheckpoint,
+    AuditEntry,
     FindingRow,
     GithubInstallation,
     IssueRow,
@@ -409,3 +414,107 @@ def delete_installation(s: Session, installation_id: str) -> None:
     if row is not None:
         s.delete(row)
         s.commit()
+
+
+def create_api_token(
+    s: Session, *, org_id: str, name: str, scopes: list[str], expires_at: datetime | None = None
+) -> tuple[ApiToken, str]:
+    """Returns `(row, raw_token)` -- the raw secret is generated here and returned exactly once;
+    only its hash is ever persisted (`core/tokens.py`). Callers (the `bulwark token create` CLI)
+    must show `raw_token` to the operator and never log or store it themselves."""
+    from core.tokens import generate_token
+
+    generated = generate_token()
+    row = ApiToken(
+        org_id=org_id, name=name, token_hash=generated.token_hash,
+        display_prefix=generated.display_prefix, scopes=sorted(scopes), expires_at=expires_at,
+    )  # fmt: skip
+    s.add(row)
+    s.commit()
+    return row, generated.raw
+
+
+def get_api_token_by_hash(s: Session, token_hash: str) -> ApiToken | None:
+    """No org filter, deliberately -- see `ApiToken`'s docstring. Authenticating a request with a
+    token is what *resolves* its org context; this lookup can't be gated by org context that
+    doesn't exist yet at this point in the request."""
+    return s.scalar(select(ApiToken).where(ApiToken.token_hash == token_hash))
+
+
+def touch_api_token(s: Session, token_id: str) -> None:
+    row = s.get(ApiToken, token_id)
+    if row is not None:
+        row.last_used_at = _now()
+        s.commit()
+
+
+def list_api_tokens(s: Session, org_id: str) -> list[ApiToken]:
+    return list(
+        s.scalars(
+            select(ApiToken).where(ApiToken.org_id == org_id).order_by(ApiToken.created_at.desc())
+        )
+    )
+
+
+def revoke_api_token(s: Session, token_id: str) -> bool:
+    row = s.get(ApiToken, token_id)
+    if row is None or row.revoked_at is not None:
+        return False
+    row.revoked_at = _now()
+    s.commit()
+    return True
+
+
+def append_audit_entry(
+    s: Session, *, actor: str, action: str, target: str, payload: dict[str, Any]
+) -> AuditEntry:
+    """A bounded optimistic-concurrency retry, not a database lock -- see `AuditEntry`'s docstring
+    for why that's an accepted, documented simplification at this project's current scale (one API
+    process, one worker), not a claim that a concurrent-write race is impossible."""
+    digest = audit.payload_digest(payload)
+    for _ in range(5):
+        last = s.scalar(select(AuditEntry).order_by(AuditEntry.seq.desc()).limit(1))
+        seq = (last.seq + 1) if last else 1
+        prev_hash = last.entry_hash if last else audit.GENESIS_HASH
+        now = _now()
+        entry_hash = audit.compute_hash(
+            seq=seq, prev_hash=prev_hash, timestamp=now, actor=actor, action=action,
+            target=target, payload_digest=digest,
+        )  # fmt: skip
+        row = AuditEntry(
+            seq=seq, prev_hash=prev_hash, entry_hash=entry_hash, timestamp=now, actor=actor,
+            action=action, target=target, payload_digest=digest,
+        )  # fmt: skip
+        s.add(row)
+        try:
+            s.commit()
+            return row
+        except IntegrityError:
+            s.rollback()
+    raise RuntimeError("could not append an audit entry after 5 attempts (high write contention)")
+
+
+def list_audit_entries(s: Session, *, since_seq: int = 0) -> list[AuditEntry]:
+    return list(
+        s.scalars(select(AuditEntry).where(AuditEntry.seq > since_seq).order_by(AuditEntry.seq))
+    )
+
+
+def latest_checkpoint(s: Session) -> AuditCheckpoint | None:
+    return s.scalar(select(AuditCheckpoint).order_by(AuditCheckpoint.seq_end.desc()).limit(1))
+
+
+def record_checkpoint(
+    s: Session, *, seq_end: int, chain_hash: str, signature_bundle: str, rekor_log_index: int | None
+) -> AuditCheckpoint:
+    row = AuditCheckpoint(
+        seq_end=seq_end, chain_hash=chain_hash, signature_bundle=signature_bundle,
+        rekor_log_index=rekor_log_index,
+    )  # fmt: skip
+    s.add(row)
+    s.commit()
+    return row
+
+
+def list_checkpoints(s: Session) -> list[AuditCheckpoint]:
+    return list(s.scalars(select(AuditCheckpoint).order_by(AuditCheckpoint.seq_end)))

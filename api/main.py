@@ -31,7 +31,16 @@ from fastapi.websockets import WebSocketDisconnect
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from api.deps import AppState, EventSubscriber, current_org, db, require_auth, state, token_ok
+from api.deps import (
+    AppState,
+    EventSubscriber,
+    current_org,
+    db,
+    require_auth,
+    require_scope,
+    state,
+    token_ok,
+)
 from api.schemas import (
     FeedsStatus,
     FindingsPage,
@@ -230,7 +239,10 @@ def create_app(app_state: AppState) -> FastAPI:
         return {"status": "ok"}
 
     @app.post(
-        "/scans", status_code=202, response_model=ScanCreated, dependencies=[Depends(require_auth)]
+        "/scans",
+        status_code=202,
+        response_model=ScanCreated,
+        dependencies=[Depends(require_scope("scans:write"))],
     )
     def create_scan(
         body: ScanRequest,
@@ -254,7 +266,7 @@ def create_app(app_state: AppState) -> FastAPI:
         "/scans/upload",
         status_code=202,
         response_model=ScanCreated,
-        dependencies=[Depends(require_auth)],
+        dependencies=[Depends(require_scope("scans:write"))],
     )
     async def upload_scan(
         archive: UploadFile = File(...),
@@ -322,12 +334,20 @@ def create_app(app_state: AppState) -> FastAPI:
                 inst = payload.get("installation") or {}
                 inst_id = str(inst.get("id") or "")
                 if payload.get("action") == "created" and inst_id:
-                    repo.get_or_create_installation(
-                        s, installation_id=inst_id,
-                        account_login=str((inst.get("account") or {}).get("login") or ""),
+                    login = str((inst.get("account") or {}).get("login") or "")
+                    row = repo.get_or_create_installation(
+                        s, installation_id=inst_id, account_login=login
+                    )
+                    repo.append_audit_entry(
+                        s, actor="webhook:github", action="installation.created",
+                        target=inst_id, payload={"account_login": login, "org_id": row.org_id},
                     )  # fmt: skip
                 elif payload.get("action") == "deleted" and inst_id:
                     repo.delete_installation(s, inst_id)
+                    repo.append_audit_entry(
+                        s, actor="webhook:github", action="installation.deleted",
+                        target=inst_id, payload={},
+                    )  # fmt: skip
                 return {"status": "ok"}
 
             if event == "pull_request":
@@ -353,7 +373,11 @@ def create_app(app_state: AppState) -> FastAPI:
 
         return {"status": "ignored"}
 
-    @app.get("/scans", response_model=list[ScanSummary], dependencies=[Depends(require_auth)])
+    @app.get(
+        "/scans",
+        response_model=list[ScanSummary],
+        dependencies=[Depends(require_scope("scans:read"))],
+    )
     def list_scans(
         limit: int = Query(default=20, ge=1, le=50),
         s: Session = Depends(db),
@@ -375,7 +399,7 @@ def create_app(app_state: AppState) -> FastAPI:
     @app.get(
         "/scans/{scan_id}/guidance",
         response_model=GuidanceView,
-        dependencies=[Depends(require_auth)],
+        dependencies=[Depends(require_scope("scans:read"))],
     )
     def get_guidance(
         scan_id: str,
@@ -400,7 +424,7 @@ def create_app(app_state: AppState) -> FastAPI:
     @app.post(
         "/scans/{scan_id}/suggestion",
         response_model=RemediationView,
-        dependencies=[Depends(require_auth)],
+        dependencies=[Depends(require_scope("scans:write"))],
     )
     def create_suggestion(
         scan_id: str,
@@ -435,7 +459,11 @@ def create_app(app_state: AppState) -> FastAPI:
             errors=meta.get("errors", {}),
         )
 
-    @app.get("/scans/{scan_id}", response_model=ScanView, dependencies=[Depends(require_auth)])
+    @app.get(
+        "/scans/{scan_id}",
+        response_model=ScanView,
+        dependencies=[Depends(require_scope("scans:read"))],
+    )
     def get_scan(
         scan_id: str, s: Session = Depends(db), org: str = Depends(current_org)
     ) -> ScanView:
@@ -444,7 +472,7 @@ def create_app(app_state: AppState) -> FastAPI:
     @app.get(
         "/scans/{scan_id}/findings",
         response_model=FindingsPage,
-        dependencies=[Depends(require_auth)],
+        dependencies=[Depends(require_scope("scans:read"))],
     )
     def get_findings(
         scan_id: str,
@@ -465,7 +493,7 @@ def create_app(app_state: AppState) -> FastAPI:
         )  # fmt: skip
         return FindingsPage(total=page.total, limit=limit, offset=offset, items=page.items)
 
-    @app.get("/scans/{scan_id}/export", dependencies=[Depends(require_auth)])
+    @app.get("/scans/{scan_id}/export", dependencies=[Depends(require_scope("scans:read"))])
     def export_scan(
         scan_id: str,
         format: str = Query(default="sarif", description="sarif | html | pdf | json"),

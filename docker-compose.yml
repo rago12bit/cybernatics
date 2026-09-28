@@ -138,7 +138,8 @@ services:
       args:
         NEXT_PUBLIC_API_URL: ${BULWARK_PUBLIC_API_URL:-http://localhost:8000}
     image: bulwark/web:dev
-    ports: ["127.0.0.1:3000:3000"]
+    # 3000 is taken by an unrelated local process on this machine; published on 3010 instead.
+    ports: ["127.0.0.1:3010:3000"]
     depends_on:
       api: { condition: service_healthy }
     restart: unless-stopped

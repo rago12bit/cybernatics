@@ -6,6 +6,41 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 ## [Unreleased]
 
 ### Added
+- **Week 29/30 backfill — scoped API tokens, tamper-evident audit log, automated tenant-leak test
+  (ADR-0018, ADR-0019):** reading the plan's actual §19.1–§19.3 text fresh surfaced that this
+  session's earlier "Week 29"/"Week 30" work had drifted from the plan's real scope for those
+  weeks (no scoped tokens, no CI-run cross-tenant test, no audit log; the GitHub App was actually a
+  Week 29 sub-item, not Week 30's own "audit log" deliverable). This closes those specific gaps:
+  - `bulwark_<hex>_<checksum>` scoped tokens (`core/tokens.py`), hashed at rest, with real
+    `scans:read`/`scans:write` scope enforcement; a scoped token's org is authoritative and
+    `X-Bulwark-Org` is ignored for it — the concrete fix for the exact "a caller can claim any org
+    id" limitation ADR-0013 documented. `bulwark token create/list/revoke` (CLI-only; no
+    self-service API yet, no per-user identity to hang one off).
+  - A hash-chained, tamper-evident audit log (`core/audit.py`, `core/audit_rekor.py`):
+    `bulwark audit verify` walks and recomputes the whole chain; `bulwark audit checkpoint` signs
+    the current head and publishes it to Sigstore's Rekor (key-based signing with real Rekor
+    upload, not keyless — no OIDC identity provider integration exists for a long-running
+    self-hosted server). Logs `token.created`/`token.revoked` and
+    `installation.created`/`installation.deleted` today; most of the plan's own example audit
+    actions (role changes, triage, fix approvals) don't exist as features yet.
+  - The automated cross-tenant leak test ADR-0013 committed to but never wired into CI: a new
+    `tenancy-rls` GitHub Actions job with its own real Postgres service, running on every pull
+    request against real Row-Level Security.
+  Two real bugs found and fixed, both the same root cause: SQLite (and potentially a
+  differently-configured Postgres session) hands back a naive `datetime` even for a
+  `DateTime(timezone=True)` column, which crashed a token-expiry comparison and — more
+  seriously — silently shifted timestamps inside the hash chain itself, meaning `verify_chain`
+  would have reported a genuinely untampered chain as broken on any host not itself in UTC. Fixed
+  by treating a naive value as UTC (every timestamp this codebase writes already is); confirmed
+  fixed with a live tampering test against real Postgres. Explicitly deferred: the full
+  Organization/project/role permission matrix and GitHub OAuth/passkey/TOTP sign-in (both need real
+  human identity, which doesn't exist yet, and are security-sensitive enough to deserve their own
+  pass), the custom Gitleaks rule for Bulwark's own token format (needs extending the sandboxed
+  runner's mount mechanism), and an actual live Rekor checkpoint publish (a permanent, public,
+  third-party write, done only with explicit confirmation). Full writeup:
+  docs/v2-week29-backfill-verification.md.
+
+### Added
 - **Week 27 verification gate:** every v2-plan §16.1 check re-run live against real Docker containers rather than
   inferred from unit tests — sandbox flags via `docker inspect`, network isolation, 9 adapters × 7 malformed
   inputs, a container killed mid-scan, zip-bomb/zip-slip/file-count/SSRF ingestion attacks, secret masking
