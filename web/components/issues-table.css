@@ -1,0 +1,158 @@
+.ds-issues {
+  display: grid;
+  gap: var(--ds-space-2);
+  font-family: var(--ds-font-sans);
+  color: var(--ds-ink);
+}
+
+.ds-issues-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-2);
+  flex-wrap: wrap;
+}
+.ds-issues-chips {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+.ds-issues-spacer {
+  flex: 1;
+}
+
+.ds-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: var(--ds-text-1);
+  padding: 0.3rem 0.55rem;
+  border: 1px solid var(--ds-rule);
+  border-radius: var(--ds-radius-input);
+  background: var(--ds-raised);
+  color: var(--ds-muted);
+  cursor: pointer;
+}
+.ds-chip.active {
+  border-color: var(--ds-brand);
+  color: var(--ds-brand);
+  background: color-mix(in srgb, var(--ds-brand) 8%, var(--ds-raised));
+}
+
+.ds-issues-views {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.ds-saved-view {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--ds-rule);
+  border-radius: var(--ds-radius-input);
+  overflow: hidden;
+  font-size: var(--ds-text-1);
+}
+.ds-saved-view button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--ds-ink);
+  padding: 0.3rem 0.5rem;
+}
+.ds-saved-view button:last-child {
+  color: var(--ds-muted);
+  border-left: 1px solid var(--ds-rule);
+}
+
+.ds-bulkbar {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0.8rem;
+  background: color-mix(in srgb, var(--ds-brand) 8%, var(--ds-raised));
+  border: 1px solid var(--ds-rule);
+  border-radius: var(--ds-radius-panel);
+  font-size: var(--ds-text-2);
+}
+
+.ds-issues-error,
+.ds-issues-empty {
+  color: var(--ds-muted);
+  font-size: var(--ds-text-2);
+}
+
+.ds-issues-table-wrap {
+  border: 1px solid var(--ds-rule);
+  border-radius: var(--ds-radius-table);
+}
+
+.ds-issues-headrow,
+.ds-issue-row {
+  display: grid;
+  grid-template-columns: 2rem 1.75rem 1fr auto auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0 0.75rem;
+}
+.ds-issues-headrow {
+  height: 2.25rem;
+  border-bottom: 1px solid var(--ds-rule);
+  background: var(--ds-surface);
+  font-size: var(--ds-text-1);
+  color: var(--ds-muted);
+}
+.ds-issue-row {
+  border-bottom: 1px solid var(--ds-rule);
+  font-size: var(--ds-text-2);
+}
+.ds-issue-row.compact {
+  font-size: var(--ds-text-1);
+}
+
+.ds-issue-main {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+  overflow: hidden;
+}
+.ds-issue-title {
+  color: var(--ds-ink);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ds-issue-title:hover {
+  color: var(--ds-brand);
+  text-decoration: underline;
+}
+.ds-issue-loc {
+  font-family: var(--ds-font-mono);
+  font-size: var(--ds-text-1);
+  color: var(--ds-muted);
+}
+.ds-issue-triage-tag {
+  font-size: var(--ds-text-1);
+  color: var(--ds-muted);
+  border: 1px solid var(--ds-rule);
+  border-radius: var(--ds-radius-input);
+  padding: 0.1rem 0.4rem;
+  white-space: nowrap;
+}
+.ds-issue-rule {
+  font-family: var(--ds-font-mono);
+  font-size: var(--ds-text-1);
+  color: var(--ds-muted);
+  white-space: nowrap;
+}
+
+.ds-issues-scroll {
+  overflow-y: auto;
+}
+
+.sr-only-ds {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}

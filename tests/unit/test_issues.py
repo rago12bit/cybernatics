@@ -12,6 +12,7 @@ def code(
     path: str = "a.py",
     line: int = 10,
     finding_id: str = "semgrep:sqli:a.py:10",
+    rule_id: str = "sqli",
 ) -> Finding:
     f = Finding(
         id=finding_id,
@@ -22,6 +23,7 @@ def code(
     )
     f.scoring.normalized_severity = Severity.HIGH
     f.evidence.reported_by = ["semgrep"]
+    f.evidence.rule_ids = {"semgrep": [rule_id]}
     return f
 
 
@@ -58,12 +60,34 @@ def test_fallback_key_ignores_path_but_not_cwe_or_content() -> None:
     assert fallback_key(a) != fallback_key(d)
 
 
-def test_fallback_key_is_none_for_sca_and_placeholder_findings() -> None:
+def test_fallback_key_is_none_only_for_sca_findings() -> None:
+    """SCA's package/version/CVE identity is already location-independent, so its primary
+    fingerprint already serves as its own fallback (ADR-0004) -- a second, duplicate key here would
+    be redundant, not wrong, but the point of `fallback_key` is a *different* location-independent
+    key from the primary one."""
     sca = finalized(sca_finding())[0]
     assert fallback_key(sca) is None
 
-    redacted = finalized(code(snippet="[secret redacted]"))[0]
-    assert fallback_key(redacted) is None
+
+def test_fallback_key_handles_placeholder_and_empty_snippets_via_rule_id() -> None:
+    """A placeholder (redacted) or genuinely empty snippet gives nothing to hash on its own -- but
+    unlike an earlier version of this function, that no longer means "give up and return None": the
+    rule id anchors it instead, so a redacted secret (or a Dockerfile-style whole-line check with no
+    snippet at all) still gets a real, *distinct* fallback identity per rule, and can still be
+    tracked across a file move. Without the rule id, two different rules that both redact to
+    "[secret redacted]" -- or both quote nothing at all -- would collide onto the same key anywhere
+    in the asset, which is exactly the real bug this guards against (see
+    core.correlation.engine.fingerprint's docstring for the confirmed real-world case)."""
+    a = finalized(code(snippet="[secret redacted]", rule_id="generic-api-key"))[0]
+    b = finalized(code(snippet="[secret redacted]", rule_id="aws-access-key"))[0]
+    assert fallback_key(a) is not None
+    assert fallback_key(a) != fallback_key(b)  # different rules, same placeholder text
+    assert fallback_key(a) == fallback_key(finalized(code(snippet="[secret redacted]", rule_id="generic-api-key", path="elsewhere.py"))[0])  # fmt: skip
+
+    empty_a = finalized(code(snippet="", rule_id="DS002"))[0]
+    empty_b = finalized(code(snippet="", rule_id="DS026"))[0]
+    assert fallback_key(empty_a) is not None
+    assert fallback_key(empty_a) != fallback_key(empty_b)
 
 
 def test_match_keys_primary_is_the_correlation_fingerprint() -> None:

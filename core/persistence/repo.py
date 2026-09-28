@@ -8,9 +8,10 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, cast
 
-from sqlalchemy import case, delete, func, or_, select
+from sqlalchemy import and_, case, delete, func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
+from sqlalchemy.sql.elements import ColumnElement
 
 import core.audit as audit
 from core.assets import asset_key
@@ -243,6 +244,221 @@ def open_issue_trend(
         )
         out.append({"scan_id": scan.id, "finished_at": scan.finished_at, "open_count": open_count})
     return out
+
+
+# ---------------------------------------------------------------------------------------------
+# Issues (Week 34, plan §28.3): the asset-level, cross-scan view of currently-open findings.
+# "Currently open" for an asset's *latest* scan is exactly that scan's FindingRows carrying an
+# issue_id -- any Issue not found there was necessarily marked `fixed` when that scan synced
+# (core/issues.py), so there's no separate "is this issue still live" query to write. The only new
+# thing this section adds is triage: a human decision layered on top of that.
+# ---------------------------------------------------------------------------------------------
+
+ACTIVE_TRIAGE_STATUSES = ("open",)  # the default queue: everything not deliberately set aside
+
+
+def _active_triage_clause(now: datetime) -> ColumnElement[bool]:
+    """An issue counts as "still in the active queue" if it's untouched, OR it was accepted but
+    that acceptance has since expired (§28.3: accepted risk "reappears automatically")."""
+    return or_(
+        IssueRow.triage_status == "open",
+        and_(
+            IssueRow.triage_status == "accepted",
+            IssueRow.triage_expires_at.is_not(None),
+            IssueRow.triage_expires_at <= now,
+        ),
+    )
+
+
+def list_asset_issues(
+    s: Session,
+    asset_id: str,
+    latest_scan_id: str,
+    *,
+    severities: list[str] | None = None,
+    categories: list[str] | None = None,
+    triage: list[str] | None = None,
+    sort: str = "risk",
+    limit: int = 100,
+    offset: int = 0,
+) -> FindingPage:
+    """Findings from the asset's latest scan, each annotated with its Issue's triage state.
+    `triage=None` (the default) is the active triage queue: untouched issues, plus any accepted
+    issue whose expiry has passed. Pass an explicit list (e.g. `["accepted", "not_a_risk"]`) to see
+    triaged-away issues instead."""
+    conds = [FindingRow.scan_id == latest_scan_id, FindingRow.issue_id.is_not(None)]
+    if severities:
+        conds.append(FindingRow.severity.in_([x.upper() for x in severities]))
+    if categories:
+        conds.append(FindingRow.category.in_([x.lower() for x in categories]))
+
+    issue_ids_q = select(IssueRow.id).where(IssueRow.asset_id == asset_id)
+    if triage:
+        issue_ids_q = issue_ids_q.where(IssueRow.triage_status.in_(triage))
+    else:
+        issue_ids_q = issue_ids_q.where(_active_triage_clause(_now()))
+    conds.append(FindingRow.issue_id.in_(issue_ids_q))
+
+    total = s.scalar(select(func.count()).select_from(FindingRow).where(*conds)) or 0
+    order: list[Any]
+    if sort == "path":
+        order = [FindingRow.path, FindingRow.start_line]
+    elif sort == "risk":
+        order = [case((FindingRow.risk_score.is_(None), -1), else_=FindingRow.risk_score).desc()]
+    else:
+        order = [
+            FindingRow.severity_rank.desc(),
+            case((FindingRow.risk_score.is_(None), -1), else_=FindingRow.risk_score).desc(),
+            FindingRow.path,
+            FindingRow.start_line,
+        ]
+    rows = list(
+        s.scalars(
+            select(FindingRow)
+            .where(*conds)
+            .order_by(*order, FindingRow.pk)
+            .limit(limit)
+            .offset(offset)
+        )
+    )
+    issue_ids = [r.issue_id for r in rows if r.issue_id]
+    triage_by_id = (
+        {i.id: i for i in s.scalars(select(IssueRow).where(IssueRow.id.in_(issue_ids)))}
+        if issue_ids
+        else {}
+    )
+    items = []
+    for r in rows:
+        d = {**r.data, "scan_id": latest_scan_id}
+        issue_row = triage_by_id.get(r.issue_id) if r.issue_id else None
+        d["issue"] = (
+            {
+                "id": r.issue_id,
+                "state": r.issue_state,
+                "triage_status": issue_row.triage_status if issue_row else "open",
+                "triage_reason": issue_row.triage_reason if issue_row else None,
+                "triage_expires_at": issue_row.triage_expires_at if issue_row else None,
+                "first_seen_at": issue_row.first_seen_at if issue_row else None,
+            }
+            if r.issue_id
+            else None
+        )
+        items.append(d)
+    return FindingPage(total, items)
+
+
+def get_issue(s: Session, issue_id: str, *, org_id: str | None = None) -> IssueRow | None:
+    """App-level org check (belt-and-suspenders alongside Postgres RLS, ADR-0013) -- `issues` has
+    no `org_id` column of its own, so this joins through `assets`, exactly like the RLS policy
+    itself does (migration 0005)."""
+    q = select(IssueRow).where(IssueRow.id == issue_id)
+    if org_id is not None:
+        q = q.join(Asset, Asset.id == IssueRow.asset_id).where(Asset.org_id == org_id)
+    return s.scalars(q).one_or_none()
+
+
+def get_issue_finding(s: Session, issue_id: str, latest_scan_id: str) -> dict[str, Any] | None:
+    """The full canonical Finding for one issue's detail screen (plan §28.3) -- its occurrence in
+    the asset's latest scan, the same source `list_asset_issues` reads, just for one issue instead
+    of a page of them."""
+    row = s.scalar(
+        select(FindingRow).where(
+            FindingRow.scan_id == latest_scan_id, FindingRow.issue_id == issue_id
+        )
+    )
+    if row is None:
+        return None
+    issue_row = s.get(IssueRow, issue_id)
+    d = {**row.data, "scan_id": latest_scan_id}
+    d["issue"] = {
+        "id": issue_id,
+        "state": row.issue_state,
+        "triage_status": issue_row.triage_status if issue_row else "open",
+        "triage_reason": issue_row.triage_reason if issue_row else None,
+        "triage_expires_at": issue_row.triage_expires_at if issue_row else None,
+        "first_seen_at": issue_row.first_seen_at if issue_row else None,
+    }
+    return d
+
+
+def triage_issue(
+    s: Session,
+    issue_id: str,
+    *,
+    org_id: str,
+    action: str,
+    reason: str | None = None,
+    expires_at: datetime | None = None,
+    actor: str,
+) -> IssueRow:
+    """Mark an issue `not_a_risk` (requires `reason`) or `accepted` (requires `expires_at`), or
+    `reopen` it back to the active queue. Writes an audit entry either way (plan §28.3: "Both write
+    to the audit log (§19.3)") -- `reopen` too, since undoing a triage decision is itself a
+    security-relevant action worth a durable record."""
+    if action not in ("not_a_risk", "accepted", "reopen"):
+        raise ValueError(f"unknown triage action: {action}")
+    row = get_issue(s, issue_id, org_id=org_id)
+    if row is None:
+        raise LookupError("issue not found")
+    now = _now()
+    if action == "not_a_risk":
+        if not reason or not reason.strip():
+            raise ValueError("a reason is required to mark an issue as not a risk")
+        row.triage_status, row.triage_reason, row.triage_expires_at = (
+            "not_a_risk",
+            reason.strip(),
+            None,
+        )
+    elif action == "accepted":
+        if expires_at is None:
+            raise ValueError("an expiry date is required to accept a risk")
+        row.triage_status, row.triage_reason, row.triage_expires_at = (
+            "accepted",
+            reason.strip() if reason else None,
+            expires_at,
+        )
+    else:  # reopen
+        row.triage_status, row.triage_reason, row.triage_expires_at = "open", None, None
+    row.triaged_at, row.triaged_by = now, actor
+    payload = {
+        "action": action,
+        "reason": reason,
+        "expires_at": expires_at.isoformat() if expires_at else None,
+    }
+    # append_audit_entry() commits -- the same flush also persists this row's pending changes above,
+    # so the triage decision and its audit entry land together, in one transaction.
+    append_audit_entry(
+        s, actor=actor, action=f"issue.triage.{action}", target=issue_id, payload=payload
+    )
+    return row
+
+
+def issue_history(s: Session, issue_id: str) -> list[dict[str, Any]]:
+    """A real event timeline for one issue (plan §28.3), built from what's actually recorded: when
+    it was first seen, every triage decision made about it since (the tamper-evident audit log,
+    ADR-0019 -- `target` is the issue id), and when it was fixed, if it has been. Nothing here is
+    synthesized; an issue with no triage history just has one or two entries."""
+    issue = s.get(IssueRow, issue_id)
+    events: list[dict[str, Any]] = []
+    if issue is not None:
+        events.append({"at": issue.first_seen_at, "label": "First seen"})
+        if issue.fixed_at is not None:
+            events.append({"at": issue.fixed_at, "label": "Fixed"})
+    entries = s.scalars(
+        select(AuditEntry).where(AuditEntry.target == issue_id).order_by(AuditEntry.seq)
+    )
+    for e in entries:
+        events.append({"at": e.timestamp, "label": _audit_action_label(e.action)})
+    events.sort(key=lambda ev: ev["at"])
+    return events
+
+
+def _audit_action_label(action: str) -> str:
+    return {
+        "issue.triage.not_a_risk": "Marked as not a risk",
+        "issue.triage.accepted": "Risk accepted",
+        "issue.triage.reopen": "Reopened",
+    }.get(action, action)
 
 
 def reset_scan_results(s: Session, scan_id: str) -> None:

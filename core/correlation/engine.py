@@ -221,8 +221,27 @@ def fingerprint(f: Finding) -> str:
 
     SCA is exact: sha256(ecosystem|name|version|primary vuln id), where the primary id is the
     smallest CVE (else smallest alias). Code findings hash (smallest CWE in the family | path |
-    normalized snippet); this survives whitespace, comment and identifier changes but is best-effort
-    when the set of enabled tools changes, because the quoted snippet differs by tool.
+    normalized snippet | rule id(s)); the snippet half survives whitespace, comment and identifier
+    changes but is best-effort when the set of enabled tools changes, because the quoted snippet
+    differs by tool.
+
+    The rule id(s) that fired are always folded in, not only when the snippet is unusable. Two
+    real, confirmed collisions without it, from real scan data in this repo's own golden fixtures:
+    Trivy's Dockerfile rules quote no snippet at all, so DS002 ("runs as root") and DS026 ("no
+    HEALTHCHECK") on the same Dockerfile's line 1 hashed identically; and Trivy's Terraform checks
+    quote the *entire resource block* verbatim for every rule that fires against it, so ten
+    genuinely different misconfiguration findings (public ACL, no versioning, no logging, no
+    encryption, ...) on one `aws_s3_bucket` resource all shared one snippet and hashed identically
+    too -- nothing about "IaC linters quote the whole block" is an edge case; it's the normal shape
+    of that finding style. Either collision silently collapses distinct vulnerabilities into one
+    tracked Issue (ADR-0012): triaging one would have silently dismissed the others along with it.
+
+    This never affects cross-tool merging of the *same* defect: `correlate()` already decided which
+    findings belong in one merged group (via `same_defect`, before this ever runs) using signals
+    other than the fingerprint, so a merged group's `evidence.rule_ids` already reflects every
+    contributing tool's rule for that one defect, consistently, on every scan that finds the same
+    set of tools agreeing. Only when the enabled tool set itself changes between scans (already a
+    documented best-effort limitation of the snippet half, above) can the rule-id set shift too.
     """
     if f.package:
         ids = sorted(f.taxonomy.cve) or sorted(f.taxonomy.aliases) or [f.id]
@@ -230,8 +249,10 @@ def fingerprint(f: Finding) -> str:
     else:
         cwe = min(cwe_family(f) or {"none"})
         snip = f.location.snippet
-        if norm.is_placeholder(snip):  # nothing comparable in the snippet: anchor on the line
-            raw = f"{cwe}|{f.location.path}|placeholder|{f.location.start_line}"
+        rule_ids = sorted({r for rules in f.evidence.rule_ids.values() for r in rules})
+        rules_part = "|".join(rule_ids) if rule_ids else "no-rule-id"
+        if norm.is_placeholder(snip) or not snip.strip():
+            raw = f"{cwe}|{f.location.path}|placeholder|{f.location.start_line}|{rules_part}"
         else:
-            raw = f"{cwe}|{f.location.path}|{norm.snippet_hash(snip)}|"
+            raw = f"{cwe}|{f.location.path}|{norm.snippet_hash(snip)}|{rules_part}"
     return "sha256:" + hashlib.sha256(raw.encode()).hexdigest()

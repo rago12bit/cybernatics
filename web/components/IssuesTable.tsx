@@ -1,0 +1,282 @@
+"use client";
+
+import { createColumnHelper, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import Link from "next/link";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ApiError, bulkTriageIssues, listIssues, type IssuesQuery } from "@/lib/api";
+import type { Finding, Severity, TriageStatus } from "@/lib/types";
+import { SEVERITIES } from "@/lib/types";
+import { SeverityIcon } from "@/design-system/severity";
+import { Button } from "@/design-system/primitives/Button";
+import { Dialog } from "@/design-system/primitives/Dialog";
+import { useMode } from "@/design-system/mode";
+import { useSavedViews, type SavedView } from "@/lib/saved-views";
+import "./issues-table.css";
+
+const ROW_HEIGHT_COMFORTABLE = 56;
+const ROW_HEIGHT_COMPACT = 40;
+
+function defaultQuery(): IssuesQuery {
+  return { severity: [], category: "", triage: [], sort: "risk" };
+}
+
+const columnHelper = createColumnHelper<Finding>();
+
+/** Plan §31: TanStack Table for the column model (selection, severity, title/location, triage,
+ * rule id), TanStack Virtual for rendering only the rows on screen — real usage of both named
+ * tools, not just a hand-rolled scroller. Server-side pagination (up to 200 issues per fetch, see
+ * lib/api.ts's listIssues) still bounds each request; the virtualization is what lets the table
+ * itself stay smooth once that page is on screen, exactly the plan's own "without jank" framing. */
+export function IssuesTable({ assetId }: { assetId: string }) {
+  const { mode } = useMode();
+  const [q, setQ] = useState<IssuesQuery>(defaultQuery());
+  const [page, setPage] = useState<{ total: number; items: Finding[] } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [busy, setBusy] = useState(false);
+  const { views, save, remove } = useSavedViews(assetId);
+  const [saveOpen, setSaveOpen] = useState(false);
+  const [viewName, setViewName] = useState("");
+  const [triageOpen, setTriageOpen] = useState<"not_a_risk" | "accepted" | null>(null);
+  const [reason, setReason] = useState("");
+  const [expiresAt, setExpiresAt] = useState("");
+  const parentRef = useRef<HTMLDivElement>(null);
+
+  const reload = useCallback(() => {
+    listIssues(assetId, q).then(
+      (p) => { setPage(p); setError(null); },
+      (e) => setError(e instanceof ApiError ? e.message : "Failed to load issues"),
+    );
+  }, [assetId, q]);
+  useEffect(reload, [reload]);
+
+  const items = useMemo(() => page?.items ?? [], [page]);
+
+  const columns = useMemo(
+    () => [
+      columnHelper.display({
+        id: "select",
+        header: () => <span className="sr-only-ds">Select</span>,
+        cell: (ctx) => (
+          <input
+            type="checkbox"
+            checked={selected.has(ctx.row.original.id)}
+            onChange={() => toggleRow(ctx.row.original.id)}
+            aria-label={`Select ${ctx.row.original.title}`}
+          />
+        ),
+      }),
+      columnHelper.accessor((f) => f.scoring.normalized_severity, {
+        id: "severity",
+        header: "Severity",
+        cell: (ctx) => <SeverityIcon severity={ctx.getValue().toLowerCase() as "critical" | "high" | "medium" | "low" | "info"} />,
+      }),
+      columnHelper.accessor("title", {
+        header: "Issue",
+        cell: (ctx) => {
+          const f = ctx.row.original;
+          return (
+            <div className="ds-issue-main">
+              <Link href={`/app/projects/${assetId}/issues/${f.issue?.id ?? ""}`} className="ds-issue-title">{f.title}</Link>
+              {mode === "novice" && <code className="ds-issue-loc">{f.location.path}:{f.location.start_line}</code>}
+            </div>
+          );
+        },
+      }),
+      columnHelper.display({
+        id: "triage",
+        header: "Status",
+        cell: (ctx) => {
+          const t = ctx.row.original.issue?.triage_status;
+          return t && t !== "open" ? <span className="ds-issue-triage-tag">{t === "not_a_risk" ? "Not a risk" : "Accepted"}</span> : null;
+        },
+      }),
+      columnHelper.display({
+        id: "rule",
+        header: "Rule",
+        cell: (ctx) => (mode === "expert" ? <code className="ds-issue-rule">{Object.values(ctx.row.original.evidence.rule_ids)[0]?.[0] ?? ""}</code> : null),
+      }),
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    ],
+    [selected, mode, assetId],
+  );
+
+  const table = useReactTable({ data: items, columns, getCoreRowModel: getCoreRowModel() });
+  const rows = table.getRowModel().rows;
+  const rowHeight = mode === "expert" ? ROW_HEIGHT_COMPACT : ROW_HEIGHT_COMFORTABLE;
+  const virtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => rowHeight,
+    overscan: 10,
+  });
+
+  function toggleSeverity(s: Severity) {
+    setQ((cur) => ({ ...cur, severity: cur.severity.includes(s) ? cur.severity.filter((x) => x !== s) : [...cur.severity, s] }));
+  }
+  function toggleTriage(t: TriageStatus) {
+    setQ((cur) => ({ ...cur, triage: cur.triage.includes(t) ? cur.triage.filter((x) => x !== t) : [...cur.triage, t] }));
+  }
+  function toggleRow(id: string) {
+    setSelected((cur) => {
+      const next = new Set(cur);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+  const selectedIssueIds = useMemo(
+    () => items.filter((f) => selected.has(f.id) && f.issue).map((f) => f.issue!.id),
+    [items, selected],
+  );
+
+  async function runTriage(action: "not_a_risk" | "accepted" | "reopen") {
+    setBusy(true);
+    try {
+      const body = action === "not_a_risk" ? { action, reason } : action === "accepted" ? { action, reason, expires_at: expiresAt } : { action };
+      await bulkTriageIssues(assetId, selectedIssueIds, body);
+      setSelected(new Set());
+      setTriageOpen(null);
+      setReason("");
+      setExpiresAt("");
+      reload();
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Triage failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function applyView(v: SavedView) {
+    setQ(v.query);
+  }
+
+  return (
+    <div className="ds-issues">
+      <div className="ds-issues-toolbar">
+        <div className="ds-issues-chips" role="group" aria-label="Severity">
+          {SEVERITIES.map((s) => (
+            <button key={s} type="button" className={q.severity.includes(s) ? "ds-chip active" : "ds-chip"} onClick={() => toggleSeverity(s)}>
+              <SeverityIcon severity={s.toLowerCase() as "critical" | "high" | "medium" | "low" | "info"} size={14} />
+              {s}
+            </button>
+          ))}
+        </div>
+        <div className="ds-issues-chips" role="group" aria-label="Triage status">
+          {(["not_a_risk", "accepted"] as TriageStatus[]).map((t) => (
+            <button key={t} type="button" className={q.triage.includes(t) ? "ds-chip active" : "ds-chip"} onClick={() => toggleTriage(t)}>
+              {t === "not_a_risk" ? "Not a risk" : "Accepted"}
+            </button>
+          ))}
+        </div>
+        <select value={q.sort} onChange={(e) => setQ((cur) => ({ ...cur, sort: e.target.value as IssuesQuery["sort"] }))} aria-label="Sort">
+          <option value="risk">Sort: risk</option>
+          <option value="severity">Sort: severity</option>
+          <option value="path">Sort: file path</option>
+        </select>
+        <div className="ds-issues-spacer" />
+        <Button onClick={() => setSaveOpen(true)}>Save this view</Button>
+      </div>
+
+      {views.length > 0 && (
+        <div className="ds-issues-views" aria-label="Saved views">
+          {views.map((v) => (
+            <span key={v.name} className="ds-saved-view">
+              <button type="button" onClick={() => applyView(v)}>{v.name}</button>
+              <button type="button" aria-label={`Delete view ${v.name}`} onClick={() => remove(v.name)}>×</button>
+            </span>
+          ))}
+        </div>
+      )}
+
+      {selected.size > 0 && (
+        <div className="ds-bulkbar" role="toolbar" aria-label="Bulk triage">
+          <span>{selected.size} selected</span>
+          <Button variant="primary" onClick={() => setTriageOpen("not_a_risk")}>Mark not a risk</Button>
+          <Button onClick={() => setTriageOpen("accepted")}>Accept risk</Button>
+          <Button onClick={() => runTriage("reopen")} disabled={busy}>Reopen</Button>
+          <Button onClick={() => setSelected(new Set())}>Clear</Button>
+        </div>
+      )}
+
+      {error && <p className="ds-issues-error" role="alert">{error}</p>}
+      {!error && page && page.total === 0 && <p className="ds-issues-empty">Nothing here. Try a different filter, or check the triaged-away issues above.</p>}
+
+      {!error && page && page.total > 0 && (
+        <div className="ds-issues-table-wrap">
+          <div className="ds-issues-headrow">
+            {table.getHeaderGroups()[0]?.headers.map((h) => (
+              <div key={h.id} className={`ds-issues-headcell col-${h.column.id}`}>
+                {flexRender(h.column.columnDef.header, h.getContext())}
+              </div>
+            ))}
+          </div>
+          <div ref={parentRef} className="ds-issues-scroll" style={{ height: "min(70vh, 640px)" }}>
+            <div style={{ height: virtualizer.getTotalSize(), position: "relative" }}>
+              {virtualizer.getVirtualItems().map((vi) => {
+                const row = rows[vi.index];
+                if (!row) return null;
+                return (
+                  <div
+                    key={row.id}
+                    className={`ds-issue-row${mode === "expert" ? " compact" : ""}`}
+                    style={{ position: "absolute", top: 0, left: 0, width: "100%", height: vi.size, transform: `translateY(${vi.start}px)` }}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <div key={cell.id} className={`ds-issues-cell col-${cell.column.id}`}>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <Dialog open={saveOpen} onOpenChange={setSaveOpen} title="Save this view" description="Name the current filters so you can come back to them.">
+        <input type="text" value={viewName} onChange={(e) => setViewName(e.target.value)} placeholder="e.g. Critical, unreachable-excluded" className="ds-palette-input" />
+        <div style={{ marginTop: "1rem", display: "flex", gap: "0.5rem" }}>
+          <Button
+            variant="primary"
+            disabled={!viewName.trim()}
+            onClick={() => {
+              save(viewName.trim(), q);
+              setViewName("");
+              setSaveOpen(false);
+            }}
+          >
+            Save
+          </Button>
+        </div>
+      </Dialog>
+
+      <Dialog
+        open={triageOpen === "not_a_risk"}
+        onOpenChange={(o) => !o && setTriageOpen(null)}
+        title="Mark as not a risk"
+        description="A reason is required, and this is written to the audit log."
+      >
+        <textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={3} placeholder="Why isn't this a risk?" className="ds-palette-input" style={{ width: "100%", resize: "vertical" }} />
+        <div style={{ marginTop: "1rem" }}>
+          <Button variant="primary" disabled={!reason.trim() || busy} onClick={() => runTriage("not_a_risk")}>Confirm</Button>
+        </div>
+      </Dialog>
+
+      <Dialog
+        open={triageOpen === "accepted"}
+        onOpenChange={(o) => !o && setTriageOpen(null)}
+        title="Accept this risk"
+        description="An expiry date is required — it reappears automatically once it passes. Written to the audit log."
+      >
+        <input type="date" value={expiresAt} onChange={(e) => setExpiresAt(e.target.value)} className="ds-palette-input" />
+        <textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={2} placeholder="Optional note" className="ds-palette-input" style={{ width: "100%", marginTop: "0.5rem", resize: "vertical" }} />
+        <div style={{ marginTop: "1rem" }}>
+          <Button variant="primary" disabled={!expiresAt || busy} onClick={() => runTriage("accepted")}>Confirm</Button>
+        </div>
+      </Dialog>
+    </div>
+  );
+}

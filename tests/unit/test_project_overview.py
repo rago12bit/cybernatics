@@ -47,13 +47,13 @@ def env(sessions: sessionmaker[Session], tmp_path: Any, monkeypatch: pytest.Monk
 
 def _finding(fid: str, path: str, sev: Severity, *, cat: Category = Category.SAST) -> Finding:
     # core.issues.match_keys() matches on a *primary* key (fingerprint) first, falling back to a
-    # location-independent key (category + a hash of the snippet's normalized tokens) whenever the
-    # primary key is new. That fallback intentionally treats snippets as equal once identifiers and
-    # literals are normalized to generic "ID"/"NUM"/"STR" tokens (so a renamed variable still
-    # matches) -- which means two *different*, unrelated test findings with equally-generic
-    # placeholder snippets would collide onto the same fallback key and be merged into one Issue.
-    # A placeholder-marker snippet (the same one production code uses for a redacted secret) makes
-    # fallback_key() return None outright, matching purely on the `fingerprint` this test controls.
+    # location-independent key (core.issues.fallback_key) whenever the primary key is new. Both
+    # anchor on the rule id when the snippet gives nothing distinguishing to hash (a placeholder,
+    # like the one below, or an empty string) -- so a distinct `rule_id` per test finding is what
+    # actually keeps unrelated findings here from colliding onto the same Issue, not the
+    # placeholder-marker snippet alone (see core.correlation.engine.fingerprint's docstring for the
+    # real bug this guards against: two different rules with no distinguishing snippet used to hash
+    # identically and silently share one tracked Issue).
     f = Finding(
         fid,
         f"title {fid}",
@@ -63,6 +63,7 @@ def _finding(fid: str, path: str, sev: Severity, *, cat: Category = Category.SAS
     )
     f.scoring.normalized_severity = sev
     f.scoring.risk_score = {"CRITICAL": 90, "HIGH": 70, "LOW": 20}[sev.value]
+    f.evidence.rule_ids = {"bandit": [f"rule-{fid}"]}
     f.evidence.reported_by = ["bandit"]
     # The real pipeline computes this via core.correlation.engine.fingerprint before syncing issues
     # (core/pipeline.py); a plain Finding() leaves it "" for every instance, which would make every

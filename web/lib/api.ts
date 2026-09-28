@@ -1,4 +1,4 @@
-import type { AssetSummary, FindingsPage, FindingsQuery, Guidance, GuidanceApi, ProjectOverview, Remediation, ScanSummary, ScanView } from "./types";
+import type { AssetSummary, BulkTriageResult, Finding, FindingsPage, FindingsQuery, Guidance, GuidanceApi, IssueHistoryEvent, ProjectOverview, Remediation, ScanSummary, ScanView, TriageStatus } from "./types";
 import { findingsQueryString } from "./format";
 
 export const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/$/, "");
@@ -138,3 +138,52 @@ export const liveGuidance: GuidanceApi = { get: getGuidance, request: requestSug
 export const listAssets = () => request<AssetSummary[]>("/assets?limit=50");
 export const getAssetOverview = (id: string) =>
   request<ProjectOverview>(`/assets/${encodeURIComponent(id)}/overview`);
+
+/** The issues table (plan §28.3, Week 34): the asset's currently-open issues, joined with triage
+ * state. `triage` omitted is the active queue; pass e.g. ["accepted"] to see triaged-away issues. */
+export interface IssuesQuery {
+  severity: string[];
+  category: string;
+  triage: TriageStatus[];
+  sort: "severity" | "path" | "risk";
+}
+
+function issuesQueryString(q: IssuesQuery, limit?: number, offset?: number): string {
+  const p = new URLSearchParams();
+  q.severity.forEach((s) => p.append("severity", s));
+  if (q.category) p.append("category", q.category);
+  q.triage.forEach((t) => p.append("triage", t));
+  p.set("sort", q.sort);
+  if (limit != null) p.set("limit", String(limit));
+  if (offset != null) p.set("offset", String(offset));
+  return p.toString();
+}
+
+export const listIssues = (assetId: string, q: IssuesQuery, limit = 200, offset = 0) =>
+  request<FindingsPage>(`/assets/${encodeURIComponent(assetId)}/issues?${issuesQueryString(q, limit, offset)}`);
+
+export const getIssue = (assetId: string, issueId: string) =>
+  request<Finding>(`/assets/${encodeURIComponent(assetId)}/issues/${encodeURIComponent(issueId)}`);
+
+export const getIssueHistory = (assetId: string, issueId: string) =>
+  request<IssueHistoryEvent[]>(`/assets/${encodeURIComponent(assetId)}/issues/${encodeURIComponent(issueId)}/history`);
+
+export interface TriageAction {
+  action: "not_a_risk" | "accepted" | "reopen";
+  reason?: string;
+  expires_at?: string;
+}
+
+export const triageIssue = (assetId: string, issueId: string, body: TriageAction) =>
+  request<{ triage_status: TriageStatus }>(`/assets/${encodeURIComponent(assetId)}/issues/${encodeURIComponent(issueId)}/triage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+export const bulkTriageIssues = (assetId: string, issueIds: string[], body: TriageAction) =>
+  request<BulkTriageResult>(`/assets/${encodeURIComponent(assetId)}/issues/bulk-triage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ issue_ids: issueIds, ...body }),
+  });

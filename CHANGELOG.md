@@ -5,6 +5,41 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 
 ## [Unreleased]
 
+### Fixed
+- **Cross-tool/cross-rule correlation identity (`core/correlation/engine.py`'s `fingerprint()`,
+  `core/issues.py`'s `fallback_key()`):** two genuinely different findings could silently share one
+  tracked Issue (ADR-0012) whenever their snippet gave nothing distinguishing to hash — either no
+  snippet at all (Trivy's Dockerfile checks: `DS002` "runs as root" and `DS026` "no HEALTHCHECK" on
+  the same line) or a real but non-unique snippet (Trivy's Terraform checks quote the whole resource
+  block for every rule that fires against it — ten different misconfigurations, one snippet).
+  Confirmed against this repo's own real golden scan data and this session's live Postgres
+  deployment, where it meant triaging one Dockerfile finding silently also dismissed an unrelated
+  one. Fixed by always folding the finding's rule id(s) into both functions' hash; never affects
+  cross-tool merging of the *same* defect, which `correlate()` already decides via other signals
+  before either function runs. Migrated and re-verified against real Postgres; see
+  `docs/v2-week34-verification.md`.
+
+### Added
+- **Week 34 — Issues experience (plan §28.3, §30.4, §32):** a virtualized issues table
+  (`components/IssuesTable.tsx`, real `@tanstack/react-table` + `@tanstack/react-virtual`, not a
+  hand-rolled scroller) with severity/triage filters, sort, bulk selection, and saved views
+  (`localStorage`-backed, no per-user identity yet — see the verification doc for why); an issue
+  detail screen (`components/IssueDetail.tsx`) with the why-ranked panel reused from Week 33, a
+  taint-path stepper that's honestly "static until Phase 9 supplies real paths" (one real step, the
+  finding's own location — never a fabricated multi-hop path), a real Shiki code view, and a real
+  event history built from the tamper-evident audit log. Triage itself: `not_a_risk` (reason
+  required) and `accepted` (expiry required, and it reappears in the active queue automatically once
+  the expiry passes) both write to the audit log, exactly as §28.3 specifies; `reopen` undoes either.
+  New `GET/POST /assets/{id}/issues...` endpoints (migration `0009_issue_triage.py`) reuse the
+  existing scan-findings query machinery rather than introducing a second source of truth. Novice
+  and expert mode (`design-system/mode.tsx`, §30.4): a real, working, `localStorage`-persisted
+  toggle for row density, the plain-language explanation's default state, and rule-id visibility —
+  explicitly not the sign-in landing page, since no per-user sign-in flow exists yet. 13 new backend
+  tests plus 2 correlation regression tests, 869 passed overall; live-verified end to end in the
+  browser against a disposable local server, which caught and fixed a real hardcoded-plural bug
+  along the way. Full account, including the real pre-existing correlation bug found while building
+  this, in `docs/v2-week34-verification.md`.
+
 ### Added
 - **Week 33 — App shell and project overview (plan §27, §28.1, §30.1, §32):** the first real
   screens built on Week 32's design system — additive at the route level (`/app/projects`,

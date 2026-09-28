@@ -44,12 +44,29 @@ export interface ScanView {
   issue_counts?: Partial<Record<"new" | "open" | "reintroduced", number>>;
 }
 
+export type TriageStatus = "open" | "not_a_risk" | "accepted";
+
 /** Which side of an Issue's lifecycle a finding is on right now (ADR-0012). Absent ("null") means
  * this scan predates Issue tracking, or has no asset. A "fixed" issue never appears here — it has
- * no occurrence in the scan that would carry this field. */
+ * no occurrence in the scan that would carry this field. Triage (plan §28.3) is a human decision
+ * layered on top of `state`, not a replacement for it. */
 export interface IssueRef {
   id: string;
   state: "new" | "open" | "reintroduced";
+  triage_status?: TriageStatus;
+  triage_reason?: string | null;
+  triage_expires_at?: string | null;
+  first_seen_at?: string | null;
+}
+
+export interface IssueHistoryEvent {
+  at: string;
+  label: string;
+}
+
+export interface BulkTriageResult {
+  updated: string[];
+  failed: { issue_id: string; error: string }[];
 }
 
 /** Guidance for one finding. `source` says whether a model wrote it; `label` is always displayed with it. */
@@ -126,6 +143,10 @@ export interface Finding {
   remediation: { summary: string; references: string[]; generated_by: string };
   package: { name: string; version: string; ecosystem: string } | null;
   issue?: IssueRef | null;
+  /** Only present on /assets/.../issues responses (Week 34): the scan this occurrence came from,
+   * so the issue detail screen can reuse the existing scan-scoped guidance API without a second
+   * round trip to look it up. */
+  scan_id?: string;
 }
 
 export interface FindingsPage {

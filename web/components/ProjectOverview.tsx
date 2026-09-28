@@ -50,6 +50,7 @@ export function ProjectOverview({ assetId }: { assetId: string }) {
     <div className="ds-ov">
       <div className="ds-ov-crumbline">
         {data.asset.label} <span aria-hidden="true">·</span>{" "}
+        <Link href={`/app/projects/${assetId}/issues`}>all issues</Link> <span aria-hidden="true">·</span>{" "}
         <Link href={`/scans/${data.latest_scan_id}`}>full scan report</Link>
       </div>
 
@@ -79,14 +80,14 @@ export function ProjectOverview({ assetId }: { assetId: string }) {
                     <code>{f.location.path}:{f.location.start_line}</code>
                   </div>
                 </div>
-                <Link href={`/scans/${data.latest_scan_id}`} className="ds-ov-item-action">View →</Link>
+                <Link href={f.issue ? `/app/projects/${assetId}/issues/${f.issue.id}` : `/scans/${data.latest_scan_id}`} className="ds-ov-item-action">View →</Link>
               </li>
             ))}
           </ol>
           {more_at_lower_risk > 0 && (
             <p className="ds-ov-more">
               {more_at_lower_risk} more issue{more_at_lower_risk === 1 ? "" : "s"} at lower risk{" "}
-              <Link href={`/scans/${data.latest_scan_id}`}>View all</Link>
+              <Link href={`/app/projects/${assetId}/issues`}>View all</Link>
             </p>
           )}
         </section>

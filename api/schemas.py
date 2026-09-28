@@ -98,6 +98,40 @@ class ScannedTool(BaseModel):
     findings: int = 0
 
 
+class TriageRequest(BaseModel):
+    action: Literal["not_a_risk", "accepted", "reopen"]
+    reason: str | None = Field(default=None, max_length=2000)
+    expires_at: datetime | None = None
+
+
+class BulkTriageRequest(BaseModel):
+    issue_ids: list[str] = Field(min_length=1, max_length=500)
+    action: Literal["not_a_risk", "accepted", "reopen"]
+    reason: str | None = Field(default=None, max_length=2000)
+    expires_at: datetime | None = None
+
+
+class IssueView(BaseModel):
+    id: str
+    state: str
+    triage_status: str
+    triage_reason: str | None
+    triage_expires_at: datetime | None
+
+
+class BulkTriageResult(BaseModel):
+    updated: list[str]
+    failed: list[dict[str, str]] = Field(
+        description="Each item: {issue_id, error} — one issue failing (e.g. not found in this "
+        "org) doesn't abort the rest of the batch."
+    )
+
+
+class IssueHistoryEvent(BaseModel):
+    at: datetime
+    label: str
+
+
 class TrendPoint(BaseModel):
     scan_id: str
     finished_at: datetime

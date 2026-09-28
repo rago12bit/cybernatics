@@ -31,18 +31,28 @@ def fallback_key(f: Finding) -> str | None:
     the file path, so moving a function to another file does not manufacture a spurious "new" issue
     alongside a spurious "fixed" one.
 
-    Returns None where there is nothing safe to anchor on without the path: SCA findings (the
-    package/version/CVE triple is already location-independent, so the primary fingerprint already
-    serves as its own fallback and this would just duplicate it) and findings whose snippet was
-    redacted to a placeholder (a hash of "[secret redacted]" would match every other redacted
-    finding with the same CWE, which is not identity, it's a collision).
+    Returns None only for SCA findings (the package/version/CVE triple is already
+    location-independent, so the primary fingerprint already serves as its own fallback and this
+    would just duplicate it). Every other case anchors on the rule id(s) that fired, same as the
+    primary fingerprint (`core.correlation.engine.fingerprint` -- see its docstring for the two real
+    collisions, confirmed against this repo's own golden scan data, that made this necessary): a
+    placeholder or empty snippet alone gives literally nothing to anchor on, and even a real,
+    non-empty snippet isn't always unique -- an IaC linter (Trivy's Terraform checks, for one)
+    routinely quotes the *entire resource block* verbatim for every distinct rule that fires against
+    it, so several genuinely different findings can share one snippet. Without the rule id here too,
+    this key -- already path-independent by design -- would match those collisions *anywhere in the
+    asset*, which is a strictly worse version of the same bug than the primary fingerprint has.
     """
     if f.package:
         return None
-    if is_placeholder(f.location.snippet):
-        return None
+    snip = f.location.snippet
     cwe = min(cwe_family(f) or {"none"})
-    raw = f"{cwe}|{snippet_hash(f.location.snippet)}"
+    rule_ids = sorted({r for rules in f.evidence.rule_ids.values() for r in rules})
+    rules_part = "|".join(rule_ids) if rule_ids else "no-rule-id"
+    snippet_part = (
+        "placeholder" if (is_placeholder(snip) or not snip.strip()) else snippet_hash(snip)
+    )
+    raw = f"{cwe}|{snippet_part}|{rules_part}"
     return "fallback:" + hashlib.sha256(raw.encode()).hexdigest()
 
 

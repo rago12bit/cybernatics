@@ -183,6 +183,18 @@ class IssueRow(Base):
     last_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
     fixed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
+    # Triage (Week 34, plan §28.3): a human decision layered on top of `state`, not a replacement
+    # for it -- an issue a scan still finds can independently be "open" (untouched), "not_a_risk"
+    # (a person said so, with a reason), or "accepted" (a person said so, with an expiry; it
+    # reappears in the active queue automatically once `triage_expires_at` passes).
+    triage_status: Mapped[str] = mapped_column(String(16), default="open", index=True)
+    triage_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    triage_expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    triaged_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    triaged_by: Mapped[str | None] = mapped_column(String(200), nullable=True)
+
     asset: Mapped[Asset] = relationship(back_populates="issues")
 
     __table_args__ = (

@@ -33,6 +33,7 @@ from sqlalchemy.orm import Session
 
 from api.deps import (
     AppState,
+    AuthContext,
     EventSubscriber,
     current_org,
     db,
@@ -43,9 +44,13 @@ from api.deps import (
 )
 from api.schemas import (
     AssetSummary,
+    BulkTriageRequest,
+    BulkTriageResult,
     FeedsStatus,
     FindingsPage,
     GuidanceView,
+    IssueHistoryEvent,
+    IssueView,
     ProjectOverview,
     RemediationView,
     ScanCreated,
@@ -56,6 +61,7 @@ from api.schemas import (
     SuggestionRequest,
     ToolStatus,
     TrendPoint,
+    TriageRequest,
 )
 from core.config import Settings
 from core.export import FORMATS, ReportData, render
@@ -107,6 +113,21 @@ def _get_asset(s: Session, asset_id: str, org_id: str) -> Any:
     if asset is None:
         raise HTTPException(404, "project not found")
     return asset
+
+
+def _get_issue(s: Session, issue_id: str, org_id: str) -> Any:
+    """Same 404-not-403 pattern as `_get_scan`/`_get_asset` (ADR-0013)."""
+    issue = repo.get_issue(s, issue_id, org_id=org_id) if _UUID.match(issue_id) else None
+    if issue is None:
+        raise HTTPException(404, "issue not found")
+    return issue
+
+
+def _issue_view(row: Any) -> IssueView:
+    return IssueView(
+        id=row.id, state=row.state, triage_status=row.triage_status,
+        triage_reason=row.triage_reason, triage_expires_at=row.triage_expires_at,
+    )  # fmt: skip
 
 
 def _all_findings(s: Session, scan_id: str) -> list[dict[str, Any]]:
@@ -507,6 +528,131 @@ def create_app(app_state: AppState) -> FastAPI:
             latest_scan_id=latest.id,
             latest_scan_finished_at=latest.finished_at,
         )
+
+    @app.get(
+        "/assets/{asset_id}/issues",
+        response_model=FindingsPage,
+        dependencies=[Depends(require_scope("scans:read"))],
+    )
+    def list_issues(
+        asset_id: str,
+        severity: list[str] | None = Query(default=None),
+        category: list[str] | None = Query(default=None),
+        triage: list[str] | None = Query(
+            default=None,
+            description="Filter TO these triage statuses (e.g. accepted, not_a_risk). Omitted: "
+            "the active queue -- untouched issues, plus any accepted issue past its expiry.",
+        ),
+        sort: str = Query(default="risk", pattern="^(severity|path|risk)$"),
+        limit: int = Query(default=100, ge=1, le=500),
+        offset: int = Query(default=0, ge=0),
+        s: Session = Depends(db),
+        org: str = Depends(current_org),
+    ) -> FindingsPage:
+        """Plan §28.3's issues table: the asset's currently-open issues (its latest scan's
+        findings, joined with each one's triage state). Empty, not 404, when nothing has scanned
+        yet -- mirrors `/scans/{id}/findings`'s own shape so the same frontend table component
+        can render either."""
+        asset = _get_asset(s, asset_id, org)
+        latest = repo.latest_scan_for_asset(s, asset.id, org_id=org)
+        if latest is None:
+            return FindingsPage(total=0, limit=limit, offset=offset, items=[])
+        page = repo.list_asset_issues(
+            s, asset.id, latest.id, severities=severity, categories=category, triage=triage,
+            sort=sort, limit=limit, offset=offset,
+        )  # fmt: skip
+        return FindingsPage(total=page.total, limit=limit, offset=offset, items=page.items)
+
+    @app.get(
+        "/assets/{asset_id}/issues/{issue_id}",
+        dependencies=[Depends(require_scope("scans:read"))],
+    )
+    def get_one_issue(
+        asset_id: str, issue_id: str, s: Session = Depends(db), org: str = Depends(current_org)
+    ) -> dict[str, Any]:
+        """The one issue's own detail screen (plan §28.3): the same Finding shape as a row in the
+        issues table, fetched on its own rather than paging through the whole list."""
+        asset = _get_asset(s, asset_id, org)
+        _get_issue(s, issue_id, org)
+        latest = repo.latest_scan_for_asset(s, asset.id, org_id=org)
+        finding = repo.get_issue_finding(s, issue_id, latest.id) if latest else None
+        if finding is None:
+            raise HTTPException(404, "issue not found in the latest scan")
+        return finding
+
+    @app.post(
+        "/assets/{asset_id}/issues/{issue_id}/triage",
+        response_model=IssueView,
+        dependencies=[Depends(require_scope("scans:write"))],
+    )
+    def triage_one_issue(
+        asset_id: str,
+        issue_id: str,
+        body: TriageRequest,
+        auth: AuthContext = Depends(require_auth),
+        s: Session = Depends(db),
+        org: str = Depends(current_org),
+    ) -> IssueView:
+        """Mark not-a-risk (needs a reason) or accept risk (needs an expiry), or reopen either
+        decision -- plan §28.3: "Both write to the audit log." `asset_id` in the path is a
+        readability/routing convenience (matches the frontend's URLs); the org check that actually
+        matters is `_get_asset` below, before the issue lookup even runs."""
+        _get_asset(s, asset_id, org)
+        try:
+            row = repo.triage_issue(
+                s, issue_id, org_id=org, action=body.action, reason=body.reason,
+                expires_at=body.expires_at, actor=auth.actor,
+            )  # fmt: skip
+        except LookupError as exc:
+            raise HTTPException(404, "issue not found") from exc
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from exc
+        return _issue_view(row)
+
+    @app.post(
+        "/assets/{asset_id}/issues/bulk-triage",
+        response_model=BulkTriageResult,
+        dependencies=[Depends(require_scope("scans:write"))],
+    )
+    def bulk_triage_issues(
+        asset_id: str,
+        body: BulkTriageRequest,
+        auth: AuthContext = Depends(require_auth),
+        s: Session = Depends(db),
+        org: str = Depends(current_org),
+    ) -> BulkTriageResult:
+        """Same rule per issue as the single-issue endpoint, applied to a batch: one issue failing
+        (not found in this org, or a bad request for that action) doesn't abort the rest -- each
+        success still gets its own audit entry, exactly as if triaged one at a time."""
+        _get_asset(s, asset_id, org)
+        updated: list[str] = []
+        failed: list[dict[str, str]] = []
+        for issue_id in body.issue_ids:
+            try:
+                repo.triage_issue(
+                    s, issue_id, org_id=org, action=body.action, reason=body.reason,
+                    expires_at=body.expires_at, actor=auth.actor,
+                )  # fmt: skip
+                updated.append(issue_id)
+            except LookupError:
+                failed.append({"issue_id": issue_id, "error": "not found"})
+            except ValueError as exc:
+                failed.append({"issue_id": issue_id, "error": str(exc)})
+        return BulkTriageResult(updated=updated, failed=failed)
+
+    @app.get(
+        "/assets/{asset_id}/issues/{issue_id}/history",
+        response_model=list[IssueHistoryEvent],
+        dependencies=[Depends(require_scope("scans:read"))],
+    )
+    def get_issue_history(
+        asset_id: str, issue_id: str, s: Session = Depends(db), org: str = Depends(current_org)
+    ) -> list[IssueHistoryEvent]:
+        _get_asset(s, asset_id, org)
+        _get_issue(s, issue_id, org)
+        return [
+            IssueHistoryEvent(at=e["at"], label=e["label"]) for e in repo.issue_history(s, issue_id)
+        ]
 
     @app.get(
         "/scans/{scan_id}/guidance",

@@ -1,0 +1,206 @@
+.ds-issue {
+  display: grid;
+  gap: var(--ds-space-3);
+  font-family: var(--ds-font-sans);
+  color: var(--ds-ink);
+  max-width: 72rem;
+}
+
+.ds-issue-topline {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-2);
+  padding-bottom: var(--ds-space-2);
+  border-bottom: 1px solid var(--ds-rule);
+  font-size: var(--ds-text-2);
+}
+.ds-issue-topline a {
+  color: var(--ds-brand);
+  text-decoration: none;
+}
+.ds-issue-topline code {
+  font-family: var(--ds-font-mono);
+  color: var(--ds-muted);
+  font-size: var(--ds-text-1);
+}
+.ds-issue-topline-title {
+  font-weight: 600;
+  font-size: var(--ds-text-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ds-issue-topline-spacer {
+  flex: 1;
+}
+.ds-mode-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: var(--ds-text-1);
+  color: var(--ds-muted);
+  white-space: nowrap;
+}
+
+.ds-issue-triage-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-2);
+  padding: 0.7rem 1rem;
+  border: 1px solid var(--ds-rule);
+  border-radius: var(--ds-radius-panel);
+  background: color-mix(in srgb, var(--ds-sev-medium) 8%, var(--ds-raised));
+  font-size: var(--ds-text-2);
+}
+
+.ds-issue-grid {
+  display: grid;
+  grid-template-columns: 1.7fr 1fr;
+  gap: var(--ds-space-4);
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .ds-issue-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ds-issue-main-col {
+  display: grid;
+  gap: var(--ds-space-3);
+  min-width: 0;
+}
+
+.ds-issue-section {
+  min-width: 0;
+}
+.ds-issue-label {
+  font-size: var(--ds-text-1);
+  color: var(--ds-muted);
+  font-weight: 500;
+  margin-bottom: 0.4rem;
+}
+
+.ds-issue-explain-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  color: var(--ds-muted);
+  padding: 0;
+  font-size: var(--ds-text-1);
+  font-weight: 500;
+}
+.ds-ai-tag {
+  font-size: var(--ds-text-1);
+  color: var(--ds-sev-medium);
+  border: 1px dashed var(--ds-sev-medium);
+  border-radius: var(--ds-radius-input);
+  padding: 0 0.3rem;
+}
+.ds-issue-explain-text {
+  margin: 0.5rem 0 0;
+  font-size: var(--ds-text-2);
+  line-height: 1.55;
+  color: var(--ds-ink);
+  max-width: 60ch;
+}
+
+.ds-issue-sidebar {
+  display: grid;
+  gap: var(--ds-space-3);
+  border-left: 1px solid var(--ds-rule);
+  padding-left: var(--ds-space-3);
+}
+@media (max-width: 900px) {
+  .ds-issue-sidebar {
+    border-left: 0;
+    border-top: 1px solid var(--ds-rule);
+    padding-left: 0;
+    padding-top: var(--ds-space-3);
+  }
+}
+.ds-issue-meta {
+  font-size: var(--ds-text-1);
+  color: var(--ds-muted);
+  margin: 0.4rem 0 0;
+}
+.ds-issue-rules {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: var(--ds-text-1);
+  color: var(--ds-muted);
+  display: grid;
+  gap: 0.2rem;
+}
+.ds-issue-rules code {
+  font-family: var(--ds-font-mono);
+}
+.ds-issue-actions {
+  display: grid;
+  gap: 0.5rem;
+}
+.ds-issue-history {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: var(--ds-text-2);
+  display: grid;
+  gap: 0.4rem;
+}
+.ds-issue-history span {
+  font-family: var(--ds-font-mono);
+  font-size: var(--ds-text-1);
+  color: var(--ds-muted);
+  margin-right: 0.5rem;
+}
+
+.ds-issue-input {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: var(--ds-font-sans);
+  font-size: var(--ds-text-2);
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--ds-rule);
+  border-radius: var(--ds-radius-input);
+  background: var(--ds-surface);
+  color: var(--ds-ink);
+  resize: vertical;
+}
+
+.ds-issue-empty {
+  padding: var(--ds-space-4);
+  color: var(--ds-muted);
+  font-family: var(--ds-font-sans);
+}
+
+/* Shiki code view */
+.ds-code-shiki {
+  border: 1px solid var(--ds-rule);
+  border-radius: var(--ds-radius-panel);
+  overflow: auto;
+  font-size: var(--ds-text-1);
+}
+.ds-code-shiki pre {
+  margin: 0;
+  padding: 0.8rem;
+}
+.ds-code-plain {
+  border: 1px solid var(--ds-rule);
+  border-radius: var(--ds-radius-panel);
+  padding: 0.8rem;
+  font-family: var(--ds-font-mono);
+  font-size: var(--ds-text-1);
+  overflow: auto;
+  background: var(--ds-surface);
+  margin: 0;
+}
+.ds-code-highlight {
+  display: inline-block;
+  width: 100%;
+  background: color-mix(in srgb, var(--ds-sev-medium) 15%, transparent);
+}

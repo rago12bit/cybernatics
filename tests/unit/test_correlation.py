@@ -257,6 +257,27 @@ def test_code_fingerprint_depends_on_cwe_and_path() -> None:
     assert fingerprint(base) != fingerprint(code("bandit", "B1", 5, path="b.py"))
 
 
+def test_code_fingerprint_distinguishes_different_rules_with_no_snippet() -> None:
+    """Real bug, confirmed against this repo's own golden scan data (see fingerprint()'s
+    docstring): Trivy's Dockerfile checks quote no snippet at all, so two *different* rules on the
+    same line -- DS002 "runs as root" and DS026 "no HEALTHCHECK" -- used to hash identically and
+    silently collapse into one tracked Issue."""
+    ds002 = code("trivy", "DS002", 1, cwe="", snippet="")
+    ds026 = code("trivy", "DS026", 1, cwe="", snippet="")
+    assert fingerprint(ds002) != fingerprint(ds026)
+
+
+def test_code_fingerprint_distinguishes_different_rules_sharing_one_quoted_block() -> None:
+    """Real bug, confirmed against this repo's own golden scan data: an IaC linter (Trivy's
+    Terraform checks, for one) routinely quotes the *entire resource block* verbatim for every rule
+    that fires against it, so several genuinely different misconfiguration findings on one resource
+    used to share a snippet and hash identically."""
+    block = 'resource "aws_s3_bucket" "b" {\n  bucket = "x"\n  acl    = "public-read"\n}'
+    public_acl = code("trivy", "AVD-AWS-0086", 1, cwe="", snippet=block)
+    no_versioning = code("trivy", "AVD-AWS-0090", 1, cwe="", snippet=block)
+    assert fingerprint(public_acl) != fingerprint(no_versioning)
+
+
 def test_sca_fingerprint_is_exact_and_tool_independent() -> None:
     t = sca("trivy", "CVE-1", cves=("CVE-1",))
     o = sca("osv-scanner", "GHSA-x", aliases=("CVE-1",), cves=("CVE-1",))

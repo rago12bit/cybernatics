@@ -9,6 +9,7 @@ import { DropdownMenuChildren } from "@/design-system/primitives/DropdownMenu";
 import { Dialog as DsDialog } from "@/design-system/primitives/Dialog";
 import { Button } from "@/design-system/primitives/Button";
 import { TooltipProvider } from "@/design-system/primitives/Tooltip";
+import { ModeProvider } from "@/design-system/mode";
 import * as RadixDropdown from "@radix-ui/react-dropdown-menu";
 import "@/design-system/fonts.css";
 import "@/design-system/tokens.css";
@@ -52,6 +53,7 @@ export function AppShell({ crumbs, children }: { crumbs: Crumb[]; children: Reac
   }, []);
 
   return (
+    <ModeProvider>
     <TooltipProvider>
       <div className="ds-shell">
         <header className="ds-shell-top">
@@ -85,6 +87,7 @@ export function AppShell({ crumbs, children }: { crumbs: Crumb[]; children: Reac
         <ShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
       </div>
     </TooltipProvider>
+    </ModeProvider>
   );
 }
 

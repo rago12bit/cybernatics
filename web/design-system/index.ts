@@ -7,3 +7,8 @@ export type { DropdownItem } from "./primitives/DropdownMenu";
 export { Dialog } from "./primitives/Dialog";
 export { Tabs } from "./primitives/Tabs";
 export { WhyRankedPanel, WhyRankedTrigger } from "./why-ranked";
+export { TaintStepper } from "./taint-stepper";
+export type { TaintStep } from "./taint-stepper";
+export { CodeView } from "./code-view";
+export { ModeProvider, useMode } from "./mode";
+export type { Mode } from "./mode";
