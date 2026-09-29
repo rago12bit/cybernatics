@@ -39,7 +39,9 @@ async function mount() {
 // The wait condition itself is the actual thing each caller is about to assert on next -- there's
 // no ambiguous window for "the alert text appeared" or "createObjectURL was called" to be
 // trivially true before the click did anything, unlike (1) and (2) above.
-async function waitFor(cond: () => boolean, timeoutMs = 2000, stepMs = 5) {
+// 5s, not 2s: a correctly-written wait can still lose to CI scheduler jitter under the real
+// CPU oversubscription described in vitest.config.ts (17 worker processes on a 2-CPU runner).
+async function waitFor(cond: () => boolean, timeoutMs = 5000, stepMs = 5) {
   const start = Date.now();
   while (!cond()) {
     if (Date.now() - start > timeoutMs) throw new Error("waitFor: timed out");

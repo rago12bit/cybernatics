@@ -7,6 +7,7 @@ only writable path is the output directory.
 
 from __future__ import annotations
 
+import os
 import subprocess
 import tempfile
 import uuid
@@ -45,6 +46,14 @@ def build_docker_argv(
     tool_cmd = adapter.build_command(
         Path(CONTAINER_TARGET), Path(CONTAINER_OUT) / spec.output_name, ctx
     )
+    # Docker refuses `--cpus` above the host's actual CPU count outright ("range of CPUs is
+    # from 0.01 to N.NN, as there are only N CPUs available") -- it's not a soft cap. A tool
+    # tuned against a beefier dev machine (e.g. trivy/semgrep at cpus=4) then fails every single
+    # run, deterministically, on a smaller host such as a GitHub Actions runner's 2 CPUs. This
+    # isn't the flakiness `pytest-rerunfailures` (tests/integration/test_tools_docker.py) was
+    # added for -- retrying the identical argv against the identical host fails the same way
+    # every time -- so it has to be fixed at the source: clamp to what the host actually has.
+    effective_cpus = min(spec.cpus, os.cpu_count() or spec.cpus)
     return [
         "docker",
         "run",
@@ -57,7 +66,7 @@ def build_docker_argv(
         "--user=10001:10001",
         "--security-opt=no-new-privileges",
         f"--memory={spec.memory_limit}",
-        f"--cpus={spec.cpus:g}",
+        f"--cpus={effective_cpus:g}",
         "--pids-limit=256",
         "--label=bulwark.managed=1",
         f"--tmpfs=/tmp:rw,noexec,nosuid,size={spec.tmp_size}",
