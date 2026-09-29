@@ -25,6 +25,7 @@ from core.reachability import analyze_or_none
 from core.risk import ensure_fresh
 from core.scan import ADAPTERS, ToolOutcome, detect_context, execute_tool
 from core.source import materialize
+from core.taint import analyze_or_none as taint_analyze_or_none
 from core.tenancy import scoped_sessions
 
 log = logging.getLogger(__name__)
@@ -114,6 +115,8 @@ def _run_scan_job(
                 ctx = detect_context(workspace)
             with span("reachability"):
                 reach = analyze_or_none(workspace)
+            with span("taint"):
+                taint = taint_analyze_or_none(workspace)
             runnable: list[str] = []
             outcomes: list[ToolOutcome] = []
             for name in tools:
@@ -154,7 +157,7 @@ def _run_scan_job(
         set_attributes(sp, raw=stats.raw, unique=stats.unique)
     with span("finalize"):
         ensure_fresh()
-        findings = finalize(correlated, reach=reach)
+        findings = finalize(correlated, reach=reach, taint=taint, root=workspace)
     has_secrets = any(f.taxonomy.category is Category.SECRETS for f in findings)
     with span("persist", findings=len(findings)):
         _store_raw(sessions, store, scan_id, outcomes, raws, has_secrets)

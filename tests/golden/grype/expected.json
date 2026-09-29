@@ -48,6 +48,7 @@
       "risk_factors": [],
       "risk_score": null
     },
+    "taint_path": [],
     "taxonomy": {
       "aliases": [
         "GHSA-35jh-r3h4-6jhm",
@@ -118,6 +119,7 @@
       "risk_factors": [],
       "risk_score": null
     },
+    "taint_path": [],
     "taxonomy": {
       "aliases": [
         "GHSA-x84v-xcm2-53pg",
@@ -188,6 +190,7 @@
       "risk_factors": [],
       "risk_score": null
     },
+    "taint_path": [],
     "taxonomy": {
       "aliases": [
         "GHSA-jf85-cpcp-j695",
@@ -258,6 +261,7 @@
       "risk_factors": [],
       "risk_score": null
     },
+    "taint_path": [],
     "taxonomy": {
       "aliases": [
         "GHSA-p6mc-m468-83gw",
@@ -329,6 +333,7 @@
       "risk_factors": [],
       "risk_score": null
     },
+    "taint_path": [],
     "taxonomy": {
       "aliases": [
         "GHSA-29mw-wpgm-hmr9",
@@ -399,6 +404,7 @@
       "risk_factors": [],
       "risk_score": null
     },
+    "taint_path": [],
     "taxonomy": {
       "aliases": [
         "GHSA-562c-5r94-xh97",
@@ -469,6 +475,7 @@
       "risk_factors": [],
       "risk_score": null
     },
+    "taint_path": [],
     "taxonomy": {
       "aliases": [
         "GHSA-r5fr-rjxr-66jc",
@@ -539,6 +546,7 @@
       "risk_factors": [],
       "risk_score": null
     },
+    "taint_path": [],
     "taxonomy": {
       "aliases": [
         "GHSA-x5rq-j2xg-h7qm",
@@ -610,6 +618,7 @@
       "risk_factors": [],
       "risk_score": null
     },
+    "taint_path": [],
     "taxonomy": {
       "aliases": [
         "GHSA-j8r2-6x86-q33q",
@@ -680,6 +689,7 @@
       "risk_factors": [],
       "risk_score": null
     },
+    "taint_path": [],
     "taxonomy": {
       "aliases": [
         "GHSA-5wv5-4vpf-pj6m",
@@ -748,6 +758,7 @@
       "risk_factors": [],
       "risk_score": null
     },
+    "taint_path": [],
     "taxonomy": {
       "aliases": [
         "GHSA-fvqr-27wr-82fm",
@@ -819,6 +830,7 @@
       "risk_factors": [],
       "risk_score": null
     },
+    "taint_path": [],
     "taxonomy": {
       "aliases": [
         "GHSA-4xc9-xhrj-v574",
@@ -889,6 +901,7 @@
       "risk_factors": [],
       "risk_score": null
     },
+    "taint_path": [],
     "taxonomy": {
       "aliases": [
         "GHSA-xxjr-mmjv-4gpg",
@@ -959,6 +972,7 @@
       "risk_factors": [],
       "risk_score": null
     },
+    "taint_path": [],
     "taxonomy": {
       "aliases": [
         "GHSA-m2qf-hxjv-5gpq",
@@ -1029,6 +1043,7 @@
       "risk_factors": [],
       "risk_score": null
     },
+    "taint_path": [],
     "taxonomy": {
       "aliases": [
         "GHSA-9hjg-9r4m-mvj7",
@@ -1099,6 +1114,7 @@
       "risk_factors": [],
       "risk_score": null
     },
+    "taint_path": [],
     "taxonomy": {
       "aliases": [
         "GHSA-f23m-r3pf-42rh",
@@ -1169,6 +1185,7 @@
       "risk_factors": [],
       "risk_score": null
     },
+    "taint_path": [],
     "taxonomy": {
       "aliases": [
         "GHSA-9wx4-h78v-vm56",
@@ -1239,6 +1256,7 @@
       "risk_factors": [],
       "risk_score": null
     },
+    "taint_path": [],
     "taxonomy": {
       "aliases": [
         "GHSA-68rp-wp8r-4726",
@@ -1309,6 +1327,7 @@
       "risk_factors": [],
       "risk_score": null
     },
+    "taint_path": [],
     "taxonomy": {
       "aliases": [
         "GHSA-gc5v-m9x4-r6x2",

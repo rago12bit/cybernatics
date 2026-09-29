@@ -48,6 +48,7 @@
       "risk_factors": [],
       "risk_score": null
     },
+    "taint_path": [],
     "taxonomy": {
       "aliases": [
         "CVE-2020-28500",
@@ -119,6 +120,7 @@
       "risk_factors": [],
       "risk_score": null
     },
+    "taint_path": [],
     "taxonomy": {
       "aliases": [
         "CVE-2021-23337",
@@ -193,6 +195,7 @@
       "risk_factors": [],
       "risk_score": null
     },
+    "taint_path": [],
     "taxonomy": {
       "aliases": [
         "CVE-2018-16487",
@@ -263,6 +266,7 @@
       "risk_factors": [],
       "risk_score": null
     },
+    "taint_path": [],
     "taxonomy": {
       "aliases": [
         "CVE-2025-13465",
@@ -336,6 +340,7 @@
       "risk_factors": [],
       "risk_score": null
     },
+    "taint_path": [],
     "taxonomy": {
       "aliases": [
         "CVE-2018-3721",
@@ -407,6 +412,7 @@
       "risk_factors": [],
       "risk_score": null
     },
+    "taint_path": [],
     "taxonomy": {
       "aliases": [
         "CVE-2019-10744",
@@ -479,6 +485,7 @@
       "risk_factors": [],
       "risk_score": null
     },
+    "taint_path": [],
     "taxonomy": {
       "aliases": [
         "CVE-2020-8203",
@@ -550,6 +557,7 @@
       "risk_factors": [],
       "risk_score": null
     },
+    "taint_path": [],
     "taxonomy": {
       "aliases": [
         "CVE-2019-1010266",
@@ -621,6 +629,7 @@
       "risk_factors": [],
       "risk_score": null
     },
+    "taint_path": [],
     "taxonomy": {
       "aliases": [
         "CVE-2018-1000656",
@@ -690,6 +699,7 @@
       "risk_factors": [],
       "risk_score": null
     },
+    "taint_path": [],
     "taxonomy": {
       "aliases": [
         "CVE-2019-1010083",
@@ -759,6 +769,7 @@
       "risk_factors": [],
       "risk_score": null
     },
+    "taint_path": [],
     "taxonomy": {
       "aliases": [
         "CVE-2023-30861",
@@ -828,6 +839,7 @@
       "risk_factors": [],
       "risk_score": null
     },
+    "taint_path": [],
     "taxonomy": {
       "aliases": [
         "CVE-2026-27205",
@@ -897,6 +909,7 @@
       "risk_factors": [],
       "risk_score": null
     },
+    "taint_path": [],
     "taxonomy": {
       "aliases": [
         "CVE-2018-18074",
@@ -966,6 +979,7 @@
       "risk_factors": [],
       "risk_score": null
     },
+    "taint_path": [],
     "taxonomy": {
       "aliases": [
         "CVE-2023-32681",
@@ -1035,6 +1049,7 @@
       "risk_factors": [],
       "risk_score": null
     },
+    "taint_path": [],
     "taxonomy": {
       "aliases": [
         "CVE-2024-47081",
@@ -1104,6 +1119,7 @@
       "risk_factors": [],
       "risk_score": null
     },
+    "taint_path": [],
     "taxonomy": {
       "aliases": [
         "CVE-2024-35195",
@@ -1173,6 +1189,7 @@
       "risk_factors": [],
       "risk_score": null
     },
+    "taint_path": [],
     "taxonomy": {
       "aliases": [
         "CVE-2026-25645",

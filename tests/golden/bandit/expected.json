@@ -44,6 +44,7 @@
       "risk_factors": [],
       "risk_score": null
     },
+    "taint_path": [],
     "taxonomy": {
       "aliases": [],
       "category": "sast",
@@ -105,6 +106,7 @@
       "risk_factors": [],
       "risk_score": null
     },
+    "taint_path": [],
     "taxonomy": {
       "aliases": [],
       "category": "sast",
@@ -166,6 +168,7 @@
       "risk_factors": [],
       "risk_score": null
     },
+    "taint_path": [],
     "taxonomy": {
       "aliases": [],
       "category": "sast",
@@ -227,6 +230,7 @@
       "risk_factors": [],
       "risk_score": null
     },
+    "taint_path": [],
     "taxonomy": {
       "aliases": [],
       "category": "sast",
@@ -288,6 +292,7 @@
       "risk_factors": [],
       "risk_score": null
     },
+    "taint_path": [],
     "taxonomy": {
       "aliases": [],
       "category": "sast",
@@ -349,6 +354,7 @@
       "risk_factors": [],
       "risk_score": null
     },
+    "taint_path": [],
     "taxonomy": {
       "aliases": [],
       "category": "sast",

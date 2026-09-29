@@ -22,7 +22,7 @@ const finding = (agreement: number): Finding => ({
   taxonomy: { category: "sast", cwe: [], owasp_top_10_2021: [], cve: [], aliases: [] },
   scoring: { native_severity: { bandit: "MEDIUM", semgrep: "ERROR" }, normalized_severity: "HIGH", cvss_v3_1: null, risk_score: null, confidence: 0.5 },
   evidence: { reported_by: [], agreement_count: agreement, rule_ids: {} },
-  remediation: { summary: "", references: [], generated_by: "static" }, package: null,
+  remediation: { summary: "", references: [], generated_by: "static" }, package: null, taint_path: [],
 });
 
 describe("safe links (untrusted scanner data must never become a dangerous href)", () => {

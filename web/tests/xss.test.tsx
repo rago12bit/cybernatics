@@ -27,6 +27,7 @@ const hostile: Finding = {
     generated_by: "static",
   },
   package: { name: `pkg${EVIL}`, version: "1", ecosystem: "npm" },
+  taint_path: [],
 };
 
 describe("report UI cannot be used for stored XSS", () => {

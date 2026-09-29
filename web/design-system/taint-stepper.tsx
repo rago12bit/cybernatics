@@ -1,12 +1,11 @@
-/* The taint-path stepper (plan §28.3, §20.3): "static until Phase 9 supplies real paths" (Week
- * 34's own line item) — Phase 9 (Weeks 36-40) is where a real taint engine tracing source→sink
- * through the call graph gets built. Until then, this component is real and reusable, but the data
- * it's fed is honest about what exists today: a finding's own location is the one real step (the
- * sink), never invented intermediate hops. Steps are clickable and move the code view to that
- * line, exactly as the plan asks, for whenever Phase 9 supplies more than one. */
+/* The taint-path stepper (plan §28.3, §20.3). Week 37/38 built the real taint engine
+ * (core/taint/) that traces source→sink through the call graph; `IssueDetail.tsx` now feeds this
+ * component the real, multi-hop path when one was found, falling back to the finding's own
+ * location as the one real step when it wasn't (never invented intermediate hops either way).
+ * Steps are clickable and move the code view to that line, per the plan's own wording. */
 import type { ReactElement } from "react";
 
-export type TaintStep = { path: string; line: number; label: string };
+export type TaintStep = { path: string; line: number; label: string; isSink?: boolean };
 
 export function TaintStepper({
   steps,
@@ -51,8 +50,8 @@ export function TaintStepper({
               {s.path}:{s.line}
             </code>
             <span>{s.label}</span>
-            {i === activeIndex && steps.length > 1 && (
-              <span aria-hidden="true" style={{ marginLeft: "auto" }}>
+            {s.isSink && steps.length > 1 && (
+              <span aria-hidden="true" title="Sink" style={{ marginLeft: "auto" }}>
                 ◄
               </span>
             )}

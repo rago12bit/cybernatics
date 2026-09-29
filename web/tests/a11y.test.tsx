@@ -148,7 +148,18 @@ describe("axe accessibility audit", () => {
 // question with one answer.
 describe("axe accessibility audit — Week 33-35 screens", () => {
   const asset = { id: "a1", label: "acme/payments-api", source_type: "git", last_scanned_at: "2026-09-25T00:00:00Z", latest_scan_id: "s1", latest_scan_status: "completed" as const, open_issue_count: 1 };
-  const issueFinding: Finding = { ...(demo.findings[0] as unknown as Finding), scan_id: "s1", issue: { id: "iss-1", state: "open", triage_status: "open", first_seen_at: "2026-09-20T00:00:00Z" } };
+  // A real multi-step taint path (plan §20.3/§28.3), not the empty-array fallback, so the axe
+  // audit below actually exercises the stepper's real-data rendering (sink marker, per-step code
+  // view), not just its single-step placeholder path.
+  const issueFinding: Finding = {
+    ...(demo.findings[0] as unknown as Finding),
+    scan_id: "s1",
+    taint_path: [
+      { path: "routes/auth.py", line: 21, description: "username from form", is_sink: false, snippet: "20 def login():\n21     username = request.form['username']\n22     ..." },
+      { path: "db/queries.py", line: 12, description: "cursor.execute(q) -- sql injection", is_sink: true, snippet: "11     q = f\"SELECT * FROM users WHERE name='{name}'\"\n12     return cursor.execute(q)\n13 " },
+    ],
+    issue: { id: "iss-1", state: "open", triage_status: "open", first_seen_at: "2026-09-20T00:00:00Z" },
+  };
 
   it("projects list: loading, empty, and populated", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => new Promise(() => undefined)));
@@ -237,6 +248,12 @@ describe("axe accessibility audit — Week 33-35 screens", () => {
     const rows = await mount(<ModeProvider><IssueDetail assetId="a1" issueId="iss-1" /></ModeProvider>);
     await act(async () => { await Promise.resolve(); await Promise.resolve(); });
     expect(await violations(rows.host)).toEqual([]);
+
+    // The real taint path (both hops, in order) is rendered, not the single-step placeholder,
+    // and it opens on the sink -- the code view shows the dangerous call by default (plan §28.3).
+    expect(rows.host.textContent).toContain("username from form");
+    expect(rows.host.textContent).toContain("sql injection");
+    expect(rows.host.textContent).toContain("cursor.execute(q)");
 
     // The triage dialogs (opened here) once had a reason textarea and an expiry date input with
     // only placeholder text and no real <label> -- axe wouldn't catch that from the closed state

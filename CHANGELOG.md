@@ -6,6 +6,21 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 ## [Unreleased]
 
 ### Added
+- **Week 38 follow-up — Taint paths attached to Issues, feeding scoring and the UI (plan §20.3,
+  §28.3):** closes the three items deferred from the taint engine's initial landing. A `Finding`
+  now carries a `taint_path` (`core/models/finding.py`), attached by
+  `core/taint/reachability.py::attach_taint_paths()` when a SAST finding's own location matches a
+  real taint-confirmed sink — enrichment only, never a new finding. This raises the finding's
+  `scoring.confidence` (reusing `core/risk/score.py`'s existing confidence-driven likelihood for
+  non-CVE findings, rather than a second scoring rule) and sets `scoring.reachable = True` through
+  the same `Assess` composition `core.reachability` already uses in `core/postprocess.py::finalize()`
+  — measured effect on a HIGH-severity SAST finding: risk_score 56 → 71. No new database table: the
+  path persists through the existing `findings` table's JSON column. Per-step code snippets are
+  captured from the scanned workspace at attach time (the one point the checked-out source is
+  guaranteed to still exist), so the UI's taint-path stepper — built in an earlier week, deliberately
+  "static until Phase 9 supplies real paths" — now renders every real hop, defaults to opening on the
+  sink rather than step 1, and moves the code view to each step's own file and line as it's clicked.
+  Full account in `docs/adr/0022-taint-issue-scoring-ui.md`.
 - **Week 38 — Taint analysis (plan §20.3):** a new `core/taint/` package traces concrete
   source-to-sink data-flow paths from real HTTP entrypoints, built on Week 37's call graph.
   Per-language intra-procedural flow analysis (Python via `ast`, JavaScript/TypeScript and Go via

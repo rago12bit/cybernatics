@@ -118,9 +118,12 @@ caught:
 - Full-repository timing on real applications: NodeGoat (40 files) in 0.07s, nodejs-goof (10 files)
   in 0.04s — the worklist and flow analysis add negligible time on top of Week 37's own call-graph
   construction at this scale.
-- **Not done**: Postgres persistence of findings, or any Issue/scoring/UI integration (plan §28.3's
-  step-by-step rendering) — deferred on purpose, recorded in ADR-0021, the same reasoning ADR-0020
-  gave for deferring the code graph's own persistence to this week. FastAPI's typed-parameter source
-  style, object-field-level taint (as opposed to bare-name taint), path-sensitive branch analysis,
-  and loop-fixed-point iteration are documented permanent limits of this design, not TODOs for a
-  future week (ADR-0021).
+- **Issue attachment, scoring, and the UI stepper: since landed.** The initial pass of this week
+  deferred all of this; it was completed in a follow-up pass the same week and is recorded in
+  ADR-0022, not this document. FastAPI's typed-parameter source style, object-field-level taint (as
+  opposed to bare-name taint), path-sensitive branch analysis, and loop-fixed-point iteration remain
+  documented permanent limits of this design, not TODOs for a future week (ADR-0021).
+- **Not done**: Postgres persistence of `CodeGraph`/`FunctionSummary` data itself (as opposed to a
+  taint path attached to a Finding, which persists today through the existing `findings` table's
+  JSON column — no new table was needed) — still deferred to whenever a real consumer needs to query
+  the graph directly rather than through a Finding it already produced.

@@ -167,6 +167,9 @@ export interface Finding {
   };
   remediation: { summary: string; references: string[]; generated_by: string };
   package: { name: string; version: string; ecosystem: string } | null;
+  /** A concrete source-to-sink path (plan §20.3/§28.3), empty when taint analysis found none for
+   * this finding -- absence here means "no confirmed path found," never "confirmed unreachable." */
+  taint_path: { path: string; line: number; description: string; is_sink: boolean; snippet: string }[];
   issue?: IssueRef | null;
   /** Only present on /assets/.../issues responses (Week 34): the scan this occurrence came from,
    * so the issue detail screen can reuse the existing scan-scoped guidance API without a second

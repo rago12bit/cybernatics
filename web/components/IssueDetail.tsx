@@ -39,6 +39,15 @@ export function IssueDetail({ assetId, issueId }: { assetId: string; issueId: st
   }
   useEffect(reload, [assetId, issueId]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Default the stepper to the sink -- the code view should open on the dangerous call itself
+  // (plan §28.3's own mockup), not step 1, whenever a real multi-hop path was found.
+  useEffect(() => {
+    if (!finding) return;
+    const path = finding.taint_path ?? []; // a Finding persisted before this field existed has none
+    const sinkIdx = path.length > 0 ? Math.max(0, path.findIndex((s) => s.is_sink)) : 0;
+    setActiveStep(sinkIdx);
+  }, [finding]);
+
   // j/k (plan §30.1, J3): move to the next/previous issue in whatever order the issues table showed
   // when this page was opened from it (lib/issue-nav.ts) -- the same list, not a second fetch that
   // could sort differently and desync (the bug the old scan report's FindingsTable.tsx hit once).
@@ -106,10 +115,18 @@ export function IssueDetail({ assetId, issueId }: { assetId: string; issueId: st
     );
   }
 
-  // The taint-path stepper (plan §20.3, §28.3): "static until Phase 9 supplies real taint paths."
-  // The one real step available today is the finding's own location -- the sink -- never invented
-  // intermediate hops.
-  const steps: TaintStep[] = [{ path: finding.location.path, line: finding.location.start_line, label: "Where this happens" }];
+  // The taint-path stepper (plan §20.3, §28.3): core/taint/'s real engine (Week 37/38) attaches a
+  // concrete, multi-hop source-to-sink path to a Finding when it found one. When it didn't (no
+  // taint-confirmed path for this finding -- most findings today, since taint analysis only covers
+  // Python/JS/TS/Go SAST sinks reachable from a detected HTTP entrypoint), the finding's own
+  // location is the one real step shown -- never an invented intermediate hop either way.
+  const taintPath = finding.taint_path ?? []; // a Finding persisted before this field existed has none
+  const steps: TaintStep[] =
+    taintPath.length > 0
+      ? taintPath.map((s) => ({ path: s.path, line: s.line, label: s.description, isSink: s.is_sink }))
+      : [{ path: finding.location.path, line: finding.location.start_line, label: "Where this happens", isSink: true }];
+  const activeStepData = steps[Math.min(activeStep, steps.length - 1)];
+  const activeSnippet = taintPath.length > 0 ? taintPath[Math.min(activeStep, steps.length - 1)]?.snippet : finding.location.snippet;
   const triageStatus = finding.issue?.triage_status ?? "open";
 
   return (
@@ -149,7 +166,7 @@ export function IssueDetail({ assetId, issueId }: { assetId: string; issueId: st
           </div>
 
           <div className="ds-issue-section">
-            <CodeView code={finding.location.snippet || "(no snippet available)"} path={finding.location.path} />
+            <CodeView code={activeSnippet || "(no snippet available)"} path={activeStepData?.path ?? finding.location.path} highlightLine={activeStepData?.line} />
           </div>
 
           <div className="ds-issue-section">

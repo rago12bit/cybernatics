@@ -33,6 +33,7 @@ from core.observability import metrics as obs
 from core.postprocess import finalize
 from core.reachability import analyze_or_none
 from core.runner import RunnerError, run_tool
+from core.taint import analyze_or_none as taint_analyze_or_none
 
 ADAPTERS: dict[str, ToolAdapter] = {
     a.spec.name: a
@@ -376,5 +377,10 @@ def scan(
     correlated, result.stats = correlate(result.findings)
     rules = ignore if ignore is not None else IgnoreRules.load(target / IGNORE_FILE)
     correlated, result.ignored = apply_ignore(correlated, rules)
-    result.findings = finalize(correlated, reach=analyze_or_none(target))
+    result.findings = finalize(
+        correlated,
+        reach=analyze_or_none(target),
+        taint=taint_analyze_or_none(target),
+        root=target,
+    )
     return result

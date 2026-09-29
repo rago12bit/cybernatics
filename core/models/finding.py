@@ -44,6 +44,21 @@ class Location:
 
 
 @dataclass(frozen=True)
+class TaintPathStep:
+    """One step of a concrete taint path (plan §20.3/§28.3): "the input gets there" one hop at a
+    time, source to sink. `is_sink` marks the last step -- the UI's own arrow marker (§28.3's
+    mockup: "cursor.execute(q) ◄"). `snippet` is captured from the scanned workspace while it still
+    exists (`core.taint.reachability.attach_taint_paths` reads it at scan time), so the UI's code
+    view has something real to show for every step, not only the sink's own location."""
+
+    path: str
+    line: int
+    description: str
+    is_sink: bool = False
+    snippet: str = ""
+
+
+@dataclass(frozen=True)
 class Taxonomy:
     category: Category
     cwe: tuple[str, ...] = ()
@@ -126,6 +141,7 @@ class Finding:
     triage: Triage = field(default_factory=Triage)
     fingerprint: str = ""
     package: Package | None = None
+    taint_path: tuple[TaintPathStep, ...] = ()  # empty: no concrete path found (not "unreachable")
 
     def to_dict(self) -> dict[str, Any]:
         def default(obj: Any) -> Any:
@@ -168,4 +184,5 @@ def finding_from_dict(d: dict[str, Any]) -> Finding:
         triage=Triage(**{**d["triage"], "state": TriageState(d["triage"]["state"])}),
         fingerprint=d.get("fingerprint", ""),
         package=Package(**pkg) if pkg else None,
+        taint_path=tuple(TaintPathStep(**step) for step in d.get("taint_path", ())),
     )

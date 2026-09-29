@@ -19,14 +19,14 @@ export const SingleRealStep: StoryObj = {
 };
 
 export const MultiStepExample: StoryObj = {
-  name: "Multi-step (illustrative — Phase 9 supplies real paths)",
+  name: "Multi-step (a real taint path, core/taint/)",
   render: () => {
     function Demo() {
       const [active, setActive] = useState(2);
       const steps = [
         { path: "routes/auth.py", line: 21, label: "username from form" },
         { path: "services/user.py", line: 40, label: "find_user(username)" },
-        { path: "db/queries.py", line: 12, label: "cursor.execute(q)" },
+        { path: "db/queries.py", line: 12, label: "cursor.execute(q)", isSink: true },
       ];
       return <TaintStepper steps={steps} activeIndex={active} onStepClick={setActive} />;
     }
