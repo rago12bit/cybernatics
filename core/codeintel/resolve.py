@@ -11,7 +11,22 @@ could mean either are all cases this cannot and does not resolve -- the edge is 
 
 from __future__ import annotations
 
-from core.codeintel.models import CallEdge, CodeGraph, FileUnit
+from core.codeintel.models import CallEdge, CodeGraph, FileUnit, Symbol
+
+
+def build_name_index(
+    symbols: dict[str, Symbol],
+) -> tuple[dict[tuple[str, str], list[str]], dict[str, list[str]]]:
+    """The two indices `resolve_one` needs, built from an already-known symbol table -- exposed so
+    `core.taint`'s own call sites (found by re-walking each file for data flow, not by reading
+    `CodeGraph.edges`) can be resolved with the exact same semantics as this module's own edges,
+    instead of a second, potentially-diverging implementation."""
+    by_file_and_name: dict[tuple[str, str], list[str]] = {}
+    by_name: dict[str, list[str]] = {}
+    for s in symbols.values():
+        by_file_and_name.setdefault((s.path, s.name), []).append(s.id)
+        by_name.setdefault(s.name, []).append(s.id)
+    return by_file_and_name, by_name
 
 
 def resolve(units: list[FileUnit]) -> CodeGraph:
@@ -19,8 +34,6 @@ def resolve(units: list[FileUnit]) -> CodeGraph:
     entrypoints = []
     languages: set[str] = set()
     files_parsed = files_unparsed = 0
-    by_file_and_name: dict[tuple[str, str], list[str]] = {}
-    by_name: dict[str, list[str]] = {}
 
     for u in units:
         languages.add(u.language)
@@ -30,14 +43,13 @@ def resolve(units: list[FileUnit]) -> CodeGraph:
             files_unparsed += 1
         for s in u.symbols:
             symbols[s.id] = s
-            by_file_and_name.setdefault((s.path, s.name), []).append(s.id)
-            by_name.setdefault(s.name, []).append(s.id)
         entrypoints.extend(u.entrypoints)
 
+    by_file_and_name, by_name = build_name_index(symbols)
     edges = [
         CallEdge(
             caller_id, callee_name, line,
-            _resolve_one(u.path, callee_name, by_file_and_name, by_name),
+            resolve_one(u.path, callee_name, by_file_and_name, by_name),
         )  # fmt: skip
         for u in units
         for caller_id, callee_name, line in u.calls
@@ -53,7 +65,7 @@ def resolve(units: list[FileUnit]) -> CodeGraph:
     )
 
 
-def _resolve_one(
+def resolve_one(
     path: str,
     callee_name: str,
     by_file_and_name: dict[tuple[str, str], list[str]],

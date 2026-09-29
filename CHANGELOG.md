@@ -6,6 +6,29 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 ## [Unreleased]
 
 ### Added
+- **Week 38 — Taint analysis (plan §20.3):** a new `core/taint/` package traces concrete
+  source-to-sink data-flow paths from real HTTP entrypoints, built on Week 37's call graph.
+  Per-language intra-procedural flow analysis (Python via `ast`, JavaScript/TypeScript and Go via
+  tree-sitter) tracks tainted variables through assignments, branches, and calls; YAML catalogs
+  per language name sources (request parameters, per the plan's own wording), sinks
+  (`cursor.execute`, `subprocess.run`, `eval`, unescaped template rendering), and sanitizers
+  (parameterized queries, escaping functions). Function summaries are computed once per function
+  and propagated over the call graph via a bounded worklist (`core/taint/engine.py`), so a handler
+  that calls a helper that calls the real sink is analysed once per function, not once per call
+  site, with a full hop-by-hop chain from entrypoint to sink. Validated against three real,
+  independently-known-vulnerable applications, not synthetic fixtures: Vulnerable-Flask-App's
+  SQL injection in `/search`, NodeGoat's own `eval()` injection in `/contributions` (its own code
+  comment: *"Insecure use of eval() to parse inputs"*), and Snyk's nodejs-goof command injection
+  in `exports.create` — all three confirmed present before trusting the tool's own output.
+  Cross-checked against Semgrep's own taint mode as the plan requires: exact agreement on
+  NodeGoat's `eval()` lines, and a fully explained anchor-line difference (sink call vs.
+  string-construction site) on the same SQL injection, not a silent disagreement. Real-world
+  testing also surfaced and fixed a serious, previously-invisible bug: tree-sitter-typescript
+  wraps every function parameter differently than plain JavaScript, so every TypeScript handler's
+  request parameter was silently never seeded as a taint source at all until this was caught by a
+  deliberate `.ts` smoke test (neither of the two JS benchmark repos used to validate this week
+  contains any TypeScript). Postgres persistence and Issue/UI integration are deliberately
+  deferred, per ADR-0021. Full account in `docs/v2-week38-verification.md`.
 - **Week 37 — Code intelligence: symbols, call graph, entrypoints (plan §20.2):** a new
   `core/codeintel/` package builds, per repository, a `Symbol` table, a resolved call graph, and
   a list of framework `Entrypoint`s (FastAPI, Flask, Django, Express, Next.js App/Pages Router,

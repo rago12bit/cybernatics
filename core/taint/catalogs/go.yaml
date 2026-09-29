@@ -1,0 +1,23 @@
+# Go taint catalog (plan §20.3). `func(w http.ResponseWriter, r *http.Request)` -- the second
+# parameter, by position, is the request; Go handlers don't vary this signature the way JS
+# arrow functions can vary parameter names, but position is used for the same reason as the
+# JavaScript catalog: it does not depend on what the parameter happens to be called.
+global_sources: []
+
+param_source_positions: [1]
+
+sinks:
+  - name: Command    # os/exec.Command(name, arg...)
+    category: command_injection
+  - name: Query      # database/sql: db.Query(sql) / db.QueryRow(sql) -- raw SQL, not a placeholder
+    category: sql_injection
+  - name: QueryRow
+    category: sql_injection
+  - name: Exec       # db.Exec(sql)
+    category: sql_injection
+
+# Idiomatic Go database/sql code almost always uses placeholder-based parameterized queries rather
+# than a callable escaping function, so there is no equivalent sanitizer table yet -- an honest gap,
+# not an oversight: a Go sanitizer catalog would need to recognize the *placeholder shape* of a
+# query string, not a function call, which this catalog format does not express.
+sanitizers: []

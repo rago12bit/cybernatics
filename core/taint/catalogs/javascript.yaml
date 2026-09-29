@@ -1,0 +1,22 @@
+# JavaScript/TypeScript taint catalog (plan §20.3). Express's `(req, res) => {}`, Next.js's
+# `GET(req)`/`POST(req)`: in both, the handler's own first parameter -- whatever it happens to be
+# named -- is the request object, so position 0 is used rather than a name like "req" (a handler is
+# free to call it anything).
+global_sources: []
+
+param_source_positions: [0]
+
+sinks:
+  - name: exec         # child_process.exec(cmd) -- shell=true by default, unlike execFile
+    category: command_injection
+  - name: execSync
+    category: command_injection
+  - name: eval
+    category: code_injection
+  - name: query        # db.query(sql) -- raw SQL on most Node DB drivers (mysql, pg, mongoose's own escape hatch)
+    category: sql_injection
+
+sanitizers:
+  - escape
+  - sanitize
+  - quote

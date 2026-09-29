@@ -1,0 +1,34 @@
+# Python taint catalog (plan §20.3). Flask/Django: `request` is a bare name reference either way
+# (Flask's imported global, or a Django view's first parameter), so one global-name entry covers
+# both frameworks without needing to know which one it is. FastAPI's typed-parameter style (a
+# request body arrives as a Pydantic model parameter, not an attribute access on a shared object)
+# is a documented gap: it needs the parameter's *type annotation*, not just its name or position,
+# to know it carries external input, which this catalog format does not express.
+global_sources:
+  - request
+
+param_source_positions: []
+
+sinks:
+  - name: execute       # cursor.execute(sql) / cursor.executemany(sql, ...)
+    category: sql_injection
+  - name: executemany
+    category: sql_injection
+  - name: run           # subprocess.run(cmd, shell=True) -- the plan's own example
+    category: command_injection
+  - name: call           # subprocess.call
+    category: command_injection
+  - name: system         # os.system
+    category: command_injection
+  - name: popen          # os.popen
+    category: command_injection
+  - name: eval
+    category: code_injection
+  - name: exec
+    category: code_injection
+  - name: render_template_string   # Flask: renders a string as a Jinja2 template -- classic SSTI
+    category: ssti
+
+sanitizers:
+  - escape    # html.escape / markupsafe.escape / flask.escape
+  - quote     # shlex.quote
