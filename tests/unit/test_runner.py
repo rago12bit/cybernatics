@@ -66,13 +66,27 @@ def test_trivy_and_osv_scan_the_same_dependency_scope() -> None:
     )  # offline, no network resolution
 
 
-def test_cpu_quota_is_per_tool_and_defaults_to_one() -> None:
+def test_cpu_quota_is_per_tool_and_defaults_to_one(monkeypatch: pytest.MonkeyPatch) -> None:
     from core.adapters.semgrep import SemgrepAdapter
     from core.adapters.trivy import TrivyAdapter
 
+    # Each tool's tuned quota, assuming a host with enough CPUs that none of them get clamped
+    # (build_docker_argv caps --cpus to os.cpu_count() -- see its own test below).
+    monkeypatch.setattr("os.cpu_count", lambda: 8)
     for adapter, cpus in ((BanditAdapter(), "1"), (SemgrepAdapter(), "4"), (TrivyAdapter(), "4")):
         argv = build_docker_argv(adapter, Path("."), Path("."), "c1")
         assert f"--cpus={cpus}" in argv
+
+
+def test_cpu_quota_is_capped_to_the_host_cpu_count(monkeypatch: pytest.MonkeyPatch) -> None:
+    from core.adapters.trivy import TrivyAdapter
+
+    # Docker hard-rejects --cpus above the host's real CPU count ("range of CPUs is from 0.01 to
+    # N.NN") -- this isn't a soft limit, so a tool tuned on a beefier machine (trivy: cpus=4) must
+    # never ask for more than a smaller host, such as a 2-CPU CI runner, actually has.
+    monkeypatch.setattr("os.cpu_count", lambda: 2)
+    argv = build_docker_argv(TrivyAdapter(), Path("."), Path("."), "c1")
+    assert "--cpus=2" in argv
 
 
 def test_semgrep_jobs_follow_the_cpu_quota() -> None:

@@ -59,7 +59,15 @@ afterEach(() => { vi.unstubAllGlobals(); sessionStorage.clear(); document.body.i
 describe("report downloads", () => {
   it("offers PDF, HTML and SARIF, and requests the right format with the token in a header only", async () => {
     setToken("t".repeat(24));
-    const fetchMock = vi.fn(async () => new Response(new Blob(["x"]), { status: 200 }));
+    // A string body, not `new Blob(["x"])`: on Node 22 (this repo's CI, not the Node this was
+    // developed against), the global `Response` is undici's, while jsdom's test environment
+    // installs its own `Blob` -- undici's Response constructor calls `.stream()` on a Blob body,
+    // which jsdom's Blob doesn't implement, so it throws synchronously with "object.stream is
+    // not a function" (reproduced locally by running this suite under a Node 22 Docker
+    // container, matching CI exactly). `res.blob()` still hands back a real Blob downstream
+    // regardless of the body type the mock was built from, so a string sidesteps the
+    // incompatibility without weakening what the test verifies.
+    const fetchMock = vi.fn(async () => new Response("x", { status: 200 }));
     vi.stubGlobal("fetch", fetchMock);
     URL.createObjectURL = vi.fn(() => "blob:x");
     URL.revokeObjectURL = vi.fn();
