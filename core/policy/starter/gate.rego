@@ -57,3 +57,12 @@ deny contains msg if {
 	(expires - time.now_ns()) > max_accepted_risk_ns
 	msg := sprintf("%s's accepted risk extends beyond the 90-day limit", [issue.id])
 }
+
+# 6. No malicious packages, ever (plan §20.5) -- osv-scanner already flags an OSSF
+# malicious-packages report (a MAL- id) as `malicious: true`; unlike a graded vulnerability this is
+# not a matter of severity or reachability, the same reasoning as rule 2's secrets.
+deny contains msg if {
+	some issue in input.new_issues
+	issue.malicious
+	msg := sprintf("%s is a reported malicious package", [issue.id])
+}

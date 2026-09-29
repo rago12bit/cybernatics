@@ -23,6 +23,7 @@
     },
     "package": {
       "ecosystem": "npm",
+      "license": "",
       "name": "lodash",
       "version": "4.17.4"
     },
@@ -93,6 +94,7 @@
     },
     "package": {
       "ecosystem": "npm",
+      "license": "",
       "name": "lodash",
       "version": "4.17.4"
     },
@@ -163,6 +165,7 @@
     },
     "package": {
       "ecosystem": "npm",
+      "license": "",
       "name": "lodash",
       "version": "4.17.4"
     },
@@ -234,6 +237,7 @@
     },
     "package": {
       "ecosystem": "npm",
+      "license": "",
       "name": "lodash",
       "version": "4.17.4"
     },
@@ -304,6 +308,7 @@
     },
     "package": {
       "ecosystem": "npm",
+      "license": "",
       "name": "lodash",
       "version": "4.17.4"
     },
@@ -374,6 +379,7 @@
     },
     "package": {
       "ecosystem": "npm",
+      "license": "",
       "name": "lodash",
       "version": "4.17.4"
     },
@@ -445,6 +451,7 @@
     },
     "package": {
       "ecosystem": "npm",
+      "license": "",
       "name": "lodash",
       "version": "4.17.4"
     },
@@ -513,6 +520,7 @@
     },
     "package": {
       "ecosystem": "npm",
+      "license": "",
       "name": "lodash",
       "version": "4.17.4"
     },
@@ -583,6 +591,7 @@
     },
     "package": {
       "ecosystem": "npm",
+      "license": "",
       "name": "lodash",
       "version": "4.17.4"
     },
@@ -653,6 +662,7 @@
     },
     "package": {
       "ecosystem": "npm",
+      "license": "",
       "name": "lodash",
       "version": "4.17.4"
     },
@@ -724,6 +734,7 @@
     },
     "package": {
       "ecosystem": "pypi",
+      "license": "",
       "name": "flask",
       "version": "0.12"
     },
@@ -794,6 +805,7 @@
     },
     "package": {
       "ecosystem": "pypi",
+      "license": "",
       "name": "flask",
       "version": "0.12"
     },
@@ -862,6 +874,7 @@
     },
     "package": {
       "ecosystem": "pypi",
+      "license": "",
       "name": "flask",
       "version": "0.12"
     },
@@ -932,6 +945,7 @@
     },
     "package": {
       "ecosystem": "pypi",
+      "license": "",
       "name": "flask",
       "version": "0.12"
     },
@@ -1002,6 +1016,7 @@
     },
     "package": {
       "ecosystem": "pypi",
+      "license": "",
       "name": "requests",
       "version": "2.19.0"
     },
@@ -1072,6 +1087,7 @@
     },
     "package": {
       "ecosystem": "pypi",
+      "license": "",
       "name": "requests",
       "version": "2.19.0"
     },
@@ -1142,6 +1158,7 @@
     },
     "package": {
       "ecosystem": "pypi",
+      "license": "",
       "name": "requests",
       "version": "2.19.0"
     },
@@ -1212,6 +1229,7 @@
     },
     "package": {
       "ecosystem": "pypi",
+      "license": "",
       "name": "requests",
       "version": "2.19.0"
     },
@@ -1282,6 +1300,7 @@
     },
     "package": {
       "ecosystem": "pypi",
+      "license": "",
       "name": "requests",
       "version": "2.19.0"
     },

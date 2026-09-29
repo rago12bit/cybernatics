@@ -116,6 +116,17 @@ def test_the_compare_step_only_passes_policy_when_a_policy_file_is_set() -> None
     assert '[ -n "$POLICY_FILE" ]' in compare["run"]
 
 
+def test_the_sbom_step_runs_before_compare_and_feeds_it_for_license_enrichment() -> None:
+    """plan §20.5: the SBOM must exist before `ci compare` runs so its own package licenses can be
+    joined onto findings for policy evaluation -- generating it only after gating (the original
+    order) would always be one run too late."""
+    sbom = next(s for s in STEPS if s.get("id") == "sbom")
+    compare = next(s for s in STEPS if s.get("id") == "compare")
+    assert STEPS.index(sbom) < STEPS.index(compare)
+    assert compare["env"]["SBOM_FILE"] == "${{ steps.sbom.outputs.sbom-file }}"
+    assert '[ -n "$SBOM_FILE" ]' in compare["run"] and "--sbom" in compare["run"]
+
+
 def test_policy_violations_output_is_wired_to_the_compare_step() -> None:
     assert (
         ACTION["outputs"]["policy-violations"]["value"]

@@ -26,7 +26,10 @@ inputs:
     description: "Comment the new findings on pull requests (needs `pull-requests: write`; not possible on forks)."
     default: "true"
   sbom:
-    description: "Also write a CycloneDX 1.6 SBOM (output sbom-file); upload it with actions/upload-artifact if you want to keep it."
+    description: >
+      Also write a CycloneDX 1.6 SBOM (output sbom-file; upload it with actions/upload-artifact if
+      you want to keep it). Also joins each finding's real package license onto it before policy
+      evaluation (plan §20.5), so a policy-file testing issue.license works with no extra input.
     default: "false"
   compare-base:
     description: On pull requests, also scan the base commit so only new findings are reported and gated.
@@ -158,30 +161,6 @@ runs:
           fi
         fi
 
-    - name: Compare and gate
-      id: compare
-      shell: bash
-      env:
-        FAIL_ON: ${{ inputs.fail-on }}
-        POLICY_FILE: ${{ inputs.policy-file }}
-        RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-      run: |
-        set -uo pipefail
-        args=(ci compare --head "$RUNNER_TEMP/head.json" --fail-on "$FAIL_ON"
-              --label "$GITHUB_REPOSITORY" --run-url "$RUN_URL"
-              --sarif-out "$RUNNER_TEMP/bulwark.sarif" --comment-out "$RUNNER_TEMP/comment.md"
-              --summary-out "$GITHUB_STEP_SUMMARY" --github-output "$GITHUB_OUTPUT")
-        [ -f "$RUNNER_TEMP/base.json" ] && args+=(--base "$RUNNER_TEMP/base.json")
-        [ -n "$POLICY_FILE" ] && args+=(--policy "$GITHUB_WORKSPACE/$POLICY_FILE")
-        bulwark "${args[@]}"
-        rc=$?
-        echo "gate-exit=$rc" >> "$GITHUB_OUTPUT"
-        echo "sarif-file=$RUNNER_TEMP/bulwark.sarif" >> "$GITHUB_OUTPUT"
-        # 1 means "threshold or policy breached" (both are folded into the same exit code by
-        # `bulwark ci compare`): reported after the upload and comment steps. 2 is a real error
-        # (including a syntactically invalid policy file).
-        [ "$rc" -le 1 ] || exit "$rc"
-
     - name: Generate SBOM
       id: sbom
       if: ${{ inputs.sbom == 'true' }}
@@ -191,6 +170,34 @@ runs:
       run: |
         bulwark sbom "$SCAN_PATH" --output "$RUNNER_TEMP/sbom.cdx.json"
         echo "sbom-file=$RUNNER_TEMP/sbom.cdx.json" >> "$GITHUB_OUTPUT"
+
+    - name: Compare and gate
+      id: compare
+      shell: bash
+      env:
+        FAIL_ON: ${{ inputs.fail-on }}
+        POLICY_FILE: ${{ inputs.policy-file }}
+        SBOM_FILE: ${{ steps.sbom.outputs.sbom-file }}
+        RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      run: |
+        set -uo pipefail
+        args=(ci compare --head "$RUNNER_TEMP/head.json" --fail-on "$FAIL_ON"
+              --label "$GITHUB_REPOSITORY" --run-url "$RUN_URL"
+              --sarif-out "$RUNNER_TEMP/bulwark.sarif" --comment-out "$RUNNER_TEMP/comment.md"
+              --summary-out "$GITHUB_STEP_SUMMARY" --github-output "$GITHUB_OUTPUT")
+        [ -f "$RUNNER_TEMP/base.json" ] && args+=(--base "$RUNNER_TEMP/base.json")
+        [ -n "$POLICY_FILE" ] && args+=(--policy "$GITHUB_WORKSPACE/$POLICY_FILE")
+        # SBOM_FILE (plan §20.5) is only set when `sbom: true` -- it joins each finding's real
+        # package license onto it, so a --policy checking issue.license works with no extra input.
+        [ -n "$SBOM_FILE" ] && args+=(--sbom "$SBOM_FILE")
+        bulwark "${args[@]}"
+        rc=$?
+        echo "gate-exit=$rc" >> "$GITHUB_OUTPUT"
+        echo "sarif-file=$RUNNER_TEMP/bulwark.sarif" >> "$GITHUB_OUTPUT"
+        # 1 means "threshold or policy breached" (both are folded into the same exit code by
+        # `bulwark ci compare`): reported after the upload and comment steps. 2 is a real error
+        # (including a syntactically invalid policy file).
+        [ "$rc" -le 1 ] || exit "$rc"
 
     - name: Upload SARIF to Code Scanning
       if: ${{ always() && inputs.upload-sarif == 'true' && steps.compare.outputs.sarif-file != '' }}

@@ -352,6 +352,71 @@ def test_cli_compare_exits_2_on_a_syntactically_invalid_policy(tmp_path: Path) -
     assert "policy evaluation failed" in r.output.lower()
 
 
+@_NEEDS_OPA
+def test_cli_compare_sbom_enriches_license_for_policy_evaluation(tmp_path: Path) -> None:
+    """plan §20.5: --sbom joins a package's real license onto a finding before policy evaluation,
+    so a policy testing issue.license has something to match -- without it the field is simply
+    absent, as `core.policy.input`'s own docstring says."""
+    f = finding("p1", sev="LOW")
+    f["package"] = {"ecosystem": "npm", "name": "once", "version": "1.4.0"}
+    head = write(tmp_path / "h.json", scan_of(f))
+    sbom = tmp_path / "sbom.json"
+    sbom.write_text(
+        json.dumps(
+            {
+                "bomFormat": "CycloneDX",
+                "specVersion": "1.6",
+                "components": [
+                    {
+                        "bom-ref": "a",
+                        "name": "once",
+                        "version": "1.4.0",
+                        "purl": "pkg:npm/once@1.4.0",
+                        "licenses": [{"license": {"id": "ISC"}}],
+                    }
+                ],
+            }
+        )
+    )
+    policy = tmp_path / "gate.rego"
+    policy.write_text(
+        'package gate.pull_request\n\ndeny contains msg if {\n\tsome issue in input.new_issues\n\tissue.license == "ISC"\n\tmsg := sprintf("%s uses ISC", [issue.id])\n}\n'
+    )
+    comment_out = tmp_path / "comment.md"
+    r = runner.invoke(
+        app,
+        [
+            "ci", "compare", "--head", str(head), "--fail-on", "none",
+            "--policy", str(policy), "--sbom", str(sbom), "--comment-out", str(comment_out),
+        ],
+    )  # fmt: skip
+    assert r.exit_code == 1, r.output
+    assert "uses ISC" in comment_out.read_text()
+
+
+@_NEEDS_OPA
+def test_cli_compare_without_sbom_the_policy_sees_no_license_at_all(tmp_path: Path) -> None:
+    f = finding("p1", sev="LOW")
+    f["package"] = {"ecosystem": "npm", "name": "once", "version": "1.4.0"}
+    head = write(tmp_path / "h.json", scan_of(f))
+    policy = tmp_path / "gate.rego"
+    policy.write_text(
+        'package gate.pull_request\n\ndeny contains msg if {\n\tsome issue in input.new_issues\n\tissue.license == "ISC"\n\tmsg := sprintf("%s uses ISC", [issue.id])\n}\n'
+    )
+    r = runner.invoke(
+        app, ["ci", "compare", "--head", str(head), "--fail-on", "none", "--policy", str(policy)]
+    )
+    assert r.exit_code == 0, r.output
+
+
+def test_cli_compare_sbom_without_policy_is_a_harmless_no_op(tmp_path: Path) -> None:
+    head = write(tmp_path / "h.json", scan_of(finding("p1", sev="LOW")))
+    r = runner.invoke(
+        app, ["ci", "compare", "--head", str(head), "--fail-on", "none", "--sbom", "/nonexistent"]
+    )
+    assert r.exit_code == 0, r.output  # --sbom is only read when --policy is also given
+
+
 def test_cli_writes_sarif_comment_summary_and_outputs(tmp_path: Path) -> None:
     head = write(tmp_path / "h.json", scan_of(finding("x")))
     out = {k: tmp_path / k for k in ("s.sarif", "c.md", "sum.md", "gh.out")}

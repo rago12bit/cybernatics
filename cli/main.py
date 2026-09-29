@@ -316,11 +316,20 @@ def ci_compare(
         None,
         help="A Rego policy file (plan §20.4); its data.gate.pull_request.deny drives the check too.",
     ),
+    sbom: Path | None = typer.Option(
+        None,
+        help=(
+            "A CycloneDX SBOM (`bulwark sbom` output, plan §20.5). Joins each finding's package "
+            "license onto it before policy evaluation, so a policy testing issue.license has "
+            "something real to match against. No effect without --policy."
+        ),
+    ),
 ) -> None:
     """Exit 0 if the change passes the threshold and policy, 1 if it does not, 2 on unusable input."""
     from core.ci import breaches, compare, load_scan, markdown_comment, report_data
     from core.export import render
     from core.policy import evaluate_gate
+    from core.sbom import SbomError, summarize
 
     try:
         head_scan = load_scan(head)
@@ -332,7 +341,16 @@ def ci_compare(
         raise typer.Exit(2) from exc
     policy_denials: tuple[str, ...] = ()
     if policy is not None:
-        result = evaluate_gate(cmp.gate_set(), policy.read_text(encoding="utf-8"))
+        gate_set = cmp.gate_set()
+        if sbom is not None:
+            from core.sbom.enrich import apply_licenses
+
+            try:
+                gate_set = apply_licenses(gate_set, summarize(sbom.read_bytes()))
+            except (SbomError, OSError) as exc:
+                typer.echo(f"error: --sbom: {exc}", err=True)
+                raise typer.Exit(2) from exc
+        result = evaluate_gate(gate_set, policy.read_text(encoding="utf-8"))
         if result.error is not None:
             typer.echo(f"error: policy evaluation failed: {result.error}", err=True)
             raise typer.Exit(2)
@@ -461,6 +479,58 @@ def sbom_cmd(
     kinds = ", ".join(f"{k} {v}" for k, v in sorted(sbom.ecosystems.items())) or "none"
     typer.echo(
         f"wrote {output}: {sbom.components} components (CycloneDX {sbom.spec_version}; {kinds})",
+        err=True,
+    )
+
+
+supply_chain_app = typer.Typer(
+    help="Supply-chain risk (plan §20.5): typosquats and OpenSSF Scorecard for direct dependencies."
+)
+app.add_typer(supply_chain_app, name="supply-chain")
+
+
+@supply_chain_app.command("analyze")
+def supply_chain_analyze(
+    sbom: Path = typer.Option(..., help="A CycloneDX SBOM (`bulwark sbom` output)."),
+    output: Path = typer.Option(..., "--output", "-o", help="Where to write the JSON report."),
+    scorecard: bool = typer.Option(
+        True,
+        help=(
+            "Also fetch OpenSSF Scorecard results for direct dependencies (network: "
+            "api.deps.dev to resolve a source repo, api.securityscorecards.dev for its score). "
+            "Malicious-package flags are not here -- they already show up as CRITICAL findings "
+            "from `bulwark scan`'s own osv-scanner (plan §20.5); this SBOM alone carries no "
+            "vulnerability data to check them against."
+        ),
+    ),
+) -> None:
+    """Typosquat detection over the SBOM's own packages, plus (optionally) OpenSSF Scorecard for
+    its direct dependencies (plan §20.5)."""
+    from core.sbom import SbomError, summarize
+    from core.supplychain import enrich_direct_dependencies, find_typosquats
+
+    try:
+        parsed = summarize(sbom.read_bytes())
+    except (SbomError, OSError) as exc:
+        typer.echo(f"error: {exc}", err=True)
+        raise typer.Exit(2) from exc
+    typosquats = find_typosquats(parsed.packages)
+    scores: dict[str, dict[str, Any]] = {}
+    if scorecard:
+        scores = {
+            purl: {"score": r.score, "checks": r.checks, "date": r.date}
+            for purl, r in enrich_direct_dependencies(parsed.direct_purls).items()
+        }
+    report = {
+        "typosquats": [f.to_dict() for f in typosquats],
+        "scorecard": scores,
+        "direct_dependencies": sorted(parsed.direct_purls),
+        "transitive_dependencies": sorted(parsed.transitive_purls),
+    }
+    output.write_text(json.dumps(report, indent=2, sort_keys=True))
+    typer.echo(
+        f"wrote {output}: {len(typosquats)} possible typosquat(s), "
+        f"{len(scores)} Scorecard result(s) for {len(parsed.direct_purls)} direct dependencies",
         err=True,
     )
 

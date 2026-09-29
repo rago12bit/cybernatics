@@ -57,10 +57,11 @@ deny contains msg if {
 | `category` | yes | `sast`, `sca`, `secrets`, `iac`, `container` |
 | `cwe`, `owasp` | yes (may be empty) | the finding's taxonomy |
 | `in_cisa_kev` | yes | `false` unless the finding's CVE is in CISA KEV |
+| `malicious` | yes | `false` unless osv-scanner matched an OSSF malicious-packages report (a `MAL-` id, plan §20.5) |
 | `risk_score` | yes (may be `null`) | the same 0–100 score the UI shows |
 | `entrypoint` | yes (may be `""`) | the real HTTP entrypoint a taint path (plan §20.3) traced back to, if any |
 | `reachable` | **only when known** | Week 37/38's taint analysis, or import-level SCA reachability — absent, not `null`, when unknown |
-| `license` | **not yet** | needs Week 40's SBOM/license work; the starter library's license rule is real, tested Rego with nothing to match against today |
+| `license` | **only with `--sbom`** | joined from a CycloneDX SBOM's own package licenses (plan §20.5) — see "Supply-chain risk" below |
 | `triage_status`, `triage_expires_at` | **only in the hosted pipeline** | a database-backed `IssueRow`; the standalone CLI/Action never has this |
 
 Test your policy the same way the starter library is tested:
@@ -72,6 +73,38 @@ opa test path/to/your/policy/
 `bulwark ci compare` also runs `opa check` on your policy before evaluating it — a syntactically
 invalid policy exits 2 (a real error), never a silent pass.
 
+## Supply-chain risk (plan §20.5)
+
+Malicious-package detection needs no extra step: `bulwark scan`'s own osv-scanner already checks
+every dependency against OSV, whose database includes OSSF's malicious-packages reports (`MAL-`
+ids) alongside ordinary CVEs. Such a finding is always `CRITICAL` severity and `malicious: true` in
+policy input, regardless of what (if any) severity label the record itself carries.
+
+License policy needs one extra step, since license data lives in an SBOM, not a scan:
+
+```bash
+bulwark sbom . --output sbom.cdx.json
+bulwark ci compare --head head.json --policy gate.rego --sbom sbom.cdx.json
+```
+
+`--sbom` joins each finding's package onto the SBOM's own declared license (matched by ecosystem,
+name and version) before policy evaluation — nothing is guessed for a package the SBOM has no
+license for, and `--sbom` has no effect without `--policy`. In the GitHub Action, set `sbom: true`;
+the SBOM step already runs before the gate for exactly this reason.
+
+Typosquat detection and OpenSSF Scorecard for direct dependencies are their own command, since
+neither is about deny/allow policy — they run over an SBOM directly and produce a JSON report,
+not policy denials:
+
+```bash
+bulwark supply-chain analyze --sbom sbom.cdx.json --output supply-chain.json
+```
+
+This flags a package name within edit distance 1–2 of a well-known package in the same ecosystem
+(a small, hand-curated seed list — not a live popularity feed), and fetches each *direct*
+dependency's [OpenSSF Scorecard](https://scorecard.dev) result via deps.dev and
+api.securityscorecards.dev, cached for a week. Pass `--no-scorecard` to skip the network calls.
+
 ## What this isn't (yet)
 
 - **No policy editor UI.** Write the `.rego` file by hand, in your own editor, and commit it — the
@@ -81,3 +114,10 @@ invalid policy exits 2 (a real error), never a silent pass.
 - **OPA runs unsandboxed**, deliberately: it evaluates data this platform already computed (a
   scan's own findings), never the scanned repository's own content, so there's nothing here for the
   sandboxed scanner runner to protect against.
+- **No Dependencies screen UI.** `bulwark supply-chain analyze`'s report (typosquats, Scorecard) and
+  `core.supplychain.dependency_view.path_to` (which path in the graph pulls in a package) are real
+  and tested; nothing renders them yet (ADR-0024).
+- **Direct-versus-transitive needs a lockfile.** Syft's own `dependencies` graph is only as complete
+  as the manifest format it read: a committed lockfile (`package-lock.json`, `poetry.lock`,
+  `Cargo.lock`, ...) has the resolved tree; a bare, unlocked manifest does not, so `direct_purls`/
+  `transitive_purls` are simply empty for it — absent data, not a fabricated "everything is direct".

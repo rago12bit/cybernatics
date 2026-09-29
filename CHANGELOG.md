@@ -6,6 +6,27 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 ## [Unreleased]
 
 ### Added
+- **Week 40 — Supply-chain risk (plan §20.5), closing Milestone M8 (`v1.3.0`):** a `MAL-` id (an
+  OSSF malicious-packages report) already flowed through `osv-scanner`'s own offline OSV database as
+  an ordinary `Finding`, but with no CVSS score or severity label it normalized to `INFO` — the
+  *lowest* severity, exactly backwards. `core/adapters/osv_scanner.py` now forces `CRITICAL`
+  severity and full confidence for one, and `core/policy/input.py` exposes it as `malicious` (a
+  sixth starter policy rule: no malicious packages, ever). `core/sbom/syft.py` now parses each
+  CycloneDX component's license and derives a direct/transitive dependency graph from Syft's own
+  `dependencies` array (validated against a real `bulwark/syft:1.52.0` run); `core/sbom/enrich.py`
+  joins that license onto a finding's package, and `bulwark ci compare --sbom PATH` (also wired into
+  the Action's existing `sbom: true` input) feeds it to policy evaluation — closing the `license`
+  field ADR-0023 left wired but unpopulated. New: `core/supplychain/typosquat.py` (edit-distance 1–2
+  from a curated popular-package seed per ecosystem), `core/supplychain/scorecard.py` (OpenSSF
+  Scorecard for direct dependencies via deps.dev + the Scorecard REST API, both validated live,
+  cached a week), and `core/supplychain/dependency_view.py::path_to` (which path in the graph pulls
+  in a package), tied together by `bulwark supply-chain analyze`. Also fixed a real, if minor,
+  pre-existing bug found while building this: `osv_scanner.py`/`grype.py` picked a scanner's
+  *first-listed* fixed version, not the smallest (`core/scoring/versions.py::smallest_safe_upgrade`)
+  — confirmed unchanged output on this repo's own golden fixtures, which mix git-hash and real-version
+  entries for the same finding. The Dependencies screen UI is deliberately deferred — full reasoning
+  in `docs/adr/0024-supply-chain-risk.md`. 52 new tests. Full account in
+  `docs/v2-week40-verification.md`.
 - **Week 39 — Policy-as-code (plan §20.4):** a new `core/policy/` package embeds the real Open
   Policy Agent binary, matching the plan's own worked example (`opa eval` with a JSON input document
   built from existing `Finding` fields, no new data collection). The five starter policies the plan

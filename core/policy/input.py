@@ -2,8 +2,12 @@
 summary plus the Issue set").
 
 Every field here comes from data a `Finding` (or, when the caller has it, an `IssueRow`) already
-carries -- nothing is invented. Two fields the starter policy library's own examples need have no
-real source yet anywhere in this codebase and are included only when present, never guessed:
+carries -- nothing is invented. `malicious` (plan §20.5) is derived the same way `in_cisa_kev` is:
+always present, `false` unless the finding's own alias set contains an OSSF malicious-packages
+report id (`osv-scanner`, the only adapter that surfaces these, already forces such a finding's
+`aliases` to include its `MAL-...` id -- see `core.adapters.osv_scanner`). Two fields the starter
+policy library's own examples need have no real source yet anywhere in this codebase and are
+included only when present, never guessed:
 
   - `license`: needs Week 40's SBOM/license work (plan §20.5); until then, `Finding`/`Package`
     simply carries no license, so it is omitted from the input document entirely rather than sent
@@ -47,6 +51,7 @@ def issue_document(finding: dict[str, Any], issue: dict[str, Any] | None = None)
         "cwe": list(taxonomy.get("cwe", [])),
         "owasp": list(taxonomy.get("owasp_top_10_2021", [])),
         "in_cisa_kev": bool(scoring.get("in_cisa_kev", False)),
+        "malicious": any(str(a).startswith("MAL-") for a in taxonomy.get("aliases", [])),
         "risk_score": scoring.get("risk_score"),
         "entrypoint": _entrypoint(finding),
     }

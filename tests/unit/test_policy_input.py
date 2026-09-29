@@ -35,6 +35,23 @@ def test_reachable_true_and_false_are_both_included() -> None:
     assert issue_document(_finding(reachable=False))["reachable"] is False
 
 
+def test_malicious_is_false_by_default_not_omitted() -> None:
+    doc = issue_document(_finding())
+    assert doc["malicious"] is False  # always present, like in_cisa_kev -- never simply absent
+
+
+def test_malicious_is_true_when_a_mal_alias_is_present() -> None:
+    f = _finding()
+    f["taxonomy"] = {**f["taxonomy"], "aliases": ["MAL-2022-7441"]}
+    assert issue_document(f)["malicious"] is True
+
+
+def test_malicious_is_false_for_ordinary_vulnerability_aliases() -> None:
+    f = _finding()
+    f["taxonomy"] = {**f["taxonomy"], "aliases": ["CVE-2020-1234", "GHSA-xxxx-xxxx-xxxx"]}
+    assert issue_document(f)["malicious"] is False
+
+
 def test_license_is_omitted_when_the_package_has_none() -> None:
     doc = issue_document(_finding())
     assert "license" not in doc

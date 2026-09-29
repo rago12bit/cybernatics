@@ -74,8 +74,19 @@ test_an_open_untriaged_issue_is_never_checked_against_the_90_day_rule if {
 	count(result) == 0
 }
 
+# 6. Malicious packages
+test_a_malicious_package_is_denied if {
+	result := deny with input as {"new_issues": [{"id": "A", "malicious": true}]}
+	count(result) == 1
+}
+
+test_a_non_malicious_package_is_allowed if {
+	result := deny with input as {"new_issues": [{"id": "A", "malicious": false}]}
+	count(result) == 0
+}
+
 # A benign finding must never trip any rule at once.
 test_a_clean_low_severity_finding_is_allowed if {
-	result := deny with input as {"new_issues": [{"id": "A", "severity": "LOW", "category": "sast", "in_cisa_kev": false, "reachable": false}]}
+	result := deny with input as {"new_issues": [{"id": "A", "severity": "LOW", "category": "sast", "in_cisa_kev": false, "reachable": false, "malicious": false}]}
 	count(result) == 0
 }

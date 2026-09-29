@@ -6,6 +6,7 @@ from typing import Any
 from core.adapters.base import RepoContext, ToolSpec
 from core.adapters.helpers import JsonAdapter, make_finding
 from core.models import Category, Finding, Package
+from core.scoring.versions import smallest_safe_upgrade
 
 
 class GrypeAdapter(JsonAdapter):
@@ -33,6 +34,7 @@ class GrypeAdapter(JsonAdapter):
             if str(c.get("version")).startswith("3")
         ]
         fixed = (v.get("fix") or {}).get("versions") or []
+        best_fixed = smallest_safe_upgrade(fixed) or (fixed[0] if fixed else None)
         return make_finding(
             "grype",
             Category.SCA,
@@ -49,6 +51,6 @@ class GrypeAdapter(JsonAdapter):
             cve=[a for a in aliases if a.startswith("CVE-")],
             aliases=aliases,
             refs=[v.get("dataSource")],
-            summary=f"Upgrade {name} to {fixed[0]} or later." if fixed else "",
+            summary=f"Upgrade {name} to {best_fixed} or later." if best_fixed else "",
             package=Package(name, version, Package.normalize_ecosystem(purl_type)),
         )

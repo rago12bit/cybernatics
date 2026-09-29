@@ -86,6 +86,7 @@ class Package:
     name: str
     version: str
     ecosystem: str
+    license: str = ""  # "" until a license is resolved (Week 40) -- never a fabricated "unknown"
 
     @staticmethod
     def normalize_ecosystem(raw: str) -> str:

@@ -1,0 +1,53 @@
+{
+  "pypi": [
+    "requests", "numpy", "pandas", "flask", "django", "boto3", "botocore", "urllib3", "pyyaml",
+    "six", "click", "jinja2", "cryptography", "setuptools", "pip", "wheel", "certifi",
+    "charset-normalizer", "idna", "packaging", "attrs", "sqlalchemy", "pytest", "pillow", "scipy",
+    "matplotlib", "pydantic", "fastapi", "uvicorn", "gunicorn", "redis", "celery", "lxml",
+    "beautifulsoup4", "selenium", "scrapy", "tornado", "aiohttp", "httpx", "black", "mypy", "ruff",
+    "poetry", "virtualenv", "tox", "coverage", "tqdm", "rich", "typer", "protobuf", "grpcio"
+  ],
+  "npm": [
+    "react", "react-dom", "lodash", "express", "axios", "webpack", "babel-core", "typescript",
+    "eslint", "chalk", "commander", "debug", "moment", "vue", "next", "jquery", "vite", "prettier",
+    "jest", "mocha", "chai", "socket.io", "redux", "rxjs", "underscore", "async", "request",
+    "bluebird", "uuid", "dotenv", "cors", "body-parser", "mongoose", "sequelize", "prisma",
+    "graphql", "apollo-server", "nodemon", "pm2", "yargs", "inquirer", "fs-extra", "glob",
+    "minimist", "semver", "colors", "ora", "figlet", "node-fetch", "ws"
+  ],
+  "go": [
+    "golang.org/x/net", "golang.org/x/sys", "golang.org/x/crypto", "github.com/gin-gonic/gin",
+    "github.com/spf13/cobra", "github.com/spf13/viper", "github.com/sirupsen/logrus",
+    "github.com/stretchr/testify", "github.com/gorilla/mux", "github.com/pkg/errors",
+    "github.com/aws/aws-sdk-go", "google.golang.org/grpc", "github.com/prometheus/client_golang",
+    "github.com/go-sql-driver/mysql", "github.com/lib/pq", "github.com/gofiber/fiber",
+    "github.com/labstack/echo", "k8s.io/client-go", "github.com/docker/docker",
+    "github.com/hashicorp/terraform"
+  ],
+  "cargo": [
+    "serde", "tokio", "rand", "clap", "regex", "log", "reqwest", "anyhow", "thiserror", "futures",
+    "once_cell", "lazy_static", "itertools", "rayon", "chrono", "uuid", "bytes", "hyper",
+    "actix-web", "syn", "quote", "proc-macro2", "libc", "cfg-if", "num", "indexmap"
+  ],
+  "rubygems": [
+    "rails", "rake", "rspec", "bundler", "devise", "sidekiq", "puma", "nokogiri", "rack",
+    "sinatra", "faraday", "capistrano", "pundit", "rubocop", "activesupport", "actionpack",
+    "activerecord", "jekyll", "httparty", "redis"
+  ],
+  "maven": [
+    "junit", "mockito-core", "slf4j-api", "log4j-core", "guava", "gson", "jackson-databind",
+    "spring-boot-starter", "spring-core", "spring-web", "hibernate-core", "commons-lang3",
+    "commons-io", "lombok", "okhttp", "retrofit", "rxjava", "kotlin-stdlib", "netty-all",
+    "httpclient"
+  ],
+  "packagist": [
+    "laravel/framework", "symfony/console", "symfony/http-foundation", "guzzlehttp/guzzle",
+    "monolog/monolog", "phpunit/phpunit", "doctrine/orm", "twig/twig", "nesbot/carbon",
+    "vlucas/phpdotenv"
+  ],
+  "nuget": [
+    "Newtonsoft.Json", "Microsoft.Extensions.DependencyInjection", "Microsoft.AspNetCore.App",
+    "Serilog", "AutoMapper", "EntityFramework", "Dapper", "Moq", "xunit", "NUnit",
+    "Microsoft.EntityFrameworkCore", "Polly", "FluentValidation", "RestSharp"
+  ]
+}

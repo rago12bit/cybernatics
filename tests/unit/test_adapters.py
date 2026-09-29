@@ -13,7 +13,7 @@ from core.adapters.grype import GrypeAdapter
 from core.adapters.osv_scanner import OsvScannerAdapter
 from core.adapters.semgrep import SemgrepAdapter
 from core.adapters.trivy import TrivyAdapter
-from core.models import Category, Finding, Package, finding_from_dict
+from core.models import Category, Finding, Package, Severity, finding_from_dict
 
 GOLDEN = Path(__file__).parent.parent / "golden"
 ADAPTERS: list[ToolAdapter] = [
@@ -117,6 +117,43 @@ def test_osv_emits_one_finding_per_vulnerability_group() -> None:
     assert len(ids) == len(set(ids))
     assert all(f.taxonomy.category is Category.SCA and f.package for f in findings)
     assert all(f.scoring.cvss_v3_1 is None or 0 <= f.scoring.cvss_v3_1 <= 10 for f in findings)
+
+
+def test_osv_flags_a_malicious_package_report_as_critical() -> None:
+    """A MAL- id (plan §20.5, OSSF's malicious-packages dataset) carries no CVSS score or severity
+    label, unlike a graded vulnerability -- without the plan §20.5 fix it would normalize to INFO
+    (the *lowest* severity), exactly backwards from what a confirmed malicious package deserves."""
+    raw = json.dumps(
+        {
+            "results": [
+                {
+                    "source": {"path": "/requirements.txt"},
+                    "packages": [
+                        {
+                            "package": {"name": "reuests", "version": "1.0.0", "ecosystem": "PyPI"},
+                            "vulnerabilities": [
+                                {
+                                    "id": "MAL-2022-7441",
+                                    "summary": "Malicious code in reuests (PyPI)",
+                                    "details": "Typosquats requests; exfiltrates credentials.",
+                                    "database_specific": {},
+                                    "affected": [],
+                                }
+                            ],
+                            "groups": [{"ids": ["MAL-2022-7441"], "aliases": ["MAL-2022-7441"]}],
+                        }
+                    ],
+                }
+            ]
+        }
+    ).encode()
+    findings = OsvScannerAdapter().parse(raw)
+    assert len(findings) == 1
+    f = findings[0]
+    assert f.scoring.normalized_severity is Severity.CRITICAL
+    assert f.scoring.confidence == 1.0
+    assert "malicious" in f.title.lower()
+    assert "remove" in f.remediation.summary.lower()
 
 
 def test_trivy_splits_categories_and_maps_severity() -> None:

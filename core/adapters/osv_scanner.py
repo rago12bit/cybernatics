@@ -20,9 +20,11 @@ from core.models import (
     Package,
     Remediation,
     Scoring,
+    Severity,
     Taxonomy,
 )
 from core.scoring.severity import from_cvss, normalize
+from core.scoring.versions import smallest_safe_upgrade
 
 log = logging.getLogger(__name__)
 
@@ -86,18 +88,32 @@ class OsvScannerAdapter(ToolAdapter):
                 aliases = {str(a) for a in group.get("aliases", [])} | set(ids)
                 cves = tuple(sorted(a for a in aliases if a.startswith("CVE-")))
                 db = rep.get("database_specific") or {}
+                # A MAL- id (plan §20.5) is a confirmed malicious-package report from OSSF's own
+                # malicious-packages dataset, not a graded vulnerability -- it carries no CVSS score
+                # or severity label, so without this check it falls through to the default (INFO,
+                # the *lowest* severity), exactly backwards from what it should be.
+                malicious = any(a.startswith("MAL-") for a in aliases)
                 score = _to_float(group.get("max_severity"))
                 sev = (
-                    from_cvss(score)
-                    if score is not None
-                    else normalize("osv-scanner", str(db.get("severity", "")))
+                    Severity.CRITICAL
+                    if malicious
+                    else (
+                        from_cvss(score)
+                        if score is not None
+                        else normalize("osv-scanner", str(db.get("severity", "")))
+                    )
                 )
                 fixed = _fixed_versions(rep, name)
+                best_fixed = smallest_safe_upgrade(fixed) or (fixed[0] if fixed else None)
                 text = f"{name}@{version}"
                 out.append(
                     Finding(
                         id=f"osv-scanner:{ids[0]}:{path}:{text}",
-                        title=f"{name} {version}: {rep.get('summary') or ids[0]}"[:300],
+                        title=(
+                            f"Malicious package: {name} {version} ({ids[0]})"
+                            if malicious
+                            else f"{name} {version}: {rep.get('summary') or ids[0]}"
+                        )[:300],
                         description=str(rep.get("details") or rep.get("summary") or ids[0]),
                         location=Location(path, 1, 1, text, Location.hash_snippet(text)),
                         taxonomy=Taxonomy(
@@ -110,16 +126,22 @@ class OsvScannerAdapter(ToolAdapter):
                             native_severity={"osv-scanner": str(group.get("max_severity", ""))},
                             normalized_severity=sev,
                             cvss_v3_1=score,
-                            confidence=0.9,
+                            confidence=1.0 if malicious else 0.9,
                         ),
                         evidence=Evidence(
                             reported_by=["osv-scanner"], rule_ids={"osv-scanner": [ids[0]]}
                         ),
                         remediation=Remediation(
                             summary=(
-                                f"Upgrade {name} to {fixed[0]} or later."
-                                if fixed
-                                else f"No fixed version of {name} is listed; consider mitigations."
+                                f"Remove {name} {version}; it is a reported malicious package, "
+                                "not something to patch or upgrade."
+                                if malicious
+                                else (
+                                    f"Upgrade {name} to {best_fixed} or later."
+                                    if best_fixed
+                                    else f"No fixed version of {name} is listed; consider "
+                                    "mitigations."
+                                )
                             ),
                             references=[f"https://osv.dev/{ids[0]}"],
                         ),
