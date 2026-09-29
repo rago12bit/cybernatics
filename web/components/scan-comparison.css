@@ -1,0 +1,84 @@
+/* Plan §28.6's scan comparison screen. Built on design-system/tokens.css's --ds-* properties,
+   matching project-overview.css's conventions. */
+
+.ds-cmp {
+  display: grid;
+  gap: var(--ds-space-3);
+  max-width: 72rem;
+}
+
+.ds-cmp-empty,
+.ds-cmp-empty-inline {
+  color: var(--ds-muted);
+  font-size: var(--ds-text-2);
+}
+
+.ds-cmp-picker {
+  display: flex;
+  gap: var(--ds-space-3);
+  flex-wrap: wrap;
+}
+.ds-cmp-picker label {
+  display: grid;
+  gap: 0.3rem;
+  font-size: var(--ds-text-2);
+  color: var(--ds-muted);
+}
+.ds-cmp-picker select {
+  font: inherit;
+  color: var(--ds-ink);
+  background: var(--ds-raised);
+  border: 1px solid var(--ds-rule);
+  border-radius: var(--ds-radius-input);
+  padding: 0.4rem 0.6rem;
+}
+
+.ds-cmp-range {
+  font-size: var(--ds-text-2);
+  color: var(--ds-muted);
+}
+
+.ds-cmp-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--ds-space-3);
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .ds-cmp-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ds-cmp-col-title {
+  font-size: var(--ds-text-2);
+  font-weight: 600;
+  color: var(--ds-ink);
+  border-bottom: 1px solid var(--ds-rule);
+  padding-bottom: 0.4rem;
+  margin-bottom: 0.5rem;
+}
+.ds-cmp-count {
+  color: var(--ds-muted);
+  font-weight: 400;
+}
+
+.ds-cmp-list {
+  display: grid;
+  gap: var(--ds-space-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.ds-cmp-item {
+  display: grid;
+  gap: 0.25rem;
+}
+.ds-cmp-item-title {
+  color: var(--ds-ink);
+  font-size: var(--ds-text-2);
+}
+.ds-cmp-item-path {
+  color: var(--ds-muted);
+  font-size: var(--ds-text-1);
+}

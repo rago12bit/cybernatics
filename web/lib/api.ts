@@ -1,4 +1,4 @@
-import type { AssetSummary, BulkTriageResult, Finding, FindingsPage, FindingsQuery, Guidance, GuidanceApi, IssueHistoryEvent, ProjectOverview, Remediation, ScanSummary, ScanView, TriageStatus } from "./types";
+import type { AssetSummary, BulkTriageResult, Finding, FindingsPage, FindingsQuery, Guidance, GuidanceApi, IssueHistoryEvent, ProjectOverview, Remediation, ScanComparison, ScanSummary, ScanView, TriageStatus } from "./types";
 import { findingsQueryString } from "./format";
 
 export const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/$/, "");
@@ -76,6 +76,10 @@ export const listScans = () => request<ScanSummary[]>("/scans?limit=15");
 export const getScan = (id: string) => request<ScanView>(`/scans/${encodeURIComponent(id)}`);
 export const getFindings = (id: string, q: FindingsQuery, limit?: number) =>
   request<FindingsPage>(`/scans/${encodeURIComponent(id)}/findings?${findingsQueryString(q, limit)}`);
+export const compareScans = (id: string, against: string) =>
+  request<ScanComparison>(
+    `/scans/${encodeURIComponent(id)}/compare?against=${encodeURIComponent(against)}`,
+  );
 
 export function createGitScan(url: string, tools: string[]) {
   return request<{ id: string; status: string }>("/scans", {

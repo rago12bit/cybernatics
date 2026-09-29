@@ -10,6 +10,7 @@ import { IssueDetail } from "../components/IssueDetail";
 import { IssuesTable } from "../components/IssuesTable";
 import { ProjectOverview } from "../components/ProjectOverview";
 import { ProjectsList } from "../components/ProjectsList";
+import { ScanComparison } from "../components/ScanComparison";
 import { RecentScans } from "../components/RecentScans";
 import { ScanReport } from "../components/ScanReport";
 import { SubmitForm } from "../components/SubmitForm";
@@ -188,6 +189,30 @@ describe("axe accessibility audit — Week 33-35 screens", () => {
     const rows = await mount(<TooltipProvider><ProjectOverview assetId="a1" /></TooltipProvider>);
     await act(async () => { await Promise.resolve(); });
     expect(await violations(rows.host)).toEqual([]);
+  });
+
+  it("scan comparison: picker and populated categories", async () => {
+    const overview = {
+      asset, verdict_count: 0, fix_first: [], more_at_lower_risk: 0,
+      since_previous_scan: { fixed: 0, new: 0, returned: 0 },
+      trend: [
+        { scan_id: "s1", finished_at: "2026-09-01T00:00:00Z", open_count: 2 },
+        { scan_id: "s2", finished_at: "2026-09-02T00:00:00Z", open_count: 1 },
+      ],
+      scanned: [], latest_scan_id: "s2", latest_scan_finished_at: "2026-09-02T00:00:00Z",
+    };
+    const comparison = {
+      earlier: { scan_id: "s1", source_label: "acme/widgets", finished_at: "2026-09-01T00:00:00Z", github_pr_number: null },
+      later: { scan_id: "s2", source_label: "acme/widgets", finished_at: "2026-09-02T00:00:00Z", github_pr_number: 7 },
+      new: [{ id: "i-new", title: "New SQL injection", severity: "HIGH", category: "sast", path: "a.py" }],
+      fixed: [], reintroduced: [],
+      unchanged: [{ id: "i-same", title: "Known secret", severity: "CRITICAL", category: "secrets", path: "c.env" }],
+    };
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => json(url.includes("/overview") ? overview : comparison)));
+    const { host, root: r } = await mount(<ScanComparison assetId="a1" />);
+    await act(async () => { await new Promise((res) => setTimeout(res, 50)); });
+    expect(await violations(host)).toEqual([]);
+    await act(async () => r.unmount());
   });
 
   it("issues table, populated", async () => {

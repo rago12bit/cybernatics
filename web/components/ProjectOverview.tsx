@@ -78,7 +78,8 @@ export function ProjectOverview({ assetId }: { assetId: string }) {
       <div className="ds-ov-crumbline">
         {data.asset.label} <span aria-hidden="true">·</span>{" "}
         <Link href={`/app/projects/${assetId}/issues`}>all issues</Link> <span aria-hidden="true">·</span>{" "}
-        <Link href={`/scans/${data.latest_scan_id}`}>full scan report</Link>
+        <Link href={`/scans/${data.latest_scan_id}`}>full scan report</Link> <span aria-hidden="true">·</span>{" "}
+        <Link href={`/app/projects/${assetId}/compare`}>compare scans</Link>
       </div>
 
       <div className="ds-ov-verdict">

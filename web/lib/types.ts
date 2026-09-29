@@ -111,6 +111,31 @@ export interface ScanSummary {
   severity_counts: Partial<Record<Severity, number>>;
 }
 
+export interface ComparedIssue {
+  id: string;
+  title: string;
+  severity: string;
+  category: string;
+  path: string;
+}
+
+export interface ScanComparisonSide {
+  scan_id: string;
+  source_label: string;
+  finished_at: string | null;
+  github_pr_number: number | null;
+}
+
+/** Plan §28.6's scan comparison screen. */
+export interface ScanComparison {
+  earlier: ScanComparisonSide;
+  later: ScanComparisonSide;
+  new: ComparedIssue[];
+  fixed: ComparedIssue[];
+  reintroduced: ComparedIssue[];
+  unchanged: ComparedIssue[];
+}
+
 export interface Finding {
   id: string;
   fingerprint: string;
