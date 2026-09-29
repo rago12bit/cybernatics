@@ -31,6 +31,13 @@ inputs:
   compare-base:
     description: On pull requests, also scan the base commit so only new findings are reported and gated.
     default: "true"
+  cache:
+    description: >
+      Content-addressed result cache (plan §20.1), persisted across runs with actions/cache: files
+      unchanged since a previous run are not rescanned. This is what keeps compare-base's extra
+      base-commit scan cheap on repeat runs, and is what "under 60 seconds for a typical pull
+      request" (the target this feature is measured against) actually depends on.
+    default: "true"
   github-token:
     description: Token used for the pull-request comment.
     default: ${{ github.token }}
@@ -71,6 +78,14 @@ runs:
         ACTION_PATH: ${{ github.action_path }}
       run: bash "$ACTION_PATH/action/build-images.sh"
 
+    - name: Restore the result cache
+      if: ${{ inputs.cache == 'true' }}
+      uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      with:
+        path: ~/.bulwark-result-cache
+        key: bulwark-result-cache-${{ runner.os }}-${{ github.run_id }}
+        restore-keys: bulwark-result-cache-${{ runner.os }}-
+
     - name: Scan
       id: scan
       shell: bash
@@ -80,10 +95,16 @@ runs:
         COMPARE_BASE: ${{ inputs.compare-base }}
         EVENT_NAME: ${{ github.event_name }}
         BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        CACHE: ${{ inputs.cache }}
       run: |
         set -euo pipefail
         cd "$GITHUB_WORKSPACE"
         ignore_args=()
+        cache_args=()
+        # Same path as the restore/save steps' `path: ~/.bulwark-result-cache` -- $HOME, not a
+        # literal `~`, since bash only expands `~` when it appears directly in a word it parses,
+        # not inside an already-set environment variable's value.
+        [ "$CACHE" = "true" ] && cache_args=(--cache-dir "$HOME/.bulwark-result-cache")
         pr=false
         if [ "$EVENT_NAME" = "pull_request" ] && [ -n "$BASE_SHA" ]; then
           pr=true
@@ -98,11 +119,15 @@ runs:
           fi
           ignore_args=(--ignore-file "$RUNNER_TEMP/ignore")
         fi
-        bulwark scan "$SCAN_PATH" --tools "$TOOLS" --format json ${ignore_args[@]+"${ignore_args[@]}"} --output "$RUNNER_TEMP/head.json"
+        bulwark scan "$SCAN_PATH" --tools "$TOOLS" --format json ${ignore_args[@]+"${ignore_args[@]}"} ${cache_args[@]+"${cache_args[@]}"} --output "$RUNNER_TEMP/head.json"
         if [ "$pr" = true ] && [ "$COMPARE_BASE" = "true" ]; then
-          # A failed baseline is not fatal: the comment then says every finding is listed.
+          # A failed baseline is not fatal: the comment then says every finding is listed. The
+          # result cache (when enabled) is what keeps this second, otherwise-redundant full scan of
+          # the base commit cheap: on any run after the first, the base commit's files were most
+          # likely already scanned (as some prior run's HEAD), so this becomes almost entirely
+          # cache hits rather than a second real scan.
           if git worktree add --quiet --detach "$RUNNER_TEMP/base" "$BASE_SHA" \
-             && bulwark scan "$RUNNER_TEMP/base/$SCAN_PATH" --tools "$TOOLS" --format json ${ignore_args[@]+"${ignore_args[@]}"} --output "$RUNNER_TEMP/base.json"; then
+             && bulwark scan "$RUNNER_TEMP/base/$SCAN_PATH" --tools "$TOOLS" --format json ${ignore_args[@]+"${ignore_args[@]}"} ${cache_args[@]+"${cache_args[@]}"} --output "$RUNNER_TEMP/base.json"; then
             echo "baseline scan done"
           else
             echo "::warning::Could not scan the base commit; reporting all findings instead of only new ones."
@@ -158,6 +183,13 @@ runs:
       run: |
         bulwark ci comment --body "$RUNNER_TEMP/comment.md" --repo "$GITHUB_REPOSITORY" \
           --pr "$PR_NUMBER" --api-url "$API_URL"
+
+    - name: Save the result cache
+      if: ${{ always() && inputs.cache == 'true' }}
+      uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      with:
+        path: ~/.bulwark-result-cache
+        key: bulwark-result-cache-${{ runner.os }}-${{ github.run_id }}
 
     - name: Enforce the threshold
       if: ${{ steps.compare.outputs.gate-exit == '1' }}

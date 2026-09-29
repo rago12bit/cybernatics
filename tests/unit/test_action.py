@@ -24,6 +24,7 @@ def test_is_a_composite_action_with_documented_inputs() -> None:
         "upload-sarif",
         "comment",
         "compare-base",
+        "cache",
         "github-token",
     ):
         assert ACTION["inputs"][name]["description"], name
@@ -92,12 +93,28 @@ def test_inputs_are_wired_to_the_steps_that_use_them() -> None:
     assert env["scan"]["SCAN_PATH"] == "${{ inputs.path }}"
     assert env["scan"]["TOOLS"] == "${{ inputs.tools }}"
     assert env["scan"]["COMPARE_BASE"] == "${{ inputs.compare-base }}"
+    assert env["scan"]["CACHE"] == "${{ inputs.cache }}"
     assert env["compare"]["FAIL_ON"] == "${{ inputs.fail-on }}"
     sbom = next(s for s in STEPS if s.get("id") == "sbom")
     assert sbom["env"]["SCAN_PATH"] == "${{ inputs.path }}" and "inputs.sbom" in sbom["if"]
     comment = next(s for s in STEPS if s.get("name", "").startswith("Comment"))
     assert comment["env"]["GITHUB_TOKEN"] == "${{ inputs.github-token }}"
     assert comment["env"]["PR_NUMBER"] == "${{ github.event.pull_request.number }}"
+
+
+def test_result_cache_is_restored_before_scanning_and_saved_after_with_a_matching_path() -> None:
+    """Plan §20.1/§36: the cache directory named in the scan step's --cache-dir must be exactly the
+    one restore/save operate on, or the cache would silently do nothing."""
+    restore = next(s for s in STEPS if s.get("uses", "").startswith("actions/cache/restore"))
+    save = next(s for s in STEPS if s.get("uses", "").startswith("actions/cache/save"))
+    scan = next(s for s in STEPS if s.get("id") == "scan")["run"]
+    assert restore["with"]["path"] == save["with"]["path"] == "~/.bulwark-result-cache"
+    assert "$HOME/.bulwark-result-cache" in scan and "--cache-dir" in scan
+    assert "inputs.cache" in restore["if"] and "inputs.cache" in save["if"]
+    assert "always()" in save["if"]  # must still run (and thus save progress) after a failed step
+    # restore happens strictly before the scan step that would use it; save strictly after
+    assert STEPS.index(restore) < STEPS.index(next(s for s in STEPS if s.get("id") == "scan"))
+    assert STEPS.index(save) > STEPS.index(next(s for s in STEPS if s.get("id") == "scan"))
 
 
 def test_pull_requests_take_ignore_rules_from_the_base_commit_not_the_change() -> None:
