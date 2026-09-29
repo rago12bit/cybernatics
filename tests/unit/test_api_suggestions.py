@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from api.deps import AppState
 from api.main import create_app
 from core.config import Settings
+from core.llm.budget import BudgetConfig
 from core.llm.limits import UsageLimiter
 from core.models import Category, Finding, Location, Taxonomy
 from core.persistence import repo
@@ -51,6 +52,7 @@ def make_client(
     tmp_path: Path,
     model: Any = None,
     limiter: UsageLimiter | None = None,
+    budget: BudgetConfig | None = None,
 ) -> TestClient:
     settings = Settings(
         database_url="sqlite://", redis_url="", s3_endpoint=None, s3_access_key="", s3_secret_key="",
@@ -63,6 +65,7 @@ def make_client(
         FakeSubscriber(),
         llm=model,
         limiter=limiter or UsageLimiter(100, 1000),
+        llm_budget=budget or BudgetConfig(per_scan=1_000_000, per_org_month=1_000_000),
     )
     return TestClient(create_app(st))
 
@@ -203,6 +206,42 @@ def test_the_spend_limit_returns_429_with_retry_after_and_cache_hits_stay_free(p
         repo.add_findings(s, sid, [f2])
     r = c.post(f"/scans/{sid}/suggestion", json={"finding_id": "b:2"}, headers=AUTH)
     assert r.status_code == 429 and int(r.headers["Retry-After"]) >= 1 and len(model.calls) == 1
+
+
+def test_the_token_budget_returns_429_once_a_scans_cap_is_reached(parts) -> None:  # type: ignore[no-untyped-def]
+    sessions, tmp, sid, fid = parts
+    model = FakeModel(reply(), tokens=50)
+    c = make_client(sessions, tmp, model, budget=BudgetConfig(per_scan=40, per_org_month=1_000_000))
+    r = c.post(f"/scans/{sid}/suggestion", json={"finding_id": fid}, headers=AUTH)
+    assert r.status_code == 200 and r.json()["tokens_used"] == 50 and r.json()["source"] == "ai"
+    with (
+        sessions() as s
+    ):  # over budget now (50 >= 40): a second, different finding needs a real call
+        f2 = Finding(
+            "b:2", "XSS", "d",
+            Location("a.py", 3, 3, "x = 1", Location.hash_snippet("x = 1")),
+            Taxonomy(Category.SAST, cwe=("CWE-79",)),
+        )  # fmt: skip
+        f2.evidence.rule_ids = {"bandit": ["B703"]}
+        repo.add_findings(s, sid, [f2])
+    r2 = c.post(f"/scans/{sid}/suggestion", json={"finding_id": "b:2"}, headers=AUTH)
+    assert r2.status_code == 429 and "token budget" in r2.json()["detail"] and len(model.calls) == 1
+    with sessions() as s:
+        assert repo.get_scan(s, sid, org_id=None).llm_tokens_used == 50  # never double-charged
+
+
+def test_a_cache_hit_reports_zero_tokens_used_and_never_double_charges_the_budget(parts) -> None:  # type: ignore[no-untyped-def]
+    sessions, tmp, sid, fid = parts
+    model = FakeModel(reply(), tokens=50)
+    c = make_client(sessions, tmp, model, budget=BudgetConfig(per_scan=1000, per_org_month=1000))
+    first = c.post(f"/scans/{sid}/suggestion", json={"finding_id": fid}, headers=AUTH).json()
+    second = c.post(f"/scans/{sid}/suggestion", json={"finding_id": fid}, headers=AUTH).json()
+    assert first["tokens_used"] == 50 and first["from_cache"] is False
+    assert (
+        second["from_cache"] is True and second["tokens_used"] == 0
+    )  # the cached answer cost nothing this time
+    with sessions() as s:
+        assert repo.get_scan(s, sid, org_id=None).llm_tokens_used == 50  # charged once, not twice
 
 
 def test_missing_things_and_bad_input(parts, sessions: sessionmaker[Session], tmp_path: Path) -> None:  # type: ignore[no-untyped-def]

@@ -68,8 +68,10 @@ def cache_key(f: Finding, model: str) -> str | None:
 
 def _store(s: Session, key: str, f: Finding, res: RemediationResult) -> None:
     payload = asdict(res)
-    for k in ("warnings", "degraded_reason", "from_cache"):
-        payload.pop(k, None)  # request-specific, not part of the reusable answer
+    for k in ("warnings", "degraded_reason", "from_cache", "tokens_used"):
+        payload.pop(
+            k, None
+        )  # request-specific, not part of the reusable answer (a cache hit costs 0)
     payload["generated_at"] = res.generated_at or datetime.now(timezone.utc).isoformat(
         timespec="seconds"
     )

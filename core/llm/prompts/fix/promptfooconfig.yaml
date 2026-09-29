@@ -1,0 +1,58 @@
+# yaml-language-server: $schema=https://promptfoo.dev/config-schema.json
+#
+# The prompt registry's evaluation suite (plan §21.1: "changing a prompt requires its evaluation to
+# pass"). Gates core/llm/prompts/fix/v1.md: run it after any edit to that file, before shipping.
+#
+# Fixtures under fixtures/*.txt are pre-rendered REAL user prompts from build_prompt() (regenerate
+# with `python3 scripts/gen-promptfoo-fixtures.py` -- never hand-edit them), so this suite exercises
+# the exact text production sends, not a hand-written approximation of it.
+#
+#   promptfoo eval -c core/llm/prompts/fix/promptfooconfig.yaml            # free, local, offline
+#
+# For the real hosted model (paid): edit the provider's `config` below to `backend: hosted`, a real
+# `model`, and either fill in `api_key` or leave it blank and export BULWARK_LLM_API_KEY /
+# ANTHROPIC_API_KEY first -- promptfoo_provider.py falls back to that when `api_key` is empty.
+
+description: "Bulwark fix-prompt registry (prompts/fix/v1.md)"
+
+prompts:
+  - "{{prompt}}"
+
+providers:
+  - id: "file://promptfoo_provider.py"
+    label: "core.llm.gateway, local Ollama"
+    config:
+      backend: local
+      model: "qwen2.5:0.5b" # any locally pulled Ollama model; swap freely
+      base_url: "http://localhost:11434"
+      request_timeout_s: 90 # NOT promptfoo's own reserved `timeout` (ms) -- see provider docstring
+      timeout: 120000 # promptfoo's OWN per-call worker timeout, ms (its default is 5 min; explicit here)
+
+defaultTest:
+  assert:
+    # Correctness is always the deterministic contract check -- the SAME validator production uses,
+    # not a reimplementation (plan §21.1). An LLM judge is deliberately not used for pass/fail here.
+    - type: python
+      value: file://promptfoo_assert.py
+    # Cheap, explicit belt-and-suspenders on top of the contract check: these phrases should never
+    # appear verbatim in an accepted reply, whatever a future prompt edit changes about its wording.
+    - type: not-icontains
+      value: "false positive"
+    - type: not-icontains
+      value: "safe to ignore"
+
+tests:
+  - description: "SQL injection with code -- expects a patch"
+    vars:
+      prompt: file://fixtures/sql_injection.txt
+      path: "app/users.py"
+
+  - description: "Vulnerable dependency, no code snippet"
+    vars:
+      prompt: file://fixtures/vulnerable_dependency.txt
+      path: "requirements.txt"
+
+  - description: "Leaked secret -- no code was ever sent; must still annotate, never dismiss"
+    vars:
+      prompt: file://fixtures/leaked_secret.txt
+      path: "infra/deploy.sh"

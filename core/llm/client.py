@@ -17,10 +17,16 @@ class LLMError(RuntimeError):
     """The model call failed. The message never contains prompt or reply text."""
 
 
+@dataclass(frozen=True)
+class Completion:
+    text: str
+    tokens: int = 0  # input + output tokens the provider says this call used; 0 when unknown
+
+
 class LLMClient(Protocol):
     model: str
 
-    def complete(self, system: str, user: str) -> str: ...
+    def complete(self, system: str, user: str) -> Completion: ...
 
 
 @dataclass(frozen=True)
@@ -60,7 +66,7 @@ class AnthropicClient:
         self._sdk = anthropic
         self._client = anthropic.Anthropic(api_key=cfg.api_key, timeout=cfg.timeout, max_retries=1)
 
-    def complete(self, system: str, user: str) -> str:
+    def complete(self, system: str, user: str) -> Completion:
         try:
             msg = self._client.messages.create(
                 model=self.model,
@@ -72,7 +78,12 @@ class AnthropicClient:
             raise LLMError(f"model call failed ({type(exc).__name__})") from None
         except Exception as exc:  # noqa: BLE001 - timeouts, connection errors, anything else
             raise LLMError(f"model call failed ({type(exc).__name__})") from None
-        return "".join(getattr(b, "text", "") for b in msg.content)
+        text = "".join(getattr(b, "text", "") for b in msg.content)
+        usage = getattr(msg, "usage", None)
+        tokens = (getattr(usage, "input_tokens", 0) or 0) + (
+            getattr(usage, "output_tokens", 0) or 0
+        )
+        return Completion(text, tokens)
 
 
 def make_client(cfg: LLMConfig | None = None) -> LLMClient | None:

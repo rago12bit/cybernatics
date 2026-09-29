@@ -157,7 +157,9 @@ def test_failures_and_static_fallbacks_are_never_cached(db: Session, kb: Knowled
     bad = FakeModel('{"explanation": "x"}')  # breaks the contract
     assert suggest_cached(mk(), kb, bad, db, CODE).source == "static"
     assert suggest_cached(mk(), kb, bad, db, CODE).source == "static"
-    assert len(bad.calls) == 2 and stats(db)["entries"] == 0  # retried, not remembered
+    assert (
+        len(bad.calls) == 4 and stats(db)["entries"] == 0
+    )  # retried each time (incl. 1 repair), not remembered
     boom = FakeModel(RuntimeError("down"))
     suggest_cached(mk(), kb, boom, db, CODE)
     assert stats(db)["entries"] == 0

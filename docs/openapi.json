@@ -1791,6 +1791,12 @@
               }
             ],
             "title": "Generated At"
+          },
+          "tokens_used": {
+            "type": "integer",
+            "title": "Tokens Used",
+            "description": "Tokens this call actually spent; 0 for static text or a cache hit.",
+            "default": 0
           }
         },
         "type": "object",

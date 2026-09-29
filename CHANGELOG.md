@@ -6,6 +6,25 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 ## [Unreleased]
 
 ### Added
+- **Model gateway and LLMOps (Week 41, plan §21.1, ADR-0026):** a real local backend (`core/llm/ollama_client.py`,
+  plain HTTP to Ollama, no SDK) alongside the existing hosted Anthropic one, chosen per task through a new
+  `core/llm/gateway.py` (`Task`/`Backend` enums, per-task route overrides). Privacy mode
+  (`BULWARK_LLM_PRIVACY_MODE=1`, or `bulwark llm suggest --privacy`) forces every task onto the local backend and
+  refuses outright, never falling back to hosted, when no local model is ready. Token budgets, in real tokens (not
+  call counts): a running per-scan counter (`Scan.llm_tokens_used`, migration `0011`) and a per-organization
+  per-month counter (`llm_usage`, RLS-protected), both a hard `429` stop before a call, both fed by the provider's
+  own reported usage (`LLMClient.complete` now returns a `Completion(text, tokens)`). A second redaction layer
+  (`core/llm/pii.py`, optional `bulwark-scan[pii]` extra, Microsoft Presidio) removes free-text personal data after
+  the existing secret scrubber runs; a path denylist (`core/llm/pathguard.py`: `.env`, `*.pem`, `id_rsa*`, ...)
+  withholds code by path alone, regardless of a finding's scanner category. A rejected reply now gets one repair
+  attempt (a fixed, generic instruction, never the rejected reply itself) before falling back to static text. The
+  system prompt moved from an inline string to a versioned file (`core/llm/prompts/fix/v1.md`), with a real
+  `promptfoo` evaluation suite (`core/llm/prompts/fix/promptfooconfig.yaml`) that runs through the actual gateway
+  and the actual contract validator against pre-rendered real prompts. 34 new backend tests (1151 total, up from
+  1117; 94.3% coverage); mypy/ruff/black clean. Full account, including two integration bugs the promptfoo suite itself
+  caught, in `docs/adr/0026-model-gateway.md` and `docs/llm-remediation.md`.
+
+### Added
 - **Dependencies screen (plan §20.5), a follow-up to Week 40's supply-chain risk work (ADR-0025):**
   Week 40 built SBOM parsing, typosquat detection, and OpenSSF Scorecard enrichment as pure library
   code, reachable only via CLI commands, with the hosted screen explicitly deferred. This closes that

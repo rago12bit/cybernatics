@@ -25,6 +25,14 @@ from core.rag.store import KnowledgeBase
 log = logging.getLogger(__name__)
 LABEL = "AI suggestion: review before applying"
 STATIC_LABEL = "Reference guidance (not AI-generated)"
+# Fixed and generic, deliberately: it never echoes the rejected reply or the rejection reason back
+# into a new prompt. Both could contain model- or attacker-influenced text (the reply was already
+# untrusted enough to fail the contract), and re-feeding either would build exactly the kind of
+# feedback channel prompt.py's nonce-fencing exists to prevent (plan §21.1, "one repair attempt").
+REPAIR_NOTE = (
+    "Your previous reply did not match the required format. Reply again with exactly the single "
+    "JSON object described in the system message: no markdown, no code fences, no other text."
+)
 
 
 @dataclass
@@ -47,6 +55,7 @@ class RemediationResult:
     generated_at: str | None = (
         None  # when the model produced it (cache hits keep the original time)
     )
+    tokens_used: int = 0  # real model calls only (0 for static/cached); feeds core.llm.budget
 
 
 def _refs(ctx: RemediationContext) -> list[dict[str, str]]:
@@ -101,20 +110,36 @@ def suggest(
         warnings.append(
             f"{prompt.secrets_scrubbed} possible secret(s) were removed before the code was sent."
         )
+    if prompt.pii_redacted:
+        warnings.append(
+            f"{prompt.pii_redacted} possible personal detail(s) were redacted before sending."
+        )
+    tokens = 0
     try:
-        raw = client.complete(prompt.system, prompt.user)
+        completion = client.complete(prompt.system, prompt.user)
+        tokens += completion.tokens
     except Exception as exc:  # noqa: BLE001 - any failure degrades, none propagates
         log.warning("remediation model call failed: %s", type(exc).__name__)
         res = static_suggestion(finding, ctx, f"model call failed ({type(exc).__name__})")
-        res.warnings = warnings
+        res.warnings, res.tokens_used = warnings, tokens
         return res
     try:
-        s: Suggestion = parse_response(raw, path=finding.location.path)
+        s: Suggestion = parse_response(completion.text, path=finding.location.path)
     except ContractError as exc:
-        log.warning("remediation reply rejected: %s", exc)
-        res = static_suggestion(finding, ctx, f"model reply rejected: {exc}")
-        res.warnings = warnings
-        return res
+        log.warning("remediation reply rejected, attempting one repair: %s", exc)
+        try:
+            repair = client.complete(prompt.system, prompt.user + "\n\n" + REPAIR_NOTE)
+            tokens += repair.tokens
+            s = parse_response(repair.text, path=finding.location.path)
+        except (
+            Exception
+        ) as exc2:  # noqa: BLE001 - repair failed too (contract or transport): degrade
+            log.warning("remediation repair attempt also rejected: %s", exc2)
+            res = static_suggestion(
+                finding, ctx, f"model reply rejected after one repair attempt: {exc2}"
+            )
+            res.warnings, res.tokens_used = warnings, tokens
+            return res
     patch, patch_status = s.suggested_patch, None
     if patch:
         # The contract proved the patch is well formed; this proves it matches the code we showed the model.
@@ -130,5 +155,5 @@ def suggest(
     return RemediationResult(
         source="ai", label=LABEL, explanation=s.explanation, impact=s.impact, fix_summary=s.fix_summary,
         suggested_patch=patch, confidence=s.confidence, model=client.model,
-        warnings=warnings, references=_refs(ctx), patch_status=patch_status,
+        warnings=warnings, references=_refs(ctx), patch_status=patch_status, tokens_used=tokens,
     )  # fmt: skip

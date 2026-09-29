@@ -20,7 +20,7 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
-from core.llm.client import LLMClient
+from core.llm.client import Completion, LLMClient
 from core.llm.prompt import PROMPT_VERSION, CodeContext
 from core.llm.service import suggest
 from core.models import finding_from_dict
@@ -138,10 +138,11 @@ class Recorder:
     def __init__(self, inner: LLMClient) -> None:
         self.inner, self.model, self.last = inner, inner.model, ""
 
-    def complete(self, system: str, user: str) -> str:
+    def complete(self, system: str, user: str) -> Completion:
         self.last = ""
-        self.last = self.inner.complete(system, user)
-        return self.last
+        completion = self.inner.complete(system, user)
+        self.last = completion.text
+        return completion
 
 
 def run_generation(

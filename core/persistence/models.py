@@ -237,6 +237,12 @@ class Scan(Base):
     # -- nothing here needs server-side filtering or pagination; the Dependencies screen renders it
     # whole.
     sbom_summary: Mapped[dict[str, Any] | None] = mapped_column(JsonType, nullable=True)
+    # Model gateway token budget (plan §21.1, ADR-0026): total tokens every AI remediation call tied
+    # to this scan has actually used. A running counter updated in place, unlike sbom_summary's
+    # write-once snapshot -- `core.llm.budget.check()` compares it against a per-scan cap before
+    # each call, so one scan generating suggestions for every one of its findings can't alone
+    # exhaust an organization's whole monthly budget.
+    llm_tokens_used: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
@@ -313,3 +319,20 @@ class RemediationCache(Base):
     payload: Mapped[dict[str, Any]] = mapped_column(JsonType)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
     hits: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class LlmUsage(Base):
+    """One row per (org, calendar month): a running total of model-gateway tokens spent, the other
+    half of the token budget alongside `Scan.llm_tokens_used` (core/llm/budget.py, ADR-0026).
+
+    A dedicated table, not a JSON blob on `Organization` -- unlike `Scan.sbom_summary` (write once,
+    by the one scan that owns it), this counter is incremented by many concurrent scans within the
+    same org and month, which needs a race-free `UPDATE ... SET tokens = tokens + :n`, not a
+    read-modify-write of a JSON document.
+    """
+
+    __tablename__ = "llm_usage"
+
+    org_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"), primary_key=True)
+    period: Mapped[str] = mapped_column(String(7), primary_key=True)  # "YYYY-MM", UTC
+    tokens: Mapped[int] = mapped_column(Integer, default=0)

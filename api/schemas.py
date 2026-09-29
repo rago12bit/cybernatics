@@ -253,6 +253,9 @@ class RemediationView(BaseModel):
     )
     from_cache: bool = False
     generated_at: str | None = None
+    tokens_used: int = Field(
+        default=0, description="Tokens this call actually spent; 0 for static text or a cache hit."
+    )
 
 
 class GuidanceView(BaseModel):

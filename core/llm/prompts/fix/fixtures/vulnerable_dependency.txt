@@ -1,0 +1,13 @@
+=====BEGIN UNTRUSTED DATA [4f75447c2aa05b95f1cf7cb3fd9a81c7] kind=finding path="requirements.txt"=====
+Title: Known-vulnerable dependency
+Description: flask 2.2.0 has a known CVE.
+Category: sca
+CWE: none given
+OWASP Top 10: none given
+File: requirements.txt
+Lines: 3-3
+=====END UNTRUSTED DATA [4f75447c2aa05b95f1cf7cb3fd9a81c7]=====
+
+Annotate the finding described in the data blocks above.
+
+Reply with the single JSON object described in the system message, and nothing else.

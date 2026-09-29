@@ -1,0 +1,18 @@
+=====BEGIN UNTRUSTED DATA [f7eee2ff6be169ec1f7a310ed86081af] kind=finding path="app/users.py"=====
+Title: SQL injection
+Description: String-built SQL query.
+Category: sast
+CWE: CWE-89
+OWASP Top 10: A03:2021
+File: app/users.py
+Lines: 10-11
+=====END UNTRUSTED DATA [f7eee2ff6be169ec1f7a310ed86081af]=====
+
+=====BEGIN UNTRUSTED DATA [f7eee2ff6be169ec1f7a310ed86081af] kind=code path="app/users.py"=====
+   10 | def get_user(uid):
+   11 |     return db.execute("SELECT * FROM users WHERE id=" + uid)
+=====END UNTRUSTED DATA [f7eee2ff6be169ec1f7a310ed86081af]=====
+
+Annotate the finding described in the data blocks above.
+
+Reply with the single JSON object described in the system message, and nothing else.

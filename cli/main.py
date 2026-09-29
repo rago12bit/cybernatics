@@ -197,10 +197,11 @@ def _code_for(finding: Any, source: Path | None) -> Any:
 
 @llm_app.command("status")
 def llm_status() -> None:
-    """Is the feature on, which model, is a key set (never the key itself)."""
-    from core.llm.client import LLMConfig
+    """Which backend each task routes to (hosted or local), privacy mode, and whether a key/model
+    is set for each -- never the key itself."""
+    from core.llm.gateway import gateway_status
 
-    typer.echo(json.dumps(LLMConfig.from_env().status(), indent=2))
+    typer.echo(json.dumps(gateway_status(), indent=2))
 
 
 @llm_app.command("prompt")
@@ -244,24 +245,39 @@ def llm_suggest(
     finding_json: Path = typer.Argument(...),
     source: Path | None = typer.Option(None, help="The source file the finding is in."),
     index: int = typer.Option(0),
+    privacy: bool = typer.Option(
+        False,
+        "--privacy",
+        help="Force a local model (Ollama) and refuse to use a hosted one, even if configured: "
+        "the code never leaves this machine. Same as BULWARK_LLM_PRIVACY_MODE=1 for this command.",
+    ),
 ) -> None:
-    """Ask the configured model for a suggestion (sends data off this machine); else static text."""
+    """Ask the routed model for a suggestion (sends data off this machine, unless --privacy); else
+    static text."""
     from dataclasses import asdict
 
-    from core.llm.client import LLMConfig, make_client
+    from core.llm.gateway import GatewayConfig, PrivacyModeViolation, Task, make_gateway_client
     from core.llm.service import suggest
     from core.persistence.db import get_session_factory
     from core.rag.store import KnowledgeBase
 
-    cfg = LLMConfig.from_env()
-    if not cfg.enabled:
+    gw_cfg = GatewayConfig.from_env()
+    if privacy:
+        gw_cfg = GatewayConfig(default_backend=gw_cfg.default_backend, privacy_mode=True)
+    try:
+        client = make_gateway_client(Task.FIX, gateway_cfg=gw_cfg)
+    except PrivacyModeViolation as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(1) from None
+    if client is None:
         typer.echo(
-            "LLM off: set BULWARK_LLM_ENABLED=1 and BULWARK_LLM_API_KEY to enable.",
+            "No model routed for this task: set BULWARK_LLM_ENABLED=1 (+key) for hosted, or "
+            "BULWARK_LLM_LOCAL_ENABLED=1 for local. Falling back to static text.",
             err=True,
         )
     finding = _load_finding(finding_json, index)
     with get_session_factory()() as s:
-        result = suggest(finding, KnowledgeBase(s), make_client(cfg), _code_for(finding, source))
+        result = suggest(finding, KnowledgeBase(s), client, _code_for(finding, source))
     typer.echo(json.dumps(asdict(result), indent=2))
 
 

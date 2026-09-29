@@ -13,6 +13,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from core.config import Settings
+from core.llm.budget import BudgetConfig
 from core.llm.client import LLMClient
 from core.llm.limits import UsageLimiter
 from core.persistence.db import SessionFactory
@@ -32,7 +33,8 @@ class AppState:
     enqueue: Callable[[str, str], None]  # (scan_id, org_id) -> dispatches a scan job to the worker
     subscriber: EventSubscriber
     llm: LLMClient | None = None  # None: AI suggestions are off; guidance is static reference text
-    limiter: UsageLimiter = field(default_factory=UsageLimiter)  # caps real model calls (cost)
+    limiter: UsageLimiter = field(default_factory=UsageLimiter)  # caps real model calls (rate)
+    llm_budget: BudgetConfig = field(default_factory=BudgetConfig.from_env)  # caps them by tokens
 
 
 def state(request: Request) -> AppState:

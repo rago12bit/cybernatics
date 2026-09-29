@@ -71,6 +71,7 @@ from core.config import Settings
 from core.export import FORMATS, ReportData, render
 from core.gitfetch import GitUrlError, validate_git_url
 from core.github_app import parse_pull_request_event, verify_signature
+from core.llm import budget as llm_budget
 from core.llm import cache as llm_cache
 from core.llm.limits import LimitExceeded, UsageLimiter
 from core.llm.prompt import CodeContext
@@ -723,16 +724,24 @@ def create_app(app_state: AppState) -> FastAPI:
         client = app_state.llm
         if client is None:
             raise HTTPException(409, "AI suggestions are not enabled on this server")
+        scan = _get_scan(s, scan_id, org)
         f = _find(s, scan_id, org, body.finding_id)
         kb = _kb(s)
+
+        def before_call() -> None:
+            app_state.limiter.acquire()
+            llm_budget.check(s, scan, app_state.llm_budget)
+
         try:
-            res = llm_cache.suggest_cached(
-                f, kb, client, s, _code_of(f), before_call=app_state.limiter.acquire
-            )
+            res = llm_cache.suggest_cached(f, kb, client, s, _code_of(f), before_call=before_call)
         except LimitExceeded as exc:
             raise HTTPException(
                 429, str(exc), headers={"Retry-After": str(exc.retry_after)}
             ) from exc
+        except llm_budget.BudgetExceeded as exc:
+            raise HTTPException(429, str(exc)) from exc
+        if res.source == "ai" and not res.from_cache:
+            llm_budget.record(s, scan, res.tokens_used)
         return RemediationView(**asdict(res))
 
     @app.get("/risk/feeds", response_model=FeedsStatus, dependencies=[Depends(require_auth)])
@@ -918,7 +927,7 @@ class RedisSubscriber:
 
 def build_default_app() -> FastAPI:
     """Production wiring, used by `uvicorn api.main:app`."""
-    from core.llm.client import make_client
+    from core.llm.gateway import Task, make_gateway_client
     from core.persistence.db import get_session_factory
     from core.persistence.storage import S3Store
     from core.tasks import run_scan_task
@@ -932,7 +941,9 @@ def build_default_app() -> FastAPI:
             sessions=get_session_factory(),
             enqueue=lambda scan_id, org_id: run_scan_task.delay(scan_id, org_id),
             subscriber=RedisSubscriber(settings.redis_url),
-            llm=make_client(),  # None unless BULWARK_LLM_ENABLED=1 and a key is set
+            # None unless the routed backend is enabled and ready; raises at startup, not on the
+            # first request, if privacy mode is on with no local model configured (gateway.py).
+            llm=make_gateway_client(Task.FIX),
             limiter=UsageLimiter.from_env(),
         )
     )
