@@ -138,6 +138,32 @@ class TrendPoint(BaseModel):
     open_count: int
 
 
+class ComparedIssue(BaseModel):
+    id: str
+    title: str
+    severity: str
+    category: str
+    path: str
+
+
+class ScanComparisonSide(BaseModel):
+    scan_id: str
+    source_label: str
+    finished_at: datetime | None
+    github_pr_number: int | None
+
+
+class ScanComparisonView(BaseModel):
+    """Plan §28.6's scan comparison screen: two of an asset's scans, side by side."""
+
+    earlier: ScanComparisonSide
+    later: ScanComparisonSide
+    new: list[ComparedIssue]
+    fixed: list[ComparedIssue]
+    reintroduced: list[ComparedIssue]
+    unchanged: list[ComparedIssue]
+
+
 class ProjectOverview(BaseModel):
     """Plan §28.1's project overview screen, built entirely from existing scan/issue data —
     see core/persistence/repo.py's asset-overview functions for how each field is derived."""

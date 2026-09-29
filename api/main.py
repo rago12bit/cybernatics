@@ -46,6 +46,7 @@ from api.schemas import (
     AssetSummary,
     BulkTriageRequest,
     BulkTriageResult,
+    ComparedIssue,
     FeedsStatus,
     FindingsPage,
     GuidanceView,
@@ -53,6 +54,8 @@ from api.schemas import (
     IssueView,
     ProjectOverview,
     RemediationView,
+    ScanComparisonSide,
+    ScanComparisonView,
     ScanCreated,
     ScannedTool,
     ScanRequest,
@@ -751,6 +754,42 @@ def create_app(app_state: AppState) -> FastAPI:
             path_contains=path, sort=sort, limit=limit, offset=offset,
         )  # fmt: skip
         return FindingsPage(total=page.total, limit=limit, offset=offset, items=page.items)
+
+    @app.get(
+        "/scans/{scan_id}/compare",
+        response_model=ScanComparisonView,
+        dependencies=[Depends(require_scope("scans:read"))],
+    )
+    def compare_scans(
+        scan_id: str,
+        against: str = Query(description="The other scan id to compare against."),
+        s: Session = Depends(db),
+        org: str = Depends(current_org),
+    ) -> ScanComparisonView:
+        """Plan §28.6: two scans of the same project, side by side -- new, fixed, reintroduced and
+        unchanged issues. 404s (not 400) when the two scans don't share an asset, the same
+        not-a-403 reasoning as `_get_scan` (ADR-0013): which other scans exist to compare against
+        isn't information a scan in a different org (or asset) should be able to probe for."""
+        _get_scan(s, scan_id, org)
+        _get_scan(s, against, org)
+        cmp = repo.compare_scans(s, scan_id, against, org_id=org)
+        if cmp is None:
+            raise HTTPException(404, "these two scans do not belong to the same project")
+
+        def side(scan: Scan) -> ScanComparisonSide:
+            return ScanComparisonSide(
+                scan_id=scan.id, source_label=scan.source_label, finished_at=scan.finished_at,
+                github_pr_number=scan.github_pr_number,
+            )  # fmt: skip
+
+        def issues(items: list[dict[str, Any]]) -> list[ComparedIssue]:
+            return [ComparedIssue(**i) for i in items]
+
+        return ScanComparisonView(
+            earlier=side(cmp.earlier), later=side(cmp.later), new=issues(cmp.new),
+            fixed=issues(cmp.fixed), reintroduced=issues(cmp.reintroduced),
+            unchanged=issues(cmp.unchanged),
+        )  # fmt: skip
 
     @app.get("/scans/{scan_id}/export", dependencies=[Depends(require_scope("scans:read"))])
     def export_scan(

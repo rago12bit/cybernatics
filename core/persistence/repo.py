@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, cast
 
@@ -251,6 +251,77 @@ def open_issue_trend(
         )
         out.append({"scan_id": scan.id, "finished_at": scan.finished_at, "open_count": open_count})
     return out
+
+
+@dataclass
+class ScanComparison:
+    """Plan §28.6/§36: two of one asset's scans, side by side. `earlier`/`later` are ordered by
+    `created_at`, not by which one the caller happened to pass first."""
+
+    earlier: Scan
+    later: Scan
+    new: list[dict[str, Any]] = field(default_factory=list)
+    fixed: list[dict[str, Any]] = field(default_factory=list)
+    reintroduced: list[dict[str, Any]] = field(default_factory=list)
+    unchanged: list[dict[str, Any]] = field(default_factory=list)
+
+
+def compare_scans(
+    s: Session, scan_id_a: str, scan_id_b: str, *, org_id: str
+) -> ScanComparison | None:
+    """Categorize the issues between two scans of the *same* asset: new, fixed, reintroduced,
+    unchanged (plan §28.6's scan comparison screen). `None` if either scan doesn't exist in this
+    org, or the two don't share an asset -- comparing across assets is meaningless.
+
+    An issue present in `later` but not `earlier` is "reintroduced" rather than "new" if it already
+    existed by `earlier`'s time (first seen at or before `earlier` finished) -- it was absent from
+    that specific scan, then came back, exactly like the reintroduced state `core.issues.sync`
+    already tracks, just evaluated against these two scans specifically rather than "now".
+    """
+    a, b = get_scan(s, scan_id_a, org_id=org_id), get_scan(s, scan_id_b, org_id=org_id)
+    if a is None or b is None or a.asset_id is None or a.asset_id != b.asset_id:
+        return None
+    earlier, later = (a, b) if a.created_at <= b.created_at else (b, a)
+
+    def issue_ids(scan_id: str) -> set[str]:
+        rows = s.scalars(
+            select(FindingRow.issue_id).where(
+                FindingRow.scan_id == scan_id, FindingRow.issue_id.is_not(None)
+            )
+        )
+        return {r for r in rows if r is not None}
+
+    ids_earlier, ids_later = issue_ids(earlier.id), issue_ids(later.id)
+    all_ids = ids_earlier | ids_later
+    issue_rows = (
+        {r.id: r for r in s.scalars(select(IssueRow).where(IssueRow.id.in_(all_ids)))}
+        if all_ids
+        else {}
+    )
+    earlier_end = earlier.finished_at or earlier.created_at
+    if earlier_end.tzinfo is None:  # SQLite returns naive datetimes even for tz-aware columns
+        earlier_end = earlier_end.replace(tzinfo=timezone.utc)
+
+    result = ScanComparison(earlier, later)
+    for issue_id in all_ids:
+        row = issue_rows.get(issue_id)
+        if row is None:  # deleted since (org data-deletion, ADR-0007) -- nothing left to show
+            continue
+        view = {
+            "id": row.id, "title": row.title, "severity": row.severity,
+            "category": row.category, "path": row.path,
+        }  # fmt: skip
+        in_earlier, in_later = issue_id in ids_earlier, issue_id in ids_later
+        if in_earlier and in_later:
+            result.unchanged.append(view)
+        elif in_earlier:
+            result.fixed.append(view)
+        else:
+            first_seen = row.first_seen_at
+            if first_seen.tzinfo is None:
+                first_seen = first_seen.replace(tzinfo=timezone.utc)
+            (result.reintroduced if first_seen <= earlier_end else result.new).append(view)
+    return result
 
 
 # ---------------------------------------------------------------------------------------------
