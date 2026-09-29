@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+import shutil
 from pathlib import Path
 from typing import Any
 
@@ -297,6 +298,58 @@ def test_cli_without_a_base_gates_on_everything(tmp_path: Path) -> None:
         runner.invoke(app, ["ci", "compare", "--head", str(head), "--fail-on", "none"]).exit_code
         == 0
     )
+
+
+_NEEDS_OPA = pytest.mark.skipif(not shutil.which("opa"), reason="opa not available")
+
+
+@_NEEDS_OPA
+def test_cli_compare_fails_on_a_policy_violation_even_under_the_severity_threshold(
+    tmp_path: Path,
+) -> None:
+    """A policy (plan §20.4) can fail the check for a reason severity alone never would -- here, a
+    LOW-severity secret, which `--fail-on critical` would otherwise pass clean."""
+    f = finding("s1", sev="LOW")
+    f["taxonomy"]["category"] = "secrets"
+    head = write(tmp_path / "h.json", scan_of(f))
+    policy = tmp_path / "gate.rego"
+    policy.write_text(
+        'package gate.pull_request\n\ndeny contains msg if {\n\tsome issue in input.new_issues\n\tissue.category == "secrets"\n\tmsg := sprintf("%s is a secret", [issue.id])\n}\n'
+    )
+    comment_out = tmp_path / "comment.md"
+    r = runner.invoke(
+        app,
+        [
+            "ci", "compare", "--head", str(head), "--fail-on", "critical",
+            "--policy", str(policy), "--comment-out", str(comment_out),
+        ],
+    )  # fmt: skip
+    assert r.exit_code == 1, r.output
+    assert "1 policy violation(s)" in r.output
+    assert "is a secret" in comment_out.read_text()
+
+
+@_NEEDS_OPA
+def test_cli_compare_passes_when_the_policy_denies_nothing(tmp_path: Path) -> None:
+    head = write(tmp_path / "h.json", scan_of(finding("x", sev="LOW")))
+    policy = tmp_path / "gate.rego"
+    policy.write_text(
+        'package gate.pull_request\n\ndeny contains msg if {\n\tfalse\n\tmsg := ""\n}\n'
+    )
+    r = runner.invoke(
+        app, ["ci", "compare", "--head", str(head), "--fail-on", "none", "--policy", str(policy)]
+    )
+    assert r.exit_code == 0, r.output
+
+
+@_NEEDS_OPA
+def test_cli_compare_exits_2_on_a_syntactically_invalid_policy(tmp_path: Path) -> None:
+    head = write(tmp_path / "h.json", scan_of(finding("x")))
+    policy = tmp_path / "bad.rego"
+    policy.write_text("package gate.pull_request\ndeny contains msg if {\n  msg :=\n")
+    r = runner.invoke(app, ["ci", "compare", "--head", str(head), "--policy", str(policy)])
+    assert r.exit_code == 2
+    assert "policy evaluation failed" in r.output.lower()
 
 
 def test_cli_writes_sarif_comment_summary_and_outputs(tmp_path: Path) -> None:

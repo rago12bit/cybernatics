@@ -31,6 +31,13 @@ inputs:
   compare-base:
     description: On pull requests, also scan the base commit so only new findings are reported and gated.
     default: "true"
+  policy-file:
+    description: >
+      A Rego policy file (plan §20.4), relative to the workspace. Its data.gate.pull_request.deny
+      drives the check in addition to fail-on -- a policy can fail the check for a reason severity
+      alone never would (a leaked secret, a denylisted license, an expired risk acceptance), and
+      cannot loosen fail-on's own result. Leave empty to skip policy evaluation entirely.
+    default: ""
   cache:
     description: >
       Content-addressed result cache (plan §20.1), persisted across runs with actions/cache: files
@@ -55,6 +62,9 @@ outputs:
   sarif-file:
     description: Path of the SARIF report.
     value: ${{ steps.compare.outputs.sarif-file }}
+  policy-violations:
+    description: Count of policy denials (plan §20.4; empty when policy-file was not set).
+    value: ${{ steps.compare.outputs.policy-violations }}
   sbom-file:
     description: Path of the CycloneDX SBOM (empty unless `sbom` is true).
     value: ${{ steps.sbom.outputs.sbom-file }}
@@ -77,6 +87,19 @@ runs:
       env:
         ACTION_PATH: ${{ github.action_path }}
       run: bash "$ACTION_PATH/action/build-images.sh"
+
+    - name: Install OPA (plan §20.4 -- only fetched when a policy-file is actually configured)
+      if: ${{ inputs.policy-file != '' }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        os="$(uname -s | tr '[:upper:]' '[:lower:]')"
+        arch="$(uname -m)"
+        [ "$arch" = "x86_64" ] && arch="amd64"
+        [ "$arch" = "aarch64" ] && arch="arm64"
+        curl -sL -o /usr/local/bin/opa "https://openpolicyagent.org/downloads/v1.21.0/opa_${os}_${arch}_static"
+        chmod +x /usr/local/bin/opa
+        opa version
 
     - name: Restore the result cache
       if: ${{ inputs.cache == 'true' }}
@@ -140,6 +163,7 @@ runs:
       shell: bash
       env:
         FAIL_ON: ${{ inputs.fail-on }}
+        POLICY_FILE: ${{ inputs.policy-file }}
         RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
       run: |
         set -uo pipefail
@@ -148,11 +172,14 @@ runs:
               --sarif-out "$RUNNER_TEMP/bulwark.sarif" --comment-out "$RUNNER_TEMP/comment.md"
               --summary-out "$GITHUB_STEP_SUMMARY" --github-output "$GITHUB_OUTPUT")
         [ -f "$RUNNER_TEMP/base.json" ] && args+=(--base "$RUNNER_TEMP/base.json")
+        [ -n "$POLICY_FILE" ] && args+=(--policy "$GITHUB_WORKSPACE/$POLICY_FILE")
         bulwark "${args[@]}"
         rc=$?
         echo "gate-exit=$rc" >> "$GITHUB_OUTPUT"
         echo "sarif-file=$RUNNER_TEMP/bulwark.sarif" >> "$GITHUB_OUTPUT"
-        # 1 means "threshold breached": reported after the upload and comment steps. 2 is a real error.
+        # 1 means "threshold or policy breached" (both are folded into the same exit code by
+        # `bulwark ci compare`): reported after the upload and comment steps. 2 is a real error
+        # (including a syntactically invalid policy file).
         [ "$rc" -le 1 ] || exit "$rc"
 
     - name: Generate SBOM
@@ -191,9 +218,9 @@ runs:
         path: ~/.bulwark-result-cache
         key: bulwark-result-cache-${{ runner.os }}-${{ github.run_id }}
 
-    - name: Enforce the threshold
+    - name: Enforce the gate
       if: ${{ steps.compare.outputs.gate-exit == '1' }}
       shell: bash
       run: |
-        echo "::error::Bulwark found findings at or above the configured severity threshold."
+        echo "::error::Bulwark found findings at or above the configured severity threshold, or a policy violation (plan §20.4). See the pull-request comment or job summary for details."
         exit 1

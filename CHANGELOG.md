@@ -6,6 +6,23 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 ## [Unreleased]
 
 ### Added
+- **Week 39 — Policy-as-code (plan §20.4):** a new `core/policy/` package embeds the real Open
+  Policy Agent binary, matching the plan's own worked example (`opa eval` with a JSON input document
+  built from existing `Finding` fields, no new data collection). The five starter policies the plan
+  names — no reachable KEV vulnerability, no secrets, no new critical-severity issues, a license
+  denylist, accepted risk capped at 90 days — are real, tested Rego (`core/policy/starter/`), with a
+  full `opa test` suite run both in the project's own CI and inside the normal `pytest` run.
+  `bulwark ci compare` gained `--policy PATH`, folding policy denials into the exact same exit-code,
+  markdown-comment, and `$GITHUB_OUTPUT` contract the severity threshold already used, not a second
+  one; `action.yml` gained a `policy-file` input (OPA is only installed when it's actually set) and a
+  `policy-violations` output. The license-denylist and 90-day-acceptance rules are real and tested
+  but currently unreachable in practice — their data sources (Week 40's SBOM/license work; an
+  org-scoped `triage_expires_at`, only available to the hosted pipeline, not the standalone CLI/Action)
+  don't fully exist yet, and the input builder omits the field entirely rather than sending a
+  fabricated value. The plan's own policy-editor UI (Monaco, live evaluation, save gated on
+  `opa test`) is deliberately deferred — full reasoning in `docs/adr/0023-policy-as-code.md`. 25 new
+  tests, `tests/integration/test_policy_opa.py` skips gracefully without `opa` on `PATH`. Full account
+  in `docs/v2-week39-verification.md`.
 - **Week 38 follow-up — Taint paths attached to Issues, feeding scoring and the UI (plan §20.3,
   §28.3):** closes the three items deferred from the taint engine's initial landing. A `Finding`
   now carries a `taint_path` (`core/models/finding.py`), attached by

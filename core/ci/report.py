@@ -48,7 +48,13 @@ def _where(f: dict[str, Any]) -> str:
     return f"{loc.get('path', '?')}:{loc.get('start_line', '?')}"
 
 
-def markdown_comment(cmp: Comparison, fail_on: str, failed: bool, run_url: str = "") -> str:
+def markdown_comment(
+    cmp: Comparison,
+    fail_on: str,
+    failed: bool,
+    run_url: str = "",
+    policy_denials: tuple[str, ...] = (),
+) -> str:
     shown = cmp.new if cmp.baseline_available else cmp.head.findings
     lines = [COMMENT_MARKER, "## Bulwark security scan", ""]
     if not shown:
@@ -90,6 +96,9 @@ def markdown_comment(cmp: Comparison, fail_on: str, failed: bool, run_url: str =
             f"\nThreshold: fail on **{fail_on}** or higher. "
             + ("**Failing.**" if failed else "Passing.")
         )
+    if policy_denials:
+        lines += ["", "**Policy violations** (plan §20.4):"]
+        lines += [f"- {md(msg)}" for msg in policy_denials]
     if shown:
         top = sorted(
             shown,

@@ -312,10 +312,15 @@ def ci_compare(
     ),
     run_url: str = typer.Option("", help="Link to the workflow run, shown in the comment."),
     github_output: Path | None = typer.Option(None, help="Append outputs (e.g. $GITHUB_OUTPUT)."),
+    policy: Path | None = typer.Option(
+        None,
+        help="A Rego policy file (plan §20.4); its data.gate.pull_request.deny drives the check too.",
+    ),
 ) -> None:
-    """Exit 0 if the change passes the threshold, 1 if it does not, 2 on unusable input."""
+    """Exit 0 if the change passes the threshold and policy, 1 if it does not, 2 on unusable input."""
     from core.ci import breaches, compare, load_scan, markdown_comment, report_data
     from core.export import render
+    from core.policy import evaluate_gate
 
     try:
         head_scan = load_scan(head)
@@ -325,8 +330,15 @@ def ci_compare(
     except (ValueError, OSError) as exc:
         typer.echo(f"error: {exc}", err=True)
         raise typer.Exit(2) from exc
-    failed = bool(bad)
-    comment = markdown_comment(cmp, fail_on, failed, run_url)
+    policy_denials: tuple[str, ...] = ()
+    if policy is not None:
+        result = evaluate_gate(cmp.gate_set(), policy.read_text(encoding="utf-8"))
+        if result.error is not None:
+            typer.echo(f"error: policy evaluation failed: {result.error}", err=True)
+            raise typer.Exit(2)
+        policy_denials = result.deny
+    failed = bool(bad) or bool(policy_denials)
+    comment = markdown_comment(cmp, fail_on, failed, run_url, policy_denials)
     if sarif_out:
         sarif_out.write_bytes(render("sarif", report_data(label, cmp)))
     if comment_out:
@@ -335,18 +347,19 @@ def ci_compare(
         with summary_out.open("a", encoding="utf-8") as fh:
             fh.write(comment + "\n")
     shown = len(cmp.gate_set())
-    _gh_output(
-        github_output,
-        {
-            "new-findings": str(shown),
-            "total-findings": str(len(cmp.head.findings)),
-            "failed": str(failed).lower(),
-            "baseline": str(cmp.baseline_available).lower(),
-        },
-    )
+    gh_outputs = {
+        "new-findings": str(shown),
+        "total-findings": str(len(cmp.head.findings)),
+        "failed": str(failed).lower(),
+        "baseline": str(cmp.baseline_available).lower(),
+    }
+    if policy is not None:
+        gh_outputs["policy-violations"] = str(len(policy_denials))
+    _gh_output(github_output, gh_outputs)
     scope = "new" if cmp.baseline_available else "total"
+    policy_note = f"; {len(policy_denials)} policy violation(s)" if policy is not None else ""
     typer.echo(
-        f"{shown} {scope} finding(s); {len(bad)} at or above '{fail_on}'"
+        f"{shown} {scope} finding(s); {len(bad)} at or above '{fail_on}'{policy_note}"
         + ("; failing the check" if failed else "")
     )
     raise typer.Exit(1 if failed else 0)

@@ -95,11 +95,32 @@ def test_inputs_are_wired_to_the_steps_that_use_them() -> None:
     assert env["scan"]["COMPARE_BASE"] == "${{ inputs.compare-base }}"
     assert env["scan"]["CACHE"] == "${{ inputs.cache }}"
     assert env["compare"]["FAIL_ON"] == "${{ inputs.fail-on }}"
+    assert env["compare"]["POLICY_FILE"] == "${{ inputs.policy-file }}"
     sbom = next(s for s in STEPS if s.get("id") == "sbom")
     assert sbom["env"]["SCAN_PATH"] == "${{ inputs.path }}" and "inputs.sbom" in sbom["if"]
     comment = next(s for s in STEPS if s.get("name", "").startswith("Comment"))
     assert comment["env"]["GITHUB_TOKEN"] == "${{ inputs.github-token }}"
     assert comment["env"]["PR_NUMBER"] == "${{ github.event.pull_request.number }}"
+
+
+def test_opa_is_only_installed_when_a_policy_file_is_actually_configured() -> None:
+    """Plan §20.4's OPA install must not run (and slow down) every scan when no org has set a
+    policy -- only when `policy-file` is actually given."""
+    opa_step = next(s for s in STEPS if s.get("name", "").startswith("Install OPA"))
+    assert opa_step["if"] == "${{ inputs.policy-file != '' }}"
+
+
+def test_the_compare_step_only_passes_policy_when_a_policy_file_is_set() -> None:
+    compare = next(s for s in STEPS if s.get("id") == "compare")
+    assert "POLICY_FILE" in compare["run"] and "--policy" in compare["run"]
+    assert '[ -n "$POLICY_FILE" ]' in compare["run"]
+
+
+def test_policy_violations_output_is_wired_to_the_compare_step() -> None:
+    assert (
+        ACTION["outputs"]["policy-violations"]["value"]
+        == "${{ steps.compare.outputs.policy-violations }}"
+    )
 
 
 def test_result_cache_is_restored_before_scanning_and_saved_after_with_a_matching_path() -> None:
