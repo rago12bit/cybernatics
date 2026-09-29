@@ -97,7 +97,25 @@ urlpatterns = [
     assert len(u.entrypoints) == 1
     ep = u.entrypoints[0]
     assert ep.framework == "django" and ep.method == "" and ep.path == "users/"
-    assert (ep.symbol_id, "list_users", 3) in u.calls  # line of the `urlpatterns = [` statement
+    assert (ep.symbol_id, "list_users", 4) in u.calls  # line of the `path(...)` entry itself
+
+
+def test_two_urlpatterns_entries_with_the_same_route_string_get_distinct_symbol_ids() -> None:
+    """Regression test: every entry in one `urlpatterns = [...]` list shares the assignment's own
+    line, so keying the synthetic symbol by that line (instead of the entry's own) made two routes
+    with the same path string collide on the same symbol_id -- silently losing one of them when
+    resolve.py's `symbols[s.id] = s` overwrote it."""
+    src = """
+from . import views
+urlpatterns = [
+    path("items/", views.list_items, name="list"),
+    path("items/", views.create_item, name="create"),
+]
+"""
+    u = extract("urls.py", src)
+    assert len(u.entrypoints) == 2
+    assert len({ep.symbol_id for ep in u.entrypoints}) == 2
+    assert {c[1] for c in u.calls} == {"list_items", "create_item"}
 
 
 def test_a_non_route_decorator_is_not_treated_as_an_entrypoint() -> None:

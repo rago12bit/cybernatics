@@ -91,6 +91,25 @@ func handler(w http.ResponseWriter, r *http.Request) {
     assert len(sinks) == 1 and sinks[0].sink_name == "Command"
 
 
+def test_c_style_for_loop_initializer_is_not_skipped(parser, cat) -> None:
+    """Regression test: a C-style `for init; cond; post { }`'s clauses live inside their own
+    `for_clause` node (distinct from the `range_clause` a `for ... range` loop uses) -- previously
+    nothing looked inside it at all, so `id`'s own taint (from a tainted initializer) was silently
+    lost before the body ever ran."""
+    src = b"""
+package main
+func handler(w http.ResponseWriter, r *http.Request) {
+	for id := r.URL.Query().Get("id"); id != ""; id = "" {
+		db.Query(id)
+	}
+}
+"""
+    _, sinks = analyze_function(
+        _fn(parser, src), "main.go", {"r": frozenset({SOURCE})}, lambda n: None, {}, cat
+    )
+    assert len(sinks) == 1
+
+
 def test_summary_records_which_param_reaches_the_return_value(parser, cat) -> None:
     src = b"package main\nfunc identity(x string) string { return x }"
     returns, sinks = analyze_function(

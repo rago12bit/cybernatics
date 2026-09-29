@@ -220,6 +220,40 @@ function handler(req, res) {
     assert len(sinks) == 1
 
 
+def test_c_style_for_loop_initializer_is_not_skipped(parser, cat) -> None:
+    """Regression test: `for (let i = ...; ...; ...)`'s initializer is a direct child of
+    `for_statement`, not the body -- it was previously never visited at all, so `i`'s own taint
+    (from a tainted initializer) was silently lost."""
+    src = b"""
+function handler(req, res) {
+  for (let i = req.query.id; i; i = null) {
+    db.query(i);
+  }
+}
+"""
+    _, sinks = analyze_function(
+        _fn(parser, src), "a.js", {"req": frozenset({SOURCE})}, lambda n: None, {}, cat
+    )
+    assert len(sinks) == 1
+
+
+def test_compound_assignment_combines_old_and_new_taint(parser, cat) -> None:
+    """Regression test: `x += y` is its own tree-sitter node type (`augmented_assignment_expression`),
+    distinct from plain `assignment_expression` -- it previously matched no branch in `visit()` at
+    all, so it was a silent no-op that never updated `x`'s taint."""
+    src = b"""
+function handler(req, res) {
+  var q = "SELECT ";
+  q += req.query.id;
+  db.query(q);
+}
+"""
+    _, sinks = analyze_function(
+        _fn(parser, src), "a.js", {"req": frozenset({SOURCE})}, lambda n: None, {}, cat
+    )
+    assert len(sinks) == 1
+
+
 def test_try_catch_merges_taint_across_body_and_handler(parser, cat) -> None:
     src = b"""
 function handler(req, res) {

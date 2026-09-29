@@ -170,6 +170,57 @@ def view(request):
     )  # the `helper(user_id)` call
 
 
+def test_a_keyword_argument_reaches_the_sink_through_a_callee_summary(cat) -> None:
+    """Regression test: `helper`'s own parameter is `x` (tag 0), but `view` calls it as a keyword
+    (`helper(x=user_id)`), not positionally. Re-exposure must still find the taint -- Python lets a
+    normal parameter be passed either way, and `call.args[0]` alone (ignoring `call.keywords`
+    entirely) would silently miss this, reporting no finding for a call site that is, in fact,
+    vulnerable."""
+    helper_summary = FunctionSummary(
+        symbol_id="db.py:helper:1",
+        sinks=(SinkHit(frozenset({0}), "db.py", 3, "execute", "sql_injection"),),
+        returns=frozenset(),
+        param_names=("x",),
+    )
+    src = """
+def view(request):
+    user_id = request.args.get("id")
+    helper(x=user_id)
+"""
+    _, sinks = analyze_function(
+        _fn(src),
+        "app.py",
+        {"request": frozenset({SOURCE})},
+        lambda n: "db.py:helper:1" if n == "helper" else None,
+        {"db.py:helper:1": helper_summary},
+        cat,
+    )
+    assert len(sinks) == 1
+    assert sinks[0].params == frozenset({SOURCE})
+
+
+def test_a_keyword_argument_reaches_a_summarys_return_value(cat) -> None:
+    """Same keyword-vs-positional gap, but for the `returns` mapping rather than a sink."""
+    helper_summary = FunctionSummary(
+        symbol_id="lib.py:identity:1", sinks=(), returns=frozenset({0}), param_names=("x",)
+    )
+    src = """
+def view(request):
+    user_id = request.args.get("id")
+    safe_looking = identity(x=user_id)
+    cursor.execute(safe_looking)
+"""
+    _, sinks = analyze_function(
+        _fn(src),
+        "app.py",
+        {"request": frozenset({SOURCE})},
+        lambda n: "lib.py:identity:1" if n == "identity" else None,
+        {"lib.py:identity:1": helper_summary},
+        cat,
+    )
+    assert len(sinks) == 1 and sinks[0].params == frozenset({SOURCE})
+
+
 def test_an_unresolved_callee_passes_taint_through_conservatively(cat) -> None:
     """No summary exists for `transform` (unresolved, or a third-party function): the safer
     default for a security tool is to assume taint survives the call, not to silently drop it."""
@@ -252,6 +303,26 @@ def view(request):
     except Exception:
         q = "safe"
     cursor.execute(q)
+"""
+    _, sinks = analyze_function(
+        _fn(src), "app.py", {"request": frozenset({SOURCE})}, lambda n: None, {}, cat
+    )
+    assert len(sinks) == 1
+
+
+def test_try_else_sees_taint_the_try_body_introduced(cat) -> None:
+    """Regression test: `else` only ever runs once `try`'s body has completed without raising, so
+    it must see the body's own effects -- treating it as a parallel branch starting from *before*
+    the try block (the same starting point a handler uses) would make `q`'s taint invisible here,
+    missing a real vulnerability."""
+    src = """
+def view(request):
+    try:
+        q = request.args.get("id")
+    except Exception:
+        q = "safe"
+    else:
+        cursor.execute(q)
 """
     _, sinks = analyze_function(
         _fn(src), "app.py", {"request": frozenset({SOURCE})}, lambda n: None, {}, cat

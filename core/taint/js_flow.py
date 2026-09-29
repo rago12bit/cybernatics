@@ -17,7 +17,15 @@ from collections.abc import Callable
 from typing import Any
 
 from core.taint.catalog import Catalog
-from core.taint.models import SOURCE, FunctionSummary, SinkHit, TaintHop, TaintSet
+from core.taint.models import (
+    SOURCE,
+    FunctionSummary,
+    SinkHit,
+    TaintHop,
+    TaintSet,
+    merge_taint_states,
+    union_taint,
+)
 
 
 def _text(node) -> str:  # type: ignore[no-untyped-def]
@@ -56,10 +64,7 @@ class _FunctionFlow:
         self._catalog = catalog
 
     def _union(self, sets: list[TaintSet]) -> TaintSet:
-        result: TaintSet = frozenset()
-        for s in sets:
-            result = result | s
-        return result
+        return union_taint(sets)
 
     def _call_taint(self, call) -> TaintSet:  # type: ignore[no-untyped-def]
         args_node = call.child_by_field_name("arguments")
@@ -157,6 +162,17 @@ class _FunctionFlow:
             return self.expr_taint(children[0]) if children else frozenset()
         if t == "assignment_expression":
             return self.expr_taint(node.child_by_field_name("right"))
+        if t == "augmented_assignment_expression":
+            # `x += y` (this node type, distinct from plain `assignment_expression`) depends on
+            # both the old value of `x` and `y`, not just `y` -- as a used expression's own value,
+            # not only as a statement (see `visit()`'s handling of the same node type below).
+            left = node.child_by_field_name("left")
+            old = (
+                self.expr_taint(left)
+                if left is not None and left.type == "identifier"
+                else frozenset()
+            )
+            return old | self.expr_taint(node.child_by_field_name("right"))
         if t == "template_string":
             return self._union(
                 [
@@ -190,11 +206,7 @@ class _FunctionFlow:
             if branch is not None:
                 self.visit(branch)
             results.append(self.tainted)
-        names: set[str] = set()
-        for r in results:
-            names |= set(r)
-        merged = {name: self._union([r.get(name, frozenset()) for r in results]) for name in names}
-        self.tainted = {k: v for k, v in merged.items() if v}
+        self.tainted = merge_taint_states(results)
 
     def visit(self, node) -> None:  # type: ignore[no-untyped-def]
         t = node.type
@@ -219,6 +231,16 @@ class _FunctionFlow:
             right = node.child_by_field_name("right")
             if left is not None:
                 self._assign(left, self.expr_taint(right))
+        elif t == "augmented_assignment_expression":
+            # A distinct tree-sitter node type from `assignment_expression` (not a variant of it),
+            # so it was previously matched by no branch at all here -- `x += y` was a silent no-op,
+            # never updating `x`'s taint even when `y` (or `x` itself) was tainted. The new value
+            # depends on both the old `x` and `y`.
+            left = node.child_by_field_name("left")
+            right = node.child_by_field_name("right")
+            if left is not None:
+                old = self.expr_taint(left) if left.type == "identifier" else frozenset()
+                self._assign(left, old | self.expr_taint(right))
         elif t == "return_statement":
             value = node.named_children[0] if node.named_children else None
             self.returns = self.returns | self.expr_taint(value)
@@ -237,8 +259,21 @@ class _FunctionFlow:
                 if iter_taint and left is not None:
                     for name in _target_names(left):
                         self.tainted[name] = self.tainted.get(name, frozenset()) | iter_taint
+            branches = []
+            if t == "for_statement":
+                # A C-style for's `initializer` (`let i = evil()`) always runs exactly once,
+                # before the loop starts -- unlike `body`/`increment`, which may run zero or more
+                # times -- so it is visited directly into the surrounding state, not as one of the
+                # branches `_visit_branches` treats as "may or may not have happened." Without this,
+                # `i`'s own taint (from a tainted initializer) was silently never set.
+                initializer = node.child_by_field_name("initializer")
+                if initializer is not None:
+                    self.visit(initializer)
+                increment = node.child_by_field_name("increment")
+                if increment is not None:
+                    branches.append(increment)
             body = node.child_by_field_name("body")
-            self._visit_branches([body], include_before=True)
+            self._visit_branches([body, *branches], include_before=True)
         elif t == "try_statement":
             body = node.child_by_field_name("body")
             handler = node.child_by_field_name("handler")

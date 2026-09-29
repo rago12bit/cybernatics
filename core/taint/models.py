@@ -52,6 +52,11 @@ class FunctionSummary:
     symbol_id: str
     sinks: tuple[SinkHit, ...] = ()
     returns: TaintSet = frozenset()  # which tags reach this function's own return value
+    # By declaration-order index, matching each int tag's meaning ("this function's own Nth
+    # parameter"). A caller re-exposing a sink (python_flow.py's own `_call_taint`) uses this to
+    # find the argument expression a *keyword* call passed for tag N -- Python lets a positional
+    # parameter be passed by name, and `call.args[N]` alone misses that entirely.
+    param_names: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -70,3 +75,26 @@ class TaintFinding:
     sink_line: int
     sink_name: str
     hops: tuple[TaintHop, ...]  # source -> ... -> sink, in call order
+
+
+def union_taint(sets: list[TaintSet]) -> TaintSet:
+    result: TaintSet = frozenset()
+    for s in sets:
+        result = result | s
+    return result
+
+
+def merge_taint_states(results: list[dict[str, TaintSet]]) -> dict[str, TaintSet]:
+    """Union each name's tags across every result, dropping any name left untainted everywhere.
+    Shared by `python_flow`/`js_flow`/`go_flow`'s own `_visit_branches` (each language walks each
+    branch of an `if`/`try`/loop independently from the same starting state, then merges the
+    resulting states this way -- not visited sequentially into one shared map, which would let one
+    branch's clean reassignment wrongly erase taint an earlier branch introduced). This piece of
+    the shared algorithm is genuinely language-independent (unlike the branch-walking itself, which
+    needs each language's own AST), so it lives once here rather than three times, identically,
+    one per language module."""
+    names: set[str] = set()
+    for r in results:
+        names |= set(r)
+    merged = {name: union_taint([r.get(name, frozenset()) for r in results]) for name in names}
+    return {k: v for k, v in merged.items() if v}

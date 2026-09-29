@@ -5,6 +5,39 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 
 ## [Unreleased]
 
+### Fixed
+- **Nine issues from a code review of Weeks 37/38's code-intelligence and taint-analysis work
+  (`core/codeintel/`, `core/taint/`), none previously fixed:**
+  - Django `urlpatterns` entries were keyed by the enclosing list's own line, not each route's own
+    line, so two routes sharing a path string in one list collided on `symbol_id` and one silently
+    lost all its taint findings (`core/codeintel/python_lang.py`). Now keyed per entry.
+  - `core/codeintel/resolve.py`'s name-resolution index was built from the already
+    id-deduplicated symbols dict, so a rare `symbol_id` collision resolved a call confidently to
+    whichever symbol survived instead of correctly staying ambiguous. `CodeGraph` now also carries
+    every symbol as originally emitted (`all_symbols`), and the index is built from that.
+  - Python taint re-exposure only checked `call.args[tag]`, silently missing a callee's tainted
+    parameter passed as a keyword at the call site (`helper(x=user_input)` instead of
+    `helper(user_input)`) — a real false negative. `FunctionSummary` now also carries
+    `param_names`, letting the call site resolve a tag to a keyword argument by name.
+  - Python `try`/`else` was walked as a branch starting from the state *before* the `try` block,
+    not after its body completed, so `else` could not see taint the `try` body introduced — `else`
+    only ever runs once `try` succeeds, so this was a real missed detection.
+  - JavaScript compound assignment (`x += y`) is its own tree-sitter node type
+    (`augmented_assignment_expression`), distinct from plain assignment, and matched no branch at
+    all — a silent no-op that never updated `x`'s taint.
+  - A C-style `for` loop's initializer clause was never visited in either JavaScript or Go
+    (independently, in each language's own tree-sitter grammar) — only the loop body was walked, so
+    `for (let i = tainted(); ...)` / `for i := tainted(); ...` lost `i`'s own taint entirely.
+  - The branch-merge/union algorithm central to all three languages' analyses was reimplemented
+    identically three times (plus a fourth, separate inline copy in Go's `else if` handling);
+    extracted into `core/taint/models.py::merge_taint_states`/`union_taint`, used by all three.
+  - `CodeGraph.callers_of`/`calls_from` did an O(edges) linear scan on every call, and
+    `core.taint.engine`'s worklist calls `callers_of` once per changed function summary per pass —
+    now backed by a lazily-built reverse/forward index.
+
+  8 new regression tests, one per confirmed bug (the merge-algorithm and index fixes are
+  behavior-preserving). Full test suite (1110 tests) and mypy/ruff/black all clean.
+
 ### Added
 - **Week 40 — Supply-chain risk (plan §20.5), closing Milestone M8 (`v1.3.0`):** a `MAL-` id (an
   OSSF malicious-packages report) already flowed through `osv-scanner`'s own offline OSV database as

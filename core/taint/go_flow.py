@@ -15,7 +15,15 @@ from collections.abc import Callable
 from typing import Any
 
 from core.taint.catalog import Catalog
-from core.taint.models import SOURCE, FunctionSummary, SinkHit, TaintHop, TaintSet
+from core.taint.models import (
+    SOURCE,
+    FunctionSummary,
+    SinkHit,
+    TaintHop,
+    TaintSet,
+    merge_taint_states,
+    union_taint,
+)
 
 
 def _text(node: Any) -> str:
@@ -57,10 +65,7 @@ class _FunctionFlow:
         self._catalog = catalog
 
     def _union(self, sets: list[TaintSet]) -> TaintSet:
-        result: TaintSet = frozenset()
-        for s in sets:
-            result = result | s
-        return result
+        return union_taint(sets)
 
     def _call_taint(self, call: Any) -> TaintSet:
         args_node = call.child_by_field_name("arguments")
@@ -185,11 +190,7 @@ class _FunctionFlow:
             self.tainted = dict(before)
             self.visit_body(branch)
             results.append(self.tainted)
-        names: set[str] = set()
-        for r in results:
-            names |= set(r)
-        merged = {name: self._union([r.get(name, frozenset()) for r in results]) for name in names}
-        self.tainted = {k: v for k, v in merged.items() if v}
+        self.tainted = merge_taint_states(results)
 
     def visit_body(self, stmts: list[Any]) -> None:
         for s in stmts:
@@ -220,16 +221,12 @@ class _FunctionFlow:
                 self.tainted = dict(before)
                 self.visit_stmt(alternative)
                 after_alt = self.tainted
-                names = set(after_body) | set(after_alt)
-                merged = {
-                    n: self._union([after_body.get(n, frozenset()), after_alt.get(n, frozenset())])
-                    for n in names
-                }
-                self.tainted = {k: v for k, v in merged.items() if v}
+                self.tainted = merge_taint_states([after_body, after_alt])
             else:
                 self._visit_branches([_block_stmts(consequence), _block_stmts(alternative)])
         elif t == "for_statement":
             range_clauses = [c for c in s.children if c.type == "range_clause"]
+            for_clauses = [c for c in s.children if c.type == "for_clause"]
             if range_clauses:
                 rc = range_clauses[0]
                 left, right = rc.child_by_field_name("left"), rc.child_by_field_name("right")
@@ -240,8 +237,24 @@ class _FunctionFlow:
                             self.tainted[_text(name_node)] = (
                                 self.tainted.get(_text(name_node), frozenset()) | iter_taint
                             )
+            branches = []
+            if for_clauses:
+                # A C-style `for init; cond; post { }`'s clauses live inside their own
+                # `for_clause` node, not as direct children of `for_statement` -- previously
+                # nothing here looked inside it at all, so `initializer` (e.g. `i := evil()`) was
+                # silently never visited. `initializer` always runs exactly once before the loop,
+                # so (like `python_flow`/`js_flow`'s own equivalent fix) it is visited directly
+                # into the surrounding state; `update` may run every iteration, so it is merged as
+                # one more branch alongside `body`, same as `js_flow`'s `increment`.
+                fc = for_clauses[0]
+                initializer = fc.child_by_field_name("initializer")
+                if initializer is not None:
+                    self.visit_stmt(initializer)
+                update = fc.child_by_field_name("update")
+                if update is not None:
+                    branches.append([update])
             body = s.child_by_field_name("body")
-            self._visit_branches([_block_stmts(body)], include_before=True)
+            self._visit_branches([_block_stmts(body), *branches], include_before=True)
         # function/method declarations and func literals encountered while walking a body are not
         # recursed into: they get their own Symbol and their own top-level call to `analyze_function`
         # (a func literal assigned to a variable is a documented gap, same as `python_flow`'s Lambda).

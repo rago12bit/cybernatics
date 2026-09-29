@@ -30,7 +30,31 @@ import ast
 from collections.abc import Callable
 
 from core.taint.catalog import Catalog
-from core.taint.models import SOURCE, FunctionSummary, SinkHit, TaintHop, TaintSet
+from core.taint.models import (
+    SOURCE,
+    FunctionSummary,
+    SinkHit,
+    TaintHop,
+    TaintSet,
+    merge_taint_states,
+    union_taint,
+)
+
+
+def _arg_expr(call: ast.Call, tag: int, param_names: tuple[str, ...]) -> ast.expr | None:
+    """The expression this call site actually passed for the callee's Nth parameter -- positional
+    if passed positionally, by keyword if passed by name (Python allows either for a normal
+    parameter, and a call site's re-exposure must not silently drop the keyword case). `None` when
+    this call doesn't supply it at all (a default applies, or it only arrives via **kwargs, which
+    cannot be matched to a specific tag by name)."""
+    if tag < len(call.args):
+        return call.args[tag]
+    if tag < len(param_names):
+        name = param_names[tag]
+        for kw in call.keywords:
+            if kw.arg == name:
+                return kw.value
+    return None
 
 
 def _callee_name(func: ast.expr) -> str | None:
@@ -69,10 +93,7 @@ class _FunctionFlow:
         self._catalog = catalog
 
     def _union(self, sets: list[TaintSet]) -> TaintSet:
-        result: TaintSet = frozenset()
-        for s in sets:
-            result = result | s
-        return result
+        return union_taint(sets)
 
     def _call_taint(self, call: ast.Call) -> TaintSet:
         arg_taint = self._union([self.expr_taint(a) for a in call.args])
@@ -122,9 +143,10 @@ class _FunctionFlow:
                     continue
                 mapped = self._union(
                     [
-                        self.expr_taint(call.args[tag])
+                        self.expr_taint(expr)
                         for tag in hit.params
-                        if isinstance(tag, int) and tag < len(call.args)
+                        if isinstance(tag, int)
+                        and (expr := _arg_expr(call, tag, summary.param_names)) is not None
                     ]
                 )
                 if mapped:
@@ -140,8 +162,10 @@ class _FunctionFlow:
                     )
             result: TaintSet = frozenset()
             for tag in summary.returns:
-                if isinstance(tag, int) and tag < len(call.args):
-                    result = result | self.expr_taint(call.args[tag])
+                if isinstance(tag, int):
+                    expr = _arg_expr(call, tag, summary.param_names)
+                    if expr is not None:
+                        result = result | self.expr_taint(expr)
             return result
         # Unresolved call, stdlib/third-party function, or a callee with no summary yet: assume
         # taint passes through -- see module docstring on the false-positive/false-negative trade-off.
@@ -235,11 +259,10 @@ class _FunctionFlow:
             self.tainted = dict(before)
             self.visit_body(branch)
             results.append(self.tainted)
-        names: set[str] = set()
-        for r in results:
-            names |= set(r)
-        merged = {name: self._union([r.get(name, frozenset()) for r in results]) for name in names}
-        self.tainted = {k: v for k, v in merged.items() if v}
+        self._merge(results)
+
+    def _merge(self, results: list[dict[str, TaintSet]]) -> None:
+        self.tainted = merge_taint_states(results)
 
     def visit_stmt(self, s: ast.stmt) -> None:
         if isinstance(s, ast.Assign):
@@ -271,7 +294,25 @@ class _FunctionFlow:
         elif isinstance(s, ast.While):
             self._visit_branches([s.body, s.orelse], include_before=True)
         elif isinstance(s, ast.Try):
-            self._visit_branches([s.body, *[h.body for h in s.handlers], s.orelse])
+            # `else` is not just another parallel branch: it only ever runs once `body` has
+            # completed *without* raising, so it must see `body`'s own effects, not the state from
+            # before the try started -- a name `body` tainted and `else` merely reads (a common
+            # shape: fetch in `try`, use the result once nothing went wrong in `else`) was
+            # otherwise invisible here, a real false negative. A handler, in contrast, may run
+            # after only part of `body` executed (which statement raised is unknowable), so each
+            # still conservatively starts fresh from `before`, same as before this fix.
+            before = dict(self.tainted)
+            self.tainted = dict(before)
+            self.visit_body(s.body)
+            after_body = self.tainted
+            self.tainted = dict(after_body)
+            self.visit_body(s.orelse)
+            results = [after_body, self.tainted]
+            for h in s.handlers:
+                self.tainted = dict(before)
+                self.visit_body(h.body)
+                results.append(self.tainted)
+            self._merge(results)
             self.visit_body(s.finalbody)  # always runs, so applied after the merge above, not in it
         elif isinstance(s, (ast.With, ast.AsyncWith)):
             for item in s.items:

@@ -66,7 +66,7 @@ def compute_summaries(
     functions: dict[str, ParsedFunction],
     catalogs: dict[str, Catalog],
 ) -> dict[str, FunctionSummary]:
-    by_file_and_name, by_name = build_name_index(graph.symbols)
+    by_file_and_name, by_name = build_name_index(graph.all_symbols)
     summaries: dict[str, FunctionSummary] = {sid: FunctionSummary(sid) for sid in functions}
 
     def compute_one(symbol_id: str) -> FunctionSummary:
@@ -85,7 +85,7 @@ def compute_summaries(
             summaries,
             catalog,
         )
-        return FunctionSummary(symbol_id, tuple(sinks), returns)
+        return FunctionSummary(symbol_id, tuple(sinks), returns, tuple(params))
 
     pending = set(functions)
     passes = 0
@@ -121,7 +121,7 @@ def find_taint_paths(
     summaries: dict[str, FunctionSummary],
     catalogs: dict[str, Catalog],
 ) -> list[TaintFinding]:
-    by_file_and_name, by_name = build_name_index(graph.symbols)
+    by_file_and_name, by_name = build_name_index(graph.all_symbols)
     findings: list[TaintFinding] = []
     seen: set[tuple[str, int, str]] = set()  # de-dupe by (sink path, sink line, category): the same
     # sink reached from the same entrypoint by more than one internal path is one real issue, not two

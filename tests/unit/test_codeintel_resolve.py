@@ -59,6 +59,35 @@ def test_ambiguous_repo_wide_name_with_no_local_definition_is_unresolved() -> No
     assert graph.edges[0].callee_id is None
 
 
+def test_a_symbol_id_collision_still_resolves_as_ambiguous_not_to_the_dict_survivor() -> None:
+    """Regression test: `CodeGraph.symbols` is keyed by id, so two distinct symbols that happen to
+    collide on the same id (a symbol_id generation bug elsewhere, not something resolve.py itself
+    can prevent) would silently keep only the last one written. If the by-name index were built
+    from that already-deduplicated dict, the caller's name-based lookup would then confidently
+    resolve to whichever symbol survived -- rather than correctly recognizing two same-named
+    definitions exist and staying unresolved."""
+    colliding_id = "x.py:process:1"
+    a = FileUnit(
+        "a.py",
+        "python",
+        symbols=[Symbol(colliding_id, "x.py", "process", "process", "function", 1, 1, "python")],
+        calls=[],
+    )
+    b = FileUnit(
+        "b.py",
+        "python",
+        symbols=[Symbol(colliding_id, "x.py", "process", "process", "function", 1, 1, "python")],
+        calls=[],
+    )
+    caller = FileUnit(
+        "c.py", "python", symbols=[sym("c.py", "caller")], calls=[("c.py:caller:1", "process", 2)]
+    )
+    graph = resolve([a, b, caller])
+    assert len(graph.symbols) == 2  # the id-keyed dict only kept one of the two colliding "process"
+    assert len(graph.all_symbols) == 3  # but every emission is preserved for name resolution
+    assert graph.edges[0].callee_id is None  # correctly ambiguous, not confidently "resolved"
+
+
 def test_files_parsed_and_unparsed_are_counted() -> None:
     good = FileUnit("a.py", "python", parsed=True)
     bad = FileUnit("b.py", "python", parsed=False)

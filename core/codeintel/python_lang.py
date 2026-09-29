@@ -129,16 +129,21 @@ class _Extractor(ast.NodeVisitor):
             # No symbol to attach this route to yet (the view is defined elsewhere, possibly in
             # another file) -- represent the registration itself as a tiny synthetic function
             # whose one call is to the view, so resolve.py can link it by name like any other call.
+            # Keyed by the route *entry's* own line (elt.lineno), not the enclosing `urlpatterns =
+            # [...]` assignment's line (node.lineno): every entry in one list shares the latter, so
+            # two routes with the same path string (a real, if unusual, case -- e.g. the same path
+            # registered under different names for A/B testing) would otherwise collide on the same
+            # symbol_id and silently overwrite each other in resolve.py's `symbols` dict.
             qname = f"urlpatterns:{route}"
-            sid = symbol_id(self.path, qname, node.lineno)
+            sid = symbol_id(self.path, qname, elt.lineno)
             self.unit.symbols.append(
                 Symbol(
                     sid, self.path, "urlpatterns", qname, "function",
-                    node.lineno, node.lineno, "python",
+                    elt.lineno, elt.lineno, "python",
                 )  # fmt: skip
             )
             self.unit.entrypoints.append(Entrypoint(sid, "django", "", route))
-            self.unit.calls.append((sid, view_name, node.lineno))
+            self.unit.calls.append((sid, view_name, elt.lineno))
 
 
 def extract(path: str, source: str) -> FileUnit:

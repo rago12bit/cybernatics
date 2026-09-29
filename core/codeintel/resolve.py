@@ -11,19 +11,24 @@ could mean either are all cases this cannot and does not resolve -- the edge is 
 
 from __future__ import annotations
 
+from collections.abc import Iterable
+
 from core.codeintel.models import CallEdge, CodeGraph, FileUnit, Symbol
 
 
 def build_name_index(
-    symbols: dict[str, Symbol],
+    symbols: Iterable[Symbol],
 ) -> tuple[dict[tuple[str, str], list[str]], dict[str, list[str]]]:
-    """The two indices `resolve_one` needs, built from an already-known symbol table -- exposed so
+    """The two indices `resolve_one` needs. Takes every symbol *as emitted* (`CodeGraph.all_symbols`
+    or an equivalent list), not `CodeGraph.symbols` (keyed by id): a rare symbol_id collision would
+    otherwise silently drop one of the two colliding definitions before this ever sees them, turning
+    a genuinely ambiguous name into a confidently (and wrongly) resolved one. Exposed so
     `core.taint`'s own call sites (found by re-walking each file for data flow, not by reading
     `CodeGraph.edges`) can be resolved with the exact same semantics as this module's own edges,
     instead of a second, potentially-diverging implementation."""
     by_file_and_name: dict[tuple[str, str], list[str]] = {}
     by_name: dict[str, list[str]] = {}
-    for s in symbols.values():
+    for s in symbols:
         by_file_and_name.setdefault((s.path, s.name), []).append(s.id)
         by_name.setdefault(s.name, []).append(s.id)
     return by_file_and_name, by_name
@@ -31,6 +36,7 @@ def build_name_index(
 
 def resolve(units: list[FileUnit]) -> CodeGraph:
     symbols = {}
+    all_symbols: list[Symbol] = []
     entrypoints = []
     languages: set[str] = set()
     files_parsed = files_unparsed = 0
@@ -43,9 +49,10 @@ def resolve(units: list[FileUnit]) -> CodeGraph:
             files_unparsed += 1
         for s in u.symbols:
             symbols[s.id] = s
+            all_symbols.append(s)
         entrypoints.extend(u.entrypoints)
 
-    by_file_and_name, by_name = build_name_index(symbols)
+    by_file_and_name, by_name = build_name_index(all_symbols)
     edges = [
         CallEdge(
             caller_id, callee_name, line,
@@ -62,6 +69,7 @@ def resolve(units: list[FileUnit]) -> CodeGraph:
         languages=frozenset(languages),
         files_parsed=files_parsed,
         files_unparsed=files_unparsed,
+        all_symbols=tuple(all_symbols),
     )
 
 
