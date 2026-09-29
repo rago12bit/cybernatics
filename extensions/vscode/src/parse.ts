@@ -32,6 +32,7 @@ export function parseFinding(raw: unknown): BulwarkFinding | null {
   const risk = scoring.risk_score;
   return {
     id: str(f.id, 300),
+    fingerprint: str(f.fingerprint, 100),
     title: str(f.title) || "Security finding",
     path,
     startLine: start,

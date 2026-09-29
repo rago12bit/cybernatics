@@ -3,6 +3,7 @@ import { parseFinding, parseScanOutput } from "../src/parse";
 
 const good = {
   id: "bandit:B602:a.py:3",
+  fingerprint: "sha256:deadbeef",
   title: "subprocess with shell=True",
   location: { path: "a.py", start_line: 3, end_line: 5 },
   taxonomy: { category: "sast", cwe: ["CWE-78"] },
@@ -13,7 +14,7 @@ const good = {
 describe("parseFinding", () => {
   it("reads the fields the extension needs", () => {
     expect(parseFinding(good)).toMatchObject({
-      id: "bandit:B602:a.py:3", title: "subprocess with shell=True", path: "a.py", startLine: 3, endLine: 5,
+      id: "bandit:B602:a.py:3", fingerprint: "sha256:deadbeef", title: "subprocess with shell=True", path: "a.py", startLine: 3, endLine: 5,
       severity: "HIGH", category: "sast", riskScore: 71, rule: "B602", cwe: ["CWE-78"], tools: ["bandit", "semgrep"],
     });
   });

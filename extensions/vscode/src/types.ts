@@ -3,6 +3,9 @@ export type Severity = "CRITICAL" | "HIGH" | "MEDIUM" | "LOW" | "INFO";
 
 export interface BulwarkFinding {
   id: string;
+  /** Stable defect identity (core.correlation.fingerprint) -- what "new since the base branch"
+   * (plan §36) matches on, since a finding's `id` alone isn't guaranteed stable across scans. */
+  fingerprint: string;
   title: string;
   path: string;
   startLine: number;

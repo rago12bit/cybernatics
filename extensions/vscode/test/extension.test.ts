@@ -24,7 +24,7 @@ beforeEach(() => {
 
 describe("extension", () => {
   it("registers its commands", () => {
-    expect([...state.commands.keys()].sort()).toEqual(["bulwark.clearFindings", "bulwark.openReference", "bulwark.scanWorkspace", "bulwark.showOutput"]);
+    expect([...state.commands.keys()].sort()).toEqual(["bulwark.clearFindings", "bulwark.openReference", "bulwark.scanChangedSinceBase", "bulwark.scanWorkspace", "bulwark.showOutput"]);
   });
 
   it("turns findings into diagnostics with source, code, severity and range", async () => {

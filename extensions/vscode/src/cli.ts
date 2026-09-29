@@ -10,15 +10,23 @@ export interface RunOptions {
   root: string;
   tools: string;
   timeoutMs: number;
+  /** Plan §36's content-addressed result cache: reuses a prior run's results for files this
+   * workspace hasn't touched since, instead of rescanning the whole tree on every edit. */
+  cacheDir?: string;
   signal?: AbortSignal;
   log?: (line: string) => void;
 }
 
 const TOOL_LIST = /^[a-z][a-z0-9-]*(,[a-z][a-z0-9-]*)*$/;
 
-export function buildArgs(root: string, tools: string, outFile: string): string[] {
+export function buildArgs(root: string, tools: string, outFile: string, cacheDir?: string): string[] {
   if (!TOOL_LIST.test(tools)) throw new Error(`Invalid scanner list: ${JSON.stringify(tools.slice(0, 80))}`);
-  return ["scan", root, "--tools", tools, "--format", "json", "--output", outFile];
+  const args = ["scan", root, "--tools", tools, "--format", "json"];
+  if (cacheDir) args.push("--cache-dir", cacheDir);
+  // --output last, always: callers (including the test fixtures' fake CLI) rely on the last
+  // argument being the output file.
+  args.push("--output", outFile);
+  return args;
 }
 
 /** Runs `bulwark scan` without a shell (arguments are never interpreted) and returns parsed findings. */
@@ -26,7 +34,7 @@ export async function runScan(opts: RunOptions): Promise<ScanOutput> {
   const dir = await mkdtemp(path.join(tmpdir(), "bulwark-vscode-"));
   const outFile = path.join(dir, "scan.json");
   try {
-    const args = buildArgs(opts.root, opts.tools, outFile);
+    const args = buildArgs(opts.root, opts.tools, outFile, opts.cacheDir);
     opts.log?.(`$ ${opts.cliPath} ${args.join(" ")}`);
     await new Promise<void>((resolve, reject) => {
       const child = execFile(

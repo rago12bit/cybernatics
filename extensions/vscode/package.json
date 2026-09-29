@@ -34,6 +34,10 @@
       {
         "command": "bulwark.showOutput",
         "title": "Bulwark: Show Output"
+      },
+      {
+        "command": "bulwark.scanChangedSinceBase",
+        "title": "Bulwark: Scan (new since base branch)"
       }
     ],
     "configuration": {
@@ -84,6 +88,16 @@
           "default": 1800,
           "minimum": 30,
           "description": "Stop a scan that runs longer than this."
+        },
+        "bulwark.cache": {
+          "type": "boolean",
+          "default": true,
+          "description": "Reuse cached results for files this workspace hasn't changed since the last scan (plan §20.1), instead of rescanning the whole tree every time."
+        },
+        "bulwark.baseBranch": {
+          "type": "string",
+          "default": "main",
+          "description": "Branch \"Bulwark: Scan (new since base branch)\" compares HEAD against."
         }
       }
     }
