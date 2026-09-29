@@ -6,6 +6,29 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 ## [Unreleased]
 
 ### Added
+- **Week 37 — Code intelligence: symbols, call graph, entrypoints (plan §20.2):** a new
+  `core/codeintel/` package builds, per repository, a `Symbol` table, a resolved call graph, and
+  a list of framework `Entrypoint`s (FastAPI, Flask, Django, Express, Next.js App/Pages Router,
+  Go `net/http`) — foundation for Week 38's taint analysis, not yet wired to it. Python parses
+  with the standard `ast` module (matching `core/reachability/imports.py`'s existing precedent);
+  JavaScript/TypeScript and Go parse with tree-sitter (`tree-sitter-go` added this week). Call
+  resolution is intra-file-first, then repo-wide only if the name is unique, leaving ambiguous or
+  unmatched calls unresolved rather than guessed — the same "unknown stays unknown" discipline
+  `core/reachability/index.py` already established. Validated against a real application
+  (NodeGoat), not just synthetic snippets, which surfaced and fixed three real gaps: Express
+  routes registered as an object method (`app.get('/login', sessionHandler.displayLoginPage)`)
+  weren't recognized as entrypoints at all (2 of NodeGoat's ~19 real routes detected before the
+  fix, 19 after); the pre-ES6 "constructor function" idiom
+  (`this.method = (req, res) => {...}`) — NodeGoat's entire route-handler layer — had no matching
+  case, so those handlers were never registered as symbols and every call to them was permanently
+  unresolvable (fixing it raised NodeGoat's resolved-edge rate from 3.6% to 12.9%); and a
+  three-site `("arrow_function", "function")` type check never actually matched a plain
+  `function () {}` expression, because tree-sitter's own JS grammar names that node type
+  `function_expression`. Postgres persistence of the graph (the plan's literal wording) is
+  deliberately deferred to Week 38, whose taint engine will be the graph's first real consumer and
+  should inform the schema rather than it being guessed at now — recorded in
+  `docs/adr/0020-code-intelligence-call-graph.md`. Full account, including the honest limits of
+  name-based resolution, in `docs/v2-week37-verification.md`.
 - **Week 36 — Incremental scanning (plan §20.1, §36, §28.6):** a content-addressed result cache
   (`core/cache.py`, `bulwark scan --cache-dir`) — file-local tools (Bandit, Semgrep, Gitleaks)
   cached per file, repo-wide SCA tools (Trivy, OSV-Scanner) cached as a whole, keyed on the files

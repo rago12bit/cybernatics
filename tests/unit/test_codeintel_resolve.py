@@ -1,0 +1,81 @@
+"""core/codeintel/resolve.py: intra-procedural-first, then inter-procedural name-based call
+resolution (plan §20.2) -- and its documented unsoundness."""
+
+from __future__ import annotations
+
+from core.codeintel.models import FileUnit, Symbol
+from core.codeintel.resolve import resolve
+
+
+def sym(path: str, name: str, line: int = 1) -> Symbol:
+    return Symbol(f"{path}:{name}:{line}", path, name, name, "function", line, line, "python")
+
+
+def test_a_call_resolves_when_exactly_one_symbol_anywhere_has_that_name() -> None:
+    a = FileUnit(
+        "a.py", "python", symbols=[sym("a.py", "caller")], calls=[("a.py:caller:1", "helper", 2)]
+    )
+    b = FileUnit("b.py", "python", symbols=[sym("b.py", "helper")])
+    graph = resolve([a, b])
+    assert graph.edges[0].callee_id == "b.py:helper:1"
+
+
+def test_a_call_with_no_matching_symbol_anywhere_is_unresolved() -> None:
+    a = FileUnit(
+        "a.py",
+        "python",
+        symbols=[sym("a.py", "caller")],
+        calls=[("a.py:caller:1", "unknown_lib_call", 2)],
+    )
+    graph = resolve([a])
+    assert graph.edges[0].callee_id is None
+    assert graph.edges[0].callee_name == "unknown_lib_call"  # kept, even though unresolved
+
+
+def test_same_file_definition_wins_over_an_ambiguous_repo_wide_name() -> None:
+    """Intra-procedural first (plan §20.2): a file that defines its own `process` must resolve a
+    call to it locally, even though another, unrelated `process` exists elsewhere and would
+    otherwise make the name ambiguous."""
+    a = FileUnit(
+        "a.py", "python",
+        symbols=[sym("a.py", "caller"), sym("a.py", "process")],
+        calls=[("a.py:caller:1", "process", 2)],
+    )  # fmt: skip
+    b = FileUnit("b.py", "python", symbols=[sym("b.py", "process")])
+    graph = resolve([a, b])
+    assert graph.edges[0].callee_id == "a.py:process:1"
+
+
+def test_ambiguous_repo_wide_name_with_no_local_definition_is_unresolved() -> None:
+    """The plan's own documented unsoundness: two functions named `process` in two unrelated
+    files, called from a third file that defines neither -- there is no principled way to pick
+    one, so neither is guessed."""
+    a = FileUnit(
+        "a.py", "python", symbols=[sym("a.py", "caller")], calls=[("a.py:caller:1", "process", 2)]
+    )
+    b = FileUnit("b.py", "python", symbols=[sym("b.py", "process")])
+    c = FileUnit("c.py", "python", symbols=[sym("c.py", "process")])
+    graph = resolve([a, b, c])
+    assert graph.edges[0].callee_id is None
+
+
+def test_files_parsed_and_unparsed_are_counted() -> None:
+    good = FileUnit("a.py", "python", parsed=True)
+    bad = FileUnit("b.py", "python", parsed=False)
+    graph = resolve([good, bad])
+    assert graph.files_parsed == 1 and graph.files_unparsed == 1
+
+
+def test_languages_seen_are_collected() -> None:
+    graph = resolve([FileUnit("a.py", "python"), FileUnit("b.go", "go")])
+    assert graph.languages == frozenset({"python", "go"})
+
+
+def test_callers_of_and_calls_from_walk_the_resolved_graph() -> None:
+    a = FileUnit(
+        "a.py", "python", symbols=[sym("a.py", "caller")], calls=[("a.py:caller:1", "helper", 2)]
+    )
+    b = FileUnit("b.py", "python", symbols=[sym("b.py", "helper")])
+    graph = resolve([a, b])
+    assert graph.callers_of("b.py:helper:1") == ["a.py:caller:1"]
+    assert [e.callee_id for e in graph.calls_from("a.py:caller:1")] == ["b.py:helper:1"]
