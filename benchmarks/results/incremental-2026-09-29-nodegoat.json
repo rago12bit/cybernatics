@@ -1,0 +1,21 @@
+{
+  "repo": "NodeGoat",
+  "commit": "c5cb68a7084e4ae7dcc60e6a98768720a81841e8",
+  "tools": [
+    "bandit",
+    "semgrep",
+    "gitleaks",
+    "trivy",
+    "osv-scanner"
+  ],
+  "files_touched_per_rep": 3,
+  "cold_full_scan_seconds": 71.2,
+  "warm_pr_scan_seconds": [
+    19.6,
+    19.6,
+    19.5
+  ],
+  "median_warm_pr_scan_seconds": 19.6,
+  "speedup": 3.6,
+  "measured_on": "2026-09-29"
+}

@@ -6,6 +6,26 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 ## [Unreleased]
 
 ### Added
+- **Week 36 — Incremental scanning (plan §20.1, §36, §28.6):** a content-addressed result cache
+  (`core/cache.py`, `bulwark scan --cache-dir`) — file-local tools (Bandit, Semgrep, Gitleaks)
+  cached per file, repo-wide SCA tools (Trivy, OSV-Scanner) cached as a whole, keyed on the files
+  that actually drive their output. Wired into the GitHub Action with `actions/cache` so
+  `compare-base`'s base-commit scan is cheap on repeat runs, not a second full scan every time.
+  Measured on NodeGoat: 71.2s cold vs. 19.6s warm (3.6x), under the plan's 60-second target — full
+  methodology, and an honest explanation of what the remaining warm-scan time is actually spent on
+  (cross-tool correlation, not tool execution — unrelated to this week's cache), in
+  `benchmarks/README.md`. A new read-only `core/issues.py::classify_for_pr()` gives PR-triggered
+  scans "new in this PR" without mutating the asset's real Issue history (`sync()`'s
+  `fixed_issue_ids` logic is wrong for a diff that only touches some files); this surfaced and fixed
+  a real bug where a PR scan's Asset was keyed on its own display label instead of the repository's
+  URL, so it never actually shared the repository's Issue history at all. New scan comparison screen
+  (`/app/projects/[id]/compare`, `GET /scans/{id}/compare`): new/fixed/reintroduced/unchanged issues
+  between any two of a project's scans — shown against each scan's label, finish time and PR number,
+  not a full commit range, since `Scan` doesn't capture a resolved commit SHA yet (noted honestly
+  rather than threaded through its ten call sites this week). VS Code extension: optional
+  `--cache-dir` on every scan, and a new "Scan (new since base branch)" command comparing HEAD
+  against a throwaway worktree of the merge-base. Full account in
+  `docs/v2-week36-verification.md`.
 - **Week 35 — Onboarding, states, accessibility, validation (plan §28.2, §30.3, §31):** the live
   scan screen now shows real elapsed time and an honestly-labelled "raw, not yet deduplicated"
   progress line while a scan runs (real cross-tool correlation only ever happens once, after every
