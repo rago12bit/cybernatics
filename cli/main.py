@@ -9,6 +9,7 @@ from typing import Any
 
 import typer
 
+from core.cache import ResultCache
 from core.ignore import IgnoreRules
 from core.ingest import IngestError
 from core.scan import ADAPTERS, DEFAULT_TOOLS, scan
@@ -39,6 +40,14 @@ def scan_cmd(
         "--ignore-file",
         help="Ignore file to use instead of the source's own (CI: the base branch's).",
     ),
+    cache_dir: Path | None = typer.Option(
+        None,
+        "--cache-dir",
+        help="Content-addressed result cache (plan §20.1): reuse a prior run's results for "
+        "unchanged files instead of rescanning them. Safe to reuse across scans of different "
+        "repositories, and to persist across CI runs (e.g. actions/cache) -- that's what makes a "
+        "pull request's unchanged files free on every run after the first.",
+    ),
 ) -> None:
     if fmt not in ("json", "sarif", "html", "pdf"):
         raise typer.BadParameter("use json, sarif, html or pdf", param_hint="--format")
@@ -49,6 +58,11 @@ def scan_cmd(
         rules = IgnoreRules.load(ignore_file) if ignore_file is not None else None
     except ValueError as exc:
         raise typer.BadParameter(str(exc), param_hint="--ignore-file") from exc
+    if distributed and cache_dir is not None:
+        raise typer.BadParameter(
+            "not yet supported together with --distributed", param_hint="--cache-dir"
+        )
+    cache = ResultCache(cache_dir) if cache_dir is not None else None
     try:
         with materialize(source) as workspace:
             if distributed:
@@ -56,7 +70,7 @@ def scan_cmd(
 
                 result = scan(workspace, names, celery_executor, rules)
             else:
-                result = scan(workspace, names, ignore=rules)
+                result = scan(workspace, names, ignore=rules, cache=cache)
     except ValueError as exc:
         raise typer.BadParameter(str(exc), param_hint="--tools") from exc
     except IngestError as exc:

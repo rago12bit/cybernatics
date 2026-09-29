@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from core.correlation import correlate
-from core.issues import ExistingIssue, fallback_key, match_keys, sync
+from core.issues import ExistingIssue, classify_for_pr, fallback_key, match_keys, sync
 from core.models import Category, Finding, Location, Package, Severity, Taxonomy
 
 
@@ -216,3 +216,69 @@ def test_different_categories_never_collapse_even_with_the_same_raw_fingerprint(
     again = sync(merged, existing=second_scan_existing, new_issue_id=_ids("should-not-be-used"))
     assert {u.issue_id for u in again.updates} == {u.issue_id for u in result.updates}
     assert again.new_count == 0
+
+
+# ---- classify_for_pr (plan §36): read-only PR-mode counterpart to sync() -----------------------
+
+
+def test_pr_finding_matching_a_live_issue_is_open_and_keeps_its_real_id() -> None:
+    f = finalized(code())[0]
+    existing = [_issue("i1", f.fingerprint, "open")]
+    updates = classify_for_pr([f], existing)
+    assert len(updates) == 1
+    assert updates[0].issue_id == "i1" and updates[0].state == "open"
+    assert not updates[0].is_new_issue
+
+
+def test_pr_finding_matching_nothing_is_new_with_no_issue_id() -> None:
+    f = finalized(code())[0]
+    updates = classify_for_pr([f], existing=[])
+    assert updates[0].issue_id is None and updates[0].state == "new" and updates[0].is_new_issue
+
+
+def test_pr_classification_never_reports_anything_fixed() -> None:
+    """The whole reason classify_for_pr exists instead of reusing sync(): a PR's diff only ever
+    touches some of the asset's files, so an existing issue this scan's findings don't mention
+    must never be treated as absent-therefore-fixed the way sync()'s fixed_issue_ids would."""
+    f = finalized(code())[0]
+    untouched = _issue("i-elsewhere", "unrelated-fingerprint", "open")
+    updates = classify_for_pr([f], existing=[untouched])
+    # f doesn't match `untouched`, so it's "new" here -- the point is what does NOT appear: no
+    # update mentions "fixed", and `untouched` itself is absent from the output entirely, unlike
+    # sync()'s separate fixed_issue_ids list that would otherwise name it.
+    assert [u.state for u in updates] == ["new"]
+    assert "i-elsewhere" not in [u.issue_id for u in updates]
+
+
+def test_pr_reintroducing_a_fixed_issue_counts_as_new_not_open() -> None:
+    """A `fixed` issue is excluded from the "currently live" set classify_for_pr matches against
+    (LIVE_STATES), on purpose: the base branch's real, current state has no such problem, so a PR
+    bringing it back is introducing something the base branch doesn't have -- exactly what "new"
+    means for a PR's gate, even though on the real branch (sync()) the same event is called
+    "reintroduced" instead of "new". Matching it to the old, fixed IssueRow here (calling it
+    "open") would let a PR silently reintroduce a real vulnerability without ever being flagged."""
+    f = finalized(code())[0]
+    existing = [_issue("i1", f.fingerprint, "fixed")]
+    updates = classify_for_pr([f], existing)
+    assert updates[0].state == "new" and updates[0].issue_id is None
+
+
+def test_pr_classification_falls_back_to_the_location_independent_key_too() -> None:
+    """Same defect, moved to a new path within the PR -- matched via fallback_key, exactly like
+    sync() does, so a moved-but-unchanged finding doesn't look "new" just for its path shifting."""
+    original = finalized(code(path="old.py", finding_id="semgrep:sqli:old.py:10"))[0]
+    moved = finalized(code(path="new.py", finding_id="semgrep:sqli:new.py:10"))[0]
+    existing = [_issue("i1", original.fingerprint, "open", fallback=fallback_key(original))]
+    updates = classify_for_pr([moved], existing)
+    assert updates[0].issue_id == "i1" and updates[0].state == "open"
+
+
+def test_pr_classification_does_not_mutate_its_inputs() -> None:
+    """A read-only function in more than name: calling it must not be distinguishable from not
+    having called it, from the caller's point of view -- the whole safety argument for reusing it
+    on every PR scan rests on it never touching the ExistingIssue objects it's given."""
+    f = finalized(code())[0]
+    existing = [_issue("i1", f.fingerprint, "open")]
+    snapshot = list(existing)
+    classify_for_pr([f], existing)
+    assert existing == snapshot

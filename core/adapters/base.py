@@ -67,3 +67,10 @@ class ToolAdapter(ABC):
     def applies_to(self, ctx: RepoContext) -> bool:
         """Skip this tool when the repo has no relevant files."""
         return bool(ctx.languages & self.spec.languages)
+
+    def ruleset_id(self, ctx: RepoContext | None) -> str:
+        """The `ruleset_hash` component of a cache key (`core.cache.CacheKey`): identifies which
+        rules produced a result, so a config change invalidates the cache the same way a tool
+        upgrade does. Most adapters have one fixed, image-baked ruleset; override this where the
+        selected rules vary by repo (e.g. Semgrep's per-language rule files)."""
+        return "default"

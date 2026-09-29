@@ -166,18 +166,33 @@ def _run_scan_job(
             # override (Week 30) previewing a PR that might never merge. Syncing a PR scan's
             # findings into the shared asset's Issue history would corrupt it -- a PR-only finding
             # would show as "new" against the real branch, then falsely "fixed" the next time the
-            # real branch is scanned and it's (correctly) absent there.
-            if status == "completed" and ref is None:
-                issues = repo.sync_issues_for_scan(s, scan_id, findings)
-            else:
-                issues = None
-            repo.add_findings(s, scan_id, findings, issues.updates if issues else None)
+            # real branch is scanned and it's (correctly) absent there. A PR scan still gets "new
+            # in this PR" (plan §36): `classify_findings_for_pr` is the read-only counterpart that
+            # matches against the asset's current issues without writing any of this scan's own
+            # findings back into that table.
+            issues = updates = None
+            if status == "completed":
+                if ref is None:
+                    issues = repo.sync_issues_for_scan(s, scan_id, findings)
+                    updates = issues.updates
+                else:
+                    updates = repo.classify_findings_for_pr(s, scan_id, findings)
+            repo.add_findings(s, scan_id, findings, updates)
             repo.finish_scan(s, scan_id, status)
             counts = repo.severity_counts(s, scan_id)
-    issue_counts = (
-        {"new": issues.new_count, "reintroduced": issues.reintroduced_count,
-         "fixed": issues.fixed_count} if issues else None
-    )  # fmt: skip
+    if issues is not None:
+        issue_counts: dict[str, int] | None = {
+            "new": issues.new_count,
+            "reintroduced": issues.reintroduced_count,
+            "fixed": issues.fixed_count,
+        }
+    elif updates is not None:
+        issue_counts = {
+            "new": sum(1 for u in updates if u.state == "new"),
+            "existing": sum(1 for u in updates if u.state != "new"),
+        }
+    else:
+        issue_counts = None
     bus.publish(scan_id, {"type": "scan.finished", "scan_id": scan_id, "status": status,
                           "findings": len(findings), "raw_findings": stats.raw,
                           "dedup_rate": round(stats.dedup_rate, 3),

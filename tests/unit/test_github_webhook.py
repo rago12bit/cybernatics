@@ -157,6 +157,40 @@ def test_pull_request_opened_queues_a_scan_scoped_to_the_installations_org(
     assert enqueued == [(scan_id, scan.org_id)]
 
 
+def test_pull_request_resolves_to_the_repositorys_real_asset(
+    client: tuple[TestClient, list[Any]], sessions: sessionmaker[Session]
+) -> None:
+    """Plan §36 (PR mode): a PR scan must classify "new in this PR" against the repository's real
+    Issue history, which only works if it resolves to the *same* Asset an ordinary scan of this
+    repository would -- not a separate one keyed on the "owner/repo#7" label this Scan displays.
+    Two different PRs of the same repository must also share that one asset with each other."""
+    c, _ = client
+    from core.persistence import repo
+    from core.persistence.models import Asset
+
+    first = post(c, "pull_request", _pr_payload(pr_number=1)).json()["scan_id"]
+    second = post(c, "pull_request", _pr_payload(pr_number=2)).json()["scan_id"]
+    with sessions() as s:
+        a, b = s.get(Scan, first), s.get(Scan, second)
+        assert a is not None and b is not None
+        assert a.asset_id == b.asset_id
+        org_id = a.org_id
+
+        # An ordinary scan of the same repo, in the *same* org (ADR-0013 scopes Assets per org --
+        # comparing against DEFAULT_ORG_ID here would fail for that unrelated reason instead).
+        ordinary = repo.create_scan(
+            s, source_type="git", source_ref="https://github.com/acme/widgets.git",
+            source_label="https://github.com/acme/widgets.git", tools=["bandit"], org_id=org_id,
+        )  # fmt: skip
+        assert ordinary.asset_id == a.asset_id
+        assert s.query(Asset).filter_by(org_id=org_id).count() == 1  # one asset, not one per PR
+        # The asset's own label must stay the repository's, never overwritten by a PR's own
+        # "owner/repo#N" display string (Scan.source_label, unaffected, still shows that).
+        asset = s.get(Asset, a.asset_id)
+        assert asset is not None and "#" not in asset.label
+        assert a.source_label == "acme/widgets#1"
+
+
 def test_pull_request_reuses_the_same_org_across_multiple_prs(
     client: tuple[TestClient, list[Any]], sessions: sessionmaker[Session]
 ) -> None:

@@ -92,10 +92,13 @@ class ExistingIssue:
 
 @dataclass
 class IssueUpdate:
-    """One outcome of syncing a scan's findings against an asset's existing issues."""
+    """One outcome of syncing a scan's findings against an asset's existing issues.
+
+    `issue_id` is `None` only from `classify_for_pr`: a PR-mode finding that matched nothing never
+    gets a real Issue row (a PR scan mints no Issues), so there is no id to attach it to."""
 
     finding_id: str
-    issue_id: str
+    issue_id: str | None
     state: State
     is_new_issue: bool
     fingerprint: str  # the fingerprint the issue should now be stored under (may have moved)
@@ -179,3 +182,34 @@ def sync(
     ]
     result.fixed_count = len(result.fixed_issue_ids)
     return result
+
+
+def classify_for_pr(findings: list[Finding], existing: list[ExistingIssue]) -> list[IssueUpdate]:
+    """Read-only counterpart to `sync()` for a pull-request scan (plan §36): "new in this PR" means
+    "doesn't match one of the asset's currently-live issues", without deciding anything about the
+    issues this scan's findings *don't* mention.
+
+    `sync()` also computes `fixed_issue_ids` from exactly that absence, which is exactly wrong
+    here: a PR's diff necessarily touches only some of the asset's files, so every issue elsewhere
+    in the codebase would look "fixed" simply for not appearing in a scan that never looked at it.
+    A PR scan must never mutate the asset's real Issue history (an `IssueRow` this function does
+    not touch) — only classify against it. Matched findings report the real issue they matched
+    (state "open": already known, whatever it was before); everything else is "new" -- including a
+    finding that matches a `fixed` issue: the base branch's current state has no such problem, so a
+    PR bringing it back is introducing something new to *this* diff, exactly what the gate should
+    flag, even though the same event is called "reintroduced" on the real branch (`sync()`).
+    """
+    live = [i for i in existing if i.state in LIVE_STATES]
+    by_primary = {(i.category, i.fingerprint): i for i in live}
+    by_fallback = {(i.category, i.fallback_fingerprint): i for i in live if i.fallback_fingerprint}
+    updates = []
+    for f in findings:
+        keys = match_keys(f)
+        found = by_primary.get((keys.category, keys.primary))
+        if found is None and keys.fallback is not None:
+            found = by_fallback.get((keys.category, keys.fallback))
+        state: State = "open" if found is not None else "new"
+        updates.append(
+            IssueUpdate(f.id, found.id if found else None, state, found is None, keys.primary)
+        )
+    return updates

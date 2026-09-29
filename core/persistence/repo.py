@@ -15,7 +15,7 @@ from sqlalchemy.sql.elements import ColumnElement
 
 import core.audit as audit
 from core.assets import asset_key
-from core.issues import ExistingIssue, IssueUpdate, State, SyncResult, fallback_key
+from core.issues import ExistingIssue, IssueUpdate, State, SyncResult, classify_for_pr, fallback_key
 from core.issues import sync as sync_issues
 from core.models import Finding
 from core.persistence.models import (
@@ -73,12 +73,19 @@ def create_scan(
     tools: list[str],
     org_id: str = DEFAULT_ORG_ID,
     ref: str | None = None,
+    asset_label: str | None = None,
     github_repo: str | None = None,
     github_pr_number: int | None = None,
     github_installation_id: str | None = None,
 ) -> Scan:
+    """`asset_label` (plan §36, PR mode): the identity a PR-triggered scan's Asset is matched
+    against must be the repository's own normalized URL, same as an ordinary scan of it -- not the
+    "owner/repo#42" string `source_label` displays for this one scan -- or a PR scan would resolve
+    to its own throwaway per-PR Asset instead of the repository's real one, and "new in this PR"
+    would compare against nothing every time. Defaults to `source_label`, unchanged for every
+    caller that only ever scans a whole repository (there, the two are already the same thing)."""
     asset = get_or_create_asset(
-        s, source_type=source_type, source_label=source_label, org_id=org_id
+        s, source_type=source_type, source_label=asset_label or source_label, org_id=org_id
     )
     scan = Scan(
         org_id=org_id,
@@ -505,6 +512,29 @@ def set_raw_artifact(
     s.commit()
 
 
+def _existing_issues(s: Session, asset_id: str) -> tuple[list[IssueRow], list[ExistingIssue]]:
+    rows = list(s.scalars(select(IssueRow).where(IssueRow.asset_id == asset_id)))
+    existing = [
+        ExistingIssue(r.id, r.category, r.fingerprint, r.fallback_fingerprint, cast(State, r.state))
+        for r in rows
+    ]
+    return rows, existing
+
+
+def classify_findings_for_pr(
+    s: Session, scan_id: str, findings: list[Finding]
+) -> list[IssueUpdate]:
+    """Read-only PR-mode counterpart to `sync_issues_for_scan` (plan §36): "new in this PR" without
+    writing anything back to `issues` -- see `core.issues.classify_for_pr`'s docstring for why a PR
+    scan must never mutate the asset's real Issue history. `[]` when the scan has no asset."""
+    scan = s.get(Scan, scan_id)
+    assert scan is not None
+    if scan.asset_id is None:
+        return []
+    _, existing = _existing_issues(s, scan.asset_id)
+    return classify_for_pr(findings, existing)
+
+
 def sync_issues_for_scan(s: Session, scan_id: str, findings: list[Finding]) -> SyncResult:
     """Match this scan's findings against the asset's existing issues (ADR-0012, `core/issues.py`)
     and persist the lifecycle transitions. Returns one `IssueUpdate` per input finding, in the same
@@ -518,16 +548,13 @@ def sync_issues_for_scan(s: Session, scan_id: str, findings: list[Finding]) -> S
     assert scan is not None
     if scan.asset_id is None:
         return SyncResult()
-    existing_rows = list(s.scalars(select(IssueRow).where(IssueRow.asset_id == scan.asset_id)))
-    existing = [
-        ExistingIssue(r.id, r.category, r.fingerprint, r.fallback_fingerprint, cast(State, r.state))
-        for r in existing_rows
-    ]
+    existing_rows, existing = _existing_issues(s, scan.asset_id)
     by_id = {r.id: r for r in existing_rows}
     result = sync_issues(findings, existing, new_issue_id=_new_issue_id)
 
     now = _now()
     for f, u in zip(findings, result.updates, strict=True):
+        assert u.issue_id is not None  # sync() (unlike classify_for_pr) always allocates a real id
         row = by_id.get(u.issue_id)
         if row is None:  # brand new issue
             row = IssueRow(

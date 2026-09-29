@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import logging
+import shutil
+import tempfile
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -20,6 +23,8 @@ from core.adapters.grype import GrypeAdapter
 from core.adapters.osv_scanner import OsvScannerAdapter
 from core.adapters.semgrep import SemgrepAdapter
 from core.adapters.trivy import TrivyAdapter
+from core.cache import CacheKey, ResultCache, hash_file, hash_files
+from core.config import scratch_dir
 from core.correlation import CorrelationStats, correlate
 from core.ignore import IGNORE_FILE, IgnoreRules, apply_ignore
 from core.models import Finding, finding_from_dict
@@ -135,10 +140,15 @@ class ToolOutcome:
         )
 
 
-def execute_tool(name: str, target: Path) -> ToolOutcome:
-    """The unit of work: run one tool in its sandbox and parse. Used by threads and Celery."""
+def execute_tool(name: str, target: Path, ctx: RepoContext | None = None) -> ToolOutcome:
+    """The unit of work: run one tool in its sandbox and parse. Used by threads and Celery.
+
+    `ctx`: pass the *target repo's* context, not `target`'s own, when `target` is a subset
+    directory standing in for it (`core.cache`'s cache-miss subset) -- otherwise a tool whose
+    command depends on context (Semgrep's rule selection) would see only the subset's languages.
+    """
     with bind_tool(name), span(f"tool.{name}", tool=name, image=ADAPTERS[name].spec.image) as sp:
-        outcome = _execute_tool(name, target)
+        outcome = _execute_tool(name, target, ctx)
         set_attributes(sp, status=outcome.status, findings=len(outcome.findings),
                        exit_code=outcome.exit_code)  # fmt: skip
         if outcome.status != "ok":
@@ -152,11 +162,11 @@ def execute_tool(name: str, target: Path) -> ToolOutcome:
         return outcome
 
 
-def _execute_tool(name: str, target: Path) -> ToolOutcome:
+def _execute_tool(name: str, target: Path, ctx: RepoContext | None = None) -> ToolOutcome:
     adapter = ADAPTERS[name]
     start = time.monotonic()
     try:
-        run = run_tool(adapter, target, detect_context(target))
+        run = run_tool(adapter, target, ctx if ctx is not None else detect_context(target))
     except RunnerError as exc:
         return ToolOutcome(name, "error", error=str(exc), duration_seconds=time.monotonic() - start)
     findings = adapter.parse(run.raw) if run.raw else []
@@ -190,6 +200,139 @@ def threaded_executor(tools: list[str], target: Path) -> list[ToolOutcome]:
     return outcomes
 
 
+# ---- Content-addressed result cache (plan §20.1) --------------------------------------------
+#
+# File-local tools: cached per file, so a change to one file in a 5,000-file repo costs one file's
+# worth of scanning, not the whole tree's. Repo-wide (SCA) tools: cached as a whole, keyed on the
+# files that actually drive their output -- there's no per-file result to reuse from a lockfile
+# scan or an IaC misconfiguration pass.
+CACHEABLE_FILE_LOCAL: frozenset[str] = frozenset({"bandit", "semgrep", "gitleaks"})
+CACHEABLE_REPO_WIDE: frozenset[str] = frozenset({"trivy", "osv-scanner"})
+
+
+def _tool_version(name: str) -> str:
+    return ADAPTERS[name].spec.image.rsplit(":", 1)[-1]
+
+
+def _relevant_files(name: str, target: Path, ctx: RepoContext) -> list[Path]:
+    """Files whose content actually changes what `name` reports -- what a file-local tool's cache
+    is keyed on, one entry per file. Mirrors `detect_context`'s own walk and skip-dirs so a file
+    this tool would never look at doesn't generate a pointless cache entry."""
+    if name == "gitleaks":
+        wanted: frozenset[str] | None = None  # secrets can live in any file
+    elif name == "bandit":
+        wanted = frozenset({".py"})
+    elif name == "semgrep":
+        wanted = frozenset(ext for ext, lang in _EXT_LANG.items() if lang in ctx.languages)
+    else:
+        return []
+    out: list[Path] = []
+    for p in target.rglob("*"):
+        rel = p.relative_to(target)
+        if any(part in _SKIP_DIRS for part in rel.parts) or not p.is_file():
+            continue
+        if wanted is None or p.suffix in wanted:
+            out.append(p)
+    return out
+
+
+def _repo_wide_files(name: str, target: Path, ctx: RepoContext) -> list[Path]:
+    """Files a repo-wide tool's *whole* cached result is keyed on. OSV-Scanner only ever looks at
+    lockfiles (its own `applies_to`); Trivy also reports on Dockerfile and IaC misconfigurations
+    (its `applies_to` includes those too), so its key must cover them as well -- keying it on
+    lockfiles alone would silently serve a stale result after an unrelated Dockerfile edit."""
+    paths = [target / lf for lf in ctx.lockfiles]
+    if name == "trivy":
+        for p in target.rglob("*"):
+            rel = p.relative_to(target)
+            if any(part in _SKIP_DIRS for part in rel.parts) or not p.is_file():
+                continue
+            is_dockerfile = p.name == "Dockerfile" or p.name.startswith("Dockerfile.")
+            if is_dockerfile or p.suffix in _IAC_SUFFIXES:
+                paths.append(p)
+    return paths
+
+
+@contextmanager
+def _subset_dir(target: Path, files: list[Path]) -> Iterator[Path]:
+    """A throwaway directory holding only `files`, at their original paths relative to `target`.
+
+    Copied, not symlinked: the sandbox mounts this directory into a container that has no view of
+    the real `target` at all, so a symlink pointing back out to it would just be a dangling path
+    from inside the container."""
+    with tempfile.TemporaryDirectory(prefix="bulwark-subset-", dir=scratch_dir()) as tmp:
+        tmp_path = Path(tmp)
+        for f in files:
+            dest = tmp_path / f.relative_to(target)
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(f, dest)
+        yield tmp_path
+
+
+def _cached_file_local(
+    name: str, target: Path, ctx: RepoContext, cache: ResultCache
+) -> ToolOutcome:
+    files = _relevant_files(name, target, ctx)
+    version, ruleset = _tool_version(name), ADAPTERS[name].ruleset_id(ctx)
+    hit_findings: list[Finding] = []
+    misses: list[Path] = []
+    for f in files:
+        cached = cache.get(CacheKey(name, version, ruleset, hash_file(f)))
+        if cached is None:
+            misses.append(f)
+        else:
+            hit_findings.extend(cached)
+    if not misses:
+        return ToolOutcome(name, "ok", hit_findings, 0, 0.0)
+    with _subset_dir(target, misses) as subset:
+        outcome = execute_tool(name, subset, ctx)
+    if outcome.status != "ok":
+        # A cache is a performance optimization, not a new correctness path: on failure, behave
+        # exactly as an uncached run would rather than inventing partial-success semantics.
+        return outcome
+    by_path: dict[str, list[Finding]] = {}
+    for fnd in outcome.findings:
+        by_path.setdefault(fnd.location.path, []).append(fnd)
+    for f in misses:
+        rel = f.relative_to(target).as_posix()
+        cache.set(CacheKey(name, version, ruleset, hash_file(f)), by_path.get(rel, []))
+    return ToolOutcome(
+        name, "ok", hit_findings + outcome.findings, outcome.exit_code,
+        outcome.duration_seconds, None, outcome.raw, outcome.warnings,
+    )  # fmt: skip
+
+
+def _cached_repo_wide(name: str, target: Path, ctx: RepoContext, cache: ResultCache) -> ToolOutcome:
+    files = _repo_wide_files(name, target, ctx)
+    if not files:  # nothing to key on (shouldn't happen: applies_to() already gated this tool in)
+        return execute_tool(name, target, ctx)
+    key = CacheKey(name, _tool_version(name), ADAPTERS[name].ruleset_id(ctx), hash_files(files))
+    cached = cache.get(key)
+    if cached is not None:
+        return ToolOutcome(name, "ok", cached, 0, 0.0)
+    outcome = execute_tool(name, target, ctx)
+    if outcome.status == "ok":
+        cache.set(key, outcome.findings)
+    return outcome
+
+
+def cached_outcomes(
+    tools: list[str], target: Path, ctx: RepoContext, cache: ResultCache
+) -> dict[str, ToolOutcome]:
+    """Cache-aware counterpart to running `tools` directly (plan §20.1). Tier-2 tools (Grype,
+    Checkov, gosec, Dockle) aren't cached this week -- they're opt-in, not part of any default
+    scan, and none of them is on the pull-request-speed critical path yet."""
+    out: dict[str, ToolOutcome] = {}
+    for name in tools:
+        if name in CACHEABLE_FILE_LOCAL:
+            out[name] = _cached_file_local(name, target, ctx, cache)
+        elif name in CACHEABLE_REPO_WIDE:
+            out[name] = _cached_repo_wide(name, target, ctx, cache)
+        else:
+            out[name] = execute_tool(name, target, ctx)
+    return out
+
+
 @dataclass
 class ScanResult:
     findings: list[Finding] = field(default_factory=list)
@@ -203,7 +346,13 @@ def scan(
     tools: list[str],
     executor: Executor = threaded_executor,
     ignore: IgnoreRules | None = None,
+    cache: ResultCache | None = None,
 ) -> ScanResult:
+    """`cache` (plan §20.1): opt-in content-addressed result cache. Tools other than
+    `CACHEABLE_FILE_LOCAL`/`CACHEABLE_REPO_WIDE` are unaffected either way. Ignored when `executor`
+    isn't the default (e.g. `--distributed`'s Celery executor) -- wiring the cache through workers
+    that each own their own copy of the target is future work, not something this week's CLI/Action
+    speed target needs; the CLI rejects combining the two rather than silently dropping one."""
     unknown = [t for t in tools if t not in ADAPTERS]
     if unknown:
         raise ValueError(f"unknown tool(s): {', '.join(unknown)}")
@@ -215,7 +364,10 @@ def scan(
             runnable.append(name)
         else:
             result.tool_status[name] = {"status": "skipped", "reason": "no relevant files"}
-    outcomes = {o.tool: o for o in executor(runnable, target)} if runnable else {}
+    if cache is not None and runnable:
+        outcomes = cached_outcomes(runnable, target, ctx, cache)
+    else:
+        outcomes = {o.tool: o for o in executor(runnable, target)} if runnable else {}
     for name in runnable:  # stable, request-ordered output
         o = outcomes.get(name) or ToolOutcome(name, "error", error="executor returned no result")
         result.tool_status[name] = o.status_block()

@@ -397,9 +397,10 @@ def create_app(app_state: AppState) -> FastAPI:
                     return {"status": "ignored"}  # not a repo we're configured to clone from
                 scan = repo.create_scan(
                     s, source_type="git", source_ref=pr.clone_url,
-                    source_label=f"{pr.repo_full_name}#{pr.pr_number}", tools=list(DEFAULT_TOOLS),
-                    org_id=installation.org_id, ref=pr.ref, github_repo=pr.repo_full_name,
-                    github_pr_number=pr.pr_number, github_installation_id=pr.installation_id,
+                    source_label=f"{pr.repo_full_name}#{pr.pr_number}", asset_label=pr.clone_url,
+                    tools=list(DEFAULT_TOOLS), org_id=installation.org_id, ref=pr.ref,
+                    github_repo=pr.repo_full_name, github_pr_number=pr.pr_number,
+                    github_installation_id=pr.installation_id,
                 )  # fmt: skip
                 _dispatch(st, s, scan)
                 return {"status": "queued", "scan_id": scan.id}

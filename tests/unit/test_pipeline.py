@@ -36,10 +36,23 @@ def finding(
 
 
 def make_scan(
-    s: Session, tools: list[str], ref: str, stype: str = "git", label: str = "lbl"
+    s: Session,
+    tools: list[str],
+    ref: str,
+    stype: str = "git",
+    label: str = "lbl",
+    *,
+    pr_ref: str | None = None,
+    asset_label: str | None = None,
 ) -> str:
     return repo.create_scan(
-        s, source_type=stype, source_ref=ref, source_label=label, tools=tools
+        s,
+        source_type=stype,
+        source_ref=ref,
+        source_label=label,
+        tools=tools,
+        ref=pr_ref,
+        asset_label=asset_label,
     ).id
 
 
@@ -437,3 +450,60 @@ def test_issue_lifecycle_across_real_scans_of_the_same_asset(
 
         issue = s.get(IssueRow, id1)
         assert issue is not None and issue.fixed_at is None
+
+
+def test_pr_scan_shows_new_in_this_pr_without_touching_the_real_asset(
+    sessions: sessionmaker[Session], sample_repo: Path
+) -> None:
+    """Plan §36: a PR-triggered scan (Scan.ref set) classifies its findings against the asset's
+    real issue history -- via `asset_label`, the same asset an ordinary scan of this URL would
+    resolve to -- but must never mutate that history: an issue elsewhere in the codebase that a
+    PR's diff never touches must not look "fixed" just for being absent from this one scan."""
+    url = str(sample_repo)
+    with sessions() as s:
+        main_sid = make_scan(s, ["bandit"], url, label=url)
+    table = {"bandit": ToolOutcome("bandit", "ok", [finding("bandit", Category.SAST, path="a.py")])}
+    run_scan_job(main_sid, sessions, MemoryStore(), MemoryPublisher(), executor_from(table))
+    with sessions() as s:
+        from core.persistence.models import IssueRow
+
+        main_scan = repo.get_scan(s, main_sid)
+        assert main_scan is not None
+        known_issue = s.query(IssueRow).filter_by(asset_id=main_scan.asset_id).one()
+        assert known_issue.state == "new"  # its only sighting so far
+        known_issue_id = known_issue.id
+
+    with sessions() as s:
+        pr_sid = make_scan(
+            s, ["bandit"], url, label=f"{url}#7", pr_ref="refs/pull/7/head", asset_label=url
+        )
+    new_finding = finding("bandit", Category.SAST, path="b.py", fid="bandit:b.py:1")
+    # A distinct rule id, or `fallback_key` (correctly) treats this as the *same* defect merely
+    # moved to a new path -- real product behavior (ADR-0012), not something to work around here.
+    new_finding.evidence.rule_ids = {"bandit": ["B999-different-rule"]}
+    pr_table = {
+        "bandit": ToolOutcome(
+            "bandit",
+            "ok",
+            [finding("bandit", Category.SAST, path="a.py"), new_finding],  # already known  # new
+        )
+    }
+    run_scan_job(pr_sid, sessions, MemoryStore(), MemoryPublisher(), executor_from(pr_table))
+
+    with sessions() as s:
+        from core.persistence.models import IssueRow
+
+        pr_scan, main_scan = repo.get_scan(s, pr_sid), repo.get_scan(s, main_sid)
+        assert pr_scan is not None and main_scan is not None
+        assert pr_scan.asset_id == main_scan.asset_id  # the PR resolves to the SAME asset
+
+        rows = {r.finding_id: r for r in s.query(FindingRow).filter_by(scan_id=pr_sid)}
+        assert rows["bandit:a.py:1"].issue_state == "open"  # already known before this PR
+        assert rows["bandit:a.py:1"].issue_id == known_issue_id
+        assert rows["bandit:b.py:1"].issue_state == "new"  # introduced by this PR
+        assert rows["bandit:b.py:1"].issue_id is None  # no real Issue minted for a PR-only finding
+
+        # the PR scan created no second IssueRow and left the real one completely untouched
+        issues = s.query(IssueRow).filter_by(asset_id=main_scan.asset_id).all()
+        assert [i.id for i in issues] == [known_issue_id]
+        assert issues[0].state == "new" and issues[0].fixed_at is None

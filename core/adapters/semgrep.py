@@ -39,6 +39,12 @@ class SemgrepAdapter(ToolAdapter):
         native_sarif=True,
     )
 
+    def ruleset_id(self, ctx: RepoContext | None) -> str:
+        # The actual rule *selection* for this repo (`applies_to` and `build_command` both derive
+        # it from `ctx.languages` the same way) -- not a hash of the rule files' bytes, since those
+        # are pinned by `spec.image` already, which every cache key includes as `tool_version`.
+        return "|".join(_rule_dirs(ctx))
+
     def build_command(
         self, target: Path, output: Path, ctx: RepoContext | None = None
     ) -> list[str]:
