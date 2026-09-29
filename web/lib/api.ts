@@ -1,4 +1,4 @@
-import type { AssetSummary, BulkTriageResult, Finding, FindingsPage, FindingsQuery, Guidance, GuidanceApi, IssueHistoryEvent, ProjectOverview, Remediation, ScanComparison, ScanSummary, ScanView, TriageStatus } from "./types";
+import type { AssetSummary, BulkTriageResult, DependenciesView, Finding, FindingsPage, FindingsQuery, Guidance, GuidanceApi, IssueHistoryEvent, ProjectOverview, Remediation, ScanComparison, ScanSummary, ScanView, TriageStatus } from "./types";
 import { findingsQueryString } from "./format";
 
 export const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/$/, "");
@@ -142,6 +142,10 @@ export const liveGuidance: GuidanceApi = { get: getGuidance, request: requestSug
 export const listAssets = () => request<AssetSummary[]>("/assets?limit=50");
 export const getAssetOverview = (id: string) =>
   request<ProjectOverview>(`/assets/${encodeURIComponent(id)}/overview`);
+
+/** The Dependencies screen (plan §20.5): the asset's latest SBOM, if any scan opted "syft" in. */
+export const getDependencies = (assetId: string) =>
+  request<DependenciesView>(`/assets/${encodeURIComponent(assetId)}/dependencies`);
 
 /** The issues table (plan §28.3, Week 34): the asset's currently-open issues, joined with triage
  * state. `triage` omitted is the active queue; pass e.g. ["accepted"] to see triaged-away issues. */

@@ -47,6 +47,7 @@ from api.schemas import (
     BulkTriageRequest,
     BulkTriageResult,
     ComparedIssue,
+    DependenciesView,
     FeedsStatus,
     FindingsPage,
     GuidanceView,
@@ -566,6 +567,30 @@ def create_app(app_state: AppState) -> FastAPI:
             sort=sort, limit=limit, offset=offset,
         )  # fmt: skip
         return FindingsPage(total=page.total, limit=limit, offset=offset, items=page.items)
+
+    @app.get(
+        "/assets/{asset_id}/dependencies",
+        response_model=DependenciesView,
+        dependencies=[Depends(require_scope("scans:read"))],
+    )
+    def get_dependencies(
+        asset_id: str, s: Session = Depends(db), org: str = Depends(current_org)
+    ) -> DependenciesView:
+        """Plan §20.5's Dependencies screen: the asset's latest scan's SBOM (`syft` in its
+        `tools`), if any. Empty, not 404, when no scan has opted into it yet -- same shape as
+        `/assets/{id}/issues`."""
+        asset = _get_asset(s, asset_id, org)
+        latest = repo.latest_scan_for_asset(s, asset.id, org_id=org)
+        if latest is None or not latest.sbom_summary:
+            return DependenciesView(scan_id=latest.id if latest else None)
+        summary = latest.sbom_summary
+        return DependenciesView(
+            scan_id=latest.id,
+            generated_at=latest.finished_at,
+            components=summary.get("components", 0),
+            ecosystems=summary.get("ecosystems", {}),
+            packages=summary.get("packages", []),
+        )
 
     @app.get(
         "/assets/{asset_id}/issues/{issue_id}",

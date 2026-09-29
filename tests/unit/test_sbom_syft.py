@@ -140,3 +140,25 @@ def test_not_cyclonedx_raises_sbom_error() -> None:
 
 def test_summarize_returns_an_sbom() -> None:
     assert isinstance(summarize(RAW), Sbom)
+
+
+def test_syft_applies_to_every_repo_not_just_ones_with_a_detected_language() -> None:
+    """The base `ToolAdapter.applies_to` default (`ctx.languages & spec.languages`) would always be
+    False here, since `spec.languages` is deliberately empty -- Syft catalogs manifests/lockfiles,
+    not source files in `core.adapters`'s "language" sense. Without this override, a hosted scan
+    that opted "syft" into `tools` would silently skip it on every repo (plan §20.5)."""
+    from pathlib import Path
+
+    from core.adapters.base import RepoContext
+    from core.sbom.syft import SyftAdapter
+
+    assert SyftAdapter().applies_to(RepoContext(root=Path("."), languages=frozenset()))
+    assert SyftAdapter().applies_to(RepoContext(root=Path("."), languages=frozenset({"python"})))
+
+
+def test_syft_is_registered_in_the_hosted_pipelines_adapter_set() -> None:
+    from core.sbom.syft import SyftAdapter
+    from core.scan import ADAPTERS
+
+    assert "syft" in ADAPTERS
+    assert isinstance(ADAPTERS["syft"], SyftAdapter)

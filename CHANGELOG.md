@@ -5,6 +5,24 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 
 ## [Unreleased]
 
+### Added
+- **Dependencies screen (plan §20.5), a follow-up to Week 40's supply-chain risk work (ADR-0025):**
+  Week 40 built SBOM parsing, typosquat detection, and OpenSSF Scorecard enrichment as pure library
+  code, reachable only via CLI commands, with the hosted screen explicitly deferred. This closes that
+  gap: `core/sbom/syft.py::SyftAdapter` is now registered in `core/scan.py`'s `ADAPTERS`, selectable
+  via `Scan.tools` (and the web UI's own scan-creation form) exactly like any other optional tool.
+  `core/pipeline.py::_process_sbom` reshapes its raw CycloneDX output into typosquat Findings (folded
+  into the normal correlate/finalize/persist pipeline -- they get real Issue tracking for free) and a
+  JSON summary on a new `Scan.sbom_summary` column (migration `0010`; one nullable JSON column, no
+  new table, matching `FindingRow.data`'s own pattern). `GET /assets/{asset_id}/dependencies` serves
+  it, empty rather than 404 when no scan has opted in, mirroring `/assets/{id}/issues`. The new
+  `/app/projects/{id}/dependencies` page renders a filterable package table (direct/transitive/root,
+  license, Scorecard) with each row expandable to its own path-from-root -- a client-side BFS over
+  the same graph `core.supplychain.dependency_view.path_to` walks server-side, deliberately not a
+  drawn graph, since no graph-drawing library exists in this codebase and the actual need (a small
+  tree, shortest-path) didn't warrant adding one. 7 new backend tests (1117 total), 5 new frontend
+  tests (155 total). Full account in `docs/adr/0025-dependencies-screen.md`.
+
 ### Fixed
 - **Nine issues from a code review of Weeks 37/38's code-intelligence and taint-analysis work
   (`core/codeintel/`, `core/taint/`), none previously fixed:**

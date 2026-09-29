@@ -70,6 +70,16 @@ export function SubmitForm() {
         </div>
       </fieldset>
 
+      <fieldset>
+        <legend>Supply-chain risk (plan §20.5)</legend>
+        <div className="checks">
+          <label className="check">
+            <input type="checkbox" checked={tools.includes("syft")} onChange={(e) => setTools((cur) => (e.target.checked ? [...cur, "syft"] : cur.filter((x) => x !== "syft")))} />
+            syft — SBOM, typosquat detection, and OpenSSF Scorecard for direct dependencies (populates the Dependencies screen)
+          </label>
+        </div>
+      </fieldset>
+
       {hints.length > 0 && (
         <div role="status">
           <ul className="hint muted small">{hints.map((h) => <li key={h}>{h}</li>)}</ul>

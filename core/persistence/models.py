@@ -230,6 +230,13 @@ class Scan(Base):
         ForeignKey("assets.id", ondelete="SET NULL"), nullable=True, index=True
     )
     error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Supply-chain risk (plan §20.5), set only when "syft" was one of `tools` and it produced a
+    # readable SBOM: every package (name/version/ecosystem/purl/license/direct-or-transitive/its
+    # own dependency edges), plus an OpenSSF Scorecard result for each direct one, when resolved.
+    # One JSON blob, not a normalized table, matching `FindingRow.data`/`RemediationCache.payload`
+    # -- nothing here needs server-side filtering or pagination; the Dependencies screen renders it
+    # whole.
+    sbom_summary: Mapped[dict[str, Any] | None] = mapped_column(JsonType, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

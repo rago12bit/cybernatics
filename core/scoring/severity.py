@@ -42,6 +42,10 @@ MATRIX: dict[str, dict[str, Severity]] = {
         "MEDIUM": S.MEDIUM,
         "LOW": S.LOW,
     },
+    # Syft produces a document, not Findings (`SyftAdapter.parse` always returns []) -- no native
+    # severity ever reaches `normalize()` for it. An empty row, not an absent one: every registered
+    # tool gets a row in the published matrix, even a trivially unreachable one.
+    "syft": {},
 }
 
 # CVSS v3.1 base-score bands (FIRST.org qualitative severity rating scale).

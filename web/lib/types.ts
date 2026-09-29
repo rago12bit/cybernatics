@@ -230,6 +230,40 @@ export interface ProjectOverview {
   latest_scan_finished_at: string | null;
 }
 
+export type DependencyRelation = "direct" | "transitive" | "root" | "unknown";
+
+export interface DependencyScorecard {
+  score: number;
+  checks: Record<string, number>;
+  date: string;
+}
+
+/** One SBOM package (plan §20.5) -- `purl` is this package's own stable identity; `depends_on`
+ * lists the purls it depends on, which is all the Dependencies screen needs to walk the graph
+ * (root to any package) client-side, the same way `core.supplychain.dependency_view.path_to` does
+ * server-side. */
+export interface DependencyPackage {
+  name: string;
+  version: string;
+  ecosystem: string;
+  purl: string;
+  license: string;
+  path: string;
+  relation: DependencyRelation;
+  depends_on: string[];
+  scorecard: DependencyScorecard | null;
+}
+
+/** Plan §20.5's Dependencies screen: `scan_id`/`components` are 0/empty (not missing) when no
+ * scan has opted "syft" into its tools yet -- see api/schemas.py's DependenciesView. */
+export interface DependenciesView {
+  scan_id: string | null;
+  generated_at: string | null;
+  components: number;
+  ecosystems: Record<string, number>;
+  packages: DependencyPackage[];
+}
+
 export type ProgressEvent =
   | ({ type: "snapshot" } & ScanView) // the server's full view when the socket connects
   | { type: "scan.started"; tools: string[] }

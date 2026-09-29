@@ -141,6 +141,530 @@
         ]
       }
     },
+    "/assets": {
+      "get": {
+        "summary": "List Assets",
+        "description": "Projects (plan \u00a727): one row per distinct repository, most recently scanned first.",
+        "operationId": "list_assets_assets_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AssetSummary"
+                  },
+                  "title": "Response List Assets Assets Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/assets/{asset_id}/overview": {
+      "get": {
+        "summary": "Get Asset Overview",
+        "description": "Plan \u00a728.1's project overview: verdict, fix-first queue, since-previous-scan deltas,\nthe open-issue trend, and what the latest scan did (and didn't) cover. See\ncore/persistence/repo.py's asset-overview functions and docs/v2-week33-verification.md for\nexactly how each field is derived from existing scan/issue data.",
+        "operationId": "get_asset_overview_assets__asset_id__overview_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Asset Id"
+            }
+          },
+          {
+            "name": "fix_first_limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 25,
+              "minimum": 1,
+              "default": 10,
+              "title": "Fix First Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectOverview"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/assets/{asset_id}/issues": {
+      "get": {
+        "summary": "List Issues",
+        "description": "Plan \u00a728.3's issues table: the asset's currently-open issues (its latest scan's\nfindings, joined with each one's triage state). Empty, not 404, when nothing has scanned\nyet -- mirrors `/scans/{id}/findings`'s own shape so the same frontend table component\ncan render either.",
+        "operationId": "list_issues_assets__asset_id__issues_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Asset Id"
+            }
+          },
+          {
+            "name": "severity",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Severity"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Category"
+            }
+          },
+          {
+            "name": "triage",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter TO these triage statuses (e.g. accepted, not_a_risk). Omitted: the active queue -- untouched issues, plus any accepted issue past its expiry.",
+              "title": "Triage"
+            },
+            "description": "Filter TO these triage statuses (e.g. accepted, not_a_risk). Omitted: the active queue -- untouched issues, plus any accepted issue past its expiry."
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(severity|path|risk)$",
+              "default": "risk",
+              "title": "Sort"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FindingsPage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/assets/{asset_id}/dependencies": {
+      "get": {
+        "summary": "Get Dependencies",
+        "description": "Plan \u00a720.5's Dependencies screen: the asset's latest scan's SBOM (`syft` in its\n`tools`), if any. Empty, not 404, when no scan has opted into it yet -- same shape as\n`/assets/{id}/issues`.",
+        "operationId": "get_dependencies_assets__asset_id__dependencies_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Asset Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DependenciesView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/assets/{asset_id}/issues/{issue_id}": {
+      "get": {
+        "summary": "Get One Issue",
+        "description": "The one issue's own detail screen (plan \u00a728.3): the same Finding shape as a row in the\nissues table, fetched on its own rather than paging through the whole list.",
+        "operationId": "get_one_issue_assets__asset_id__issues__issue_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Asset Id"
+            }
+          },
+          {
+            "name": "issue_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Issue Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get One Issue Assets  Asset Id  Issues  Issue Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/assets/{asset_id}/issues/{issue_id}/triage": {
+      "post": {
+        "summary": "Triage One Issue",
+        "description": "Mark not-a-risk (needs a reason) or accept risk (needs an expiry), or reopen either\ndecision -- plan \u00a728.3: \"Both write to the audit log.\" `asset_id` in the path is a\nreadability/routing convenience (matches the frontend's URLs); the org check that actually\nmatters is `_get_asset` below, before the issue lookup even runs.",
+        "operationId": "triage_one_issue_assets__asset_id__issues__issue_id__triage_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Asset Id"
+            }
+          },
+          {
+            "name": "issue_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Issue Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TriageRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssueView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/assets/{asset_id}/issues/bulk-triage": {
+      "post": {
+        "summary": "Bulk Triage Issues",
+        "description": "Same rule per issue as the single-issue endpoint, applied to a batch: one issue failing\n(not found in this org, or a bad request for that action) doesn't abort the rest -- each\nsuccess still gets its own audit entry, exactly as if triaged one at a time.",
+        "operationId": "bulk_triage_issues_assets__asset_id__issues_bulk_triage_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Asset Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkTriageRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkTriageResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/assets/{asset_id}/issues/{issue_id}/history": {
+      "get": {
+        "summary": "Get Issue History",
+        "operationId": "get_issue_history_assets__asset_id__issues__issue_id__history_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Asset Id"
+            }
+          },
+          {
+            "name": "issue_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Issue Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/IssueHistoryEvent"
+                  },
+                  "title": "Response Get Issue History Assets  Asset Id  Issues  Issue Id  History Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/scans/{scan_id}/guidance": {
       "get": {
         "summary": "Get Guidance",
@@ -469,6 +993,62 @@
         }
       }
     },
+    "/scans/{scan_id}/compare": {
+      "get": {
+        "summary": "Compare Scans",
+        "description": "Plan \u00a728.6: two scans of the same project, side by side -- new, fixed, reintroduced and\nunchanged issues. 404s (not 400) when the two scans don't share an asset, the same\nnot-a-403 reasoning as `_get_scan` (ADR-0013): which other scans exist to compare against\nisn't information a scan in a different org (or asset) should be able to probe for.",
+        "operationId": "compare_scans_scans__scan_id__compare_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "scan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Scan Id"
+            }
+          },
+          {
+            "name": "against",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "The other scan id to compare against.",
+              "title": "Against"
+            },
+            "description": "The other scan id to compare against."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScanComparisonView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/scans/{scan_id}/export": {
       "get": {
         "summary": "Export Scan",
@@ -527,6 +1107,66 @@
   },
   "components": {
     "schemas": {
+      "AssetSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "source_type": {
+            "type": "string",
+            "title": "Source Type"
+          },
+          "last_scanned_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Last Scanned At"
+          },
+          "latest_scan_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Scan Id"
+          },
+          "latest_scan_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Scan Status"
+          },
+          "open_issue_count": {
+            "type": "integer",
+            "title": "Open Issue Count",
+            "description": "Open issues as of the latest completed scan; 0 if no scan has completed yet."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "label",
+          "source_type",
+          "last_scanned_at",
+          "latest_scan_id",
+          "latest_scan_status",
+          "open_issue_count"
+        ],
+        "title": "AssetSummary",
+        "description": "A project (plan \u00a727) \u2014 one distinct repository/archive, org-scoped (ADR-0012, ADR-0013)."
+      },
       "Body_upload_scan_scans_upload_post": {
         "properties": {
           "archive": {
@@ -552,6 +1192,174 @@
           "archive"
         ],
         "title": "Body_upload_scan_scans_upload_post"
+      },
+      "BulkTriageRequest": {
+        "properties": {
+          "issue_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 500,
+            "minItems": 1,
+            "title": "Issue Ids"
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "not_a_risk",
+              "accepted",
+              "reopen"
+            ],
+            "title": "Action"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "issue_ids",
+          "action"
+        ],
+        "title": "BulkTriageRequest"
+      },
+      "BulkTriageResult": {
+        "properties": {
+          "updated": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Updated"
+          },
+          "failed": {
+            "items": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Failed",
+            "description": "Each item: {issue_id, error} \u2014 one issue failing (e.g. not found in this org) doesn't abort the rest of the batch."
+          }
+        },
+        "type": "object",
+        "required": [
+          "updated",
+          "failed"
+        ],
+        "title": "BulkTriageResult"
+      },
+      "ComparedIssue": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "path": {
+            "type": "string",
+            "title": "Path"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "severity",
+          "category",
+          "path"
+        ],
+        "title": "ComparedIssue"
+      },
+      "DependenciesView": {
+        "properties": {
+          "scan_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scan Id",
+            "description": "The scan this SBOM came from; null if there is none."
+          },
+          "generated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Generated At"
+          },
+          "components": {
+            "type": "integer",
+            "title": "Components",
+            "default": 0
+          },
+          "ecosystems": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Ecosystems"
+          },
+          "packages": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Packages",
+            "description": "Each: name, version, ecosystem, purl, license, path, relation (direct|transitive|root|unknown), depends_on (purls), scorecard (or null)."
+          }
+        },
+        "type": "object",
+        "required": [
+          "scan_id"
+        ],
+        "title": "DependenciesView",
+        "description": "Plan \u00a720.5's Dependencies screen: one project's latest SBOM (`Scan.sbom_summary`), or an\nempty view when no scan has opted into `syft` yet -- never a 404, matching\n`/assets/{id}/issues`'s own \"empty, not missing\" shape."
       },
       "FeedsStatus": {
         "properties": {
@@ -725,6 +1533,157 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
+      "IssueHistoryEvent": {
+        "properties": {
+          "at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "At"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          }
+        },
+        "type": "object",
+        "required": [
+          "at",
+          "label"
+        ],
+        "title": "IssueHistoryEvent"
+      },
+      "IssueView": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "state": {
+            "type": "string",
+            "title": "State"
+          },
+          "triage_status": {
+            "type": "string",
+            "title": "Triage Status"
+          },
+          "triage_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Triage Reason"
+          },
+          "triage_expires_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Triage Expires At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "state",
+          "triage_status",
+          "triage_reason",
+          "triage_expires_at"
+        ],
+        "title": "IssueView"
+      },
+      "ProjectOverview": {
+        "properties": {
+          "asset": {
+            "$ref": "#/components/schemas/AssetSummary"
+          },
+          "verdict_count": {
+            "type": "integer",
+            "title": "Verdict Count",
+            "description": "Critical/high-severity, currently-reachable issues from the latest scan's risk-ranked top items \u2014 the plan's calm-by-default rule (\u00a729.2): an unreachable critical doesn't inflate this count."
+          },
+          "fix_first": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Fix First",
+            "description": "Same Finding shape as FindingsPage.items, risk-sorted, from the latest scan."
+          },
+          "more_at_lower_risk": {
+            "type": "integer",
+            "title": "More At Lower Risk"
+          },
+          "since_previous_scan": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Since Previous Scan",
+            "description": "fixed/new/returned since the scan before this one (ADR-0012's issue states); not a literal 7-day calendar window."
+          },
+          "trend": {
+            "items": {
+              "$ref": "#/components/schemas/TrendPoint"
+            },
+            "type": "array",
+            "title": "Trend"
+          },
+          "scanned": {
+            "items": {
+              "$ref": "#/components/schemas/ScannedTool"
+            },
+            "type": "array",
+            "title": "Scanned"
+          },
+          "latest_scan_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Scan Id"
+          },
+          "latest_scan_finished_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Scan Finished At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "asset",
+          "verdict_count",
+          "fix_first",
+          "more_at_lower_risk",
+          "since_previous_scan",
+          "trend",
+          "scanned",
+          "latest_scan_id",
+          "latest_scan_finished_at"
+        ],
+        "title": "ProjectOverview",
+        "description": "Plan \u00a728.1's project overview screen, built entirely from existing scan/issue data \u2014\nsee core/persistence/repo.py's asset-overview functions for how each field is derived."
+      },
       "RemediationView": {
         "properties": {
           "source": {
@@ -846,6 +1805,98 @@
         ],
         "title": "RemediationView",
         "description": "Guidance for one finding. `source` says whether a model wrote it."
+      },
+      "ScanComparisonSide": {
+        "properties": {
+          "scan_id": {
+            "type": "string",
+            "title": "Scan Id"
+          },
+          "source_label": {
+            "type": "string",
+            "title": "Source Label"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "github_pr_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Github Pr Number"
+          }
+        },
+        "type": "object",
+        "required": [
+          "scan_id",
+          "source_label",
+          "finished_at",
+          "github_pr_number"
+        ],
+        "title": "ScanComparisonSide"
+      },
+      "ScanComparisonView": {
+        "properties": {
+          "earlier": {
+            "$ref": "#/components/schemas/ScanComparisonSide"
+          },
+          "later": {
+            "$ref": "#/components/schemas/ScanComparisonSide"
+          },
+          "new": {
+            "items": {
+              "$ref": "#/components/schemas/ComparedIssue"
+            },
+            "type": "array",
+            "title": "New"
+          },
+          "fixed": {
+            "items": {
+              "$ref": "#/components/schemas/ComparedIssue"
+            },
+            "type": "array",
+            "title": "Fixed"
+          },
+          "reintroduced": {
+            "items": {
+              "$ref": "#/components/schemas/ComparedIssue"
+            },
+            "type": "array",
+            "title": "Reintroduced"
+          },
+          "unchanged": {
+            "items": {
+              "$ref": "#/components/schemas/ComparedIssue"
+            },
+            "type": "array",
+            "title": "Unchanged"
+          }
+        },
+        "type": "object",
+        "required": [
+          "earlier",
+          "later",
+          "new",
+          "fixed",
+          "reintroduced",
+          "unchanged"
+        ],
+        "title": "ScanComparisonView",
+        "description": "Plan \u00a728.6's scan comparison screen: two of an asset's scans, side by side."
       },
       "ScanCreated": {
         "properties": {
@@ -1074,6 +2125,29 @@
         ],
         "title": "ScanView"
       },
+      "ScannedTool": {
+        "properties": {
+          "tool": {
+            "type": "string",
+            "title": "Tool"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "findings": {
+            "type": "integer",
+            "title": "Findings",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "tool",
+          "status"
+        ],
+        "title": "ScannedTool"
+      },
       "SuggestionRequest": {
         "properties": {
           "finding_id": {
@@ -1160,6 +2234,72 @@
           "status"
         ],
         "title": "ToolStatus"
+      },
+      "TrendPoint": {
+        "properties": {
+          "scan_id": {
+            "type": "string",
+            "title": "Scan Id"
+          },
+          "finished_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Finished At"
+          },
+          "open_count": {
+            "type": "integer",
+            "title": "Open Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "scan_id",
+          "finished_at",
+          "open_count"
+        ],
+        "title": "TrendPoint"
+      },
+      "TriageRequest": {
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "not_a_risk",
+              "accepted",
+              "reopen"
+            ],
+            "title": "Action"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "action"
+        ],
+        "title": "TriageRequest"
       },
       "ValidationError": {
         "properties": {

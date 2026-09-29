@@ -114,9 +114,10 @@ api.securityscorecards.dev, cached for a week. Pass `--no-scorecard` to skip the
 - **OPA runs unsandboxed**, deliberately: it evaluates data this platform already computed (a
   scan's own findings), never the scanned repository's own content, so there's nothing here for the
   sandboxed scanner runner to protect against.
-- **No Dependencies screen UI.** `bulwark supply-chain analyze`'s report (typosquats, Scorecard) and
-  `core.supplychain.dependency_view.path_to` (which path in the graph pulls in a package) are real
-  and tested; nothing renders them yet (ADR-0024).
+- **The Dependencies screen needs a hosted scan, not just the CLI.** Opt a hosted scan into `"syft"`
+  (the web UI's own scan-creation form has a checkbox for it) to populate `/app/projects/{id}/
+  dependencies`; the standalone `bulwark supply-chain analyze` report is still there for the
+  CLI/Action path, which has no persisted screen to render into (ADR-0025).
 - **Direct-versus-transitive needs a lockfile.** Syft's own `dependencies` graph is only as complete
   as the manifest format it read: a committed lockfile (`package-lock.json`, `poetry.lock`,
   `Cargo.lock`, ...) has the resolved tree; a bare, unlocked manifest does not, so `direct_purls`/

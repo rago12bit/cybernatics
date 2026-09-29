@@ -62,6 +62,13 @@ class SyftAdapter(ToolAdapter):
     def parse(self, raw: bytes) -> list[Finding]:
         return []  # not a findings tool
 
+    def applies_to(self, ctx: RepoContext) -> bool:
+        # The base class's default (`ctx.languages & self.spec.languages`) would always be False
+        # here -- `spec.languages` is deliberately empty (Syft catalogs manifests/lockfiles, not
+        # source files in a `core.adapters` "language" sense) -- so every hosted scan that opted
+        # into "syft" would silently skip it. An SBOM is worth generating for any repo.
+        return True
+
 
 @dataclass(frozen=True)
 class SbomPackage:

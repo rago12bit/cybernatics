@@ -14,7 +14,7 @@ from typing import Any
 
 from core.correlation import correlate
 from core.ingest import IngestError
-from core.models import Category
+from core.models import Category, Finding
 from core.observability import bind_scan, in_context, mark_error, set_attributes, span
 from core.observability import metrics as obs
 from core.persistence import repo
@@ -23,8 +23,11 @@ from core.persistence.storage import ObjectStore
 from core.postprocess import finalize
 from core.reachability import analyze_or_none
 from core.risk import ensure_fresh
+from core.sbom.syft import SbomError, summarize
 from core.scan import ADAPTERS, ToolOutcome, detect_context, execute_tool
 from core.source import materialize
+from core.supplychain.scorecard import enrich_direct_dependencies
+from core.supplychain.typosquat import find_typosquats
 from core.taint import analyze_or_none as taint_analyze_or_none
 from core.tenancy import scoped_sessions
 
@@ -38,6 +41,59 @@ def _final_status(outcomes: list[ToolOutcome]) -> str:
     if not ran or all(o.status == "ok" for o in ran):
         return "completed"
     return "partial" if any(o.status == "ok" for o in ran) else "failed"
+
+
+def _process_sbom(raw: bytes) -> tuple[list[Finding], dict[str, Any] | None]:
+    """Reshapes `syft`'s raw CycloneDX document into typosquat Findings (folded into the same
+    correlate/finalize pipeline every other tool's Findings go through) and a JSON summary for the
+    Dependencies screen (plan §20.5). Best-effort throughout: a corrupt SBOM, or Scorecard/deps.dev
+    being unreachable, must not fail the whole scan -- the same "a dying tool is data" principle the
+    per-tool loop above already applies."""
+    try:
+        sbom = summarize(raw)
+    except SbomError as exc:
+        log.warning("sbom: could not summarize syft output: %s", exc)
+        return [], None
+    findings = find_typosquats(sbom.packages)
+    try:
+        scorecard = enrich_direct_dependencies(sbom.direct_purls)
+    except Exception as exc:  # noqa: BLE001 - a network/Scorecard failure must not fail the scan
+        log.warning("sbom: scorecard enrichment failed: %s", exc)
+        scorecard = {}
+    packages = []
+    for p in sbom.packages:
+        if p.purl in sbom.direct_purls:
+            relation = "direct"
+        elif p.purl in sbom.transitive_purls:
+            relation = "transitive"
+        elif p.purl in sbom.roots:
+            relation = "root"
+        else:
+            relation = "unknown"
+        result = scorecard.get(p.purl)
+        packages.append(
+            {
+                "name": p.name,
+                "version": p.version,
+                "ecosystem": p.ecosystem,
+                "purl": p.purl,
+                "license": p.license,
+                "path": p.path,
+                "relation": relation,
+                "depends_on": list(sbom.graph.get(p.purl, ())),
+                "scorecard": (
+                    {"score": result.score, "checks": result.checks, "date": result.date}
+                    if result is not None
+                    else None
+                ),
+            }
+        )
+    summary = {
+        "components": len(sbom.packages),
+        "ecosystems": dict(sbom.ecosystems),
+        "packages": packages,
+    }
+    return list(findings), summary
 
 
 def run_scan_job(
@@ -108,6 +164,8 @@ def _run_scan_job(
                               "error": message})  # fmt: skip
         return "failed", {}
 
+    sbom_findings: list[Finding] = []
+    sbom_summary: dict[str, Any] | None = None
     try:
         with ExitStack() as stack:
             with span("ingest", source_type=source_type):
@@ -144,6 +202,16 @@ def _run_scan_job(
                         outcomes.append(outcome)
                         raws[tool] = outcome.raw
                         _record(sessions, bus, scan_id, outcome)
+
+            # Supply-chain risk (plan §20.5): "syft" produces a document, not Findings, via the
+            # normal tools loop above (already persisted as a raw artifact by `_store_raw` below,
+            # exactly like any other tool's output) -- this reshapes that document into typosquat
+            # Findings (folded into the same correlate/finalize pipeline as everything else) and a
+            # JSON summary for the Dependencies screen. Best-effort: a corrupt SBOM or an
+            # unreachable Scorecard/deps.dev must not fail the whole scan.
+            if "syft" in raws:
+                with span("sbom"):
+                    sbom_findings, sbom_summary = _process_sbom(raws["syft"])
     except IngestError as exc:
         log.warning("ingestion failed: %s", exc)
         return fail(str(exc))
@@ -153,7 +221,7 @@ def _run_scan_job(
 
     # Correlate BEFORE redacting: redaction placeholders look identical and would over-merge.
     with span("correlate") as sp:
-        correlated, stats = correlate([f for o in outcomes for f in o.findings])
+        correlated, stats = correlate([f for o in outcomes for f in o.findings] + sbom_findings)
         set_attributes(sp, raw=stats.raw, unique=stats.unique)
     with span("finalize"):
         ensure_fresh()
@@ -181,6 +249,7 @@ def _run_scan_job(
                 else:
                     updates = repo.classify_findings_for_pr(s, scan_id, findings)
             repo.add_findings(s, scan_id, findings, updates)
+            repo.set_sbom_summary(s, scan_id, sbom_summary)
             repo.finish_scan(s, scan_id, status)
             counts = repo.severity_counts(s, scan_id)
     if issues is not None:

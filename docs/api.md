@@ -22,6 +22,64 @@ List Scans
 Upload Scan
 
 
+## `GET /assets`
+
+List Assets
+
+- `limit` (query)
+
+## `GET /assets/{asset_id}/overview`
+
+Get Asset Overview
+
+- `asset_id` (path, required)
+- `fix_first_limit` (query)
+
+## `GET /assets/{asset_id}/issues`
+
+List Issues
+
+- `asset_id` (path, required)
+- `severity` (query)
+- `category` (query)
+- `triage` (query)
+- `sort` (query)
+- `limit` (query)
+- `offset` (query)
+
+## `GET /assets/{asset_id}/dependencies`
+
+Get Dependencies
+
+- `asset_id` (path, required)
+
+## `GET /assets/{asset_id}/issues/{issue_id}`
+
+Get One Issue
+
+- `asset_id` (path, required)
+- `issue_id` (path, required)
+
+## `POST /assets/{asset_id}/issues/{issue_id}/triage`
+
+Triage One Issue
+
+- `asset_id` (path, required)
+- `issue_id` (path, required)
+
+## `POST /assets/{asset_id}/issues/bulk-triage`
+
+Bulk Triage Issues
+
+- `asset_id` (path, required)
+
+## `GET /assets/{asset_id}/issues/{issue_id}/history`
+
+Get Issue History
+
+- `asset_id` (path, required)
+- `issue_id` (path, required)
+
 ## `GET /scans/{scan_id}/guidance`
 
 Get Guidance
@@ -58,6 +116,13 @@ Get Findings
 - `sort` (query)
 - `limit` (query)
 - `offset` (query)
+
+## `GET /scans/{scan_id}/compare`
+
+Compare Scans
+
+- `scan_id` (path, required)
+- `against` (query, required)
 
 ## `GET /scans/{scan_id}/export`
 

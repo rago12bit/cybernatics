@@ -15,4 +15,5 @@ Tool severity vocabularies are not comparable. This table is a **judgment call**
 | dockle | — | FATAL | WARN | INFO | — |
 | gitleaks | — | (any) | — | — | — |
 | osv-scanner | CRITICAL | HIGH | MODERATE, MEDIUM | LOW | — |
+| syft | — | — | — | — | — |
 | OSV via CVSS v3.1 | ≥ 9.0 | 7.0–8.9 | 4.0–6.9 | 0.1–3.9 | 0 / none |

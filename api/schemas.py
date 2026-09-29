@@ -67,6 +67,22 @@ class FindingsPage(BaseModel):
     items: list[dict[str, Any]]
 
 
+class DependenciesView(BaseModel):
+    """Plan §20.5's Dependencies screen: one project's latest SBOM (`Scan.sbom_summary`), or an
+    empty view when no scan has opted into `syft` yet -- never a 404, matching
+    `/assets/{id}/issues`'s own "empty, not missing" shape."""
+
+    scan_id: str | None = Field(description="The scan this SBOM came from; null if there is none.")
+    generated_at: datetime | None = None
+    components: int = 0
+    ecosystems: dict[str, int] = Field(default_factory=dict)
+    packages: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="Each: name, version, ecosystem, purl, license, path, relation "
+        "(direct|transitive|root|unknown), depends_on (purls), scorecard (or null).",
+    )
+
+
 class ScanSummary(BaseModel):
     id: str
     status: str

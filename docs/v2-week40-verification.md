@@ -79,7 +79,36 @@ hash/version lists were confirmed to produce byte-identical output to before thi
   third-party action pinned, every input wired) pass unchanged after moving the "Generate SBOM" step
   earlier; a new test asserts that step now runs strictly before "Compare and gate" and that
   `SBOM_FILE` is wired into it.
-- **Not done**: the Dependencies screen UI (deferred, ADR-0024) — the graph, path, and
-  smallest-safe-upgrade data it would render are real and tested, nothing renders them yet. Also not
-  done: wiring Syft into the hosted pipeline's own scan flow (today, license/supply-chain data needs
-  a separate `bulwark sbom` run, same as before this week for the standalone CLI/Action).
+- **Since done, as a follow-up (ADR-0025, see below)**: the Dependencies screen UI, and wiring Syft
+  into the hosted pipeline's own scan flow (`"syft"` in `Scan.tools`) -- both deferred here
+  originally, now implemented.
+
+## Follow-up (2026-09-30): the Dependencies screen, end to end
+
+`core/sbom/syft.py::SyftAdapter` is now registered in `core/scan.py`'s `ADAPTERS`, selectable via
+`Scan.tools` exactly like grype/checkov/gosec. `core/pipeline.py::_process_sbom` reshapes its raw
+CycloneDX output into typosquat Findings (folded into the normal correlate/finalize/persist
+pipeline, so they get fingerprints and Issue tracking for free) and a JSON summary persisted on a
+new `Scan.sbom_summary` column (migration `0010`, one nullable JSON column -- no new table, matching
+`FindingRow.data`'s own pattern). `GET /assets/{asset_id}/dependencies` (`api/schemas.py::
+DependenciesView`) serves it, empty rather than 404 when no scan has opted in yet, mirroring
+`/assets/{id}/issues`'s own shape. `web/app/app/projects/[id]/dependencies` renders it: a filterable
+package table (name, ecosystem, direct/transitive/root, license, OpenSSF Scorecard for direct
+dependencies), each row expandable to its own path-from-root (a client-side BFS over the same graph
+`core.supplychain.dependency_view.path_to` walks server-side) and its direct dependents -- no new
+graph-drawing library, since none existed in this codebase and the actual need (a small tree/DAG,
+shortest-path) didn't warrant adding one. `SubmitForm.tsx` gained a "Supply-chain risk" checkbox so
+a user can opt a hosted scan into this from the web UI, not only the API/CLI. Full design reasoning
+in `docs/adr/0025-dependencies-screen.md`.
+
+Verified: a synthetic scan with `tools=["syft"]` and a fake CycloneDX raw output (a real
+`ToolOutcome`, run through the actual `run_scan_job`, not a mocked pipeline) correctly persisted
+`Scan.sbom_summary` (component count, per-package license/relation) and a real typosquat `Finding`
+in the `findings` table with `reported_by=["bulwark-typosquat"]` -- confirming the whole
+tools-loop-to-persistence path, not just `_process_sbom` in isolation. 7 new backend tests (1117
+total), 5 new frontend tests (155 total; the dependency-path/relation-filter logic exercised against
+realistic fixture data matching the real API response shape), `tsc --noEmit` and mypy/ruff/black all
+clean. The new page was confirmed live in a real browser (Next.js dev server) to compile, route, and
+render correctly behind `TokenGate` -- verifying the component's own data rendering against a real
+backend (Postgres/Redis/Celery/a real scan) was not done this session; that path is covered instead
+by the automated component tests above, which exercise the exact same API response shape.

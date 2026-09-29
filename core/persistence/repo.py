@@ -560,6 +560,17 @@ def finish_scan(s: Session, scan_id: str, status: str, error: str | None = None)
     s.commit()
 
 
+def set_sbom_summary(s: Session, scan_id: str, summary: dict[str, Any] | None) -> None:
+    """`None` (no "syft" in this scan's tools, or a corrupt SBOM) leaves the column at its default
+    `NULL` -- absent, not a fabricated empty summary (plan §20.5)."""
+    if summary is None:
+        return
+    scan = s.get(Scan, scan_id)
+    assert scan is not None
+    scan.sbom_summary = summary
+    s.commit()
+
+
 def add_tool_run(s: Session, scan_id: str, tool: str, block: dict[str, Any]) -> None:
     s.add(
         ToolRun(

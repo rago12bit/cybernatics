@@ -92,6 +92,53 @@ def test_happy_path_persists_everything_and_publishes_progress(
     assert kinds.count("tool.finished") == 2
 
 
+def test_syft_produces_an_sbom_summary_and_typosquat_findings(
+    sessions: sessionmaker[Session], sample_repo: Path
+) -> None:
+    """plan §20.5: opting "syft" into a scan's tools produces `Scan.sbom_summary` (for the
+    Dependencies screen) and folds typosquat Findings into the same persisted findings table as
+    every other tool's -- with no `dependencies` array in this fixture, `direct_purls` is empty, so
+    `enrich_direct_dependencies` makes zero network calls (nothing to resolve)."""
+    import json as _json
+
+    cyclonedx = _json.dumps(
+        {
+            "bomFormat": "CycloneDX",
+            "specVersion": "1.6",
+            "components": [
+                {
+                    "bom-ref": "a",
+                    "name": "reqeusts",
+                    "version": "1.0.0",
+                    "purl": "pkg:pypi/reqeusts@1.0.0",
+                },
+                {
+                    "bom-ref": "b",
+                    "name": "flask",
+                    "version": "2.0.0",
+                    "purl": "pkg:pypi/flask@2.0.0",
+                    "licenses": [{"license": {"id": "BSD-3-Clause"}}],
+                },
+            ],
+        }
+    ).encode()
+    with sessions() as s:
+        sid = make_scan(s, ["syft"], str(sample_repo))
+    table = {"syft": ToolOutcome("syft", "ok", [], raw=cyclonedx)}
+    status = run_scan_job(sid, sessions, MemoryStore(), MemoryPublisher(), executor_from(table))
+    assert status == "completed"
+    with sessions() as s:
+        scan = repo.get_scan(s, sid)
+        assert scan is not None and scan.sbom_summary is not None
+        assert scan.sbom_summary["components"] == 2
+        by_name = {p["name"]: p for p in scan.sbom_summary["packages"]}
+        assert by_name["flask"]["license"] == "BSD-3-Clause"
+        assert by_name["reqeusts"]["relation"] == "unknown"  # no dependency graph in this fixture
+        rows = s.query(FindingRow).all()
+        assert len(rows) == 1  # the typosquat finding for "reqeusts"
+        assert rows[0].data["evidence"]["reported_by"] == ["bulwark-typosquat"]
+
+
 def test_partial_failure_is_reported_not_fatal(
     sessions: sessionmaker[Session], sample_repo: Path
 ) -> None:

@@ -33,6 +33,7 @@ from core.observability import metrics as obs
 from core.postprocess import finalize
 from core.reachability import analyze_or_none
 from core.runner import RunnerError, run_tool
+from core.sbom.syft import SyftAdapter
 from core.taint import analyze_or_none as taint_analyze_or_none
 
 ADAPTERS: dict[str, ToolAdapter] = {
@@ -48,6 +49,10 @@ ADAPTERS: dict[str, ToolAdapter] = {
         CheckovAdapter(),
         GosecAdapter(),
         DockleAdapter(),
+        # SBOM + supply-chain risk (plan §20.5): opting into "syft" also gets typosquat detection
+        # and OpenSSF Scorecard for direct dependencies (`core.pipeline`), not just the raw SBOM
+        # artifact -- one toggle for the whole feature area, not three.
+        SyftAdapter(),
     )
 }
 DEFAULT_TOOLS: tuple[str, ...] = ("bandit", "semgrep", "gitleaks", "trivy", "osv-scanner")
