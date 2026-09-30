@@ -73,10 +73,16 @@ def build_prompt(finding: Finding, code: CodeContext | None) -> Prompt:
     title, pii_title = redact_pii(finding.title)
     description, pii_desc = redact_pii(finding.description)
     pii_found = pii_title + pii_desc
+    # A scanner's own title/description text can incidentally contain a secret-shaped string (e.g.
+    # a rule that quotes the offending literal) -- scrubbed here the same way `code` already is,
+    # found by the red-team corpus (plan §21.9) via a SECRETS finding whose title embedded a raw
+    # AWS key that this function was otherwise sending straight to a model.
+    title, title_scrubbed = scrub_secrets(title)
+    description, desc_scrubbed = scrub_secrets(description)
+    scrubbed = title_scrubbed + desc_scrubbed
     repo_text: list[str] = [title, description, loc.path]
 
     code_body = ""
-    scrubbed = 0
     first_line, last_line = loc.start_line, loc.end_line
     if finding.taxonomy.category is Category.SECRETS:
         code_body = "[code withheld: this finding is a leaked secret; no source is sent to a model]"
@@ -85,7 +91,8 @@ def build_prompt(finding: Finding, code: CodeContext | None) -> Prompt:
         code_body = f"[code withheld: {loc.path} matches the path denylist]"
         code = None
     elif code is not None:
-        clean, scrubbed = scrub_secrets(code.text)
+        clean, code_scrubbed = scrub_secrets(code.text)
+        scrubbed += code_scrubbed
         clean, pii_code = redact_pii(clean)
         pii_found += pii_code
         clean, cut = _clip(clean, MAX_CODE_CHARS)

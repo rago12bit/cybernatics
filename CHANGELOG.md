@@ -6,6 +6,17 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 ## [Unreleased]
 
 ### Added
+- **Attack paths, threat model draft, and an LLM red-team suite (Week 45, plan §21.6/§21.7/§21.9,
+  ADR-0030):** a ranked attack-path graph chains an asset's own open issues into a narrative from
+  entry point to impact -- one rule is call-graph-verified (SSRF reachability), two are disclosed
+  co-location heuristics. A Mermaid data-flow diagram plus a STRIDE table (`core/threatmodel/`)
+  generates from code intelligence with no model call at all, editable and versioned per asset.
+  `tests/redteam/` finally wires up a 20-payload adversarial corpus that had sat unused since an
+  earlier week, running it against the real fix/triage/copilot pipelines -- caught and fixed a real
+  bug along the way: `core/llm/prompt.py` and `core/triage_assistant/prompt.py` scrubbed secrets
+  from a finding's code but never its title/description. Live-verified RLS isolation on the new
+  `threat_models` table against a real disposable Postgres container, `bulwark_app`, not a
+  superuser.
 - **Security copilot (Week 44, plan §21.5, ADR-0029):** tool-grounded chat about one project.
   `core/embeddings/` chunks a checkout at function granularity off `core.codeintel`'s real parsers
   and embeds with the remediation knowledge base's own model-free `HashingEmbedder` (ADR-009) rather

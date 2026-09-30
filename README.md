@@ -219,6 +219,25 @@ issue IDs or file:line, checked against what actually exists before it's ever sh
 the remediation knowledge base's own model-free embedder, not a new gateway capability. See
 [docs/copilot.md](docs/copilot.md).
 
+## Attack paths
+
+A ranked chain from an entry point through a project's own open issues to real impact, computed
+from the current scan. One rule is call-graph-verified (SSRF reachable from a public route); two
+are disclosed co-location heuristics, not proven causal links. See [docs/attack-paths.md](docs/attack-paths.md).
+
+## Threat model draft
+
+A Mermaid data-flow diagram plus a STRIDE table generated from code intelligence -- no model call,
+a starting point for a person's own review, never an assessment. Editable, with an explicit
+regenerate that discards edits rather than silently overwriting them. See
+[docs/threat-model-draft.md](docs/threat-model-draft.md).
+
+## Red-team suite
+
+A 20-payload adversarial corpus run against the real fix/triage/copilot pipelines on every push and
+pull request, proving contracts and scoping hold even against a worst-case compliant model. See
+[docs/redteam.md](docs/redteam.md).
+
 ## SBOM, signing and provenance
 
 `bulwark sbom` writes a CycloneDX SBOM (Syft); `bulwark attest` signs reports with cosign and attests which scanner
