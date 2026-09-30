@@ -355,3 +355,39 @@ class VerifiedFixView(BaseModel):
     pr_url: str | None = None
     created_at: datetime
     updated_at: datetime
+
+
+class StartConversationRequest(BaseModel):
+    """Optional page context the panel was opened from (plan §28.6: "keeps page context"). Purely
+    informational -- never used for authorization, and never required to start a conversation."""
+
+    context_kind: Literal["issue", "scan"] | None = None
+    context_id: str | None = None
+
+
+class ConversationView(BaseModel):
+    id: str
+    asset_id: str
+    context_kind: str | None
+    context_id: str | None
+    created_at: datetime
+    last_message_at: datetime
+
+
+class PostMessageRequest(BaseModel):
+    question: str = Field(min_length=1, max_length=2000)
+
+
+class CitationView(BaseModel):
+    kind: Literal["issue", "code"]
+    issue_id: str | None = None
+    path: str | None = None
+    line: int | None = None
+
+
+class MessageView(BaseModel):
+    id: str
+    role: Literal["user", "assistant"]
+    content: str
+    citations: list[CitationView] | None
+    created_at: datetime

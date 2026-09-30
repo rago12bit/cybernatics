@@ -28,6 +28,8 @@ from core.persistence.models import (
     AuditEntry,
     CodeChunkIndexRow,
     CodeChunkRow,
+    CopilotConversationRow,
+    CopilotMessageRow,
     FindingRow,
     GithubInstallation,
     HypothesisRow,
@@ -1246,3 +1248,65 @@ def search_code_chunks(
     ]
     scored.sort(key=lambda t: (-t[0], t[1].id))
     return [(row, score) for score, row in scored[:k]]
+
+
+# ---- Copilot conversations (Week 44 task 3, plan §21.5) ---------------------------------------
+
+
+def create_conversation(
+    s: Session, asset_id: str, *, context_kind: str | None = None, context_id: str | None = None
+) -> CopilotConversationRow:
+    row = CopilotConversationRow(
+        asset_id=asset_id, context_kind=context_kind, context_id=context_id
+    )
+    s.add(row)
+    s.commit()
+    s.refresh(row)
+    return row
+
+
+def get_conversation(
+    s: Session, conversation_id: str, *, org_id: str | None = None
+) -> CopilotConversationRow | None:
+    q = select(CopilotConversationRow).where(CopilotConversationRow.id == conversation_id)
+    if org_id is not None:
+        q = q.join(Asset, Asset.id == CopilotConversationRow.asset_id).where(Asset.org_id == org_id)
+    return s.scalars(q).one_or_none()
+
+
+def add_message(
+    s: Session,
+    conversation_id: str,
+    *,
+    role: str,
+    content: str,
+    citations: list[dict[str, Any]] | None = None,
+    tokens_used: int | None = None,
+) -> CopilotMessageRow:
+    row = CopilotMessageRow(
+        conversation_id=conversation_id, role=role, content=content, citations=citations,
+        tokens_used=tokens_used,
+    )  # fmt: skip
+    s.add(row)
+    conversation = s.get(CopilotConversationRow, conversation_id)
+    if conversation is not None:
+        conversation.last_message_at = _now()
+    s.commit()
+    s.refresh(row)
+    return row
+
+
+def list_messages(
+    s: Session, conversation_id: str, *, org_id: str | None = None
+) -> list[CopilotMessageRow]:
+    q = select(CopilotMessageRow).where(CopilotMessageRow.conversation_id == conversation_id)
+    if org_id is not None:
+        q = (
+            q.join(
+                CopilotConversationRow,
+                CopilotConversationRow.id == CopilotMessageRow.conversation_id,
+            )
+            .join(Asset, Asset.id == CopilotConversationRow.asset_id)
+            .where(Asset.org_id == org_id)
+        )
+    return list(s.scalars(q.order_by(CopilotMessageRow.created_at)))

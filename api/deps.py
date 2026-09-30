@@ -37,6 +37,7 @@ class AppState:
     llm_budget: BudgetConfig = field(default_factory=BudgetConfig.from_env)  # caps them by tokens
     llm_triage: LLMClient | None = None  # None: the triage assistant is off (plan §21.3)
     llm_hypotheses: LLMClient | None = None  # None: the Hypotheses lane is off (plan §21.4)
+    llm_copilot: LLMClient | None = None  # None: the copilot is off (plan §21.5)
 
 
 def state(request: Request) -> AppState:

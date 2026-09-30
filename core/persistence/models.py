@@ -463,3 +463,38 @@ class CodeChunkRow(Base):
     snippet: Mapped[str] = mapped_column(Text)
     embedding: Mapped[list[float]] = mapped_column(Vector(_EMBED_DIM))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
+class CopilotConversationRow(Base):
+    """One chat session against one asset (Week 44 task 3, plan §21.5). `context_kind`/`context_id`
+    carry the page the panel was opened from ("issue"/<id> or "scan"/<id>, per §28.6's "keeps page
+    context" rule) -- advisory only, never used for authorization; RLS/`org_id` checks always go
+    through `asset_id`, not through whatever issue or scan is named here."""
+
+    __tablename__ = "copilot_conversations"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    asset_id: Mapped[str] = mapped_column(ForeignKey("assets.id", ondelete="CASCADE"), index=True)
+    context_kind: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    context_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+    last_message_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
+class CopilotMessageRow(Base):
+    """One turn of a copilot conversation: a user question or the copilot's own cited answer
+    (`role` "user"/"assistant"). `citations` is null for a user message, and for an assistant
+    message is exactly what `core.copilot.contract.validate_citations` already accepted -- never
+    stored before validation passes."""
+
+    __tablename__ = "copilot_messages"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    conversation_id: Mapped[str] = mapped_column(
+        ForeignKey("copilot_conversations.id", ondelete="CASCADE"), index=True
+    )
+    role: Mapped[str] = mapped_column(String(16))
+    content: Mapped[str] = mapped_column(Text)
+    citations: Mapped[list[dict[str, Any]] | None] = mapped_column(JsonType, nullable=True)
+    tokens_used: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)

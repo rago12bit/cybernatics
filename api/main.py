@@ -46,7 +46,9 @@ from api.schemas import (
     AssetSummary,
     BulkTriageRequest,
     BulkTriageResult,
+    CitationView,
     ComparedIssue,
+    ConversationView,
     DependenciesView,
     FeedsStatus,
     FindingsPage,
@@ -55,6 +57,8 @@ from api.schemas import (
     HypothesisView,
     IssueHistoryEvent,
     IssueView,
+    MessageView,
+    PostMessageRequest,
     ProjectOverview,
     PromoteHypothesisResult,
     RemediationView,
@@ -65,6 +69,7 @@ from api.schemas import (
     ScanRequest,
     ScanSummary,
     ScanView,
+    StartConversationRequest,
     SuggestionRequest,
     ToolStatus,
     TrendPoint,
@@ -1107,6 +1112,134 @@ def create_app(app_state: AppState) -> FastAPI:
             raise HTTPException(409, str(exc)) from exc
         return {"status": "dismissed"}
 
+    def _message_view(row: Any) -> MessageView:
+        return MessageView(
+            id=row.id, role=row.role, content=row.content,
+            citations=[CitationView(**c) for c in row.citations] if row.citations else None,
+            created_at=row.created_at,
+        )  # fmt: skip
+
+    @app.post(
+        "/assets/{asset_id}/copilot/conversations",
+        response_model=ConversationView,
+        dependencies=[Depends(require_scope("scans:write"))],
+    )
+    def start_conversation(
+        asset_id: str,
+        body: StartConversationRequest,
+        s: Session = Depends(db),
+        org: str = Depends(current_org),
+    ) -> ConversationView:
+        """Start a copilot conversation for one asset (plan §21.5). `409` if the copilot isn't
+        enabled, there's no completed scan, or the asset isn't git-sourced -- the same checks the
+        Hypotheses lane's own generate endpoint makes, since both need a real checkout."""
+        if app_state.llm_copilot is None:
+            raise HTTPException(409, "the copilot is not enabled on this server")
+        asset = _get_asset(s, asset_id, org)
+        scan = repo.latest_scan_for_asset(s, asset.id, org_id=org)
+        if scan is None:
+            raise HTTPException(409, "no completed scan for this asset")
+        if scan.source_type != "git":
+            raise HTTPException(409, "the copilot needs a git source to check out the code from")
+        row = repo.create_conversation(
+            s, asset.id, context_kind=body.context_kind, context_id=body.context_id
+        )
+        return ConversationView(
+            id=row.id, asset_id=row.asset_id, context_kind=row.context_kind,
+            context_id=row.context_id, created_at=row.created_at,
+            last_message_at=row.last_message_at,
+        )  # fmt: skip
+
+    @app.post(
+        "/assets/{asset_id}/copilot/conversations/{conversation_id}/messages",
+        response_model=MessageView,
+        dependencies=[Depends(require_scope("scans:write"))],
+    )
+    def post_copilot_message(
+        asset_id: str,
+        conversation_id: str,
+        body: PostMessageRequest,
+        s: Session = Depends(db),
+        org: str = Depends(current_org),
+    ) -> MessageView:
+        """Ask the copilot one question in an existing conversation (plan §21.5): clones the
+        asset's latest scan's source on the conversation's first message (cached for later
+        messages in the same conversation, core.copilot.session), then runs the tool-calling loop.
+        A model that never produces a validly-cited answer within its turn budget still gets a
+        stored, honest response -- never a 5xx for "the copilot couldn't find a grounded answer."
+        """
+        client = app_state.llm_copilot
+        if client is None:
+            raise HTTPException(409, "the copilot is not enabled on this server")
+
+        from core.llm.client import AnthropicClient
+
+        if not isinstance(client, AnthropicClient):
+            raise HTTPException(
+                409, "the copilot needs a hosted model backend (tool-calling isn't supported "
+                "for local models -- see ADR-0027)",
+            )  # fmt: skip
+        asset = _get_asset(s, asset_id, org)
+        conversation = repo.get_conversation(s, conversation_id, org_id=org)
+        if conversation is None or conversation.asset_id != asset.id:
+            raise HTTPException(404, "conversation not found")
+        scan = repo.latest_scan_for_asset(s, asset.id, org_id=org)
+        if scan is None:
+            raise HTTPException(409, "no completed scan for this asset")
+        if scan.source_type != "git":
+            raise HTTPException(409, "the copilot needs a git source to check out the code from")
+
+        from core.copilot.service import CopilotGiveUp, ask
+        from core.copilot.session import default_cache
+        from core.copilot.tools import CopilotContext
+        from core.gitfetch import GitUrlError
+
+        try:
+            checkout, graph = default_cache().get_or_clone(
+                conversation.id, scan.source_ref, scan.ref
+            )
+        except GitUrlError as exc:
+            raise HTTPException(422, f"could not check out the repository: {exc}") from exc
+
+        app_state.limiter.acquire()
+        repo.add_message(s, conversation.id, role="user", content=body.question)
+        ctx = CopilotContext(
+            session=s, org_id=org, asset_id=asset.id, latest_scan_id=scan.id, checkout=checkout,
+            graph=graph,
+        )  # fmt: skip
+        try:
+            result = ask(client, ctx, body.question)
+        except CopilotGiveUp:
+            row = repo.add_message(
+                s, conversation.id, role="assistant",
+                content="I couldn't find a well-grounded answer to that.",
+            )  # fmt: skip
+            return _message_view(row)
+        if result.tokens_used:
+            llm_budget.record(s, scan, result.tokens_used)
+        row = repo.add_message(
+            s, conversation.id, role="assistant", content=result.answer,
+            citations=result.citations, tokens_used=result.tokens_used,
+        )  # fmt: skip
+        return _message_view(row)
+
+    @app.get(
+        "/assets/{asset_id}/copilot/conversations/{conversation_id}/messages",
+        response_model=list[MessageView],
+        dependencies=[Depends(require_scope("scans:read"))],
+    )
+    def list_copilot_messages(
+        asset_id: str,
+        conversation_id: str,
+        s: Session = Depends(db),
+        org: str = Depends(current_org),
+    ) -> list[MessageView]:
+        asset = _get_asset(s, asset_id, org)
+        conversation = repo.get_conversation(s, conversation_id, org_id=org)
+        if conversation is None or conversation.asset_id != asset.id:
+            raise HTTPException(404, "conversation not found")
+        return [_message_view(m) for m in repo.list_messages(s, conversation.id, org_id=org)]
+
     @app.get("/risk/feeds", response_model=FeedsStatus, dependencies=[Depends(require_auth)])
     def risk_feeds() -> FeedsStatus:
         meta = read_meta(app_state.settings.workdir / "feeds")
@@ -1309,6 +1442,7 @@ def build_default_app() -> FastAPI:
             llm=make_gateway_client(Task.FIX),
             llm_triage=make_gateway_client(Task.TRIAGE),
             llm_hypotheses=make_gateway_client(Task.HYPOTHESES),
+            llm_copilot=make_gateway_client(Task.COPILOT),
             limiter=UsageLimiter.from_env(),
         )
     )
