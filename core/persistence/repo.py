@@ -21,6 +21,7 @@ from core.issues import ExistingIssue, IssueUpdate, State, SyncResult, classify_
 from core.issues import sync as sync_issues
 from core.models import Finding
 from core.persistence.models import (
+    DEFAULT_RETENTION_DAYS,
     SEVERITY_RANK,
     ApiToken,
     Asset,
@@ -30,6 +31,7 @@ from core.persistence.models import (
     CodeChunkRow,
     CopilotConversationRow,
     CopilotMessageRow,
+    DataRetentionPolicyRow,
     FindingRow,
     GithubInstallation,
     HypothesisRow,
@@ -1373,3 +1375,25 @@ def delete_scan_data_key(s: Session, scan_id: str) -> bool:
     s.delete(row)
     s.commit()
     return True
+
+
+def get_retention_days(s: Session, org_id: str) -> int:
+    """DEFAULT_RETENTION_DAYS (7, plan §22.2) for an org that has never set its own -- there is no
+    row to look up in the common case, by design (DataRetentionPolicyRow's own docstring)."""
+    row = s.get(DataRetentionPolicyRow, org_id)
+    return row.retention_days if row is not None else DEFAULT_RETENTION_DAYS
+
+
+def set_retention_days(s: Session, org_id: str, retention_days: int) -> DataRetentionPolicyRow:
+    if retention_days < 1:
+        raise ValueError("retention_days must be at least 1")
+    row = s.get(DataRetentionPolicyRow, org_id)
+    if row is None:
+        row = DataRetentionPolicyRow(org_id=org_id, retention_days=retention_days)
+        s.add(row)
+    else:
+        row.retention_days = retention_days
+    row.updated_at = _now()
+    s.commit()
+    s.refresh(row)
+    return row

@@ -1,5 +1,5 @@
 import type { AssetSummary, AttackPath, BulkTriageResult,
-  StrideRow, ThreatModel, Citation, CopilotConversation, CopilotMessage, DependenciesView, Finding, FindingsPage, FindingsQuery, GenerateHypothesesResult, Guidance, GuidanceApi, Hypothesis, IssueHistoryEvent, ProjectOverview, Remediation, ScanComparison, ScanSummary, ScanView, TriageAssistantView, TriageStatus, VerifiedFixStarted, VerifiedFixView } from "./types";
+  StrideRow, ThreatModel, RetentionSettings, Citation, CopilotConversation, CopilotMessage, DependenciesView, Finding, FindingsPage, FindingsQuery, GenerateHypothesesResult, Guidance, GuidanceApi, Hypothesis, IssueHistoryEvent, ProjectOverview, Remediation, ScanComparison, ScanSummary, ScanView, TriageAssistantView, TriageStatus, VerifiedFixStarted, VerifiedFixView } from "./types";
 import { findingsQueryString } from "./format";
 
 export const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/$/, "");
@@ -294,6 +294,17 @@ export const saveThreatModel = (assetId: string, mermaid: string, stride: Stride
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ mermaid, stride }),
+  });
+
+// Data retention (plan §22.2): how long this organization keeps a scan's encrypted artifacts
+// before crypto-shredding them. Always has a value -- the plan's own default when never set.
+export const getRetentionSettings = () => request<RetentionSettings>("/settings/retention");
+
+export const saveRetentionSettings = (retentionDays: number) =>
+  request<RetentionSettings>("/settings/retention", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ retention_days: retentionDays }),
   });
 
 // The security copilot (plan §21.5): tool-grounded, cited chat about one project.

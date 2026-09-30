@@ -45,6 +45,16 @@
   flex: 1;
 }
 
+.ds-shell-settings-link {
+  color: var(--ds-muted);
+  text-decoration: none;
+  font-size: var(--ds-text-2);
+}
+.ds-shell-settings-link:hover {
+  color: var(--ds-brand);
+  text-decoration: underline;
+}
+
 .ds-shell-main {
   padding: var(--ds-space-3);
 }

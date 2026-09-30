@@ -68,6 +68,7 @@ export function AppShell({ crumbs, children }: { crumbs: Crumb[]; children: Reac
           </nav>
           <div className="ds-shell-spacer" />
           <ProjectSwitcher assets={assets} onNavigate={(id) => router.push(`/app/projects/${id}`)} />
+          <Link href="/app/settings" className="ds-shell-settings-link">Settings</Link>
           <Button onClick={() => setPaletteOpen(true)} aria-label="Open command palette">
             <span aria-hidden="true">⌘K</span>
           </Button>

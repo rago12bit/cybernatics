@@ -358,6 +358,19 @@ class SaveThreatModelRequest(BaseModel):
     stride: list[StrideRowView]
 
 
+class RetentionSettingsView(BaseModel):
+    """How long this organization keeps a scan's encrypted artifacts before crypto-shredding them
+    (Week 47 task 2, plan §22.2). Never having set one returns the plan's own default (7 days), not
+    an error or a null -- there is always an effective policy, even if no row exists for it yet."""
+
+    org_id: str
+    retention_days: int = Field(ge=1)
+
+
+class SaveRetentionSettingsRequest(BaseModel):
+    retention_days: int = Field(ge=1)
+
+
 class GenerateHypothesesResult(BaseModel):
     generated: int = Field(description="How many NEW hypotheses this run surfaced and stored.")
     hypotheses: list[HypothesisView]

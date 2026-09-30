@@ -65,6 +65,8 @@ from api.schemas import (
     ProjectOverview,
     PromoteHypothesisResult,
     RemediationView,
+    RetentionSettingsView,
+    SaveRetentionSettingsRequest,
     SaveThreatModelRequest,
     ScanComparisonSide,
     ScanComparisonView,
@@ -1206,6 +1208,32 @@ def create_app(app_state: AppState) -> FastAPI:
             s, asset.id, body.mermaid, stride_dicts, source="edited", actor=auth.actor
         )
         return _threat_model_view(row)
+
+    @app.get(
+        "/settings/retention",
+        response_model=RetentionSettingsView,
+        dependencies=[Depends(require_scope("scans:read"))],
+    )
+    def get_retention_settings_endpoint(
+        s: Session = Depends(db), org: str = Depends(current_org)
+    ) -> RetentionSettingsView:
+        """How long this organization keeps a scan's encrypted artifacts before crypto-shredding
+        them (plan §22.2). Always returns a value -- the plan's own default (7 days) when this org
+        has never set its own, never a 404."""
+        return RetentionSettingsView(org_id=org, retention_days=repo.get_retention_days(s, org))
+
+    @app.put(
+        "/settings/retention",
+        response_model=RetentionSettingsView,
+        dependencies=[Depends(require_scope("scans:write"))],
+    )
+    def save_retention_settings_endpoint(
+        body: SaveRetentionSettingsRequest,
+        s: Session = Depends(db),
+        org: str = Depends(current_org),
+    ) -> RetentionSettingsView:
+        row = repo.set_retention_days(s, org, body.retention_days)
+        return RetentionSettingsView(org_id=row.org_id, retention_days=row.retention_days)
 
     @app.get(
         "/assets/{asset_id}/attack-paths",

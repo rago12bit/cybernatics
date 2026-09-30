@@ -1,8 +1,8 @@
-"""scan_data_keys' Row-Level Security and cascade delete (Week 47 task 1/2, plan §22.2), against
-REAL Postgres with real RLS -- not the SQLite application-level tests in
-tests/unit/test_persistence_scan_data_keys.py, which cannot exercise either: SQLite has no RLS
-equivalent, and does not enforce foreign-key constraints by default, so the migration's
-`ON DELETE CASCADE` needs a real engine to prove.
+"""scan_data_keys' and data_retention_policies' Row-Level Security and cascade delete (Week 47 task
+1/2, plan §22.2), against REAL Postgres with real RLS -- not the SQLite application-level tests in
+tests/unit/test_persistence_scan_data_keys.py / test_persistence_retention_settings.py, which cannot
+exercise either: SQLite has no RLS equivalent, and does not enforce foreign-key constraints by
+default, so the migrations' `ON DELETE CASCADE` needs a real engine to prove.
 
 Needs `BULWARK_RLS_TEST_DATABASE_URL` pointed at a real Postgres already migrated to head, connected
 as the non-superuser `bulwark_app` role (ADR-0013) -- exactly the connection the real worker uses.
@@ -20,6 +20,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session, sessionmaker
 
 from core.persistence import repo
+from core.persistence.models import DEFAULT_RETENTION_DAYS
 from core.tenancy import set_session_org
 
 
@@ -66,6 +67,7 @@ def two_orgs(sessions: sessionmaker[Session]) -> Iterator[tuple[str, str]]:
         for org in (a, b):
             set_session_org(s, org)
             s.execute(text("DELETE FROM scan_data_keys WHERE org_id = :o"), {"o": org})
+            s.execute(text("DELETE FROM data_retention_policies WHERE org_id = :o"), {"o": org})
             s.execute(text("DELETE FROM scans WHERE org_id = :o"), {"o": org})
             s.execute(text("DELETE FROM assets WHERE org_id = :o"), {"o": org})
         s.execute(text("DELETE FROM organizations WHERE id IN (:a, :b)"), {"a": a, "b": b})
@@ -131,3 +133,23 @@ def test_deleting_the_scan_cascades_to_its_data_key_on_real_postgres(
     with sessions() as s:
         set_session_org(s, org_a)
         assert repo.get_scan_data_key(s, scan_id) is None
+
+
+def test_an_orgs_retention_setting_is_invisible_to_another_org(
+    sessions: sessionmaker[Session], two_orgs: tuple[str, str]
+) -> None:
+    org_a, org_b = two_orgs
+    with sessions() as s:
+        set_session_org(s, org_a)
+        repo.set_retention_days(s, org_a, 45)
+
+    with sessions() as s:
+        set_session_org(s, org_a)
+        assert repo.get_retention_days(s, org_a) == 45
+
+    with sessions() as s:
+        set_session_org(s, org_b)
+        # RLS hides org A's row entirely -- org B sees the plan's own default, not org A's value,
+        # even though this call still explicitly passes org_a's id: RLS is the real enforcement,
+        # not just the application code filtering correctly.
+        assert repo.get_retention_days(s, org_a) == DEFAULT_RETENTION_DAYS

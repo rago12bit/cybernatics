@@ -537,3 +537,21 @@ class ScanDataKeyRow(Base):
     org_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"), index=True)
     wrapped_dek: Mapped[bytes] = mapped_column(LargeBinary)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
+DEFAULT_RETENTION_DAYS = 7
+
+
+class DataRetentionPolicyRow(Base):
+    """How long an organization keeps a scan's encrypted artifacts before crypto-shredding them
+    (Week 47 task 2, plan §22.2, ADR-0032). Lazily created: an org with no row here uses
+    DEFAULT_RETENTION_DAYS (core.persistence.repo.get_retention_days), so this table only holds
+    organizations that changed the default, not every organization that exists."""
+
+    __tablename__ = "data_retention_policies"
+
+    org_id: Mapped[str] = mapped_column(
+        ForeignKey("organizations.id", ondelete="CASCADE"), primary_key=True
+    )
+    retention_days: Mapped[int] = mapped_column(Integer, default=DEFAULT_RETENTION_DAYS)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)

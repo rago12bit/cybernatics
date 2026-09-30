@@ -1,0 +1,29 @@
+.ds-retention-intro {
+  margin-bottom: 1rem;
+  max-width: 60ch;
+}
+
+.ds-retention-error {
+  color: var(--ds-color-danger, #b00020);
+}
+
+.ds-retention-label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+}
+
+.ds-retention-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ds-retention-row input {
+  width: 5rem;
+}
+
+.ds-retention-saved {
+  color: var(--ds-color-success, #1a7f37);
+  margin-top: 0.5rem;
+}

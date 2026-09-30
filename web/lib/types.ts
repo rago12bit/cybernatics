@@ -430,3 +430,10 @@ export interface ThreatModel {
   updated_at: string;
   updated_by: string | null;
 }
+
+/** How long this organization keeps a scan's encrypted artifacts before crypto-shredding them
+ * (plan §22.2) -- always has a value, the plan's own default (7 days) when never set explicitly. */
+export interface RetentionSettings {
+  org_id: string;
+  retention_days: number;
+}

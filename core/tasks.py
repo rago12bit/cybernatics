@@ -37,6 +37,9 @@ celery_app.conf.update(
 celery_app.conf.beat_schedule = {
     "housekeeping": {"task": "bulwark.maintenance", "schedule": 300.0},  # every 5 minutes
     "risk-feeds": {"task": "bulwark.update_feeds", "schedule": 86400.0},  # EPSS is published daily
+    # Retention is measured in days; hourly is far more often than needed but cheap, and keeps a
+    # scan's data from lingering long past its org's own retention window (plan §22.2).
+    "crypto-shred": {"task": "bulwark.crypto_shred", "schedule": 3600.0},
 }
 
 
@@ -148,6 +151,18 @@ def maintenance_task() -> dict[str, int]:
         "containers_killed": len(killed),
         "scratch_removed": len(removed),
     }
+
+
+@celery_app.task(name="bulwark.crypto_shred", ignore_result=True)  # type: ignore[untyped-decorator]
+def crypto_shred_task() -> dict[str, int]:
+    """Periodic crypto-shredding sweep (Week 47 task 2, plan §22.2): destroys the data key for
+    every scan past its organization's retention window. Never deletes the scan, its issues, or its
+    findings -- only core.retention.shred_expired_scans's own docstring's target, ScanDataKeyRow."""
+    from core.persistence.db import get_session_factory
+    from core.retention import shred_expired_scans
+
+    shredded = shred_expired_scans(get_session_factory())
+    return {"scans_shredded": len(shredded)}
 
 
 def celery_executor(tools: list[str], target: Path) -> list[ToolOutcome]:
