@@ -66,6 +66,9 @@ from api.schemas import (
     ToolStatus,
     TrendPoint,
     TriageRequest,
+    VerifiedFixRequest,
+    VerifiedFixStarted,
+    VerifiedFixView,
 )
 from core.config import Settings
 from core.export import FORMATS, ReportData, render
@@ -743,6 +746,155 @@ def create_app(app_state: AppState) -> FastAPI:
         if res.source == "ai" and not res.from_cache:
             llm_budget.record(s, scan, res.tokens_used)
         return RemediationView(**asdict(res))
+
+    @app.post(
+        "/assets/{asset_id}/issues/{issue_id}/verified-fix",
+        response_model=VerifiedFixStarted,
+        dependencies=[Depends(require_scope("fixes:write"))],
+    )
+    async def start_verified_fix(
+        asset_id: str,
+        issue_id: str,
+        body: VerifiedFixRequest,
+        s: Session = Depends(db),
+        org: str = Depends(current_org),
+    ) -> VerifiedFixStarted:
+        """Start the verified-fix agent for one issue (plan §21.2): propose a patch, verify it
+        (rerun the rule, rerun scanners, optionally the project's own tests), then wait for a human
+        to approve or reject before a pull request is ever opened. Runs as a Temporal workflow --
+        `409` if Temporal is unreachable, `429` over this organization's concurrency cap
+        (ADR-0015)."""
+        from core.fixagent import client as fixagent_client
+        from core.fixagent import store as fixagent_store
+        from core.fixagent.limits import WorkflowLimits
+        from core.models import finding_from_dict
+
+        asset = _get_asset(s, asset_id, org)
+        _get_issue(s, issue_id, org)
+        scan = repo.latest_scan_for_asset(s, asset.id, org_id=org)
+        if scan is None:
+            raise HTTPException(409, "no completed scan for this asset")
+        finding_doc = repo.get_issue_finding(s, issue_id, scan.id)
+        if finding_doc is None:
+            raise HTTPException(409, "this issue has no occurrence in the latest scan")
+        finding = finding_from_dict(
+            {k: v for k, v in finding_doc.items() if k not in ("scan_id", "issue")}
+        )
+        tool = (
+            finding.evidence.reported_by[0]
+            if finding.evidence.reported_by
+            else next(iter(finding.evidence.rule_ids), "")
+        )
+        if not tool:
+            raise HTTPException(
+                409, "could not tell which scanner originally reported this finding"
+            )
+
+        limits = WorkflowLimits.from_env()
+        if fixagent_store.count_running_for_org(s, org) >= limits.max_concurrent_per_org:
+            raise HTTPException(
+                429,
+                f"too many verified-fix runs already in progress for this organization "
+                f"(max {limits.max_concurrent_per_org})",
+            )
+
+        verified_owner = scan.github_installation_id is not None
+        run_tests_spec: dict[str, Any] | None = None
+        if body.run_tests and verified_owner:
+            if not body.test_image or not body.test_command:
+                raise HTTPException(
+                    422, "test_image and test_command are required when run_tests is true"
+                )
+            run_tests_spec = {"image": body.test_image, "command": body.test_command}
+        # body.run_tests without a verified-owner asset is silently downgraded to "no tests," not a
+        # 4xx: asking for an opt-in you don't qualify for yet is a normal request, not an error
+        # (plan §21.2: "hardened Docker for now, verified-owner repositories only").
+
+        workflow_id = fixagent_client.new_workflow_id(issue_id)
+        run = fixagent_store.create_run(s, org, issue_id, workflow_id)
+        baseline = fixagent_store.baseline_fingerprints_for(s, scan.id, finding.location.path)
+        try:
+            await fixagent_client.start_verified_fix(
+                run.id,
+                workflow_id,
+                org,
+                issue_id,
+                finding.to_dict(),
+                scan.source_ref,
+                scan.ref,
+                tool,
+                baseline,
+                scan.github_repo,
+                scan.github_installation_id,
+                run_tests_spec,
+                limits,
+            )
+        except (
+            Exception
+        ) as exc:  # noqa: BLE001 - Temporal unreachable, or any other startup failure
+            raise HTTPException(503, f"could not start the verified-fix workflow: {exc}") from exc
+        return VerifiedFixStarted(run_id=run.id, workflow_id=workflow_id)
+
+    @app.get(
+        "/assets/{asset_id}/issues/{issue_id}/verified-fix",
+        response_model=VerifiedFixView,
+        dependencies=[Depends(require_scope("fixes:read"))],
+    )
+    def get_verified_fix(
+        asset_id: str, issue_id: str, s: Session = Depends(db), org: str = Depends(current_org)
+    ) -> VerifiedFixView:
+        from core.fixagent import store as fixagent_store
+
+        _get_asset(s, asset_id, org)
+        _get_issue(s, issue_id, org)
+        run = fixagent_store.latest_run_for_issue(s, issue_id, org_id=org)
+        if run is None:
+            raise HTTPException(404, "no verified-fix run for this issue")
+        return VerifiedFixView(
+            run_id=run.id, issue_id=run.issue_id, status=run.status, attempts=run.attempts,
+            latest_patch=run.latest_patch, verification_record=run.verification_record,
+            ended_reason=run.ended_reason, pr_url=run.pr_url, created_at=run.created_at,
+            updated_at=run.updated_at,
+        )  # fmt: skip
+
+    @app.post(
+        "/assets/{asset_id}/issues/{issue_id}/verified-fix/approve",
+        dependencies=[Depends(require_scope("fixes:write"))],
+    )
+    async def approve_verified_fix(
+        asset_id: str, issue_id: str, s: Session = Depends(db), org: str = Depends(current_org)
+    ) -> dict[str, str]:
+        """A human approving the proposed patch (plan §21.2: never auto-merge). Only meaningful
+        while the run is `awaiting_approval`; signalling any other state is harmless (Temporal
+        just records a signal an already-finished workflow never reads)."""
+        from core.fixagent import client as fixagent_client
+        from core.fixagent import store as fixagent_store
+
+        _get_asset(s, asset_id, org)
+        _get_issue(s, issue_id, org)
+        run = fixagent_store.latest_run_for_issue(s, issue_id, org_id=org)
+        if run is None or run.status != "awaiting_approval":
+            raise HTTPException(409, "no verified-fix run is awaiting approval for this issue")
+        await fixagent_client.approve(run.workflow_id)
+        return {"status": "approved"}
+
+    @app.post(
+        "/assets/{asset_id}/issues/{issue_id}/verified-fix/reject",
+        dependencies=[Depends(require_scope("fixes:write"))],
+    )
+    async def reject_verified_fix(
+        asset_id: str, issue_id: str, s: Session = Depends(db), org: str = Depends(current_org)
+    ) -> dict[str, str]:
+        from core.fixagent import client as fixagent_client
+        from core.fixagent import store as fixagent_store
+
+        _get_asset(s, asset_id, org)
+        _get_issue(s, issue_id, org)
+        run = fixagent_store.latest_run_for_issue(s, issue_id, org_id=org)
+        if run is None or run.status != "awaiting_approval":
+            raise HTTPException(409, "no verified-fix run is awaiting approval for this issue")
+        await fixagent_client.reject(run.workflow_id)
+        return {"status": "rejected"}
 
     @app.get("/risk/feeds", response_model=FeedsStatus, dependencies=[Depends(require_auth)])
     def risk_feeds() -> FeedsStatus:

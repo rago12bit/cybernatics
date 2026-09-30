@@ -104,6 +104,10 @@ services:
       BULWARK_LLM_ENABLED: ${BULWARK_LLM_ENABLED:-0}
       BULWARK_LLM_API_KEY: ${BULWARK_LLM_API_KEY:-}
       BULWARK_LLM_MODEL: ${BULWARK_LLM_MODEL:-claude-sonnet-5}
+      # The verified-fix agent (plan §21.2, --profile fixagent): unset (the default) means starting
+      # a run 503s with "could not start the verified-fix workflow" rather than the API failing to
+      # boot -- Temporal is opt-in infrastructure, not a hard dependency of the base stack.
+      BULWARK_TEMPORAL_ADDRESS: ${BULWARK_TEMPORAL_ADDRESS:-temporal:7233}
       # Defaults to core/config.py's own default (http://localhost:3000), which doesn't match this
       # compose file's web service below -- published on 3010 here, not 3000 (see that service's own
       # comment). Without this, the browser's CORS preflight to the API is rejected because the web
@@ -136,6 +140,59 @@ services:
       migrate: { condition: service_completed_successfully }
       redis: { condition: service_healthy }
       objectstore: { condition: service_healthy }
+      socket-proxy: { condition: service_started }
+
+  # ---- optional: the verified-fix agent (docker compose --profile fixagent up -d) --------------
+  # Temporal (plan §21.2, ADR-0027): the first Temporal workflow in this codebase (everything else
+  # uses Celery, above). Points at the SAME Postgres instance as `bulwark` itself, in separate
+  # databases (`temporal`/`temporal_visibility`) auto-setup creates on first run -- one fewer
+  # container than a dedicated Temporal Postgres, and this project already runs one.
+  temporal:
+    profiles: [fixagent]
+    image: temporalio/auto-setup:1.24.2
+    environment:
+      DB: postgres12
+      DB_PORT: 5432
+      POSTGRES_USER: bulwark
+      POSTGRES_PWD: ${POSTGRES_PASSWORD:?run scripts/init-env.sh}
+      POSTGRES_SEEDS: postgres
+    depends_on:
+      postgres: { condition: service_healthy }
+    restart: unless-stopped
+
+  # The Temporal Web UI (plan §21.2: "visible in Temporal's UI") -- operator-facing only, not part
+  # of the product's own web app.
+  temporal-ui:
+    profiles: [fixagent]
+    image: temporalio/ui:2.31.2
+    environment:
+      TEMPORAL_ADDRESS: temporal:7233
+      TEMPORAL_CORS_ORIGINS: http://localhost:8081
+    ports: ["127.0.0.1:8081:8080"]
+    depends_on: [temporal]
+    restart: unless-stopped
+
+  fixagent-worker:
+    <<: *app
+    profiles: [fixagent]
+    command: ["python", "-m", "core.fixagent.worker"]
+    environment:
+      <<: *app-env
+      BULWARK_DATABASE_URL: postgresql://bulwark_app:${APP_DB_PASSWORD:?run scripts/init-env.sh}@postgres:5432/bulwark
+      BULWARK_TEMPORAL_ADDRESS: temporal:7233
+      DOCKER_HOST: tcp://socket-proxy:2375 # for the opt-in test-execution sandbox (core/fixagent/sandbox.py)
+      # Same variables Week 41's gateway already reads (core/llm/gateway.py) -- the fix agent's own
+      # tool-calling loop is hosted (Anthropic) only for now (ADR-0027), so at minimum
+      # BULWARK_LLM_ENABLED/BULWARK_LLM_API_KEY must be set for verified-fix runs to do anything.
+      BULWARK_LLM_ENABLED: ${BULWARK_LLM_ENABLED:-0}
+      BULWARK_LLM_API_KEY: ${BULWARK_LLM_API_KEY:-}
+      BULWARK_LLM_MODEL: ${BULWARK_LLM_MODEL:-claude-sonnet-5}
+      BULWARK_GITHUB_APP_ID: ${BULWARK_GITHUB_APP_ID:-}
+      BULWARK_GITHUB_APP_PRIVATE_KEY: ${BULWARK_GITHUB_APP_PRIVATE_KEY:-}
+    volumes: ["${BULWARK_WORKDIR}:${BULWARK_WORKDIR}"]
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      temporal: { condition: service_started }
       socket-proxy: { condition: service_started }
 
   web:

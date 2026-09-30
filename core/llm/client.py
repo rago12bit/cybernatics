@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass, field
-from typing import Protocol
+from typing import Any, Protocol
 
 DEFAULT_MODEL = "claude-sonnet-5"
 
@@ -84,6 +84,27 @@ class AnthropicClient:
             getattr(usage, "output_tokens", 0) or 0
         )
         return Completion(text, tokens)
+
+    def complete_with_tools(self, system: str, messages: Any, tools: Any) -> Any:
+        """One raw multi-turn call with native tool use (plan §21.2's verified-fix agent,
+        `core/fixagent/agent.py`) -- unlike `complete()`, this returns the SDK's own `Message`
+        object (content blocks, `stop_reason`, `usage`) rather than flattened text, since the
+        caller needs to branch on whether the model asked to call a tool. Not part of the
+        `LLMClient` Protocol: it is Anthropic-specific (tool schemas, `tool_use`/`tool_result` block
+        shapes) and only the hosted backend implements it today -- see ADR-0027 for why local-model
+        tool-calling was not built this pass."""
+        try:
+            return self._client.messages.create(
+                model=self.model,
+                max_tokens=self._max_tokens,
+                system=system,
+                messages=messages,
+                tools=tools,
+            )
+        except self._sdk.APIError as exc:
+            raise LLMError(f"model call failed ({type(exc).__name__})") from None
+        except Exception as exc:  # noqa: BLE001 - timeouts, connection errors, anything else
+            raise LLMError(f"model call failed ({type(exc).__name__})") from None
 
 
 def make_client(cfg: LLMConfig | None = None) -> LLMClient | None:

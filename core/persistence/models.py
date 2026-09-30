@@ -336,3 +336,36 @@ class LlmUsage(Base):
     org_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"), primary_key=True)
     period: Mapped[str] = mapped_column(String(7), primary_key=True)  # "YYYY-MM", UTC
     tokens: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class VerifiedFixRun(Base):
+    """One verified-fix Temporal workflow's own record for one Issue (plan §21.2, ADR-0027).
+
+    A new table, not an overload of `IssueRow.triage_status`: triage is a human decision layered on
+    top of scan-derived state (its own docstring says so explicitly); "an automated agent is
+    mid-attempt, or is waiting on a human to approve its patch" is a different concept the schema
+    should not conflate with it, the same reasoning that gave `RemediationCache` (Week 12) and
+    `LlmUsage` (Week 41) their own tables instead of new columns bolted onto whatever they're about.
+
+    `latest_patch`/`verification_record` are JSON blobs, not normalized columns, matching
+    `FindingRow.data`/`RemediationCache.payload`'s "keep the full document, index only what needs
+    filtering" pattern -- the fix-review screen renders one run's whole record at once.
+    """
+
+    __tablename__ = "verified_fix_runs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"), index=True)
+    issue_id: Mapped[str] = mapped_column(ForeignKey("issues.id", ondelete="CASCADE"), index=True)
+    workflow_id: Mapped[str] = mapped_column(String(100), unique=True, index=True)
+    # running | awaiting_approval | approved | rejected | opened_pr | failed | inconclusive
+    status: Mapped[str] = mapped_column(String(20), default="running", index=True)
+    attempts: Mapped[int] = mapped_column(Integer, default=0)
+    latest_patch: Mapped[dict[str, Any] | None] = mapped_column(JsonType, nullable=True)
+    verification_record: Mapped[list[Any]] = mapped_column(JsonType, default=list)
+    # Which of ADR-0015's three limits ended this run, when one did -- "overall_timeout" |
+    # "per_attempt_timeout" | "max_attempts_exhausted" | None (ended normally: approved/rejected).
+    ended_reason: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    pr_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)

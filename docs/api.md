@@ -93,6 +93,34 @@ Create Suggestion
 
 - `scan_id` (path, required)
 
+## `POST /assets/{asset_id}/issues/{issue_id}/verified-fix`
+
+Start Verified Fix
+
+- `asset_id` (path, required)
+- `issue_id` (path, required)
+
+## `GET /assets/{asset_id}/issues/{issue_id}/verified-fix`
+
+Get Verified Fix
+
+- `asset_id` (path, required)
+- `issue_id` (path, required)
+
+## `POST /assets/{asset_id}/issues/{issue_id}/verified-fix/approve`
+
+Approve Verified Fix
+
+- `asset_id` (path, required)
+- `issue_id` (path, required)
+
+## `POST /assets/{asset_id}/issues/{issue_id}/verified-fix/reject`
+
+Reject Verified Fix
+
+- `asset_id` (path, required)
+- `issue_id` (path, required)
+
 ## `GET /risk/feeds`
 
 Risk Feeds

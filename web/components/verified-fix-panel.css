@@ -1,0 +1,107 @@
+/* The verified-fix agent's review panel (plan §21.2/§28.4). Layout/spacing follow
+   design-system/tokens.css's --ds-* properties, matching issue-detail.css's own conventions; pass/
+   fail and status colors reuse globals.css's already-global --mint/--sev-high (the same tokens
+   .st-completed/.st-failed already use elsewhere), since those are loaded on every route regardless
+   of which component's own stylesheet is active. */
+
+.ds-fix-panel {
+  display: grid;
+  gap: var(--ds-space-3);
+  padding: var(--ds-space-3);
+  border: 1px solid var(--ds-rule);
+  border-radius: var(--ds-radius, 8px);
+  background: var(--ds-surface, transparent);
+}
+
+.ds-fix-empty {
+  justify-items: start;
+}
+
+.ds-fix-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--ds-space-3);
+  flex-wrap: wrap;
+}
+.ds-fix-title {
+  font-weight: 600;
+}
+.ds-fix-status {
+  color: var(--ds-muted);
+  font-size: var(--ds-text-2);
+}
+.ds-fix-status-opened_pr,
+.ds-fix-status-approved {
+  color: var(--mint);
+}
+.ds-fix-status-failed,
+.ds-fix-status-rejected {
+  color: var(--sev-high);
+}
+.ds-fix-status-inconclusive {
+  color: var(--sev-medium);
+}
+
+.ds-fix-section {
+  display: grid;
+  gap: var(--ds-space-2);
+}
+.ds-fix-label {
+  font-size: var(--ds-text-1);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ds-muted);
+}
+
+.ds-fix-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--ds-space-1);
+}
+.ds-fix-steps li {
+  display: flex;
+  align-items: baseline;
+  gap: var(--ds-space-2);
+}
+.ds-fix-step-tag {
+  font: 500 0.6875rem/1 var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+.ds-fix-step-pass .ds-fix-step-tag {
+  color: var(--mint);
+}
+.ds-fix-step-fail .ds-fix-step-tag {
+  color: var(--sev-high);
+}
+
+.ds-fix-attempts {
+  color: var(--ds-muted);
+  font-size: var(--ds-text-2);
+  margin: 0;
+}
+
+.ds-fix-diff {
+  max-height: 24rem;
+  overflow: auto;
+}
+
+.ds-fix-actions {
+  display: flex;
+  gap: var(--ds-space-2);
+}
+
+.ds-fix-pr-link {
+  font-size: var(--ds-text-2);
+}
+.ds-fix-pr-link a {
+  color: var(--ds-brand);
+}
+
+.ds-fix-error {
+  color: var(--sev-high);
+  font-size: var(--ds-text-2);
+}

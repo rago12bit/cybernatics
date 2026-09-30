@@ -193,6 +193,13 @@ JSON logs with `scan_id`, OpenTelemetry traces (one span per stage and per scann
 optional Grafana dashboard and Jaeger via `docker compose --profile observability up -d`. See
 [docs/observability.md](docs/observability.md).
 
+## Verified-fix agent
+
+Proposes a patch for a finding, verifies it (reruns the rule, reruns every scanner, optionally the project's own
+tests), then waits for a human to approve before opening a pull request -- never auto-merged. Runs as a Temporal
+workflow: `docker compose --profile fixagent up -d` (Temporal UI at **http://localhost:8081**). See
+[docs/verified-fix-agent.md](docs/verified-fix-agent.md).
+
 ## SBOM, signing and provenance
 
 `bulwark sbom` writes a CycloneDX SBOM (Syft); `bulwark attest` signs reports with cosign and attests which scanner

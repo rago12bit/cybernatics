@@ -266,3 +266,51 @@ class GuidanceView(BaseModel):
     )
     ai_enabled: bool = Field(description="Whether this server can generate AI suggestions.")
     model: str | None = None
+
+
+class VerifiedFixRequest(BaseModel):
+    run_tests: bool = Field(
+        default=False,
+        description="Also run the project's own test suite as part of verification. Only takes "
+        "effect when the asset is linked to a verified GitHub App installation (plan §21.2); "
+        "silently ignored otherwise, never a 4xx for asking.",
+    )
+    test_image: str | None = Field(
+        default=None, description="A Docker image to run tests in, e.g. 'python:3.12-slim'. "
+        "Required when run_tests is true.",
+    )  # fmt: skip
+    test_command: str | None = Field(
+        default=None,
+        description="Shell command to install deps and run tests, e.g. 'pip install -r "
+        "requirements.txt && pytest -q'. Required when run_tests is true.",
+    )
+
+
+class VerifiedFixStarted(BaseModel):
+    run_id: str
+    workflow_id: str
+
+
+class VerifiedFixView(BaseModel):
+    run_id: str
+    issue_id: str
+    status: str = Field(
+        description="running | awaiting_approval | approved | rejected | opened_pr | failed | "
+        "inconclusive"
+    )
+    attempts: int
+    latest_patch: dict[str, Any] | None = Field(
+        description="explanation/patch/confidence/tokens_used for the most recent attempt, once "
+        "one has passed verification."
+    )
+    verification_record: list[dict[str, Any]] = Field(
+        description="Every attempt's own verification steps, in order -- the audit trail ADR-0015 "
+        "requires."
+    )
+    ended_reason: str | None = Field(
+        description="Which limit ended a non-normal run: overall_timeout | per_attempt_timeout | "
+        "max_attempts_exhausted | approval_timeout, or null for a normal approve/reject/opened_pr."
+    )
+    pr_url: str | None = None
+    created_at: datetime
+    updated_at: datetime

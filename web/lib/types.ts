@@ -269,3 +269,56 @@ export type ProgressEvent =
   | { type: "scan.started"; tools: string[] }
   | ({ type: "tool.finished"; tool: string } & Partial<ToolStatus>)
   | { type: "scan.finished"; status: ScanStatus; findings?: number; error?: string };
+
+/** The verified-fix agent (plan §21.2, §28.4). `status` is one of Temporal's own terminal/
+ * non-terminal states, mirrored onto the DB row `core.fixagent.store` writes. */
+export type VerifiedFixStatus =
+  | "running"
+  | "awaiting_approval"
+  | "approved"
+  | "rejected"
+  | "opened_pr"
+  | "failed"
+  | "inconclusive";
+
+export interface VerifiedFixPatch {
+  explanation: string;
+  patch: string;
+  confidence: "high" | "medium" | "low";
+  tokens_used: number;
+}
+
+export interface VerifiedFixStep {
+  name: "rerun_rule" | "rerun_scanners" | "run_tests";
+  passed: boolean;
+  detail: string;
+}
+
+export interface VerifiedFixAttempt {
+  attempt: number;
+  steps: VerifiedFixStep[];
+  feedback?: string;
+}
+
+export interface VerifiedFixView {
+  run_id: string;
+  issue_id: string;
+  status: VerifiedFixStatus;
+  attempts: number;
+  latest_patch: VerifiedFixPatch | null;
+  verification_record: VerifiedFixAttempt[];
+  ended_reason:
+    | "overall_timeout"
+    | "per_attempt_timeout"
+    | "max_attempts_exhausted"
+    | "approval_timeout"
+    | null;
+  pr_url: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface VerifiedFixStarted {
+  run_id: string;
+  workflow_id: string;
+}

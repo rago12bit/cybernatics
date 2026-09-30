@@ -1,4 +1,4 @@
-import type { AssetSummary, BulkTriageResult, DependenciesView, Finding, FindingsPage, FindingsQuery, Guidance, GuidanceApi, IssueHistoryEvent, ProjectOverview, Remediation, ScanComparison, ScanSummary, ScanView, TriageStatus } from "./types";
+import type { AssetSummary, BulkTriageResult, DependenciesView, Finding, FindingsPage, FindingsQuery, Guidance, GuidanceApi, IssueHistoryEvent, ProjectOverview, Remediation, ScanComparison, ScanSummary, ScanView, TriageStatus, VerifiedFixStarted, VerifiedFixView } from "./types";
 import { findingsQueryString } from "./format";
 
 export const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/$/, "");
@@ -188,6 +188,41 @@ export const triageIssue = (assetId: string, issueId: string, body: TriageAction
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
+
+// The verified-fix agent (plan §21.2/§28.4): propose, verify, and -- only once a human approves --
+// open a pull request. Never auto-merged.
+const fixPath = (assetId: string, issueId: string, suffix = "") =>
+  `/assets/${encodeURIComponent(assetId)}/issues/${encodeURIComponent(issueId)}/verified-fix${suffix}`;
+
+export interface StartVerifiedFixOptions {
+  run_tests?: boolean;
+  test_image?: string;
+  test_command?: string;
+}
+
+export const startVerifiedFix = (assetId: string, issueId: string, opts: StartVerifiedFixOptions = {}) =>
+  request<VerifiedFixStarted>(fixPath(assetId, issueId), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(opts),
+  });
+
+/** `null` (not thrown) when no verified-fix run exists yet for this issue -- a normal state, the
+ * same "empty, not an error" shape `getDependencies` already uses. */
+export async function getVerifiedFix(assetId: string, issueId: string): Promise<VerifiedFixView | null> {
+  try {
+    return await request<VerifiedFixView>(fixPath(assetId, issueId));
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 404) return null;
+    throw e;
+  }
+}
+
+export const approveVerifiedFix = (assetId: string, issueId: string) =>
+  request<{ status: string }>(fixPath(assetId, issueId, "/approve"), { method: "POST" });
+
+export const rejectVerifiedFix = (assetId: string, issueId: string) =>
+  request<{ status: string }>(fixPath(assetId, issueId, "/reject"), { method: "POST" });
 
 export const bulkTriageIssues = (assetId: string, issueIds: string[], body: TriageAction) =>
   request<BulkTriageResult>(`/assets/${encodeURIComponent(assetId)}/issues/bulk-triage`, {

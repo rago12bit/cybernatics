@@ -776,6 +776,236 @@
         }
       }
     },
+    "/assets/{asset_id}/issues/{issue_id}/verified-fix": {
+      "post": {
+        "summary": "Start Verified Fix",
+        "description": "Start the verified-fix agent for one issue (plan \u00a721.2): propose a patch, verify it\n(rerun the rule, rerun scanners, optionally the project's own tests), then wait for a human\nto approve or reject before a pull request is ever opened. Runs as a Temporal workflow --\n`409` if Temporal is unreachable, `429` over this organization's concurrency cap\n(ADR-0015).",
+        "operationId": "start_verified_fix_assets__asset_id__issues__issue_id__verified_fix_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Asset Id"
+            }
+          },
+          {
+            "name": "issue_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Issue Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifiedFixRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerifiedFixStarted"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "Get Verified Fix",
+        "operationId": "get_verified_fix_assets__asset_id__issues__issue_id__verified_fix_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Asset Id"
+            }
+          },
+          {
+            "name": "issue_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Issue Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerifiedFixView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/assets/{asset_id}/issues/{issue_id}/verified-fix/approve": {
+      "post": {
+        "summary": "Approve Verified Fix",
+        "description": "A human approving the proposed patch (plan \u00a721.2: never auto-merge). Only meaningful\nwhile the run is `awaiting_approval`; signalling any other state is harmless (Temporal\njust records a signal an already-finished workflow never reads).",
+        "operationId": "approve_verified_fix_assets__asset_id__issues__issue_id__verified_fix_approve_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Asset Id"
+            }
+          },
+          {
+            "name": "issue_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Issue Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Approve Verified Fix Assets  Asset Id  Issues  Issue Id  Verified Fix Approve Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/assets/{asset_id}/issues/{issue_id}/verified-fix/reject": {
+      "post": {
+        "summary": "Reject Verified Fix",
+        "operationId": "reject_verified_fix_assets__asset_id__issues__issue_id__verified_fix_reject_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Asset Id"
+            }
+          },
+          {
+            "name": "issue_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Issue Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Reject Verified Fix Assets  Asset Id  Issues  Issue Id  Verified Fix Reject Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/risk/feeds": {
       "get": {
         "summary": "Risk Feeds",
@@ -2346,6 +2576,149 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "VerifiedFixRequest": {
+        "properties": {
+          "run_tests": {
+            "type": "boolean",
+            "title": "Run Tests",
+            "description": "Also run the project's own test suite as part of verification. Only takes effect when the asset is linked to a verified GitHub App installation (plan \u00a721.2); silently ignored otherwise, never a 4xx for asking.",
+            "default": false
+          },
+          "test_image": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Test Image",
+            "description": "A Docker image to run tests in, e.g. 'python:3.12-slim'. Required when run_tests is true."
+          },
+          "test_command": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Test Command",
+            "description": "Shell command to install deps and run tests, e.g. 'pip install -r requirements.txt && pytest -q'. Required when run_tests is true."
+          }
+        },
+        "type": "object",
+        "title": "VerifiedFixRequest"
+      },
+      "VerifiedFixStarted": {
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "title": "Run Id"
+          },
+          "workflow_id": {
+            "type": "string",
+            "title": "Workflow Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "run_id",
+          "workflow_id"
+        ],
+        "title": "VerifiedFixStarted"
+      },
+      "VerifiedFixView": {
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "title": "Run Id"
+          },
+          "issue_id": {
+            "type": "string",
+            "title": "Issue Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "running | awaiting_approval | approved | rejected | opened_pr | failed | inconclusive"
+          },
+          "attempts": {
+            "type": "integer",
+            "title": "Attempts"
+          },
+          "latest_patch": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Patch",
+            "description": "explanation/patch/confidence/tokens_used for the most recent attempt, once one has passed verification."
+          },
+          "verification_record": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Verification Record",
+            "description": "Every attempt's own verification steps, in order -- the audit trail ADR-0015 requires."
+          },
+          "ended_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ended Reason",
+            "description": "Which limit ended a non-normal run: overall_timeout | per_attempt_timeout | max_attempts_exhausted | approval_timeout, or null for a normal approve/reject/opened_pr."
+          },
+          "pr_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pr Url"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "run_id",
+          "issue_id",
+          "status",
+          "attempts",
+          "latest_patch",
+          "verification_record",
+          "ended_reason",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "VerifiedFixView"
       }
     },
     "securitySchemes": {

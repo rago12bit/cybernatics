@@ -6,6 +6,32 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 ## [Unreleased]
 
 ### Added
+- **Verified-fix agent (Week 42, plan §21.2, ADR-0027) — "the flagship v2 feature":** proposes a
+  patch for an Issue, verifies it for real (reruns the originating rule, reruns every scanner on the
+  changed file, optionally runs the project's own tests in an opt-in, verified-GitHub-Installation-
+  owner-only sandbox), then waits for a human to approve or reject before ever opening a pull
+  request -- never auto-merged. Implemented as a Temporal workflow (`core/fixagent/workflow.py`),
+  the first one in this codebase (everything else uses Celery); durability validated live (killed
+  the worker mid-run, a fresh worker resumed correctly from Temporal's own history). The propose-
+  patch step is this repository's first tool-calling code (`core/fixagent/agent.py`,
+  `read_file`/`search_code`/`get_call_path`/`propose_patch`; hosted/Anthropic only), scrubbing and
+  redacting every tool result through Week 41's existing secret/PII layers before it reaches the
+  model. Pull requests open through a new GitHub Contents-API integration
+  (`core/fixagent/github_pr.py`) -- no local git needed, since `core.gitfetch.clone_repo` already
+  strips `.git` from every checkout. New `verified_fix_runs` table (migration `0012`, RLS-protected)
+  and `POST/GET /assets/{asset_id}/issues/{issue_id}/verified-fix[/approve|/reject]`; two new scoped-
+  token scopes, `fixes:read`/`fixes:write`. `docker-compose.yml` gains `temporal`/`temporal-ui`/
+  `fixagent-worker` behind a new `--profile fixagent`. The fix-review screen
+  (`web/components/VerifiedFixPanel.tsx`, plan §28.4) shows the verification record before the diff
+  ("trust before content") and failed attempts, not just the final patch. ADR-0015's three safety
+  limits (a per-attempt timeout, an overall timeout excluding the human-approval wait, a per-org
+  concurrency cap) got real numbers this week, plus a distinct `inconclusive` terminal state so a
+  timeout is never shown as "this fix doesn't work." 65 new backend tests (1216 total) and 8 new
+  frontend tests (163 total); mypy/ruff/black and `tsc --noEmit`/`next build` all clean. Honest gaps
+  (no live GitHub App or hosted-model run in this environment, no MLX tool-calling, no "Edit" action,
+  no precise sandbox capability set) disclosed in `docs/v2-week42-verification.md`.
+
+### Added
 - **Model gateway and LLMOps (Week 41, plan §21.1, ADR-0026):** a real local backend (`core/llm/ollama_client.py`,
   plain HTTP to Ollama, no SDK) alongside the existing hosted Anthropic one, chosen per task through a new
   `core/llm/gateway.py` (`Task`/`Backend` enums, per-task route overrides). Privacy mode

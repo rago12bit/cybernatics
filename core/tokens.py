@@ -20,7 +20,7 @@ _CHECKSUM_LEN = 6
 #: plan's example) because there is no dedicated issues endpoint yet (ADR-0012 already deferred
 #: that) -- declaring a scope nothing checks would be a scope that lies about what it does. Add to
 #: this set only alongside the endpoint it actually gates.
-SCOPES = frozenset({"scans:read", "scans:write"})
+SCOPES = frozenset({"scans:read", "scans:write", "fixes:read", "fixes:write"})
 
 
 class TokenError(ValueError):
