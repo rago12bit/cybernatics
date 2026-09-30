@@ -64,6 +64,7 @@ select = ["E", "F", "I", "B", "UP"]
 "core/rag/*" = ["E501"]  # prose-heavy design docstrings
 "core/llm/*" = ["E501"]  # prompts and regexes
 "core/fixagent/*" = ["E501"]  # prose-heavy design docstrings
+"core/copilot/*" = ["E501"]  # prompts
 "core/reachability/*" = ["E501"]  # name tables
 "core/taint/*" = ["E501"]  # prose-heavy design docstrings
 "core/ci/*" = ["E501"]  # markdown templates
