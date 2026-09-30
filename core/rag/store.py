@@ -8,48 +8,19 @@ so the fallback is instant. Choosing pgvector avoids running a separate vector d
 
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass
 from typing import Any
 
 from sqlalchemy import JSON, Integer, String, Text, delete, select, text
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.engine import Dialect
 from sqlalchemy.orm import Mapped, Session, mapped_column
-from sqlalchemy.types import TypeDecorator, TypeEngine, UserDefinedType
 
 from core.persistence.models import Base
+from core.persistence.vector_type import Vector
 from core.rag.corpus_io import Chunk
 from core.rag.embed import DIM, NAME, HashingEmbedder
 
 _JSON = JSON().with_variant(JSONB(), "postgresql")
-
-
-class _PgVector(UserDefinedType[Any]):
-    cache_ok = True
-
-    def get_col_spec(self, **kw: Any) -> str:
-        return f"vector({DIM})"
-
-
-class Vector(TypeDecorator[list[float]]):
-    """pgvector `vector(DIM)` on PostgreSQL, a JSON array elsewhere. No extra Python dependency."""
-
-    impl = JSON
-    cache_ok = True
-
-    def load_dialect_impl(self, dialect: Dialect) -> TypeEngine[Any]:
-        return _PgVector() if dialect.name == "postgresql" else dialect.type_descriptor(JSON())
-
-    def process_bind_param(self, value: list[float] | None, dialect: Dialect) -> Any:
-        if value is None or dialect.name != "postgresql":
-            return value
-        return "[" + ",".join(f"{x:.6f}" for x in value) + "]"
-
-    def process_result_value(self, value: Any, dialect: Dialect) -> list[float] | None:
-        if value is None:
-            return None
-        return [float(x) for x in json.loads(value)] if isinstance(value, str) else list(value)
 
 
 class KbChunk(Base):
@@ -64,7 +35,7 @@ class KbChunk(Base):
     cwes: Mapped[list[str]] = mapped_column(_JSON)
     url: Mapped[str] = mapped_column(String(500))
     content_hash: Mapped[str] = mapped_column(String(64))
-    embedding: Mapped[list[float]] = mapped_column(Vector())
+    embedding: Mapped[list[float]] = mapped_column(Vector(DIM))
 
 
 class KbMeta(Base):

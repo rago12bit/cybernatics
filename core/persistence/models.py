@@ -20,6 +20,8 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
+from core.persistence.vector_type import Vector
+from core.rag.embed import DIM as _EMBED_DIM
 from core.tenancy import DEFAULT_ORG_ID
 
 JsonType = JSON().with_variant(JSONB(), "postgresql")
@@ -420,3 +422,44 @@ class HypothesisRow(Base):
     )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
+class CodeChunkIndexRow(Base):
+    """One row per asset: the hashed-embedder weights (`core.rag.embed.HashingEmbedder`) its
+    `code_chunks` rows were embedded with (Week 44, plan §21.5's retrieval). A fresh fit per asset,
+    not the remediation knowledge base's one global fit (`core.rag.store.KbMeta`) -- each asset's
+    source code is its own small, distinct corpus, and nothing here ever compares one asset's chunk
+    vectors against another's, so there is no reason to share weights across them."""
+
+    __tablename__ = "code_chunk_indexes"
+
+    asset_id: Mapped[str] = mapped_column(
+        ForeignKey("assets.id", ondelete="CASCADE"), primary_key=True
+    )
+    embedder: Mapped[str] = mapped_column(String(50))
+    dim: Mapped[int] = mapped_column(Integer)
+    idf: Mapped[list[float]] = mapped_column(JsonType)
+    chunk_count: Mapped[int] = mapped_column(Integer, default=0)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
+class CodeChunkRow(Base):
+    """One function-level chunk of an asset's latest-indexed source (Week 44, plan §21.5), for the
+    copilot's grounded retrieval. `id` is `core.codeintel.models.symbol_id()`'s own stable id, so
+    re-indexing the same unchanged function produces the same row id (an upsert-by-replace, not an
+    ever-growing table across refreshes -- see `core.embeddings.service.refresh_code_chunks`)."""
+
+    __tablename__ = "code_chunks"
+
+    id: Mapped[str] = mapped_column(String(600), primary_key=True)
+    asset_id: Mapped[str] = mapped_column(ForeignKey("assets.id", ondelete="CASCADE"), index=True)
+    path: Mapped[str] = mapped_column(Text)
+    symbol_name: Mapped[str] = mapped_column(String(300))
+    qualified_name: Mapped[str] = mapped_column(Text)
+    kind: Mapped[str] = mapped_column(String(16))
+    language: Mapped[str] = mapped_column(String(16))
+    start_line: Mapped[int] = mapped_column(Integer)
+    end_line: Mapped[int] = mapped_column(Integer)
+    snippet: Mapped[str] = mapped_column(Text)
+    embedding: Mapped[list[float]] = mapped_column(Vector(_EMBED_DIM))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)

@@ -9,13 +9,14 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, cast
 
-from sqlalchemy import and_, case, delete, func, or_, select
+from sqlalchemy import and_, case, delete, func, or_, select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.elements import ColumnElement
 
 import core.audit as audit
 from core.assets import asset_key
+from core.embeddings.chunk import CodeChunk
 from core.issues import ExistingIssue, IssueUpdate, State, SyncResult, classify_for_pr, fallback_key
 from core.issues import sync as sync_issues
 from core.models import Finding
@@ -25,6 +26,8 @@ from core.persistence.models import (
     Asset,
     AuditCheckpoint,
     AuditEntry,
+    CodeChunkIndexRow,
+    CodeChunkRow,
     FindingRow,
     GithubInstallation,
     HypothesisRow,
@@ -33,6 +36,7 @@ from core.persistence.models import (
     Scan,
     ToolRun,
 )
+from core.rag.embed import HashingEmbedder
 from core.tenancy import DEFAULT_ORG_ID
 from core.triage_assistant.contract import TriageVerdict
 
@@ -1163,3 +1167,82 @@ def promote_hypothesis(s: Session, hypothesis_id: str, *, actor: str) -> IssueRo
     )  # fmt: skip
     s.refresh(issue)
     return issue
+
+
+# ---- Code chunk embeddings (Week 44, plan §21.5) --------------------------------------------
+
+
+def refresh_code_chunks(s: Session, asset_id: str, chunks: list[CodeChunk]) -> dict[str, Any]:
+    """Replace an asset's entire chunk index in one transaction: fit a fresh `HashingEmbedder` on
+    this asset's own chunk texts (see `CodeChunkIndexRow`'s docstring for why per-asset, not one
+    global fit), embed every chunk, delete the old rows, insert the new ones. Mirrors
+    `core.rag.store.load_corpus`, scoped to one asset instead of the whole knowledge base."""
+    texts = [c.text for c in chunks]
+    embedder = HashingEmbedder.fit(texts)
+    vectors = embedder.embed_documents(texts)
+    s.execute(delete(CodeChunkRow).where(CodeChunkRow.asset_id == asset_id))
+    for chunk, vector in zip(chunks, vectors, strict=True):
+        s.add(
+            CodeChunkRow(
+                id=chunk.id, asset_id=asset_id, path=chunk.path, symbol_name=chunk.symbol_name,
+                qualified_name=chunk.qualified_name, kind=chunk.kind, language=chunk.language,
+                start_line=chunk.start_line, end_line=chunk.end_line, snippet=chunk.text,
+                embedding=vector,
+            )
+        )  # fmt: skip
+    index = s.get(CodeChunkIndexRow, asset_id)
+    if index is None:
+        s.add(
+            CodeChunkIndexRow(
+                asset_id=asset_id, embedder=embedder.name, dim=embedder.dim,
+                idf=embedder.idf, chunk_count=len(chunks),
+            )
+        )  # fmt: skip
+    else:
+        index.embedder, index.dim, index.idf = embedder.name, embedder.dim, embedder.idf
+        index.chunk_count, index.updated_at = len(chunks), _now()
+    s.commit()
+    return {"chunks": len(chunks), "embedder": embedder.name}
+
+
+def search_code_chunks(
+    s: Session, asset_id: str, query: str, k: int = 5, *, org_id: str | None = None
+) -> list[tuple[CodeChunkRow, float]]:
+    """Top-k chunks of one asset's code by cosine similarity -- always tenant-filtered (plan §21.5),
+    RLS on Postgres plus the same app-level `org_id` check `list_hypotheses`/`get_hypothesis`
+    already layer on top of it for SQLite. Empty asset (never indexed) returns `[]`, not an error:
+    a copilot question about an asset with no chunk index yet should get "no relevant code found,"
+    not a 500."""
+    if org_id is not None:
+        asset = s.get(Asset, asset_id)
+        if asset is None or asset.org_id != org_id:
+            return []
+    index = s.get(CodeChunkIndexRow, asset_id)
+    if index is None:
+        return []
+    embedder = HashingEmbedder(idf=list(index.idf), dim=index.dim)
+    q = embedder.embed_query(query)
+    if s.get_bind().dialect.name == "postgresql":
+        qv = "[" + ",".join(f"{x:.6f}" for x in q) + "]"
+        rows = s.execute(
+            text(
+                "SELECT id, 1 - (embedding <=> CAST(:q AS vector)) AS score FROM code_chunks "
+                "WHERE asset_id = :asset_id ORDER BY embedding <=> CAST(:q AS vector) LIMIT :k"
+            ),
+            {"q": qv, "asset_id": asset_id, "k": k},
+        ).all()
+        scores = {r.id: float(r.score) for r in rows}
+        found = {
+            row.id: row
+            for row in s.scalars(select(CodeChunkRow).where(CodeChunkRow.id.in_(list(scores))))
+        }
+        return [(found[i], scores[i]) for i in scores if i in found]
+    # Queries are sparse (tens of non-zero buckets out of 1024): score only those, same trick
+    # `core.rag.store.KnowledgeBase.search` uses for its own non-Postgres fallback.
+    nz = [(i, x) for i, x in enumerate(q) if x]
+    scored = [
+        (sum(x * row.embedding[i] for i, x in nz), row)
+        for row in s.scalars(select(CodeChunkRow).where(CodeChunkRow.asset_id == asset_id))
+    ]
+    scored.sort(key=lambda t: (-t[0], t[1].id))
+    return [(row, score) for score, row in scored[:k]]
