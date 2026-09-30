@@ -1,0 +1,48 @@
+name: Nightly fuzzing
+
+# Coverage-guided fuzzing (Atheris) against every scanner adapter's parse() (Week 48 task 1, plan
+# §22.3), seeded from tests/golden's real recorded tool output. Nightly, not on every push: each
+# adapter gets a fixed time budget (FUZZ_SECONDS below), and a genuinely useful fuzzing run takes
+# longer than a PR should have to wait on.
+#
+# Atheris needs a real Clang+libFuzzer build; Apple's shipped Clang deliberately omits libFuzzer, so
+# this cannot run on macOS at all (confirmed by trying: `pip install atheris` fails at build time).
+# ubuntu-latest is used here specifically because atheris ships a prebuilt manylinux wheel for
+# Linux -- this job has never been run, only written and reviewed; see
+# docs/v2-week48-verification.md for exactly what that means honestly.
+
+on:
+  schedule:
+    - cron: "17 3 * * *" # 03:17 UTC daily -- off the hour, so it doesn't compete for runner capacity
+  workflow_dispatch: {} # manual trigger, for trying this out without waiting for the schedule
+
+env:
+  FUZZ_SECONDS: 120 # per adapter; nine adapters -> ~18 minutes total, a "fixed time budget" (plan §22.3)
+
+jobs:
+  fuzz:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        adapter:
+          [bandit, semgrep, gitleaks, trivy, osv-scanner, grype, checkov, gosec, dockle]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[dev]" atheris
+      - run: ./scripts/seed-fuzz-corpus.sh
+      - name: Fuzz ${{ matrix.adapter }}.parse() for ${{ env.FUZZ_SECONDS }}s
+        run: >-
+          python tests/fuzz/fuzz_adapter.py ${{ matrix.adapter }}
+          tests/fuzz_corpus/${{ matrix.adapter }}
+          -max_total_time=${{ env.FUZZ_SECONDS }}
+      - name: Upload any crash found
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fuzz-crash-${{ matrix.adapter }}
+          path: tests/fuzz_corpus/${{ matrix.adapter }}/crash-*
+          if-no-files-found: ignore
