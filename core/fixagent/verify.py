@@ -30,8 +30,10 @@ class PatchApplyError(Exception):
 
 
 def apply_patch(checkout: Path, patch: str) -> None:
+    # --fuzz=0: GNU patch's default fuzz (2) will silently apply a hunk over mismatched
+    # context, which is exactly the drifted-checkout case this function must catch.
     proc = subprocess.run(
-        ["patch", "-p1", "--forward", "--no-backup-if-mismatch"],
+        ["patch", "-p1", "--forward", "--no-backup-if-mismatch", "--fuzz=0"],
         input=patch,
         capture_output=True,
         text=True,
