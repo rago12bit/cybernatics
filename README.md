@@ -248,6 +248,18 @@ container so it works regardless of the target's own image. See
 [docs/sandbox-runtimes.md](docs/sandbox-runtimes.md), including what is not yet done and the runbook
 for closing that gap on a real Linux host.
 
+## Data protection
+
+Raw scanner output is envelope-encrypted per scan (OpenBao-held per-organization keys) and
+deletable by crypto-shredding -- destroying a scan's data key makes it permanently unreadable,
+backups included, without needing to locate the ciphertext itself. Configurable retention (default
+7 days) at **Settings → Retention**. Every network connection to Postgres requires a client
+certificate matching the connecting service's own identity; sensitive secrets (GitHub App
+credentials, the API token, the LLM API key) prefer OpenBao's secret store over a plain environment
+variable, with an unconditional fallback for deployments that haven't migrated yet. See
+[docs/data-protection.md](docs/data-protection.md), including what's genuinely least-privilege today
+versus what's disclosed as deferred.
+
 ## SBOM, signing and provenance
 
 `bulwark sbom` writes a CycloneDX SBOM (Syft); `bulwark attest` signs reports with cosign and attests which scanner

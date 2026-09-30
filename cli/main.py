@@ -752,6 +752,60 @@ def token_revoke(
     typer.echo(f"revoked {token_id}")
 
 
+secrets_app = typer.Typer(
+    help="Secrets in OpenBao (Week 47 task 4, plan §22.2, ADR-0033), instead of plain env files."
+)
+app.add_typer(secrets_app, name="secrets")
+
+# core.secrets.resolve.resolve_secret's own kv_path for each -- kept in sync by hand since there are
+# only four call sites (core/config.py x3, core/llm/client.py x1), not worth a shared registry yet.
+_MIGRATABLE_SECRETS = {
+    "bulwark/api-token": "BULWARK_API_TOKEN",
+    "bulwark/github-webhook-secret": "BULWARK_GITHUB_WEBHOOK_SECRET",
+    "bulwark/github-app-private-key": "BULWARK_GITHUB_APP_PRIVATE_KEY",
+    "bulwark/llm-api-key": "BULWARK_LLM_API_KEY",
+}
+
+
+@secrets_app.command("migrate-env")
+def secrets_migrate_env() -> None:
+    """Copies every secret core.secrets.resolve.resolve_secret knows about from its current
+    environment variable into OpenBao, so it can be removed from .env / plain deployment config
+    afterwards. Requires BULWARK_OPENBAO_ADDR/BULWARK_OPENBAO_TOKEN already set in this shell --
+    this command only writes TO OpenBao, it never configures access to one."""
+    import os
+
+    from core.secrets.openbao import OpenBaoClient, OpenBaoError
+
+    addr, token = os.environ.get("BULWARK_OPENBAO_ADDR", ""), os.environ.get(
+        "BULWARK_OPENBAO_TOKEN", ""
+    )
+    if not addr or not token:
+        typer.echo(
+            "error: BULWARK_OPENBAO_ADDR and BULWARK_OPENBAO_TOKEN must both be set", err=True
+        )
+        raise typer.Exit(1)
+    client = OpenBaoClient(addr=addr, token=token)
+    client.ensure_kv_engine_enabled()
+    migrated: list[str] = []
+    skipped: list[str] = []
+    for kv_path, env_var in _MIGRATABLE_SECRETS.items():
+        value = os.environ.get(env_var, "")
+        if not value:
+            skipped.append(env_var)
+            continue
+        try:
+            client.put_secret(kv_path, value)
+        except OpenBaoError as exc:
+            typer.echo(f"error writing {kv_path}: {exc}", err=True)
+            raise typer.Exit(1) from exc
+        migrated.append(env_var)
+    typer.echo(f"Migrated {len(migrated)} secret(s) to OpenBao: {', '.join(migrated) or '(none)'}")
+    if skipped:
+        typer.echo(f"Skipped (not set in this environment): {', '.join(skipped)}")
+    typer.echo("You can now remove these from .env / your deployment's plain environment config.")
+
+
 audit_app = typer.Typer(help="Tamper-evident audit log (Week 30 backfill, ADR-0019).")
 app.add_typer(audit_app, name="audit")
 

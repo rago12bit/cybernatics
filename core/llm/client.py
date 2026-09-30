@@ -10,6 +10,8 @@ import os
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 
+from core.secrets.resolve import resolve_secret
+
 DEFAULT_MODEL = "claude-sonnet-5"
 
 
@@ -43,7 +45,10 @@ class LLMConfig:
         return LLMConfig(
             enabled=env.get("BULWARK_LLM_ENABLED") == "1",
             model=env.get("BULWARK_LLM_MODEL", DEFAULT_MODEL),
-            api_key=env.get("BULWARK_LLM_API_KEY") or env.get("ANTHROPIC_API_KEY", ""),
+            api_key=(
+                resolve_secret("BULWARK_LLM_API_KEY", kv_path="bulwark/llm-api-key")
+                or env.get("ANTHROPIC_API_KEY", "")
+            ),
             timeout=float(env.get("BULWARK_LLM_TIMEOUT", "30")),
             max_tokens=int(env.get("BULWARK_LLM_MAX_TOKENS", "1500")),
         )

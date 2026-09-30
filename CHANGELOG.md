@@ -6,6 +6,26 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 ## [Unreleased]
 
 ### Added
+- **Envelope encryption, crypto-shredding, mTLS, and secrets in OpenBao (Week 47, plan §22.2,
+  ADR-0032/0033):** raw scanner output is now encrypted per scan with an OpenBao-held,
+  per-organization key, AEAD-bound to its own storage key so a ciphertext can never be silently
+  swapped onto a different scan's data; off by default, wired into the real production path
+  (`core.tasks.run_scan_task`). An hourly sweep destroys a scan's data key once its organization's
+  configurable retention window passes (default 7 days, a new Settings screen) --
+  "deletion by crypto-shredding," never touching the scan or its issues. Every network connection to
+  Postgres now requires a client certificate matching the connecting role: `api`/`worker`/
+  `fixagent-worker` each get their own identity (inheriting the previously-shared `bulwark_app`'s
+  grants via role membership, not duplicated by hand) instead of one shared credential; Temporal's
+  third-party image is the one disclosed, deliberate exception. The GitHub App private key, its
+  webhook secret, the API token, and the LLM API key all prefer a value from OpenBao's secret store
+  now, falling back to their plain environment variable unconditionally (`bulwark secrets
+  migrate-env` moves existing values over). Two real bugs were caught and fixed by testing against
+  real Postgres/OpenBao rather than by inspection: a SQLite-only naive-datetime comparison that
+  would have silently shredded nothing, and a cross-organization query that would have seen zero
+  rows under real Row-Level Security instead of every organization's own rows. A third, pre-existing
+  instance of that same RLS-scoping bug was found in the older `core.maintenance.reap_stale_scans`
+  and flagged separately, out of scope for this week. See `docs/data-protection.md` for what's
+  genuinely least-privilege today versus disclosed as deferred.
 - **SandboxRuntime interface, a gvisor backend, and egress denial for fix verification (Week 46,
   plan §22.1, ADR-0031):** `core/sandbox/` introduces a `SandboxRuntime` protocol so the OCI runtime
   a scanner container runs under is a configuration choice, not a call-site change; `core.runner`

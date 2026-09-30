@@ -38,6 +38,18 @@ class OpenBaoClient:
     def _request(
         self, method: str, path: str, body: dict[str, object] | None = None
     ) -> dict[str, Any]:
+        result = self._request_impl(method, path, body, not_found_ok=False)
+        assert result is not None  # not_found_ok=False never returns None
+        return result
+
+    def _request_impl(
+        self,
+        method: str,
+        path: str,
+        body: dict[str, object] | None,
+        *,
+        not_found_ok: bool,
+    ) -> dict[str, Any] | None:
         url = f"{self.addr.rstrip('/')}/v1/{path.lstrip('/')}"
         data = json.dumps(body).encode() if body is not None else None
         req = urllib.request.Request(
@@ -47,6 +59,8 @@ class OpenBaoClient:
             with urllib.request.urlopen(req, timeout=10) as resp:
                 raw = resp.read()
         except urllib.error.HTTPError as exc:
+            if not_found_ok and exc.code == 404:
+                return None
             detail = exc.read().decode("utf-8", errors="replace")
             raise OpenBaoError(f"{method} {path} -> HTTP {exc.code}: {detail}") from exc
         except urllib.error.URLError as exc:
@@ -86,6 +100,32 @@ class OpenBaoClient:
             "POST", f"transit/decrypt/{_key_name(org_id)}", {"ciphertext": wrapped}
         )
         return b64decode(resp["data"]["plaintext"])
+
+    def ensure_kv_engine_enabled(self) -> None:
+        """Mounts the KV v2 secrets engine at `secret/` if it isn't already -- dev mode (the
+        compose stack's default) auto-mounts one, so this is usually a no-op in practice, but a real
+        deployment's OpenBao won't have one until this runs. Same not-idempotent-to-just-POST
+        reasoning as ensure_transit_engine_enabled (verified live: HTTP 400 "path is already in
+        use")."""
+        mounts = self._request("GET", "sys/mounts")
+        if "secret/" in mounts.get("data", mounts):
+            return
+        self._request("POST", "sys/mounts/secret", {"type": "kv", "options": {"version": "2"}})
+
+    def get_secret(self, path: str, *, key: str = "value") -> str | None:
+        """Reads one field from a KV v2 secret at `secret/data/<path>`. Returns None if the secret
+        (or the specific field) doesn't exist -- verified live: OpenBao returns a real HTTP 404 for
+        a missing path, distinct from every other error this client raises as OpenBaoError."""
+        resp = self._request_impl("GET", f"secret/data/{path}", None, not_found_ok=True)
+        if resp is None:
+            return None
+        value = resp["data"]["data"].get(key)
+        return value if isinstance(value, str) else None
+
+    def put_secret(self, path: str, value: str, *, key: str = "value") -> None:
+        """Writes one field to a KV v2 secret at `secret/data/<path>`, creating a new version --
+        OpenBao's own versioning, not something this method manages."""
+        self._request("POST", f"secret/data/{path}", {"data": {key: value}})
 
 
 def _key_name(org_id: str) -> str:

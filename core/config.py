@@ -7,6 +7,8 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
+from core.secrets.resolve import resolve_secret
+
 
 @dataclass(frozen=True)
 class Settings:
@@ -45,7 +47,7 @@ class Settings:
             s3_access_key=os.environ.get("BULWARK_S3_ACCESS_KEY", ""),
             s3_secret_key=os.environ.get("BULWARK_S3_SECRET_KEY", ""),
             s3_bucket=os.environ.get("BULWARK_S3_BUCKET", "bulwark-artifacts"),
-            api_token=os.environ.get("BULWARK_API_TOKEN", ""),
+            api_token=resolve_secret("BULWARK_API_TOKEN", kv_path="bulwark/api-token"),
             workdir=workdir,
             upload_dir=workdir / "uploads",
             max_upload_bytes=int(os.environ.get("BULWARK_MAX_UPLOAD_BYTES", 100 * 1024 * 1024)),
@@ -55,10 +57,12 @@ class Settings:
                 if o.strip()
             ),
             github_app_id=os.environ.get("BULWARK_GITHUB_APP_ID", ""),
-            github_app_private_key=os.environ.get("BULWARK_GITHUB_APP_PRIVATE_KEY", "").replace(
-                "\\n", "\n"
+            github_app_private_key=resolve_secret(
+                "BULWARK_GITHUB_APP_PRIVATE_KEY", kv_path="bulwark/github-app-private-key"
+            ).replace("\\n", "\n"),
+            github_webhook_secret=resolve_secret(
+                "BULWARK_GITHUB_WEBHOOK_SECRET", kv_path="bulwark/github-webhook-secret"
             ),
-            github_webhook_secret=os.environ.get("BULWARK_GITHUB_WEBHOOK_SECRET", ""),
             openbao_addr=os.environ.get("BULWARK_OPENBAO_ADDR", ""),
             openbao_token=os.environ.get("BULWARK_OPENBAO_TOKEN", ""),
         )
