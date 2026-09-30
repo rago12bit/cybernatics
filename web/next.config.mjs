@@ -10,6 +10,9 @@ const nextConfig = {
   // The sample scan is the home page now; keep old /demo links working with a real HTTP redirect.
   redirects: async () => [
     { source: "/demo", destination: "/", permanent: false },
+    // RFC 9116 (Week 48 task 2): the well-known path is the canonical location; this just keeps a
+    // crawler checking the older, still-common plain /security.txt path pointed at the real file.
+    { source: "/security.txt", destination: "/.well-known/security.txt", permanent: true },
     // Public sample build: there is no API, so the app and scan pages explain how to self-host instead.
     ...(process.env.NEXT_PUBLIC_DEMO_ONLY === "1"
       ? [

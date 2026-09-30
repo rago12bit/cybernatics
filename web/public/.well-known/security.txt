@@ -1,0 +1,6 @@
+# RFC 9116 (Week 48 task 2, plan §22.3). See ../../../SECURITY.md for the full policy this points to.
+Contact: mailto:ragh.gupta22@gmail.com
+Contact: https://github.com/Rag2102/cyberimp/security/advisories/new
+Expires: 2027-10-01T00:00:00.000Z
+Preferred-Languages: en
+Policy: https://github.com/Rag2102/cyberimp/blob/main/SECURITY.md

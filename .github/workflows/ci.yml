@@ -52,6 +52,54 @@ jobs:
       - run: npm run build
       - run: npm run build-storybook
 
+  zap-baseline:
+    # DAST against itself (Week 48 task 2, plan §22.3): the platform running its own baseline
+    # scanning tooling against its own web app, in CI, on every push and pull request -- not just
+    # something it offers customers. The demo-only build (no API, ADR: web/fly.toml's "public
+    # sample site") is the right target: ZAP only needs a real running app to crawl passively, and
+    # this one needs no backend to stand up. `-I` treats WARN-level findings as informational for
+    # the exit code (only a real FAIL fails the job) -- verified live against this exact build
+    # before being written here: 0 FAIL, 4 disclosed WARN categories, all scoped to /_next/static
+    # assets that intentionally skip per-request middleware for performance (proxy.ts's own
+    # matcher), not unaddressed gaps on any real page.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - working-directory: web
+        run: npm ci
+      - working-directory: web
+        run: npm run build
+        env:
+          NEXT_PUBLIC_DEMO_ONLY: "1"
+      - working-directory: web
+        run: npx next start -p 3000 &
+        env:
+          NEXT_PUBLIC_DEMO_ONLY: "1"
+      - name: Wait for the app to come up
+        run: |
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:3000/ >/dev/null && exit 0
+            sleep 1
+          done
+          echo "app never came up" >&2
+          exit 1
+      - run: mkdir -p "$RUNNER_TEMP/zap"
+      - name: ZAP baseline scan
+        run: >-
+          docker run --rm -v "$RUNNER_TEMP/zap:/zap/wrk:rw" --network host
+          ghcr.io/zaproxy/zaproxy:stable zap-baseline.py
+          -t http://localhost:3000 -r zap-report.html -J zap-report.json -I
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: zap-baseline-report
+          path: ${{ runner.temp }}/zap/zap-report.html
+
   e2e:
     # Playwright end-to-end tests for journeys J1 and J3, plus visual regression snapshots (plan
     # §31's quality gates). Real Next.js app + real FastAPI backend (see scripts/e2e_server.py's

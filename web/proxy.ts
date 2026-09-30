@@ -32,6 +32,16 @@ export function proxy(request: NextRequest) {
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("Referrer-Policy", "no-referrer");
   response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  // Week 48 task 2 (plan §22.3): found by running the platform's own ZAP baseline scan against
+  // itself. Safe to add unconditionally -- this app loads no cross-origin fonts/images/scripts
+  // (the CSP above already restricts font-src/img-src to 'self'), which is exactly the case where
+  // require-corp has nothing to break. Verified live: a full page load plus every console message
+  // checked clean before and after, with a real browser, not just ZAP's own report.
+  response.headers.set("Cross-Origin-Embedder-Policy", "require-corp");
+  response.headers.set("Cross-Origin-Opener-Policy", "same-origin");
+  // Consistent with the CSP's frame-ancestors 'none' above: this app never expects to be embedded
+  // by, or share its resources with, another origin.
+  response.headers.set("Cross-Origin-Resource-Policy", "same-origin");
   if (demoOnly) response.headers.set("Strict-Transport-Security", "max-age=63072000; includeSubDomains");
   return response;
 }
