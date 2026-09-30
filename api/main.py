@@ -1207,7 +1207,6 @@ def create_app(app_state: AppState) -> FastAPI:
         )
         return _threat_model_view(row)
 
-
     @app.get(
         "/assets/{asset_id}/attack-paths",
         response_model=list[AttackPathView],

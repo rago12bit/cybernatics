@@ -50,7 +50,7 @@ def test_database_node_appears_only_for_the_route_reaching_a_sql_sink(tmp_path: 
     draft = _draft(tmp_path)
     assert "db[(Database)]" in draft.mermaid
     lines = draft.mermaid.splitlines()
-    users_id = next(l.split("(")[0].strip() for l in lines if '("GET /users")' in l)
+    users_id = next(ln.split("(")[0].strip() for ln in lines if '("GET /users")' in ln)
     assert f"{users_id} --> db" in draft.mermaid
     assert draft.mermaid.count("--> db") == 1
 
@@ -59,7 +59,7 @@ def test_os_node_appears_only_for_the_route_reaching_a_command_sink(tmp_path: Pa
     draft = _draft(tmp_path)
     assert "os{{OS process}}" in draft.mermaid
     lines = draft.mermaid.splitlines()
-    run_id = next(l.split("(")[0].strip() for l in lines if '("POST /run")' in l)
+    run_id = next(ln.split("(")[0].strip() for ln in lines if '("POST /run")' in ln)
     assert f"{run_id} --> os" in draft.mermaid
     assert draft.mermaid.count("--> os") == 1
 

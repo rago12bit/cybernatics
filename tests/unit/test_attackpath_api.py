@@ -33,6 +33,7 @@ class _FakeSubscriber:
         return
         yield  # pragma: no cover
 
+
 FLASK_APP = (
     "from flask import Flask\n"
     "app = Flask(__name__)\n\n"
@@ -106,8 +107,12 @@ def test_no_completed_scan_returns_409(
     client = TestClient(create_app(app_state))
     with sessions() as s:
         scan = repo.create_scan(
-            s, source_type="git", source_ref="https://example.com/x.git", source_label="acme/x",
-            tools=["bandit"], org_id=DEFAULT_ORG_ID,
+            s,
+            source_type="git",
+            source_ref="https://example.com/x.git",
+            source_label="acme/x",
+            tools=["bandit"],
+            org_id=DEFAULT_ORG_ID,
         )  # fmt: skip -- never finished
         asset_id = scan.asset_id
     r = client.get(f"/assets/{asset_id}/attack-paths", headers=AUTH)
@@ -147,7 +152,11 @@ def test_model_configured_adds_a_narrative(
         "(169.254.169.254)."
     )
     app_state = AppState(
-        _settings(tmp_path), sessions, lambda sid, org: None, _FakeSubscriber(), llm_attack_path=fake
+        _settings(tmp_path),
+        sessions,
+        lambda sid, org: None,
+        _FakeSubscriber(),
+        llm_attack_path=fake,
     )
     client = TestClient(create_app(app_state))
     asset_id = _seed_asset_with_ssrf(sessions)

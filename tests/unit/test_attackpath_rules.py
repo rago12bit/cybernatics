@@ -10,7 +10,9 @@ from core.codeintel.models import CallEdge, CodeGraph, Entrypoint, Symbol
 from core.models import Category, Evidence, Finding, Location, Scoring, Taxonomy
 
 
-def _finding(category: Category, path: str, line: int, *, cwe=(), title="", rule_ids=None) -> Finding:
+def _finding(
+    category: Category, path: str, line: int, *, cwe=(), title="", rule_ids=None
+) -> Finding:
     return Finding(
         id=f"f-{path}-{line}",
         title=title or path,

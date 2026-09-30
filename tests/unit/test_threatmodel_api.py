@@ -82,8 +82,12 @@ def test_no_completed_scan_returns_409(
     client = _client(sessions, tmp_path)
     with sessions() as s:
         scan = repo.create_scan(
-            s, source_type="git", source_ref="https://example.com/x.git", source_label="acme/x",
-            tools=["bandit"], org_id=DEFAULT_ORG_ID,
+            s,
+            source_type="git",
+            source_ref="https://example.com/x.git",
+            source_label="acme/x",
+            tools=["bandit"],
+            org_id=DEFAULT_ORG_ID,
         )  # fmt: skip -- never finished
         asset_id = scan.asset_id
     r = client.get(f"/assets/{asset_id}/threat-model", headers=AUTH)
@@ -136,9 +140,17 @@ def test_put_saves_an_edit_and_bumps_version(
     client.get(f"/assets/{asset_id}/threat-model", headers=AUTH)
     r = client.put(
         f"/assets/{asset_id}/threat-model",
-        json={"mermaid": "flowchart LR\n    x", "stride": [{
-            "element": "x", "element_kind": "process", "category": "Spoofing", "prompt": "?",
-        }]},
+        json={
+            "mermaid": "flowchart LR\n    x",
+            "stride": [
+                {
+                    "element": "x",
+                    "element_kind": "process",
+                    "category": "Spoofing",
+                    "prompt": "?",
+                }
+            ],
+        },
         headers=AUTH,
     )
     assert r.status_code == 200
