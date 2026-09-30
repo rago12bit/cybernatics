@@ -77,7 +77,7 @@ describe("ThreatModelEditor", () => {
       vi.fn(async (url: string, init?: RequestInit) => {
         if (init?.method === "PUT") {
           saved = JSON.parse(init.body as string);
-          return json({ ...MODEL, ...saved, version: 2, source: "edited" });
+          return json({ ...MODEL, ...(saved as Record<string, unknown>), version: 2, source: "edited" });
         }
         return json(MODEL);
       }),
