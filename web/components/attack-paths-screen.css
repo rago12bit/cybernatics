@@ -1,0 +1,100 @@
+.ds-ap-intro {
+  margin-bottom: 1rem;
+}
+
+.ds-ap-error {
+  color: var(--ds-color-danger, #b00020);
+}
+
+.ds-ap-empty {
+  color: var(--ds-color-muted, #666);
+}
+
+.ds-ap-nav {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.ds-ap-counter {
+  font-weight: 600;
+}
+
+.ds-ap-badges {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.ds-ap-badge {
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  border: 1px solid var(--ds-color-border, #ddd);
+}
+
+.ds-ap-chain {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem;
+}
+
+.ds-ap-chain-item {
+  display: flex;
+  align-items: center;
+}
+
+.ds-ap-node {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--ds-color-border, #ddd);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  min-width: 10rem;
+}
+
+.ds-ap-node-cheapest {
+  border-color: var(--ds-color-primary, #2b6cb0);
+  border-width: 2px;
+}
+
+.ds-ap-node-kind {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: var(--ds-color-muted, #666);
+}
+
+.ds-ap-node-label {
+  font-weight: 600;
+}
+
+.ds-ap-node-detail {
+  font-size: 0.85rem;
+  color: var(--ds-color-muted, #666);
+}
+
+.ds-ap-cheapest-badge {
+  margin-top: 0.35rem;
+  font-size: 0.75rem;
+  color: var(--ds-color-primary, #2b6cb0);
+}
+
+.ds-ap-connector {
+  margin: 0 0.5rem;
+  color: var(--ds-color-muted, #666);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.ds-ap-narrative {
+  max-width: 60ch;
+}
+
+.ds-ap-narrative-missing {
+  font-style: italic;
+  color: var(--ds-color-muted, #666);
+}

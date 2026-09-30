@@ -381,3 +381,32 @@ export interface CopilotConversation {
   created_at: string;
   last_message_at: string;
 }
+
+/** An attack path (plan §21.6, §28.5): a chain from an entry point through the project's own open
+ * issues to real impact, computed deterministically -- the narrative is a best-effort description
+ * of it, never the source of the chain itself. */
+export interface AttackPathNode {
+  id: string;
+  kind: "entrypoint" | "issue" | "secret" | "cloud_resource";
+  label: string;
+  issue_id: string | null;
+  detail: string;
+}
+
+export interface AttackPathEdge {
+  kind: "reachable_from" | "grants_access_to" | "exposes";
+  source: string;
+  target: string;
+  rule_id: string;
+}
+
+export interface AttackPath {
+  id: string;
+  likelihood: "low" | "medium" | "high";
+  impact: "low" | "medium" | "high" | "critical";
+  rank_score: number;
+  cheapest_link: string;
+  narrative: string | null;
+  nodes: AttackPathNode[];
+  edges: AttackPathEdge[];
+}

@@ -23,7 +23,7 @@ from __future__ import annotations
 from collections import deque
 
 from core.attackpath.model import EdgeKind, NodeKind, PathEdge, PathNode
-from core.attackpath.nodes import issue_node, symbol_at
+from core.attackpath.nodes import entrypoint_nodes, issue_node, symbol_at
 from core.codeintel.models import CodeGraph
 from core.models import Category, Finding
 
@@ -67,6 +67,8 @@ def ssrf_reachable_from_entrypoint(
     if not reaching:
         return [], []
 
+    reaching_ids = {f"ep_{ep.symbol_id}" for ep in reaching}
+    ep_nodes = [n for n in entrypoint_nodes(graph) if n.id in reaching_ids]
     iss_node = issue_node(issue_id, finding)
     metadata_node = PathNode(
         id="res_cloud_metadata_service",
@@ -81,7 +83,7 @@ def ssrf_reachable_from_entrypoint(
         for ep in reaching
     ]
     edges.append(PathEdge(EdgeKind.EXPOSES, iss_node.id, metadata_node.id, "ssrf-metadata-v1"))
-    return [iss_node, metadata_node], edges
+    return [*ep_nodes, iss_node, metadata_node], edges
 
 
 def secret_grants_resource(

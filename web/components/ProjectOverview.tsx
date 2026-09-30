@@ -82,7 +82,8 @@ export function ProjectOverview({ assetId }: { assetId: string }) {
         <Link href={`/scans/${data.latest_scan_id}`}>full scan report</Link> <span aria-hidden="true">·</span>{" "}
         <Link href={`/app/projects/${assetId}/compare`}>compare scans</Link> <span aria-hidden="true">·</span>{" "}
         <Link href={`/app/projects/${assetId}/dependencies`}>dependencies</Link> <span aria-hidden="true">·</span>{" "}
-        <Link href={`/app/projects/${assetId}/hypotheses`}>hypotheses</Link>
+        <Link href={`/app/projects/${assetId}/hypotheses`}>hypotheses</Link> <span aria-hidden="true">·</span>{" "}
+        <Link href={`/app/projects/${assetId}/attack-paths`}>attack paths</Link>
       </div>
 
       <div className="ds-ov-verdict">

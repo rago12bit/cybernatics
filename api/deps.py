@@ -38,6 +38,7 @@ class AppState:
     llm_triage: LLMClient | None = None  # None: the triage assistant is off (plan §21.3)
     llm_hypotheses: LLMClient | None = None  # None: the Hypotheses lane is off (plan §21.4)
     llm_copilot: LLMClient | None = None  # None: the copilot is off (plan §21.5)
+    llm_attack_path: LLMClient | None = None  # None: attack-path narratives are off (plan §21.6)
 
 
 def state(request: Request) -> AppState:

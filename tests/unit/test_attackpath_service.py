@@ -70,7 +70,9 @@ def test_ssrf_path_found_against_a_real_analyzed_checkout(
     path = paths[0]
     assert path.likelihood is Likelihood.HIGH
     assert path.impact is Impact.HIGH
-    assert {n.kind for n in path.nodes} == {NodeKind.ISSUE, NodeKind.CLOUD_RESOURCE}
+    assert {n.kind for n in path.nodes} == {
+        NodeKind.ENTRYPOINT, NodeKind.ISSUE, NodeKind.CLOUD_RESOURCE,
+    }  # fmt: skip
     assert {e.kind for e in path.edges} == {EdgeKind.REACHABLE_FROM, EdgeKind.EXPOSES}
 
 

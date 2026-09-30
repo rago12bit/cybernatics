@@ -44,6 +44,9 @@ from api.deps import (
 )
 from api.schemas import (
     AssetSummary,
+    AttackPathEdgeView,
+    AttackPathNodeView,
+    AttackPathView,
     BulkTriageRequest,
     BulkTriageResult,
     CitationView,
@@ -1112,6 +1115,71 @@ def create_app(app_state: AppState) -> FastAPI:
             raise HTTPException(409, str(exc)) from exc
         return {"status": "dismissed"}
 
+    @app.get(
+        "/assets/{asset_id}/attack-paths",
+        response_model=list[AttackPathView],
+        dependencies=[Depends(require_scope("scans:read"))],
+    )
+    def list_attack_paths_endpoint(
+        asset_id: str, s: Session = Depends(db), org: str = Depends(current_org)
+    ) -> list[AttackPathView]:
+        """Every attack path chained from this asset's current open issues, ranked highest risk
+        first (plan §21.6, §28.5). Always computable without a model -- narrative generation
+        (Task.ATTACK_PATH) is best-effort per path (at most the first 10, by rank) and never blocks
+        the graph itself."""
+        asset = _get_asset(s, asset_id, org)
+        scan = repo.latest_scan_for_asset(s, asset.id, org_id=org)
+        if scan is None:
+            raise HTTPException(409, "no completed scan for this asset")
+        if scan.source_type != "git":
+            raise HTTPException(409, "attack paths need a git source to check out the code from")
+
+        from core.attackpath.checkout import build_graph
+        from core.attackpath.narrative import generate as generate_narrative
+        from core.attackpath.service import find_attack_paths
+        from core.gitfetch import GitUrlError
+
+        app_state.limiter.acquire()
+        try:
+            graph = build_graph(scan.source_ref, scan.ref)
+        except GitUrlError as exc:
+            raise HTTPException(422, f"could not check out the repository: {exc}") from exc
+
+        paths = find_attack_paths(s, asset.id, scan.id, graph)
+        client = app_state.llm_attack_path
+        tokens = 0
+        views: list[AttackPathView] = []
+        for i, path in enumerate(paths):
+            narrative_text = None
+            if client is not None and i < 10:
+                narrated = generate_narrative(path, client)
+                if narrated is not None:
+                    narrative_text = narrated.text
+                    tokens += narrated.tokens_used
+            views.append(
+                AttackPathView(
+                    id=path.id, likelihood=path.likelihood.value, impact=path.impact.value,
+                    rank_score=path.rank_score, cheapest_link=path.cheapest_link,
+                    narrative=narrative_text,
+                    nodes=[
+                        AttackPathNodeView(
+                            id=n.id, kind=n.kind.value, label=n.label, issue_id=n.issue_id,
+                            detail=n.detail,
+                        )
+                        for n in path.nodes
+                    ],
+                    edges=[
+                        AttackPathEdgeView(
+                            kind=e.kind.value, source=e.source, target=e.target, rule_id=e.rule_id
+                        )
+                        for e in path.edges
+                    ],
+                )
+            )  # fmt: skip
+        if tokens:
+            llm_budget.record(s, scan, tokens)
+        return views
+
     def _message_view(row: Any) -> MessageView:
         return MessageView(
             id=row.id, role=row.role, content=row.content,
@@ -1443,6 +1511,7 @@ def build_default_app() -> FastAPI:
             llm_triage=make_gateway_client(Task.TRIAGE),
             llm_hypotheses=make_gateway_client(Task.HYPOTHESES),
             llm_copilot=make_gateway_client(Task.COPILOT),
+            llm_attack_path=make_gateway_client(Task.ATTACK_PATH),
             limiter=UsageLimiter.from_env(),
         )
     )

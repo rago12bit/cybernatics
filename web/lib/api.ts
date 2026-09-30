@@ -1,4 +1,4 @@
-import type { AssetSummary, BulkTriageResult, Citation, CopilotConversation, CopilotMessage, DependenciesView, Finding, FindingsPage, FindingsQuery, GenerateHypothesesResult, Guidance, GuidanceApi, Hypothesis, IssueHistoryEvent, ProjectOverview, Remediation, ScanComparison, ScanSummary, ScanView, TriageAssistantView, TriageStatus, VerifiedFixStarted, VerifiedFixView } from "./types";
+import type { AssetSummary, AttackPath, BulkTriageResult, Citation, CopilotConversation, CopilotMessage, DependenciesView, Finding, FindingsPage, FindingsQuery, GenerateHypothesesResult, Guidance, GuidanceApi, Hypothesis, IssueHistoryEvent, ProjectOverview, Remediation, ScanComparison, ScanSummary, ScanView, TriageAssistantView, TriageStatus, VerifiedFixStarted, VerifiedFixView } from "./types";
 import { findingsQueryString } from "./format";
 
 export const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/$/, "");
@@ -273,6 +273,11 @@ export const dismissHypothesis = (assetId: string, hypothesisId: string) =>
     `/assets/${encodeURIComponent(assetId)}/hypotheses/${encodeURIComponent(hypothesisId)}/dismiss`,
     { method: "POST" },
   );
+
+// Attack paths (plan §21.6): always computable from the project's own open issues, with a
+// best-effort narrative on top when a model is configured server-side (never a hard requirement).
+export const listAttackPaths = (assetId: string) =>
+  request<AttackPath[]>(`/assets/${encodeURIComponent(assetId)}/attack-paths`);
 
 // The security copilot (plan §21.5): tool-grounded, cited chat about one project.
 export const startCopilotConversation = (

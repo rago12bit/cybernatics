@@ -44,7 +44,9 @@ def test_ssrf_reachable_from_entrypoint_connects_when_reachable():
     graph = _graph_with_chain()
     finding = _finding(Category.SAST, "app.py", 22, cwe=("CWE-918",), title="SSRF")
     nodes, edges = ssrf_reachable_from_entrypoint(graph, "iss1", finding)
-    assert {n.kind for n in nodes} == {NodeKind.ISSUE, NodeKind.CLOUD_RESOURCE}
+    assert {n.kind for n in nodes} == {NodeKind.ENTRYPOINT, NodeKind.ISSUE, NodeKind.CLOUD_RESOURCE}
+    ep_node = next(n for n in nodes if n.kind is NodeKind.ENTRYPOINT)
+    assert ep_node.id == "ep_ep1" and ep_node.label == "GET /preview"
     kinds = {e.kind for e in edges}
     assert kinds == {EdgeKind.REACHABLE_FROM, EdgeKind.EXPOSES}
     reach_edges = [e for e in edges if e.kind is EdgeKind.REACHABLE_FROM]

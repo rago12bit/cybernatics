@@ -300,6 +300,37 @@ class HypothesisView(BaseModel):
     created_at: datetime
 
 
+class AttackPathNodeView(BaseModel):
+    id: str
+    kind: Literal["entrypoint", "issue", "secret", "cloud_resource"]
+    label: str
+    issue_id: str | None
+    detail: str
+
+
+class AttackPathEdgeView(BaseModel):
+    kind: Literal["reachable_from", "grants_access_to", "exposes"]
+    source: str
+    target: str
+    rule_id: str
+
+
+class AttackPathView(BaseModel):
+    """One ranked attack path (plan §21.6, §28.5). `narrative` is `None` when no model is routed
+    for Task.ATTACK_PATH -- unlike the copilot, this never 409s for that: the graph itself (nodes,
+    edges, ranking, cheapest_link) is always real and useful without a model, only the prose
+    description is best-effort on top of it."""
+
+    id: str
+    likelihood: Literal["low", "medium", "high"]
+    impact: Literal["low", "medium", "high", "critical"]
+    rank_score: float
+    cheapest_link: str
+    narrative: str | None
+    nodes: list[AttackPathNodeView]
+    edges: list[AttackPathEdgeView]
+
+
 class GenerateHypothesesResult(BaseModel):
     generated: int = Field(description="How many NEW hypotheses this run surfaced and stored.")
     hypotheses: list[HypothesisView]

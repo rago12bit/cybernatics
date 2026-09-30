@@ -32,6 +32,7 @@ class Task(str, Enum):
     TRIAGE = "triage"  # core.triage_assistant.service.assess (plan §21.3)
     HYPOTHESES = "hypotheses"  # core.hypotheses.service.assess_candidate (plan §21.4)
     COPILOT = "copilot"  # core.copilot.service.ask (plan §21.5)
+    ATTACK_PATH = "attack_path"  # core.attackpath.narrative (plan §21.6)
 
 
 class Backend(str, Enum):
