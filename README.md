@@ -238,6 +238,16 @@ A 20-payload adversarial corpus run against the real fix/triage/copilot pipeline
 pull request, proving contracts and scoping hold even against a worst-case compliant model. See
 [docs/redteam.md](docs/redteam.md).
 
+## Sandbox runtimes and egress denial
+
+Which kernel enforces a scanner container's isolation is now a `SandboxRuntime` choice, not a code
+change -- Docker (`runc`) in production today, a gVisor backend written and argv-tested but never
+yet executed (no Linux dev host). The fix-verification agent's test-execution sandbox denies egress
+to the cloud metadata range and internal networks by default, applied from outside the target
+container so it works regardless of the target's own image. See
+[docs/sandbox-runtimes.md](docs/sandbox-runtimes.md), including what is not yet done and the runbook
+for closing that gap on a real Linux host.
+
 ## SBOM, signing and provenance
 
 `bulwark sbom` writes a CycloneDX SBOM (Syft); `bulwark attest` signs reports with cosign and attests which scanner

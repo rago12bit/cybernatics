@@ -6,6 +6,19 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 ## [Unreleased]
 
 ### Added
+- **SandboxRuntime interface, a gvisor backend, and egress denial for fix verification (Week 46,
+  plan §22.1, ADR-0031):** `core/sandbox/` introduces a `SandboxRuntime` protocol so the OCI runtime
+  a scanner container runs under is a configuration choice, not a call-site change; `core.runner`
+  defaults to the existing `DockerRuntime` (a pure refactor, full suite unchanged) with a `gvisor`
+  backend written and argv-tested alongside it, though never yet executed -- `runsc` has no macOS
+  build and no Linux dev host exists for this project yet. `core/fixagent/sandbox.py`'s
+  test-execution sandbox now denies egress to the cloud metadata range and RFC1918 networks by
+  default, applied by a purpose-built sidecar (`docker/egress-sidecar`) joined to the target's
+  network namespace rather than from inside its own arbitrary image. Live-tested against real
+  Docker, catching two real bugs first: a blanket RFC1918 deny broke DNS resolution (Docker's own
+  embedded resolver lives in that range), and an unmirrored IPv6 allow let traffic bypass every IPv4
+  deny rule. Firecracker itself, and a real Linux host to run any of this on for real, are explicitly
+  deferred -- see `docs/sandbox-runtimes.md` for the honest gap and the runbook to close it.
 - **Attack paths, threat model draft, and an LLM red-team suite (Week 45, plan §21.6/§21.7/§21.9,
   ADR-0030):** a ranked attack-path graph chains an asset's own open issues into a narrative from
   entry point to impact -- one rule is call-graph-verified (SSRF reachability), two are disclosed
