@@ -28,6 +28,10 @@ x-app-env: &app-env
   BULWARK_GITHUB_APP_ID: ${BULWARK_GITHUB_APP_ID:-}
   BULWARK_GITHUB_APP_PRIVATE_KEY: ${BULWARK_GITHUB_APP_PRIVATE_KEY:-}
   BULWARK_GITHUB_WEBHOOK_SECRET: ${BULWARK_GITHUB_WEBHOOK_SECRET:-}
+  # Envelope encryption (Week 47, plan §22.2): dev-mode OpenBao, see the `openbao` service below.
+  # Unset in production env files; a real deployment points these at a real, unsealed OpenBao.
+  BULWARK_OPENBAO_ADDR: http://openbao:8200
+  BULWARK_OPENBAO_TOKEN: ${BULWARK_OPENBAO_TOKEN:?run scripts/init-env.sh}
 
 x-app: &app
   build: { context: ., dockerfile: docker/app/Dockerfile }
@@ -67,6 +71,21 @@ services:
     volumes: [objectdata:/data]
     healthcheck:
       test: ["CMD-SHELL", "curl -sf -o /dev/null http://localhost:9000/health || curl -s -o /dev/null http://localhost:9000/"]
+      interval: 3s
+      retries: 20
+    restart: unless-stopped
+
+  # Envelope encryption's key-encryption keys (Week 47, plan §22.2, ADR-0032). Dev mode ONLY: it
+  # auto-unseals with a single, fixed root token and keeps everything in memory (nothing survives a
+  # restart) -- exactly wrong for production, exactly right for local dev, where losing every KEK on
+  # `docker compose down` is a non-issue. A real deployment runs OpenBao unsealed and persistent,
+  # never with BAO_DEV_ROOT_TOKEN_ID.
+  openbao:
+    image: openbao/openbao:2.1
+    environment:
+      BAO_DEV_ROOT_TOKEN_ID: ${BULWARK_OPENBAO_TOKEN:?run scripts/init-env.sh}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8200/v1/sys/health || exit 1"]
       interval: 3s
       retries: 20
     restart: unless-stopped
@@ -120,6 +139,7 @@ services:
       migrate: { condition: service_completed_successfully }
       redis: { condition: service_healthy }
       objectstore: { condition: service_healthy }
+      openbao: { condition: service_healthy }
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://localhost:8000/healthz')"]
       interval: 5s
@@ -140,6 +160,7 @@ services:
       migrate: { condition: service_completed_successfully }
       redis: { condition: service_healthy }
       objectstore: { condition: service_healthy }
+      openbao: { condition: service_healthy }
       socket-proxy: { condition: service_started }
 
   # ---- optional: the verified-fix agent (docker compose --profile fixagent up -d) --------------

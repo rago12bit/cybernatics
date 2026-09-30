@@ -13,6 +13,7 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
+    LargeBinary,
     String,
     Text,
     UniqueConstraint,
@@ -518,3 +519,21 @@ class ThreatModelRow(Base):
     source: Mapped[str] = mapped_column(String(16))  # "generated" | "edited"
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
     updated_by: Mapped[str | None] = mapped_column(String(200), nullable=True)
+
+
+class ScanDataKeyRow(Base):
+    """A scan's envelope-encryption data key, wrapped by its organization's OpenBao KEK (Week 47
+    task 1, plan §22.2, ADR-0032). `wrapped_dek` is OpenBao's own ciphertext string, encoded to
+    bytes (core.secrets.openbao.encode_wrapped_key) -- the plaintext data key is never persisted
+    anywhere, only held in memory for the duration of one encrypt/decrypt call. Deleting this row
+    is Week 47 task 2's crypto-shredding: without it, every object encrypted under this key is
+    permanently unreadable, backups included."""
+
+    __tablename__ = "scan_data_keys"
+
+    scan_id: Mapped[str] = mapped_column(
+        ForeignKey("scans.id", ondelete="CASCADE"), primary_key=True
+    )
+    org_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"), index=True)
+    wrapped_dek: Mapped[bytes] = mapped_column(LargeBinary)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)

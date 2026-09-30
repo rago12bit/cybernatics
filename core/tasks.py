@@ -95,14 +95,23 @@ def run_scan_task(self: Any, scan_id: str, org_id: str | None = None) -> str:
     from core.config import Settings
     from core.events import RedisPublisher
     from core.persistence.db import get_session_factory
-    from core.persistence.storage import S3Store
+    from core.persistence.storage import build_object_store
     from core.pipeline import run_scan_job
+    from core.tenancy import scoped_sessions
 
     settings = Settings.from_env()
+    session_factory = get_session_factory()
+    # scan_data_keys has the same direct-org_id RLS as verified_fix_runs (migration 0018):
+    # build_object_store's own repo calls need app.current_org set, same as everything else
+    # run_scan_job does under this org, so this scopes the factory itself rather than adding a
+    # second, separate scoping path.
+    store_sessions = (
+        scoped_sessions(session_factory, org_id) if org_id is not None else session_factory
+    )
     return run_scan_job(
         scan_id,
-        get_session_factory(),
-        S3Store(settings),
+        session_factory,
+        build_object_store(settings, store_sessions, org_id),
         RedisPublisher(settings.redis_url),
         org_id=org_id,
     )

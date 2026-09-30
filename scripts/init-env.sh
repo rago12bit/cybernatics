@@ -15,6 +15,10 @@ APP_DB_PASSWORD=$(rand)
 S3_ACCESS_KEY=bulwark
 S3_SECRET_KEY=$(rand)
 BULWARK_API_TOKEN=$(rand)
+# OpenBao's dev-mode root token (Week 47, plan §22.2): fine for local dev, where OpenBao auto-unseals
+# and this token is already root -- production must never run OpenBao in dev mode or use a token
+# generated this way (see docs/data-protection.md).
+BULWARK_OPENBAO_TOKEN=$(rand)
 # Must be a path shared with the Docker host (scanner containers bind-mount from it).
 BULWARK_WORKDIR=$WORKDIR
 EOF

@@ -36,6 +36,7 @@ from core.persistence.models import (
     IssueRow,
     Organization,
     Scan,
+    ScanDataKeyRow,
     ThreatModelRow,
     ToolRun,
 )
@@ -1341,3 +1342,34 @@ def save_threat_model(
     s.commit()
     s.refresh(row)
     return row
+
+
+def get_scan_data_key(s: Session, scan_id: str) -> ScanDataKeyRow | None:
+    """None means either no data key was ever minted for this scan, or it was crypto-shredded
+    (Week 47 task 2) -- callers cannot tell which from this alone, by design: both mean 'this
+    scan's encrypted artifacts can no longer be decrypted'."""
+    return s.get(ScanDataKeyRow, scan_id)
+
+
+def save_scan_data_key(s: Session, scan_id: str, org_id: str, wrapped_dek: bytes) -> ScanDataKeyRow:
+    """Called once per scan, the first time something needs to encrypt data for it -- a scan's data
+    key never changes after that (encrypting more objects for the same scan reuses it), so this
+    does not overwrite an existing row; call get_scan_data_key first if a caller needs to know
+    whether one already exists."""
+    row = ScanDataKeyRow(scan_id=scan_id, org_id=org_id, wrapped_dek=wrapped_dek)
+    s.add(row)
+    s.commit()
+    s.refresh(row)
+    return row
+
+
+def delete_scan_data_key(s: Session, scan_id: str) -> bool:
+    """Crypto-shredding (Week 47 task 2, plan §22.2): destroys the scan's data key, making every
+    object encrypted under it permanently unreadable, backups included -- the ciphertext itself is
+    never touched by this call. Returns whether a row actually existed to delete."""
+    row = s.get(ScanDataKeyRow, scan_id)
+    if row is None:
+        return False
+    s.delete(row)
+    s.commit()
+    return True

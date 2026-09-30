@@ -28,6 +28,12 @@ class Settings:
         ""  # PEM; `\n` escapes are unescaped, since most secret stores flatten them
     )
     github_webhook_secret: str = ""
+    # Envelope encryption (Week 47, plan §22.2, ADR-0032). Both empty by default: callers that need
+    # a core.secrets.openbao.OpenBaoClient construct it explicitly and get a clear error at the
+    # point of use if these are unset, the same "off means off, not a silent no-op" posture as the
+    # GitHub App integration above.
+    openbao_addr: str = ""
+    openbao_token: str = ""
 
     @staticmethod
     def from_env() -> Settings:
@@ -53,6 +59,8 @@ class Settings:
                 "\\n", "\n"
             ),
             github_webhook_secret=os.environ.get("BULWARK_GITHUB_WEBHOOK_SECRET", ""),
+            openbao_addr=os.environ.get("BULWARK_OPENBAO_ADDR", ""),
+            openbao_token=os.environ.get("BULWARK_OPENBAO_TOKEN", ""),
         )
 
 

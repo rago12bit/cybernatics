@@ -152,7 +152,9 @@ jobs:
       - name: Cross-tenant leak test, connected as bulwark_app -- exactly like the real API
         env:
           BULWARK_RLS_TEST_DATABASE_URL: postgresql+psycopg://bulwark_app:ci-app-password@localhost:5432/bulwark
-        run: pytest tests/integration/test_tenancy_rls_docker.py --no-cov
+        run: >-
+          pytest tests/integration/test_tenancy_rls_docker.py
+          tests/integration/test_data_protection_rls_docker.py --no-cov
 
   licenses:
     # Regenerates THIRD_PARTY_LICENSES.md (kept as an artifact) and fails on an unknown or denied license.
