@@ -48,6 +48,20 @@ def test_compressed_size_limit(tmp_path: Path) -> None:
         extract_archive(z, tmp_path / "out", Limits(max_compressed_bytes=10))
 
 
+def test_path_depth_limit(tmp_path: Path) -> None:
+    deep_name = "/".join(f"d{i}" for i in range(10)) + "/f.txt"
+    z = make_zip(tmp_path / "deep.zip", {deep_name: b"x"})
+    with pytest.raises(IngestError, match="path depth"):
+        extract_archive(z, tmp_path / "out", Limits(max_depth=5))
+
+
+def test_path_depth_within_limit_is_extracted(tmp_path: Path) -> None:
+    name = "a/b/c/f.txt"
+    z = make_zip(tmp_path / "shallow.zip", {name: b"x"})
+    out = extract_archive(z, tmp_path / "out", Limits(max_depth=5))
+    assert (out / name).read_bytes() == b"x"
+
+
 def test_zip_symlink_rejected(tmp_path: Path) -> None:
     p = tmp_path / "link.zip"
     with zipfile.ZipFile(p, "w") as zf:

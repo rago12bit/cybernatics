@@ -43,13 +43,23 @@ describe("proxy (Week 48 task 2, plan §22.3: headers a real ZAP baseline scan c
     expect(csp).toContain("style-src 'self' 'unsafe-inline'");
   });
 
-  it("only sets HSTS for the public demo-only build", () => {
+  it("sets HSTS for the public demo-only build (always real HTTPS on Fly.io)", () => {
     vi.stubEnv("NODE_ENV", "production");
     vi.stubEnv("NEXT_PUBLIC_DEMO_ONLY", "1");
     expect(proxy(req()).headers.get("Strict-Transport-Security")).toContain("max-age=");
+  });
 
+  it("does not set HSTS by default for a self-hosted deployment (may not be behind TLS at all)", () => {
+    vi.stubEnv("NODE_ENV", "production");
     vi.stubEnv("NEXT_PUBLIC_DEMO_ONLY", "0");
     expect(proxy(req()).headers.get("Strict-Transport-Security")).toBeNull();
+  });
+
+  it("sets HSTS for a self-hosted deployment that opts in with BULWARK_FORCE_HTTPS", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("NEXT_PUBLIC_DEMO_ONLY", "0");
+    vi.stubEnv("BULWARK_FORCE_HTTPS", "1");
+    expect(proxy(req()).headers.get("Strict-Transport-Security")).toContain("max-age=");
   });
 
   it("generates a fresh nonce on every request", () => {

@@ -23,12 +23,16 @@ class Limits:
     max_uncompressed_bytes: int = 500 * 1024 * 1024
     max_files: int = 20_000
     max_ratio: float = 100.0  # uncompressed / compressed
+    max_depth: int = 64  # directory components in one entry's path
 
 
-def _safe_dest(root: Path, name: str) -> Path:
+def _safe_dest(root: Path, name: str, limits: Limits) -> Path:
     """Resolve an entry name under root; reject anything that escapes it."""
     if name.startswith(("/", "\\")) or "\x00" in name:
         raise IngestError(f"unsafe entry name: {name!r}")
+    depth = len(Path(name).parts)
+    if depth > limits.max_depth:
+        raise IngestError(f"entry exceeds max path depth ({depth} > {limits.max_depth}): {name!r}")
     dest = (root / name).resolve()
     if dest != root and root not in dest.parents:
         raise IngestError(f"path traversal in entry: {name!r}")
@@ -72,7 +76,7 @@ def _extract_zip(archive: Path, root: Path, compressed: int, limits: Limits) -> 
             mode = info.external_attr >> 16
             if stat.S_ISLNK(mode):
                 raise IngestError(f"symlink entries are not allowed: {info.filename!r}")
-            target = _safe_dest(root, info.filename)
+            target = _safe_dest(root, info.filename, limits)
             if info.is_dir():
                 target.mkdir(parents=True, exist_ok=True)
                 continue
@@ -92,7 +96,7 @@ def _extract_tar(archive: Path, root: Path, compressed: int, limits: Limits) -> 
         for m in members:
             if m.issym() or m.islnk() or m.isdev() or m.isfifo():
                 raise IngestError(f"links and special files are not allowed: {m.name!r}")
-            target = _safe_dest(root, m.name)
+            target = _safe_dest(root, m.name, limits)
             if m.isdir():
                 target.mkdir(parents=True, exist_ok=True)
                 continue

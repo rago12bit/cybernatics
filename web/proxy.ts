@@ -42,7 +42,16 @@ export function proxy(request: NextRequest) {
   // Consistent with the CSP's frame-ancestors 'none' above: this app never expects to be embedded
   // by, or share its resources with, another origin.
   response.headers.set("Cross-Origin-Resource-Policy", "same-origin");
-  if (demoOnly) response.headers.set("Strict-Transport-Security", "max-age=63072000; includeSubDomains");
+  // HSTS is opt-in, not tied to NODE_ENV=production alone (Week 48 task 3, plan §22.3: found
+  // during an ASVS V9 self-review): a self-hosted deployment behind plain HTTP, with no TLS
+  // termination anywhere, would have every browser refuse to reconnect at all once it received
+  // this header -- forcing it on by default for "production" would break exactly the self-hosted
+  // path README.md documents. The demo build (a real Fly.io deployment, always HTTPS) sets it
+  // unconditionally; anyone else terminating real TLS in front of their own deployment opts in
+  // explicitly with BULWARK_FORCE_HTTPS=1.
+  if (demoOnly || process.env.BULWARK_FORCE_HTTPS === "1") {
+    response.headers.set("Strict-Transport-Security", "max-age=63072000; includeSubDomains");
+  }
   return response;
 }
 

@@ -322,8 +322,8 @@ npm test && npm run typecheck && npm run build
 
 ## Contributing and security
 
-See [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md), the [threat model](docs/THREAT-MODEL.md)
-and the [CHANGELOG](CHANGELOG.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md), the [threat model](docs/THREAT-MODEL.md),
+the [OWASP ASVS Level 2 self-assessment](docs/ASVS-SELF-ASSESSMENT.md), and the [CHANGELOG](CHANGELOG.md).
 
 ## Commit convention
 

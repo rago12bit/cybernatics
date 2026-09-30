@@ -1,0 +1,35 @@
+# Automated dependency updates for Bulwark's own supply chain (Week 48 task 3, plan §22.3, ASVS
+# V10 Malicious Code -- the platform scans other projects' dependencies but had no automated update
+# process for its own, found during an ASVS self-review). Weekly, grouped, to avoid a flood of
+# individual PRs; scripts/gen-licenses.py's own policy check still runs on every PR regardless of
+# what triggered it.
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      python-dependencies:
+        patterns: ["*"]
+
+  - package-ecosystem: "npm"
+    directory: "/web"
+    schedule:
+      interval: "weekly"
+    groups:
+      web-dependencies:
+        patterns: ["*"]
+
+  - package-ecosystem: "npm"
+    directory: "/extensions/vscode"
+    schedule:
+      interval: "weekly"
+    groups:
+      vscode-extension-dependencies:
+        patterns: ["*"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"

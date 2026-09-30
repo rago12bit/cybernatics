@@ -225,6 +225,35 @@ jobs:
           name: third-party-licenses
           path: ${{ runner.temp }}/THIRD_PARTY_LICENSES.md
 
+  dependency-audit:
+    # Known-vulnerability scanning of Bulwark's OWN dependencies (Week 48 task 3, plan §22.3, ASVS
+    # V10): the platform scans other projects' dependencies for CVEs but had no equivalent check on
+    # its own until this -- found during an ASVS self-review, alongside .github/dependabot.yml for
+    # the update side of the same gap. Live-verified against this exact dependency set before being
+    # written here: the two Python findings reproduced locally were the dev venv's own stale
+    # bundled pip/setuptools, not a real project dependency -- confirmed by upgrading them and
+    # re-running (0 findings), so that upgrade is an explicit step here rather than trusting
+    # whatever pip version happens to ship with actions/setup-python. `--desc off` keeps output short.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install --upgrade pip setuptools
+      - run: pip install -e ".[dev,llm,otel]" # matches the licenses job's own extras choice above
+      - run: pip install pip-audit
+      - run: pip-audit --desc off
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - working-directory: web
+        run: npm ci
+      - working-directory: web
+        run: npm audit --omit=dev
+
   commitlint:
     # Conventional Commits (design doc §11.2): the CHANGELOG and versioning are generated from these.
     if: github.event_name == 'pull_request'
