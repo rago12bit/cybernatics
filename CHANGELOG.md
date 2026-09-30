@@ -6,6 +6,39 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 ## [Unreleased]
 
 ### Added
+- **Security copilot (Week 44, plan §21.5, ADR-0029):** tool-grounded chat about one project.
+  `core/embeddings/` chunks a checkout at function granularity off `core.codeintel`'s real parsers
+  and embeds with the remediation knowledge base's own model-free `HashingEmbedder` (ADR-009) rather
+  than adding a new embedding capability to the LLM gateway — checked first: no `LLMClient`
+  implementation can embed today. New `code_chunks`/`code_chunk_indexes` tables (migration `0015`,
+  RLS via `assets`); the pgvector/JSON column type was extracted from `core.rag.store` into
+  `core.persistence.vector_type` so both tables share one implementation. `core/copilot/` reuses
+  `core.fixagent.agent.propose_patch`'s tool-calling loop shape (bounded turns, native tool use,
+  hosted-only per ADR-0027): five read-only tools (`query_issues`/`compare_scans` wrap the existing
+  issues-table/scan-comparison repo functions, not new logic) plus a terminal `give_answer` tool
+  whose citations are checked against real issue ids and files before an answer is ever returned
+  (`core/copilot/contract.py`) — an invalid citation is rejected and retried, proven end to end
+  against a fake client. Retrieval is automatic pre-loop grounding, not a sixth tool, matching the
+  plan's own separate treatment of the two mechanisms. `core/copilot/session.CheckoutCache` clones
+  an asset's latest scan once per conversation and reuses it for later messages (idle-TTL eviction,
+  a per-conversation lock preventing two concurrent first-messages from double-cloning — proven with
+  a real multi-threaded test). New `copilot_conversations`/`copilot_messages` tables (migration
+  `0016`); the message table's RLS is a two-hop `EXISTS` through the conversation into `assets`,
+  verified live and separately from the simpler one-hop case. Three endpoints
+  (`POST .../copilot/conversations`, `POST .../conversations/{id}/messages`,
+  `GET .../conversations/{id}/messages`) and a slide-in `CopilotPanel`, mounted on the issue detail
+  and project overview pages — issue citations are real links, code citations render as plain text
+  (this frontend has no jump-to-line view yet). A local backend routed to the copilot is rejected
+  with a `409` rather than crashing (tool-calling stays hosted-only). 56 new backend tests (1370
+  total, 93.0% coverage) and 6 new frontend tests (179 total); mypy/ruff/black and
+  `tsc --noEmit`/`next build` all clean; both migrations validated live (up/down/up, plus a real
+  cross-org RLS proof including the two-hop policy) on a disposable Postgres; the panel driven
+  through a real browser against a real, disposable API server on both pages it's mounted on. Honest
+  gaps (no live hosted-model run, no promptfoo suite for the tool-calling prompt — consistent with
+  `core/fixagent`'s own, no measurement against the plan's 100-question reference set, the
+  scan-comparison page's copilot context not wired up) disclosed in
+  `docs/v2-week44-verification.md`.
+
 - **Triage assistant and Hypotheses lane (Week 43, plan §21.3/§21.4, ADR-0028):** two related LLM
   features. The **triage assistant** reads one Issue's taint path and code and returns an advisory
   verdict (`likely_real`/`likely_false_positive`/`unsure` + rationale + supporting lines,

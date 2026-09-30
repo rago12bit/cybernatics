@@ -212,6 +212,13 @@ A separate, off-by-default tab for flaws pattern-based scanning can't express --
 missing the authorization check its siblings have. Never in the main issue list or the risk score
 until a person confirms one. See [docs/hypotheses-lane.md](docs/hypotheses-lane.md).
 
+## Security copilot
+
+Tool-grounded chat about one project -- issues, code, routes, scan history -- every answer citing real
+issue IDs or file:line, checked against what actually exists before it's ever shown. Retrieval reuses
+the remediation knowledge base's own model-free embedder, not a new gateway capability. See
+[docs/copilot.md](docs/copilot.md).
+
 ## SBOM, signing and provenance
 
 `bulwark sbom` writes a CycloneDX SBOM (Syft); `bulwark attest` signs reports with cosign and attests which scanner

@@ -15,6 +15,7 @@ import { useMode } from "@/design-system/mode";
 import { getIssueNavList } from "@/lib/issue-nav";
 import { VerifiedFixPanel } from "@/components/VerifiedFixPanel";
 import { TriageAssistantPanel } from "@/components/TriageAssistantPanel";
+import { CopilotPanel } from "@/components/CopilotPanel";
 import "./issue-detail.css";
 
 const isTyping = (t: EventTarget | null) => t instanceof HTMLElement && /^(INPUT|SELECT|TEXTAREA)$/.test(t.tagName);
@@ -243,6 +244,8 @@ export function IssueDetail({ assetId, issueId }: { assetId: string; issueId: st
           <Button variant="primary" disabled={!expiresAt || busy} onClick={() => runTriage("accepted")}>Confirm</Button>
         </div>
       </Dialog>
+
+      <CopilotPanel assetId={assetId} context={{ context_kind: "issue", context_id: issueId }} />
     </div>
   );
 }

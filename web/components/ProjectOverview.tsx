@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ApiError, getAssetOverview } from "@/lib/api";
+import { CopilotPanel } from "@/components/CopilotPanel";
 import type { ProjectOverview as ProjectOverviewData } from "@/lib/types";
 import { SeverityBadge } from "@/design-system/severity";
 import { WhyRankedTrigger } from "@/design-system/why-ranked";
@@ -153,6 +154,8 @@ export function ProjectOverview({ assetId }: { assetId: string }) {
       <div className="ds-ov-footnote">
         <Button onClick={() => window.location.reload()}>Refresh</Button>
       </div>
+
+      <CopilotPanel assetId={assetId} />
     </div>
   );
 }

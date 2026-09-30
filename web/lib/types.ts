@@ -355,3 +355,29 @@ export interface GenerateHypothesesResult {
   generated: number;
   hypotheses: Hypothesis[];
 }
+
+/** The security copilot (plan §21.5): tool-grounded chat about one project, every answer cited
+ * against real issues/code -- never shown until the citation checks out. */
+export interface Citation {
+  kind: "issue" | "code";
+  issue_id: string | null;
+  path: string | null;
+  line: number | null;
+}
+
+export interface CopilotMessage {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  citations: Citation[] | null;
+  created_at: string;
+}
+
+export interface CopilotConversation {
+  id: string;
+  asset_id: string;
+  context_kind: "issue" | "scan" | null;
+  context_id: string | null;
+  created_at: string;
+  last_message_at: string;
+}

@@ -1,4 +1,4 @@
-import type { AssetSummary, BulkTriageResult, DependenciesView, Finding, FindingsPage, FindingsQuery, GenerateHypothesesResult, Guidance, GuidanceApi, Hypothesis, IssueHistoryEvent, ProjectOverview, Remediation, ScanComparison, ScanSummary, ScanView, TriageAssistantView, TriageStatus, VerifiedFixStarted, VerifiedFixView } from "./types";
+import type { AssetSummary, BulkTriageResult, Citation, CopilotConversation, CopilotMessage, DependenciesView, Finding, FindingsPage, FindingsQuery, GenerateHypothesesResult, Guidance, GuidanceApi, Hypothesis, IssueHistoryEvent, ProjectOverview, Remediation, ScanComparison, ScanSummary, ScanView, TriageAssistantView, TriageStatus, VerifiedFixStarted, VerifiedFixView } from "./types";
 import { findingsQueryString } from "./format";
 
 export const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/$/, "");
@@ -272,4 +272,26 @@ export const dismissHypothesis = (assetId: string, hypothesisId: string) =>
   request<{ status: string }>(
     `/assets/${encodeURIComponent(assetId)}/hypotheses/${encodeURIComponent(hypothesisId)}/dismiss`,
     { method: "POST" },
+  );
+
+// The security copilot (plan §21.5): tool-grounded, cited chat about one project.
+export const startCopilotConversation = (
+  assetId: string,
+  context?: { context_kind: "issue" | "scan"; context_id: string },
+) =>
+  request<CopilotConversation>(`/assets/${encodeURIComponent(assetId)}/copilot/conversations`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(context ?? {}),
+  });
+
+export const postCopilotMessage = (assetId: string, conversationId: string, question: string) =>
+  request<CopilotMessage>(
+    `/assets/${encodeURIComponent(assetId)}/copilot/conversations/${encodeURIComponent(conversationId)}/messages`,
+    { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question }) },
+  );
+
+export const listCopilotMessages = (assetId: string, conversationId: string) =>
+  request<CopilotMessage[]>(
+    `/assets/${encodeURIComponent(assetId)}/copilot/conversations/${encodeURIComponent(conversationId)}/messages`,
   );

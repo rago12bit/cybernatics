@@ -1,0 +1,101 @@
+/* The security copilot's panel (plan §21.5/§28.6): "slides in from the right, keeps page
+   context." A plain fixed-position overlay (not the Dialog primitive, which uses the native
+   <dialog> element and its own modal backdrop -- this panel stays open alongside the page, not
+   over it). */
+
+.ds-copilot-trigger {
+  position: fixed;
+  right: var(--ds-space-3);
+  bottom: var(--ds-space-3);
+  z-index: 100;
+  padding: var(--ds-space-1) var(--ds-space-3);
+  border: 1px solid var(--ds-rule);
+  border-radius: var(--ds-radius-panel);
+  background: var(--ds-surface);
+  cursor: pointer;
+}
+
+.ds-copilot-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(380px, 100vw);
+  z-index: 101;
+  display: grid;
+  grid-template-rows: auto 1fr auto auto;
+  border-left: 1px solid var(--ds-rule);
+  background: var(--ds-surface);
+  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.12);
+}
+
+.ds-copilot-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--ds-space-2) var(--ds-space-3);
+  border-bottom: 1px solid var(--ds-rule);
+}
+.ds-copilot-title {
+  font-weight: 600;
+}
+.ds-copilot-close {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.ds-copilot-messages {
+  overflow-y: auto;
+  padding: var(--ds-space-3);
+  display: grid;
+  gap: var(--ds-space-2);
+  align-content: start;
+}
+
+.ds-copilot-msg p {
+  margin: 0;
+  white-space: pre-wrap;
+}
+.ds-copilot-msg-user {
+  justify-self: end;
+  max-width: 90%;
+  text-align: right;
+}
+.ds-copilot-msg-assistant {
+  justify-self: start;
+  max-width: 90%;
+}
+
+.ds-copilot-citations {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ds-space-1);
+  font-size: var(--ds-text-2);
+}
+.ds-copilot-citation {
+  color: var(--mint);
+}
+.ds-copilot-citation-code {
+  color: var(--ds-muted);
+  font-family: monospace;
+}
+
+.ds-copilot-error {
+  color: var(--sev-high);
+  font-size: var(--ds-text-2);
+  padding: 0 var(--ds-space-3);
+}
+
+.ds-copilot-input {
+  display: flex;
+  gap: var(--ds-space-1);
+  padding: var(--ds-space-2) var(--ds-space-3);
+  border-top: 1px solid var(--ds-rule);
+}
+.ds-copilot-input input {
+  flex: 1;
+  min-width: 0;
+}
