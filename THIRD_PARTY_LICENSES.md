@@ -11,6 +11,7 @@ inventory, not legal advice: check licenses that matter to you at the source.
 | checkov | Apache-2.0 | <https://github.com/bridgecrewio/checkov> | runs in a container |
 | cosign | Apache-2.0 | <https://github.com/sigstore/cosign> | signing, runs in a container |
 | dockle | Apache-2.0 | <https://github.com/goodwithtech/dockle> | runs in a container |
+| egress-sidecar | GPL-2.0-only (nftables) | <https://git.netfilter.org/nftables/> | Bulwark's own image (docker/egress-sidecar, Week 46 §22.1); runs nftables as a separate container process to police another container's network namespace, never linked into Bulwark's own code |
 | gitleaks | MIT | <https://github.com/gitleaks/gitleaks> | upstream image, runs in a container |
 | gosec | Apache-2.0 | <https://github.com/securego/gosec> | runs in a container |
 | grafana | AGPL-3.0-only | <https://github.com/grafana/grafana> | optional compose profile, run unmodified as a separate container; nothing links to it |

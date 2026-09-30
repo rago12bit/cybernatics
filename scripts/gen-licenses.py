@@ -52,6 +52,10 @@ TOOLS: dict[str, tuple[str, str, str]] = {
     "redis": ("BSD-3-Clause (pinned to 7.2)", "https://github.com/redis/redis",
               "container image; 7.4 and later are RSALv2/SSPLv1, so the tag is pinned (ADR-0011)"),
     "rustfs": ("Apache-2.0", "https://github.com/rustfs/rustfs", "container image (object store)"),
+    "egress-sidecar": ("GPL-2.0-only (nftables)", "https://git.netfilter.org/nftables/",
+                        "Bulwark's own image (docker/egress-sidecar, Week 46 §22.1); runs nftables "
+                        "as a separate container process to police another container's network "
+                        "namespace, never linked into Bulwark's own code"),
 }  # fmt: skip
 DATA: list[tuple[str, str, str]] = [
     (

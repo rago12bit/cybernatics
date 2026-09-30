@@ -244,6 +244,10 @@ services:
     profiles: [scanners]
     build: docker/syft
     image: bulwark/syft:1.52.0
+  egress-sidecar:
+    profiles: [scanners]
+    build: docker/egress-sidecar
+    image: bulwark/egress-sidecar:1
 
   # ---- optional: metrics, dashboard and traces (docker compose --profile observability up -d) ----
   prometheus:
