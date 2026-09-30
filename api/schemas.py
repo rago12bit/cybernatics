@@ -331,6 +331,33 @@ class AttackPathView(BaseModel):
     edges: list[AttackPathEdgeView]
 
 
+class StrideRowView(BaseModel):
+    element: str
+    element_kind: Literal["external_entity", "process", "data_store", "external_interactor"]
+    category: str
+    prompt: str
+
+
+class ThreatModelView(BaseModel):
+    """A project's threat-model draft (plan §21.7): a Mermaid data-flow diagram plus a STRIDE
+    table, generated from code intelligence -- a starting point for a person's own review, not an
+    assessment. `source` says whether the current content is the last generate output or a
+    person's own edit."""
+
+    asset_id: str
+    mermaid: str
+    stride: list[StrideRowView]
+    version: int
+    source: Literal["generated", "edited"]
+    updated_at: datetime
+    updated_by: str | None
+
+
+class SaveThreatModelRequest(BaseModel):
+    mermaid: str
+    stride: list[StrideRowView]
+
+
 class GenerateHypothesesResult(BaseModel):
     generated: int = Field(description="How many NEW hypotheses this run surfaced and stored.")
     hypotheses: list[HypothesisView]

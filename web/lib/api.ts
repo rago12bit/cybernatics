@@ -1,4 +1,5 @@
-import type { AssetSummary, AttackPath, BulkTriageResult, Citation, CopilotConversation, CopilotMessage, DependenciesView, Finding, FindingsPage, FindingsQuery, GenerateHypothesesResult, Guidance, GuidanceApi, Hypothesis, IssueHistoryEvent, ProjectOverview, Remediation, ScanComparison, ScanSummary, ScanView, TriageAssistantView, TriageStatus, VerifiedFixStarted, VerifiedFixView } from "./types";
+import type { AssetSummary, AttackPath, BulkTriageResult,
+  StrideRow, ThreatModel, Citation, CopilotConversation, CopilotMessage, DependenciesView, Finding, FindingsPage, FindingsQuery, GenerateHypothesesResult, Guidance, GuidanceApi, Hypothesis, IssueHistoryEvent, ProjectOverview, Remediation, ScanComparison, ScanSummary, ScanView, TriageAssistantView, TriageStatus, VerifiedFixStarted, VerifiedFixView } from "./types";
 import { findingsQueryString } from "./format";
 
 export const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/$/, "");
@@ -278,6 +279,22 @@ export const dismissHypothesis = (assetId: string, hypothesisId: string) =>
 // best-effort narrative on top when a model is configured server-side (never a hard requirement).
 export const listAttackPaths = (assetId: string) =>
   request<AttackPath[]>(`/assets/${encodeURIComponent(assetId)}/attack-paths`);
+
+// Threat model draft (plan §21.7): deterministic, no model call, auto-generated on first access.
+export const getThreatModel = (assetId: string) =>
+  request<ThreatModel>(`/assets/${encodeURIComponent(assetId)}/threat-model`);
+
+export const regenerateThreatModel = (assetId: string) =>
+  request<ThreatModel>(`/assets/${encodeURIComponent(assetId)}/threat-model/regenerate`, {
+    method: "POST",
+  });
+
+export const saveThreatModel = (assetId: string, mermaid: string, stride: StrideRow[]) =>
+  request<ThreatModel>(`/assets/${encodeURIComponent(assetId)}/threat-model`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ mermaid, stride }),
+  });
 
 // The security copilot (plan §21.5): tool-grounded, cited chat about one project.
 export const startCopilotConversation = (

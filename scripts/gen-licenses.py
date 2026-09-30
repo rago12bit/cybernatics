@@ -143,6 +143,16 @@ def python_closure(root_name: str = "bulwark-scan") -> dict[str, tuple[str, str]
     return dict(sorted(seen.items()))
 
 
+# Packages whose own package.json omits "license" (so package-lock.json has nothing to read),
+# verified by hand against the package's actual LICENSE file in node_modules -- npm's own metadata
+# gap, not an unknown or ambiguous license.
+NPM_LICENSE_OVERRIDES: dict[str, str] = {
+    # mermaid's color-math dependency (Week 45 threat-model draft); verified MIT text in
+    # node_modules/khroma/license, just never added to its package.json.
+    "khroma": "MIT",
+}
+
+
 def npm_packages(lock: Path) -> list[tuple[str, str, str, bool]]:
     """[(name, version, license, dev)] from a package-lock.json (v2/v3)."""
     out = []
@@ -152,6 +162,8 @@ def npm_packages(lock: Path) -> list[tuple[str, str, str, bool]]:
         name = p.get("name") or path.rsplit("node_modules/", 1)[-1]
         lic = p.get("license")
         lic = lic if isinstance(lic, str) else ("UNKNOWN" if not lic else str(lic))
+        if lic == "UNKNOWN" and name in NPM_LICENSE_OVERRIDES:
+            lic = NPM_LICENSE_OVERRIDES[name]
         out.append((name, p.get("version", ""), lic, bool(p.get("dev") or p.get("devOptional"))))
     return sorted(set(out))
 

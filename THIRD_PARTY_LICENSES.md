@@ -45,7 +45,7 @@ optional separate container.
 | CycloneDX 1.6 JSON schema | Apache-2.0 | test fixture (tests/fixtures/cyclonedx) |
 | SARIF 2.1.0 JSON schema | OASIS | test fixture (tests/fixtures) |
 
-## Python dependencies (80)
+## Python dependencies (85)
 
 | Package | Version | License |
 |---|---|---|
@@ -60,11 +60,13 @@ optional separate container.
 | boto3 | 1.43.101 | Apache-2.0 |
 | botocore | 1.43.101 | Apache-2.0 |
 | celery | 5.6.3 | BSD-3-Clause |
+| cffi | 2.1.1 | MIT-0 |
 | charset-normalizer | 3.5.1 | MIT |
 | click | 8.5.0 | BSD-3-Clause |
 | click-didyoumean | 0.3.1 | MIT |
 | click-plugins | 1.1.1.2 | New BSD |
 | click-repl | 0.4.0 | MIT |
+| cryptography | 50.0.1 | Apache-2.0 OR BSD-3-Clause |
 | docstring-parser | 0.18.0 | MIT |
 | exceptiongroup | 1.3.1 | MIT License |
 | fastapi | 0.141.1 | MIT |
@@ -96,9 +98,11 @@ optional separate container.
 | protobuf | 7.36.2 | 3-Clause BSD License |
 | psycopg | 3.3.6 | LGPL-3.0-only |
 | psycopg-binary | 3.3.6 | LGPL-3.0-only |
+| pycparser | 3.0 | BSD-3-Clause |
 | pydantic | 2.13.5 | MIT |
 | pydantic-core | 2.46.5 | MIT |
 | pygments | 2.21.0 | BSD-2-Clause |
+| pyjwt | 2.15.0 | MIT |
 | python-dateutil | 2.9.0.post0 | Dual License |
 | python-dotenv | 1.2.3 | BSD-3-Clause |
 | python-multipart | 0.0.32 | Apache-2.0 |
@@ -114,6 +118,7 @@ optional separate container.
 | starlette | 1.7.0 | BSD-3-Clause |
 | tomli | 2.4.1 | MIT |
 | tree-sitter | 0.26.0 | MIT License |
+| tree-sitter-go | 0.25.0 | MIT |
 | tree-sitter-javascript | 0.25.0 | MIT |
 | tree-sitter-typescript | 0.23.2 | MIT |
 | truststore | 0.10.4 | MIT |
@@ -130,13 +135,24 @@ optional separate container.
 | wcwidth | 0.9.1 | MIT License |
 | websockets | 16.1.1 | BSD-3-Clause |
 
-## npm dependencies: web app (53 runtime, 102 development)
+## npm dependencies: web app (259 runtime, 331 development)
 
-Runtime license summary: MIT 19, Apache-2.0 15, LGPL-3.0-or-later 10, Apache-2.0 AND LGPL-3.0-or-later 3, ISC 2, Apache-2.0 AND LGPL-3.0-or-later AND MIT 1, CC-BY-4.0 1, BSD-3-Clause 1, 0BSD 1
+Runtime license summary: MIT 180, ISC 35, Apache-2.0 17, LGPL-3.0-or-later 10, BSD-3-Clause 7, Apache-2.0 AND LGPL-3.0-or-later 3, OFL-1.1 2, Apache-2.0 AND LGPL-3.0-or-later AND MIT 1, CC-BY-4.0 1, (MPL-2.0 OR Apache-2.0) 1, Unlicense 1, 0BSD 1
 
 | Package | Version | License |
 |---|---|---|
+| @antfu/install-pkg | 2.1.0 | MIT |
+| @braintree/sanitize-url | 7.1.2 | MIT |
+| @chevrotain/types | 11.1.2 | Apache-2.0 |
 | @emnapi/runtime | 1.11.3 | MIT |
+| @floating-ui/core | 1.8.0 | MIT |
+| @floating-ui/dom | 1.8.0 | MIT |
+| @floating-ui/react-dom | 2.1.9 | MIT |
+| @floating-ui/utils | 0.2.12 | MIT |
+| @fontsource/ibm-plex-sans | 5.3.0 | OFL-1.1 |
+| @fontsource/jetbrains-mono | 5.3.0 | OFL-1.1 |
+| @iconify/types | 2.0.0 | MIT |
+| @iconify/utils | 3.1.7 | MIT |
 | @img/colour | 1.1.0 | MIT |
 | @img/sharp-darwin-arm64 | 0.35.4 | Apache-2.0 |
 | @img/sharp-darwin-x64 | 0.35.4 | Apache-2.0 |
@@ -164,6 +180,7 @@ Runtime license summary: MIT 19, Apache-2.0 15, LGPL-3.0-or-later 10, Apache-2.0
 | @img/sharp-win32-arm64 | 0.35.4 | Apache-2.0 AND LGPL-3.0-or-later |
 | @img/sharp-win32-ia32 | 0.35.4 | Apache-2.0 AND LGPL-3.0-or-later |
 | @img/sharp-win32-x64 | 0.35.4 | Apache-2.0 AND LGPL-3.0-or-later |
+| @mermaid-js/parser | 1.2.1 | MIT |
 | @next/env | 16.3.6 | MIT |
 | @next/swc-darwin-arm64 | 16.3.6 | MIT |
 | @next/swc-darwin-x64 | 16.3.6 | MIT |
@@ -173,22 +190,216 @@ Runtime license summary: MIT 19, Apache-2.0 15, LGPL-3.0-or-later 10, Apache-2.0
 | @next/swc-linux-x64-musl | 16.3.6 | MIT |
 | @next/swc-win32-arm64-msvc | 16.3.6 | MIT |
 | @next/swc-win32-x64-msvc | 16.3.6 | MIT |
+| @radix-ui/primitive | 1.1.7 | MIT |
+| @radix-ui/react-arrow | 1.1.15 | MIT |
+| @radix-ui/react-collection | 1.1.15 | MIT |
+| @radix-ui/react-compose-refs | 1.1.5 | MIT |
+| @radix-ui/react-context | 1.2.2 | MIT |
+| @radix-ui/react-dialog | 1.1.23 | MIT |
+| @radix-ui/react-direction | 1.1.4 | MIT |
+| @radix-ui/react-dismissable-layer | 1.1.19 | MIT |
+| @radix-ui/react-dropdown-menu | 2.1.24 | MIT |
+| @radix-ui/react-focus-guards | 1.1.6 | MIT |
+| @radix-ui/react-focus-scope | 1.1.16 | MIT |
+| @radix-ui/react-id | 1.1.4 | MIT |
+| @radix-ui/react-menu | 2.1.24 | MIT |
+| @radix-ui/react-popper | 1.3.7 | MIT |
+| @radix-ui/react-portal | 1.1.17 | MIT |
+| @radix-ui/react-presence | 1.1.10 | MIT |
+| @radix-ui/react-primitive | 2.1.10 | MIT |
+| @radix-ui/react-roving-focus | 1.1.19 | MIT |
+| @radix-ui/react-slot | 1.3.3 | MIT |
+| @radix-ui/react-tabs | 1.1.21 | MIT |
+| @radix-ui/react-tooltip | 1.2.16 | MIT |
+| @radix-ui/react-use-callback-ref | 1.1.4 | MIT |
+| @radix-ui/react-use-controllable-state | 1.2.6 | MIT |
+| @radix-ui/react-use-effect-event | 0.0.5 | MIT |
+| @radix-ui/react-use-is-hydrated | 0.1.3 | MIT |
+| @radix-ui/react-use-layout-effect | 1.1.4 | MIT |
+| @radix-ui/react-use-rect | 1.1.4 | MIT |
+| @radix-ui/react-use-size | 1.1.4 | MIT |
+| @radix-ui/react-visually-hidden | 1.2.11 | MIT |
+| @radix-ui/rect | 1.1.3 | MIT |
+| @shikijs/core | 4.4.3 | MIT |
+| @shikijs/engine-javascript | 4.4.3 | MIT |
+| @shikijs/engine-oniguruma | 4.4.3 | MIT |
+| @shikijs/langs | 4.4.3 | MIT |
+| @shikijs/primitive | 4.4.3 | MIT |
+| @shikijs/themes | 4.4.3 | MIT |
+| @shikijs/types | 4.4.3 | MIT |
+| @shikijs/vscode-textmate | 10.0.2 | MIT |
 | @swc/helpers | 0.5.23 | Apache-2.0 |
+| @tanstack/react-table | 8.21.3 | MIT |
+| @tanstack/react-virtual | 3.14.13 | MIT |
+| @tanstack/table-core | 8.21.3 | MIT |
+| @tanstack/virtual-core | 3.17.11 | MIT |
+| @types/d3 | 7.4.3 | MIT |
+| @types/d3-array | 3.2.2 | MIT |
+| @types/d3-axis | 3.0.6 | MIT |
+| @types/d3-brush | 3.0.6 | MIT |
+| @types/d3-chord | 3.0.6 | MIT |
+| @types/d3-color | 3.1.3 | MIT |
+| @types/d3-contour | 3.0.6 | MIT |
+| @types/d3-delaunay | 6.0.4 | MIT |
+| @types/d3-dispatch | 3.0.7 | MIT |
+| @types/d3-drag | 3.0.7 | MIT |
+| @types/d3-dsv | 3.0.7 | MIT |
+| @types/d3-ease | 3.0.2 | MIT |
+| @types/d3-fetch | 3.0.7 | MIT |
+| @types/d3-force | 3.0.10 | MIT |
+| @types/d3-format | 3.0.4 | MIT |
+| @types/d3-geo | 3.1.1 | MIT |
+| @types/d3-hierarchy | 3.1.7 | MIT |
+| @types/d3-interpolate | 3.0.4 | MIT |
+| @types/d3-path | 3.1.1 | MIT |
+| @types/d3-polygon | 3.0.2 | MIT |
+| @types/d3-quadtree | 3.0.6 | MIT |
+| @types/d3-random | 3.0.4 | MIT |
+| @types/d3-scale | 4.0.9 | MIT |
+| @types/d3-scale-chromatic | 3.1.0 | MIT |
+| @types/d3-selection | 3.0.12 | MIT |
+| @types/d3-shape | 3.2.0 | MIT |
+| @types/d3-time | 3.0.4 | MIT |
+| @types/d3-time-format | 4.0.3 | MIT |
+| @types/d3-timer | 3.0.2 | MIT |
+| @types/d3-transition | 3.0.9 | MIT |
+| @types/d3-zoom | 3.0.9 | MIT |
+| @types/geojson | 7946.0.16 | MIT |
+| @types/hast | 3.0.5 | MIT |
+| @types/mdast | 4.0.4 | MIT |
+| @types/trusted-types | 2.0.7 | MIT |
+| @types/unist | 3.0.3 | MIT |
+| @ungap/structured-clone | 1.4.0 | ISC |
+| @upsetjs/venn.js | 2.0.0 | MIT |
+| aria-hidden | 1.2.6 | MIT |
 | baseline-browser-mapping | 2.11.26 | Apache-2.0 |
 | caniuse-lite | 1.0.30001812 | CC-BY-4.0 |
+| ccount | 2.0.1 | MIT |
+| character-entities-html4 | 2.1.0 | MIT |
+| character-entities-legacy | 3.0.0 | MIT |
 | client-only | 0.0.1 | MIT |
+| comma-separated-tokens | 2.0.3 | MIT |
+| commander | 7.2.0 | MIT |
+| commander | 8.3.0 | MIT |
+| cose-base | 1.0.3 | MIT |
+| cose-base | 2.2.0 | MIT |
+| cytoscape | 3.34.3 | MIT |
+| cytoscape-cose-bilkent | 4.1.0 | MIT |
+| cytoscape-fcose | 2.2.0 | MIT |
+| d3 | 7.9.0 | ISC |
+| d3-array | 2.12.1 | BSD-3-Clause |
+| d3-array | 3.2.4 | ISC |
+| d3-axis | 3.0.0 | ISC |
+| d3-brush | 3.0.0 | ISC |
+| d3-chord | 3.0.1 | ISC |
+| d3-color | 3.1.0 | ISC |
+| d3-contour | 4.0.2 | ISC |
+| d3-delaunay | 6.0.4 | ISC |
+| d3-dispatch | 3.0.1 | ISC |
+| d3-drag | 3.0.0 | ISC |
+| d3-dsv | 3.0.1 | ISC |
+| d3-ease | 3.0.1 | BSD-3-Clause |
+| d3-fetch | 3.0.1 | ISC |
+| d3-force | 3.0.0 | ISC |
+| d3-format | 3.1.2 | ISC |
+| d3-geo | 3.1.1 | ISC |
+| d3-hierarchy | 3.1.2 | ISC |
+| d3-interpolate | 3.0.1 | ISC |
+| d3-path | 1.0.9 | BSD-3-Clause |
+| d3-path | 3.1.0 | ISC |
+| d3-polygon | 3.0.1 | ISC |
+| d3-quadtree | 3.0.1 | ISC |
+| d3-random | 3.0.1 | ISC |
+| d3-sankey | 0.12.3 | BSD-3-Clause |
+| d3-scale | 4.0.2 | ISC |
+| d3-scale-chromatic | 3.1.0 | ISC |
+| d3-selection | 3.0.0 | ISC |
+| d3-shape | 1.3.7 | BSD-3-Clause |
+| d3-shape | 3.2.0 | ISC |
+| d3-time | 3.1.0 | ISC |
+| d3-time-format | 4.1.0 | ISC |
+| d3-timer | 3.0.1 | ISC |
+| d3-transition | 3.0.1 | ISC |
+| d3-zoom | 3.0.0 | ISC |
+| dagre-d3-es | 7.0.14 | MIT |
+| dayjs | 1.11.23 | MIT |
+| delaunator | 5.1.0 | ISC |
+| dequal | 2.0.3 | MIT |
+| detect-libc | 2.1.2 | Apache-2.0 |
+| detect-node-es | 1.1.0 | MIT |
+| devlop | 1.1.0 | MIT |
+| dompurify | 3.4.16 | (MPL-2.0 OR Apache-2.0) |
+| es-toolkit | 1.52.0 | MIT |
+| fastdom | 1.0.12 | MIT |
+| get-nonce | 1.0.1 | MIT |
+| hachure-fill | 0.5.2 | MIT |
+| hast-util-to-html | 9.0.5 | MIT |
+| hast-util-whitespace | 3.0.0 | MIT |
+| html-void-elements | 3.0.0 | MIT |
+| iconv-lite | 0.6.3 | MIT |
+| import-meta-resolve | 4.2.0 | MIT |
+| internmap | 1.0.1 | ISC |
+| internmap | 2.0.3 | ISC |
+| katex | 0.16.47 | MIT |
+| khroma | 2.1.0 | MIT |
+| layout-base | 1.0.2 | MIT |
+| layout-base | 2.0.1 | MIT |
+| lodash-es | 4.18.1 | MIT |
+| marked | 16.4.2 | MIT |
+| mdast-util-to-hast | 13.2.1 | MIT |
+| mermaid | 11.17.2 | MIT |
+| micromark-util-character | 2.1.1 | MIT |
+| micromark-util-encode | 2.0.1 | MIT |
+| micromark-util-sanitize-uri | 2.0.1 | MIT |
+| micromark-util-symbol | 2.0.1 | MIT |
+| micromark-util-types | 2.0.3 | MIT |
 | nanoid | 3.3.19 | MIT |
 | next | 16.3.6 | MIT |
+| oniguruma-parser | 0.12.2 | MIT |
+| oniguruma-to-es | 4.3.6 | MIT |
+| package-manager-detector | 1.8.0 | MIT |
+| path-data-parser | 0.1.0 | MIT |
 | picocolors | 1.1.1 | ISC |
+| points-on-curve | 0.2.0 | MIT |
+| points-on-path | 0.2.1 | MIT |
 | postcss | 8.5.23 | MIT |
+| property-information | 7.2.0 | MIT |
 | react | 19.3.0 | MIT |
 | react-dom | 19.3.0 | MIT |
+| react-remove-scroll | 2.7.2 | MIT |
+| react-remove-scroll-bar | 2.3.8 | MIT |
+| react-style-singleton | 2.2.3 | MIT |
+| regex | 6.1.0 | MIT |
+| regex-recursion | 6.0.2 | MIT |
+| regex-utilities | 2.3.0 | MIT |
+| robust-predicates | 3.0.3 | Unlicense |
+| roughjs | 4.6.6 | MIT |
+| rw | 1.3.3 | BSD-3-Clause |
+| safer-buffer | 2.1.2 | MIT |
 | scheduler | 0.28.0 | MIT |
-| semver | 7.8.5 | ISC |
 | sharp | 0.35.4 | Apache-2.0 |
+| shiki | 4.4.3 | MIT |
 | source-map-js | 1.2.1 | BSD-3-Clause |
+| space-separated-tokens | 2.0.2 | MIT |
+| strictdom | 1.0.1 | MIT |
+| stringify-entities | 4.0.4 | MIT |
 | styled-jsx | 5.1.6 | MIT |
+| stylis | 4.4.0 | MIT |
+| tinyexec | 1.3.1 | MIT |
+| trim-lines | 3.0.1 | MIT |
+| ts-dedent | 2.3.0 | MIT |
 | tslib | 2.8.1 | 0BSD |
+| unist-util-is | 6.0.1 | MIT |
+| unist-util-position | 5.0.0 | MIT |
+| unist-util-stringify-position | 4.0.0 | MIT |
+| unist-util-visit | 5.1.0 | MIT |
+| unist-util-visit-parents | 6.0.2 | MIT |
+| use-callback-ref | 1.3.3 | MIT |
+| use-sidecar | 1.1.3 | MIT |
+| uuid | 14.0.2 | MIT |
+| vfile | 6.0.3 | MIT |
+| vfile-message | 4.0.3 | MIT |
+| zwitch | 2.0.4 | MIT |
 
 ## npm dependencies: VS Code extension (0 runtime, 203 development)
 
@@ -215,5 +426,6 @@ Allowed, listed so the obligations are visible (dynamic linking or use as an unm
 - @img/sharp-win32-arm64: Apache-2.0 AND LGPL-3.0-or-later
 - @img/sharp-win32-ia32: Apache-2.0 AND LGPL-3.0-or-later
 - @img/sharp-win32-x64: Apache-2.0 AND LGPL-3.0-or-later
+- dompurify: (MPL-2.0 OR Apache-2.0)
 - psycopg: LGPL-3.0-only
 - psycopg-binary: LGPL-3.0-only

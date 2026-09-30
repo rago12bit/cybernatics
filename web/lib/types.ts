@@ -410,3 +410,23 @@ export interface AttackPath {
   nodes: AttackPathNode[];
   edges: AttackPathEdge[];
 }
+
+/** A project's threat-model draft (plan §21.7): a Mermaid data-flow diagram plus a STRIDE table,
+ * generated from code intelligence -- a starting point for a person's own review, editable and
+ * stored, never silently overwritten except by an explicit regenerate. */
+export interface StrideRow {
+  element: string;
+  element_kind: "external_entity" | "process" | "data_store" | "external_interactor";
+  category: string;
+  prompt: string;
+}
+
+export interface ThreatModel {
+  asset_id: string;
+  mermaid: string;
+  stride: StrideRow[];
+  version: number;
+  source: "generated" | "edited";
+  updated_at: string;
+  updated_by: string | null;
+}

@@ -36,6 +36,7 @@ from core.persistence.models import (
     IssueRow,
     Organization,
     Scan,
+    ThreatModelRow,
     ToolRun,
 )
 from core.rag.embed import HashingEmbedder
@@ -1310,3 +1311,33 @@ def list_messages(
             .where(Asset.org_id == org_id)
         )
     return list(s.scalars(q.order_by(CopilotMessageRow.created_at)))
+
+
+def get_threat_model(s: Session, asset_id: str) -> ThreatModelRow | None:
+    return s.get(ThreatModelRow, asset_id)
+
+
+def save_threat_model(
+    s: Session,
+    asset_id: str,
+    mermaid: str,
+    stride: list[dict[str, Any]],
+    *,
+    source: str,
+    actor: str | None,
+) -> ThreatModelRow:
+    """`source` is "generated" or "edited" -- the caller's job to say which, never inferred here.
+    Replaces the asset's one current row in place and bumps `version`; never keeps prior content."""
+    row = s.get(ThreatModelRow, asset_id)
+    if row is None:
+        row = ThreatModelRow(asset_id=asset_id, version=0)
+        s.add(row)
+    row.mermaid = mermaid
+    row.stride = stride
+    row.version += 1
+    row.source = source
+    row.updated_at = _now()
+    row.updated_by = actor
+    s.commit()
+    s.refresh(row)
+    return row

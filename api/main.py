@@ -65,6 +65,7 @@ from api.schemas import (
     ProjectOverview,
     PromoteHypothesisResult,
     RemediationView,
+    SaveThreatModelRequest,
     ScanComparisonSide,
     ScanComparisonView,
     ScanCreated,
@@ -73,7 +74,9 @@ from api.schemas import (
     ScanSummary,
     ScanView,
     StartConversationRequest,
+    StrideRowView,
     SuggestionRequest,
+    ThreatModelView,
     ToolStatus,
     TrendPoint,
     TriageAssistantView,
@@ -1114,6 +1117,96 @@ def create_app(app_state: AppState) -> FastAPI:
         except ValueError as exc:
             raise HTTPException(409, str(exc)) from exc
         return {"status": "dismissed"}
+
+    def _threat_model_view(row: Any) -> ThreatModelView:
+        return ThreatModelView(
+            asset_id=row.asset_id, mermaid=row.mermaid,
+            stride=[StrideRowView(**d) for d in row.stride], version=row.version,
+            source=row.source, updated_at=row.updated_at, updated_by=row.updated_by,
+        )  # fmt: skip
+
+    def _regenerate_threat_model(s: Session, asset: Any, org: str) -> Any:
+        scan = repo.latest_scan_for_asset(s, asset.id, org_id=org)
+        if scan is None:
+            raise HTTPException(409, "no completed scan for this asset")
+        if scan.source_type != "git":
+            raise HTTPException(
+                409, "the threat model needs a git source to check out the code from"
+            )
+
+        from core.attackpath.checkout import build_graph
+        from core.gitfetch import GitUrlError
+        from core.threatmodel.generate import generate_threat_model
+
+        app_state.limiter.acquire()
+        try:
+            graph = build_graph(scan.source_ref, scan.ref)
+        except GitUrlError as exc:
+            raise HTTPException(422, f"could not check out the repository: {exc}") from exc
+        draft = generate_threat_model(graph)
+        stride_dicts = [
+            {
+                "element": r.element, "element_kind": r.element_kind.value,
+                "category": r.category, "prompt": r.prompt,
+            }  # fmt: skip
+            for r in draft.stride
+        ]
+        return repo.save_threat_model(
+            s, asset.id, draft.mermaid, stride_dicts, source="generated", actor=None
+        )
+
+    @app.get(
+        "/assets/{asset_id}/threat-model",
+        response_model=ThreatModelView,
+        dependencies=[Depends(require_scope("scans:read"))],
+    )
+    def get_threat_model_endpoint(
+        asset_id: str, s: Session = Depends(db), org: str = Depends(current_org)
+    ) -> ThreatModelView:
+        """The project's threat-model draft (plan §21.7). Auto-generated from the latest scan on
+        first access -- deterministic, no model call, so there is no cost gate to ask for first.
+        Once a person edits it or explicitly regenerates, that becomes the current row and stays
+        until the next explicit regenerate."""
+        asset = _get_asset(s, asset_id, org)
+        existing = repo.get_threat_model(s, asset.id)
+        if existing is not None:
+            return _threat_model_view(existing)
+        return _threat_model_view(_regenerate_threat_model(s, asset, org))
+
+    @app.post(
+        "/assets/{asset_id}/threat-model/regenerate",
+        response_model=ThreatModelView,
+        dependencies=[Depends(require_scope("scans:write"))],
+    )
+    def regenerate_threat_model_endpoint(
+        asset_id: str, s: Session = Depends(db), org: str = Depends(current_org)
+    ) -> ThreatModelView:
+        """Discards the current draft, including any edits, and regenerates from the latest scan."""
+        asset = _get_asset(s, asset_id, org)
+        return _threat_model_view(_regenerate_threat_model(s, asset, org))
+
+    @app.put(
+        "/assets/{asset_id}/threat-model",
+        response_model=ThreatModelView,
+        dependencies=[Depends(require_scope("scans:write"))],
+    )
+    def save_threat_model_endpoint(
+        asset_id: str,
+        body: SaveThreatModelRequest,
+        auth: AuthContext = Depends(require_auth),
+        s: Session = Depends(db),
+        org: str = Depends(current_org),
+    ) -> ThreatModelView:
+        """A person's own edit to the diagram/table -- stored as-is, source="edited". Never
+        validated against the code: there is nothing to validate a person's own review notes
+        against."""
+        asset = _get_asset(s, asset_id, org)
+        stride_dicts = [r.model_dump() for r in body.stride]
+        row = repo.save_threat_model(
+            s, asset.id, body.mermaid, stride_dicts, source="edited", actor=auth.actor
+        )
+        return _threat_model_view(row)
+
 
     @app.get(
         "/assets/{asset_id}/attack-paths",

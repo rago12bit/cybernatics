@@ -498,3 +498,23 @@ class CopilotMessageRow(Base):
     citations: Mapped[list[dict[str, Any]] | None] = mapped_column(JsonType, nullable=True)
     tokens_used: Mapped[int | None] = mapped_column(Integer, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
+class ThreatModelRow(Base):
+    """One project's threat-model draft (Week 45 task 3, plan §21.7): a Mermaid data-flow diagram
+    plus a STRIDE table, generated from code intelligence already computed for this asset. One
+    current row per asset (`asset_id` is itself the primary key) -- `version` increments on every
+    save, `source` says whether the current content is the last `generate` output or a person's own
+    `edit`, so a client can tell whether regenerating would discard something a person wrote."""
+
+    __tablename__ = "threat_models"
+
+    asset_id: Mapped[str] = mapped_column(
+        ForeignKey("assets.id", ondelete="CASCADE"), primary_key=True
+    )
+    mermaid: Mapped[str] = mapped_column(Text)
+    stride: Mapped[list[dict[str, Any]]] = mapped_column(JsonType)
+    version: Mapped[int] = mapped_column(Integer, default=1)
+    source: Mapped[str] = mapped_column(String(16))  # "generated" | "edited"
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+    updated_by: Mapped[str | None] = mapped_column(String(200), nullable=True)

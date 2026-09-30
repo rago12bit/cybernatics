@@ -1,0 +1,70 @@
+.ds-tm-intro {
+  margin-bottom: 1rem;
+}
+
+.ds-tm-error {
+  color: var(--ds-color-danger, #b00020);
+}
+
+.ds-tm-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.ds-tm-source {
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  border: 1px solid var(--ds-color-border, #ddd);
+}
+
+.ds-tm-diagram {
+  border: 1px solid var(--ds-color-border, #ddd);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  overflow-x: auto;
+}
+
+.ds-tm-raw {
+  white-space: pre-wrap;
+  font-family: var(--ds-font-mono, monospace);
+}
+
+.ds-tm-label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.ds-tm-textarea {
+  width: 100%;
+  font-family: var(--ds-font-mono, monospace);
+  margin-bottom: 1rem;
+}
+
+.ds-tm-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+}
+
+.ds-tm-table th,
+.ds-tm-table td {
+  border: 1px solid var(--ds-color-border, #ddd);
+  padding: 0.4rem 0.6rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.ds-tm-table input,
+.ds-tm-table textarea {
+  width: 100%;
+}
+
+.ds-tm-actions {
+  display: flex;
+  gap: 0.5rem;
+}
