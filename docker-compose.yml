@@ -3,15 +3,21 @@
 name: bulwark
 
 x-app-env: &app-env
-  # The table-owning role. `migrate` runs as this (it must be able to create the app role below and
-  # alter schema); `api` and `worker` override BULWARK_DATABASE_URL to the non-superuser app role
-  # instead (ADR-0013) -- Postgres Row-Level Security does nothing against a superuser connection,
-  # policies or not, so those two services must NOT use this URL once migration 0005 has run.
-  BULWARK_DATABASE_URL: postgresql://bulwark:${POSTGRES_PASSWORD:?run scripts/init-env.sh}@postgres:5432/bulwark
-  BULWARK_APP_DATABASE_URL: postgresql://bulwark_app:${APP_DB_PASSWORD:?run scripts/init-env.sh}@postgres:5432/bulwark
-  # Bare values too (not just baked into the URLs above): migration 0005 reads APP_DB_PASSWORD
+  # The table-owning role, mTLS-authenticated as itself (Week 47 task 3, plan §22.2, ADR-0033):
+  # `migrate` runs as this (it must be able to create the per-service roles below and alter schema);
+  # `api`/`worker`/`fixagent-worker` override BULWARK_DATABASE_URL to their own named, more
+  # restricted role instead -- Postgres Row-Level Security does nothing against a superuser
+  # connection, policies or not, so those three services must NOT use this URL once migration 0005
+  # has run. `bulwark_app` (the role all three used to share) is NOLOGIN as of migration 0020 --
+  # nothing connects as it directly anymore, only through one of the three named roles that inherit
+  # its grants.
+  BULWARK_DATABASE_URL: postgresql+psycopg://bulwark@postgres:5432/bulwark?sslmode=verify-full&sslrootcert=/certs/ca.crt&sslcert=/certs/client_bulwark.crt&sslkey=/certs/client_bulwark.key
+  # Bare value too (not just baked into the URL above): migration 0005 reads APP_DB_PASSWORD
   # directly via os.environ to create/update the bulwark_app role. A value embedded only inside
   # another env var's string is not itself a separate environment variable a process can read.
+  # bulwark_app itself is authenticated by certificate now (migration 0020: NOLOGIN, no password
+  # checked for its members either), but migration 0005 still runs first in the same chain and
+  # still needs a password to set on bulwark_app at that point in history.
   APP_DB_PASSWORD: ${APP_DB_PASSWORD:?run scripts/init-env.sh}
   BULWARK_REDIS_URL: redis://redis:6379/0
   BULWARK_S3_ENDPOINT: http://objectstore:9000
@@ -47,7 +53,13 @@ services:
       POSTGRES_USER: bulwark
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?run scripts/init-env.sh}
       POSTGRES_DB: bulwark
-    volumes: [pgdata:/var/lib/postgresql/data]
+      # Read by docker/postgres/init-temporal-role.sh on first init only.
+      TEMPORAL_DB_PASSWORD: ${TEMPORAL_DB_PASSWORD:?run scripts/init-env.sh}
+    # mTLS (Week 47 task 3, plan §22.2, ADR-0033): ./certs is scripts/gen-mtls-certs.sh's output,
+    # mounted read-only -- the image's own entrypoint wrapper stages the CA/server cert into the
+    # data directory with the ownership Postgres requires (see docker/postgres/
+    # docker-entrypoint-wrapper.sh for why a bind mount alone isn't enough).
+    volumes: [pgdata:/var/lib/postgresql/data, "./certs:/certs-in:ro"]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U bulwark"]
       interval: 3s
@@ -106,6 +118,7 @@ services:
     <<: *app
     command: ["sh", "-c", "alembic upgrade head && bulwark kb load --if-empty"]
     restart: "no"
+    volumes: ["./certs:/certs:ro"]
     depends_on:
       postgres: { condition: service_healthy }
 
@@ -114,10 +127,10 @@ services:
     command: ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000", "--log-config", "api/log_config.json", "--no-access-log"]
     environment:
       <<: *app-env
-      # Non-superuser role: this is the connection Postgres RLS (ADR-0013) actually enforces against.
-      # (Compose variable substitution can't reference another key's already-substituted value, so
-      # this repeats the same construction as BULWARK_APP_DATABASE_URL above rather than pointing at it.)
-      BULWARK_DATABASE_URL: postgresql://bulwark_app:${APP_DB_PASSWORD:?run scripts/init-env.sh}@postgres:5432/bulwark
+      # bulwark_api: its own mTLS-authenticated identity (Week 47 task 3, plan §22.2, ADR-0033),
+      # a member of bulwark_app (migration 0020) so it inherits the same grants without duplicating
+      # them, and the connection Postgres RLS (ADR-0013) actually enforces against.
+      BULWARK_DATABASE_URL: postgresql+psycopg://bulwark_api@postgres:5432/bulwark?sslmode=verify-full&sslrootcert=/certs/ca.crt&sslcert=/certs/client_bulwark_api.crt&sslkey=/certs/client_bulwark_api.key
       # Optional AI suggestions (off by default). Only the API needs the key, never the worker.
       # Enabling sends finding text and code snippets to your model provider: see docs/llm-remediation.md.
       BULWARK_LLM_ENABLED: ${BULWARK_LLM_ENABLED:-0}
@@ -134,7 +147,7 @@ services:
       # the Bulwark API" (a CORS rejection looks like a network failure to fetch()).
       BULWARK_CORS_ORIGINS: ${BULWARK_CORS_ORIGINS:-http://localhost:3010}
     ports: ["127.0.0.1:8000:8000"]
-    volumes: ["${BULWARK_WORKDIR}:${BULWARK_WORKDIR}"]
+    volumes: ["${BULWARK_WORKDIR}:${BULWARK_WORKDIR}", "./certs:/certs:ro"]
     depends_on:
       migrate: { condition: service_completed_successfully }
       redis: { condition: service_healthy }
@@ -150,12 +163,12 @@ services:
     command: ["celery", "-A", "core.tasks", "worker", "-B", "-s", "/tmp/celerybeat-schedule", "-P", "threads", "-c", "4", "-l", "info"]  # -B: embedded beat for housekeeping (run ONE worker with -B)
     environment:
       <<: *app-env
-      # Non-superuser role, same reasoning as the api service above (ADR-0013).
-      BULWARK_DATABASE_URL: postgresql://bulwark_app:${APP_DB_PASSWORD:?run scripts/init-env.sh}@postgres:5432/bulwark
+      # bulwark_worker: its own mTLS-authenticated identity, same reasoning as the api service above.
+      BULWARK_DATABASE_URL: postgresql+psycopg://bulwark_worker@postgres:5432/bulwark?sslmode=verify-full&sslrootcert=/certs/ca.crt&sslcert=/certs/client_bulwark_worker.crt&sslkey=/certs/client_bulwark_worker.key
       DOCKER_HOST: tcp://socket-proxy:2375
       BULWARK_METRICS_ADDR: 0.0.0.0 # reachable by Prometheus on the compose network; not published to the host
     # Same path inside and outside: scanner containers bind-mount these via the host daemon.
-    volumes: ["${BULWARK_WORKDIR}:${BULWARK_WORKDIR}"]
+    volumes: ["${BULWARK_WORKDIR}:${BULWARK_WORKDIR}", "./certs:/certs:ro"]
     depends_on:
       migrate: { condition: service_completed_successfully }
       redis: { condition: service_healthy }
@@ -174,8 +187,11 @@ services:
     environment:
       DB: postgres12
       DB_PORT: 5432
-      POSTGRES_USER: bulwark
-      POSTGRES_PWD: ${POSTGRES_PASSWORD:?run scripts/init-env.sh}
+      # Its own dedicated, password-authenticated role (Week 47 task 3, plan §22.2, ADR-0033) --
+      # this image cannot present a client certificate, so it is never bulwark or a member of
+      # bulwark_app; see docker/postgres/pg_hba.conf and init-temporal-role.sh.
+      POSTGRES_USER: temporal_svc
+      POSTGRES_PWD: ${TEMPORAL_DB_PASSWORD:?run scripts/init-env.sh}
       POSTGRES_SEEDS: postgres
     depends_on:
       postgres: { condition: service_healthy }
@@ -199,7 +215,8 @@ services:
     command: ["python", "-m", "core.fixagent.worker"]
     environment:
       <<: *app-env
-      BULWARK_DATABASE_URL: postgresql://bulwark_app:${APP_DB_PASSWORD:?run scripts/init-env.sh}@postgres:5432/bulwark
+      # bulwark_fixagent: its own mTLS-authenticated identity, same reasoning as api/worker above.
+      BULWARK_DATABASE_URL: postgresql+psycopg://bulwark_fixagent@postgres:5432/bulwark?sslmode=verify-full&sslrootcert=/certs/ca.crt&sslcert=/certs/client_bulwark_fixagent.crt&sslkey=/certs/client_bulwark_fixagent.key
       BULWARK_TEMPORAL_ADDRESS: temporal:7233
       DOCKER_HOST: tcp://socket-proxy:2375 # for the opt-in test-execution sandbox (core/fixagent/sandbox.py)
       # Same variables Week 41's gateway already reads (core/llm/gateway.py) -- the fix agent's own
@@ -210,7 +227,7 @@ services:
       BULWARK_LLM_MODEL: ${BULWARK_LLM_MODEL:-claude-sonnet-5}
       BULWARK_GITHUB_APP_ID: ${BULWARK_GITHUB_APP_ID:-}
       BULWARK_GITHUB_APP_PRIVATE_KEY: ${BULWARK_GITHUB_APP_PRIVATE_KEY:-}
-    volumes: ["${BULWARK_WORKDIR}:${BULWARK_WORKDIR}"]
+    volumes: ["${BULWARK_WORKDIR}:${BULWARK_WORKDIR}", "./certs:/certs:ro"]
     depends_on:
       migrate: { condition: service_completed_successfully }
       temporal: { condition: service_started }

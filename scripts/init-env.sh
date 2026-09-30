@@ -19,8 +19,12 @@ BULWARK_API_TOKEN=$(rand)
 # and this token is already root -- production must never run OpenBao in dev mode or use a token
 # generated this way (see docs/data-protection.md).
 BULWARK_OPENBAO_TOKEN=$(rand)
+# Temporal's own auto-setup image (Week 47 task 3, plan §22.2): a dedicated, password-authenticated
+# role, never a member of bulwark_app -- see docker/postgres/init-temporal-role.sh.
+TEMPORAL_DB_PASSWORD=$(rand)
 # Must be a path shared with the Docker host (scanner containers bind-mount from it).
 BULWARK_WORKDIR=$WORKDIR
 EOF
 chmod 600 .env
-echo "Wrote .env (API token: see BULWARK_API_TOKEN inside it). Next: docker compose --profile scanners build"
+echo "Wrote .env (API token: see BULWARK_API_TOKEN inside it)."
+echo "Next: ./scripts/gen-mtls-certs.sh && docker compose --profile scanners build"
