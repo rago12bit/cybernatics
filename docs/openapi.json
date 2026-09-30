@@ -1006,6 +1006,333 @@
         }
       }
     },
+    "/assets/{asset_id}/issues/{issue_id}/triage-assistant": {
+      "post": {
+        "summary": "Create Triage Assessment",
+        "description": "Ask the triage assistant for a verdict on one issue (plan \u00a721.3): reads the taint path\nand surrounding code from its latest occurrence and returns an advisory verdict. Stored so\n`core.risk.score` can use it as one ranking input on this asset's later scans -- never\nchanges `triage_status` or anything else about the issue; a person still decides that.",
+        "operationId": "create_triage_assessment_assets__asset_id__issues__issue_id__triage_assistant_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Asset Id"
+            }
+          },
+          {
+            "name": "issue_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Issue Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TriageAssistantView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "Get Triage Assessment",
+        "operationId": "get_triage_assessment_assets__asset_id__issues__issue_id__triage_assistant_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Asset Id"
+            }
+          },
+          {
+            "name": "issue_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Issue Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TriageAssistantView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/assets/{asset_id}/hypotheses/generate": {
+      "post": {
+        "summary": "Generate Hypotheses",
+        "description": "Generate Hypotheses-lane candidates for one asset (plan \u00a721.4): re-checks out its latest\nscan's source, finds every route with no recognized auth marker in a file where a sibling\nroute has one (`core.hypotheses.facts`, deterministic, no model), and asks the model to\ndecide which of those are worth a person's time. Off by default: `409` when no model is\nrouted for `Task.HYPOTHESES` (the same on/off switch the gateway gives every task).",
+        "operationId": "generate_hypotheses_assets__asset_id__hypotheses_generate_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Asset Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenerateHypothesesResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/assets/{asset_id}/hypotheses": {
+      "get": {
+        "summary": "List Hypotheses Endpoint",
+        "operationId": "list_hypotheses_endpoint_assets__asset_id__hypotheses_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Asset Id"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter to open|promoted|dismissed.",
+              "title": "Status"
+            },
+            "description": "Filter to open|promoted|dismissed."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HypothesisView"
+                  },
+                  "title": "Response List Hypotheses Endpoint Assets  Asset Id  Hypotheses Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/assets/{asset_id}/hypotheses/{hypothesis_id}/promote": {
+      "post": {
+        "summary": "Promote Hypothesis Endpoint",
+        "description": "A human confirming a hypothesis (plan \u00a721.4): creates a real Issue, `source=\n\"llm-confirmed\"`. Never automatic -- this is the one and only way that value is ever set.",
+        "operationId": "promote_hypothesis_endpoint_assets__asset_id__hypotheses__hypothesis_id__promote_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Asset Id"
+            }
+          },
+          {
+            "name": "hypothesis_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Hypothesis Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromoteHypothesisResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/assets/{asset_id}/hypotheses/{hypothesis_id}/dismiss": {
+      "post": {
+        "summary": "Dismiss Hypothesis Endpoint",
+        "operationId": "dismiss_hypothesis_endpoint_assets__asset_id__hypotheses__hypothesis_id__dismiss_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Asset Id"
+            }
+          },
+          {
+            "name": "hypothesis_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Hypothesis Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Dismiss Hypothesis Endpoint Assets  Asset Id  Hypotheses  Hypothesis Id  Dismiss Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/risk/feeds": {
       "get": {
         "summary": "Risk Feeds",
@@ -1680,6 +2007,28 @@
         ],
         "title": "FindingsPage"
       },
+      "GenerateHypothesesResult": {
+        "properties": {
+          "generated": {
+            "type": "integer",
+            "title": "Generated",
+            "description": "How many NEW hypotheses this run surfaced and stored."
+          },
+          "hypotheses": {
+            "items": {
+              "$ref": "#/components/schemas/HypothesisView"
+            },
+            "type": "array",
+            "title": "Hypotheses"
+          }
+        },
+        "type": "object",
+        "required": [
+          "generated",
+          "hypotheses"
+        ],
+        "title": "GenerateHypothesesResult"
+      },
       "GitSource": {
         "properties": {
           "type": {
@@ -1762,6 +2111,93 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "HypothesisView": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "route_method": {
+            "type": "string",
+            "title": "Route Method"
+          },
+          "route_path": {
+            "type": "string",
+            "title": "Route Path"
+          },
+          "file": {
+            "type": "string",
+            "title": "File"
+          },
+          "line": {
+            "type": "integer",
+            "title": "Line"
+          },
+          "evidence": {
+            "type": "string",
+            "title": "Evidence"
+          },
+          "suggested_check": {
+            "type": "string",
+            "title": "Suggested Check"
+          },
+          "confidence": {
+            "type": "string",
+            "enum": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "title": "Confidence"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "promoted",
+              "dismissed"
+            ],
+            "title": "Status"
+          },
+          "promoted_issue_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Promoted Issue Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "route_method",
+          "route_path",
+          "file",
+          "line",
+          "evidence",
+          "suggested_check",
+          "confidence",
+          "model",
+          "status",
+          "promoted_issue_id",
+          "created_at"
+        ],
+        "title": "HypothesisView",
+        "description": "One Hypotheses-lane candidate (plan \u00a721.4) -- off by default, its own tab, excluded from the\nrisk score and policy gates until a person promotes it. `promoted_issue_id` is set only once\n`status` is \"promoted\"."
       },
       "IssueHistoryEvent": {
         "properties": {
@@ -1913,6 +2349,20 @@
         ],
         "title": "ProjectOverview",
         "description": "Plan \u00a728.1's project overview screen, built entirely from existing scan/issue data \u2014\nsee core/persistence/repo.py's asset-overview functions for how each field is derived."
+      },
+      "PromoteHypothesisResult": {
+        "properties": {
+          "issue_id": {
+            "type": "string",
+            "title": "Issue Id",
+            "description": "The new Issue's id, source='llm-confirmed'."
+          }
+        },
+        "type": "object",
+        "required": [
+          "issue_id"
+        ],
+        "title": "PromoteHypothesisResult"
       },
       "RemediationView": {
         "properties": {
@@ -2494,6 +2944,59 @@
           "open_count"
         ],
         "title": "TrendPoint"
+      },
+      "TriageAssistantView": {
+        "properties": {
+          "verdict": {
+            "type": "string",
+            "enum": [
+              "likely_real",
+              "likely_false_positive",
+              "unsure"
+            ],
+            "title": "Verdict"
+          },
+          "confidence": {
+            "type": "string",
+            "enum": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "title": "Confidence"
+          },
+          "rationale": {
+            "type": "string",
+            "title": "Rationale"
+          },
+          "supporting_lines": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Supporting Lines"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "verdict",
+          "confidence",
+          "rationale",
+          "supporting_lines",
+          "model",
+          "generated_at"
+        ],
+        "title": "TriageAssistantView",
+        "description": "A model's verdict on one Issue (plan \u00a721.3) -- advisory only, distinct from `IssueView`'s\n`triage_status` (a human decision, ADR-0012). `null` if the assistant has never run for this\nissue, which is the normal state until someone asks for one."
       },
       "TriageRequest": {
         "properties": {

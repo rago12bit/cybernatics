@@ -44,6 +44,13 @@ class Entrypoint:
     framework: str  # "fastapi" | "flask" | "django" | "express" | "nextjs" | "net/http"
     method: str  # "GET", "POST", ... or "" when the framework doesn't restrict by verb
     path: str  # route path; "" when it couldn't be determined
+    # Names of decorators (Python) or middleware arguments (Express) attached to this route,
+    # other than the route-registration one itself -- e.g. ("login_required",) or ("requireAuth",)
+    # (plan §21.4's Hypotheses lane: "the map of which auth decorators and middleware apply where").
+    # Matched by name only, not resolved to a definition: a real, disclosed heuristic (the same kind
+    # `_route_entrypoint`/`_express_entrypoint` already use for the route itself), not a guarantee
+    # that a name here actually enforces authorization or that its absence means it doesn't.
+    auth_markers: tuple[str, ...] = ()
 
 
 @dataclass

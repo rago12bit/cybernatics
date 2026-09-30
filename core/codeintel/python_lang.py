@@ -24,22 +24,38 @@ def _string_const(node: ast.expr | None) -> str | None:
     return node.value if isinstance(node, ast.Constant) and isinstance(node.value, str) else None
 
 
+def _decorator_name(dec: ast.expr) -> str | None:
+    """The name a decorator is written under -- `@login_required` -> "login_required",
+    `@auth.requires_role("admin")` -> "requires_role", `@app.get(...)` -> "get". Used only to test
+    against a keyword heuristic (`core.hypotheses.facts`), never resolved to a real definition."""
+    if isinstance(dec, ast.Call):
+        return _attr_chain_name(dec.func)
+    return _attr_chain_name(dec)
+
+
 def _route_entrypoint(fn: ast.FunctionDef | ast.AsyncFunctionDef, sid: str) -> Entrypoint | None:
     """`@app.get("/path")` (FastAPI) or `@app.route("/path", methods=[...])` (Flask) -- and their
     equivalents on any object named like a router (`router.get(...)`, `api.route(...)`): matched by
     decorator *shape* (an HTTP-verb-or-`route` method call with a string path), not by which package
     was actually imported, since reliably resolving that needs far more than decorator inspection.
     A false positive is a decorator that merely looks like a route registration; documented, not
-    hidden, same as the plan's own instruction for this whole feature."""
-    for dec in fn.decorator_list:
+    hidden, same as the plan's own instruction for this whole feature.
+
+    Every OTHER decorator on the same function becomes an `auth_markers` entry (plan §21.4) --
+    whatever it's actually called, not filtered to a known auth allowlist here (that judgement is
+    `core.hypotheses.facts`'s, kept out of extraction so the two stay independently testable)."""
+    route_index: int | None = None
+    framework = method = path = ""
+    for i, dec in enumerate(fn.decorator_list):
         if not (isinstance(dec, ast.Call) and isinstance(dec.func, ast.Attribute)):
             continue
         verb = dec.func.attr.lower()
-        path = _string_const(dec.args[0]) if dec.args else None
-        if path is None:
+        p = _string_const(dec.args[0]) if dec.args else None
+        if p is None:
             continue
         if verb in _HTTP_METHODS:
-            return Entrypoint(sid, "fastapi", verb.upper(), path)
+            route_index, framework, method, path = i, "fastapi", verb.upper(), p
+            break
         if verb == "route":
             methods = next((kw.value for kw in dec.keywords if kw.arg == "methods"), None)
             verbs = (
@@ -47,8 +63,16 @@ def _route_entrypoint(fn: ast.FunctionDef | ast.AsyncFunctionDef, sid: str) -> E
                 if isinstance(methods, ast.List)
                 else ["GET"]
             )
-            return Entrypoint(sid, "flask", ",".join(verbs), path)
-    return None
+            route_index, framework, method, path = i, "flask", ",".join(verbs), p
+            break
+    if route_index is None:
+        return None
+    markers = tuple(
+        name
+        for i, dec in enumerate(fn.decorator_list)
+        if i != route_index and (name := _decorator_name(dec))
+    )
+    return Entrypoint(sid, framework, method, path, markers)
 
 
 class _Extractor(ast.NodeVisitor):

@@ -14,6 +14,7 @@ import { Dialog } from "@/design-system/primitives/Dialog";
 import { useMode } from "@/design-system/mode";
 import { getIssueNavList } from "@/lib/issue-nav";
 import { VerifiedFixPanel } from "@/components/VerifiedFixPanel";
+import { TriageAssistantPanel } from "@/components/TriageAssistantPanel";
 import "./issue-detail.css";
 
 const isTyping = (t: EventTarget | null) => t instanceof HTMLElement && /^(INPUT|SELECT|TEXTAREA)$/.test(t.tagName);
@@ -176,6 +177,12 @@ export function IssueDetail({ assetId, issueId }: { assetId: string; issueId: st
             </button>
             {explanationOpen && <p className="ds-issue-explain-text">{aiExplanation ?? finding.description}</p>}
           </div>
+
+          {triageStatus === "open" && (
+            <div className="ds-issue-section">
+              <TriageAssistantPanel assetId={assetId} issueId={issueId} />
+            </div>
+          )}
 
           {triageStatus === "open" && (
             <div className="ds-issue-section">

@@ -1,0 +1,54 @@
+# yaml-language-server: $schema=https://promptfoo.dev/config-schema.json
+#
+# The triage assistant's evaluation suite (plan §21.3), mirroring core/llm/prompts/fix/'s own:
+# gates core/triage_assistant/prompt.py's system prompt (core/llm/prompts/triage/v1.md).
+#
+# Fixtures under fixtures/*.txt are pre-rendered REAL user prompts from build_prompt() (regenerate
+# with `python3 scripts/gen-triage-fixtures.py` -- never hand-edit them).
+#
+#   promptfoo eval -c core/llm/prompts/triage/promptfooconfig.yaml            # free, local, offline
+
+description: "Bulwark triage-assistant prompt registry (prompts/triage/v1.md)"
+
+prompts:
+  - "{{prompt}}"
+
+providers:
+  - id: "file://promptfoo_provider.py"
+    label: "core.llm.gateway (Task.TRIAGE), local Ollama"
+    config:
+      backend: local
+      model: "qwen2.5:0.5b"
+      base_url: "http://localhost:11434"
+      request_timeout_s: 90
+      timeout: 120000
+
+defaultTest:
+  assert:
+    # Correctness is always the deterministic contract check -- the SAME validator production uses.
+    - type: python
+      value: file://promptfoo_assert.py
+    # A verdict is advisory only: it must never claim to change the finding's status.
+    - type: not-icontains
+      value: "suppress"
+    - type: not-icontains
+      value: "dismiss"
+
+tests:
+  - description: "Complete taint path, no sanitizer -- expects a confident verdict"
+    vars:
+      prompt: file://fixtures/sqli_full_path.txt
+      first_line: 10
+      last_line: 11
+
+  - description: "Parameterized query -- a plausible likely_false_positive candidate"
+    vars:
+      prompt: file://fixtures/sanitized_input.txt
+      first_line: 20
+      last_line: 21
+
+  - description: "No concrete taint path recorded -- expects low confidence, not a guess"
+    vars:
+      prompt: file://fixtures/no_taint_path.txt
+      first_line: 30
+      last_line: 31

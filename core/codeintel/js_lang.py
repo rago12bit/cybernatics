@@ -135,13 +135,28 @@ class _Extractor:
         if path is None:
             return
         handler = args.named_children[-1]
+        # Every argument between the path and the final handler is middleware -- e.g. `router.get(
+        # path, requireAuth, checkOwner, handler)`, or `passport.authenticate('jwt')` called inline
+        # -- captured by name only (plan §21.4's `auth_markers`), the same "shape, not resolution"
+        # heuristic `_express_entrypoint` itself already uses for the route registration.
+        markers = tuple(
+            n
+            for a in args.named_children[1:-1]
+            if (
+                n := (
+                    _callee_name(a.child_by_field_name("function"))
+                    if a.type == "call_expression"
+                    else _callee_name(a)
+                )
+            )
+        )
         if handler.type in ("arrow_function", "function_expression"):
             # An inline handler has no other name to resolve it by: give it a synthetic one, walk
             # its body right here (with the correct caller context), and mark its span handled so
             # the generic recursion below doesn't re-visit it with the wrong caller.
             self._anon_count += 1
             sid = self._add_symbol(f"<route-handler-{self._anon_count}>", handler, exported=False)
-            self.unit.entrypoints.append(Entrypoint(sid, "express", verb.upper(), path))
+            self.unit.entrypoints.append(Entrypoint(sid, "express", verb.upper(), path, markers))
             body = handler.child_by_field_name("body")
             if body is not None:
                 self._walk_function_body(sid, body)
@@ -166,7 +181,7 @@ class _Extractor:
                     call_node.start_point[0] + 1, call_node.start_point[0] + 1, self.unit.language,
                 )  # fmt: skip
             )
-            self.unit.entrypoints.append(Entrypoint(sid, "express", verb.upper(), path))
+            self.unit.entrypoints.append(Entrypoint(sid, "express", verb.upper(), path, markers))
             self.unit.calls.append((sid, name, handler.start_point[0] + 1))
 
     def visit(self, node) -> None:  # type: ignore[no-untyped-def]

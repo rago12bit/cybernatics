@@ -1,4 +1,4 @@
-import type { AssetSummary, BulkTriageResult, DependenciesView, Finding, FindingsPage, FindingsQuery, Guidance, GuidanceApi, IssueHistoryEvent, ProjectOverview, Remediation, ScanComparison, ScanSummary, ScanView, TriageStatus, VerifiedFixStarted, VerifiedFixView } from "./types";
+import type { AssetSummary, BulkTriageResult, DependenciesView, Finding, FindingsPage, FindingsQuery, GenerateHypothesesResult, Guidance, GuidanceApi, Hypothesis, IssueHistoryEvent, ProjectOverview, Remediation, ScanComparison, ScanSummary, ScanView, TriageAssistantView, TriageStatus, VerifiedFixStarted, VerifiedFixView } from "./types";
 import { findingsQueryString } from "./format";
 
 export const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/$/, "");
@@ -230,3 +230,46 @@ export const bulkTriageIssues = (assetId: string, issueIds: string[], body: Tria
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ issue_ids: issueIds, ...body }),
   });
+
+// The triage assistant (plan §21.3): an advisory model verdict, never a human triage decision.
+const triageAssistantPath = (assetId: string, issueId: string) =>
+  `/assets/${encodeURIComponent(assetId)}/issues/${encodeURIComponent(issueId)}/triage-assistant`;
+
+/** `null` (not thrown) when no verdict has been generated yet -- the normal starting state. */
+export async function getTriageAssessment(assetId: string, issueId: string): Promise<TriageAssistantView | null> {
+  try {
+    return await request<TriageAssistantView>(triageAssistantPath(assetId, issueId));
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 404) return null;
+    throw e;
+  }
+}
+
+/** Generates a fresh verdict. This sends the finding's code to the model provider. */
+export const requestTriageAssessment = (assetId: string, issueId: string) =>
+  request<TriageAssistantView>(triageAssistantPath(assetId, issueId), { method: "POST" });
+
+// The Hypotheses lane (plan §21.4): off by default, a separate tab, never in the main issue list
+// until a person promotes one.
+export const listHypotheses = (assetId: string, status?: Hypothesis["status"]) =>
+  request<Hypothesis[]>(
+    `/assets/${encodeURIComponent(assetId)}/hypotheses${status ? `?status=${status}` : ""}`,
+  );
+
+/** Re-checks out the asset's latest scan and asks the model about every candidate it finds. */
+export const generateHypotheses = (assetId: string) =>
+  request<GenerateHypothesesResult>(`/assets/${encodeURIComponent(assetId)}/hypotheses/generate`, {
+    method: "POST",
+  });
+
+export const promoteHypothesis = (assetId: string, hypothesisId: string) =>
+  request<{ issue_id: string }>(
+    `/assets/${encodeURIComponent(assetId)}/hypotheses/${encodeURIComponent(hypothesisId)}/promote`,
+    { method: "POST" },
+  );
+
+export const dismissHypothesis = (assetId: string, hypothesisId: string) =>
+  request<{ status: string }>(
+    `/assets/${encodeURIComponent(assetId)}/hypotheses/${encodeURIComponent(hypothesisId)}/dismiss`,
+    { method: "POST" },
+  );

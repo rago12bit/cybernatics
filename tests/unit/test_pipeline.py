@@ -406,7 +406,11 @@ def test_risk_is_scored_stored_and_drives_sort(
         epss={"CVE-2021-44228": 0.94}, kev={"CVE-2021-44228"}, epss_loaded=True, kev_loaded=True
     )
     real = pp.apply_risk
-    monkeypatch.setattr(pp, "apply_risk", lambda fs, _=None, assess=None: real(fs, feeds, assess))
+    monkeypatch.setattr(
+        pp,
+        "apply_risk",
+        lambda fs, _=None, assess=None, verdict_lookup=None: real(fs, feeds, assess),
+    )
     (sample_repo / "requirements.txt").write_text("x==1\n")
     with sessions() as s:
         sid = make_scan(s, ["trivy", "bandit"], str(sample_repo))
@@ -425,6 +429,54 @@ def test_risk_is_scored_stored_and_drives_sort(
     assert top["in_cisa_kev"] is True and top["epss_score"] == 0.94 and top["risk_score"] >= 90
     assert any("KEV" in x for x in top["risk_factors"])
     assert page.items[1]["scoring"]["risk_score"] < top["risk_score"]
+
+
+def test_a_stored_triage_verdict_dampens_the_next_scan_of_the_same_asset(
+    sessions: sessionmaker[Session], sample_repo: Path
+) -> None:
+    """plan §21.3: a verdict is "one input to the ranker" -- it can't retroactively change a scan
+    already persisted, but a verdict recorded against one occurrence must lower the risk score of
+    the SAME finding (same fingerprint) reproduced by a LATER scan of the same asset, end to end
+    through the real pipeline and `core.persistence.repo.assistant_verdicts_for_asset`."""
+    with sessions() as s:
+        sid1 = make_scan(s, ["bandit"], str(sample_repo))
+    f = finding("bandit", Category.SAST, fid="f1")
+    run_scan_job(
+        sid1,
+        sessions,
+        MemoryStore(),
+        MemoryPublisher(),
+        executor_from({"bandit": ToolOutcome("bandit", "ok", [f])}),
+    )
+    with sessions() as s:
+        baseline_row = s.query(FindingRow).filter_by(scan_id=sid1).one()
+        baseline_score = baseline_row.data["scoring"]["risk_score"]
+        issue_id = baseline_row.issue_id
+        assert issue_id is not None
+        repo.set_assistant_verdict(
+            s, issue_id, verdict="likely_false_positive", confidence="high",
+            rationale="parameterized elsewhere", lines=[1], model="fake-model-1",
+        )  # fmt: skip
+
+    with sessions() as s:
+        sid2 = make_scan(s, ["bandit"], str(sample_repo))
+    run_scan_job(
+        sid2,
+        sessions,
+        MemoryStore(),
+        MemoryPublisher(),
+        executor_from({"bandit": ToolOutcome("bandit", "ok", [f])}),
+    )
+    with sessions() as s:
+        second_row = s.query(FindingRow).filter_by(scan_id=sid2).one()
+        assert second_row.issue_id == issue_id  # same Issue: this really is "the same finding"
+        assert second_row.data["scoring"]["risk_score"] < baseline_score
+        assert any(
+            "Triage assistant: likely false positive" in fac
+            for fac in second_row.data["scoring"]["risk_factors"]
+        )
+        # And the verdict never touched the human triage_status.
+        assert repo.get_issue(s, issue_id).triage_status == "open"
 
 
 def test_default_order_is_severity_then_risk_then_path(

@@ -195,6 +195,25 @@ class IssueRow(Base):
     triaged_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     triaged_by: Mapped[str | None] = mapped_column(String(200), nullable=True)
 
+    # Where this Issue came from (Week 43, plan §21.4): "scanner" for every ordinary issue (the
+    # default, and every issue that existed before this column did); "llm-confirmed" only for one
+    # promoted from the Hypotheses lane (`core.hypotheses`), and only once a person confirmed it --
+    # `core.hypotheses.repo`-style promotion is the one and only writer of that value.
+    source: Mapped[str] = mapped_column(String(20), default="scanner")
+
+    # Triage ASSISTANT (Week 43, plan §21.3): a model's verdict, distinct from the human decision
+    # above -- deliberately named `assistant_*`, never `triage_*`, so nothing here is mistakable for
+    # a human triage action. Advisory only: `core.risk.score` reads it as one ranking input (never
+    # zero, never suppressing), and no code path lets it write `triage_status` itself.
+    assistant_verdict: Mapped[str | None] = mapped_column(String(24), nullable=True, index=True)
+    assistant_verdict_confidence: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    assistant_verdict_rationale: Mapped[str | None] = mapped_column(Text, nullable=True)
+    assistant_verdict_lines: Mapped[list[int] | None] = mapped_column(JsonType, nullable=True)
+    assistant_verdict_model: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    assistant_verdict_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
     asset: Mapped[Asset] = relationship(back_populates="issues")
 
     __table_args__ = (
@@ -367,5 +386,37 @@ class VerifiedFixRun(Base):
     # "per_attempt_timeout" | "max_attempts_exhausted" | None (ended normally: approved/rejected).
     ended_reason: Mapped[str | None] = mapped_column(String(30), nullable=True)
     pr_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
+class HypothesisRow(Base):
+    """One Hypotheses-lane candidate the model chose to surface (Week 43, plan §21.4). Off by
+    default, its own tab, excluded from the risk score and policy gates -- a genuinely separate
+    table from `IssueRow`, not a variant `state`, precisely because it must NOT show up anywhere an
+    Issue does until a person promotes it (the plan's own rule: LLM-originated content never enters
+    the main issue list on its own).
+
+    `snippet` is the exact code shown to the model at generation time, kept here so `promote()` can
+    build a real Finding/Issue occurrence without a second clone of the repository."""
+
+    __tablename__ = "hypotheses"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    asset_id: Mapped[str] = mapped_column(ForeignKey("assets.id", ondelete="CASCADE"), index=True)
+    route_method: Mapped[str] = mapped_column(String(16))
+    route_path: Mapped[str] = mapped_column(Text)
+    file: Mapped[str] = mapped_column(Text)
+    line: Mapped[int] = mapped_column(Integer)
+    evidence: Mapped[str] = mapped_column(Text)
+    suggested_check: Mapped[str] = mapped_column(Text)
+    confidence: Mapped[str] = mapped_column(String(16))
+    snippet: Mapped[str] = mapped_column(Text)
+    model: Mapped[str] = mapped_column(String(100))
+    # open | promoted | dismissed
+    status: Mapped[str] = mapped_column(String(16), default="open", index=True)
+    promoted_issue_id: Mapped[str | None] = mapped_column(
+        ForeignKey("issues.id", ondelete="SET NULL"), nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)

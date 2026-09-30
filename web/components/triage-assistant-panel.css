@@ -1,0 +1,45 @@
+/* The triage assistant's panel (plan §21.3/§28.3). Same layout/color conventions as
+   verified-fix-panel.css -- --ds-* tokens for spacing, --mint/--sev-high/--sev-medium (already
+   global) for verdict color, since a verdict is fundamentally the same "is this actually a risk"
+   question --sev-* already answers elsewhere in this design system. */
+
+.ds-triage-panel {
+  display: grid;
+  gap: var(--ds-space-3);
+  padding: var(--ds-space-3);
+  border: 1px solid var(--ds-rule);
+  border-radius: var(--ds-radius, 8px);
+  background: var(--ds-surface, transparent);
+}
+
+.ds-triage-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--ds-space-3);
+  flex-wrap: wrap;
+}
+.ds-triage-title {
+  font-weight: 600;
+}
+.ds-triage-verdict {
+  font-size: var(--ds-text-2);
+  color: var(--ds-muted);
+}
+.ds-triage-verdict-likely-real {
+  color: var(--sev-high);
+}
+.ds-triage-verdict-likely-false-positive {
+  color: var(--mint);
+}
+.ds-triage-verdict-unsure {
+  color: var(--sev-medium);
+}
+
+.ds-triage-rationale {
+  margin: 0;
+}
+
+.ds-triage-error {
+  color: var(--sev-high);
+  font-size: var(--ds-text-2);
+}

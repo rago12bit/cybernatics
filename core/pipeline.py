@@ -152,6 +152,7 @@ def _run_scan_job(
             raise LookupError(f"scan {scan_id} not found")
         source_type, source_ref, tools = scan.source_type, scan.source_ref, list(scan.tools)
         ref = scan.ref
+        asset_id = scan.asset_id
         github = (scan.github_repo, scan.github_pr_number, scan.github_installation_id)
         repo.reset_scan_results(s, scan_id)
         repo.mark_running(s, scan_id)
@@ -225,7 +226,17 @@ def _run_scan_job(
         set_attributes(sp, raw=stats.raw, unique=stats.unique)
     with span("finalize"):
         ensure_fresh()
-        findings = finalize(correlated, reach=reach, taint=taint, root=workspace)
+        verdicts: dict[str, Any] = {}
+        if asset_id is not None:
+            with sessions() as s:
+                verdicts = repo.assistant_verdicts_for_asset(s, asset_id)
+        findings = finalize(
+            correlated,
+            reach=reach,
+            taint=taint,
+            root=workspace,
+            verdict_lookup=(lambda f: verdicts.get(f.fingerprint)) if verdicts else None,
+        )
     has_secrets = any(f.taxonomy.category is Category.SECRETS for f in findings)
     with span("persist", findings=len(findings)):
         _store_raw(sessions, store, scan_id, outcomes, raws, has_secrets)

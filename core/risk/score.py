@@ -5,6 +5,8 @@
                  non-dependency findings (code, secrets, IaC) -> the merged confidence
     risk       = 100 * impact * (0.5 + 0.5 * likelihood);  listed in CISA KEV -> at least 90
     reachable is False (nothing imports it, or only tests) -> risk * 0.85, KEV floor 80
+    a triage-assistant verdict (plan §21.3), when one exists for this finding -> a bounded nudge,
+                 applied before the KEV floor so a KEV-listed CVE's guaranteed minimum is unaffected
 
 A transparent heuristic for ordering work, not a probability, and not validated against outcomes.
 Every score carries the human-readable factors that produced it.
@@ -19,6 +21,7 @@ from dataclasses import replace
 from core.models import Category, Finding, Severity
 from core.reachability import Reachability
 from core.risk.feeds import Feeds
+from core.triage_assistant.contract import TriageVerdict
 
 SEVERITY_IMPACT = {
     Severity.CRITICAL: 0.95,
@@ -31,6 +34,14 @@ KEV_FLOOR = 90
 UNREACHED_FACTOR = 0.85  # plan weight 0.15: a nudge, since another package may still load it
 UNREACHED_KEV_FLOOR = 80
 Assess = Callable[[Finding], Reachability | None]
+# Never below 0.6 or above 1.15: the plan is explicit that a verdict is "one input to the ranker"
+# and "never suppresses an issue on its own" (§21.3) -- these bounds are chosen so even a
+# high-confidence "likely_false_positive" only dampens a score, and "unsure" (the common,
+# low-information case) is deliberately excluded below rather than mapped to a 1.0 no-op entry, so a
+# missing dict key is a loud KeyError if that ever changes rather than a silent no-op.
+VerdictLookup = Callable[[Finding], TriageVerdict | None]
+_FALSE_POSITIVE_FACTOR = {"high": 0.6, "medium": 0.75, "low": 0.9}
+_LIKELY_REAL_FACTOR = {"high": 1.15, "medium": 1.08, "low": 1.0}
 UNKNOWN_LIKELIHOOD = 0.3
 EPSS_FULL_AT = 0.5  # an EPSS of 50% or more counts as certain enough for full weight
 
@@ -45,7 +56,12 @@ def epss_likelihood(epss: float) -> float:
     return min(1.0, math.sqrt(max(epss, 0.0) / EPSS_FULL_AT))
 
 
-def score_finding(f: Finding, feeds: Feeds, reach: Reachability | None = None) -> Finding:
+def score_finding(
+    f: Finding,
+    feeds: Feeds,
+    reach: Reachability | None = None,
+    verdict: TriageVerdict | None = None,
+) -> Finding:
     cves = cves_of(f)
     epss = max((feeds.epss[c] for c in cves if c in feeds.epss), default=None)
     kev = any(c in feeds.kev for c in cves)
@@ -83,6 +99,17 @@ def score_finding(f: Finding, feeds: Feeds, reach: Reachability | None = None) -
 
     unreached = reach is not None and reach.reachable is False
     score = round(100 * impact * (0.5 + 0.5 * likelihood) * (UNREACHED_FACTOR if unreached else 1))
+    if verdict is not None and verdict.verdict != "unsure":
+        factor = (
+            _FALSE_POSITIVE_FACTOR
+            if verdict.verdict == "likely_false_positive"
+            else _LIKELY_REAL_FACTOR
+        )[verdict.confidence]
+        score = round(score * factor)
+        factors.append(
+            f"Triage assistant: {verdict.verdict.replace('_', ' ')} "
+            f"({verdict.confidence} confidence)"
+        )
     if kev:
         score = max(score, UNREACHED_KEV_FLOOR if unreached else KEV_FLOOR)
     if reach is not None:
@@ -102,10 +129,18 @@ def score_finding(f: Finding, feeds: Feeds, reach: Reachability | None = None) -
 
 
 def apply_risk(
-    findings: list[Finding], feeds: Feeds | None = None, assess: Assess | None = None
+    findings: list[Finding],
+    feeds: Feeds | None = None,
+    assess: Assess | None = None,
+    verdict_lookup: VerdictLookup | None = None,
 ) -> list[Finding]:
     """Score every finding. Loads feeds from the cache if not given; missing feeds never raise."""
     if feeds is None:
         wanted = set().union(*(cves_of(f) for f in findings)) if findings else set()
         feeds = Feeds.load(wanted)
-    return [score_finding(f, feeds, assess(f) if assess else None) for f in findings]
+    return [
+        score_finding(
+            f, feeds, assess(f) if assess else None, verdict_lookup(f) if verdict_lookup else None
+        )
+        for f in findings
+    ]

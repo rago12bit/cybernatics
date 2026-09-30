@@ -50,10 +50,13 @@ from api.schemas import (
     DependenciesView,
     FeedsStatus,
     FindingsPage,
+    GenerateHypothesesResult,
     GuidanceView,
+    HypothesisView,
     IssueHistoryEvent,
     IssueView,
     ProjectOverview,
+    PromoteHypothesisResult,
     RemediationView,
     ScanComparisonSide,
     ScanComparisonView,
@@ -65,6 +68,7 @@ from api.schemas import (
     SuggestionRequest,
     ToolStatus,
     TrendPoint,
+    TriageAssistantView,
     TriageRequest,
     VerifiedFixRequest,
     VerifiedFixStarted,
@@ -896,6 +900,213 @@ def create_app(app_state: AppState) -> FastAPI:
         await fixagent_client.reject(run.workflow_id)
         return {"status": "rejected"}
 
+    def _triage_view(row: Any) -> TriageAssistantView:
+        return TriageAssistantView(
+            verdict=row.assistant_verdict,
+            confidence=row.assistant_verdict_confidence,
+            rationale=row.assistant_verdict_rationale,
+            supporting_lines=list(row.assistant_verdict_lines or []),
+            model=row.assistant_verdict_model,
+            generated_at=row.assistant_verdict_at,
+        )
+
+    @app.post(
+        "/assets/{asset_id}/issues/{issue_id}/triage-assistant",
+        response_model=TriageAssistantView,
+        dependencies=[Depends(require_scope("scans:write"))],
+    )
+    def create_triage_assessment(
+        asset_id: str, issue_id: str, s: Session = Depends(db), org: str = Depends(current_org)
+    ) -> TriageAssistantView:
+        """Ask the triage assistant for a verdict on one issue (plan §21.3): reads the taint path
+        and surrounding code from its latest occurrence and returns an advisory verdict. Stored so
+        `core.risk.score` can use it as one ranking input on this asset's later scans -- never
+        changes `triage_status` or anything else about the issue; a person still decides that."""
+        client = app_state.llm_triage
+        if client is None:
+            raise HTTPException(409, "the triage assistant is not enabled on this server")
+        asset = _get_asset(s, asset_id, org)
+        _get_issue(s, issue_id, org)
+        scan = repo.latest_scan_for_asset(s, asset.id, org_id=org)
+        if scan is None:
+            raise HTTPException(409, "no completed scan for this asset")
+        finding_doc = repo.get_issue_finding(s, issue_id, scan.id)
+        if finding_doc is None:
+            raise HTTPException(409, "this issue has no occurrence in the latest scan")
+        finding = finding_from_dict(
+            {k: v for k, v in finding_doc.items() if k not in ("scan_id", "issue")}
+        )
+        try:
+            app_state.limiter.acquire()
+            llm_budget.check(s, scan, app_state.llm_budget)
+        except LimitExceeded as exc:
+            raise HTTPException(
+                429, str(exc), headers={"Retry-After": str(exc.retry_after)}
+            ) from exc
+        except llm_budget.BudgetExceeded as exc:
+            raise HTTPException(429, str(exc)) from exc
+
+        from core.triage_assistant import service as triage_service
+
+        assessment = triage_service.assess(finding, client, _code_of(finding))
+        if assessment is None:
+            raise HTTPException(
+                503, "the triage assistant could not produce a usable verdict for this finding"
+            )
+        llm_budget.record(s, scan, assessment.tokens_used)
+        row = repo.set_assistant_verdict(
+            s,
+            issue_id,
+            verdict=assessment.verdict.verdict,
+            confidence=assessment.verdict.confidence,
+            rationale=assessment.verdict.rationale,
+            lines=list(assessment.verdict.supporting_lines),
+            model=assessment.model,
+        )
+        return _triage_view(row)
+
+    @app.get(
+        "/assets/{asset_id}/issues/{issue_id}/triage-assistant",
+        response_model=TriageAssistantView,
+        dependencies=[Depends(require_scope("scans:read"))],
+    )
+    def get_triage_assessment(
+        asset_id: str, issue_id: str, s: Session = Depends(db), org: str = Depends(current_org)
+    ) -> TriageAssistantView:
+        _get_asset(s, asset_id, org)
+        issue = _get_issue(s, issue_id, org)
+        if issue.assistant_verdict is None:
+            raise HTTPException(404, "no triage-assistant verdict for this issue yet")
+        return _triage_view(issue)
+
+    def _hypothesis_view(row: Any) -> HypothesisView:
+        return HypothesisView(
+            id=row.id, route_method=row.route_method, route_path=row.route_path, file=row.file,
+            line=row.line, evidence=row.evidence, suggested_check=row.suggested_check,
+            confidence=row.confidence, model=row.model, status=row.status,
+            promoted_issue_id=row.promoted_issue_id, created_at=row.created_at,
+        )  # fmt: skip
+
+    @app.post(
+        "/assets/{asset_id}/hypotheses/generate",
+        response_model=GenerateHypothesesResult,
+        dependencies=[Depends(require_scope("scans:write"))],
+    )
+    def generate_hypotheses(
+        asset_id: str, s: Session = Depends(db), org: str = Depends(current_org)
+    ) -> GenerateHypothesesResult:
+        """Generate Hypotheses-lane candidates for one asset (plan §21.4): re-checks out its latest
+        scan's source, finds every route with no recognized auth marker in a file where a sibling
+        route has one (`core.hypotheses.facts`, deterministic, no model), and asks the model to
+        decide which of those are worth a person's time. Off by default: `409` when no model is
+        routed for `Task.HYPOTHESES` (the same on/off switch the gateway gives every task)."""
+        client = app_state.llm_hypotheses
+        if client is None:
+            raise HTTPException(409, "the Hypotheses lane is not enabled on this server")
+        asset = _get_asset(s, asset_id, org)
+        scan = repo.latest_scan_for_asset(s, asset.id, org_id=org)
+        if scan is None:
+            raise HTTPException(409, "no completed scan for this asset")
+        if scan.source_type != "git":
+            raise HTTPException(
+                409, "the Hypotheses lane needs a git source to re-check out the code from"
+            )
+
+        import shutil
+        import tempfile
+        from pathlib import Path
+
+        from core.gitfetch import GitUrlError
+        from core.gitfetch import clone_repo as git_clone_repo
+        from core.hypotheses.service import generate_for_checkout
+
+        app_state.limiter.acquire()
+        checkout = Path(tempfile.mkdtemp(prefix="bulwark-hypotheses-"))
+        try:
+            try:
+                git_clone_repo(scan.source_ref, checkout, ref=scan.ref)
+            except GitUrlError as exc:
+                raise HTTPException(422, f"could not check out the repository: {exc}") from exc
+            surfaced = generate_for_checkout(checkout, client)
+        finally:
+            shutil.rmtree(checkout, ignore_errors=True)
+
+        tokens = sum(assessment.tokens_used for _, assessment in surfaced)
+        if tokens:
+            llm_budget.record(s, scan, tokens)
+        rows = [
+            repo.create_hypothesis(
+                s, asset.id, method=candidate.route.method or "", path=candidate.route.path,
+                file=candidate.file, line=candidate.line, evidence=assessment.result.evidence,
+                suggested_check=assessment.result.suggested_check,
+                confidence=assessment.result.confidence, snippet=assessment.snippet,
+                model=assessment.model,
+            )  # fmt: skip
+            for candidate, assessment in surfaced
+        ]
+        return GenerateHypothesesResult(
+            generated=len(rows), hypotheses=[_hypothesis_view(r) for r in rows]
+        )
+
+    @app.get(
+        "/assets/{asset_id}/hypotheses",
+        response_model=list[HypothesisView],
+        dependencies=[Depends(require_scope("scans:read"))],
+    )
+    def list_hypotheses_endpoint(
+        asset_id: str,
+        status: str | None = Query(default=None, description="Filter to open|promoted|dismissed."),
+        s: Session = Depends(db),
+        org: str = Depends(current_org),
+    ) -> list[HypothesisView]:
+        _get_asset(s, asset_id, org)
+        return [_hypothesis_view(r) for r in repo.list_hypotheses(s, asset_id, status=status)]
+
+    @app.post(
+        "/assets/{asset_id}/hypotheses/{hypothesis_id}/promote",
+        response_model=PromoteHypothesisResult,
+        dependencies=[Depends(require_scope("scans:write"))],
+    )
+    def promote_hypothesis_endpoint(
+        asset_id: str,
+        hypothesis_id: str,
+        auth: AuthContext = Depends(require_auth),
+        s: Session = Depends(db),
+        org: str = Depends(current_org),
+    ) -> PromoteHypothesisResult:
+        """A human confirming a hypothesis (plan §21.4): creates a real Issue, `source=
+        "llm-confirmed"`. Never automatic -- this is the one and only way that value is ever set."""
+        _get_asset(s, asset_id, org)
+        hyp = repo.get_hypothesis(s, hypothesis_id, org_id=org)
+        if hyp is None or hyp.asset_id != asset_id:
+            raise HTTPException(404, "hypothesis not found")
+        try:
+            issue = repo.promote_hypothesis(s, hypothesis_id, actor=auth.actor)
+        except (LookupError, ValueError) as exc:
+            raise HTTPException(409, str(exc)) from exc
+        return PromoteHypothesisResult(issue_id=issue.id)
+
+    @app.post(
+        "/assets/{asset_id}/hypotheses/{hypothesis_id}/dismiss",
+        dependencies=[Depends(require_scope("scans:write"))],
+    )
+    def dismiss_hypothesis_endpoint(
+        asset_id: str,
+        hypothesis_id: str,
+        auth: AuthContext = Depends(require_auth),
+        s: Session = Depends(db),
+        org: str = Depends(current_org),
+    ) -> dict[str, str]:
+        _get_asset(s, asset_id, org)
+        hyp = repo.get_hypothesis(s, hypothesis_id, org_id=org)
+        if hyp is None or hyp.asset_id != asset_id:
+            raise HTTPException(404, "hypothesis not found")
+        try:
+            repo.dismiss_hypothesis(s, hypothesis_id, actor=auth.actor)
+        except ValueError as exc:
+            raise HTTPException(409, str(exc)) from exc
+        return {"status": "dismissed"}
+
     @app.get("/risk/feeds", response_model=FeedsStatus, dependencies=[Depends(require_auth)])
     def risk_feeds() -> FeedsStatus:
         meta = read_meta(app_state.settings.workdir / "feeds")
@@ -1096,6 +1307,8 @@ def build_default_app() -> FastAPI:
             # None unless the routed backend is enabled and ready; raises at startup, not on the
             # first request, if privacy mode is on with no local model configured (gateway.py).
             llm=make_gateway_client(Task.FIX),
+            llm_triage=make_gateway_client(Task.TRIAGE),
+            llm_hypotheses=make_gateway_client(Task.HYPOTHESES),
             limiter=UsageLimiter.from_env(),
         )
     )

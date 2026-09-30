@@ -6,6 +6,36 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 ## [Unreleased]
 
 ### Added
+- **Triage assistant and Hypotheses lane (Week 43, plan §21.3/§21.4, ADR-0028):** two related LLM
+  features. The **triage assistant** reads one Issue's taint path and code and returns an advisory
+  verdict (`likely_real`/`likely_false_positive`/`unsure` + rationale + supporting lines,
+  `core/triage_assistant/`) — a deliberately separate JSON contract from remediation's (which must
+  never dismiss a finding) so both guarantees hold without either trusting the other. The verdict
+  feeds `core.risk.score` as a bounded multiplier (0.6-1.15, never past a KEV floor) starting with
+  the asset's *next* scan (`core.pipeline` looks it up by fingerprint before scoring) — proven end to
+  end by running two real scans of the same asset through the real pipeline. It never touches the
+  human `triage_status`. New `POST/GET /assets/{asset_id}/issues/{issue_id}/triage-assistant` and an
+  issue-detail panel. The **Hypotheses lane** (`core/hypotheses/`) is a separate, off-by-default tab
+  for flaws pattern-based scanning can't express — v1 detects one type, a route with no recognized
+  authorization marker in a file where a sibling route has one, found by an entirely deterministic
+  pass over `core.codeintel` (new `Entrypoint.auth_markers`, populated for Python decorators and
+  Express middleware). The model's only job is judging each deterministic candidate, never inventing
+  the pattern itself. Off by default, excluded from the risk score, and never in the main issue list
+  until a person promotes one (`source="llm-confirmed"`, a new `IssueRow` column) — promotion is a
+  direct insert, deliberately not `core.issues.sync` (which would misread every other open issue as
+  fixed if handed one synthetic finding; proven with a real second Issue left untouched). New
+  `hypotheses` table (migration `0014`, RLS via `assets`) and
+  `POST /assets/{asset_id}/hypotheses/generate`, `GET .../hypotheses`,
+  `POST .../hypotheses/{id}/promote|dismiss`, plus a new `/app/projects/[id]/hypotheses` tab. Two new
+  promptfoo suites (`core/llm/prompts/triage/`, `core/llm/prompts/hypotheses/`). 79 new backend tests
+  (1295 total, 92.4% coverage) and 10 new frontend tests (173 total); mypy/ruff/black and
+  `tsc --noEmit`/`next build` all clean; both migrations validated live (up/down/up) with a real
+  cross-org RLS proof on Postgres; both new panels driven through a real browser against a real,
+  disposable API server. Honest gaps (no live hosted-model run for either feature, no OWASP
+  Benchmark/Juice Shop measurement, IDOR/mass-assignment not implemented, no Go/Django auth-marker
+  extraction) disclosed in `docs/v2-week43-verification.md`.
+
+### Added
 - **Verified-fix agent (Week 42, plan §21.2, ADR-0027) — "the flagship v2 feature":** proposes a
   patch for an Issue, verifies it for real (reruns the originating rule, reruns every scanner on the
   changed file, optionally runs the project's own tests in an opt-in, verified-GitHub-Installation-

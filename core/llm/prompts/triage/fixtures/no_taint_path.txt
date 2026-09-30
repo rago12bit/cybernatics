@@ -1,0 +1,22 @@
+=====BEGIN UNTRUSTED DATA [437a0953df694420b9d56ec098f3ab90] kind=finding path="app/auth.py"=====
+Title: Weak hash algorithm
+Description: MD5 used for password hashing.
+Category: sast
+CWE: CWE-327
+File: app/auth.py
+Lines: 30-30
+Reported by 1 scanner(s): unknown
+=====END UNTRUSTED DATA [437a0953df694420b9d56ec098f3ab90]=====
+
+=====BEGIN UNTRUSTED DATA [437a0953df694420b9d56ec098f3ab90] kind=code path="app/auth.py"=====
+   30 | def hash_password(pw):
+   31 |     return hashlib.md5(pw.encode()).hexdigest()
+=====END UNTRUSTED DATA [437a0953df694420b9d56ec098f3ab90]=====
+
+=====BEGIN UNTRUSTED DATA [437a0953df694420b9d56ec098f3ab90] kind=taint_path=====
+[no concrete taint path was recorded]
+=====END UNTRUSTED DATA [437a0953df694420b9d56ec098f3ab90]=====
+
+Give your verdict on the finding described in the data blocks above.
+
+Reply with the single JSON object described in the system message, and nothing else.

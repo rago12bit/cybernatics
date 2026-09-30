@@ -1,0 +1,23 @@
+=====BEGIN UNTRUSTED DATA [6d734d5b2e41dcc818d96252a7928499] kind=finding path="app/users.py"=====
+Title: SQL injection
+Description: String-built SQL query.
+Category: sast
+CWE: CWE-89
+File: app/users.py
+Lines: 10-11
+Reported by 1 scanner(s): unknown
+=====END UNTRUSTED DATA [6d734d5b2e41dcc818d96252a7928499]=====
+
+=====BEGIN UNTRUSTED DATA [6d734d5b2e41dcc818d96252a7928499] kind=code path="app/users.py"=====
+   10 | def get_user(uid):
+   11 |     return db.execute("SELECT * FROM users WHERE id=" + uid)
+=====END UNTRUSTED DATA [6d734d5b2e41dcc818d96252a7928499]=====
+
+=====BEGIN UNTRUSTED DATA [6d734d5b2e41dcc818d96252a7928499] kind=taint_path=====
+app/routes.py:5: request.args['id'] enters get_user()
+app/users.py:10: cursor.execute('SELECT * FROM users WHERE id=' + uid) <-- sink
+=====END UNTRUSTED DATA [6d734d5b2e41dcc818d96252a7928499]=====
+
+Give your verdict on the finding described in the data blocks above.
+
+Reply with the single JSON object described in the system message, and nothing else.

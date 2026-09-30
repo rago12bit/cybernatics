@@ -121,6 +121,47 @@ Reject Verified Fix
 - `asset_id` (path, required)
 - `issue_id` (path, required)
 
+## `POST /assets/{asset_id}/issues/{issue_id}/triage-assistant`
+
+Create Triage Assessment
+
+- `asset_id` (path, required)
+- `issue_id` (path, required)
+
+## `GET /assets/{asset_id}/issues/{issue_id}/triage-assistant`
+
+Get Triage Assessment
+
+- `asset_id` (path, required)
+- `issue_id` (path, required)
+
+## `POST /assets/{asset_id}/hypotheses/generate`
+
+Generate Hypotheses
+
+- `asset_id` (path, required)
+
+## `GET /assets/{asset_id}/hypotheses`
+
+List Hypotheses Endpoint
+
+- `asset_id` (path, required)
+- `status` (query)
+
+## `POST /assets/{asset_id}/hypotheses/{hypothesis_id}/promote`
+
+Promote Hypothesis Endpoint
+
+- `asset_id` (path, required)
+- `hypothesis_id` (path, required)
+
+## `POST /assets/{asset_id}/hypotheses/{hypothesis_id}/dismiss`
+
+Dismiss Hypothesis Endpoint
+
+- `asset_id` (path, required)
+- `hypothesis_id` (path, required)
+
 ## `GET /risk/feeds`
 
 Risk Feeds

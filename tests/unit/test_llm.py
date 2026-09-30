@@ -599,7 +599,15 @@ def test_cli_status_prompt_and_suggest_without_a_key(
     src.write_text("\n".join(f"line{i} = {i}" for i in range(1, 40)))
     runner = CliRunner()
     status = json.loads(runner.invoke(app, ["llm", "status"]).output)
-    assert status["routes"] == {"fix": "hosted"} and status["privacy_mode"] is False
+    assert (
+        status["routes"]
+        == {
+            "fix": "hosted",
+            "triage": "hosted",
+            "hypotheses": "hosted",
+        }
+        and status["privacy_mode"] is False
+    )
     assert status["hosted"] == {"enabled": False, "model": "claude-sonnet-5", "api_key_set": False}
     assert status["local"]["enabled"] is False
     shown = runner.invoke(app, ["llm", "prompt", str(doc), "--source", str(src)])

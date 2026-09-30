@@ -1,0 +1,38 @@
+# yaml-language-server: $schema=https://promptfoo.dev/config-schema.json
+#
+# The Hypotheses lane's evaluation suite (plan §21.4), mirroring the fix/ and triage/ suites: gates
+# core/hypotheses/prompt.py's system prompt (core/llm/prompts/hypotheses/v1.md).
+#
+# Fixtures under fixtures/*.txt are pre-rendered REAL user prompts from build_prompt() (regenerate
+# with `python3 scripts/gen-hypotheses-fixtures.py` -- never hand-edit them).
+#
+#   promptfoo eval -c core/llm/prompts/hypotheses/promptfooconfig.yaml            # free, local, offline
+
+description: "Bulwark Hypotheses-lane prompt registry (prompts/hypotheses/v1.md)"
+
+prompts:
+  - "{{prompt}}"
+
+providers:
+  - id: "file://promptfoo_provider.py"
+    label: "core.llm.gateway (Task.HYPOTHESES), local Ollama"
+    config:
+      backend: local
+      model: "qwen2.5:0.5b"
+      base_url: "http://localhost:11434"
+      request_timeout_s: 90
+      timeout: 120000
+
+defaultTest:
+  assert:
+    - type: python
+      value: file://promptfoo_assert.py
+
+tests:
+  - description: "A route with no marker in a file whose siblings all have one -- a real candidate"
+    vars:
+      prompt: file://fixtures/missing_admin_check.txt
+
+  - description: "A plausibly-public health check -- a reasonable surface=false candidate"
+    vars:
+      prompt: file://fixtures/plausibly_public_health_check.txt

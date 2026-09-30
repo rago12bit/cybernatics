@@ -80,7 +80,8 @@ export function ProjectOverview({ assetId }: { assetId: string }) {
         <Link href={`/app/projects/${assetId}/issues`}>all issues</Link> <span aria-hidden="true">·</span>{" "}
         <Link href={`/scans/${data.latest_scan_id}`}>full scan report</Link> <span aria-hidden="true">·</span>{" "}
         <Link href={`/app/projects/${assetId}/compare`}>compare scans</Link> <span aria-hidden="true">·</span>{" "}
-        <Link href={`/app/projects/${assetId}/dependencies`}>dependencies</Link>
+        <Link href={`/app/projects/${assetId}/dependencies`}>dependencies</Link> <span aria-hidden="true">·</span>{" "}
+        <Link href={`/app/projects/${assetId}/hypotheses`}>hypotheses</Link>
       </div>
 
       <div className="ds-ov-verdict">

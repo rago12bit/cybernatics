@@ -12,6 +12,7 @@ from core.models import Finding
 from core.reachability import Reachability, ReachabilityIndex
 from core.redact import redact_near_secrets
 from core.risk import Feeds, apply_risk
+from core.risk.score import VerdictLookup
 from core.taint import TaintResult
 from core.taint.reachability import attach_taint_paths, build_index
 from core.taxonomy import enrich_all
@@ -23,11 +24,14 @@ def finalize(
     reach: ReachabilityIndex | None = None,
     taint: TaintResult | None = None,
     root: Path | None = None,
+    verdict_lookup: VerdictLookup | None = None,
 ) -> list[Finding]:
     # Order matters: correlate (done by the caller) -> map -> attach taint paths (so the confidence
     # bump they carry is in place before scoring runs) -> score -> redact last. `root` (the scanned
     # workspace) only reads a few lines of per-step context for the UI; scoring/reachability need
-    # none of it.
+    # none of it. `verdict_lookup` (plan §21.3): `None` for the CLI path (no asset, no history to
+    # look a verdict up against) and every scan's first pass; the API path (`core/pipeline.py`)
+    # supplies one keyed by fingerprint once an asset has any Issue carrying a stored verdict.
     findings = attach_taint_paths(enrich_all(correlated), taint.findings if taint else [], root)
     taint_index = build_index(taint.findings) if taint else None
 
@@ -40,4 +44,4 @@ def finalize(
                 return r
         return reach.assess(f) if reach else None
 
-    return redact_near_secrets(apply_risk(findings, feeds, assess))
+    return redact_near_secrets(apply_risk(findings, feeds, assess, verdict_lookup))

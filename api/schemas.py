@@ -268,6 +268,47 @@ class GuidanceView(BaseModel):
     model: str | None = None
 
 
+class TriageAssistantView(BaseModel):
+    """A model's verdict on one Issue (plan §21.3) -- advisory only, distinct from `IssueView`'s
+    `triage_status` (a human decision, ADR-0012). `null` if the assistant has never run for this
+    issue, which is the normal state until someone asks for one."""
+
+    verdict: Literal["likely_real", "likely_false_positive", "unsure"]
+    confidence: Literal["high", "medium", "low"]
+    rationale: str
+    supporting_lines: list[int]
+    model: str
+    generated_at: datetime
+
+
+class HypothesisView(BaseModel):
+    """One Hypotheses-lane candidate (plan §21.4) -- off by default, its own tab, excluded from the
+    risk score and policy gates until a person promotes it. `promoted_issue_id` is set only once
+    `status` is "promoted"."""
+
+    id: str
+    route_method: str
+    route_path: str
+    file: str
+    line: int
+    evidence: str
+    suggested_check: str
+    confidence: Literal["high", "medium", "low"]
+    model: str
+    status: Literal["open", "promoted", "dismissed"]
+    promoted_issue_id: str | None
+    created_at: datetime
+
+
+class GenerateHypothesesResult(BaseModel):
+    generated: int = Field(description="How many NEW hypotheses this run surfaced and stored.")
+    hypotheses: list[HypothesisView]
+
+
+class PromoteHypothesisResult(BaseModel):
+    issue_id: str = Field(description="The new Issue's id, source='llm-confirmed'.")
+
+
 class VerifiedFixRequest(BaseModel):
     run_tests: bool = Field(
         default=False,

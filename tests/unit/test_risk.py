@@ -124,6 +124,65 @@ def test_apply_risk_does_not_mutate_inputs() -> None:
     assert f.scoring.risk_score is None and out[0].scoring.risk_score is not None
 
 
+# ---- triage-assistant verdict (plan §21.3) ------------------------------------------------------
+
+
+def test_a_likely_false_positive_verdict_dampens_but_never_zeroes_the_score() -> None:
+    from core.triage_assistant.contract import TriageVerdict
+
+    baseline = score_finding(_code(0.9), Feeds()).scoring.risk_score or 0
+    verdict = TriageVerdict("likely_false_positive", "high", "no sanitizer seen", (10,))
+    dampened = score_finding(_code(0.9), Feeds(), verdict=verdict).scoring.risk_score or 0
+    assert 0 < dampened < baseline
+
+
+def test_a_likely_real_verdict_can_only_nudge_up_not_dominate() -> None:
+    from core.triage_assistant.contract import TriageVerdict
+
+    baseline = score_finding(_code(0.5), Feeds()).scoring.risk_score or 0
+    verdict = TriageVerdict("likely_real", "high", "reaches the sink", (10,))
+    nudged = score_finding(_code(0.5), Feeds(), verdict=verdict).scoring.risk_score or 0
+    assert baseline <= nudged <= 100
+
+
+def test_an_unsure_verdict_never_changes_the_score() -> None:
+    from core.triage_assistant.contract import TriageVerdict
+
+    baseline = score_finding(_code(0.6), Feeds()).scoring.risk_score
+    verdict = TriageVerdict("unsure", "low", "not enough information", (10,))
+    same = score_finding(_code(0.6), Feeds(), verdict=verdict).scoring.risk_score
+    assert baseline == same
+
+
+def test_the_verdict_factor_never_overrides_the_kev_floor() -> None:
+    from core.triage_assistant.contract import TriageVerdict
+
+    verdict = TriageVerdict("likely_false_positive", "high", "x", (1,))
+    f = score_finding(_vuln(cvss=1.0), Feeds(kev={"CVE-2021-44228"}), verdict=verdict)
+    assert (f.scoring.risk_score or 0) >= KEV_FLOOR
+
+
+def test_the_verdict_is_named_in_risk_factors() -> None:
+    from core.triage_assistant.contract import TriageVerdict
+
+    verdict = TriageVerdict("likely_false_positive", "medium", "x", (1,))
+    f = score_finding(_code(0.8), Feeds(), verdict=verdict)
+    assert any("Triage assistant: likely false positive" in fac for fac in f.scoring.risk_factors)
+
+
+def test_apply_risk_threads_the_verdict_lookup_by_fingerprint() -> None:
+    from core.triage_assistant.contract import TriageVerdict
+
+    f = _code(0.9)
+    f.fingerprint = "fp-1"
+    verdict = TriageVerdict("likely_false_positive", "high", "x", (1,))
+    with_verdict = apply_risk(
+        [f], Feeds(), verdict_lookup=lambda x: verdict if x.fingerprint == "fp-1" else None
+    )
+    without = apply_risk([f], Feeds())
+    assert (with_verdict[0].scoring.risk_score or 0) < (without[0].scoring.risk_score or 0)
+
+
 # ---- feeds -------------------------------------------------------------------------------------
 
 

@@ -322,3 +322,36 @@ export interface VerifiedFixStarted {
   run_id: string;
   workflow_id: string;
 }
+
+/** The triage assistant's verdict on one Issue (plan §21.3) -- advisory only, distinct from
+ * `IssueRef.triage_status` (a human decision). `null` until someone asks for one. */
+export interface TriageAssistantView {
+  verdict: "likely_real" | "likely_false_positive" | "unsure";
+  confidence: "high" | "medium" | "low";
+  rationale: string;
+  supporting_lines: number[];
+  model: string;
+  generated_at: string;
+}
+
+/** One Hypotheses-lane candidate (plan §21.4) -- off by default, its own tab, excluded from the
+ * risk score until a person promotes it. */
+export interface Hypothesis {
+  id: string;
+  route_method: string;
+  route_path: string;
+  file: string;
+  line: number;
+  evidence: string;
+  suggested_check: string;
+  confidence: "high" | "medium" | "low";
+  model: string;
+  status: "open" | "promoted" | "dismissed";
+  promoted_issue_id: string | null;
+  created_at: string;
+}
+
+export interface GenerateHypothesesResult {
+  generated: number;
+  hypotheses: Hypothesis[];
+}

@@ -86,6 +86,38 @@ def home():
     assert u.entrypoints[0].method == "GET"
 
 
+def test_auth_decorators_become_auth_markers() -> None:
+    src = """
+@app.get("/admin/users")
+@login_required
+def list_users():
+    pass
+"""
+    u = extract("app.py", src)
+    assert u.entrypoints[0].auth_markers == ("login_required",)
+
+
+def test_a_call_style_decorator_contributes_its_function_name() -> None:
+    src = """
+@app.get("/admin/users")
+@auth.requires_role("admin")
+def list_users():
+    pass
+"""
+    u = extract("app.py", src)
+    assert u.entrypoints[0].auth_markers == ("requires_role",)
+
+
+def test_a_route_with_no_other_decorator_has_no_auth_markers() -> None:
+    src = """
+@app.get("/health")
+def health():
+    pass
+"""
+    u = extract("app.py", src)
+    assert u.entrypoints[0].auth_markers == ()
+
+
 def test_django_urlpatterns_produces_an_entrypoint_and_a_call_to_the_view() -> None:
     src = """
 from . import views

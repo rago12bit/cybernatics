@@ -1,0 +1,17 @@
+=====BEGIN UNTRUSTED DATA [8d4e7466ffdce299a7fb4ba1a5615ac0] kind=facts=====
+File: app.py
+Candidate route: DELETE /users/<id>
+Candidate's own auth-looking markers: none
+Sibling routes in the same file that DO have a recognized auth-looking marker:
+- GET /users, markers: login_required
+=====END UNTRUSTED DATA [8d4e7466ffdce299a7fb4ba1a5615ac0]=====
+
+=====BEGIN UNTRUSTED DATA [8d4e7466ffdce299a7fb4ba1a5615ac0] kind=code=====
+def delete_user(id):
+    db.delete(User, id)
+    return '', 204
+=====END UNTRUSTED DATA [8d4e7466ffdce299a7fb4ba1a5615ac0]=====
+
+Decide whether this candidate is worth a person's time, per the rules above.
+
+Reply with the single JSON object described in the system message, and nothing else.

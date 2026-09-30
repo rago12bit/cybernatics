@@ -244,6 +244,7 @@ describe("axe accessibility audit — Week 33-35 screens", () => {
       if (url.includes("/history")) return json([{ at: "2026-09-20T00:00:00Z", label: "First seen" }]);
       if (url.includes("/guidance")) return json({ status: 404 }, 404); // no cached guidance: a real, common case
       if (url.includes("/verified-fix")) return json({ detail: "no verified-fix run for this issue" }, 404); // none started yet
+      if (url.includes("/triage-assistant")) return json({ detail: "no triage-assistant verdict for this issue yet" }, 404); // none generated yet
       return json(issueFinding);
     }));
     const rows = await mount(<ModeProvider><IssueDetail assetId="a1" issueId="iss-1" /></ModeProvider>);

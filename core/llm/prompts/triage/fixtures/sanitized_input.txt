@@ -1,0 +1,23 @@
+=====BEGIN UNTRUSTED DATA [beea2dfa531dd526c7bd0d2bf228e62b] kind=finding path="app/users.py"=====
+Title: Possible SQL injection
+Description: Parameterized query flagged by a broad rule.
+Category: sast
+CWE: CWE-89
+File: app/users.py
+Lines: 20-21
+Reported by 1 scanner(s): unknown
+=====END UNTRUSTED DATA [beea2dfa531dd526c7bd0d2bf228e62b]=====
+
+=====BEGIN UNTRUSTED DATA [beea2dfa531dd526c7bd0d2bf228e62b] kind=code path="app/users.py"=====
+   20 | def get_user_safe(uid):
+   21 |     return db.execute("SELECT * FROM users WHERE id=%s", (uid,))
+=====END UNTRUSTED DATA [beea2dfa531dd526c7bd0d2bf228e62b]=====
+
+=====BEGIN UNTRUSTED DATA [beea2dfa531dd526c7bd0d2bf228e62b] kind=taint_path=====
+app/routes.py:5: request.args['id'] enters get_user_safe()
+app/users.py:20: cursor.execute('SELECT * FROM users WHERE id=%s', (uid,)) <-- sink
+=====END UNTRUSTED DATA [beea2dfa531dd526c7bd0d2bf228e62b]=====
+
+Give your verdict on the finding described in the data blocks above.
+
+Reply with the single JSON object described in the system message, and nothing else.

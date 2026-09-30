@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import logging
 import uuid
 from dataclasses import dataclass, field
@@ -26,12 +27,14 @@ from core.persistence.models import (
     AuditEntry,
     FindingRow,
     GithubInstallation,
+    HypothesisRow,
     IssueRow,
     Organization,
     Scan,
     ToolRun,
 )
 from core.tenancy import DEFAULT_ORG_ID
+from core.triage_assistant.contract import TriageVerdict
 
 log = logging.getLogger(__name__)
 
@@ -455,8 +458,66 @@ def get_issue_finding(s: Session, issue_id: str, latest_scan_id: str) -> dict[st
         "triage_reason": issue_row.triage_reason if issue_row else None,
         "triage_expires_at": issue_row.triage_expires_at if issue_row else None,
         "first_seen_at": issue_row.first_seen_at if issue_row else None,
+        "assistant_verdict": issue_row.assistant_verdict if issue_row else None,
+        "assistant_verdict_confidence": (
+            issue_row.assistant_verdict_confidence if issue_row else None
+        ),
+        "assistant_verdict_rationale": issue_row.assistant_verdict_rationale if issue_row else None,
+        "assistant_verdict_lines": issue_row.assistant_verdict_lines if issue_row else None,
+        "assistant_verdict_model": issue_row.assistant_verdict_model if issue_row else None,
+        "assistant_verdict_at": issue_row.assistant_verdict_at if issue_row else None,
     }
     return d
+
+
+def set_assistant_verdict(
+    s: Session,
+    issue_id: str,
+    *,
+    verdict: str,
+    confidence: str,
+    rationale: str,
+    lines: list[int],
+    model: str,
+) -> IssueRow:
+    """Store a triage-assistant verdict on an Issue (plan §21.3). Advisory only: nothing here
+    touches `triage_status` -- a person, never a model, decides that (`triage_issue`, above)."""
+    row = s.get(IssueRow, issue_id)
+    if row is None:
+        raise LookupError(f"issue {issue_id} not found")
+    row.assistant_verdict = verdict
+    row.assistant_verdict_confidence = confidence
+    row.assistant_verdict_rationale = rationale
+    row.assistant_verdict_lines = lines
+    row.assistant_verdict_model = model
+    row.assistant_verdict_at = _now()
+    s.commit()
+    s.refresh(row)
+    return row
+
+
+def assistant_verdicts_for_asset(s: Session, asset_id: str) -> dict[str, TriageVerdict]:
+    """fingerprint -> verdict for every Issue of this asset that already carries one (plan §21.3:
+    "one input to the ranker"). Read by `core.pipeline` before a new scan's findings are scored, so
+    a verdict generated from one occurrence keeps informing the risk score of every later scan that
+    reproduces the same finding (same fingerprint) -- until a fresh verdict or a changed finding
+    (new fingerprint) supersedes it. `core.correlation.engine.fingerprint()` is the one true
+    source of a finding's fingerprint; `IssueRow.fingerprint` is that same value once an occurrence
+    has been matched to an Issue (`core/issues.py`), so keying on it here needs no recomputation."""
+    rows = s.scalars(
+        select(IssueRow).where(
+            IssueRow.asset_id == asset_id, IssueRow.assistant_verdict.is_not(None)
+        )
+    ).all()
+    return {
+        r.fingerprint: TriageVerdict(
+            verdict=cast(Any, r.assistant_verdict),
+            confidence=cast(Any, r.assistant_verdict_confidence),
+            rationale=r.assistant_verdict_rationale or "",
+            supporting_lines=tuple(r.assistant_verdict_lines or ()),
+        )
+        for r in rows
+    }
 
 
 def triage_issue(
@@ -970,3 +1031,135 @@ def record_checkpoint(
 
 def list_checkpoints(s: Session) -> list[AuditCheckpoint]:
     return list(s.scalars(select(AuditCheckpoint).order_by(AuditCheckpoint.seq_end)))
+
+
+# ---- Hypotheses lane (Week 43, plan §21.4) -------------------------------------------------------
+
+
+def create_hypothesis(
+    s: Session,
+    asset_id: str,
+    *,
+    method: str,
+    path: str,
+    file: str,
+    line: int,
+    evidence: str,
+    suggested_check: str,
+    confidence: str,
+    snippet: str,
+    model: str,
+) -> HypothesisRow:
+    row = HypothesisRow(
+        asset_id=asset_id, route_method=method, route_path=path, file=file, line=line,
+        evidence=evidence, suggested_check=suggested_check, confidence=confidence,
+        snippet=snippet, model=model,
+    )  # fmt: skip
+    s.add(row)
+    s.commit()
+    s.refresh(row)
+    return row
+
+
+def list_hypotheses(
+    s: Session, asset_id: str, *, org_id: str | None = None, status: str | None = None
+) -> list[HypothesisRow]:
+    q = select(HypothesisRow).where(HypothesisRow.asset_id == asset_id)
+    if org_id is not None:
+        q = q.join(Asset, Asset.id == HypothesisRow.asset_id).where(Asset.org_id == org_id)
+    if status is not None:
+        q = q.where(HypothesisRow.status == status)
+    return list(s.scalars(q.order_by(HypothesisRow.created_at.desc())))
+
+
+def get_hypothesis(
+    s: Session, hypothesis_id: str, *, org_id: str | None = None
+) -> HypothesisRow | None:
+    q = select(HypothesisRow).where(HypothesisRow.id == hypothesis_id)
+    if org_id is not None:
+        q = q.join(Asset, Asset.id == HypothesisRow.asset_id).where(Asset.org_id == org_id)
+    return s.scalars(q).one_or_none()
+
+
+def dismiss_hypothesis(s: Session, hypothesis_id: str, *, actor: str) -> HypothesisRow:
+    row = s.get(HypothesisRow, hypothesis_id)
+    if row is None:
+        raise LookupError(f"hypothesis {hypothesis_id} not found")
+    if row.status != "open":
+        raise ValueError(f"hypothesis is already {row.status}")
+    row.status, row.updated_at = "dismissed", _now()
+    append_audit_entry(
+        s, actor=actor, action="hypothesis.dismiss", target=hypothesis_id, payload={}
+    )  # fmt: skip
+    return row
+
+
+def promote_hypothesis(s: Session, hypothesis_id: str, *, actor: str) -> IssueRow:
+    """Confirm a Hypotheses-lane candidate into a real Issue (plan §21.4), `source="llm-confirmed"`.
+
+    Deliberately NOT `core.issues.sync`: that function reconciles a whole scan's worth of findings
+    against history and would read every other currently-open Issue as "absent from this scan,
+    therefore fixed" if handed just this one synthetic finding. A promoted hypothesis instead gets
+    a direct, narrow insert: one new Issue, one new occurrence (a `FindingRow`) attached to the
+    asset's latest scan, exactly as if that scan had reported it -- nothing else about that scan's
+    history is touched.
+
+    Scored with the same `core.risk.score_finding` every scanner-sourced finding gets, so a
+    promoted hypothesis sorts sensibly in the issues table instead of carrying no risk score at
+    all; there is no CVE or scanner-agreement signal to weigh here, so `Feeds()` (empty) and the
+    confidence implied by the model's own stated confidence are all it has to go on -- a
+    documented, honest floor, not a guessed-at precise number.
+    """
+    from core.models import Category, Finding, Location, Severity, Taxonomy
+    from core.risk import Feeds, score_finding
+
+    hyp = s.get(HypothesisRow, hypothesis_id)
+    if hyp is None:
+        raise LookupError(f"hypothesis {hypothesis_id} not found")
+    if hyp.status != "open":
+        raise ValueError(f"hypothesis is already {hyp.status}")
+    latest = latest_scan_for_asset(s, hyp.asset_id)
+    if latest is None:
+        raise LookupError("this asset has no completed scan to attach the promoted issue to")
+
+    finding_id = f"hypothesis:{hyp.id}"
+    fingerprint = hashlib.sha256(
+        f"hypothesis:{hyp.asset_id}:{hyp.file}:{hyp.line}:{hyp.route_method}:{hyp.route_path}".encode()
+    ).hexdigest()[:32]
+    confidence_value = {"high": 0.8, "medium": 0.6, "low": 0.4}[hyp.confidence]
+    finding = Finding(
+        id=finding_id,
+        title=f"Missing authorization check: {hyp.route_method} {hyp.route_path}".strip(),
+        description=f"{hyp.evidence}\n\nSuggested check: {hyp.suggested_check}",
+        location=Location(hyp.file, hyp.line, hyp.line, hyp.snippet),
+        taxonomy=Taxonomy(Category.SAST, cwe=("CWE-862",)),
+    )
+    finding.scoring.normalized_severity = Severity.MEDIUM
+    finding.scoring.confidence = confidence_value
+    finding.evidence.reported_by = ["hypotheses-lane"]
+    finding.evidence.agreement_count = 1
+    finding.fingerprint = fingerprint
+    finding = score_finding(finding, Feeds())
+
+    issue = IssueRow(
+        asset_id=hyp.asset_id, fingerprint=fingerprint, state="new", category="sast",
+        severity="MEDIUM", path=hyp.file, title=finding.title, source="llm-confirmed",
+    )  # fmt: skip
+    s.add(issue)
+    s.flush()  # assigns issue.id, needed by the FindingRow below
+
+    s.add(
+        FindingRow(
+            scan_id=latest.id, finding_id=finding_id, fingerprint=fingerprint, category="sast",
+            severity="MEDIUM", severity_rank=SEVERITY_RANK["MEDIUM"], path=hyp.file,
+            start_line=hyp.line, tools=["hypotheses-lane"], data=finding.to_dict(),
+            issue_id=issue.id, issue_state="new",
+        )  # fmt: skip
+    )
+    hyp.status, hyp.promoted_issue_id, hyp.updated_at = "promoted", issue.id, _now()
+    append_audit_entry(
+        s, actor=actor, action="hypothesis.promote", target=hypothesis_id,
+        payload={"issue_id": issue.id},
+    )  # fmt: skip
+    s.refresh(issue)
+    return issue

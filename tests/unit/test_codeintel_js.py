@@ -101,6 +101,43 @@ app.get('/login', sessionHandler.displayLoginPage);
     assert (ep.symbol_id, "displayLoginPage", 2) in u.calls
 
 
+def test_express_middleware_between_path_and_handler_becomes_auth_markers() -> None:
+    src = b"""
+router.get('/admin/users', requireAuth, checkAdmin, (req, res) => {
+  res.send(listUsers());
+});
+"""
+    u = extract("routes.js", src)
+    ep = u.entrypoints[0]
+    assert ep.auth_markers == ("requireAuth", "checkAdmin")
+
+
+def test_express_middleware_before_a_named_handler_becomes_auth_markers() -> None:
+    src = b"""
+router.post('/login', requireAuth, loginHandler);
+"""
+    u = extract("routes.js", src)
+    ep = u.entrypoints[0]
+    assert ep.auth_markers == ("requireAuth",)
+
+
+def test_a_called_middleware_contributes_its_own_function_name() -> None:
+    src = b"""
+router.get('/profile', passport.authenticate('jwt'), profileHandler);
+"""
+    u = extract("routes.js", src)
+    ep = u.entrypoints[0]
+    assert ep.auth_markers == ("authenticate",)
+
+
+def test_a_route_with_no_middleware_has_no_auth_markers() -> None:
+    src = b"""
+app.get('/health', (req, res) => res.send('ok'));
+"""
+    u = extract("routes.js", src)
+    assert u.entrypoints[0].auth_markers == ()
+
+
 def test_a_single_argument_get_call_is_not_an_entrypoint() -> None:
     """Entrypoint detection needs a path *and* a handler argument; `cache.get('key')` (one
     argument, no handler to attach an Entrypoint to) must not produce one, even though it matches

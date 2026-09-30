@@ -200,6 +200,18 @@ tests), then waits for a human to approve before opening a pull request -- never
 workflow: `docker compose --profile fixagent up -d` (Temporal UI at **http://localhost:8081**). See
 [docs/verified-fix-agent.md](docs/verified-fix-agent.md).
 
+## Triage assistant
+
+For one Issue, a model reads its taint path and code and returns an advisory verdict --
+`likely_real`/`likely_false_positive`/`unsure` -- that feeds the risk score as a bounded nudge but
+never suppresses the finding or changes its status. See [docs/triage-assistant.md](docs/triage-assistant.md).
+
+## Hypotheses lane
+
+A separate, off-by-default tab for flaws pattern-based scanning can't express -- v1 detects a route
+missing the authorization check its siblings have. Never in the main issue list or the risk score
+until a person confirms one. See [docs/hypotheses-lane.md](docs/hypotheses-lane.md).
+
 ## SBOM, signing and provenance
 
 `bulwark sbom` writes a CycloneDX SBOM (Syft); `bulwark attest` signs reports with cosign and attests which scanner

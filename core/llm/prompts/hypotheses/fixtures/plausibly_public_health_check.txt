@@ -1,0 +1,16 @@
+=====BEGIN UNTRUSTED DATA [26217d8c5c1feaad46f7f2128f18c5ef] kind=facts=====
+File: app.py
+Candidate route: GET /health
+Candidate's own auth-looking markers: none
+Sibling routes in the same file that DO have a recognized auth-looking marker:
+- GET /users, markers: login_required
+=====END UNTRUSTED DATA [26217d8c5c1feaad46f7f2128f18c5ef]=====
+
+=====BEGIN UNTRUSTED DATA [26217d8c5c1feaad46f7f2128f18c5ef] kind=code=====
+def health():
+    return {'status': 'ok'}
+=====END UNTRUSTED DATA [26217d8c5c1feaad46f7f2128f18c5ef]=====
+
+Decide whether this candidate is worth a person's time, per the rules above.
+
+Reply with the single JSON object described in the system message, and nothing else.

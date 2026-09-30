@@ -35,6 +35,8 @@ class AppState:
     llm: LLMClient | None = None  # None: AI suggestions are off; guidance is static reference text
     limiter: UsageLimiter = field(default_factory=UsageLimiter)  # caps real model calls (rate)
     llm_budget: BudgetConfig = field(default_factory=BudgetConfig.from_env)  # caps them by tokens
+    llm_triage: LLMClient | None = None  # None: the triage assistant is off (plan §21.3)
+    llm_hypotheses: LLMClient | None = None  # None: the Hypotheses lane is off (plan §21.4)
 
 
 def state(request: Request) -> AppState:

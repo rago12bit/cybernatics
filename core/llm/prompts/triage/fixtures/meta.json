@@ -1,0 +1,14 @@
+{
+  "sqli_full_path": {
+    "first_line": 10,
+    "last_line": 11
+  },
+  "sanitized_input": {
+    "first_line": 20,
+    "last_line": 21
+  },
+  "no_taint_path": {
+    "first_line": 30,
+    "last_line": 31
+  }
+}

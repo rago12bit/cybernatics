@@ -68,7 +68,7 @@ def test_gateway_status_lists_every_known_task_and_leaks_no_secrets() -> None:
     cfg = GatewayConfig(default_backend=Backend.LOCAL, privacy_mode=False)
     hosted = LLMConfig(enabled=True, api_key="sk-ant-TOPSECRET0123456789")
     status = gateway_status(gateway_cfg=cfg, hosted_cfg=hosted, local_cfg=OllamaConfig())
-    assert status["routes"] == {"fix": "local"}
+    assert status["routes"] == {"fix": "local", "triage": "local", "hypotheses": "local"}
     assert "TOPSECRET" not in json.dumps(status) and status["hosted"]["api_key_set"] is True
 
 

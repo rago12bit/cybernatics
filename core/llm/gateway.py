@@ -5,12 +5,11 @@
 the one place that decides which of them a given task should use, so privacy mode and per-task model
 choice live in one spot instead of being re-decided at every call site (the API endpoint, the CLI).
 
-Only one task has a real caller today: `fix` (`core.llm.service.suggest`, used from `POST
-/scans/{id}/suggestion` and `bulwark llm suggest`). The plan also names "explanations" and "triage"
-for per-task routing, but neither has a model-calling consumer yet (triage lands in Week 43, a
-copilot in Week 44) -- inventing routes for tasks that don't exist yet would just be dead
-configuration. `Task` and the per-task override below are still genuinely keyed by task name, not
-hardcoded to `fix`, so Week 43/44 register their own route without changes here.
+Three tasks have a real caller: `fix` (`core.llm.service.suggest`, used from `POST
+/scans/{id}/suggestion` and `bulwark llm suggest`), `triage` (`core.triage_assistant.service.assess`,
+Week 43, plan §21.3), and `hypotheses` (`core.hypotheses.service.assess_candidate`, Week 43, plan
+§21.4). A copilot task lands in Week 44 and will register its own route the same way -- `Task` and
+the per-task override below are genuinely keyed by task name, not hardcoded to `fix`.
 
 Privacy mode (`BULWARK_LLM_PRIVACY_MODE=1`) forces every task onto the local backend and refuses --
 loudly, never a silent fallback to hosted -- when no local model is configured. A silent fallback
@@ -29,7 +28,9 @@ from core.llm.ollama_client import OllamaConfig, make_ollama_client
 
 
 class Task(str, Enum):
-    FIX = "fix"  # core.llm.service.suggest: the only task with a real caller today
+    FIX = "fix"  # core.llm.service.suggest
+    TRIAGE = "triage"  # core.triage_assistant.service.assess (plan §21.3)
+    HYPOTHESES = "hypotheses"  # core.hypotheses.service.assess_candidate (plan §21.4)
 
 
 class Backend(str, Enum):
