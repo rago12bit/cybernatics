@@ -40,6 +40,21 @@ export function IssueBadge({ issue }: { issue?: IssueRef | null }) {
   );
 }
 
+/** Set once a DAST campaign's own finding matched this Issue on the same route+CWE (plan §22.4,
+ * Week 49 task 4) -- a static finding a real HTTP request actually reached, not just a tool's
+ * guess. Silent when absent: most Issues have no DAST campaign to confirm them against at all. */
+export function ConfirmedAtRuntimeBadge({ issue }: { issue?: IssueRef | null }) {
+  if (!issue?.confirmed_at_runtime_at) return null;
+  return (
+    <span
+      className="tag issue-confirmed-runtime"
+      title={`A DAST campaign confirmed this at runtime on ${new Date(issue.confirmed_at_runtime_at).toLocaleString()}`}
+    >
+      Confirmed at runtime
+    </span>
+  );
+}
+
 /** Risk 0-100 plus the two exploit signals that matter most. */
 export function RiskSignals({ score, kev, epss }: { score: number | null; kev?: boolean; epss?: number | null }) {
   return (

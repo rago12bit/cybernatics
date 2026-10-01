@@ -114,6 +114,12 @@ class RegisterWebAssetRequest(BaseModel):
 
     domain: str = Field(max_length=255, examples=["example.com"])
     method: Literal["dns_txt", "well_known"]
+    source_asset_id: str | None = Field(
+        default=None,
+        description="Optionally link to an existing git/archive project (plan §22.4, Week 49 task "
+        "4): its SAST scans' route map is what lets a later DAST finding be marked 'confirmed at "
+        "runtime.' Must belong to the same organization.",
+    )
 
 
 class StartDastCampaignRequest(BaseModel):

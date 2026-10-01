@@ -155,6 +155,13 @@ class Asset(Base):
     label: Mapped[str] = mapped_column(String(300))  # most recent human-readable label
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
     last_scanned_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+    # Set only on a `web` Asset, optionally, at registration (Week 49 task 4, plan §22.4): the
+    # git/archive Asset whose SAST scans' `route_map` a DAST campaign against this target should
+    # correlate its findings against ("confirmed at runtime," core.dast.correlate). No FK: a web
+    # Asset must survive the source Asset it's linked to being deleted independently --
+    # `repo.register_web_asset` enforces same-org at write time instead, so this never silently
+    # points at another organization's project even without a DB-level constraint.
+    linked_source_asset_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
 
     issues: Mapped[list[IssueRow]] = relationship(
         back_populates="asset", cascade="all, delete-orphan"
@@ -242,6 +249,17 @@ class IssueRow(Base):
         DateTime(timezone=True), nullable=True
     )
 
+    # "Confirmed at runtime" (Week 49 task 4, plan §22.4): set only when a DAST campaign's finding
+    # correlated against this Issue on the same route+CWE (`core.dast.correlate`) -- a static
+    # finding a real HTTP request actually reached, not merely a model's or a tool's guess.
+    # `confirmed_by_scan_id` has no FK: it names the DAST campaign (a Scan row) that confirmed it,
+    # which may belong to a different asset-scan lineage than this Issue's own SAST scans and must
+    # survive that campaign scan being deleted independently of this Issue's own lifecycle.
+    confirmed_at_runtime_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    confirmed_by_scan_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+
     asset: Mapped[Asset] = relationship(back_populates="issues")
 
     __table_args__ = (
@@ -290,6 +308,12 @@ class Scan(Base):
     # -- nothing here needs server-side filtering or pagination; the Dependencies screen renders it
     # whole.
     sbom_summary: Mapped[dict[str, Any] | None] = mapped_column(JsonType, nullable=True)
+    # Web-route handlers found in this scan's own Python source (Week 49 task 4, plan §22.4):
+    # `[{"route": "/assets/*/campaigns", "path": "api/main.py", "line": 648}, ...]`. What a later
+    # DAST campaign's `core.dast.correlate` matches a live finding's route against to mark a
+    # static finding "confirmed at runtime." Empty list (not null) for an ordinary scan that found
+    # no Python route decorators at all -- null only for a scan from before this column existed.
+    route_map: Mapped[list[dict[str, Any]] | None] = mapped_column(JsonType, nullable=True)
     # Model gateway token budget (plan §21.1, ADR-0026): total tokens every AI remediation call tied
     # to this scan has actually used. A running counter updated in place, unlike sbom_summary's
     # write-once snapshot -- `core.llm.budget.check()` compares it against a per-scan cap before

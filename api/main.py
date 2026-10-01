@@ -595,9 +595,13 @@ def create_app(app_state: AppState) -> FastAPI:
         the chosen method; no campaign (Week 49 task 3) can run against this asset until `POST
         /assets/{id}/verify` passes against a live DNS/HTTP check, not merely this call."""
         domain = body.domain.strip().lower()
-        asset, verification = repo.register_web_asset(
-            s, domain=domain, method=body.method, org_id=org
-        )
+        try:
+            asset, verification = repo.register_web_asset(
+                s, domain=domain, method=body.method, org_id=org,
+                source_asset_id=body.source_asset_id,
+            )  # fmt: skip
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from exc
         return _verification_view(asset, verification)
 
     @app.get(

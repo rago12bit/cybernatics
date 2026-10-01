@@ -545,6 +545,7 @@ kbd { font: 500 0.6875rem/1 var(--mono); border: 1px solid var(--line-strong); p
 .tag.epss { color: var(--sev-medium); }
 .tag.issue-new { color: var(--teal); }
 .tag.issue-reintroduced { color: var(--sev-high); }
+.tag.issue-confirmed-runtime { color: var(--teal); margin-left: 0.4rem; }
 .sevcell { display: inline-flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
 .hint { margin: 0; padding-left: 1.1rem; }
 .fixfirst { border-bottom: 1px solid var(--line); }

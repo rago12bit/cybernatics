@@ -917,6 +917,12 @@ def asset_add_web(
     domain: str = typer.Argument(..., help="e.g. example.com"),
     method: str = typer.Option("dns_txt", help="dns_txt (default) or well_known."),
     org: str = typer.Option(DEFAULT_ORG_ID, help="Organization to register this target under."),
+    source_asset_id: str = typer.Option(
+        None,
+        "--source-asset-id",
+        help="Link to an existing git/archive project's asset id (plan §22.4, Week 49 task 4): "
+        "its SAST scans' route map lets a later DAST finding be marked 'confirmed at runtime.'",
+    ),
 ) -> None:
     """Register a web target and print the proof-of-control instructions for the chosen method.
     Scanning it (Week 49 task 3) is blocked until `bulwark asset verify` passes."""
@@ -930,7 +936,13 @@ def asset_add_web(
         raise typer.Exit(1)
     with get_session_factory()() as s:
         set_session_org(s, org)  # RLS-scoped tables (assets, asset_verifications) need this first
-        asset, verification = repo.register_web_asset(s, domain=domain, method=method, org_id=org)
+        try:
+            asset, verification = repo.register_web_asset(
+                s, domain=domain, method=method, org_id=org, source_asset_id=source_asset_id
+            )
+        except ValueError as exc:
+            typer.echo(f"error: {exc}", err=True)
+            raise typer.Exit(1) from exc
         typer.echo(json.dumps(_verification_dict(asset, verification), indent=2))
 
 

@@ -20,7 +20,7 @@ from core.dast import ownership
 from core.embeddings.chunk import CodeChunk
 from core.issues import ExistingIssue, IssueUpdate, State, SyncResult, classify_for_pr, fallback_key
 from core.issues import sync as sync_issues
-from core.models import Finding
+from core.models import Finding, finding_from_dict
 from core.persistence.models import (
     DEFAULT_RETENTION_DAYS,
     SEVERITY_RANK,
@@ -235,14 +235,28 @@ def get_asset(s: Session, asset_id: str, *, org_id: str | None = None) -> Asset 
 
 
 def register_web_asset(
-    s: Session, *, domain: str, method: str, org_id: str = DEFAULT_ORG_ID
+    s: Session,
+    *,
+    domain: str,
+    method: str,
+    org_id: str = DEFAULT_ORG_ID,
+    source_asset_id: str | None = None,
 ) -> tuple[Asset, AssetVerification]:
     """Registering the same domain again replaces its verification row with a fresh token and
     resets status to `pending` (`merge`, not `add`) -- deliberately invalidating whatever DNS/
     well-known record was published for the previous token, since there is no way to tell from here
     whether the person re-registering is the same owner choosing a different method or losing access
-    to the first one."""
+    to the first one.
+
+    `source_asset_id` (Week 49 task 4, plan §22.4): optionally links this web target to the git/
+    archive Asset whose SAST scans provide the route map DAST correlation needs. Must already exist
+    in the SAME org -- raises `ValueError` otherwise, rather than silently either ignoring it or
+    linking across a tenant boundary."""
+    if source_asset_id is not None and get_asset(s, source_asset_id, org_id=org_id) is None:
+        raise ValueError(f"source_asset_id {source_asset_id!r} not found in this organization")
     asset = get_or_create_asset(s, source_type="web", source_label=domain, org_id=org_id)
+    if source_asset_id is not None:
+        asset.linked_source_asset_id = source_asset_id
     verification = AssetVerification(
         asset_id=asset.id,
         method=method,
@@ -552,6 +566,9 @@ def list_asset_issues(
                 "triage_reason": issue_row.triage_reason if issue_row else None,
                 "triage_expires_at": issue_row.triage_expires_at if issue_row else None,
                 "first_seen_at": issue_row.first_seen_at if issue_row else None,
+                "confirmed_at_runtime_at": (
+                    issue_row.confirmed_at_runtime_at if issue_row else None
+                ),
             }
             if r.issue_id
             else None
@@ -598,6 +615,7 @@ def get_issue_finding(s: Session, issue_id: str, latest_scan_id: str) -> dict[st
         "assistant_verdict_lines": issue_row.assistant_verdict_lines if issue_row else None,
         "assistant_verdict_model": issue_row.assistant_verdict_model if issue_row else None,
         "assistant_verdict_at": issue_row.assistant_verdict_at if issue_row else None,
+        "confirmed_at_runtime_at": issue_row.confirmed_at_runtime_at if issue_row else None,
     }
     return d
 
@@ -761,6 +779,70 @@ def set_sbom_summary(s: Session, scan_id: str, summary: dict[str, Any] | None) -
     scan = s.get(Scan, scan_id)
     assert scan is not None
     scan.sbom_summary = summary
+    s.commit()
+
+
+def set_route_map(s: Session, scan_id: str, route_map: list[dict[str, Any]]) -> None:
+    """Unlike `set_sbom_summary`, an empty list is still written: "this scan found no Python route
+    decorators" is informative (and distinguishes an old scan, before this column existed, whose
+    value is genuinely `NULL`) from "this scan never looked" (Week 49 task 4, plan §22.4)."""
+    scan = s.get(Scan, scan_id)
+    assert scan is not None
+    scan.route_map = route_map
+    s.commit()
+
+
+def latest_scan_with_route_map(
+    s: Session, asset_id: str, *, org_id: str | None = None, candidates: int = 10
+) -> Scan | None:
+    """The most recent completed SAST/archive/git scan of this asset that has a non-empty route
+    map -- what a DAST campaign (`core.dast.pipeline`) correlates its own findings against. `None`
+    when the asset has never had a scan with Python route handlers in it (including every web-only
+    asset, which never runs a SAST scan at all). Filters "non-empty" in Python rather than with a
+    JSON-array-length SQL function, whose name differs between SQLite and Postgres -- `candidates`
+    recent completed scans is enough to find one with real routes without needing either dialect's
+    own JSON functions at all."""
+    q = (
+        select(Scan)
+        .where(Scan.asset_id == asset_id, Scan.status == "completed", Scan.route_map.is_not(None))
+        .order_by(Scan.created_at.desc())
+        .limit(candidates)
+    )
+    if org_id is not None:
+        q = q.where(Scan.org_id == org_id)
+    for scan in s.scalars(q):
+        if scan.route_map:
+            return scan
+    return None
+
+
+def issue_findings_for_scan(s: Session, asset_id: str, scan_id: str) -> list[tuple[str, Finding]]:
+    """Every open issue from one scan, reconstructed as a real `Finding` via `FindingRow.data`
+    (`Finding.to_dict`'s inverse) -- the same round-trip
+    `core.attackpath.service._all_issue_findings` already does for attack-path generation, here for
+    Week 49 task 4's DAST correlation instead."""
+    out: list[tuple[str, Finding]] = []
+    offset = 0
+    page_size = 200
+    while True:
+        page = list_asset_issues(s, asset_id, scan_id, sort="path", limit=page_size, offset=offset)
+        for d in page.items:
+            issue = d.get("issue")
+            if issue and issue.get("id"):
+                out.append((issue["id"], finding_from_dict(d)))
+        if offset + page_size >= page.total:
+            break
+        offset += page_size
+    return out
+
+
+def mark_issue_confirmed_at_runtime(s: Session, issue_id: str, *, scan_id: str) -> None:
+    issue = s.get(IssueRow, issue_id)
+    if issue is None:
+        return
+    if issue.confirmed_at_runtime_at is None:
+        issue.confirmed_at_runtime_at = _now()
+    issue.confirmed_by_scan_id = scan_id
     s.commit()
 
 

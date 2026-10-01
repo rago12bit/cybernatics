@@ -57,6 +57,9 @@ export interface IssueRef {
   triage_reason?: string | null;
   triage_expires_at?: string | null;
   first_seen_at?: string | null;
+  /** Set once a DAST campaign's own finding matched this Issue on the same route+CWE (plan §22.4,
+   * Week 49 task 4) -- a static finding a real HTTP request actually reached. */
+  confirmed_at_runtime_at?: string | null;
 }
 
 export interface IssueHistoryEvent {

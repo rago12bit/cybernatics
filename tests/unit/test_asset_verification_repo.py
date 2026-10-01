@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 from sqlalchemy.orm import Session, sessionmaker
 
 from core.persistence import repo
@@ -91,3 +92,41 @@ def test_get_asset_verification_is_org_scoped(sessions: sessionmaker[Session]) -
         asset, _ = repo.register_web_asset(s, domain="example.com", method="dns_txt", org_id="a")
         assert repo.get_asset_verification(s, asset.id, org_id="a") is not None
         assert repo.get_asset_verification(s, asset.id, org_id="b") is None
+
+
+def test_register_web_asset_can_link_to_an_existing_source_asset(
+    sessions: sessionmaker[Session],
+) -> None:
+    with sessions() as s:
+        source = repo.get_or_create_asset(
+            s, source_type="git", source_label="https://github.com/a/b", org_id="o"
+        )
+        asset, _ = repo.register_web_asset(
+            s, domain="example.com", method="dns_txt", org_id="o", source_asset_id=source.id
+        )
+        assert asset.linked_source_asset_id == source.id
+
+
+def test_register_web_asset_rejects_a_source_asset_id_that_does_not_exist(
+    sessions: sessionmaker[Session],
+) -> None:
+    with sessions() as s:
+        with pytest.raises(ValueError, match="not found"):
+            repo.register_web_asset(
+                s, domain="example.com", method="dns_txt", org_id="o",
+                source_asset_id="00000000-0000-0000-0000-000000000000",
+            )  # fmt: skip
+
+
+def test_register_web_asset_rejects_a_source_asset_id_from_another_org(
+    sessions: sessionmaker[Session],
+) -> None:
+    with sessions() as s:
+        source = repo.get_or_create_asset(
+            s, source_type="git", source_label="https://github.com/a/b", org_id="org-a"
+        )
+        with pytest.raises(ValueError, match="not found"):
+            repo.register_web_asset(
+                s, domain="example.com", method="dns_txt", org_id="org-b",
+                source_asset_id=source.id,
+            )  # fmt: skip

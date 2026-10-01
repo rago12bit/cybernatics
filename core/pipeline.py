@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from core.correlation import correlate
+from core.dast.routes import extract_routes_from_workspace
 from core.ingest import IngestError
 from core.models import Category, Finding
 from core.observability import bind_scan, in_context, mark_error, set_attributes, span
@@ -41,6 +42,21 @@ def _final_status(outcomes: list[ToolOutcome]) -> str:
     if not ran or all(o.status == "ok" for o in ran):
         return "completed"
     return "partial" if any(o.status == "ok" for o in ran) else "failed"
+
+
+def _extract_route_map(workspace: Path) -> list[dict[str, Any]]:
+    """Web-route handlers found in this scan's own source (Week 49 task 4, plan §22.4) -- what a
+    later DAST campaign's `core.dast.correlate` needs to mark a static finding "confirmed at
+    runtime." Best-effort like the SBOM/Scorecard enrichment below: a workspace with no Python, or
+    one `ast` can't parse some of, must never fail the scan over a feature most scans never use."""
+    try:
+        return [
+            {"route": h.route, "path": h.path, "line": h.line}
+            for h in extract_routes_from_workspace(workspace)
+        ]
+    except Exception as exc:  # noqa: BLE001 - route extraction must never fail the whole scan
+        log.warning("route extraction failed: %s", exc)
+        return []
 
 
 def _process_sbom(raw: bytes) -> tuple[list[Finding], dict[str, Any] | None]:
@@ -172,6 +188,8 @@ def _run_scan_job(
             with span("ingest", source_type=source_type):
                 workspace = stack.enter_context(materialize(source_ref, ref=ref))
                 ctx = detect_context(workspace)
+            with span("dast_routes"):
+                route_map = _extract_route_map(workspace)
             with span("reachability"):
                 reach = analyze_or_none(workspace)
             with span("taint"):
@@ -261,6 +279,7 @@ def _run_scan_job(
                     updates = repo.classify_findings_for_pr(s, scan_id, findings)
             repo.add_findings(s, scan_id, findings, updates)
             repo.set_sbom_summary(s, scan_id, sbom_summary)
+            repo.set_route_map(s, scan_id, route_map)
             repo.finish_scan(s, scan_id, status)
             counts = repo.severity_counts(s, scan_id)
     if issues is not None:

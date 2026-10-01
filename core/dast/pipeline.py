@@ -18,6 +18,8 @@ from core.dast import campaign as campaign_rules
 from core.dast import ownership
 from core.dast.adapters.nuclei import NucleiError, run_nuclei
 from core.dast.adapters.zap import ZapError, run_zap_baseline
+from core.dast.correlate import correlate_dast_with_sast
+from core.dast.routes import RouteHandler
 from core.models import Finding
 from core.persistence import repo
 from core.persistence.db import SessionFactory
@@ -148,9 +150,48 @@ def run_dast_campaign_job(
                      "raw_findings": stats.raw, "unique_findings": stats.unique},
         )  # fmt: skip
         counts = repo.severity_counts(s, scan_id)
+    _confirm_sast_findings_at_runtime(sessions, asset_id, scan_id, final_findings, org_id=org_id)
     bus.publish(
         scan_id,
         {"type": "scan.finished", "scan_id": scan_id, "status": status,
          "findings": len(final_findings), "severity_counts": counts},
     )  # fmt: skip
     return status
+
+
+def _confirm_sast_findings_at_runtime(
+    sessions: SessionFactory,
+    asset_id: str,
+    dast_scan_id: str,
+    dast_findings: list[Finding],
+    *,
+    org_id: str | None,
+) -> None:
+    """SAST/DAST correlation (Week 49 task 4, plan §22.4): best-effort and strictly additive -- it
+    only ever adds a "confirmed at runtime" marker to an Issue that already exists from the linked
+    source Asset's own SAST scans, never creates, removes, or changes anything else. Any failure
+    here must not undo or fail a DAST campaign that otherwise completed successfully. A web Asset
+    with no `linked_source_asset_id` (the common case today -- nothing in the registration UI sets
+    it yet, only the API/CLI) simply has nothing to correlate against, silently."""
+    try:
+        with sessions() as s:
+            web_asset = repo.get_asset(s, asset_id, org_id=org_id)
+            source_asset_id = web_asset.linked_source_asset_id if web_asset else None
+            if source_asset_id is None:
+                return
+            sast_scan = repo.latest_scan_with_route_map(s, source_asset_id, org_id=org_id)
+            if sast_scan is None:
+                return
+            handlers = [RouteHandler(**h) for h in (sast_scan.route_map or [])]
+            sast_pairs = repo.issue_findings_for_scan(s, source_asset_id, sast_scan.id)
+            sast_findings = [f for _, f in sast_pairs]
+            # issue_findings_for_scan returns (issue_id, Finding) pairs; invert for lookup by the
+            # Finding's own id, which is what correlate_dast_with_sast actually reports.
+            finding_id_to_issue = {f.id: issue_id for issue_id, f in sast_pairs}
+            confirmations = correlate_dast_with_sast(dast_findings, sast_findings, handlers)
+            for c in confirmations:
+                issue_id = finding_id_to_issue.get(c.sast_finding_id)
+                if issue_id is not None:
+                    repo.mark_issue_confirmed_at_runtime(s, issue_id, scan_id=dast_scan_id)
+    except Exception:  # noqa: BLE001 - correlation is additive and must never affect the campaign
+        log.exception("SAST/DAST correlation failed for asset %s", asset_id)
