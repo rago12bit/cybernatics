@@ -1,0 +1,60 @@
+site_name: Bulwark
+site_description: Unified security scanning -- one scan, one deduplicated list of findings.
+site_url: https://rag2102.github.io/cyberimp/
+repo_url: https://github.com/Rag2102/cyberimp
+repo_name: Rag2102/cyberimp
+edit_uri: edit/main/docs/
+docs_dir: docs
+
+nav:
+  - Home: index.md
+  - Quickstart: quickstart.md
+  - Concepts:
+      - Architecture: concepts/architecture.md
+      - Risk scoring: risk-score.md
+      - Taxonomy (CWE / OWASP): taxonomy.md
+      - Reachability: reachability.md
+  - Writing a plugin: plugins.md
+  - Policy cookbook: policy.md
+  - API reference: api.md
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.top
+    - content.code.copy
+    - content.action.edit
+  icon:
+    repo: fontawesome/brands/github
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.inlinehilite
+
+# Every markdown file under docs/ not listed in `nav` above (ADRs, weekly verification records, UX
+# research, etc.) still builds -- reachable by direct URL, deliberately left out of the navigation
+# sidebar because they're engineering history, not user-facing documentation. `not_in_nav` would
+# need every such path enumerated and re-enumerated on every new week's doc; leaving them findable
+# but unlinked costs nothing and needs no maintenance.

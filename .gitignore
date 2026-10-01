@@ -12,3 +12,4 @@ node_modules/
 *.db
 certs/
 tests/fuzz_corpus/
+site/

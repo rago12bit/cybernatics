@@ -63,6 +63,22 @@ jobs:
       - run: npm run build
       - run: npm run build-storybook
 
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[docs]"
+      # Not --strict: a few of the many pre-Week-51 docs under docs/ (ASVS self-assessment, the
+      # v1.0.0 blog post, the threat-model draft) link to repo-root files like ../SECURITY.md that
+      # don't exist inside mkdocs's own docs_dir sandbox -- pre-existing and not part of the site's
+      # nav (mkdocs.yml). This still fails on anything that actually breaks the build: a bad plugin
+      # config, a missing nav target, a template error.
+      - run: mkdocs build
+      - run: python -m pytest tests/unit/test_api_docs_freshness.py --no-cov
+
   zap-baseline:
     # DAST against itself (Week 48 task 2, plan §22.3): the platform running its own baseline
     # scanning tooling against its own web app, in CI, on every push and pull request -- not just
