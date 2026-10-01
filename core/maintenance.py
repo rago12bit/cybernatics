@@ -17,10 +17,11 @@ from pathlib import Path
 from typing import Any
 
 from sqlalchemy import or_, select
-from sqlalchemy.orm import Session
 
 from core.persistence import repo
-from core.persistence.models import Scan
+from core.persistence.db import SessionFactory
+from core.persistence.models import Organization, Scan
+from core.tenancy import set_session_org
 
 log = logging.getLogger(__name__)
 
@@ -32,36 +33,58 @@ def _aware(dt: datetime) -> datetime:
 
 
 def reap_stale_scans(
-    s: Session, max_age: timedelta, bus: Any = None, now: datetime | None = None
+    sessions: SessionFactory, max_age: timedelta, bus: Any = None, now: datetime | None = None
 ) -> list[str]:
-    """Fail scans that have been queued/running longer than max_age. Returns the reaped ids."""
+    """Fail scans that have been queued/running longer than max_age, across every organization.
+    Returns the reaped ids.
+
+    Iterates one organization at a time with `core.tenancy.set_session_org` set explicitly for
+    each, the same pattern `core.retention.shred_expired_scans` already uses and for the identical
+    reason (see that module's own docstring): `scans` carries a `FORCE ROW LEVEL SECURITY` policy
+    keyed on `app.current_org`, and the worker's connection is `NOBYPASSRLS` by design (ADR-0013) --
+    a single query with no org context set sees zero rows under real RLS, not every org's, since an
+    unset `app.current_org` matches nothing. The original version of this function took an
+    already-open, unscoped `Session` and queried across all scans directly, which worked against the
+    SQLite test database (no RLS there to enforce) but meant this reaper silently reaped nothing at
+    all in production -- a worker dying mid-scan would leave that scan stuck "running" forever."""
     now = now or datetime.now(timezone.utc)
     cutoff = now - max_age
-    candidates = s.scalars(
-        select(Scan).where(or_(Scan.status == "queued", Scan.status == "running"))
-    )
+    with sessions() as s:  # organizations carries no RLS (ADR-0013) -- safe to query unscoped
+        org_ids = list(s.scalars(select(Organization.id)))
+
     reaped: list[str] = []
-    for scan in candidates:
-        started = _aware(scan.started_at or scan.created_at)
-        if started > cutoff:
-            continue
-        repo.finish_scan(s, scan.id, "failed", STALE_MESSAGE)
-        if scan.source_type == "archive":
-            Path(scan.source_ref).unlink(missing_ok=True)
-        if bus is not None:
-            bus.publish(
-                scan.id,
-                {
-                    "type": "scan.finished",
-                    "scan_id": scan.id,
-                    "status": "failed",
-                    "error": STALE_MESSAGE,
-                },
+    for org_id in org_ids:
+        with sessions() as s:
+            set_session_org(s, org_id)
+            candidates = s.scalars(
+                select(Scan).where(
+                    Scan.org_id == org_id, or_(Scan.status == "queued", Scan.status == "running")
+                )
             )
-        log.warning(
-            "reaped stale scan %s (status was stuck since %s)", scan.id, started.isoformat()
-        )
-        reaped.append(scan.id)
+            for scan in candidates:
+                started = _aware(scan.started_at or scan.created_at)
+                if started > cutoff:
+                    continue
+                repo.finish_scan(s, scan.id, "failed", STALE_MESSAGE)
+                if scan.source_type == "archive":
+                    Path(scan.source_ref).unlink(missing_ok=True)
+                if bus is not None:
+                    bus.publish(
+                        scan.id,
+                        {
+                            "type": "scan.finished",
+                            "scan_id": scan.id,
+                            "status": "failed",
+                            "error": STALE_MESSAGE,
+                        },
+                    )
+                log.warning(
+                    "reaped stale scan %s (org %s, status was stuck since %s)",
+                    scan.id,
+                    org_id,
+                    started.isoformat(),
+                )
+                reaped.append(scan.id)
     return reaped
 
 

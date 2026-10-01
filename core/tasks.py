@@ -158,10 +158,9 @@ def maintenance_task() -> dict[str, int]:
 
     settings = Settings.from_env()
     max_minutes = int(os.environ.get("BULWARK_SCAN_MAX_MINUTES", "30"))
-    with get_session_factory()() as s:
-        reaped = reap_stale_scans(
-            s, timedelta(minutes=max_minutes), RedisPublisher(settings.redis_url)
-        )
+    reaped = reap_stale_scans(
+        get_session_factory(), timedelta(minutes=max_minutes), RedisPublisher(settings.redis_url)
+    )
     killed = cleanup_containers()
     removed = cleanup_scratch(settings.workdir / "tmp") + cleanup_scratch(settings.upload_dir)
     return {

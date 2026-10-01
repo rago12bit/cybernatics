@@ -12,7 +12,8 @@ from sqlalchemy.orm import Session, sessionmaker
 from core import maintenance
 from core.events import MemoryPublisher
 from core.persistence import repo
-from core.persistence.models import Scan
+from core.persistence.models import Organization, Scan
+from core.tenancy import DEFAULT_ORG_ID
 
 NOW = datetime(2026, 9, 25, 12, 0, tzinfo=timezone.utc)
 
@@ -20,6 +21,13 @@ NOW = datetime(2026, 9, 25, 12, 0, tzinfo=timezone.utc)
 def _scan(
     s: Session, status: str, created: datetime, started: datetime | None = None, **kw: str
 ) -> str:
+    """reap_stale_scans discovers which orgs to check via the organizations table itself (its own
+    docstring explains why: that's the one table with no RLS, so it's safe to query before
+    app.current_org is set for any particular org) -- so, like core.retention's equivalent fixture,
+    this seeds a real Organization row even under SQLite's otherwise-unenforced FKs."""
+    if s.get(Organization, DEFAULT_ORG_ID) is None:
+        s.add(Organization(id=DEFAULT_ORG_ID, name=DEFAULT_ORG_ID))
+        s.commit()
     scan = repo.create_scan(
         s,
         source_type=kw.get("stype", "git"),
@@ -41,9 +49,10 @@ def test_reaper_fails_only_stuck_scans(sessions: sessionmaker[Session], tmp_path
         fresh_running = _scan(s, "running", NOW - timedelta(hours=3), NOW - timedelta(minutes=5))
         fresh_queued = _scan(s, "queued", NOW - timedelta(minutes=1))
         done = _scan(s, "completed", NOW - timedelta(days=1), NOW - timedelta(days=1))
-        bus = MemoryPublisher()
-        reaped = maintenance.reap_stale_scans(s, timedelta(minutes=30), bus, NOW)
-        assert sorted(reaped) == sorted([old_queued, old_running])
+    bus = MemoryPublisher()
+    reaped = maintenance.reap_stale_scans(sessions, timedelta(minutes=30), bus, NOW)
+    assert sorted(reaped) == sorted([old_queued, old_running])
+    with sessions() as s:
         statuses = {x.id: (x.status, x.error) for x in s.query(Scan).all()}
     assert statuses[old_queued][0] == statuses[old_running][0] == "failed"
     assert "did not finish" in (statuses[old_running][1] or "")
@@ -57,8 +66,8 @@ def test_reaper_fails_only_stuck_scans(sessions: sessionmaker[Session], tmp_path
 def test_reaper_is_idempotent(sessions: sessionmaker[Session]) -> None:
     with sessions() as s:
         _scan(s, "running", NOW - timedelta(hours=3), NOW - timedelta(hours=2))
-        assert len(maintenance.reap_stale_scans(s, timedelta(minutes=30), None, NOW)) == 1
-        assert maintenance.reap_stale_scans(s, timedelta(minutes=30), None, NOW) == []
+    assert len(maintenance.reap_stale_scans(sessions, timedelta(minutes=30), None, NOW)) == 1
+    assert maintenance.reap_stale_scans(sessions, timedelta(minutes=30), None, NOW) == []
 
 
 def test_docker_timestamp_parsing() -> None:
