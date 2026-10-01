@@ -250,6 +250,252 @@
         }
       }
     },
+    "/assets/web": {
+      "post": {
+        "summary": "Register Web Asset",
+        "description": "Register a web/DAST target (plan \u00a722.4). Returns the proof-of-control instructions for\nthe chosen method; no campaign (Week 49 task 3) can run against this asset until `POST\n/assets/{id}/verify` passes against a live DNS/HTTP check, not merely this call.",
+        "operationId": "register_web_asset_assets_web_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterWebAssetRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetVerificationView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/assets/{asset_id}/verification": {
+      "get": {
+        "summary": "Get Asset Verification",
+        "operationId": "get_asset_verification_assets__asset_id__verification_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Asset Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetVerificationView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/assets/{asset_id}/verify": {
+      "post": {
+        "summary": "Verify Asset Endpoint",
+        "description": "Runs a real, live DNS/HTTP check right now and persists the result -- never trusts a\npreviously-stored \"verified\" status, since ownership can lapse any time after it passed.",
+        "operationId": "verify_asset_endpoint_assets__asset_id__verify_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Asset Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetVerificationView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/assets/{asset_id}/campaigns": {
+      "post": {
+        "summary": "Start Dast Campaign",
+        "description": "Start a DAST campaign (plan \u00a722.4): gated on a LIVE ownership check right now (never a\ncached \"verified\" status) and, for an active campaign, the rate limit -- both checked before\na Scan row is even created, so an unverified or rate-limited attempt never shows up as a\nqueued campaign waiting to run and fail.",
+        "operationId": "start_dast_campaign_assets__asset_id__campaigns_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Asset Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartDastCampaignRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScanCreated"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "List Dast Campaigns",
+        "operationId": "list_dast_campaigns_assets__asset_id__campaigns_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Asset Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ScanSummary"
+                  },
+                  "title": "Response List Dast Campaigns Assets  Asset Id  Campaigns Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/assets/{asset_id}/issues": {
       "get": {
         "summary": "List Issues",
@@ -1333,6 +1579,585 @@
         }
       }
     },
+    "/assets/{asset_id}/threat-model": {
+      "get": {
+        "summary": "Get Threat Model Endpoint",
+        "description": "The project's threat-model draft (plan \u00a721.7). Auto-generated from the latest scan on\nfirst access -- deterministic, no model call, so there is no cost gate to ask for first.\nOnce a person edits it or explicitly regenerates, that becomes the current row and stays\nuntil the next explicit regenerate.",
+        "operationId": "get_threat_model_endpoint_assets__asset_id__threat_model_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Asset Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ThreatModelView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Save Threat Model Endpoint",
+        "description": "A person's own edit to the diagram/table -- stored as-is, source=\"edited\". Never\nvalidated against the code: there is nothing to validate a person's own review notes\nagainst.",
+        "operationId": "save_threat_model_endpoint_assets__asset_id__threat_model_put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Asset Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveThreatModelRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ThreatModelView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/assets/{asset_id}/threat-model/regenerate": {
+      "post": {
+        "summary": "Regenerate Threat Model Endpoint",
+        "description": "Discards the current draft, including any edits, and regenerates from the latest scan.",
+        "operationId": "regenerate_threat_model_endpoint_assets__asset_id__threat_model_regenerate_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Asset Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ThreatModelView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings/retention": {
+      "get": {
+        "summary": "Get Retention Settings Endpoint",
+        "description": "How long this organization keeps a scan's encrypted artifacts before crypto-shredding\nthem (plan \u00a722.2). Always returns a value -- the plan's own default (7 days) when this org\nhas never set its own, never a 404.",
+        "operationId": "get_retention_settings_endpoint_settings_retention_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RetentionSettingsView"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "put": {
+        "summary": "Save Retention Settings Endpoint",
+        "operationId": "save_retention_settings_endpoint_settings_retention_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveRetentionSettingsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RetentionSettingsView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/plugins": {
+      "get": {
+        "summary": "List Plugins Endpoint",
+        "description": "Every plugin discovered via the `bulwark.scanner_adapters` entry point (Week 51 task 1,\nplan \u00a723), whether or not this organization has allowlisted it yet. `allowed` is this org's\nallowlist row right now -- `core.plugins.signing` still re-verifies the image's Sigstore\nsignature at the moment a scan actually uses it, so `allowed=True` is not itself a guarantee\nthe plugin will run successfully.",
+        "operationId": "list_plugins_endpoint_plugins_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PluginView"
+                  },
+                  "type": "array",
+                  "title": "Response List Plugins Endpoint Plugins Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/plugins/{plugin_name}/allowlist": {
+      "put": {
+        "summary": "Set Plugin Allowed Endpoint",
+        "description": "Trusting a plugin is security-relevant (it will run inside the same sandbox as a built-in\nscanner) -- recorded in the audit log by `core.persistence.repo.set_plugin_allowed` itself.\nTurning a plugin ON re-verifies its Sigstore signature synchronously, right now, so a bad\npublisher identity or an unsigned image fails loudly at the moment someone tries to trust it\nrather than silently at the next scan that happens to request it; turning one off never\nneeds that check.",
+        "operationId": "set_plugin_allowed_endpoint_plugins__plugin_name__allowlist_put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "plugin_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Plugin Name"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetPluginAllowedRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PluginView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings/integrations": {
+      "get": {
+        "summary": "Get Integration Settings Endpoint",
+        "description": "Week 51 task 2, plan \u00a723. Never a 404 -- an org with nothing configured just shows every\nintegration as not configured, the same \"always a value, never a missing-row error\" posture\n`GET /settings/retention` already has.",
+        "operationId": "get_integration_settings_endpoint_settings_integrations_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationSettingsView"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "put": {
+        "summary": "Save Integration Settings Endpoint",
+        "operationId": "save_integration_settings_endpoint_settings_integrations_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveIntegrationSettingsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationSettingsView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/assets/{asset_id}/attack-paths": {
+      "get": {
+        "summary": "List Attack Paths Endpoint",
+        "description": "Every attack path chained from this asset's current open issues, ranked highest risk\nfirst (plan \u00a721.6, \u00a728.5). Always computable without a model -- narrative generation\n(Task.ATTACK_PATH) is best-effort per path (at most the first 10, by rank) and never blocks\nthe graph itself.",
+        "operationId": "list_attack_paths_endpoint_assets__asset_id__attack_paths_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Asset Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AttackPathView"
+                  },
+                  "title": "Response List Attack Paths Endpoint Assets  Asset Id  Attack Paths Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/assets/{asset_id}/copilot/conversations": {
+      "post": {
+        "summary": "Start Conversation",
+        "description": "Start a copilot conversation for one asset (plan \u00a721.5). `409` if the copilot isn't\nenabled, there's no completed scan, or the asset isn't git-sourced -- the same checks the\nHypotheses lane's own generate endpoint makes, since both need a real checkout.",
+        "operationId": "start_conversation_assets__asset_id__copilot_conversations_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Asset Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartConversationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/assets/{asset_id}/copilot/conversations/{conversation_id}/messages": {
+      "post": {
+        "summary": "Post Copilot Message",
+        "description": "Ask the copilot one question in an existing conversation (plan \u00a721.5): clones the\nasset's latest scan's source on the conversation's first message (cached for later\nmessages in the same conversation, core.copilot.session), then runs the tool-calling loop.\nA model that never produces a validly-cited answer within its turn budget still gets a\nstored, honest response -- never a 5xx for \"the copilot couldn't find a grounded answer.\"",
+        "operationId": "post_copilot_message_assets__asset_id__copilot_conversations__conversation_id__messages_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Asset Id"
+            }
+          },
+          {
+            "name": "conversation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Conversation Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PostMessageRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "List Copilot Messages",
+        "operationId": "list_copilot_messages_assets__asset_id__copilot_conversations__conversation_id__messages_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Asset Id"
+            }
+          },
+          {
+            "name": "conversation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Conversation Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MessageView"
+                  },
+                  "title": "Response List Copilot Messages Assets  Asset Id  Copilot Conversations  Conversation Id  Messages Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/risk/feeds": {
       "get": {
         "summary": "Risk Feeds",
@@ -1606,6 +2431,99 @@
         }
       }
     },
+    "/scans/{scan_id}/cost": {
+      "get": {
+        "summary": "Get Scan Cost",
+        "description": "Plan \u00a723's cost-per-scan dashboard (Week 50): an estimate, computed fresh on every call\nrather than stored -- a scan's LLM spend keeps growing after the scan job itself finishes\n(remediation suggestions, hypotheses, copilot messages are all requested later), so a cost\nwritten once at completion would go stale the moment someone asks for a suggestion.",
+        "operationId": "get_scan_cost_scans__scan_id__cost_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "scan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Scan Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScanCostView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/costs/summary": {
+      "get": {
+        "summary": "Get Cost Summary",
+        "description": "The same estimate as `get_scan_cost`, aggregated over every scan in the window -- an\ninternal visibility dashboard (plan \u00a723), not a billing export.",
+        "operationId": "get_cost_summary_costs_summary_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 365,
+              "minimum": 1,
+              "default": 30,
+              "title": "Days"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CostSummaryView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/scans/{scan_id}/export": {
       "get": {
         "summary": "Export Scan",
@@ -1724,6 +2642,279 @@
         "title": "AssetSummary",
         "description": "A project (plan \u00a727) \u2014 one distinct repository/archive, org-scoped (ADR-0012, ADR-0013)."
       },
+      "AssetVerificationView": {
+        "properties": {
+          "asset_id": {
+            "type": "string",
+            "title": "Asset Id"
+          },
+          "domain": {
+            "type": "string",
+            "title": "Domain"
+          },
+          "method": {
+            "type": "string",
+            "title": "Method"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "pending | verified | failed"
+          },
+          "record_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Record Name",
+            "description": "dns_txt only"
+          },
+          "record_value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Record Value",
+            "description": "dns_txt only"
+          },
+          "well_known_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Well Known Url",
+            "description": "well_known only"
+          },
+          "file_content": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "File Content",
+            "description": "well_known only"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "verified_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verified At"
+          },
+          "last_checked_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Checked At"
+          },
+          "last_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "asset_id",
+          "domain",
+          "method",
+          "status",
+          "created_at",
+          "verified_at",
+          "last_checked_at",
+          "last_error"
+        ],
+        "title": "AssetVerificationView"
+      },
+      "AttackPathEdgeView": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "reachable_from",
+              "grants_access_to",
+              "exposes"
+            ],
+            "title": "Kind"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "target": {
+            "type": "string",
+            "title": "Target"
+          },
+          "rule_id": {
+            "type": "string",
+            "title": "Rule Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "source",
+          "target",
+          "rule_id"
+        ],
+        "title": "AttackPathEdgeView"
+      },
+      "AttackPathNodeView": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "entrypoint",
+              "issue",
+              "secret",
+              "cloud_resource"
+            ],
+            "title": "Kind"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "issue_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Issue Id"
+          },
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "label",
+          "issue_id",
+          "detail"
+        ],
+        "title": "AttackPathNodeView"
+      },
+      "AttackPathView": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "likelihood": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ],
+            "title": "Likelihood"
+          },
+          "impact": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high",
+              "critical"
+            ],
+            "title": "Impact"
+          },
+          "rank_score": {
+            "type": "number",
+            "title": "Rank Score"
+          },
+          "cheapest_link": {
+            "type": "string",
+            "title": "Cheapest Link"
+          },
+          "narrative": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Narrative"
+          },
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/AttackPathNodeView"
+            },
+            "type": "array",
+            "title": "Nodes"
+          },
+          "edges": {
+            "items": {
+              "$ref": "#/components/schemas/AttackPathEdgeView"
+            },
+            "type": "array",
+            "title": "Edges"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "likelihood",
+          "impact",
+          "rank_score",
+          "cheapest_link",
+          "narrative",
+          "nodes",
+          "edges"
+        ],
+        "title": "AttackPathView",
+        "description": "One ranked attack path (plan \u00a721.6, \u00a728.5). `narrative` is `None` when no model is routed\nfor Task.ATTACK_PATH -- unlike the copilot, this never 409s for that: the graph itself (nodes,\nedges, ranking, cheapest_link) is always real and useful without a model, only the prose\ndescription is best-effort on top of it."
+      },
       "Body_upload_scan_scans_upload_post": {
         "properties": {
           "archive": {
@@ -1830,6 +3021,56 @@
         ],
         "title": "BulkTriageResult"
       },
+      "CitationView": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "issue",
+              "code"
+            ],
+            "title": "Kind"
+          },
+          "issue_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Issue Id"
+          },
+          "path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Path"
+          },
+          "line": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Line"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind"
+        ],
+        "title": "CitationView"
+      },
       "ComparedIssue": {
         "properties": {
           "id": {
@@ -1862,6 +3103,150 @@
           "path"
         ],
         "title": "ComparedIssue"
+      },
+      "ConversationView": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "asset_id": {
+            "type": "string",
+            "title": "Asset Id"
+          },
+          "context_kind": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Context Kind"
+          },
+          "context_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Context Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "last_message_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Last Message At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "asset_id",
+          "context_kind",
+          "context_id",
+          "created_at",
+          "last_message_at"
+        ],
+        "title": "ConversationView"
+      },
+      "CostSummaryRow": {
+        "properties": {
+          "scan_id": {
+            "type": "string",
+            "title": "Scan Id"
+          },
+          "source_label": {
+            "type": "string",
+            "title": "Source Label"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "compute_seconds": {
+            "type": "number",
+            "title": "Compute Seconds"
+          },
+          "llm_tokens": {
+            "type": "integer",
+            "title": "Llm Tokens"
+          },
+          "total_usd": {
+            "type": "number",
+            "title": "Total Usd"
+          }
+        },
+        "type": "object",
+        "required": [
+          "scan_id",
+          "source_label",
+          "created_at",
+          "compute_seconds",
+          "llm_tokens",
+          "total_usd"
+        ],
+        "title": "CostSummaryRow"
+      },
+      "CostSummaryView": {
+        "properties": {
+          "days": {
+            "type": "integer",
+            "title": "Days"
+          },
+          "scan_count": {
+            "type": "integer",
+            "title": "Scan Count"
+          },
+          "total_compute_seconds": {
+            "type": "number",
+            "title": "Total Compute Seconds"
+          },
+          "total_llm_tokens": {
+            "type": "integer",
+            "title": "Total Llm Tokens"
+          },
+          "total_compute_usd": {
+            "type": "number",
+            "title": "Total Compute Usd"
+          },
+          "total_llm_usd": {
+            "type": "number",
+            "title": "Total Llm Usd"
+          },
+          "total_usd": {
+            "type": "number",
+            "title": "Total Usd"
+          },
+          "scans": {
+            "items": {
+              "$ref": "#/components/schemas/CostSummaryRow"
+            },
+            "type": "array",
+            "title": "Scans"
+          }
+        },
+        "type": "object",
+        "required": [
+          "days",
+          "scan_count",
+          "total_compute_seconds",
+          "total_llm_tokens",
+          "total_compute_usd",
+          "total_llm_usd",
+          "total_usd",
+          "scans"
+        ],
+        "title": "CostSummaryView"
       },
       "DependenciesView": {
         "properties": {
@@ -2199,6 +3584,81 @@
         "title": "HypothesisView",
         "description": "One Hypotheses-lane candidate (plan \u00a721.4) -- off by default, its own tab, excluded from the\nrisk score and policy gates until a person promotes it. `promoted_issue_id` is set only once\n`status` is \"promoted\"."
       },
+      "IntegrationSettingsView": {
+        "properties": {
+          "org_id": {
+            "type": "string",
+            "title": "Org Id"
+          },
+          "slack_configured": {
+            "type": "boolean",
+            "title": "Slack Configured"
+          },
+          "discord_configured": {
+            "type": "boolean",
+            "title": "Discord Configured"
+          },
+          "outbound_webhook_configured": {
+            "type": "boolean",
+            "title": "Outbound Webhook Configured"
+          },
+          "github_configured": {
+            "type": "boolean",
+            "title": "Github Configured"
+          },
+          "github_issues_repo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Github Issues Repo"
+          },
+          "jira_configured": {
+            "type": "boolean",
+            "title": "Jira Configured"
+          },
+          "jira_base_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Jira Base Url"
+          },
+          "jira_project_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Jira Project Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "org_id",
+          "slack_configured",
+          "discord_configured",
+          "outbound_webhook_configured",
+          "github_configured",
+          "github_issues_repo",
+          "jira_configured",
+          "jira_base_url",
+          "jira_project_key"
+        ],
+        "title": "IntegrationSettingsView",
+        "description": "Never echoes a secret value back (Week 51 task 2, plan \u00a723) -- a webhook URL, a GitHub PAT,\nand a Jira API token are each themselves a bearer credential. `*_configured` says whether one is\nset; the non-secret fields (which repo/project an issue gets filed into) are shown in full since\nthey're just config, not something that grants access on their own."
+      },
       "IssueHistoryEvent": {
         "properties": {
           "at": {
@@ -2265,6 +3725,113 @@
           "triage_expires_at"
         ],
         "title": "IssueView"
+      },
+      "MessageView": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "user",
+              "assistant"
+            ],
+            "title": "Role"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content"
+          },
+          "citations": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/CitationView"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Citations"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "role",
+          "content",
+          "citations",
+          "created_at"
+        ],
+        "title": "MessageView"
+      },
+      "PluginView": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "package_name": {
+            "type": "string",
+            "title": "Package Name"
+          },
+          "package_version": {
+            "type": "string",
+            "title": "Package Version"
+          },
+          "image": {
+            "type": "string",
+            "title": "Image"
+          },
+          "certificate_identity": {
+            "type": "string",
+            "title": "Certificate Identity"
+          },
+          "certificate_oidc_issuer": {
+            "type": "string",
+            "title": "Certificate Oidc Issuer"
+          },
+          "allowed": {
+            "type": "boolean",
+            "title": "Allowed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "package_name",
+          "package_version",
+          "image",
+          "certificate_identity",
+          "certificate_oidc_issuer",
+          "allowed"
+        ],
+        "title": "PluginView",
+        "description": "One discovered third-party scanner-adapter plugin (Week 51 task 1, plan \u00a723). `allowed`\nreflects the calling organization's own allowlist row right now -- it is not re-verified against\nSigstore here (that only happens when a scan actually requests this tool); a plugin can show\n`allowed=True` and still fail at scan time if its image's signature has since gone bad."
+      },
+      "PostMessageRequest": {
+        "properties": {
+          "question": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Question"
+          }
+        },
+        "type": "object",
+        "required": [
+          "question"
+        ],
+        "title": "PostMessageRequest"
       },
       "ProjectOverview": {
         "properties": {
@@ -2363,6 +3930,45 @@
           "issue_id"
         ],
         "title": "PromoteHypothesisResult"
+      },
+      "RegisterWebAssetRequest": {
+        "properties": {
+          "domain": {
+            "type": "string",
+            "maxLength": 255,
+            "title": "Domain",
+            "examples": [
+              "example.com"
+            ]
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "dns_txt",
+              "well_known"
+            ],
+            "title": "Method"
+          },
+          "source_asset_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Asset Id",
+            "description": "Optionally link to an existing git/archive project (plan \u00a722.4, Week 49 task 4): its SAST scans' route map is what lets a later DAST finding be marked 'confirmed at runtime.' Must belong to the same organization."
+          }
+        },
+        "type": "object",
+        "required": [
+          "domain",
+          "method"
+        ],
+        "title": "RegisterWebAssetRequest",
+        "description": "Registering a DAST target (plan \u00a722.4) -- this alone does not authorize scanning it; the\nreturned instructions must be satisfied and `/verify` must pass before a campaign can start."
       },
       "RemediationView": {
         "properties": {
@@ -2492,6 +4098,200 @@
         "title": "RemediationView",
         "description": "Guidance for one finding. `source` says whether a model wrote it."
       },
+      "RetentionSettingsView": {
+        "properties": {
+          "org_id": {
+            "type": "string",
+            "title": "Org Id"
+          },
+          "retention_days": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Retention Days"
+          }
+        },
+        "type": "object",
+        "required": [
+          "org_id",
+          "retention_days"
+        ],
+        "title": "RetentionSettingsView",
+        "description": "How long this organization keeps a scan's encrypted artifacts before crypto-shredding them\n(Week 47 task 2, plan \u00a722.2). Never having set one returns the plan's own default (7 days), not\nan error or a null -- there is always an effective policy, even if no row exists for it yet."
+      },
+      "SaveIntegrationSettingsRequest": {
+        "properties": {
+          "slack_webhook_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slack Webhook Url"
+          },
+          "discord_webhook_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Discord Webhook Url"
+          },
+          "outbound_webhook_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outbound Webhook Url"
+          },
+          "outbound_webhook_secret": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outbound Webhook Secret"
+          },
+          "github_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Github Token"
+          },
+          "github_issues_repo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Github Issues Repo"
+          },
+          "github_webhook_secret": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Github Webhook Secret"
+          },
+          "jira_base_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Jira Base Url"
+          },
+          "jira_email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Jira Email"
+          },
+          "jira_api_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Jira Api Token"
+          },
+          "jira_project_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Jira Project Key"
+          },
+          "jira_webhook_secret": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Jira Webhook Secret"
+          }
+        },
+        "type": "object",
+        "title": "SaveIntegrationSettingsRequest",
+        "description": "A full replacement of this organization's integration settings (same semantics as\n`SaveRetentionSettingsRequest`'s single value, just over more fields): a field omitted here is\ncleared, not left unchanged. Re-fetch via `GET /settings/integrations` and resend every field\nyou want to keep."
+      },
+      "SaveRetentionSettingsRequest": {
+        "properties": {
+          "retention_days": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Retention Days"
+          }
+        },
+        "type": "object",
+        "required": [
+          "retention_days"
+        ],
+        "title": "SaveRetentionSettingsRequest"
+      },
+      "SaveThreatModelRequest": {
+        "properties": {
+          "mermaid": {
+            "type": "string",
+            "title": "Mermaid"
+          },
+          "stride": {
+            "items": {
+              "$ref": "#/components/schemas/StrideRowView"
+            },
+            "type": "array",
+            "title": "Stride"
+          }
+        },
+        "type": "object",
+        "required": [
+          "mermaid",
+          "stride"
+        ],
+        "title": "SaveThreatModelRequest"
+      },
       "ScanComparisonSide": {
         "properties": {
           "scan_id": {
@@ -2583,6 +4383,45 @@
         ],
         "title": "ScanComparisonView",
         "description": "Plan \u00a728.6's scan comparison screen: two of an asset's scans, side by side."
+      },
+      "ScanCostView": {
+        "properties": {
+          "scan_id": {
+            "type": "string",
+            "title": "Scan Id"
+          },
+          "compute_seconds": {
+            "type": "number",
+            "title": "Compute Seconds"
+          },
+          "compute_usd": {
+            "type": "number",
+            "title": "Compute Usd"
+          },
+          "llm_tokens": {
+            "type": "integer",
+            "title": "Llm Tokens"
+          },
+          "llm_usd": {
+            "type": "number",
+            "title": "Llm Usd"
+          },
+          "total_usd": {
+            "type": "number",
+            "title": "Total Usd"
+          }
+        },
+        "type": "object",
+        "required": [
+          "scan_id",
+          "compute_seconds",
+          "compute_usd",
+          "llm_tokens",
+          "llm_usd",
+          "total_usd"
+        ],
+        "title": "ScanCostView",
+        "description": "Plan \u00a723's cost-per-scan dashboard (Week 50) -- an estimate, not a bill; see\ncore/observability/cost.py's own docstring for what it does and doesn't account for."
       },
       "ScanCreated": {
         "properties": {
@@ -2834,6 +4673,102 @@
         ],
         "title": "ScannedTool"
       },
+      "SetPluginAllowedRequest": {
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "default": true
+          }
+        },
+        "type": "object",
+        "title": "SetPluginAllowedRequest"
+      },
+      "StartConversationRequest": {
+        "properties": {
+          "context_kind": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "issue",
+                  "scan"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Context Kind"
+          },
+          "context_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Context Id"
+          }
+        },
+        "type": "object",
+        "title": "StartConversationRequest",
+        "description": "Optional page context the panel was opened from (plan \u00a728.6: \"keeps page context\"). Purely\ninformational -- never used for authorization, and never required to start a conversation."
+      },
+      "StartDastCampaignRequest": {
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "passive",
+              "active"
+            ],
+            "title": "Mode"
+          }
+        },
+        "type": "object",
+        "required": [
+          "mode"
+        ],
+        "title": "StartDastCampaignRequest",
+        "description": "Start a DAST campaign (plan \u00a722.4, Week 49 task 3) against an already ownership-verified web\nAsset. \"passive\" (ZAP baseline only) runs unconditionally once verification passes; \"active\"\n(adds curated Nuclei) is rate-limited to one per asset per\n`core.dast.campaign.ACTIVE_SCAN_MIN_INTERVAL`."
+      },
+      "StrideRowView": {
+        "properties": {
+          "element": {
+            "type": "string",
+            "title": "Element"
+          },
+          "element_kind": {
+            "type": "string",
+            "enum": [
+              "external_entity",
+              "process",
+              "data_store",
+              "external_interactor"
+            ],
+            "title": "Element Kind"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "prompt": {
+            "type": "string",
+            "title": "Prompt"
+          }
+        },
+        "type": "object",
+        "required": [
+          "element",
+          "element_kind",
+          "category",
+          "prompt"
+        ],
+        "title": "StrideRowView"
+      },
       "SuggestionRequest": {
         "properties": {
           "finding_id": {
@@ -2849,6 +4784,65 @@
           "finding_id"
         ],
         "title": "SuggestionRequest"
+      },
+      "ThreatModelView": {
+        "properties": {
+          "asset_id": {
+            "type": "string",
+            "title": "Asset Id"
+          },
+          "mermaid": {
+            "type": "string",
+            "title": "Mermaid"
+          },
+          "stride": {
+            "items": {
+              "$ref": "#/components/schemas/StrideRowView"
+            },
+            "type": "array",
+            "title": "Stride"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "generated",
+              "edited"
+            ],
+            "title": "Source"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "updated_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated By"
+          }
+        },
+        "type": "object",
+        "required": [
+          "asset_id",
+          "mermaid",
+          "stride",
+          "version",
+          "source",
+          "updated_at",
+          "updated_by"
+        ],
+        "title": "ThreatModelView",
+        "description": "A project's threat-model draft (plan \u00a721.7): a Mermaid data-flow diagram plus a STRIDE\ntable, generated from code intelligence -- a starting point for a person's own review, not an\nassessment. `source` says whether the current content is the last generate output or a\nperson's own edit."
       },
       "ToolStatus": {
         "properties": {

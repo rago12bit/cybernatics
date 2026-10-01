@@ -35,6 +35,36 @@ Get Asset Overview
 - `asset_id` (path, required)
 - `fix_first_limit` (query)
 
+## `POST /assets/web`
+
+Register Web Asset
+
+
+## `GET /assets/{asset_id}/verification`
+
+Get Asset Verification
+
+- `asset_id` (path, required)
+
+## `POST /assets/{asset_id}/verify`
+
+Verify Asset Endpoint
+
+- `asset_id` (path, required)
+
+## `POST /assets/{asset_id}/campaigns`
+
+Start Dast Campaign
+
+- `asset_id` (path, required)
+
+## `GET /assets/{asset_id}/campaigns`
+
+List Dast Campaigns
+
+- `asset_id` (path, required)
+- `limit` (query)
+
 ## `GET /assets/{asset_id}/issues`
 
 List Issues
@@ -162,6 +192,81 @@ Dismiss Hypothesis Endpoint
 - `asset_id` (path, required)
 - `hypothesis_id` (path, required)
 
+## `GET /assets/{asset_id}/threat-model`
+
+Get Threat Model Endpoint
+
+- `asset_id` (path, required)
+
+## `PUT /assets/{asset_id}/threat-model`
+
+Save Threat Model Endpoint
+
+- `asset_id` (path, required)
+
+## `POST /assets/{asset_id}/threat-model/regenerate`
+
+Regenerate Threat Model Endpoint
+
+- `asset_id` (path, required)
+
+## `GET /settings/retention`
+
+Get Retention Settings Endpoint
+
+
+## `PUT /settings/retention`
+
+Save Retention Settings Endpoint
+
+
+## `GET /plugins`
+
+List Plugins Endpoint
+
+
+## `PUT /plugins/{plugin_name}/allowlist`
+
+Set Plugin Allowed Endpoint
+
+- `plugin_name` (path, required)
+
+## `GET /settings/integrations`
+
+Get Integration Settings Endpoint
+
+
+## `PUT /settings/integrations`
+
+Save Integration Settings Endpoint
+
+
+## `GET /assets/{asset_id}/attack-paths`
+
+List Attack Paths Endpoint
+
+- `asset_id` (path, required)
+
+## `POST /assets/{asset_id}/copilot/conversations`
+
+Start Conversation
+
+- `asset_id` (path, required)
+
+## `POST /assets/{asset_id}/copilot/conversations/{conversation_id}/messages`
+
+Post Copilot Message
+
+- `asset_id` (path, required)
+- `conversation_id` (path, required)
+
+## `GET /assets/{asset_id}/copilot/conversations/{conversation_id}/messages`
+
+List Copilot Messages
+
+- `asset_id` (path, required)
+- `conversation_id` (path, required)
+
 ## `GET /risk/feeds`
 
 Risk Feeds
@@ -192,6 +297,18 @@ Compare Scans
 
 - `scan_id` (path, required)
 - `against` (query, required)
+
+## `GET /scans/{scan_id}/cost`
+
+Get Scan Cost
+
+- `scan_id` (path, required)
+
+## `GET /costs/summary`
+
+Get Cost Summary
+
+- `days` (query)
 
 ## `GET /scans/{scan_id}/export`
 
