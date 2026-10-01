@@ -49,6 +49,12 @@ services:
   postgres:
     build: docker/postgres
     image: bulwark/postgres:16-pgvector
+    # Default max_connections (100) couldn't cover 4 api replicas plus the worker and beat each
+    # opening their own connection pool -- found live under k6 (plan §23, Week 50), as "FATAL: sorry,
+    # too many clients already" on the majority of concurrent requests. See core/persistence/db.py's
+    # own comment for the other half of this fix (the per-engine pool sizing that now assumes this
+    # headroom exists).
+    command: ["postgres", "-c", "max_connections=300"]
     environment:
       POSTGRES_USER: bulwark
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?run scripts/init-env.sh}
@@ -97,7 +103,11 @@ services:
     environment:
       BAO_DEV_ROOT_TOKEN_ID: ${BULWARK_OPENBAO_TOKEN:?run scripts/init-env.sh}
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8200/v1/sys/health || exit 1"]
+      # 127.0.0.1, not localhost: this image's /etc/hosts resolves "localhost" to ::1 first, but
+      # openbao's -dev-listen-address only binds the IPv4 0.0.0.0:8200 -- wget's IPv6 attempt was
+      # refused every time even with a healthy, fully unsealed server underneath (found live, Week
+      # 50: a real `docker compose up -d api` couldn't start because this healthcheck never passed).
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8200/v1/sys/health || exit 1"]
       interval: 3s
       retries: 20
     restart: unless-stopped
@@ -124,7 +134,14 @@ services:
 
   api:
     <<: *app
-    command: ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000", "--log-config", "api/log_config.json", "--no-access-log"]
+    # --workers 4: a single uvicorn process couldn't sustain real concurrent load -- found live under
+    # k6 (plan §23, Week 50): 500 concurrent users browsing results mostly timed out at ~31s (uvicorn's
+    # default AnyIO threadpool, not the raised DB pool size above, was the actual ceiling for
+    # synchronous request handlers). core/events.py's scan-progress relay is Redis pub/sub, not
+    # in-process memory, so it's safe to run multiple worker processes -- a client's WebSocket
+    # connection can land on a different process than the one that published the event and still see
+    # it.
+    command: ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4", "--log-config", "api/log_config.json", "--no-access-log"]
     environment:
       <<: *app-env
       # bulwark_api: its own mTLS-authenticated identity (Week 47 task 3, plan §22.2, ADR-0033),
