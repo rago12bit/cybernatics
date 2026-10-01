@@ -30,12 +30,17 @@ def severity_doc() -> str:
     )
 
 
-def main() -> None:
+def openapi_spec() -> dict:
+    """The live FastAPI app's own OpenAPI document -- the single source of truth `api.md` and
+    `openapi.json` are both generated from, so the two can never disagree with each other, only
+    (if this script hasn't been re-run) with the app itself."""
     base = Settings.from_env()
     settings = Settings(**{**base.__dict__, "api_token": "x" * 32})
     app = create_app(AppState(settings, lambda: None, lambda _sid, _org: None, _NoSub()))  # type: ignore[arg-type,return-value]
-    spec = app.openapi()
-    (ROOT / "docs" / "openapi.json").write_text(json.dumps(spec, indent=2) + "\n")
+    return app.openapi()
+
+
+def api_doc(spec: dict) -> str:
     lines = [
         f"# {spec['info']['title']} reference",
         "",
@@ -61,7 +66,13 @@ def main() -> None:
         "`GET /scans/{scan_id}/ws` (not part of OpenAPI).",
         "",
     ]
-    (ROOT / "docs" / "api.md").write_text("\n".join(lines))
+    return "\n".join(lines)
+
+
+def main() -> None:
+    spec = openapi_spec()
+    (ROOT / "docs" / "openapi.json").write_text(json.dumps(spec, indent=2) + "\n")
+    (ROOT / "docs" / "api.md").write_text(api_doc(spec))
     (ROOT / "docs" / "severity-matrix.md").write_text(severity_doc())
 
 
