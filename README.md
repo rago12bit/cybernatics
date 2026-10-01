@@ -252,6 +252,18 @@ container so it works regardless of the target's own image. See
 [docs/sandbox-runtimes.md](docs/sandbox-runtimes.md), including what is not yet done and the runbook
 for closing that gap on a real Linux host.
 
+## DAST (web scanning)
+
+Scanning a live web target needs proof you control it first: registering one (`POST /assets/web` or
+`bulwark asset add-web`) issues a DNS TXT or `.well-known` challenge, re-checked live every time a
+campaign starts, never trusted from a cached status. Passive campaigns (ZAP baseline) run
+unconditionally once verified; active campaigns (add curated Nuclei, with intrusive/DoS-shaped
+templates excluded unconditionally) are opt-in and rate-limited to one per asset per day. A DAST
+finding landing on the same route and a related CWE as an existing static finding marks it
+"confirmed at runtime." A scope-enforcing allow-list egress proxy and matching nftables policy exist
+and are independently verified, but aren't wired into campaign execution yet -- see
+[ADR-0035](docs/adr/0035-dast-scanning.md) for exactly what's left.
+
 ## Data protection
 
 Raw scanner output is envelope-encrypted per scan (OpenBao-held per-organization keys) and

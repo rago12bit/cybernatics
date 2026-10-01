@@ -6,6 +6,26 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 ## [Unreleased]
 
 ### Added
+- **DAST: ownership verification, scope-enforcing egress, safe scanning tiers, SAST/DAST
+  correlation (Week 49, plan §22.4, ADR-0035):** registering a web target (`POST /assets/web`, or
+  `bulwark asset add-web`) issues a DNS TXT or `.well-known` proof-of-control challenge; nothing can
+  scan it until that passes a LIVE check, re-run (never cached) every time a campaign starts. A
+  campaign is just a `Scan` row with `source_type="web"`: passive mode (ZAP baseline, spiders and
+  observes only) runs unconditionally once verified; active mode (adds curated Nuclei, with
+  `dos`/`fuzz`/`intrusive`/`bruteforce` templates excluded unconditionally in the adapter itself) is
+  opt-in and rate-limited to one campaign per asset per 24h. A new `/app/projects/[id]/campaigns`
+  screen starts campaigns and lists past ones; results render on the existing `/scans/{id}` report
+  screen, unchanged. A real `bandit` scan's findings can now be marked "confirmed at runtime"
+  (`core/dast/correlate.py`) when a DAST finding lands on the same route (extracted from real
+  FastAPI/Flask decorators, `core/dast/routes.py`) and a related CWE -- verified against this
+  project's own `api/main.py` (44 real routes found) and end to end against a real vulnerable Flask
+  app. Also built and independently verified, but not yet wired into real campaign execution: a
+  scope-enforcing allow-list egress proxy (`core/dast/proxy.py`) and the nftables policy
+  (`core/dast/egress.py`) that would force a campaign runner through it -- ADR-0035 has the detail
+  on what's left. Three real bugs were found by testing against real infrastructure rather than
+  mocks and fixed, each with a regression test: two scanner-report id collisions (ZAP's rule 90004,
+  Nuclei's repeated-template reports) and a SQLite naive-datetime comparison that would have made
+  every active campaign instantly rate-limit itself.
 - **Verifying the platform itself: fuzzing, DAST self-scan, ASVS, supply-chain hardening (Week 48,
   plan §22.3, ADR-0034):** an Atheris fuzzing harness per scanner adapter plus a nightly CI job
   (written and reviewed, never executed -- Atheris needs a real Clang+libFuzzer build macOS doesn't
