@@ -39,6 +39,10 @@ Scanners never see the network or the host: each runs with `--network=none --rea
 --user=10001 --memory=2g --pids-limit=256` and the target mounted read-only. Design decisions are recorded
 as [ADRs](docs/adr/) (correlation: [ADR-004](docs/adr/0004-fingerprinting-and-correlation.md)).
 
+A curated documentation site (quickstart, concepts, the plugin guide, the API reference and the
+policy cookbook) builds from this same `docs/` folder with `pip install -e ".[docs]" && mkdocs serve`
+(ADR-0037); it isn't deployed anywhere yet, so for now, build it locally or read the markdown directly.
+
 ## Quickstart
 
 Needs Docker (with Compose) running. The first build downloads scanner databases (about 1.4 GB for Trivy).
@@ -190,6 +194,33 @@ Five scanners run by default; Grype, Checkov, gosec and Dockle are opt-in (`--to
 `bulwark scan-image myapp:latest`). What adding them taught about the adapter design:
 [docs/adding-a-scanner.md](docs/adding-a-scanner.md). Licenses of everything Bulwark uses or ships:
 [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
+
+## Plugins
+
+A sixth scanner Bulwark doesn't ship can run as an ordinary, independently versioned, pip-installable
+package -- discovered via a standard Python entry point, run through the identical sandbox a built-in
+scanner uses, and trusted only after a real keyless Sigstore signature check and a per-org allowlist.
+See [the plugin guide](docs/plugins.md) and the real, installable
+[`examples/bulwark-plugin-demo`](examples/bulwark-plugin-demo) package (ADR-0037).
+
+## Integrations
+
+Slack and Discord notifications, generic HMAC-signed outbound webhooks, and two-way GitHub
+Issues/Jira sync -- deliberately asymmetric, so closing the wrong external ticket can never hide a
+vulnerability Bulwark's own next scan would still find. `GET`/`PUT /settings/integrations`; see
+[docs/api.md](docs/api.md) and ADR-0037.
+
+## Pre-commit hook
+
+Catch a secret or an obvious SAST issue before it's ever committed, not just in CI -- native, no
+Docker, fast enough for every commit:
+
+```bash
+bulwark precommit install
+```
+
+Or add this repository's [`.pre-commit-hooks.yaml`](.pre-commit-hooks.yaml) to your own
+`.pre-commit-config.yaml` if you already use the [`pre-commit`](https://pre-commit.com) framework.
 
 ## Observability
 

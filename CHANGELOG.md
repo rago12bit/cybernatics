@@ -6,6 +6,17 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 ## [Unreleased]
 
 ### Fixed
+- **`docs/api.md` and `docs/openapi.json` had been stale for several weeks, with nothing to catch
+  it.** Regenerating them while building Week 51's documentation site surfaced that the Week
+  48-50 asset/threat-model/copilot/cost endpoints, and Week 51's own `/plugins` and
+  `/settings/integrations`, were all missing from the published docs -- unlike
+  `docs/severity-matrix.md`, which `tests/unit/test_correlation.py` already checks for freshness,
+  nothing checked either of these two files against the live app. Fixed the drift, then closed the
+  gap: `scripts/gen-api-docs.py` now exposes `openapi_spec()`/`api_doc()` as standalone functions so
+  a new test (`tests/unit/test_api_docs_freshness.py`) can re-derive each file's expected content
+  from the running app and compare, instead of a second hand-maintained copy of the derivation that
+  could itself drift. Verified the test actually catches drift by deliberately staling one file,
+  confirming the failure, and reverting.
 - **`reap_stale_scans` silently reaped nothing in production (found during Week 50's own
   connection/RLS work, plan §23).** The housekeeping task that fails scans stuck in `queued`/`running`
   after a worker dies queried `scans` on a session with no `app.current_org` ever set. Under real
@@ -19,6 +30,29 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   (`tests/integration/test_maintenance_rls_docker.py`, new).
 
 ### Added
+- **Ecosystem: Plugin SDK, Integrations, pre-commit hook, documentation site (Week 51, plan §23,
+  ADR-0037):** four tasks extending where findings come from and go to, not scanning itself. The
+  **Plugin SDK** (`core/plugins/`) lets a third-party scanner run through the same sandboxed
+  `docker run` and golden-file conformance kit a built-in adapter does, discovered via a standard
+  `bulwark.scanner_adapters` entry point and trusted only after a real keyless Sigstore signature
+  check (re-verified on every use, not cached at allow-time) and a per-org allowlist; a real,
+  installable example package (`examples/bulwark-plugin-demo`) proves the whole chain outside this
+  repository's own source tree. **Integrations** (`core/integrations/`) adds Slack/Discord
+  notifications, HMAC-signed generic outbound webhooks, and two-way GitHub Issues/Jira sync that is
+  deliberately asymmetric -- an external close/reopen only updates sync metadata, never Bulwark's own
+  authoritative issue state, so a real vulnerability can't be hidden by closing the wrong ticket --
+  all sharing the same DNS-resolve-and-reject SSRF guard git ingestion already used (newly extracted
+  into `core/netsafety.py`). The **pre-commit hook** (`core/precommit/`) is a native, no-Docker
+  complement to Gitleaks/Bandit -- ~15 high-confidence secret patterns and 7 `ast`-based Python SAST
+  checks, fast enough to run on every commit (`bulwark precommit run/install/uninstall`, plus a
+  `.pre-commit-hooks.yaml` for the `pre-commit` framework); a real 238-file commit's timing found a
+  genuine performance bug (one `git show` subprocess per staged file, 1.93s) fixed by batching every
+  blob into one `git cat-file --batch` call (0.45s on the same commit). The new **documentation
+  site** (`mkdocs.yml`, MkDocs Material) curates the existing `docs/` folder into a real nav --
+  quickstart, a new architecture overview, a new plugin-authoring guide, the policy cookbook, and the
+  API reference generated from the live app's own OpenAPI document -- rather than forking a separate
+  site-source tree. Also fixed along the way: two of the four `tests/integration/*_rls_docker.py`
+  files were silently never run in CI (`tenancy-rls`'s job only listed two by name).
 - **Scale: Helm chart with KEDA autoscaling, k6 load testing, cost-per-scan dashboard (Week 50, plan
   §23, ADR-0036):** a new `helm/bulwark/` chart deploys the core product to Kubernetes (Postgres,
   Redis, object storage, OpenBao, the API, the worker, a new single-replica Celery beat split out of
