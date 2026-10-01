@@ -2,6 +2,17 @@
 3, plan §22.4). Baseline mode only spiders and passively observes traffic -- it never sends an
 attack payload -- which is exactly why it's safe to run against any ownership-verified target
 without the stricter gating an active scan needs.
+
+Passing `proxy` (Week 49b, plan §22.4 follow-up) points ZAP's own outbound HTTP client at the
+campaign's egress proxy via `network.connection.httpProxy.{enabled,host,port}` -- confirmed live
+against a real running `core.dast.proxy.BackgroundProxy` to be the config ZAP's Network add-on
+actually reads at daemon start (`-config network.connectionParam.*`, the legacy pre-add-on key
+family, is silently ignored by the version this image ships). Live-verified consequence worth
+keeping in mind when reading a campaign's audit log: ZAP's own background "check for updates" and
+telemetry calls (`news.zaproxy.org`, `cfu.zaproxy.org`, `tel.zaproxy.org`) go out on the same proxy
+and get correctly refused, since they aren't the verified target -- that's the scope enforcement
+working as designed, not a scan failure, and the baseline scan itself completes and reports findings
+normally regardless.
 """
 
 from __future__ import annotations
@@ -14,6 +25,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
 
+from core.dast.proxy import ProxyConfig
 from core.models import (
     Category,
     Evidence,
@@ -39,7 +51,9 @@ class ZapError(Exception):
     pass
 
 
-def run_zap_baseline(target_url: str, *, timeout_s: int = 300) -> list[Finding]:
+def run_zap_baseline(
+    target_url: str, *, timeout_s: int = 300, proxy: ProxyConfig | None = None
+) -> list[Finding]:
     """Runs `zap-baseline.py` for real in a throwaway container, against `target_url`. `-I` treats
     a WARN-level alert as informational for ZAP's own exit code (it still appears in the JSON report
     at its real risk level) -- a scan that only turned up WARN-level alerts must not be reported as
@@ -47,14 +61,26 @@ def run_zap_baseline(target_url: str, *, timeout_s: int = 300) -> list[Finding]:
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
         tmp_path.chmod(0o777)  # the zap container runs as its own non-root user, not this one
-        argv = [
-            "docker", "run", "--rm",
+        argv = ["docker", "run", "--rm"]
+        if proxy is not None:
+            # See core.dast.adapters.nuclei.run_nuclei for why this flag is unconditional whenever
+            # a proxy is configured: host.docker.internal needs it on Linux, and it's a no-op on
+            # macOS Docker Desktop where the hostname already resolves.
+            argv += ["--add-host", "host.docker.internal:host-gateway"]
+        argv += [
             "-v", f"{tmp_path}:/zap/wrk:rw",
             ZAP_IMAGE, "zap-baseline.py",
             "-t", target_url,
             "-J", "report.json",
             "-I",
         ]  # fmt: skip
+        if proxy is not None:
+            argv += [
+                "-z",
+                f"-config network.connection.httpProxy.enabled=true "
+                f"-config network.connection.httpProxy.host={proxy.host} "
+                f"-config network.connection.httpProxy.port={proxy.port}",
+            ]
         try:
             proc = subprocess.run(argv, capture_output=True, timeout=timeout_s, check=False)
         except subprocess.TimeoutExpired as exc:

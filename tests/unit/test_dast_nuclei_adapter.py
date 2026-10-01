@@ -1,10 +1,15 @@
-"""core.dast.adapters.nuclei's JSONL parsing (Week 49 task 3, plan §22.4)."""
+"""core.dast.adapters.nuclei's JSONL parsing (Week 49 task 3, plan §22.4) and its egress-proxy
+wiring (Week 49b, plan §22.4 follow-up)."""
 
 from __future__ import annotations
 
 import json
+import subprocess
+from typing import Any
 
-from core.dast.adapters.nuclei import EXCLUDED_TAGS, _parse_jsonl
+from core.dast.adapters import nuclei
+from core.dast.adapters.nuclei import ALLOWED_PROTOCOL_TYPES, EXCLUDED_TAGS, _parse_jsonl
+from core.dast.proxy import ProxyConfig
 from core.models import Category, Severity
 
 
@@ -111,3 +116,45 @@ def test_excluded_tags_never_include_an_allowed_tag_by_accident() -> None:
     """Regression guard for the module's own safety invariant: these four tags must always be
     excluded, unconditionally -- see the module docstring for why."""
     assert set(EXCLUDED_TAGS) == {"dos", "fuzz", "intrusive", "bruteforce"}
+
+
+def test_allowed_protocol_types_is_http_only() -> None:
+    """Regression guard: a real live run found Nuclei's `dns`/`whois`-type templates legitimately
+    contact hosts other than the verified target (a DNS resolver, a domain registry's RDAP API) --
+    see the module docstring. `http` must stay the only allowed protocol type, unconditionally."""
+    assert set(ALLOWED_PROTOCOL_TYPES) == {"http"}
+
+
+def test_without_a_proxy_the_argv_has_no_proxy_or_add_host_flags(monkeypatch: Any) -> None:
+    captured: dict[str, list[str]] = {}
+
+    def fake_run(argv: list[str], **kwargs: Any) -> Any:
+        captured["argv"] = argv
+        return subprocess.CompletedProcess(argv, 0, stdout=b"", stderr=b"")
+
+    monkeypatch.setattr(nuclei.subprocess, "run", fake_run)
+    nuclei.run_nuclei("https://example.com/")
+    assert "-proxy" not in captured["argv"]
+    assert "--add-host" not in captured["argv"]
+    assert "-pt" in captured["argv"]
+    assert captured["argv"][captured["argv"].index("-pt") + 1] == "http"
+
+
+def test_with_a_proxy_the_argv_points_nuclei_at_it_through_host_docker_internal(
+    monkeypatch: Any,
+) -> None:
+    captured: dict[str, list[str]] = {}
+
+    def fake_run(argv: list[str], **kwargs: Any) -> Any:
+        captured["argv"] = argv
+        return subprocess.CompletedProcess(argv, 0, stdout=b"", stderr=b"")
+
+    monkeypatch.setattr(nuclei.subprocess, "run", fake_run)
+    nuclei.run_nuclei(
+        "https://example.com/", proxy=ProxyConfig(host="host.docker.internal", port=1234)
+    )
+    argv = captured["argv"]
+    assert "--add-host" in argv
+    assert argv[argv.index("--add-host") + 1] == "host.docker.internal:host-gateway"
+    assert "-proxy" in argv
+    assert argv[argv.index("-proxy") + 1] == "http://host.docker.internal:1234"

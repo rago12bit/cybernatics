@@ -21,15 +21,28 @@ import argparse
 import asyncio
 import json
 import sys
+import threading
 from collections.abc import Callable
 from dataclasses import dataclass
 
 DEFAULT_CONNECT_TIMEOUT = 10.0
 _MAX_HEADER_BYTES = 16 * 1024  # a request line this large is already not a sane DAST tool request
+_START_TIMEOUT = 5.0
 
 
 class ProxyError(Exception):
     pass
+
+
+@dataclass(frozen=True)
+class ProxyConfig:
+    """Where a scanner adapter should point its own upstream-proxy option. `host` is the address a
+    scanner's own container can reach the proxy at -- not necessarily the address the proxy is bound
+    to -- so a bind of 0.0.0.0 pairs with a `host` of "host.docker.internal" for a sibling Docker
+    container (Week 49b, plan §22.4 follow-up)."""
+
+    host: str
+    port: int
 
 
 @dataclass(frozen=True)
@@ -205,6 +218,91 @@ async def _pump(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> N
         pass
     finally:
         writer.close()
+
+
+class BackgroundProxy:
+    """Runs a real `AllowListProxy` on its own event loop in a background thread, for a synchronous
+    caller (a DAST campaign job) that needs proxied traffic to flow while it makes blocking
+    `subprocess.run` calls to launch scanner containers (Week 49b, plan §22.4 follow-up). Binds to
+    `bind_host` (0.0.0.0 by default, so a sibling Docker container can reach it) on an OS-assigned
+    port; use as a context manager so the server is always torn down, including when a scanner
+    adapter raises.
+
+    Shutdown waits on an `asyncio.Event` that `close()` sets, rather than cancelling
+    `serve_forever()` -- the same choice `tests/integration/test_dast_proxy_live.py` made, for the
+    same reason: cancellation makes the thread's driving coroutine end via `CancelledError`, which
+    surfaces as an unhandled-exception-in-thread warning on every single campaign otherwise."""
+
+    def __init__(
+        self,
+        allowed_hosts: frozenset[str],
+        *,
+        on_blocked: OnBlocked | None = None,
+        bind_host: str = "0.0.0.0",
+    ) -> None:
+        self._proxy = AllowListProxy(allowed_hosts, on_blocked=on_blocked)
+        self._loop = asyncio.new_event_loop()
+        self._server: asyncio.base_events.Server | None = None
+        self._stop_event: asyncio.Event | None = None
+        ready = threading.Event()
+        start_error: list[BaseException] = []
+
+        def run_loop() -> None:
+            asyncio.set_event_loop(self._loop)
+
+            async def _start() -> None:
+                self._stop_event = asyncio.Event()
+                try:
+                    self._server = await asyncio.start_server(self._proxy.handle, bind_host, 0)
+                except OSError as exc:
+                    start_error.append(exc)
+                    return
+                finally:
+                    ready.set()
+                async with self._server:
+                    await self._stop_event.wait()
+                # A scanner's own connection to the proxy and `close()` being called (once the
+                # campaign's `subprocess.run` for that scanner returns) can land in the same
+                # instant -- draining whatever relay tasks are still mid-flight here, instead of
+                # letting the thread exit out from under them, is what turns an occasional "Task
+                # was destroyed but it is pending" / "Event loop is closed" warning on an otherwise
+                # passing campaign into a clean shutdown every time.
+                pending = [
+                    t for t in asyncio.all_tasks(self._loop) if t is not asyncio.current_task()
+                ]
+                if pending:
+                    await asyncio.wait(pending, timeout=2.0)
+
+            try:
+                self._loop.run_until_complete(_start())
+            finally:
+                self._loop.close()
+
+        self._thread = threading.Thread(target=run_loop, daemon=True)
+        self._thread.start()
+        if not ready.wait(timeout=_START_TIMEOUT) or start_error:
+            self.close()
+            detail = f": {start_error[0]}" if start_error else " (timed out)"
+            raise ProxyError(f"background proxy failed to start{detail}")
+
+    @property
+    def port(self) -> int:
+        assert self._server is not None
+        return int(self._server.sockets[0].getsockname()[1])
+
+    def __enter__(self) -> BackgroundProxy:
+        return self
+
+    def __exit__(self, *exc_info: object) -> None:
+        self.close()
+
+    def close(self) -> None:
+        if self._stop_event is not None:
+            try:
+                self._loop.call_soon_threadsafe(self._stop_event.set)
+            except RuntimeError:
+                pass  # the loop already stopped and closed itself (the failed-start path)
+        self._thread.join(timeout=_START_TIMEOUT)
 
 
 async def serve(allowed_hosts: frozenset[str], *, host: str = "0.0.0.0", port: int = 8080) -> None:

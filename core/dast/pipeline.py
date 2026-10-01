@@ -5,6 +5,13 @@ taint/SBOM machinery, none of which applies to a target with no checked-out sour
 ends at the exact same tables (`scans`, `tool_runs`, `findings`), via the same
 `core.persistence.repo` functions, so the API/UI need no DAST-specific code path to display a
 campaign's results.
+
+The scanner tools run behind `core.dast.proxy`'s egress proxy (Week 49b, plan §22.4 follow-up): a
+`BackgroundProxy` scoped to exactly the campaign's one verified host is started in
+`run_dast_campaign_job` before either adapter runs and torn down after, on every exit path including
+a tool error. This is the piece ADR-0035 originally disclosed as built but not wired in;
+`core.dast.egress`'s nftables half (denying a scanner that ignores its proxy config outright) is
+still Linux-only and still not exercised here, the same disclosed boundary as before.
 """
 
 from __future__ import annotations
@@ -12,6 +19,7 @@ from __future__ import annotations
 import logging
 import time
 from typing import Any
+from urllib.parse import urlsplit
 
 from core.correlation import correlate
 from core.dast import campaign as campaign_rules
@@ -19,6 +27,7 @@ from core.dast import ownership
 from core.dast.adapters.nuclei import NucleiError, run_nuclei
 from core.dast.adapters.zap import ZapError, run_zap_baseline
 from core.dast.correlate import correlate_dast_with_sast
+from core.dast.proxy import BackgroundProxy, ProxyConfig, ProxyError
 from core.dast.routes import RouteHandler
 from core.models import Finding
 from core.persistence import repo
@@ -97,36 +106,71 @@ def run_dast_campaign_job(
 
     findings: list[Finding] = []
     tool_errors: list[str] = []
-    started = time.monotonic()
-    try:
-        zap_findings = run_zap_baseline(target_url)
-        findings.extend(zap_findings)
-        elapsed = time.monotonic() - started
-        with sessions() as s:
-            repo.add_tool_run(
-                s, scan_id, "zap-baseline",
-                {"status": "ok", "findings": len(zap_findings), "duration_seconds": elapsed},
-            )  # fmt: skip
-    except ZapError as exc:
-        tool_errors.append(str(exc))
-        with sessions() as s:
-            repo.add_tool_run(s, scan_id, "zap-baseline", {"status": "error", "error": str(exc)})
+    blocked_attempts: list[dict[str, Any]] = []
 
-    if mode == "active":
+    def _record_blocked(host: str, port: int, is_connect: bool) -> None:
+        blocked_attempts.append(
+            {"host": host, "port": port, "protocol": "https" if is_connect else "http"}
+        )
+
+    target_host = urlsplit(target_url).hostname or target_url
+    try:
+        proxy = BackgroundProxy(frozenset({target_host}), on_blocked=_record_blocked)
+    except ProxyError as exc:
+        return fail(
+            f"could not start the campaign's egress proxy: {exc}",
+            action="dast.campaign.proxy_failed",
+        )
+
+    with proxy:
+        proxy_config = ProxyConfig(host="host.docker.internal", port=proxy.port)
         started = time.monotonic()
         try:
-            nuclei_findings = run_nuclei(target_url)
-            findings.extend(nuclei_findings)
+            zap_findings = run_zap_baseline(target_url, proxy=proxy_config)
+            findings.extend(zap_findings)
             elapsed = time.monotonic() - started
             with sessions() as s:
                 repo.add_tool_run(
-                    s, scan_id, "nuclei",
-                    {"status": "ok", "findings": len(nuclei_findings), "duration_seconds": elapsed},
+                    s, scan_id, "zap-baseline",
+                    {"status": "ok", "findings": len(zap_findings), "duration_seconds": elapsed},
                 )  # fmt: skip
-        except NucleiError as exc:
+        except ZapError as exc:
             tool_errors.append(str(exc))
             with sessions() as s:
-                repo.add_tool_run(s, scan_id, "nuclei", {"status": "error", "error": str(exc)})
+                repo.add_tool_run(
+                    s, scan_id, "zap-baseline", {"status": "error", "error": str(exc)}
+                )
+
+        if mode == "active":
+            started = time.monotonic()
+            try:
+                nuclei_findings = run_nuclei(target_url, proxy=proxy_config)
+                findings.extend(nuclei_findings)
+                elapsed = time.monotonic() - started
+                with sessions() as s:
+                    repo.add_tool_run(
+                        s, scan_id, "nuclei",
+                        {"status": "ok", "findings": len(nuclei_findings),
+                         "duration_seconds": elapsed},
+                    )  # fmt: skip
+            except NucleiError as exc:
+                tool_errors.append(str(exc))
+                with sessions() as s:
+                    repo.add_tool_run(s, scan_id, "nuclei", {"status": "error", "error": str(exc)})
+
+    if blocked_attempts:
+        # Egress the scanners tried and were refused -- real signal (a redirect, a misbehaving
+        # template, an SSRF-shaped response) worth keeping on the campaign's own record, not just in
+        # the proxy process's own stdout where nothing reads it (Week 49b, plan §22.4 follow-up).
+        with sessions() as s:
+            repo.add_tool_run(
+                s, scan_id, "egress-proxy",
+                {"status": "blocked_attempts", "attempts": blocked_attempts},
+            )  # fmt: skip
+            repo.append_audit_entry(
+                s, actor="worker:dast-campaign", action="dast.campaign.egress_blocked",
+                target=scan_id, payload={"asset_id": asset_id, "attempts": blocked_attempts},
+            )  # fmt: skip
 
     if not findings and tool_errors:
         return fail("; ".join(tool_errors), action="dast.campaign.tools_failed")
@@ -147,7 +191,8 @@ def run_dast_campaign_job(
         repo.append_audit_entry(
             s, actor="worker:dast-campaign", action="dast.campaign.completed", target=scan_id,
             payload={"asset_id": asset_id, "mode": mode, "status": status,
-                     "raw_findings": stats.raw, "unique_findings": stats.unique},
+                     "raw_findings": stats.raw, "unique_findings": stats.unique,
+                     "blocked_egress_attempts": len(blocked_attempts)},
         )  # fmt: skip
         counts = repo.severity_counts(s, scan_id)
     _confirm_sast_findings_at_runtime(sessions, asset_id, scan_id, final_findings, org_id=org_id)

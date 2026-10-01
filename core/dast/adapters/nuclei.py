@@ -4,6 +4,18 @@ flood, or otherwise degrade a target (`dos`), fuzz it with large payload volumes
 intrusive checks with real side effects (`intrusive`) -- these are excluded unconditionally, not
 offered as an opt-in, because an "active scan" opt-in authorizes probing the target more thoroughly
 than a passive scan, not authorizing a denial-of-service against it.
+
+`-pt http` is the same kind of unconditional restriction, added when the egress proxy was wired in
+(Week 49b, plan §22.4 follow-up): a real live run found that Nuclei's default template set reaches
+third parties that are NOT the verified target by design, not by bug -- `dns`-type templates query
+whatever DNS resolver the container uses, and several `http`-type templates (`rdap-whois`) call a
+domain registry's own API to look up WHOIS data about the target. Excluded tags alone don't stop
+this, since those templates aren't `dos`/`fuzz`/`intrusive`/`bruteforce`. A campaign's egress proxy
+is scoped to exactly one allowed host (the verified Asset); letting Nuclei also need DNS resolvers
+and `rdap.verisign.com` would mean either breaking those templates outright or widening the allow-
+list past the one host the ownership check actually verified -- the latter is a bigger hole than the
+feature these templates provide. Restricting to `http`-protocol templates keeps every request inside
+the one relationship DAST is actually authorized for: an HTTP(S) request to the verified target.
 """
 
 from __future__ import annotations
@@ -14,6 +26,7 @@ import subprocess
 from typing import Any
 from urllib.parse import urlsplit
 
+from core.dast.proxy import ProxyConfig
 from core.models import (
     Category,
     Evidence,
@@ -30,6 +43,9 @@ NUCLEI_IMAGE = "projectdiscovery/nuclei:latest"
 # Never run, regardless of what the caller asks for -- see the module docstring.
 EXCLUDED_TAGS = ("dos", "fuzz", "intrusive", "bruteforce")
 
+# Never run anything but an HTTP(S) request to the target itself -- see the module docstring.
+ALLOWED_PROTOCOL_TYPES = ("http",)
+
 _SEVERITY_MAP = {
     "info": Severity.INFO,
     "low": Severity.LOW,
@@ -43,15 +59,25 @@ class NucleiError(Exception):
     pass
 
 
-def run_nuclei(target_url: str, *, timeout_s: int = 300) -> list[Finding]:
-    argv = [
-        "docker", "run", "--rm",
+def run_nuclei(
+    target_url: str, *, timeout_s: int = 300, proxy: ProxyConfig | None = None
+) -> list[Finding]:
+    argv = ["docker", "run", "--rm"]
+    if proxy is not None:
+        # host.docker.internal needs this explicit mapping on Linux too (Docker Engine >= 20.10);
+        # macOS Docker Desktop already resolves it without the flag, but passing it unconditionally
+        # here means the same argv works on both, which is what a worker actually needs.
+        argv += ["--add-host", "host.docker.internal:host-gateway"]
+    argv += [
         NUCLEI_IMAGE,
         "-u", target_url,
         "-etags", ",".join(EXCLUDED_TAGS),
+        "-pt", ",".join(ALLOWED_PROTOCOL_TYPES),
         "-jsonl",
         "-silent",
     ]  # fmt: skip
+    if proxy is not None:
+        argv += ["-proxy", f"http://{proxy.host}:{proxy.port}"]
     try:
         proc = subprocess.run(argv, capture_output=True, timeout=timeout_s, check=False)
     except subprocess.TimeoutExpired as exc:
