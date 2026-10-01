@@ -1,0 +1,48 @@
+name: OpenSSF Scorecard
+
+# Supply-chain security posture, measured and published (Week 48 task 4, plan §22.3). Several of the
+# checks Scorecard scores are already real work done earlier this same week, not new for this
+# workflow: Fuzzing (.github/workflows/fuzz.yml), Dependency-Update-Tool (.github/dependabot.yml),
+# Pinned-Dependencies and Token-Permissions (ci.yml/fuzz.yml's own SHA pins and `permissions:`
+# blocks), Security-Policy (SECURITY.md), SAST (ruff/mypy in ci.yml, plus this repo's own self-scan
+# in bulwark.yml). Branch-Protection and Signed-Releases are repository/release-process settings
+# this workflow cannot create by itself -- see docs/v2-week48-verification.md for what Scorecard
+# reports once this has actually run, which this workflow has not, never having been pushed before.
+
+on:
+  branch_protection_rule: {}
+  schedule:
+    - cron: "30 1 * * 6" # weekly, Saturday 01:30 UTC
+  push:
+    branches: [main]
+
+permissions: read-all
+
+jobs:
+  analysis:
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write # upload SARIF to Code Scanning
+      id-token: write # publish results to the public Scorecard API (so the README badge resolves)
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
+
+      - uses: ossf/scorecard-action@55891bbd73f2425e97637d96e306fc9d491d0b21 # v2.4.4
+        with:
+          results_file: results.sarif
+          results_format: sarif
+          publish_results: true
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: scorecard-results
+          path: results.sarif
+          retention-days: 5
+
+      - uses: github/codeql-action/upload-sarif@88585263c0627ee42c0e1c5143a112c8d6f4aa18 # v4.38.2
+        with:
+          sarif_file: results.sarif

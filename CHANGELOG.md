@@ -6,6 +6,22 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 ## [Unreleased]
 
 ### Added
+- **Verifying the platform itself: fuzzing, DAST self-scan, ASVS, supply-chain hardening (Week 48,
+  plan §22.3, ADR-0034):** an Atheris fuzzing harness per scanner adapter plus a nightly CI job
+  (written and reviewed, never executed -- Atheris needs a real Clang+libFuzzer build macOS doesn't
+  ship) and three Hypothesis property tests for fingerprinting, fully local. A real ZAP baseline
+  scan of the web app now runs in CI on every push; running it against the actual production build
+  found three missing cross-origin isolation headers, fixed and re-verified. A full OWASP ASVS
+  Level 2 self-assessment (`docs/ASVS-SELF-ASSESSMENT.md`), citing real code for every row, drove
+  three more fixes: HSTS was only ever set for the public demo build (now an explicit
+  `BULWARK_FORCE_HTTPS` opt-in), Bulwark had no vulnerability scanning of its own dependencies
+  despite shipping that as a product feature (now a `dependency-audit` CI job plus Dependabot), and
+  SECURITY.md's claimed archive "depth limits" didn't actually exist in `core/ingest.py` (now they
+  do, tested). Two real gaps were found and left open, disclosed rather than hidden: no
+  authentication rate limiting, no general API abuse-prevention. GitHub Actions are now SHA-pinned
+  with least-privilege `permissions:` blocks; OpenSSF Scorecard runs weekly; a new release workflow
+  generates SLSA Build Level 3 provenance and a keyless cosign signature for the app image, written
+  but never triggered -- cutting a real release wasn't part of this pass.
 - **Envelope encryption, crypto-shredding, mTLS, and secrets in OpenBao (Week 47, plan §22.2,
   ADR-0032/0033):** raw scanner output is now encrypted per scan with an OpenBao-held,
   per-organization key, AEAD-bound to its own storage key so a ciphertext can never be silently

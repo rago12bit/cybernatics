@@ -2,6 +2,10 @@
 
 Source: <https://github.com/Rag2102/cyberimp>
 
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/Rag2102/cyberimp/badge)](https://securityscorecards.dev/viewer/?uri=github.com/Rag2102/cyberimp)
+<!-- Week 48 task 4, plan §22.3: this badge resolves once .github/workflows/scorecard.yml has run at
+     least once for real -- it has not yet, as of this commit (see docs/v2-week48-verification.md). -->
+
 **One scan, one deduplicated list of findings.** Bulwark runs five open-source security scanners against
 a repository, merges what they agree on, and shows you a single list you can actually work through.
 
@@ -259,6 +263,20 @@ credentials, the API token, the LLM API key) prefer OpenBao's secret store over 
 variable, with an unconditional fallback for deployments that haven't migrated yet. See
 [docs/data-protection.md](docs/data-protection.md), including what's genuinely least-privilege today
 versus what's disclosed as deferred.
+
+## Verifying the platform itself
+
+Bulwark turns its own tooling on itself: a nightly Atheris fuzzing job against every scanner
+adapter's parser (written and reviewed, not yet executed -- Atheris needs a real Clang+libFuzzer
+build macOS doesn't ship), Hypothesis property tests for fingerprinting, and a real ZAP baseline
+scan of the web app on every push, which found and fixed three missing cross-origin isolation
+headers. A full [OWASP ASVS Level 2 self-assessment](docs/ASVS-SELF-ASSESSMENT.md) drove three more
+real fixes (HSTS, an archive path-depth limit, dependency vulnerability scanning for Bulwark's own
+supply chain) and discloses two gaps left open. Releases get SLSA Build Level 3 provenance and a
+keyless cosign signature (written, never yet triggered); GitHub Actions are SHA-pinned with
+least-privilege permissions; OpenSSF Scorecard runs weekly. See
+[docs/v2-week48-verification.md](docs/v2-week48-verification.md) for exactly what's been run for
+real versus what remains to be.
 
 ## SBOM, signing and provenance
 
