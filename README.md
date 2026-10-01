@@ -9,9 +9,11 @@ Source: <https://github.com/Rag2102/cyberimp>
 **One scan, one deduplicated list of findings.** Bulwark runs five open-source security scanners against
 a repository, merges what they agree on, and shows you a single list you can actually work through.
 
-> Status: 1.0.0. All 26 weeks of the plan are done: scanners, correlation, risk ranking, LLM-backed fix suggestions,
-> reachability, a VS Code extension and GitHub Action, SBOMs and signed attestations, and the benchmark results
-> below. Not ready for untrusted multi-user hosting yet: auth is a single shared token (see [Limits](#limits)).
+> Status: 2.0.0. All 52 weeks of the plan are done: v1.0's scanners, correlation and risk ranking, plus v2's
+> multi-tenancy, stable issue identity, taint-confirmed reachability, a verified-fix agent, authorized DAST, a
+> plugin SDK, and the benchmark results below. See [docs/release-notes-v2.0.0.md](docs/release-notes-v2.0.0.md)
+> for the full list. Not ready for untrusted multi-user hosting yet: auth is a single shared token outside the
+> GitHub App flow (see [Limits](#limits)).
 
 ## The problem
 
@@ -82,12 +84,20 @@ Measured 2026-09-25. This measures duplicate reduction, not accuracy; precision/
 
 ## Limits
 
-- One shared bearer token: no users, roles or rate limiting yet.
+- Multi-tenancy exists (organizations, projects, roles, Postgres RLS) and the GitHub App has its own
+  identity flow, but most of the API is still a single shared bearer token outside that flow -- no
+  per-user identity for everything else yet.
 - The worker reaches Docker through a socket proxy; that reduces but does not remove the risk
   ([ADR-002](docs/adr/0002-docker-isolation-strategy.md)).
 - Semgrep's community rules may not be redistributed or offered as a service
   ([ADR-006](docs/adr/0006-semgrep-rules-licensing.md)); fine for your own use, undecided for a public demo.
-- Deduplication numbers measure duplicate reduction, not accuracy; precision/recall benchmarks come later.
+- Deduplication numbers measure duplicate reduction, not accuracy; precision/recall benchmarks are
+  in [docs/evaluation.md](docs/evaluation.md) and [docs/evaluation-v2.md](docs/evaluation-v2.md), with
+  five evaluation areas (verified-fix acceptance, triage assistant, hypotheses lane, Copilot, LLM
+  red-team attack-success-rate) still needing a live model to measure.
+- The UX overhaul (Weeks 31-35) shipped real screens on a real design system; the human-measured
+  before/after usability study that would prove it's actually *better* needs real participants and
+  hasn't been run.
 
 License: Apache-2.0
 

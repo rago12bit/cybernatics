@@ -5,6 +5,15 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-10-02
+
+Weeks 27-52 of the plan, Milestone M11: "v2.0 public launch." See
+[docs/release-notes-v2.0.0.md](docs/release-notes-v2.0.0.md) for the organized-by-theme summary,
+[docs/evaluation-v2.md](docs/evaluation-v2.md) for the measured numbers (and an honest list of what
+still needs a live model to measure), and [docs/blog-v2.0.0.md](docs/blog-v2.0.0.md) /
+[docs/technical-report-v2.md](docs/technical-report-v2.md) for plain-language and technical
+write-ups. Everything below is the full week-by-week record since `v1.0.0`.
+
 ### Fixed
 - **`docs/api.md` and `docs/openapi.json` had been stale for several weeks, with nothing to catch
   it.** Regenerating them while building Week 51's documentation site surfaced that the Week
@@ -30,6 +39,27 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   (`tests/integration/test_maintenance_rls_docker.py`, new).
 
 ### Added
+- **Launch: benchmark v2, a live landing page, the v2.0.0 release (Week 52, plan §33-34):** four
+  tasks closing out the v2 plan, none of them new architecture -- this week compiled, measured, and
+  wrote up what the previous 25 weeks already built.
+  [docs/evaluation-v2.md](docs/evaluation-v2.md) fills in every row of the plan's own evaluation
+  table: four rows were real measurements scattered across earlier weeks and collected here for the
+  first time (ranking, scale, platform security, OWASP/Juliet detection); the taint engine row is new
+  real work -- a hand-verified spot-check against NodeGoat's own documented `eval()` injection
+  vulnerability, confirming the engine's actual contribution over a plain pattern rule (proving the
+  argument flows from the HTTP request, not just that `eval()` exists); five rows (verified fixes,
+  triage assistant, hypotheses lane, Copilot, LLM attack-success-rate) are marked not measured --
+  each needs a live model, already individually disclosed in Weeks 41-44's own verification docs, just
+  collected here. The homepage's first screen is now a replay of a real scan of the real, public OWASP
+  Juice Shop (271 real findings) instead of a static small-fixture report, reusing the exact
+  `ScanReport`/`ToolCards` components the authenticated app's live WebSocket scan already uses, with
+  every number shown real and only the wall-clock pacing compressed for a visitor's sake. Closed with
+  [docs/release-notes-v2.0.0.md](docs/release-notes-v2.0.0.md), a plain-language
+  [blog post](docs/blog-v2.0.0.md), an arXiv-style
+  [technical report](docs/technical-report-v2.md) on correlation, taint-based ranking and verified
+  fixes, a [demo-video script](docs/demo-script-v2.md) and a
+  [conference-talk outline](docs/talk-outline-v2.md) (the video and the talk itself are explicitly
+  left to the user), and the `v2.0.0` tag.
 - **Ecosystem: Plugin SDK, Integrations, pre-commit hook, documentation site (Week 51, plan §23,
   ADR-0037):** four tasks extending where findings come from and go to, not scanning itself. The
   **Plugin SDK** (`core/plugins/`) lets a third-party scanner run through the same sandboxed
