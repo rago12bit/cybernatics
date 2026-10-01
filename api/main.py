@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import hmac
 import json
 import logging
 import re
@@ -13,6 +14,7 @@ from collections.abc import AsyncIterator
 from dataclasses import asdict
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 from fastapi import (
@@ -62,6 +64,7 @@ from api.schemas import (
     GenerateHypothesesResult,
     GuidanceView,
     HypothesisView,
+    IntegrationSettingsView,
     IssueHistoryEvent,
     IssueView,
     MessageView,
@@ -72,6 +75,7 @@ from api.schemas import (
     RegisterWebAssetRequest,
     RemediationView,
     RetentionSettingsView,
+    SaveIntegrationSettingsRequest,
     SaveRetentionSettingsRequest,
     SaveThreatModelRequest,
     ScanComparisonSide,
@@ -102,6 +106,7 @@ from core.dast import ownership
 from core.export import FORMATS, ReportData, render
 from core.gitfetch import GitUrlError, validate_git_url
 from core.github_app import parse_pull_request_event, verify_signature
+from core.integrations.ssrf import WebhookUrlError, validate_webhook_url
 from core.llm import budget as llm_budget
 from core.llm import cache as llm_cache
 from core.llm.client import LLMConfig
@@ -1477,6 +1482,147 @@ def create_app(app_state: AppState) -> FastAPI:
                 raise HTTPException(422, f"cannot allow {plugin_name}: {exc}") from exc
         repo.set_plugin_allowed(s, org, plugin_name, enabled=body.enabled, allowed_by=auth.actor)
         return _plugin_view(manifest, body.enabled)
+
+    def _integration_settings_view(org: str, row: Any) -> IntegrationSettingsView:
+        row = row or SimpleNamespace(
+            slack_webhook_url=None, discord_webhook_url=None, outbound_webhook_url=None,
+            outbound_webhook_secret=None, github_token=None, github_issues_repo=None,
+            jira_base_url=None, jira_project_key=None,
+        )  # fmt: skip
+        outbound_ok = bool(row.outbound_webhook_url and row.outbound_webhook_secret)
+        github_ok = bool(row.github_token and row.github_issues_repo)
+        jira_ok = bool(row.jira_base_url and row.jira_project_key)
+        return IntegrationSettingsView(
+            org_id=org,
+            slack_configured=bool(row.slack_webhook_url),
+            discord_configured=bool(row.discord_webhook_url),
+            outbound_webhook_configured=outbound_ok,
+            github_configured=github_ok,
+            github_issues_repo=row.github_issues_repo,
+            jira_configured=jira_ok,
+            jira_base_url=row.jira_base_url,
+            jira_project_key=row.jira_project_key,
+        )
+
+    @app.get(
+        "/settings/integrations",
+        response_model=IntegrationSettingsView,
+        dependencies=[Depends(require_scope("scans:read"))],
+    )
+    def get_integration_settings_endpoint(
+        s: Session = Depends(db), org: str = Depends(current_org)
+    ) -> IntegrationSettingsView:
+        """Week 51 task 2, plan §23. Never a 404 -- an org with nothing configured just shows every
+        integration as not configured, the same "always a value, never a missing-row error" posture
+        `GET /settings/retention` already has."""
+        return _integration_settings_view(org, repo.get_integration_settings(s, org))
+
+    @app.put(
+        "/settings/integrations",
+        response_model=IntegrationSettingsView,
+        dependencies=[Depends(require_scope("scans:write"))],
+    )
+    def save_integration_settings_endpoint(
+        body: SaveIntegrationSettingsRequest,
+        s: Session = Depends(db),
+        org: str = Depends(current_org),
+        auth: AuthContext = Depends(require_auth),
+    ) -> IntegrationSettingsView:
+        for field_name, value in (
+            ("slack_webhook_url", body.slack_webhook_url),
+            ("discord_webhook_url", body.discord_webhook_url),
+            ("outbound_webhook_url", body.outbound_webhook_url),
+        ):
+            if value:
+                try:
+                    validate_webhook_url(value)
+                except WebhookUrlError as exc:
+                    raise HTTPException(422, f"{field_name}: {exc}") from exc
+        row = repo.set_integration_settings(s, org, actor=auth.actor, **body.model_dump())
+        return _integration_settings_view(org, row)
+
+    @app.post("/integrations/github-issues/webhook/{org_id}", include_in_schema=False)
+    async def github_issues_webhook(
+        org_id: str, request: Request, st: AppState = Depends(state)
+    ) -> dict[str, str]:
+        """Inbound half of GitHub Issues two-way sync (Week 51 task 2, plan §23): a repo-level
+        webhook the operator configures on their own GitHub repository (Settings -> Webhooks),
+        pointed at this URL with the same secret stored as `github_webhook_secret` -- deliberately
+        separate from the GitHub *App* webhook (`/integrations/github/webhook`) and its deployment-
+        wide secret, since this integration needs no App installation at all (see
+        `core.integrations.github_issues`'s own docstring)."""
+        body = await request.body()
+        with st.sessions() as s:
+            set_session_org(s, org_id)
+            settings = repo.get_integration_settings(s, org_id)
+            if settings is None or not settings.github_webhook_secret:
+                raise HTTPException(404, "not configured")
+            if not verify_signature(
+                body, request.headers.get("X-Hub-Signature-256"), settings.github_webhook_secret
+            ):
+                raise HTTPException(401, "invalid webhook signature")
+            if request.headers.get("X-GitHub-Event") != "issues":
+                return {"status": "ignored"}
+            try:
+                payload = json.loads(body)
+            except json.JSONDecodeError as exc:
+                raise HTTPException(422, "invalid JSON") from exc
+            action = payload.get("action")
+            if action not in ("closed", "reopened"):
+                return {"status": "ignored"}
+            issue = payload.get("issue") or {}
+            repo_full_name = (payload.get("repository") or {}).get("full_name")
+            number = issue.get("number")
+            if not repo_full_name or number is None:
+                return {"status": "ignored"}
+            link = repo.get_external_link_by_external_id(
+                s, org_id, "github", f"{repo_full_name}#{number}"
+            )
+            if link is None:
+                return {"status": "ignored"}
+            # Sync metadata only -- see ExternalIssueLinkRow's own docstring for why this never
+            # touches IssueRow.state.
+            repo.set_external_link_status(s, link.id, "closed" if action == "closed" else "open")
+        return {"status": "ok"}
+
+    @app.post("/integrations/jira/webhook/{org_id}/{secret}", include_in_schema=False)
+    async def jira_webhook(
+        org_id: str, secret: str, request: Request, st: AppState = Depends(state)
+    ) -> dict[str, str]:
+        """Inbound half of Jira two-way sync. Jira Cloud's own webhooks carry no HMAC signature of
+        any kind (unlike GitHub's) -- a shared secret embedded in the URL path the operator pastes
+        into Jira's own WebHooks admin screen is the standard way to secure a webhook receiver for a
+        sender that doesn't sign its requests."""
+        with st.sessions() as s:
+            set_session_org(s, org_id)
+            settings = repo.get_integration_settings(s, org_id)
+            if settings is None or not settings.jira_webhook_secret:
+                raise HTTPException(404, "not configured")
+            if not hmac.compare_digest(secret, settings.jira_webhook_secret):
+                raise HTTPException(401, "invalid secret")
+            body = await request.body()
+            try:
+                payload = json.loads(body)
+            except json.JSONDecodeError as exc:
+                raise HTTPException(422, "invalid JSON") from exc
+            if payload.get("webhookEvent") != "jira:issue_updated":
+                return {"status": "ignored"}
+            issue = payload.get("issue") or {}
+            key = issue.get("key")
+            if not key:
+                return {"status": "ignored"}
+            link = repo.get_external_link_by_external_id(s, org_id, "jira", key)
+            if link is None:
+                return {"status": "ignored"}
+            # Jira has no universal "closed" boolean -- every workflow can name its own statuses,
+            # but statusCategory.key is standardized across all of them to exactly "new" |
+            # "indeterminate" | "done".
+            status_category = ((issue.get("fields") or {}).get("status") or {}).get(
+                "statusCategory"
+            ) or {}
+            new_status = "closed" if status_category.get("key") == "done" else "open"
+            repo.set_external_link_status(s, link.id, new_status)
+        return {"status": "ok"}
 
     @app.get(
         "/assets/{asset_id}/attack-paths",

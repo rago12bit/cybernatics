@@ -1,6 +1,7 @@
 import pytest
 
-from core.gitfetch import GitUrlError, _is_public, validate_git_url
+from core.gitfetch import GitUrlError, validate_git_url
+from core.netsafety import is_public_ip as _is_public
 
 
 def resolves_to(*ips: str):  # type: ignore[no-untyped-def]

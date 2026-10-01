@@ -34,9 +34,11 @@ from core.persistence.models import (
     CopilotConversationRow,
     CopilotMessageRow,
     DataRetentionPolicyRow,
+    ExternalIssueLinkRow,
     FindingRow,
     GithubInstallation,
     HypothesisRow,
+    IntegrationSettingsRow,
     IssueRow,
     Organization,
     PluginAllowlistRow,
@@ -1667,3 +1669,91 @@ def list_plugin_allowlist(s: Session, org_id: str) -> list[PluginAllowlistRow]:
             .order_by(PluginAllowlistRow.plugin_name)
         )
     )
+
+
+# ---- Integrations (Week 51 task 2, plan §23) ------------------------------------------------
+
+
+_INTEGRATION_FIELDS = (
+    "slack_webhook_url", "discord_webhook_url", "outbound_webhook_url", "outbound_webhook_secret",
+    "github_token", "github_issues_repo", "github_webhook_secret", "jira_base_url", "jira_email",
+    "jira_api_token", "jira_project_key", "jira_webhook_secret",
+)  # fmt: skip
+
+
+def get_integration_settings(s: Session, org_id: str) -> IntegrationSettingsRow | None:
+    """`None` means every integration is off (IntegrationSettingsRow's own docstring) -- there is
+    no "default" settings row the way retention has one."""
+    return s.get(IntegrationSettingsRow, org_id)
+
+
+def set_integration_settings(
+    s: Session, org_id: str, *, actor: str, **fields: str | None
+) -> IntegrationSettingsRow:
+    """Replaces every field named in `_INTEGRATION_FIELDS` with what's given (`None` clears it) --
+    a full-replace PUT, the same semantics `set_retention_days` uses for its one field, just over
+    more of them. Never logs a field's *value* to the audit log (several are bearer credentials);
+    only which fields were touched, and by whom (`actor`, the caller's own token identity -- same
+    attribution `set_plugin_allowed`'s `allowed_by` records)."""
+    unknown = set(fields) - set(_INTEGRATION_FIELDS)
+    if unknown:
+        raise ValueError(f"unknown integration setting(s): {sorted(unknown)}")
+    row = s.get(IntegrationSettingsRow, org_id)
+    if row is None:
+        row = IntegrationSettingsRow(org_id=org_id)
+        s.add(row)
+    for name in _INTEGRATION_FIELDS:
+        if name in fields:
+            setattr(row, name, fields[name])
+    row.updated_at = _now()
+    append_audit_entry(
+        s, actor=actor, action="integrations.settings_updated", target=org_id,
+        payload={"fields_set": sorted(fields)},
+    )  # fmt: skip
+    s.commit()
+    s.refresh(row)
+    return row
+
+
+def create_external_link(
+    s: Session, *, issue_id: str, org_id: str, provider: str, external_id: str, external_url: str
+) -> ExternalIssueLinkRow:
+    row = ExternalIssueLinkRow(
+        issue_id=issue_id, org_id=org_id, provider=provider, external_id=external_id,
+        external_url=external_url,
+    )  # fmt: skip
+    s.add(row)
+    s.commit()
+    s.refresh(row)
+    return row
+
+
+def get_external_link(s: Session, issue_id: str, provider: str) -> ExternalIssueLinkRow | None:
+    return s.scalar(
+        select(ExternalIssueLinkRow).where(
+            ExternalIssueLinkRow.issue_id == issue_id, ExternalIssueLinkRow.provider == provider
+        )
+    )
+
+
+def get_external_link_by_external_id(
+    s: Session, org_id: str, provider: str, external_id: str
+) -> ExternalIssueLinkRow | None:
+    """How an inbound webhook (a GitHub `issues` event, a Jira `issue_updated` event) finds which
+    Bulwark Issue an externally changed ticket belongs to."""
+    return s.scalar(
+        select(ExternalIssueLinkRow).where(
+            ExternalIssueLinkRow.org_id == org_id,
+            ExternalIssueLinkRow.provider == provider,
+            ExternalIssueLinkRow.external_id == external_id,
+        )
+    )
+
+
+def set_external_link_status(s: Session, link_id: str, status: str) -> None:
+    """Sync metadata only -- see ExternalIssueLinkRow's own docstring for why this never touches
+    IssueRow.state."""
+    row = s.get(ExternalIssueLinkRow, link_id)
+    if row is not None:
+        row.external_status, row.updated_at = status, _now()
+        s.commit()

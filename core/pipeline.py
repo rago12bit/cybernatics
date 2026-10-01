@@ -17,6 +17,7 @@ from core.adapters import ToolAdapter
 from core.correlation import correlate
 from core.dast.routes import extract_routes_from_workspace
 from core.ingest import IngestError
+from core.integrations.dispatch import notify_scan_result
 from core.models import Category, Finding
 from core.observability import bind_scan, in_context, mark_error, set_attributes, span
 from core.observability import metrics as obs
@@ -192,6 +193,7 @@ def _run_scan_job(
         if scan is None:
             raise LookupError(f"scan {scan_id} not found")
         source_type, source_ref, tools = scan.source_type, scan.source_ref, list(scan.tools)
+        source_label = scan.source_label
         ref = scan.ref
         asset_id = scan.asset_id
         github = (scan.github_repo, scan.github_pr_number, scan.github_installation_id)
@@ -320,6 +322,18 @@ def _run_scan_job(
             repo.set_route_map(s, scan_id, route_map)
             repo.finish_scan(s, scan_id, status)
             counts = repo.severity_counts(s, scan_id)
+            # Integrations (Week 51 task 2, plan §23): only for a real, full scan of the asset's
+            # current state, the same condition that gates writing real Issue history above -- a
+            # PR scan must not notify Slack or file a GitHub issue for something that might never
+            # merge.
+            if issues is not None and org_id is not None:
+                try:
+                    notify_scan_result(
+                        s, org_id, source_label, scan_id, issues,
+                        {f.id: f for f in findings},
+                    )  # fmt: skip
+                except Exception:  # noqa: BLE001 - a dying integration must not fail the scan
+                    log.exception("integrations dispatch failed for scan %s", scan_id)
     if issues is not None:
         issue_counts: dict[str, int] | None = {
             "new": issues.new_count,

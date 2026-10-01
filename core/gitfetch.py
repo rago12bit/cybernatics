@@ -8,25 +8,22 @@ hooks, credential helpers and non-https protocols -> hard size watchdog and time
 
 from __future__ import annotations
 
-import ipaddress
 import os
 import re
 import shutil
-import socket
 import subprocess
 import tempfile
 import time
-from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from urllib.parse import urlsplit
 
 from core.ingest import IngestError, Limits
+from core.netsafety import Resolver, default_resolver, is_public_ip
 
 ALLOWED_HOSTS = frozenset({"github.com", "gitlab.com", "bitbucket.org"})
 _PATH_RE = re.compile(r"^/[A-Za-z0-9_.-]+(/[A-Za-z0-9_.-]+){1,4}(\.git)?/?$")
 
-Resolver = Callable[[str], list[str]]
 #: Deliberately narrow (Week 30, ADR-0017): the only ref this codebase ever passes today is one
 #: parsed straight out of a GitHub webhook payload for the App integration. Restricting the shape
 #: this tightly, rather than accepting any ref-like string, keeps a malformed or hostile webhook
@@ -38,21 +35,7 @@ class GitUrlError(IngestError):
     """URL rejected by validation (bad scheme/host/path or unsafe resolved address)."""
 
 
-def default_resolver(host: str) -> list[str]:
-    infos = socket.getaddrinfo(host, 443, type=socket.SOCK_STREAM)
-    return sorted({str(i[4][0]) for i in infos})
-
-
-def _is_public(ip: str) -> bool:
-    addr = ipaddress.ip_address(ip.split("%")[0])
-    if isinstance(addr, ipaddress.IPv6Address):
-        # Unwrap addresses that embed an IPv4 target, a classic SSRF filter bypass.
-        embedded = addr.ipv4_mapped or addr.sixtofour or (addr.teredo[1] if addr.teredo else None)
-        if embedded is not None:
-            return _is_public(str(embedded))
-        if addr in ipaddress.ip_network("64:ff9b::/96"):  # NAT64
-            return False
-    return addr.is_global and not addr.is_multicast
+_ = Resolver, default_resolver  # re-exported: existing callers import these names from this module
 
 
 @dataclass(frozen=True)
@@ -84,7 +67,7 @@ def validate_git_url(url: str, resolver: Resolver = default_resolver) -> Validat
         raise GitUrlError(f"could not resolve {host}: {exc}") from exc
     if not ips:
         raise GitUrlError(f"{host} did not resolve")
-    bad = [ip for ip in ips if not _is_public(ip)]
+    bad = [ip for ip in ips if not is_public_ip(ip)]
     if bad:
         raise GitUrlError(f"{host} resolves to non-public address(es): {bad}")
     return ValidatedRepo(url=f"https://{host}{parts.path}", host=host, ip=ips[0])

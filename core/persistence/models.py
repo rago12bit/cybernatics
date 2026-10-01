@@ -631,3 +631,69 @@ class PluginAllowlistRow(Base):
     enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     allowed_by: Mapped[str] = mapped_column(String(200))  # audit actor, e.g. "token:abc123"
     allowed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
+class IntegrationSettingsRow(Base):
+    """One organization's notification/ticketing integration config (Week 51 task 2, plan §23).
+    Lazily created like DataRetentionPolicyRow: no row means every integration is off, not a
+    default-enabled one -- "off means off" (core/secrets/resolve.py's own stated convention),
+    applied here too.
+
+    All of these are plaintext columns. That's a real, disclosed gap, not an oversight: the Slack/
+    Discord webhook URLs, the GitHub PAT, and the Jira API token are each themselves a bearer
+    credential, and unlike a scan's object-storage data (`ScanDataKeyRow`, envelope-encrypted via
+    OpenBao Transit), nothing here is wrapped at rest. Doing the same OpenBao-envelope treatment for
+    these is real future work -- see docs/v2-week51-verification.md for why it wasn't done this
+    task, and `core/secrets/openbao.py`'s `OpenBaoClient` for the primitives it would reuse
+    (`ensure_org_key`/`generate_data_key`/`unwrap_data_key`, one durable per-org key rather than a
+    fresh one per scan)."""
+
+    __tablename__ = "integration_settings"
+
+    org_id: Mapped[str] = mapped_column(
+        ForeignKey("organizations.id", ondelete="CASCADE"), primary_key=True
+    )
+    slack_webhook_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    discord_webhook_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    outbound_webhook_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    outbound_webhook_secret: Mapped[str | None] = mapped_column(Text, nullable=True)
+    github_token: Mapped[str | None] = mapped_column(Text, nullable=True)
+    github_issues_repo: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    github_webhook_secret: Mapped[str | None] = mapped_column(Text, nullable=True)
+    jira_base_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    jira_email: Mapped[str | None] = mapped_column(String(320), nullable=True)
+    jira_api_token: Mapped[str | None] = mapped_column(Text, nullable=True)
+    jira_project_key: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    jira_webhook_secret: Mapped[str | None] = mapped_column(Text, nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
+class ExternalIssueLinkRow(Base):
+    """Maps one Bulwark Issue to one externally created ticket (Week 51 task 2, plan §23) -- what
+    "two-way status sync" needs in both directions: Bulwark -> external (close/reopen the linked
+    ticket when `core.issues.sync` transitions the Issue to fixed/reintroduced) and external ->
+    Bulwark (an inbound webhook looks a ticket up by `(org_id, provider, external_id)` to find which
+    Issue it belongs to).
+
+    `external_status` is sync metadata only -- it is never read back into `IssueRow.state`. A human
+    closing a GitHub issue or Jira ticket does not, by itself, change Bulwark's own belief about
+    whether the vulnerability is still present; only the next scan (`core.issues.sync`) can do that.
+    Treating an external close as authoritative would let a person silently hide a still-exploitable
+    finding from Bulwark's own tracking by closing the wrong tab."""
+
+    __tablename__ = "external_issue_links"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    issue_id: Mapped[str] = mapped_column(ForeignKey("issues.id", ondelete="CASCADE"), index=True)
+    org_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"), index=True)
+    provider: Mapped[str] = mapped_column(String(16))  # "github" | "jira"
+    external_id: Mapped[str] = mapped_column(String(300))  # "owner/repo#5" | "PROJ-123"
+    external_url: Mapped[str] = mapped_column(Text)
+    external_status: Mapped[str] = mapped_column(String(16), default="open")  # sync metadata only
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+    __table_args__ = (
+        UniqueConstraint("issue_id", "provider", name="uq_external_links_issue_provider"),
+        Index("ix_external_links_org_provider_external_id", "org_id", "provider", "external_id"),
+    )

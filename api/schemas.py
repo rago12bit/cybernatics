@@ -460,6 +460,43 @@ class SetPluginAllowedRequest(BaseModel):
     enabled: bool = True
 
 
+class IntegrationSettingsView(BaseModel):
+    """Never echoes a secret value back (Week 51 task 2, plan §23) -- a webhook URL, a GitHub PAT,
+    and a Jira API token are each themselves a bearer credential. `*_configured` says whether one is
+    set; the non-secret fields (which repo/project an issue gets filed into) are shown in full since
+    they're just config, not something that grants access on their own."""
+
+    org_id: str
+    slack_configured: bool
+    discord_configured: bool
+    outbound_webhook_configured: bool
+    github_configured: bool
+    github_issues_repo: str | None
+    jira_configured: bool
+    jira_base_url: str | None
+    jira_project_key: str | None
+
+
+class SaveIntegrationSettingsRequest(BaseModel):
+    """A full replacement of this organization's integration settings (same semantics as
+    `SaveRetentionSettingsRequest`'s single value, just over more fields): a field omitted here is
+    cleared, not left unchanged. Re-fetch via `GET /settings/integrations` and resend every field
+    you want to keep."""
+
+    slack_webhook_url: str | None = None
+    discord_webhook_url: str | None = None
+    outbound_webhook_url: str | None = None
+    outbound_webhook_secret: str | None = None
+    github_token: str | None = None
+    github_issues_repo: str | None = None
+    github_webhook_secret: str | None = None
+    jira_base_url: str | None = None
+    jira_email: str | None = None
+    jira_api_token: str | None = None
+    jira_project_key: str | None = None
+    jira_webhook_secret: str | None = None
+
+
 class GenerateHypothesesResult(BaseModel):
     generated: int = Field(description="How many NEW hypotheses this run surfaced and stored.")
     hypotheses: list[HypothesisView]
