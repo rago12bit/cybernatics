@@ -14,6 +14,7 @@ from core.ignore import IgnoreRules
 from core.ingest import IngestError
 from core.scan import ADAPTERS, DEFAULT_TOOLS, scan
 from core.source import materialize
+from core.tenancy import DEFAULT_ORG_ID
 
 app = typer.Typer(help="Bulwark: unified security scanning.", no_args_is_help=True)
 
@@ -887,3 +888,106 @@ def audit_checkpoint(
             payload={"seq_end": seq_end, "rekor_log_index": log_index},
         )  # fmt: skip
     typer.echo(json.dumps({"seq_end": seq_end, "rekor_log_index": log_index}))
+
+
+asset_app = typer.Typer(help="Web/DAST targets and ownership verification (Week 49, plan §22.4).")
+app.add_typer(asset_app, name="asset")
+
+
+def _verification_dict(asset: Any, verification: Any) -> dict[str, Any]:
+    from core.dast import ownership
+
+    out: dict[str, Any] = {
+        "asset_id": asset.id,
+        "domain": asset.key,
+        "method": verification.method,
+        "status": verification.status,
+    }
+    if verification.method == "dns_txt":
+        out["record_name"] = ownership.dns_record_name(asset.key)
+        out["record_value"] = ownership.dns_expected_value(verification.token)
+    else:
+        out["well_known_url"] = ownership.well_known_url(asset.key)
+        out["file_content"] = verification.token
+    return out
+
+
+@asset_app.command("add-web")
+def asset_add_web(
+    domain: str = typer.Argument(..., help="e.g. example.com"),
+    method: str = typer.Option("dns_txt", help="dns_txt (default) or well_known."),
+    org: str = typer.Option(DEFAULT_ORG_ID, help="Organization to register this target under."),
+) -> None:
+    """Register a web target and print the proof-of-control instructions for the chosen method.
+    Scanning it (Week 49 task 3) is blocked until `bulwark asset verify` passes."""
+    from core.dast.ownership import METHODS
+    from core.persistence import repo
+    from core.persistence.db import get_session_factory
+    from core.tenancy import set_session_org
+
+    if method not in METHODS:
+        typer.echo(f"error: unknown method {method!r}; valid: {sorted(METHODS)}", err=True)
+        raise typer.Exit(1)
+    with get_session_factory()() as s:
+        set_session_org(s, org)  # RLS-scoped tables (assets, asset_verifications) need this first
+        asset, verification = repo.register_web_asset(s, domain=domain, method=method, org_id=org)
+        typer.echo(json.dumps(_verification_dict(asset, verification), indent=2))
+
+
+@asset_app.command("verify")
+def asset_verify(
+    asset_id: str = typer.Argument(...),
+    org: str = typer.Option(DEFAULT_ORG_ID, help="Organization the asset belongs to."),
+) -> None:
+    """Run a real, live DNS/HTTP check right now against the target and persist the result."""
+    from core.dast import ownership
+    from core.persistence import repo
+    from core.persistence.db import get_session_factory
+    from core.tenancy import set_session_org
+
+    with get_session_factory()() as s:
+        set_session_org(s, org)
+        asset = repo.get_asset(s, asset_id, org_id=org)
+        if asset is None:
+            typer.echo("error: asset not found", err=True)
+            raise typer.Exit(1)
+        verification = repo.get_asset_verification(s, asset.id, org_id=org)
+        if verification is None:
+            typer.echo("error: this asset has no ownership verification on record", err=True)
+            raise typer.Exit(1)
+        outcome = ownership.verify(
+            verification.method,
+            asset.key,
+            verification.token,
+            resolver=ownership.DnsPythonResolver(),
+            fetcher=ownership.HttpxFetcher(),
+        )
+        verification = repo.record_verification_check(
+            s, verification, ok=outcome.ok, error=outcome.error
+        )
+        typer.echo(json.dumps(_verification_dict(asset, verification), indent=2))
+    if not outcome.ok:
+        raise typer.Exit(1)
+
+
+@asset_app.command("show")
+def asset_show(
+    asset_id: str = typer.Argument(...),
+    org: str = typer.Option(DEFAULT_ORG_ID, help="Organization the asset belongs to."),
+) -> None:
+    """Print an asset's current ownership-verification state without re-checking it."""
+    from core.persistence import repo
+    from core.persistence.db import get_session_factory
+    from core.tenancy import set_session_org
+
+    with get_session_factory()() as s:
+        set_session_org(s, org)
+        asset = repo.get_asset(s, asset_id, org_id=org)
+        if asset is None:
+            typer.echo("error: asset not found", err=True)
+            raise typer.Exit(1)
+        verification = repo.get_asset_verification(s, asset.id, org_id=org)
+        if verification is None:
+            typer.echo("error: this asset has no ownership verification on record", err=True)
+            raise typer.Exit(1)
+        typer.echo(json.dumps(_verification_dict(asset, verification), indent=2))

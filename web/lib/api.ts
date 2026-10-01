@@ -1,4 +1,4 @@
-import type { AssetSummary, AttackPath, BulkTriageResult,
+import type { AssetSummary, AssetVerification, AttackPath, BulkTriageResult,
   StrideRow, ThreatModel, RetentionSettings, Citation, CopilotConversation, CopilotMessage, DependenciesView, Finding, FindingsPage, FindingsQuery, GenerateHypothesesResult, Guidance, GuidanceApi, Hypothesis, IssueHistoryEvent, ProjectOverview, Remediation, ScanComparison, ScanSummary, ScanView, TriageAssistantView, TriageStatus, VerifiedFixStarted, VerifiedFixView } from "./types";
 import { findingsQueryString } from "./format";
 
@@ -306,6 +306,21 @@ export const saveRetentionSettings = (retentionDays: number) =>
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ retention_days: retentionDays }),
   });
+
+// Web/DAST target ownership verification (plan §22.4): registering a target returns the proof-of-
+// control instructions; nothing can scan it until POST .../verify passes a live check.
+export const registerWebAsset = (domain: string, method: "dns_txt" | "well_known") =>
+  request<AssetVerification>("/assets/web", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ domain, method }),
+  });
+
+export const getAssetVerification = (assetId: string) =>
+  request<AssetVerification>(`/assets/${encodeURIComponent(assetId)}/verification`);
+
+export const verifyAsset = (assetId: string) =>
+  request<AssetVerification>(`/assets/${encodeURIComponent(assetId)}/verify`, { method: "POST" });
 
 // The security copilot (plan §21.5): tool-grounded, cited chat about one project.
 export const startCopilotConversation = (

@@ -1,0 +1,80 @@
+.ds-wav-intro {
+  margin-bottom: 1rem;
+  max-width: 65ch;
+}
+
+.ds-wav-error {
+  color: var(--ds-color-danger, #b00020);
+}
+
+.ds-wav-label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+}
+
+.ds-wav-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.ds-wav-row input[type="text"] {
+  flex: 1;
+  max-width: 24rem;
+}
+
+.ds-wav-methods {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.ds-wav-methods label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: normal;
+}
+
+.ds-wav-instructions {
+  border: 1px solid var(--ds-color-border, #d0d7de);
+  border-radius: 6px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.ds-wav-instructions dt {
+  font-weight: 600;
+  margin-top: 0.6rem;
+}
+
+.ds-wav-instructions dd {
+  margin: 0.2rem 0 0;
+}
+
+.ds-wav-code {
+  display: block;
+  font-family: var(--ds-font-mono, monospace);
+  background: var(--ds-color-surface-muted, #f6f8fa);
+  padding: 0.4rem 0.6rem;
+  border-radius: 4px;
+  word-break: break-all;
+}
+
+.ds-wav-status {
+  display: inline-block;
+  margin-top: 1rem;
+  margin-right: 0.75rem;
+  font-weight: 600;
+}
+
+.ds-wav-status-pending { color: var(--ds-color-muted, #656d76); }
+.ds-wav-status-verified { color: var(--ds-color-success, #1a7f37); }
+.ds-wav-status-failed { color: var(--ds-color-danger, #b00020); }
+
+.ds-wav-last-error {
+  margin-top: 0.5rem;
+  color: var(--ds-color-danger, #b00020);
+}

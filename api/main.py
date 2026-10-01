@@ -44,6 +44,7 @@ from api.deps import (
 )
 from api.schemas import (
     AssetSummary,
+    AssetVerificationView,
     AttackPathEdgeView,
     AttackPathNodeView,
     AttackPathView,
@@ -64,6 +65,7 @@ from api.schemas import (
     PostMessageRequest,
     ProjectOverview,
     PromoteHypothesisResult,
+    RegisterWebAssetRequest,
     RemediationView,
     RetentionSettingsView,
     SaveRetentionSettingsRequest,
@@ -88,6 +90,7 @@ from api.schemas import (
     VerifiedFixView,
 )
 from core.config import Settings
+from core.dast import ownership
 from core.export import FORMATS, ReportData, render
 from core.gitfetch import GitUrlError, validate_git_url
 from core.github_app import parse_pull_request_event, verify_signature
@@ -554,6 +557,86 @@ def create_app(app_state: AppState) -> FastAPI:
             latest_scan_id=latest.id,
             latest_scan_finished_at=latest.finished_at,
         )
+
+    def _verification_view(asset: Any, verification: Any) -> AssetVerificationView:
+        record_name = record_value = well_known_url = file_content = None
+        if verification.method == "dns_txt":
+            record_name = ownership.dns_record_name(asset.key)
+            record_value = ownership.dns_expected_value(verification.token)
+        else:
+            well_known_url = ownership.well_known_url(asset.key)
+            file_content = verification.token
+        return AssetVerificationView(
+            asset_id=asset.id,
+            domain=asset.key,
+            method=verification.method,
+            status=verification.status,
+            record_name=record_name,
+            record_value=record_value,
+            well_known_url=well_known_url,
+            file_content=file_content,
+            created_at=verification.created_at,
+            verified_at=verification.verified_at,
+            last_checked_at=verification.last_checked_at,
+            last_error=verification.last_error,
+        )
+
+    @app.post(
+        "/assets/web",
+        response_model=AssetVerificationView,
+        dependencies=[Depends(require_scope("scans:write"))],
+    )
+    def register_web_asset(
+        body: RegisterWebAssetRequest, s: Session = Depends(db), org: str = Depends(current_org)
+    ) -> AssetVerificationView:
+        """Register a web/DAST target (plan §22.4). Returns the proof-of-control instructions for
+        the chosen method; no campaign (Week 49 task 3) can run against this asset until `POST
+        /assets/{id}/verify` passes against a live DNS/HTTP check, not merely this call."""
+        domain = body.domain.strip().lower()
+        asset, verification = repo.register_web_asset(
+            s, domain=domain, method=body.method, org_id=org
+        )
+        return _verification_view(asset, verification)
+
+    @app.get(
+        "/assets/{asset_id}/verification",
+        response_model=AssetVerificationView,
+        dependencies=[Depends(require_scope("scans:read"))],
+    )
+    def get_asset_verification(
+        asset_id: str, s: Session = Depends(db), org: str = Depends(current_org)
+    ) -> AssetVerificationView:
+        asset = _get_asset(s, asset_id, org)
+        verification = repo.get_asset_verification(s, asset.id, org_id=org)
+        if verification is None:
+            raise HTTPException(404, "this asset has no ownership verification on record")
+        return _verification_view(asset, verification)
+
+    @app.post(
+        "/assets/{asset_id}/verify",
+        response_model=AssetVerificationView,
+        dependencies=[Depends(require_scope("scans:write"))],
+    )
+    def verify_asset_endpoint(
+        asset_id: str, s: Session = Depends(db), org: str = Depends(current_org)
+    ) -> AssetVerificationView:
+        """Runs a real, live DNS/HTTP check right now and persists the result -- never trusts a
+        previously-stored "verified" status, since ownership can lapse any time after it passed."""
+        asset = _get_asset(s, asset_id, org)
+        verification = repo.get_asset_verification(s, asset.id, org_id=org)
+        if verification is None:
+            raise HTTPException(404, "this asset has no ownership verification on record")
+        outcome = ownership.verify(
+            verification.method,
+            asset.key,
+            verification.token,
+            resolver=ownership.DnsPythonResolver(),
+            fetcher=ownership.HttpxFetcher(),
+        )
+        verification = repo.record_verification_check(
+            s, verification, ok=outcome.ok, error=outcome.error
+        )
+        return _verification_view(asset, verification)
 
     @app.get(
         "/assets/{asset_id}/issues",

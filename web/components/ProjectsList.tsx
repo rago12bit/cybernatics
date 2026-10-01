@@ -42,12 +42,17 @@ export function ProjectsList() {
             build doesn't have yet (no per-user GitHub sign-in exists -- see docs/v2-week33/34
             verification). The real first action today is the scan submission form. */}
         <p>Run your first scan to see it here. It takes about two minutes. <Link href="/app">Start a scan →</Link></p>
+        <p><Link href="/app/projects/new-web">Add a web target for DAST scanning →</Link></p>
       </div>
     );
   }
 
   return (
-    <ol className="ds-ov-list" aria-label="Projects">
+    <>
+      <p style={{ marginBottom: "1rem" }}>
+        <Link href="/app/projects/new-web">+ Add a web target</Link>
+      </p>
+      <ol className="ds-ov-list" aria-label="Projects">
       {assets.map((a) => (
         <li key={a.id} className="ds-ov-item">
           <span className="ds-ov-rank" aria-hidden="true">•</span>
@@ -62,6 +67,7 @@ export function ProjectsList() {
           <Link href={`/app/projects/${a.id}`} className="ds-ov-item-action">Open →</Link>
         </li>
       ))}
-    </ol>
+      </ol>
+    </>
   );
 }

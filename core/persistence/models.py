@@ -150,7 +150,7 @@ class Asset(Base):
     org_id: Mapped[str] = mapped_column(
         ForeignKey("organizations.id"), default=DEFAULT_ORG_ID, index=True
     )
-    source_type: Mapped[str] = mapped_column(String(16))  # git | archive
+    source_type: Mapped[str] = mapped_column(String(16))  # git | archive | web
     key: Mapped[str] = mapped_column(String(500))  # normalized identity, core.assets.asset_key
     label: Mapped[str] = mapped_column(String(300))  # most recent human-readable label
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
@@ -163,6 +163,31 @@ class Asset(Base):
     __table_args__ = (
         UniqueConstraint("org_id", "source_type", "key", name="uq_assets_org_type_key"),
     )
+
+
+class AssetVerification(Base):
+    """Proof that whoever registered a web Asset actually controls it (plan §22.4, ADR-0035) --
+    required before any DAST campaign may run against it. One row per Asset (a `web` one; a git/
+    archive Asset never gets one), not a history: re-verifying overwrites `status`/`checked_at`/
+    `error` in place, since only the current, live state matters -- a campaign gate checks "is this
+    verified right now," never "was this ever verified." `token` is generated once at registration
+    and never rotates on its own; registering the same domain again (a fresh `POST`) replaces it,
+    which deliberately invalidates any DNS/well-known record already published for the old token."""
+
+    __tablename__ = "asset_verifications"
+
+    asset_id: Mapped[str] = mapped_column(
+        ForeignKey("assets.id", ondelete="CASCADE"), primary_key=True
+    )
+    method: Mapped[str] = mapped_column(String(16))  # dns_txt | well_known
+    token: Mapped[str] = mapped_column(String(64))
+    status: Mapped[str] = mapped_column(String(16), default="pending", index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+    verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_checked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_error: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    asset: Mapped[Asset] = relationship()
 
 
 class IssueRow(Base):

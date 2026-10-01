@@ -34,3 +34,20 @@ def test_archive_label_is_stripped_but_not_otherwise_normalized() -> None:
     assert asset_key("archive", "  my-project.zip  ") == "my-project.zip"
     # unlike git URLs, case is preserved: a filename's case is meaningful on most filesystems
     assert asset_key("archive", "MyProject.zip") != asset_key("archive", "myproject.zip")
+
+
+def test_web_identity_is_the_host_regardless_of_scheme_path_or_case() -> None:
+    variants = [
+        "example.com",
+        "https://example.com",
+        "https://example.com/",
+        "https://Example.com",
+        "http://example.com/some/path",
+    ]
+    keys = {asset_key("web", v) for v in variants}
+    assert keys == {"example.com"}
+
+
+def test_web_identity_differs_by_host() -> None:
+    assert asset_key("web", "example.com") != asset_key("web", "example.org")
+    assert asset_key("web", "sub.example.com") != asset_key("web", "example.com")

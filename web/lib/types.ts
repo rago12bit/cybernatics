@@ -437,3 +437,20 @@ export interface RetentionSettings {
   org_id: string;
   retention_days: number;
 }
+
+/** Proof that whoever registered a web/DAST target actually controls it (plan §22.4) -- required
+ * before any campaign can run against it (Week 49 task 3). */
+export interface AssetVerification {
+  asset_id: string;
+  domain: string;
+  method: "dns_txt" | "well_known";
+  status: "pending" | "verified" | "failed";
+  record_name: string | null;
+  record_value: string | null;
+  well_known_url: string | null;
+  file_content: string | null;
+  created_at: string;
+  verified_at: string | null;
+  last_checked_at: string | null;
+  last_error: string | null;
+}

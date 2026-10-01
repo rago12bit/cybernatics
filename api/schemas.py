@@ -108,6 +108,29 @@ class AssetSummary(BaseModel):
     )
 
 
+class RegisterWebAssetRequest(BaseModel):
+    """Registering a DAST target (plan §22.4) -- this alone does not authorize scanning it; the
+    returned instructions must be satisfied and `/verify` must pass before a campaign can start."""
+
+    domain: str = Field(max_length=255, examples=["example.com"])
+    method: Literal["dns_txt", "well_known"]
+
+
+class AssetVerificationView(BaseModel):
+    asset_id: str
+    domain: str
+    method: str
+    status: str = Field(description="pending | verified | failed")
+    record_name: str | None = Field(default=None, description="dns_txt only")
+    record_value: str | None = Field(default=None, description="dns_txt only")
+    well_known_url: str | None = Field(default=None, description="well_known only")
+    file_content: str | None = Field(default=None, description="well_known only")
+    created_at: datetime
+    verified_at: datetime | None
+    last_checked_at: datetime | None
+    last_error: str | None
+
+
 class ScannedTool(BaseModel):
     tool: str
     status: str

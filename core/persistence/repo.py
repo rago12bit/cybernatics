@@ -16,6 +16,7 @@ from sqlalchemy.sql.elements import ColumnElement
 
 import core.audit as audit
 from core.assets import asset_key
+from core.dast import ownership
 from core.embeddings.chunk import CodeChunk
 from core.issues import ExistingIssue, IssueUpdate, State, SyncResult, classify_for_pr, fallback_key
 from core.issues import sync as sync_issues
@@ -25,6 +26,7 @@ from core.persistence.models import (
     SEVERITY_RANK,
     ApiToken,
     Asset,
+    AssetVerification,
     AuditCheckpoint,
     AuditEntry,
     CodeChunkIndexRow,
@@ -161,6 +163,62 @@ def get_asset(s: Session, asset_id: str, *, org_id: str | None = None) -> Asset 
     if asset is None or (org_id is not None and asset.org_id != org_id):
         return None
     return asset
+
+
+# ---------------------------------------------------------------------------------------------
+# Web assets and ownership verification (Week 49 task 1, plan §22.4, ADR-0035).
+# ---------------------------------------------------------------------------------------------
+
+
+def register_web_asset(
+    s: Session, *, domain: str, method: str, org_id: str = DEFAULT_ORG_ID
+) -> tuple[Asset, AssetVerification]:
+    """Registering the same domain again replaces its verification row with a fresh token and
+    resets status to `pending` (`merge`, not `add`) -- deliberately invalidating whatever DNS/
+    well-known record was published for the previous token, since there is no way to tell from here
+    whether the person re-registering is the same owner choosing a different method or losing access
+    to the first one."""
+    asset = get_or_create_asset(s, source_type="web", source_label=domain, org_id=org_id)
+    verification = AssetVerification(
+        asset_id=asset.id,
+        method=method,
+        token=ownership.generate_token(),
+        status="pending",
+    )
+    merged = s.merge(verification)
+    s.commit()
+    return asset, merged
+
+
+def get_asset_verification(
+    s: Session, asset_id: str, *, org_id: str | None = None
+) -> AssetVerification | None:
+    asset = get_asset(s, asset_id, org_id=org_id)
+    if asset is None:
+        return None
+    return s.get(AssetVerification, asset_id)
+
+
+def record_verification_check(
+    s: Session, verification: AssetVerification, *, ok: bool, error: str | None
+) -> AssetVerification:
+    now = _now()
+    verification.last_checked_at = now
+    verification.last_error = error
+    verification.status = "verified" if ok else "failed"
+    if ok and verification.verified_at is None:
+        verification.verified_at = now
+    s.commit()
+    return verification
+
+
+def is_asset_verified(s: Session, asset_id: str, *, org_id: str | None = None) -> bool:
+    """The cached status from the last check -- cheap, used for list/display views. A DAST campaign
+    starting must call `core.dast.ownership.verify` live instead of trusting this (plan §22.4: "re-
+    checked before every campaign"), since a domain can be reassigned or a DNS/well-known record
+    removed at any time after a past check passed."""
+    verification = get_asset_verification(s, asset_id, org_id=org_id)
+    return verification is not None and verification.status == "verified"
 
 
 def latest_scan_for_asset(

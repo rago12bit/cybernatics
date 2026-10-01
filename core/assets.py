@@ -14,14 +14,16 @@ from __future__ import annotations
 
 from urllib.parse import urlsplit
 
-SourceType = str  # "git" | "archive"
+SourceType = str  # "git" | "archive" | "web"
 
 
 def asset_key(source_type: SourceType, source_label: str) -> str:
     """The identity a repeated scan is matched against. Same inputs -> same key, always."""
-    if source_type != "git":
-        return source_label.strip()
-    return _normalize_git_url(source_label)
+    if source_type == "git":
+        return _normalize_git_url(source_label)
+    if source_type == "web":
+        return _normalize_domain(source_label)
+    return source_label.strip()
 
 
 def _normalize_git_url(url: str) -> str:
@@ -31,3 +33,15 @@ def _normalize_git_url(url: str) -> str:
     if path.endswith(".git"):
         path = path[: -len(".git")]
     return f"https://{host}{path}"
+
+
+def _normalize_domain(domain_or_url: str) -> str:
+    """A web asset's identity is just its registrable host, lowercased, scheme/path/port dropped --
+    "https://Example.com/", "example.com:443" and "example.com" are the same asset (plan §22.4's
+    DAST target). Unlike a git URL, a web target has no meaningful path component to preserve: the
+    whole site is in scope once ownership is verified, not one URL under it."""
+    raw = domain_or_url.strip()
+    if "//" not in raw:
+        raw = f"//{raw}"
+    host = (urlsplit(raw).hostname or raw.strip("/")).lower()
+    return host
