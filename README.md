@@ -258,11 +258,12 @@ Scanning a live web target needs proof you control it first: registering one (`P
 `bulwark asset add-web`) issues a DNS TXT or `.well-known` challenge, re-checked live every time a
 campaign starts, never trusted from a cached status. Passive campaigns (ZAP baseline) run
 unconditionally once verified; active campaigns (add curated Nuclei, with intrusive/DoS-shaped
-templates excluded unconditionally) are opt-in and rate-limited to one per asset per day. A DAST
-finding landing on the same route and a related CWE as an existing static finding marks it
-"confirmed at runtime." A scope-enforcing allow-list egress proxy and matching nftables policy exist
-and are independently verified, but aren't wired into campaign execution yet -- see
-[ADR-0035](docs/adr/0035-dast-scanning.md) for exactly what's left.
+templates and non-HTTP protocol types excluded unconditionally) are opt-in and rate-limited to one
+per asset per day. A DAST finding landing on the same route and a related CWE as an existing static
+finding marks it "confirmed at runtime." Every campaign runs behind a scope-enforcing allow-list
+egress proxy, scoped to exactly the one verified host; a matching nftables policy exists as a
+network-namespace-level backstop but is independently verified only (never loaded into a real
+namespace) -- see [ADR-0035](docs/adr/0035-dast-scanning.md) for exactly what's left.
 
 ## Data protection
 

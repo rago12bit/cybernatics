@@ -6,6 +6,23 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 ## [Unreleased]
 
 ### Added
+- **DAST egress proxy wired into real campaign execution (Week 49b, plan §22.4 follow-up,
+  ADR-0035):** a standalone task inserted before tagging `v1.5.0`, since Week 49's own M10 milestone
+  claims "scope enforced at the network layer" and that wasn't true until now. `core.dast.pipeline.
+  run_dast_campaign_job` starts a real `core.dast.proxy.BackgroundProxy`, scoped to exactly the
+  campaign's one verified host, before running ZAP/Nuclei and tears it down after; both adapters gained
+  a `proxy` parameter pointing the real tool at it (ZAP via its Network add-on's `httpProxy` config,
+  Nuclei via its native `-proxy` flag). Blocked egress attempts (ZAP's own background telemetry calls,
+  proven live) are now recorded on the campaign itself, as a `tool_runs` row and an audit-log entry,
+  not just a log line nobody reads. Two real findings came from making this actually work: ZAP's
+  proxy-config keys had moved to `network.connection.httpProxy.*` (the commonly-documented legacy keys
+  are silently ignored by the shipped image's add-on version), found by inspecting its own compiled
+  option class; and Nuclei's default templates legitimately contact third parties (a DNS resolver, a
+  domain registry's RDAP API) that a single-host allow-list can't permit, fixed by restricting every
+  campaign to `-pt http` unconditionally. Still disclosed as not done: this is cooperative, application-
+  layer enforcement only -- the nftables backstop that would deny a scanner's direct egress at the
+  network-namespace level regardless of its own cooperation is still Linux-only and untested on any
+  real namespace, the same boundary Week 46 already drew.
 - **DAST: ownership verification, scope-enforcing egress, safe scanning tiers, SAST/DAST
   correlation (Week 49, plan §22.4, ADR-0035):** registering a web target (`POST /assets/web`, or
   `bulwark asset add-web`) issues a DNS TXT or `.well-known` proof-of-control challenge; nothing can
@@ -19,13 +36,12 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   (`core/dast/correlate.py`) when a DAST finding lands on the same route (extracted from real
   FastAPI/Flask decorators, `core/dast/routes.py`) and a related CWE -- verified against this
   project's own `api/main.py` (44 real routes found) and end to end against a real vulnerable Flask
-  app. Also built and independently verified, but not yet wired into real campaign execution: a
-  scope-enforcing allow-list egress proxy (`core/dast/proxy.py`) and the nftables policy
-  (`core/dast/egress.py`) that would force a campaign runner through it -- ADR-0035 has the detail
-  on what's left. Three real bugs were found by testing against real infrastructure rather than
-  mocks and fixed, each with a regression test: two scanner-report id collisions (ZAP's rule 90004,
-  Nuclei's repeated-template reports) and a SQLite naive-datetime comparison that would have made
-  every active campaign instantly rate-limit itself.
+  app. Also built and independently verified in this week, and wired into real campaign execution in
+  the Week 49b follow-up above: a scope-enforcing allow-list egress proxy (`core/dast/proxy.py`) and
+  the nftables policy (`core/dast/egress.py`). Three real bugs were found by testing against real
+  infrastructure rather than mocks and fixed, each with a regression test: two scanner-report id
+  collisions (ZAP's rule 90004, Nuclei's repeated-template reports) and a SQLite naive-datetime
+  comparison that would have made every active campaign instantly rate-limit itself.
 - **Verifying the platform itself: fuzzing, DAST self-scan, ASVS, supply-chain hardening (Week 48,
   plan §22.3, ADR-0034):** an Atheris fuzzing harness per scanner adapter plus a nightly CI job
   (written and reviewed, never executed -- Atheris needs a real Clang+libFuzzer build macOS doesn't

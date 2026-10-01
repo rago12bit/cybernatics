@@ -1,6 +1,8 @@
 # ADR-0035: DAST -- ownership verification, scope-enforcing egress, safe scanning tiers, SAST/DAST correlation
 
-Status: Implemented (2026-10-01), Week 49 (plan §22.4).
+Status: Implemented (2026-10-01), Week 49 (plan §22.4); egress-proxy wiring completed in a Week 49b
+follow-up (2026-10-01), a standalone task inserted before tagging `v1.5.0` specifically because the
+plan's own M10 milestone claims "scope enforced at the network layer" and that wasn't true yet.
 
 ## Context
 
@@ -25,26 +27,66 @@ starting on stale trust is the exact failure mode this is designed to prevent. V
 DNS/HTTPS lookups against `example.com` (confirmed failing, since no such record exists there), and
 the full browser → Next.js → FastAPI → Postgres → DNS path in a real browser session.
 
-### Scope enforcement is two independent layers, and only one of them is wired into campaign execution yet
+### Scope enforcement is two independent layers: one is now in the loop, the other is still a disclosed gap
 
 `core/dast/proxy.py` is a real allow-list forward proxy (CONNECT tunneling for HTTPS, plain HTTP
 relaying) -- exact-host-match only, reporting every refused attempt as structured JSON.
 `core/dast/egress.py` denies all direct 80/443 in a runner's network namespace except to that proxy,
 via the same nftables-sidecar mechanism `core.fixagent.egress` already uses for Week 46's
-fix-verification sandbox. Both were built and verified independently: the proxy with real sockets, a
-real local HTTP target, and a real CONNECT tunnel to `example.com` over the real network, including
-inside the actual `docker/dast-egress-proxy` image; the nftables ruleset with unit tests only --
-loading it into a real namespace is Linux-only and wasn't executed on this (macOS) dev machine, the
-same disclosed boundary Week 46 already drew.
+fix-verification sandbox. Week 49 built and verified both independently but wired neither into an
+actual campaign; Week 49b (below) wires the proxy in. The nftables half remains exactly as it was:
+unit-tested only, never loaded into a real namespace, Linux-only.
 
-**What is NOT done**: `core/dast/pipeline.py`'s actual campaign runner calls
-`core.dast.adapters.zap.run_zap_baseline`/`nuclei.run_nuclei` as plain `docker run` subprocesses on
-the worker host -- it does not yet start them behind the allow-list proxy, or apply the nftables
-egress policy to their containers. The scope-enforcement machinery is real and independently proven,
-but it is not in the loop for an actual campaign today. Wiring it in means the worker provisioning a
-proxy instance per campaign (with that campaign's one verified host as its allow-list) and launching
-the scanner containers with `--network=container:<proxy>` plus the nftables sidecar applied to that
-shared namespace -- a real piece of remaining work, not a detail.
+**Week 49b: the proxy is now in the campaign runner's actual path.** `core.dast.pipeline.
+run_dast_campaign_job` starts a `core.dast.proxy.BackgroundProxy` -- a real `AllowListProxy` on a
+background thread, scoped to exactly the campaign's one verified host -- before invoking either
+adapter, and tears it down after, on every exit path including a tool error (`core/dast/proxy.py`'s
+`BackgroundProxy` is a context manager for exactly this). `core.dast.adapters.zap.run_zap_baseline`
+and `nuclei.run_nuclei` both gained a `proxy: ProxyConfig | None` parameter: ZAP is pointed at it via
+`-z "-config network.connection.httpProxy.enabled=true -config network.connection.httpProxy.host=...
+-config network.connection.httpProxy.port=..."`, and Nuclei via its native `-proxy` flag; both
+containers get `--add-host host.docker.internal:host-gateway` so the hostname resolves identically
+on macOS Docker Desktop and real Linux (Docker Engine >= 20.10).
+
+Two real findings came out of making this actually work, not just compile:
+
+- **ZAP's config keys had moved.** The legacy `network.connectionParam.proxyChain*` keys (what most
+  ZAP documentation and forum answers still reference) are silently ignored by the Network add-on
+  this image ships; a real `zap-baseline.py` run with those keys showed zero traffic reaching a real
+  running proxy. Inspecting the add-on's own compiled `ConnectionOptions.class` inside the shipped
+  `network-beta-*.zap` file found the keys it actually reads: `network.connection.httpProxy.
+  {enabled,host,port}`. A second live run with the corrected keys showed the real scan's CONNECT to
+  the target succeed through the proxy, and ZAP's own background "check for updates"/telemetry calls
+  (`news.zaproxy.org`, `cfu.zaproxy.org`, `tel.zaproxy.org`) correctly refused with 403 -- proof the
+  enforcement is real, not just a passthrough, and that the scan completes and reports findings
+  normally regardless.
+- **Nuclei's default templates legitimately contact third parties that are not the target.** A real
+  run (before the proxy was scoped down) showed `dns`-type templates querying whatever DNS resolver
+  the container uses, and an `http`-type template (`rdap-whois`) calling `rdap.verisign.com` to look
+  up the target's WHOIS record -- by design, not a bug, and not covered by the `dos`/`fuzz`/
+  `intrusive`/`bruteforce` tag exclusions Week 49 already had. A single-host allow-list can't permit
+  this without widening the scope past the one host ownership verification actually covers, so
+  `core.dast.adapters.nuclei.ALLOWED_PROTOCOL_TYPES = ("http",)` now restricts every campaign run to
+  `-pt http` unconditionally, the same kind of non-negotiable restriction as `EXCLUDED_TAGS`. This is
+  arguably a correction to Week 49's own curation, caught only once egress was actually constrained
+  enough to expose it.
+
+Both fixes are proven by `tests/integration/test_dast_pipeline_egress_proxy_live.py` (new): the real
+`run_dast_campaign_job`, against real Postgres, running a real `zap-baseline.py` through a real
+`BackgroundProxy` against a real local HTTP target, asserting the campaign completes with real
+findings *and* that the blocked call-home attempts land as both a `tool_runs` row (`"egress-proxy"`)
+and an audit-log entry (`dast.campaign.egress_blocked`) -- Task 4 of this follow-up, so a blocked
+attempt during a real campaign is visible to an operator instead of only appearing in a log line
+nobody reads.
+
+**What is still NOT done.** This wiring is cooperative, not a kernel-level backstop: it works because
+ZAP and Nuclei were configured to use the proxy and chose to honor that configuration. Nothing at the
+network-namespace level yet stops a scanner container that ignored its proxy settings entirely (a
+compromised scanner, a future adapter that doesn't take a `proxy` argument, a template with its own
+raw-socket logic) from reaching the internet directly -- that backstop is exactly what `core.dast.
+egress`'s nftables ruleset is for, and it has still never been loaded into a real network namespace,
+on any machine, for this feature. Linux-only, the same disclosed boundary as Week 46's own egress
+work; closing it needs a real Linux host or CI runner, not this (macOS) dev machine.
 
 ### Safe-by-default scanning tiers: passive always, active is opt-in and rate-limited
 
@@ -93,10 +135,11 @@ same route/CWE correctly confirmed the right Issue.
 
 ## What is NOT done
 
-- The scope-enforcing egress proxy and nftables policy (Week 49 task 2) are built and independently
-  verified, but not yet wired into the actual campaign runner -- see task 2's section above.
-- The nftables ruleset itself has never been loaded into a real network namespace on any machine;
-  Linux-only, the same disclosed boundary as Week 46's `core.fixagent.egress`.
+- The egress proxy is now wired into the campaign runner (Week 49b), but only at the application
+  layer -- a scanner's own cooperation, not a network-namespace-level guarantee. The nftables policy
+  that would make bypassing it a dropped packet rather than a policy violation has never been loaded
+  into a real network namespace on any machine; Linux-only, the same disclosed boundary as Week 46's
+  `core.fixagent.egress`.
 - Registering a web asset's link to its source project (`linked_source_asset_id`) is API/CLI-only;
   the "Add web target" screen doesn't expose picking one yet.
 - Route extraction recognizes one decorator shape (FastAPI/Flask-style); Django's `urls.py` table,
