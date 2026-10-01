@@ -61,6 +61,8 @@ def shred_expired_scans(sessions: SessionFactory, now: datetime | None = None) -
                 .where(ScanDataKeyRow.org_id == org_id, Scan.finished_at.is_not(None))
             ).all()
             for scan_id, finished_at in rows:
+                if finished_at is None:  # SQL already filters this; narrows the type for mypy
+                    continue
                 if _aware(finished_at) >= cutoff:
                     continue
                 if repo.delete_scan_data_key(s, scan_id):
