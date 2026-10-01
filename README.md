@@ -188,6 +188,9 @@ What these do not show: there is no ensemble result because only one scanner ana
 SCA prioritization (EPSS, KEV, reachability) has no ground truth and is unmeasured; AI fix quality is unmeasured.
 Method, per-CWE and per-category tables, and the limits of each: [docs/evaluation.md](docs/evaluation.md).
 
+v2's full evaluation -- the taint engine, scale, platform security, and an honest list of what still needs a live
+model to measure -- is in [docs/evaluation-v2.md](docs/evaluation-v2.md) (plan §34, Week 52).
+
 ## Adding scanners
 
 Five scanners run by default; Grype, Checkov, gosec and Dockle are opt-in (`--tools grype,checkov,gosec`,

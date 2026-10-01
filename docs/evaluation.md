@@ -1,5 +1,9 @@
 # Evaluation
 
+Covers scanning, correlation and ranking only. For the rest of v2 (taint engine, verified fixes,
+triage assistant, Copilot, scale, platform security, and an honest list of what still needs a live
+model to measure), see [evaluation-v2.md](evaluation-v2.md) (plan §34, Week 52).
+
 What was measured, how, and what it does and does not show. Every figure is produced by a script in `benchmarks/`
 from a result file committed in `benchmarks/results/`, from one run on one machine (a laptop running Docker
 Desktop with 10 CPUs) in September 2026. Run-to-run variation was not measured; the OWASP and Juliet scans were
