@@ -34,6 +34,9 @@ MATRIX: dict[str, dict[str, Severity]] = {
     "checkov": {"CRITICAL": S.CRITICAL, "HIGH": S.HIGH, "MEDIUM": S.MEDIUM, "LOW": S.LOW},
     "dockle": {"FATAL": S.HIGH, "WARN": S.MEDIUM, "INFO": S.LOW},
     "gitleaks": {"*": S.HIGH},  # a committed credential is always treated as high
+    # Pre-commit hook's native, no-Docker complements to gitleaks/bandit (plan §23, Week 51 task 4).
+    "precommit-secrets": {"*": S.HIGH},
+    "precommit-sast": {"HIGH": S.HIGH, "MEDIUM": S.MEDIUM, "LOW": S.LOW},
     # OSV-Scanner reports CVSS scores where available (see from_cvss), else GitHub-style labels:
     "osv-scanner": {
         "CRITICAL": S.CRITICAL,

@@ -1,0 +1,23 @@
+# Lets another repo add Bulwark's fast, native secrets + SAST check to its own commits via the
+# `pre-commit` framework (pre-commit.com), instead of (or alongside) `bulwark precommit install`'s
+# native .git/hooks/pre-commit (plan §23, Week 51 task 4):
+#
+#   repos:
+#     - repo: https://github.com/Rag2102/cyberimp
+#       rev: v1.0.0  # pin a tag; see CHANGELOG.md
+#       hooks:
+#         - id: bulwark-precommit
+#
+# `language: python` means the framework installs this project (and its full dependency set --
+# FastAPI, Celery, SQLAlchemy and the rest, not just what `precommit run` itself needs) into an
+# isolated venv on first use, then caches it. That first install is the one part of this hook not
+# under the two-second budget; every commit after it is.
+- id: bulwark-precommit
+  name: Bulwark secrets + fast SAST
+  description: >-
+    Fast, native (no Docker) secrets and SAST checks on staged files -- a narrower, faster
+    complement to `bulwark scan --tools gitleaks,bandit`, not a replacement for it.
+  entry: bulwark precommit run
+  language: python
+  pass_filenames: true
+  types: [text]

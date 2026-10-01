@@ -10,7 +10,7 @@ from typing import Any
 import typer
 
 from core.cache import ResultCache
-from core.ignore import IgnoreRules
+from core.ignore import IGNORE_FILE, IgnoreRules
 from core.ingest import IngestError
 from core.scan import ADAPTERS, DEFAULT_TOOLS, scan
 from core.source import materialize
@@ -1080,3 +1080,138 @@ def asset_campaign_list(
             for c in campaigns
         ]  # fmt: skip
     typer.echo(json.dumps(out, indent=2))
+
+
+precommit_app = typer.Typer(
+    help="Fast, native (no Docker) secrets + SAST checks on staged files (Week 51 task 4, plan §23)."
+)
+app.add_typer(precommit_app, name="precommit")
+
+_PRECOMMIT_HOOK_MARKER = "# installed by `bulwark precommit install` (plan §23)"
+_PRECOMMIT_HOOK_SCRIPT = f"""#!/bin/sh
+{_PRECOMMIT_HOOK_MARKER}
+# Edit or delete freely; `bulwark precommit install --force` recreates this file.
+exec bulwark precommit run
+"""
+
+
+@precommit_app.command("run")
+def precommit_run(
+    files: list[str] = typer.Argument(
+        None,
+        help="Files to scan, as the `pre-commit` framework passes them (read from disk). Omit "
+        "to scan this git repository's currently staged files instead (what a native "
+        "`bulwark precommit install`'d hook does).",
+    ),
+    repo: Path = typer.Option(
+        Path("."), help="Repository root, for staged-file mode (ignored when FILES are given)."
+    ),
+    fail_on: str = typer.Option(
+        "HIGH", help="Minimum severity that blocks the commit: CRITICAL, HIGH, MEDIUM or LOW."
+    ),
+    ignore_file: Path | None = typer.Option(
+        None, "--ignore-file", help="Defaults to <repo>/.bulwarkignore."
+    ),
+    json_output: bool = typer.Option(
+        False, "--json", help="Machine-readable report on stdout instead of human text."
+    ),
+) -> None:
+    from core.precommit import scan_files
+    from core.precommit.git_staged import load_staged_files
+
+    if files:
+        pairs: list[tuple[str, str | bytes | None]] = []
+        for f in files:
+            p = Path(f)
+            pairs.append((f, p.read_bytes() if p.is_file() else None))
+    else:
+        try:
+            pairs = [(sf.path, sf.text) for sf in load_staged_files(repo)]
+        except Exception as exc:  # noqa: BLE001 - git missing/not-a-repo/etc. all fail the same way
+            typer.echo(f"error: could not read staged files from {repo}: {exc}", err=True)
+            raise typer.Exit(2) from exc
+
+    try:
+        rules = IgnoreRules.load(ignore_file or repo / IGNORE_FILE)
+    except ValueError as exc:
+        typer.echo(f"error: {exc}", err=True)
+        raise typer.Exit(2) from exc
+
+    result = scan_files(pairs, ignore_rules=rules)
+    blocking = result.blocking(fail_on)
+
+    if json_output:
+        typer.echo(
+            json.dumps(
+                {
+                    "files_scanned": result.files_scanned,
+                    "findings": [f.to_dict() for f in result.findings],
+                    "blocking": len(blocking),
+                    "ignored_count": result.ignored_count,
+                    "elapsed_seconds": round(result.elapsed_seconds, 3),
+                },
+                indent=2,
+            )
+        )
+    else:
+        if not result.findings:
+            typer.echo(
+                f"bulwark precommit: {result.files_scanned} file(s) scanned, no issues "
+                f"({result.elapsed_seconds:.2f}s)"
+            )
+        else:
+            for f in result.findings:
+                marker = "BLOCK" if f in blocking else "warn "
+                typer.echo(
+                    f"[{marker}] {f.scoring.normalized_severity.value:8} "
+                    f"{f.location.path}:{f.location.start_line}  {f.title}"
+                )
+            typer.echo(
+                f"\nbulwark precommit: {len(result.findings)} finding(s) in "
+                f"{result.files_scanned} file(s), {len(blocking)} blocking "
+                f"({result.elapsed_seconds:.2f}s)"
+            )
+        # Ignoring is never silent (core/ignore.py) even when it suppresses every finding there
+        # was -- shown unconditionally, not only on the "there are findings left" branch above.
+        if result.ignored_count:
+            typer.echo(f"({result.ignored_count} finding(s) ignored by .bulwarkignore)")
+    if blocking:
+        raise typer.Exit(1)
+
+
+@precommit_app.command("install")
+def precommit_install(
+    repo: Path = typer.Option(Path("."), help="Repository root to install the hook into."),
+    force: bool = typer.Option(False, help="Overwrite an existing hooks/pre-commit script."),
+) -> None:
+    """Writes a native `.git/hooks/pre-commit` that runs `bulwark precommit run` on the staged
+    files. Repos using the `pre-commit` framework (pre-commit.com) instead should add this
+    project's `.pre-commit-hooks.yaml` entry to their .pre-commit-config.yaml -- that framework
+    manages hook installation itself and this command isn't needed there."""
+    git_dir = repo / ".git"
+    if not git_dir.is_dir():
+        typer.echo(f"error: {repo} is not a git repository (no .git directory)", err=True)
+        raise typer.Exit(1)
+    hook_path = git_dir / "hooks" / "pre-commit"
+    if hook_path.exists() and not force:
+        typer.echo(f"error: {hook_path} already exists (use --force to overwrite)", err=True)
+        raise typer.Exit(1)
+    hook_path.parent.mkdir(parents=True, exist_ok=True)
+    hook_path.write_text(_PRECOMMIT_HOOK_SCRIPT)
+    hook_path.chmod(hook_path.stat().st_mode | 0o111)
+    typer.echo(f"Installed {hook_path}")
+
+
+@precommit_app.command("uninstall")
+def precommit_uninstall(
+    repo: Path = typer.Option(Path("."), help="Repository root the hook was installed into."),
+) -> None:
+    hook_path = repo / ".git" / "hooks" / "pre-commit"
+    if not hook_path.is_file():
+        typer.echo("no pre-commit hook installed")
+        return
+    if _PRECOMMIT_HOOK_MARKER not in hook_path.read_text(errors="replace"):
+        typer.echo(f"error: {hook_path} was not installed by `bulwark precommit install`", err=True)
+        raise typer.Exit(1)
+    hook_path.unlink()
+    typer.echo(f"Removed {hook_path}")
