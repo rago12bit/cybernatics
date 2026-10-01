@@ -349,6 +349,43 @@ def test_an_unreachable_broker_omits_the_gauge_instead_of_failing_the_scrape(
     assert "bulwark_queue_depth" not in generate_latest(reg).decode()
 
 
+def test_cost_summary_sums_compute_and_llm_cost_for_the_default_org(
+    sessions: sessionmaker[Session],
+) -> None:
+    from core.persistence.models import Scan, ToolRun
+    from core.tenancy import DEFAULT_ORG_ID
+
+    with sessions() as s:
+        scan = Scan(
+            org_id=DEFAULT_ORG_ID, source_type="git", source_ref="x", source_label="x",
+            tools=["bandit"], llm_tokens_used=2000,
+        )  # fmt: skip
+        s.add(scan)
+        s.flush()
+        s.add(ToolRun(scan_id=scan.id, tool="bandit", status="ok", duration_seconds=10.0))
+        s.commit()
+
+    reg = CollectorRegistry()
+    reg.register(obs.CostSummary(sessions))
+    families = {m.name: m for m in reg.collect()}
+    samples = {
+        s.labels["component"]: s.value for s in families["bulwark_estimated_cost_usd"].samples
+    }
+    assert samples["compute"] == pytest.approx(0.003)  # 10s * 0.0003 $/s
+    assert samples["llm"] == pytest.approx(0.012)  # 2000 tok * 0.006 $/1k
+
+
+def test_cost_summary_omits_the_gauge_instead_of_failing_the_scrape_when_the_db_is_unreachable() -> (
+    None
+):
+    def broken_factory() -> Session:
+        raise ConnectionError("down")
+
+    reg = CollectorRegistry()
+    reg.register(obs.CostSummary(broken_factory))
+    assert "bulwark_estimated_cost_usd" not in generate_latest(reg).decode()
+
+
 def test_metrics_server_can_be_disabled_and_reports_a_busy_port() -> None:
     assert obs.start_metrics_server(port=0) is None
     import socket
@@ -439,7 +476,9 @@ def test_the_dashboard_only_uses_metrics_the_worker_exports() -> None:
         Path(__file__).resolve().parents[2] / "observability/grafana/dashboards/bulwark.json"
     ).read_text()
     used = set(re.findall(r"bulwark_[a-z_]+", dash))
-    exported = generate_latest(obs.REGISTRY).decode() + "bulwark_queue_depth"
+    exported = (
+        generate_latest(obs.REGISTRY).decode() + "bulwark_queue_depth bulwark_estimated_cost_usd"
+    )
     for name in used:
         base = re.sub(r"_(bucket|count|sum|total|created)$", "", name)
         assert (

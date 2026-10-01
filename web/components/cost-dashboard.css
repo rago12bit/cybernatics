@@ -1,0 +1,63 @@
+.ds-cost-intro {
+  margin-bottom: 1rem;
+  max-width: 65ch;
+}
+
+.ds-cost-error {
+  color: var(--ds-color-danger, #b00020);
+}
+
+.ds-cost-window {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.ds-cost-window button {
+  padding: 0.25rem 0.75rem;
+  border: 1px solid var(--ds-color-border, #d0d7de);
+  border-radius: 999px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.ds-cost-window-active {
+  background: var(--ds-color-accent, #0969da);
+  color: #fff;
+  border-color: transparent !important;
+}
+
+.ds-cost-totals {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.ds-cost-tile {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--ds-color-border, #d0d7de);
+  border-radius: 8px;
+}
+
+.ds-cost-tile-label {
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+.ds-cost-tile-value {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.ds-cost-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ds-cost-table th,
+.ds-cost-table td {
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--ds-color-border, #d0d7de);
+}

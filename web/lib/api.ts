@@ -1,5 +1,5 @@
 import type { AssetSummary, AssetVerification, AttackPath, BulkTriageResult,
-  StrideRow, ThreatModel, RetentionSettings, Citation, CopilotConversation, CopilotMessage, DependenciesView, Finding, FindingsPage, FindingsQuery, GenerateHypothesesResult, Guidance, GuidanceApi, Hypothesis, IssueHistoryEvent, ProjectOverview, Remediation, ScanComparison, ScanSummary, ScanView, TriageAssistantView, TriageStatus, VerifiedFixStarted, VerifiedFixView } from "./types";
+  StrideRow, ThreatModel, RetentionSettings, Citation, CopilotConversation, CopilotMessage, CostSummary, DependenciesView, Finding, FindingsPage, FindingsQuery, GenerateHypothesesResult, Guidance, GuidanceApi, Hypothesis, IssueHistoryEvent, ProjectOverview, Remediation, ScanComparison, ScanCost, ScanSummary, ScanView, TriageAssistantView, TriageStatus, VerifiedFixStarted, VerifiedFixView } from "./types";
 import { findingsQueryString } from "./format";
 
 export const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/$/, "");
@@ -324,6 +324,14 @@ export const verifyAsset = (assetId: string) =>
 
 // DAST campaigns (plan §22.4, Week 49 task 3): "passive" (ZAP baseline) runs once ownership
 // verification passes; "active" (adds curated Nuclei) is additionally rate-limited server-side.
+// Cost-per-scan dashboard (plan §23, Week 50): an estimate, computed fresh on every call -- see
+// ScanCost/CostSummary's own doc comments in ./types.
+export const getScanCost = (scanId: string) =>
+  request<ScanCost>(`/scans/${encodeURIComponent(scanId)}/cost`);
+
+export const getCostSummary = (days: number = 30) =>
+  request<CostSummary>(`/costs/summary?days=${encodeURIComponent(days)}`);
+
 export const listDastCampaigns = (assetId: string) =>
   request<ScanSummary[]>(`/assets/${encodeURIComponent(assetId)}/campaigns`);
 

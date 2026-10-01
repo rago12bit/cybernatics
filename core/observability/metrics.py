@@ -114,6 +114,58 @@ class QueueDepth:
         yield g
 
 
+class CostSummary:
+    """Collector: estimated cost over the last 24h, read from Postgres when Prometheus scrapes --
+    same "always current, no bookkeeping" shape as `QueueDepth`, just against SQL instead of Redis
+    (plan §23, Week 50's cost-per-scan dashboard; `core.observability.cost` has the actual pricing
+    logic and its own disclosed accuracy caveats, which apply here identically).
+
+    Scoped to the bootstrap default org, like every other metric in this module (none of them carry
+    an org label) -- this project's own stated scope is a self-hosted single-tenant deployment, not a
+    multi-tenant SaaS (see Part 1's explicit non-goals), so that's the one org an operator's own
+    Grafana dashboard actually needs. A real multi-tenant deployment wanting cross-org cost visibility
+    here would need `set_session_org` called once per org (RLS hides every other org's rows from a
+    session with no org context at all, which is why this can't just query across all orgs in one
+    pass the way QueueDepth's single Redis key can)."""
+
+    def __init__(self, session_factory: Any) -> None:
+        self._session_factory = session_factory
+
+    def collect(self) -> Any:
+        g = GaugeMetricFamily(
+            "bulwark_estimated_cost_usd",
+            "Estimated cost over the last 24h for the default org, by component.",
+            labels=["component"],
+        )
+        try:
+            from datetime import datetime, timedelta, timezone
+
+            from core.observability.cost import estimate_cost
+            from core.persistence.repo import cost_summary_scans
+            from core.tenancy import DEFAULT_ORG_ID, set_session_org
+
+            with self._session_factory() as s:
+                set_session_org(s, DEFAULT_ORG_ID)
+                since = datetime.now(timezone.utc) - timedelta(hours=24)
+                compute_usd = llm_usd = 0.0
+                for scan, compute_seconds in cost_summary_scans(
+                    s, org_id=DEFAULT_ORG_ID, since=since
+                ):
+                    breakdown = estimate_cost(
+                        compute_seconds=compute_seconds,
+                        llm_tokens=scan.llm_tokens_used,
+                        model="claude-sonnet-5",
+                    )
+                    compute_usd += breakdown.compute_usd
+                    llm_usd += breakdown.llm_usd
+            g.add_metric(["compute"], compute_usd)
+            g.add_metric(["llm"], llm_usd)
+        except Exception:  # noqa: BLE001 - an unreachable DB is reported by omission, not a crash
+            log.warning("cost summary unavailable", exc_info=True)
+            return
+        yield g
+
+
 def init_series() -> None:
     """Create every label combination at zero so rates and 'no failures yet' show up from the first scrape."""
     for t in TOOLS:
@@ -135,6 +187,12 @@ def start_metrics_server(port: int | None = None, redis_url: str | None = None) 
     init_series()
     if redis_url:
         REGISTRY.register(QueueDepth(redis_url))  # type: ignore[arg-type,unused-ignore]
+    try:
+        from core.persistence.db import get_session_factory
+
+        REGISTRY.register(CostSummary(get_session_factory()))  # type: ignore[arg-type,unused-ignore]
+    except Exception:  # noqa: BLE001 - no DB configured (e.g. a unit test importing this module)
+        log.warning("cost summary metric not registered (no database available)")
     try:
         start_http_server(
             p, addr=os.environ.get("BULWARK_METRICS_ADDR", "127.0.0.1"), registry=REGISTRY

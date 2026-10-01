@@ -36,6 +36,13 @@ class Settings:
     # GitHub App integration above.
     openbao_addr: str = ""
     openbao_token: str = ""
+    # Cost-per-scan dashboard (plan §23, Week 50): both tunable per deployment, since neither is
+    # knowable from inside this codebase -- see core/observability/cost.py's own docstring for why
+    # the defaults are explicitly placeholders, not real billing figures.
+    compute_cost_per_second_usd: float = 0.0003
+    llm_cost_per_1k_tokens_usd: float | None = (
+        None  # None -> core.observability.cost's per-model table
+    )
 
     @staticmethod
     def from_env() -> Settings:
@@ -65,6 +72,14 @@ class Settings:
             ),
             openbao_addr=os.environ.get("BULWARK_OPENBAO_ADDR", ""),
             openbao_token=os.environ.get("BULWARK_OPENBAO_TOKEN", ""),
+            compute_cost_per_second_usd=float(
+                os.environ.get("BULWARK_COMPUTE_COST_PER_SECOND_USD", 0.0003)
+            ),
+            llm_cost_per_1k_tokens_usd=(
+                float(os.environ["BULWARK_LLM_COST_PER_1K_TOKENS_USD"])
+                if "BULWARK_LLM_COST_PER_1K_TOKENS_USD" in os.environ
+                else None
+            ),
         )
 
 

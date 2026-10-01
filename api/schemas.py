@@ -218,6 +218,38 @@ class ScanComparisonView(BaseModel):
     unchanged: list[ComparedIssue]
 
 
+class ScanCostView(BaseModel):
+    """Plan §23's cost-per-scan dashboard (Week 50) -- an estimate, not a bill; see
+    core/observability/cost.py's own docstring for what it does and doesn't account for."""
+
+    scan_id: str
+    compute_seconds: float
+    compute_usd: float
+    llm_tokens: int
+    llm_usd: float
+    total_usd: float
+
+
+class CostSummaryRow(BaseModel):
+    scan_id: str
+    source_label: str
+    created_at: datetime
+    compute_seconds: float
+    llm_tokens: int
+    total_usd: float
+
+
+class CostSummaryView(BaseModel):
+    days: int
+    scan_count: int
+    total_compute_seconds: float
+    total_llm_tokens: int
+    total_compute_usd: float
+    total_llm_usd: float
+    total_usd: float
+    scans: list[CostSummaryRow]
+
+
 class ProjectOverview(BaseModel):
     """Plan §28.1's project overview screen, built entirely from existing scan/issue data —
     see core/persistence/repo.py's asset-overview functions for how each field is derived."""

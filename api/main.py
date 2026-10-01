@@ -11,6 +11,7 @@ import time
 import uuid
 from collections.abc import AsyncIterator
 from dataclasses import asdict
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -53,6 +54,8 @@ from api.schemas import (
     CitationView,
     ComparedIssue,
     ConversationView,
+    CostSummaryRow,
+    CostSummaryView,
     DependenciesView,
     FeedsStatus,
     FindingsPage,
@@ -72,6 +75,7 @@ from api.schemas import (
     SaveThreatModelRequest,
     ScanComparisonSide,
     ScanComparisonView,
+    ScanCostView,
     ScanCreated,
     ScannedTool,
     ScanRequest,
@@ -98,11 +102,12 @@ from core.gitfetch import GitUrlError, validate_git_url
 from core.github_app import parse_pull_request_event, verify_signature
 from core.llm import budget as llm_budget
 from core.llm import cache as llm_cache
+from core.llm.client import LLMConfig
 from core.llm.limits import LimitExceeded, UsageLimiter
 from core.llm.prompt import CodeContext
 from core.llm.service import static_suggestion
 from core.models import finding_from_dict
-from core.observability import bind_scan, configure_logging, setup_tracing
+from core.observability import bind_scan, configure_logging, cost, setup_tracing
 from core.persistence import repo
 from core.persistence.models import FindingRow, Scan
 from core.rag.retrieve import context_for
@@ -1665,6 +1670,79 @@ def create_app(app_state: AppState) -> FastAPI:
             earlier=side(cmp.earlier), later=side(cmp.later), new=issues(cmp.new),
             fixed=issues(cmp.fixed), reintroduced=issues(cmp.reintroduced),
             unchanged=issues(cmp.unchanged),
+        )  # fmt: skip
+
+    @app.get(
+        "/scans/{scan_id}/cost",
+        response_model=ScanCostView,
+        dependencies=[Depends(require_scope("scans:read"))],
+    )
+    def get_scan_cost(
+        scan_id: str,
+        st: AppState = Depends(state),
+        s: Session = Depends(db),
+        org: str = Depends(current_org),
+    ) -> ScanCostView:
+        """Plan §23's cost-per-scan dashboard (Week 50): an estimate, computed fresh on every call
+        rather than stored -- a scan's LLM spend keeps growing after the scan job itself finishes
+        (remediation suggestions, hypotheses, copilot messages are all requested later), so a cost
+        written once at completion would go stale the moment someone asks for a suggestion."""
+        scan = _get_scan(s, scan_id, org)
+        compute_seconds = repo.scan_compute_seconds(s, scan_id)
+        settings = st.settings
+        breakdown = cost.estimate_cost(
+            compute_seconds=compute_seconds,
+            llm_tokens=scan.llm_tokens_used,
+            model=LLMConfig.from_env().model,
+            compute_usd_per_second=settings.compute_cost_per_second_usd,
+            llm_usd_per_1k_tokens=settings.llm_cost_per_1k_tokens_usd,
+        )
+        return ScanCostView(
+            scan_id=scan_id, compute_seconds=breakdown.compute_seconds,
+            compute_usd=breakdown.compute_usd, llm_tokens=breakdown.llm_tokens,
+            llm_usd=breakdown.llm_usd, total_usd=breakdown.total_usd,
+        )  # fmt: skip
+
+    @app.get(
+        "/costs/summary",
+        response_model=CostSummaryView,
+        dependencies=[Depends(require_scope("scans:read"))],
+    )
+    def get_cost_summary(
+        days: int = Query(default=30, ge=1, le=365),
+        st: AppState = Depends(state),
+        s: Session = Depends(db),
+        org: str = Depends(current_org),
+    ) -> CostSummaryView:
+        """The same estimate as `get_scan_cost`, aggregated over every scan in the window -- an
+        internal visibility dashboard (plan §23), not a billing export."""
+        since = datetime.now(timezone.utc) - timedelta(days=days)
+        settings = st.settings
+        model = LLMConfig.from_env().model
+        rows: list[CostSummaryRow] = []
+        total_compute_s = total_llm_tokens = 0.0
+        total_compute_usd = total_llm_usd = 0.0
+        for scan, compute_seconds in repo.cost_summary_scans(s, org_id=org, since=since):
+            breakdown = cost.estimate_cost(
+                compute_seconds=compute_seconds, llm_tokens=scan.llm_tokens_used, model=model,
+                compute_usd_per_second=settings.compute_cost_per_second_usd,
+                llm_usd_per_1k_tokens=settings.llm_cost_per_1k_tokens_usd,
+            )  # fmt: skip
+            rows.append(
+                CostSummaryRow(
+                    scan_id=scan.id, source_label=scan.source_label, created_at=scan.created_at,
+                    compute_seconds=breakdown.compute_seconds, llm_tokens=breakdown.llm_tokens,
+                    total_usd=breakdown.total_usd,
+                )
+            )  # fmt: skip
+            total_compute_s += breakdown.compute_seconds
+            total_llm_tokens += breakdown.llm_tokens
+            total_compute_usd += breakdown.compute_usd
+            total_llm_usd += breakdown.llm_usd
+        return CostSummaryView(
+            days=days, scan_count=len(rows), total_compute_seconds=total_compute_s,
+            total_llm_tokens=int(total_llm_tokens), total_compute_usd=total_compute_usd,
+            total_llm_usd=total_llm_usd, total_usd=total_compute_usd + total_llm_usd, scans=rows,
         )  # fmt: skip
 
     @app.get("/scans/{scan_id}/export", dependencies=[Depends(require_scope("scans:read"))])

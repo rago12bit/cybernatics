@@ -205,6 +205,34 @@ def get_scan(s: Session, scan_id: str, *, org_id: str | None = None) -> Scan | N
     return scan
 
 
+def scan_compute_seconds(s: Session, scan_id: str) -> float:
+    """Sum of every real scanner's own wall-clock time for this scan (`ToolRun.duration_seconds`,
+    Week 50 plan §23's cost dashboard) -- the scanner-compute half of a scan's estimated cost."""
+    total = s.scalar(
+        select(func.coalesce(func.sum(ToolRun.duration_seconds), 0.0)).where(
+            ToolRun.scan_id == scan_id
+        )
+    )
+    return float(total or 0.0)
+
+
+def cost_summary_scans(s: Session, *, org_id: str, since: datetime) -> list[tuple[Scan, float]]:
+    """Every scan for `org_id` created since `since`, paired with its own summed scanner compute
+    time -- one query, not one-per-scan (Week 50 plan §23's cost dashboard)."""
+    compute = (
+        select(ToolRun.scan_id, func.coalesce(func.sum(ToolRun.duration_seconds), 0.0).label("cs"))
+        .group_by(ToolRun.scan_id)
+        .subquery()
+    )
+    rows = s.execute(
+        select(Scan, func.coalesce(compute.c.cs, 0.0))
+        .outerjoin(compute, compute.c.scan_id == Scan.id)
+        .where(Scan.org_id == org_id, Scan.created_at >= since)
+        .order_by(Scan.created_at.desc())
+    ).all()
+    return [(scan, float(cs)) for scan, cs in rows]
+
+
 # ---------------------------------------------------------------------------------------------
 # Assets as projects (plan §27): the project overview screen (Week 33, §28.1) is built entirely
 # from data that already exists -- Asset (ADR-0012), IssueRow's lifecycle timestamps, and the same

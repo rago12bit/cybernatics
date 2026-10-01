@@ -114,6 +114,37 @@ export interface ScanSummary {
   severity_counts: Partial<Record<Severity, number>>;
 }
 
+/** Plan §23's cost-per-scan dashboard (Week 50) -- an estimate, not a bill; see
+ * core/observability/cost.py's own docstring for what it does and doesn't account for. */
+export interface ScanCost {
+  scan_id: string;
+  compute_seconds: number;
+  compute_usd: number;
+  llm_tokens: number;
+  llm_usd: number;
+  total_usd: number;
+}
+
+export interface CostSummaryRow {
+  scan_id: string;
+  source_label: string;
+  created_at: string;
+  compute_seconds: number;
+  llm_tokens: number;
+  total_usd: number;
+}
+
+export interface CostSummary {
+  days: number;
+  scan_count: number;
+  total_compute_seconds: number;
+  total_llm_tokens: number;
+  total_compute_usd: number;
+  total_llm_usd: number;
+  total_usd: number;
+  scans: CostSummaryRow[];
+}
+
 export interface ComparedIssue {
   id: string;
   title: string;
