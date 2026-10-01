@@ -5,7 +5,38 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 
 ## [Unreleased]
 
+### Fixed
+- **`reap_stale_scans` silently reaped nothing in production (found during Week 50's own
+  connection/RLS work, plan §23).** The housekeeping task that fails scans stuck in `queued`/`running`
+  after a worker dies queried `scans` on a session with no `app.current_org` ever set. Under real
+  Postgres RLS (`FORCE ROW LEVEL SECURITY`, ADR-0013) that query sees zero rows, not every org's --
+  it only ever worked in the SQLite-backed unit tests, which have no RLS to enforce. Fixed by having
+  it iterate one organization at a time with `core.tenancy.set_session_org` set explicitly, the same
+  pattern `core.retention.shred_expired_scans` already used (and had already documented
+  `reap_stale_scans` as needing). Verified against real Postgres, connected as the real worker's
+  `bulwark_worker` role: a stuck scan in each of two organizations is now reaped correctly by one
+  call with no org context set beforehand, which the old implementation could not do
+  (`tests/integration/test_maintenance_rls_docker.py`, new).
+
 ### Added
+- **Scale: Helm chart with KEDA autoscaling, k6 load testing, cost-per-scan dashboard (Week 50, plan
+  §23, ADR-0036):** a new `helm/bulwark/` chart deploys the core product to Kubernetes (Postgres,
+  Redis, object storage, OpenBao, the API, the worker, a new single-replica Celery beat split out of
+  the worker specifically so it's KEDA-scale-safe, and the web app), with an optional KEDA
+  `ScaledObject` that scales the worker on real Celery queue depth -- live-verified against a real
+  `kind` cluster: a real 3,000-task backlog scaled the worker from 1 to 5 replicas in 16 seconds and
+  drained it in under 30. New `k6/scan-submission.js` and `k6/browse-results.js` load tests, run for
+  real against the dev stack, found and drove the fix for two genuine capacity bugs: a single uvicorn
+  process couldn't serve 500 concurrent users (fixed with `--workers 4`), and the default SQLAlchemy
+  connection pool combined with Postgres's default `max_connections` couldn't support that many
+  processes at once (fixed by raising both, sized to add up correctly together). A new cost-per-scan
+  dashboard (`core/observability/cost.py`, `GET /scans/{id}/cost`, `GET /costs/summary`, a new
+  `/app/costs` page, and two new Grafana panels) estimates cost from data already tracked -- scanner
+  compute seconds and LLM tokens used -- computed fresh on every call rather than stored, since a
+  scan's LLM spend keeps growing after the scan itself finishes. Two more real, pre-existing bugs were
+  found and fixed along the way: an `openbao` healthcheck that resolved `localhost` to `::1` first
+  and never passed even against a healthy server, and three missing per-service Postgres roles from
+  earlier historical drift that silently blocked every write.
 - **DAST egress proxy wired into real campaign execution (Week 49b, plan §22.4 follow-up,
   ADR-0035):** a standalone task inserted before tagging `v1.5.0`, since Week 49's own M10 milestone
   claims "scope enforced at the network layer" and that wasn't true until now. `core.dast.pipeline.

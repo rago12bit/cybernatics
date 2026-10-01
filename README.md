@@ -291,6 +291,24 @@ least-privilege permissions; OpenSSF Scorecard runs weekly. See
 [docs/v2-week48-verification.md](docs/v2-week48-verification.md) for exactly what's been run for
 real versus what remains to be.
 
+## Scale
+
+A Helm chart (`helm/bulwark/`) deploys the product to Kubernetes, with an optional KEDA
+`ScaledObject` that scales the worker on real Celery queue depth -- live-verified against a real
+`kind` cluster: a real 3,000-task backlog scaled the worker from 1 to 5 replicas in 16 seconds and
+drained it in under 30. Celery beat runs as its own fixed-at-1-replica deployment, split out of the
+worker specifically so scaling it doesn't duplicate scheduled jobs. k6 load tests (`k6/`) against the
+dev stack found and drove the fix for two real capacity limits: a single API process couldn't serve
+500 concurrent users, and the database connection pool needed sizing to match. See
+[ADR-0036](docs/adr/0036-scale.md) and
+[docs/v2-week50-verification.md](docs/v2-week50-verification.md) for the full numbers and what the
+chart deliberately doesn't reproduce from the dev stack (Postgres mTLS, OpenBao's production mode,
+the verified-fix agent, and the observability stack).
+
+A new cost-per-scan dashboard (`/app/costs` in the web app, plus two Grafana panels) estimates cost
+from scanner compute time and LLM tokens already tracked per scan -- an internal visibility figure,
+not a bill; see `core/observability/cost.py` for the pricing assumptions.
+
 ## SBOM, signing and provenance
 
 `bulwark sbom` writes a CycloneDX SBOM (Syft); `bulwark attest` signs reports with cosign and attests which scanner
