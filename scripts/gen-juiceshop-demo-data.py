@@ -21,13 +21,14 @@ import sys
 from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "web" / "lib" / "juiceshop-demo-data.json"
 
 
-def convert_tool_status(raw: dict[str, dict]) -> dict[str, dict]:
-    out = {}
+def convert_tool_status(raw: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    out: dict[str, dict[str, Any]] = {}
     for name, t in raw.items():
         status = t["status"]
         out[name] = {
