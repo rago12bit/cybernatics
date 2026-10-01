@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "bulwark.fullname" . }}-beat
+  labels: {{- include "bulwark.labels" . | nindent 4 }}
+spec:
+  # Always exactly 1 -- see values.yaml's beat comment. Never a KEDA scale target.
+  replicas: 1
+  strategy: { type: Recreate } # never run two beats, even briefly during a rolling update
+  selector:
+    matchLabels: {{- include "bulwark.selectorLabels" (dict "component" "beat") | nindent 6 }}
+  template:
+    metadata:
+      labels: {{- include "bulwark.selectorLabels" (dict "component" "beat") | nindent 8 }}
+    spec:
+      initContainers:
+        {{- include "bulwark.waitForDepsInitContainers" . | nindent 8 }}
+      containers:
+        - name: beat
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          # The embedded-beat half of docker-compose.yml's worker command (`celery worker -B`),
+          # split into its own single-replica Deployment -- but using Celery's dedicated `beat`
+          # subcommand, not `worker -B -P solo -c 1` as a first pass of this file had: that still
+          # runs a 1-concurrency worker, which was caught live during the KEDA demo below (a 100-task
+          # backlog pushed onto an intentionally-paused worker Deployment drained on its own within
+          # seconds -- this beat process was quietly consuming it). `celery beat` only runs the
+          # scheduler; it enqueues bulwark.update_feeds/maintenance/crypto_shred onto the real
+          # (KEDA-scaled) worker Deployment's queue and never consumes anything itself.
+          command:
+            - celery
+            - -A
+            - core.tasks
+            - beat
+            - -s
+            - /tmp/celerybeat-schedule
+            - -l
+            - info
+          env:
+            {{- include "bulwark.sharedEnv" . | nindent 12 }}
+            - name: BULWARK_DATABASE_URL
+              valueFrom:
+                secretKeyRef: { name: {{ include "bulwark.fullname" . }}-secrets, key: database-url-worker }
+            - name: BULWARK_S3_ACCESS_KEY
+              valueFrom:
+                secretKeyRef: { name: {{ include "bulwark.fullname" . }}-secrets, key: objectstore-access-key }
+            - name: BULWARK_S3_SECRET_KEY
+              valueFrom:
+                secretKeyRef: { name: {{ include "bulwark.fullname" . }}-secrets, key: objectstore-secret-key }
+            - name: BULWARK_OPENBAO_TOKEN
+              valueFrom:
+                secretKeyRef: { name: {{ include "bulwark.fullname" . }}-secrets, key: openbao-dev-root-token }
+            - name: BULWARK_API_TOKEN
+              valueFrom:
+                secretKeyRef: { name: {{ include "bulwark.fullname" . }}-secrets, key: bulwark-api-token }
+          volumeMounts:
+            - { name: workdir, mountPath: /workdir }
+          resources: {{- .Values.beat.resources | toYaml | nindent 12 }}
+      volumes:
+        - name: workdir
+          persistentVolumeClaim: { claimName: {{ include "bulwark.workdirClaimName" . }} }

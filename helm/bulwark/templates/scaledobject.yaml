@@ -1,0 +1,25 @@
+{{- if .Values.keda.enabled }}
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {{ include "bulwark.fullname" . }}-worker
+  labels: {{- include "bulwark.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    name: {{ include "bulwark.fullname" . }}-worker
+  minReplicaCount: {{ .Values.keda.minReplicaCount }}
+  maxReplicaCount: {{ .Values.keda.maxReplicaCount }}
+  pollingInterval: {{ .Values.keda.pollingInterval }}
+  cooldownPeriod: {{ .Values.keda.cooldownPeriod }}
+  triggers:
+    - type: redis
+      metadata:
+        # Fully-qualified, not the short Service name: the KEDA operator resolves this DNS name
+        # from its own Pod in the `keda` namespace, not this release's namespace, so a short name
+        # like "bulwark-redis" alone doesn't resolve (confirmed live: "no such host" until this was
+        # qualified).
+        address: {{ include "bulwark.fullname" . }}-redis.{{ .Release.Namespace }}.svc.cluster.local:6379
+        listName: {{ .Values.keda.listName | quote }}
+        listLength: {{ .Values.keda.listLength | quote }}
+        activationListLength: "0"
+{{- end }}

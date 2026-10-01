@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "bulwark.fullname" . }}-postgres
+  labels: {{- include "bulwark.labels" . | nindent 4 }}
+spec:
+  serviceName: {{ include "bulwark.fullname" . }}-postgres
+  replicas: 1
+  selector:
+    matchLabels: {{- include "bulwark.selectorLabels" (dict "component" "postgres") | nindent 6 }}
+  template:
+    metadata:
+      labels: {{- include "bulwark.selectorLabels" (dict "component" "postgres") | nindent 8 }}
+    spec:
+      containers:
+        - name: postgres
+          image: {{ .Values.postgres.image }}
+          ports: [{ containerPort: 5432 }]
+          env:
+            - name: POSTGRES_USER
+              value: {{ .Values.postgres.user | quote }}
+            - name: POSTGRES_DB
+              value: {{ .Values.postgres.database | quote }}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef: { name: {{ include "bulwark.fullname" . }}-secrets, key: postgres-password }
+          volumeMounts:
+            - { name: data, mountPath: /var/lib/postgresql/data }
+          readinessProbe:
+            exec: { command: ["pg_isready", "-U", {{ .Values.postgres.user | quote }}] }
+            initialDelaySeconds: 3
+            periodSeconds: 3
+          livenessProbe:
+            exec: { command: ["pg_isready", "-U", {{ .Values.postgres.user | quote }}] }
+            initialDelaySeconds: 10
+            periodSeconds: 10
+  volumeClaimTemplates:
+    - metadata: { name: data }
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        {{- if .Values.postgres.storageClassName }}
+        storageClassName: {{ .Values.postgres.storageClassName }}
+        {{- end }}
+        resources: { requests: { storage: {{ .Values.postgres.storage }} } }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "bulwark.fullname" . }}-postgres
+  labels: {{- include "bulwark.labels" . | nindent 4 }}
+spec:
+  clusterIP: None
+  selector: {{- include "bulwark.selectorLabels" (dict "component" "postgres") | nindent 4 }}
+  ports: [{ port: 5432, targetPort: 5432 }]

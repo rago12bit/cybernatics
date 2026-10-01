@@ -1,0 +1,137 @@
+# Default values for the bulwark chart (plan §23, Week 50). Every password/token below is a
+# placeholder meant to be overridden with -f/--set in real use; nothing here is a secret worth
+# protecting on its own, same posture as scripts/init-env.sh's generated docker-compose .env file.
+
+image:
+  repository: bulwark/app
+  tag: dev
+  pullPolicy: IfNotPresent
+
+webImage:
+  repository: bulwark/web
+  tag: dev
+  pullPolicy: IfNotPresent
+
+postgres:
+  # The default here is plain password auth against the upstream pgvector image -- NOT the
+  # docker-compose stack's own bulwark/postgres:16-pgvector image, which requires mTLS client
+  # certificates it generates from ./certs. Reproducing that in Kubernetes needs a cert-issuing
+  # mechanism (cert-manager, or a chart-managed CA Job) this chart does not yet provide -- see
+  # helm/bulwark/README.md. BULWARK_DATABASE_URL's format is identical either way (it's an ordinary
+  # connection string, sslmode and all); pointing `postgres.image` and `databaseUrlOverride` at a
+  # real mTLS-fronted Postgres is a values-only change once that mechanism exists.
+  image: pgvector/pgvector:pg16
+  user: bulwark
+  password: dev-postgres-password
+  database: bulwark
+  storage: 2Gi
+  storageClassName: ""
+
+redis:
+  image: redis:7.2-alpine # see docs/adr/0011-redis-license.md -- pinned for its BSD license
+
+objectstore:
+  image: rustfs/rustfs:latest
+  accessKey: bulwark-dev-access
+  secretKey: dev-objectstore-secret
+  storage: 2Gi
+  storageClassName: ""
+
+openbao:
+  # Dev-mode only, exactly like docker-compose.yml's own openbao service: auto-unseals with a fixed
+  # root token, nothing survives a restart. A real deployment points BULWARK_OPENBAO_ADDR at a real,
+  # unsealed, persistent OpenBao instead of enabling this one.
+  image: openbao/openbao:2.1
+  devRootToken: dev-openbao-token
+
+# Shared scratch space for uploaded archives: the API writes an uploaded file here and the worker
+# reads it by the same path, so this volume must be readable from both. The default below is a
+# hostPath PersistentVolume, which only works correctly when api and worker land on the same node --
+# true by construction on a single-node cluster (e.g. kind), false on a real multi-node one. Set
+# `workdir.existingClaim` to a PVC backed by a real ReadWriteMany StorageClass (NFS, EFS, Longhorn,
+# ...) for a multi-node deployment; leaving it empty uses the hostPath fallback and is a disclosed
+# single-node-only default, not a hidden one.
+workdir:
+  existingClaim: ""
+  hostPath: /var/lib/bulwark/workdir
+  storage: 2Gi
+
+api:
+  replicas: 1
+  # The legacy shared bootstrap token (core/config.py's api_token, resolve_secret("BULWARK_API_TOKEN")):
+  # "the whole-API, every-org" credential api/deps.py falls back to when a request carries no scoped
+  # per-org token. Change this from the default before exposing the API past a single trusted network.
+  apiToken: dev-bulwark-api-token
+  corsOrigins: "http://localhost:3010"
+  llm:
+    enabled: false
+    apiKey: ""
+    model: claude-sonnet-5
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits: { cpu: "1", memory: 512Mi }
+  service:
+    type: ClusterIP
+    port: 8000
+
+worker:
+  # The baseline/minimum replica count; KEDA (below) scales above this on queue depth when enabled.
+  replicas: 1
+  concurrency: 4
+  resources:
+    requests: { cpu: 200m, memory: 512Mi }
+    limits: { cpu: "2", memory: 1Gi }
+  # The worker launches sandboxed scanner containers (docker run), exactly like docker-compose's own
+  # worker does through socket-proxy. Kubernetes nodes don't expose a Docker socket the way a compose
+  # host does, so this chart runs a privileged docker:dind sidecar in the worker Pod instead and
+  # points DOCKER_HOST at it over localhost -- a well-known, real pattern (the same one many CI
+  # systems use to run Docker-based jobs on Kubernetes), not a stand-in. The real, disclosed trade-
+  # off: it needs a privileged sidecar container, which is a materially different security posture
+  # from socket-proxy's deliberately narrow API allowlist (CONTAINERS/POST/IMAGES/VOLUMES only, no
+  # host socket inside the worker's own container) -- see helm/bulwark/README.md.
+  dind:
+    enabled: true
+    image: docker:27-dind
+    resources:
+      requests: { cpu: 200m, memory: 512Mi }
+      limits: { cpu: "2", memory: 2Gi }
+
+beat:
+  # Celery's embedded beat (-B) must run as exactly one process cluster-wide, or scheduled jobs
+  # (feed updates, retention housekeeping, crypto-shredding) fire once per worker replica instead of
+  # once -- see docker-compose.yml's own "-B: run ONE worker with -B" comment. KEDA scales the
+  # `worker` Deployment (beat disabled there); this Deployment is fixed at 1 replica and is never a
+  # KEDA scale target.
+  resources:
+    requests: { cpu: 50m, memory: 128Mi }
+    limits: { cpu: 500m, memory: 256Mi }
+
+web:
+  replicas: 1
+  # Passed to the web Pod as a runtime env var (NEXT_PUBLIC_API_URL) -- this reaches server-side code
+  # (web/proxy.ts reads it per-request) but NOT the browser-side bundle: web/lib/api.ts's client-side
+  # API_URL constant is inlined by Next.js at image BUILD time, from the webImage's own build arg
+  # (web/Dockerfile's ARG NEXT_PUBLIC_API_URL, default http://localhost:8000). Changing this value
+  # alone does not change what a browser calls directly; a real (non-port-forwarded) deployment needs
+  # the web image rebuilt with the real public API URL as a build arg, not just this value changed.
+  publicApiUrl: "http://localhost:8000"
+  resources:
+    requests: { cpu: 50m, memory: 128Mi }
+    limits: { cpu: 500m, memory: 256Mi }
+  service:
+    type: ClusterIP
+    port: 3000
+
+# KEDA autoscaling on Celery queue depth (plan §23, Week 50). Requires the KEDA operator already
+# installed in the cluster (helm install keda kedacore/keda -n keda --create-namespace) -- this
+# chart does not install KEDA itself, the same way it doesn't install Kubernetes itself.
+keda:
+  enabled: true
+  minReplicaCount: 1
+  maxReplicaCount: 5
+  # Celery's own default queue name (core/tasks.py sets no task_default_queue override), read via
+  # Redis LLEN -- the exact mechanism core/observability/metrics.py's own QueueDepth collector uses.
+  listName: celery
+  listLength: 5
+  pollingInterval: 5
+  cooldownPeriod: 30

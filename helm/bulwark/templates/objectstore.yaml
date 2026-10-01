@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "bulwark.fullname" . }}-objectstore
+  labels: {{- include "bulwark.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  strategy: { type: Recreate } # single ReadWriteOnce volume below -- never run two at once
+  selector:
+    matchLabels: {{- include "bulwark.selectorLabels" (dict "component" "objectstore") | nindent 6 }}
+  template:
+    metadata:
+      labels: {{- include "bulwark.selectorLabels" (dict "component" "objectstore") | nindent 8 }}
+    spec:
+      containers:
+        - name: objectstore
+          image: {{ .Values.objectstore.image }}
+          ports: [{ containerPort: 9000 }]
+          env:
+            - name: RUSTFS_ACCESS_KEY
+              valueFrom:
+                secretKeyRef: { name: {{ include "bulwark.fullname" . }}-secrets, key: objectstore-access-key }
+            - name: RUSTFS_SECRET_KEY
+              valueFrom:
+                secretKeyRef: { name: {{ include "bulwark.fullname" . }}-secrets, key: objectstore-secret-key }
+          volumeMounts:
+            - { name: data, mountPath: /data }
+          readinessProbe:
+            # rustfs returns 403 (not 200) for an unauthenticated GET even when it's up -- found
+            # live, a plain httpGet readiness check never turned Ready. docker-compose.yml's own
+            # healthcheck tolerates this the same way (curl -s without -f treats any HTTP response as
+            # healthy); a tcpSocket check matches that same "is it listening" intent without
+            # depending on rustfs's unauthenticated-response status code.
+            tcpSocket: { port: 9000 }
+            initialDelaySeconds: 3
+            periodSeconds: 5
+      volumes:
+        - name: data
+          persistentVolumeClaim: { claimName: {{ include "bulwark.fullname" . }}-objectstore }
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "bulwark.fullname" . }}-objectstore
+  labels: {{- include "bulwark.labels" . | nindent 4 }}
+spec:
+  accessModes: ["ReadWriteOnce"]
+  {{- if .Values.objectstore.storageClassName }}
+  storageClassName: {{ .Values.objectstore.storageClassName }}
+  {{- end }}
+  resources: { requests: { storage: {{ .Values.objectstore.storage }} } }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "bulwark.fullname" . }}-objectstore
+  labels: {{- include "bulwark.labels" . | nindent 4 }}
+spec:
+  selector: {{- include "bulwark.selectorLabels" (dict "component" "objectstore") | nindent 4 }}
+  ports: [{ port: 9000, targetPort: 9000 }]

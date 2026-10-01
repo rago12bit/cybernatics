@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "bulwark.fullname" . }}-web
+  labels: {{- include "bulwark.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.web.replicas }}
+  selector:
+    matchLabels: {{- include "bulwark.selectorLabels" (dict "component" "web") | nindent 6 }}
+  template:
+    metadata:
+      labels: {{- include "bulwark.selectorLabels" (dict "component" "web") | nindent 8 }}
+    spec:
+      containers:
+        - name: web
+          image: "{{ .Values.webImage.repository }}:{{ .Values.webImage.tag }}"
+          imagePullPolicy: {{ .Values.webImage.pullPolicy }}
+          ports: [{ containerPort: 3000 }]
+          env:
+            - name: NEXT_PUBLIC_API_URL
+              value: {{ .Values.web.publicApiUrl | quote }}
+          readinessProbe:
+            tcpSocket: { port: 3000 }
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources: {{- .Values.web.resources | toYaml | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "bulwark.fullname" . }}-web
+  labels: {{- include "bulwark.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.web.service.type }}
+  selector: {{- include "bulwark.selectorLabels" (dict "component" "web") | nindent 4 }}
+  ports: [{ port: {{ .Values.web.service.port }}, targetPort: 3000 }]

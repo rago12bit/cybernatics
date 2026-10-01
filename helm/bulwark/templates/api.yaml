@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "bulwark.fullname" . }}-api
+  labels: {{- include "bulwark.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.api.replicas }}
+  selector:
+    matchLabels: {{- include "bulwark.selectorLabels" (dict "component" "api") | nindent 6 }}
+  template:
+    metadata:
+      labels: {{- include "bulwark.selectorLabels" (dict "component" "api") | nindent 8 }}
+    spec:
+      initContainers:
+        {{- include "bulwark.waitForDepsInitContainers" . | nindent 8 }}
+      containers:
+        - name: api
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - uvicorn
+            - api.main:app
+            - --host=0.0.0.0
+            - --port=8000
+            - --log-config=api/log_config.json
+            - --no-access-log
+          ports: [{ containerPort: 8000 }]
+          env:
+            {{- include "bulwark.sharedEnv" . | nindent 12 }}
+            - name: BULWARK_DATABASE_URL
+              valueFrom:
+                secretKeyRef: { name: {{ include "bulwark.fullname" . }}-secrets, key: database-url-api }
+            - name: BULWARK_S3_ACCESS_KEY
+              valueFrom:
+                secretKeyRef: { name: {{ include "bulwark.fullname" . }}-secrets, key: objectstore-access-key }
+            - name: BULWARK_S3_SECRET_KEY
+              valueFrom:
+                secretKeyRef: { name: {{ include "bulwark.fullname" . }}-secrets, key: objectstore-secret-key }
+            - name: BULWARK_OPENBAO_TOKEN
+              valueFrom:
+                secretKeyRef: { name: {{ include "bulwark.fullname" . }}-secrets, key: openbao-dev-root-token }
+            - name: BULWARK_API_TOKEN
+              valueFrom:
+                secretKeyRef: { name: {{ include "bulwark.fullname" . }}-secrets, key: bulwark-api-token }
+            - name: BULWARK_CORS_ORIGINS
+              value: {{ .Values.api.corsOrigins | quote }}
+            - name: BULWARK_LLM_ENABLED
+              value: {{ .Values.api.llm.enabled | ternary "1" "0" | quote }}
+            - name: BULWARK_LLM_MODEL
+              value: {{ .Values.api.llm.model | quote }}
+            {{- if .Values.api.llm.enabled }}
+            - name: BULWARK_LLM_API_KEY
+              valueFrom:
+                secretKeyRef: { name: {{ include "bulwark.fullname" . }}-secrets, key: llm-api-key }
+            {{- end }}
+          volumeMounts:
+            - { name: workdir, mountPath: /workdir }
+          readinessProbe:
+            httpGet: { path: /healthz, port: 8000 }
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet: { path: /healthz, port: 8000 }
+            initialDelaySeconds: 15
+            periodSeconds: 15
+          resources: {{- .Values.api.resources | toYaml | nindent 12 }}
+      volumes:
+        - name: workdir
+          persistentVolumeClaim: { claimName: {{ include "bulwark.workdirClaimName" . }} }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "bulwark.fullname" . }}-api
+  labels: {{- include "bulwark.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.api.service.type }}
+  selector: {{- include "bulwark.selectorLabels" (dict "component" "api") | nindent 4 }}
+  ports: [{ port: {{ .Values.api.service.port }}, targetPort: 8000 }]

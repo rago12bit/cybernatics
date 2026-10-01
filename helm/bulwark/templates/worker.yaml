@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "bulwark.fullname" . }}-worker
+  labels: {{- include "bulwark.labels" . | nindent 4 }}
+spec:
+  # KEDA (templates/scaledobject.yaml, when enabled) manages replicas above this baseline by owning
+  # a HorizontalPodAutoscaler that targets this Deployment -- `replicas` here is only the count Helm
+  # itself would set on a plain `helm install`/`helm upgrade` with KEDA disabled or not yet reconciled.
+  replicas: {{ .Values.worker.replicas }}
+  selector:
+    matchLabels: {{- include "bulwark.selectorLabels" (dict "component" "worker") | nindent 6 }}
+  template:
+    metadata:
+      labels: {{- include "bulwark.selectorLabels" (dict "component" "worker") | nindent 8 }}
+    spec:
+      initContainers:
+        {{- include "bulwark.waitForDepsInitContainers" . | nindent 8 }}
+      containers:
+        - name: worker
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          # No -B here, unlike docker-compose.yml's worker service -- see templates/beat.yaml for
+          # why embedded beat and a KEDA-scaled Deployment must never be the same process.
+          command:
+            - celery
+            - -A
+            - core.tasks
+            - worker
+            - -s
+            - /tmp/celerybeat-schedule
+            - -P
+            - threads
+            - -c
+            - {{ .Values.worker.concurrency | quote }}
+            - -l
+            - info
+          env:
+            {{- include "bulwark.sharedEnv" . | nindent 12 }}
+            - name: BULWARK_DATABASE_URL
+              valueFrom:
+                secretKeyRef: { name: {{ include "bulwark.fullname" . }}-secrets, key: database-url-worker }
+            - name: BULWARK_S3_ACCESS_KEY
+              valueFrom:
+                secretKeyRef: { name: {{ include "bulwark.fullname" . }}-secrets, key: objectstore-access-key }
+            - name: BULWARK_S3_SECRET_KEY
+              valueFrom:
+                secretKeyRef: { name: {{ include "bulwark.fullname" . }}-secrets, key: objectstore-secret-key }
+            - name: BULWARK_OPENBAO_TOKEN
+              valueFrom:
+                secretKeyRef: { name: {{ include "bulwark.fullname" . }}-secrets, key: openbao-dev-root-token }
+            - name: BULWARK_API_TOKEN
+              valueFrom:
+                secretKeyRef: { name: {{ include "bulwark.fullname" . }}-secrets, key: bulwark-api-token }
+            {{- if .Values.worker.dind.enabled }}
+            - name: DOCKER_HOST
+              value: "tcp://localhost:2375"
+            {{- end }}
+            - name: BULWARK_METRICS_ADDR
+              value: "0.0.0.0"
+          volumeMounts:
+            - { name: workdir, mountPath: /workdir }
+          resources: {{- .Values.worker.resources | toYaml | nindent 12 }}
+        {{- if .Values.worker.dind.enabled }}
+        # Kubernetes nodes don't expose a Docker socket the way docker-compose.yml's socket-proxy
+        # service does -- see values.yaml's own worker.dind comment for the trade-off this makes
+        # (a privileged sidecar, in exchange for the worker's real docker-run-based scanning working
+        # unmodified). The sidecar shares the Pod's network namespace, so "localhost:2375" above
+        # reaches it directly.
+        - name: dind
+          image: {{ .Values.worker.dind.image }}
+          securityContext: { privileged: true }
+          env:
+            - { name: DOCKER_TLS_CERTDIR, value: "" } # plaintext 2375 within the Pod's own network namespace only
+          volumeMounts:
+            - { name: workdir, mountPath: /workdir }
+            - { name: docker-graph, mountPath: /var/lib/docker }
+          resources: {{- .Values.worker.dind.resources | toYaml | nindent 12 }}
+        {{- end }}
+      volumes:
+        - name: workdir
+          persistentVolumeClaim: { claimName: {{ include "bulwark.workdirClaimName" . }} }
+        {{- if .Values.worker.dind.enabled }}
+        - name: docker-graph
+          emptyDir: {}
+        {{- end }}

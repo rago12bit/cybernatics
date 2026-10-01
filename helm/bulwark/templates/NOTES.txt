@@ -1,0 +1,25 @@
+Bulwark is deploying.
+
+Check rollout status:
+  kubectl rollout status deployment/{{ include "bulwark.fullname" . }}-api
+  kubectl rollout status deployment/{{ include "bulwark.fullname" . }}-worker
+  kubectl rollout status deployment/{{ include "bulwark.fullname" . }}-beat
+  kubectl rollout status deployment/{{ include "bulwark.fullname" . }}-web
+
+Reach the API and web app locally:
+  kubectl port-forward svc/{{ include "bulwark.fullname" . }}-api 8000:{{ .Values.api.service.port }}
+  kubectl port-forward svc/{{ include "bulwark.fullname" . }}-web 3010:{{ .Values.web.service.port }}
+
+{{- if .Values.keda.enabled }}
+
+KEDA autoscaling is enabled on the worker Deployment (Celery queue depth via Redis LLEN on list
+{{ .Values.keda.listName | quote }}, scaling {{ .Values.keda.minReplicaCount }}-{{ .Values.keda.maxReplicaCount }} replicas). Requires the KEDA
+operator already installed in this cluster -- see helm/bulwark/README.md. Watch it react:
+  kubectl get scaledobject {{ include "bulwark.fullname" . }}-worker
+  kubectl get hpa -l app.kubernetes.io/part-of=bulwark
+  kubectl get pods -l app.kubernetes.io/component=worker -w
+{{- end }}
+
+See helm/bulwark/README.md for what this chart deliberately simplifies relative to the
+docker-compose dev stack (Postgres mTLS, OpenBao production mode, the verified-fix agent, and the
+observability stack).

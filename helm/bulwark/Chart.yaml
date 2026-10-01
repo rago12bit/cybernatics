@@ -1,0 +1,12 @@
+apiVersion: v2
+name: bulwark
+description: >-
+  Bulwark security-scanning platform (plan §23, Week 50). Deploys the core product -- Postgres,
+  Redis, S3-compatible object storage, OpenBao, the API, the Celery worker, a single-replica Celery
+  beat, and the web app -- to Kubernetes, with an optional KEDA ScaledObject that scales the worker
+  on Celery queue depth. See helm/bulwark/README.md for what this chart deliberately does not yet
+  reproduce from the docker-compose dev stack (mTLS-to-Postgres, OpenBao in production mode, the
+  verified-fix agent / Temporal, and the observability stack).
+type: application
+version: 0.1.0
+appVersion: "1.5.0"

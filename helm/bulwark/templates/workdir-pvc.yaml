@@ -1,0 +1,30 @@
+{{- if not .Values.workdir.existingClaim }}
+# hostPath fallback (see values.yaml's own comment on workdir.existingClaim): correct on a
+# single-node cluster only, since it ties the volume to whichever node the PV's hostPath lives on.
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ include "bulwark.fullname" . }}-workdir-pv
+  labels: {{- include "bulwark.labels" . | nindent 4 }}
+spec:
+  capacity:
+    storage: {{ .Values.workdir.storage }}
+  accessModes: ["ReadWriteOnce"]
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: {{ include "bulwark.fullname" . }}-workdir-hostpath
+  hostPath:
+    path: {{ .Values.workdir.hostPath }}
+    type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "bulwark.fullname" . }}-workdir
+  labels: {{- include "bulwark.labels" . | nindent 4 }}
+spec:
+  accessModes: ["ReadWriteOnce"]
+  storageClassName: {{ include "bulwark.fullname" . }}-workdir-hostpath
+  resources:
+    requests:
+      storage: {{ .Values.workdir.storage }}
+{{- end }}

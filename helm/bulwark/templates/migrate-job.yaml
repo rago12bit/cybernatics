@@ -1,0 +1,41 @@
+# Deliberately NOT a Helm hook: a pre-install hook Job runs before Helm creates this chart's own
+# other resources (including the Secret and the Postgres StatefulSet it needs), which is backwards --
+# found live, the first time this chart was installed ("secret ... not found", since the hook Job was
+# scheduled before the Secret existed). A plain Job is created in Helm's normal resource-ordering pass
+# (Secrets/PVCs before Jobs), and the initContainer below waits out whatever startup time Postgres
+# itself still needs.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "bulwark.fullname" . }}-migrate-{{ .Release.Revision }}
+  labels: {{- include "bulwark.labels" . | nindent 4 }}
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      labels: {{- include "bulwark.selectorLabels" (dict "component" "migrate") | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      initContainers:
+        - name: wait-for-postgres
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - until nc -z {{ include "bulwark.fullname" . }}-postgres 5432; do echo waiting for postgres; sleep 2; done
+      containers:
+        - name: migrate
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["sh", "-c", "alembic upgrade head && bulwark kb load --if-empty"]
+          env:
+            - name: BULWARK_DATABASE_URL
+              valueFrom:
+                secretKeyRef: { name: {{ include "bulwark.fullname" . }}-secrets, key: database-url-migrate }
+            - name: APP_DB_PASSWORD
+              valueFrom:
+                secretKeyRef: { name: {{ include "bulwark.fullname" . }}-secrets, key: postgres-password }
+            {{- include "bulwark.sharedEnv" . | nindent 12 }}
+            - name: BULWARK_API_TOKEN
+              valueFrom:
+                secretKeyRef: { name: {{ include "bulwark.fullname" . }}-secrets, key: bulwark-api-token }
