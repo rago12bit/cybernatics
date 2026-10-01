@@ -1,0 +1,230 @@
+"""The scope-enforcing egress proxy every DAST campaign runner's traffic goes through (plan §22.4,
+Week 49 task 2). A DAST scanner (ZAP, Nuclei, ...) is a program whose entire job is to make requests
+to arbitrary hosts and paths it discovers by following links and guessing -- exactly the capability
+that must never extend past the one host a campaign is scoped to. This proxy is the enforcement
+point: it allows a CONNECT tunnel or a plain HTTP request only to a host on its allow-list (normally
+exactly one -- the campaign's ownership-verified Asset), and refuses, and reports, everything else.
+
+This alone is not the whole control (`core.dast.egress` is the other half): a scanner could simply
+ignore its configured proxy and connect directly. `core.dast.egress.build_dast_egress_nft_ruleset`
+denies all direct outbound 80/443 in the runner's network namespace except to this proxy itself,
+the same sidecar-container mechanism `core.fixagent.egress` already uses for fix-verification
+(Week 46) -- so going around the proxy isn't a policy violation, it's a dropped packet.
+
+Pure asyncio, no Linux-specific syscalls: unlike `core.fixagent.egress`'s nftables half, this part
+runs and was verified for real on this (macOS) dev machine, not just reviewed.
+"""
+
+from __future__ import annotations
+
+import argparse
+import asyncio
+import json
+import sys
+from collections.abc import Callable
+from dataclasses import dataclass
+
+DEFAULT_CONNECT_TIMEOUT = 10.0
+_MAX_HEADER_BYTES = 16 * 1024  # a request line this large is already not a sane DAST tool request
+
+
+class ProxyError(Exception):
+    pass
+
+
+@dataclass(frozen=True)
+class ProxyTarget:
+    host: str
+    port: int
+    is_connect: bool  # CONNECT (HTTPS tunnel) vs. plain absolute-form HTTP
+    request_line: bytes  # the original request line, re-sent verbatim for plain HTTP
+
+
+def parse_request_line(line: bytes) -> ProxyTarget | None:
+    """`line` is the first line of an HTTP request, with the trailing CRLF already stripped.
+    Returns None for anything that isn't a CONNECT or an absolute-form HTTP request -- origin-form
+    requests ("GET /path HTTP/1.1") have no host in the request line at all and are refused by the
+    caller, the same as an explicitly disallowed host: a proxy that guessed the target from the Host
+    header alone would be trivially confusable about what it was actually enforcing."""
+    try:
+        text = line.decode("ascii")
+    except UnicodeDecodeError:
+        return None
+    parts = text.split(" ")
+    if len(parts) != 3 or not parts[2].startswith("HTTP/"):
+        return None
+    method, target = parts[0], parts[1]
+    if method == "CONNECT":
+        host, _, port = target.partition(":")
+        if not host or not port.isdigit():
+            return None
+        return ProxyTarget(host=host.lower(), port=int(port), is_connect=True, request_line=line)
+    if "://" in target:
+        from urllib.parse import urlsplit
+
+        parsed = urlsplit(target)
+        if not parsed.hostname:
+            return None
+        resolved_port = parsed.port or (443 if parsed.scheme == "https" else 80)
+        return ProxyTarget(
+            host=parsed.hostname.lower(), port=resolved_port, is_connect=False, request_line=line
+        )
+    return None
+
+
+class JsonLinesReporter:
+    """The default `on_blocked` callback: one JSON object per line to stdout. A sidecar proxy
+    container normally has no database credentials of its own (the point of running it isolated
+    from the scanned target is that a compromised scanner shouldn't inherit app secrets) -- the
+    worker that started a campaign tails this container's logs and writes each blocked attempt to
+    the real audit log (`core.persistence.repo.append_audit_entry`) from its own, already-
+    authenticated process instead. A caller with direct DB access (a test, or a future in-process
+    runner) can pass any other `Callable[[str, int, bool], None]` instead of this."""
+
+    def __call__(self, host: str, port: int, is_connect: bool) -> None:
+        print(
+            json.dumps(
+                {
+                    "event": "dast_egress_blocked",
+                    "host": host,
+                    "port": port,
+                    "protocol": "https" if is_connect else "http",
+                }
+            ),
+            flush=True,
+        )
+
+
+OnBlocked = Callable[[str, int, bool], None]
+
+
+class AllowListProxy:
+    """`allowed_hosts` is normally exactly one hostname -- the campaign's verified Asset. Matching
+    is exact, never a suffix/subdomain match: a DAST campaign scoped to `example.com` must not be
+    able to silently also reach `evil.example.com` just because it shares a suffix."""
+
+    def __init__(self, allowed_hosts: frozenset[str], *, on_blocked: OnBlocked | None = None):
+        self._allowed_hosts = frozenset(h.lower() for h in allowed_hosts)
+        self._on_blocked = on_blocked or JsonLinesReporter()
+
+    def is_allowed(self, host: str) -> bool:
+        return host.lower() in self._allowed_hosts
+
+    async def handle(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+        try:
+            line = await asyncio.wait_for(reader.readline(), timeout=DEFAULT_CONNECT_TIMEOUT)
+        except (TimeoutError, asyncio.TimeoutError):
+            writer.close()
+            return
+        if not line or len(line) > _MAX_HEADER_BYTES:
+            writer.close()
+            return
+        target = parse_request_line(line.rstrip(b"\r\n"))
+        if target is None:
+            writer.write(b"HTTP/1.1 400 Bad Request\r\n\r\n")
+            await writer.drain()
+            writer.close()
+            return
+        if not self.is_allowed(target.host):
+            self._on_blocked(target.host, target.port, target.is_connect)
+            status = b"403 Forbidden"
+            writer.write(f"HTTP/1.1 {status.decode()}\r\n\r\n".encode())
+            await writer.drain()
+            writer.close()
+            return
+        if target.is_connect:
+            await self._relay_connect(reader, writer, target)
+        else:
+            await self._relay_plain_http(reader, writer, target)
+
+    async def _relay_connect(
+        self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter, target: ProxyTarget
+    ) -> None:
+        # Drain the rest of the CONNECT request's headers (clients normally send none of substance,
+        # but a blank-line-terminated head is still part of the protocol) before tunneling.
+        while True:
+            header_line = await reader.readline()
+            if header_line in (b"\r\n", b""):
+                break
+        try:
+            upstream_reader, upstream_writer = await asyncio.wait_for(
+                asyncio.open_connection(target.host, target.port), timeout=DEFAULT_CONNECT_TIMEOUT
+            )
+        except (OSError, asyncio.TimeoutError, TimeoutError):
+            writer.write(b"HTTP/1.1 502 Bad Gateway\r\n\r\n")
+            await writer.drain()
+            writer.close()
+            return
+        writer.write(b"HTTP/1.1 200 Connection Established\r\n\r\n")
+        await writer.drain()
+        await asyncio.gather(
+            _pump(reader, upstream_writer), _pump(upstream_reader, writer), return_exceptions=True
+        )
+
+    async def _relay_plain_http(
+        self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter, target: ProxyTarget
+    ) -> None:
+        from urllib.parse import urlsplit
+
+        parsed = urlsplit(target.request_line.decode("ascii").split(" ")[1])
+        origin_form_path = parsed.path or "/"
+        if parsed.query:
+            origin_form_path += f"?{parsed.query}"
+        method = target.request_line.decode("ascii").split(" ")[0]
+        rewritten = f"{method} {origin_form_path} HTTP/1.1\r\n"
+        try:
+            upstream_reader, upstream_writer = await asyncio.wait_for(
+                asyncio.open_connection(target.host, target.port), timeout=DEFAULT_CONNECT_TIMEOUT
+            )
+        except (OSError, asyncio.TimeoutError, TimeoutError):
+            writer.write(b"HTTP/1.1 502 Bad Gateway\r\n\r\n")
+            await writer.drain()
+            writer.close()
+            return
+        upstream_writer.write(rewritten.encode("ascii"))
+        while True:
+            header_line = await reader.readline()
+            upstream_writer.write(header_line)
+            if header_line in (b"\r\n", b""):
+                break
+        await upstream_writer.drain()
+        await asyncio.gather(
+            _pump(reader, upstream_writer), _pump(upstream_reader, writer), return_exceptions=True
+        )
+
+
+async def _pump(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+    try:
+        while True:
+            chunk = await reader.read(65536)
+            if not chunk:
+                break
+            writer.write(chunk)
+            await writer.drain()
+    except (ConnectionResetError, BrokenPipeError):
+        pass
+    finally:
+        writer.close()
+
+
+async def serve(allowed_hosts: frozenset[str], *, host: str = "0.0.0.0", port: int = 8080) -> None:
+    proxy = AllowListProxy(allowed_hosts)
+    server = await asyncio.start_server(proxy.handle, host, port)
+    async with server:
+        await server.serve_forever()
+
+
+def main(argv: list[str] | None = None) -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--allow", action="append", required=True, help="Allowed host (repeatable)")
+    parser.add_argument("--host", default="0.0.0.0")
+    parser.add_argument("--port", type=int, default=8080)
+    args = parser.parse_args(argv)
+    try:
+        asyncio.run(serve(frozenset(args.allow), host=args.host, port=args.port))
+    except KeyboardInterrupt:
+        pass
+
+
+if __name__ == "__main__":  # pragma: no cover - exercised via a real subprocess in tests, not here
+    main(sys.argv[1:])

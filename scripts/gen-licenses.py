@@ -56,6 +56,9 @@ TOOLS: dict[str, tuple[str, str, str]] = {
                         "Bulwark's own image (docker/egress-sidecar, Week 46 §22.1); runs nftables "
                         "as a separate container process to police another container's network "
                         "namespace, never linked into Bulwark's own code"),
+    "dast-egress-proxy": ("Apache-2.0 (Bulwark's own code)", "https://www.python.org/",
+                          "Bulwark's own image (docker/dast-egress-proxy, Week 49 §22.4): a pure-"
+                          "stdlib asyncio allow-list proxy, no third-party packages installed"),
 }  # fmt: skip
 DATA: list[tuple[str, str, str]] = [
     (

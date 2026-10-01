@@ -10,6 +10,7 @@ inventory, not legal advice: check licenses that matter to you at the source.
 | bandit | Apache-2.0 | <https://github.com/PyCQA/bandit> | runs in a container |
 | checkov | Apache-2.0 | <https://github.com/bridgecrewio/checkov> | runs in a container |
 | cosign | Apache-2.0 | <https://github.com/sigstore/cosign> | signing, runs in a container |
+| dast-egress-proxy | Apache-2.0 (Bulwark's own code) | <https://www.python.org/> | Bulwark's own image (docker/dast-egress-proxy, Week 49 §22.4): a pure-stdlib asyncio allow-list proxy, no third-party packages installed |
 | dockle | Apache-2.0 | <https://github.com/goodwithtech/dockle> | runs in a container |
 | egress-sidecar | GPL-2.0-only (nftables) | <https://git.netfilter.org/nftables/> | Bulwark's own image (docker/egress-sidecar, Week 46 §22.1); runs nftables as a separate container process to police another container's network namespace, never linked into Bulwark's own code |
 | gitleaks | MIT | <https://github.com/gitleaks/gitleaks> | upstream image, runs in a container |
@@ -46,7 +47,7 @@ optional separate container.
 | CycloneDX 1.6 JSON schema | Apache-2.0 | test fixture (tests/fixtures/cyclonedx) |
 | SARIF 2.1.0 JSON schema | OASIS | test fixture (tests/fixtures) |
 
-## Python dependencies (85)
+## Python dependencies (89)
 
 | Package | Version | License |
 |---|---|---|
@@ -61,6 +62,7 @@ optional separate container.
 | boto3 | 1.43.101 | Apache-2.0 |
 | botocore | 1.43.101 | Apache-2.0 |
 | celery | 5.6.3 | BSD-3-Clause |
+| certifi | 2026.7.22 | MPL-2.0 |
 | cffi | 2.1.1 | MIT-0 |
 | charset-normalizer | 3.5.1 | MIT |
 | click | 8.5.0 | BSD-3-Clause |
@@ -68,13 +70,16 @@ optional separate container.
 | click-plugins | 1.1.1.2 | New BSD |
 | click-repl | 0.4.0 | MIT |
 | cryptography | 50.0.1 | Apache-2.0 OR BSD-3-Clause |
+| dnspython | 2.8.0 | ISC |
 | docstring-parser | 0.18.0 | MIT |
 | exceptiongroup | 1.3.1 | MIT License |
 | fastapi | 0.141.1 | MIT |
 | googleapis-common-protos | 1.75.4 | Apache-2.0 |
 | h11 | 0.16.0 | MIT |
+| httpcore | 1.0.9 | BSD-3-Clause |
 | httpcore2 | 2.13.1 | BSD-3-Clause |
 | httptools | 0.8.0 | MIT |
+| httpx | 0.28.1 | BSD-3-Clause |
 | httpx2 | 2.13.1 | BSD-3-Clause |
 | idna | 3.20 | BSD-3-Clause |
 | jiter | 0.17.0 | MIT |
@@ -427,6 +432,7 @@ Allowed, listed so the obligations are visible (dynamic linking or use as an unm
 - @img/sharp-win32-arm64: Apache-2.0 AND LGPL-3.0-or-later
 - @img/sharp-win32-ia32: Apache-2.0 AND LGPL-3.0-or-later
 - @img/sharp-win32-x64: Apache-2.0 AND LGPL-3.0-or-later
+- certifi: MPL-2.0
 - dompurify: (MPL-2.0 OR Apache-2.0)
 - psycopg: LGPL-3.0-only
 - psycopg-binary: LGPL-3.0-only
