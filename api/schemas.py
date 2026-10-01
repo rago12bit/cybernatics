@@ -441,6 +441,25 @@ class SaveRetentionSettingsRequest(BaseModel):
     retention_days: int = Field(ge=1)
 
 
+class PluginView(BaseModel):
+    """One discovered third-party scanner-adapter plugin (Week 51 task 1, plan §23). `allowed`
+    reflects the calling organization's own allowlist row right now -- it is not re-verified against
+    Sigstore here (that only happens when a scan actually requests this tool); a plugin can show
+    `allowed=True` and still fail at scan time if its image's signature has since gone bad."""
+
+    name: str
+    package_name: str
+    package_version: str
+    image: str
+    certificate_identity: str
+    certificate_oidc_issuer: str
+    allowed: bool
+
+
+class SetPluginAllowedRequest(BaseModel):
+    enabled: bool = True
+
+
 class GenerateHypothesesResult(BaseModel):
     generated: int = Field(description="How many NEW hypotheses this run surfaced and stored.")
     hypotheses: list[HypothesisView]

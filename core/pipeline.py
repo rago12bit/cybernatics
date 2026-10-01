@@ -7,11 +7,13 @@ from __future__ import annotations
 
 import logging
 import time
+from collections.abc import Mapping
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from contextlib import ExitStack
 from pathlib import Path
 from typing import Any
 
+from core.adapters import ToolAdapter
 from core.correlation import correlate
 from core.dast.routes import extract_routes_from_workspace
 from core.ingest import IngestError
@@ -21,6 +23,8 @@ from core.observability import metrics as obs
 from core.persistence import repo
 from core.persistence.db import SessionFactory
 from core.persistence.storage import ObjectStore
+from core.plugins.registry import PluginError, resolve_adapters
+from core.plugins.signing import PluginSignatureError
 from core.postprocess import finalize
 from core.reachability import analyze_or_none
 from core.risk import ensure_fresh
@@ -42,6 +46,26 @@ def _final_status(outcomes: list[ToolOutcome]) -> str:
     if not ran or all(o.status == "ok" for o in ran):
         return "completed"
     return "partial" if any(o.status == "ok" for o in ran) else "failed"
+
+
+def _adapter_bound_executor(adapters: Mapping[str, ToolAdapter]) -> Any:
+    """Closes over this scan's resolved adapter table (built-ins plus any allowlisted, signature-
+    verified plugins) without mutating `core.scan.ADAPTERS` itself -- that global is shared by every
+    concurrent scan in this worker process, built-in or not, and two scans for different
+    organizations must never see each other's plugins through it. Only substituted when the caller
+    left `executor=None` (`run_scan_job`'s own default, used for every real production call); a
+    caller that passes its own fake executor (every unit test in tests/unit/test_pipeline.py, and
+    tests/unit/test_observability.py's monkeypatched one) bypasses adapter resolution entirely,
+    which is correct there since those fakes never look at a ToolAdapter at all. Deliberately a
+    `None` sentinel rather than comparing `executor is execute_tool`: a test that monkeypatches the
+    module-level `execute_tool` name (as test_observability.py does) would otherwise make that
+    identity check true by accident, silently wrapping a test double that was never meant to receive
+    an `adapters=` keyword at all."""
+
+    def _run(name: str, target: Path) -> ToolOutcome:
+        return execute_tool(name, target, adapters=adapters)
+
+    return _run
 
 
 def _extract_route_map(workspace: Path) -> list[dict[str, Any]]:
@@ -117,7 +141,7 @@ def run_scan_job(
     sessions: SessionFactory,
     store: ObjectStore,
     bus: Any,
-    executor: Any = execute_tool,
+    executor: Any = None,
     *,
     org_id: str | None = None,
 ) -> str:
@@ -140,7 +164,7 @@ def run_scan_job(
     try:
         with bind_scan(scan_id), span("scan", scan_id=scan_id) as sp:
             log.info("scan started")
-            status, counts = _run_scan_job(scan_id, sessions, store, bus, executor)
+            status, counts = _run_scan_job(scan_id, sessions, store, bus, executor, org_id)
             set_attributes(sp, status=status, findings=sum(counts.values()))
             if status == "failed":
                 mark_error(sp, "scan failed")
@@ -161,6 +185,7 @@ def _run_scan_job(
     store: ObjectStore,
     bus: Any,
     executor: Any,
+    org_id: str | None = None,
 ) -> tuple[str, dict[str, int]]:
     with sessions() as s:
         scan = repo.get_scan(s, scan_id)
@@ -170,9 +195,22 @@ def _run_scan_job(
         ref = scan.ref
         asset_id = scan.asset_id
         github = (scan.github_repo, scan.github_pr_number, scan.github_installation_id)
+        # Resolved once, up front, inside the same org-scoped session this scan's own org already
+        # uses: a plugin tool not (or no longer) allowlisted, or whose image fails Sigstore
+        # verification right now, must fail the whole scan here, before it's even marked running --
+        # not surface as a mysteriously-missing tool outcome later.
+        try:
+            adapters = resolve_adapters(tools, ADAPTERS, org_id, s)
+        except (PluginError, PluginSignatureError) as exc:
+            repo.finish_scan(s, scan_id, "failed", f"plugin resolution failed: {exc}")
+            bus.publish(scan_id, {"type": "scan.finished", "scan_id": scan_id, "status": "failed",
+                                  "error": f"plugin resolution failed: {exc}"})  # fmt: skip
+            return "failed", {}
         repo.reset_scan_results(s, scan_id)
         repo.mark_running(s, scan_id)
     bus.publish(scan_id, {"type": "scan.started", "scan_id": scan_id, "tools": tools})
+    if executor is None:
+        executor = _adapter_bound_executor(adapters)
 
     def fail(message: str) -> tuple[str, dict[str, int]]:
         with sessions() as s:
@@ -197,7 +235,7 @@ def _run_scan_job(
             runnable: list[str] = []
             outcomes: list[ToolOutcome] = []
             for name in tools:
-                if ADAPTERS[name].applies_to(ctx):
+                if adapters[name].applies_to(ctx):
                     runnable.append(name)
                     continue
                 skipped = ToolOutcome(name, "skipped", error="no relevant files")

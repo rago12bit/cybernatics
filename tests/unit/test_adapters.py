@@ -13,7 +13,13 @@ from core.adapters.grype import GrypeAdapter
 from core.adapters.osv_scanner import OsvScannerAdapter
 from core.adapters.semgrep import SemgrepAdapter
 from core.adapters.trivy import TrivyAdapter
-from core.models import Category, Finding, Package, Severity, finding_from_dict
+from core.models import Category, Finding, Package, Severity
+from core.plugins.conformance import (
+    assert_findings_survive_json_roundtrip,
+    assert_matches_golden,
+    assert_never_raises_on_garbage,
+    assert_paths_relative_to_target,
+)
 
 GOLDEN = Path(__file__).parent.parent / "golden"
 ADAPTERS: list[ToolAdapter] = [
@@ -31,11 +37,10 @@ ADAPTERS: list[ToolAdapter] = [
 
 @pytest.mark.parametrize("adapter", ADAPTERS, ids=lambda a: a.spec.name)
 def test_parse_matches_golden(adapter: ToolAdapter) -> None:
-    d = GOLDEN / adapter.spec.name
-    expected = json.loads((d / "expected.json").read_text())
-    actual = [f.to_dict() for f in adapter.parse((d / "raw.json").read_bytes())]
-    assert actual, "golden fixture must produce findings"
-    assert json.loads(json.dumps(actual, sort_keys=True)) == expected
+    """core.plugins.conformance.assert_matches_golden -- the same function a third-party plugin's
+    own conformance test calls (Week 51 task 1, plan §23): built-in adapters run through literally
+    the same check, not a parallel hand-copy of it."""
+    assert_matches_golden(adapter, GOLDEN / adapter.spec.name)
 
 
 @pytest.mark.parametrize("adapter", ADAPTERS, ids=lambda a: a.spec.name)
@@ -43,13 +48,12 @@ def test_parse_matches_golden(adapter: ToolAdapter) -> None:
     "garbage", [b"", b"not json", b"{}", b"[]", b'{"results": [{"bogus": 1}]}', b'[{"x": 1}]']
 )
 def test_parse_never_raises_on_garbage(adapter: ToolAdapter, garbage: bytes) -> None:
-    assert adapter.parse(garbage) == []
+    assert_never_raises_on_garbage(adapter, [garbage])
 
 
 @pytest.mark.parametrize("adapter", ADAPTERS, ids=lambda a: a.spec.name)
 def test_paths_are_relative_to_target(adapter: ToolAdapter) -> None:
-    raw = (GOLDEN / adapter.spec.name / "raw.json").read_bytes()
-    assert all(not f.location.path.startswith("/") for f in adapter.parse(raw))
+    assert_paths_relative_to_target(adapter, GOLDEN / adapter.spec.name)
 
 
 def test_gitleaks_output_never_contains_the_secret() -> None:
@@ -83,8 +87,7 @@ def _parse(name: str, adapter: ToolAdapter) -> list[Finding]:
 
 @pytest.mark.parametrize("adapter", ADAPTERS, ids=lambda a: a.spec.name)
 def test_findings_survive_json_roundtrip(adapter: ToolAdapter) -> None:
-    for f in _parse(adapter.spec.name, adapter):
-        assert finding_from_dict(json.loads(json.dumps(f.to_dict()))) == f
+    assert_findings_survive_json_roundtrip(adapter, GOLDEN / adapter.spec.name)
 
 
 def test_ecosystem_normalization_makes_tools_agree() -> None:

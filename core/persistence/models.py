@@ -8,6 +8,7 @@ from typing import Any
 
 from sqlalchemy import (
     JSON,
+    Boolean,
     DateTime,
     Float,
     ForeignKey,
@@ -610,3 +611,23 @@ class DataRetentionPolicyRow(Base):
     )
     retention_days: Mapped[int] = mapped_column(Integer, default=DEFAULT_RETENTION_DAYS)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
+class PluginAllowlistRow(Base):
+    """A third-party scanner-adapter plugin an organization has chosen to trust (Week 51 task 1,
+    plan §23). Default-deny, the opposite lazy-creation sense of DataRetentionPolicyRow above: no
+    row for (org_id, plugin_name) means "not allowed," not "allowed with a default" -- a plugin
+    discovered via entry-point but never explicitly allowlisted must never run just because it's
+    installed alongside Bulwark. `core.plugins.signing` re-verifies the plugin image's Sigstore
+    signature every time it actually runs, not only once at allow-time -- this row records an
+    organization's decision to trust the *publisher identity*, not a one-time image hash pin."""
+
+    __tablename__ = "plugin_allowlist"
+
+    org_id: Mapped[str] = mapped_column(
+        ForeignKey("organizations.id", ondelete="CASCADE"), primary_key=True
+    )
+    plugin_name: Mapped[str] = mapped_column(String(200), primary_key=True)
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    allowed_by: Mapped[str] = mapped_column(String(200))  # audit actor, e.g. "token:abc123"
+    allowed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)

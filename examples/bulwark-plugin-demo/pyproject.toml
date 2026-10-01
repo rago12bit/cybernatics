@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bulwark-plugin-demo"
+version = "0.1.0"
+description = "Reference third-party scanner-adapter plugin for Bulwark's Plugin SDK (plan §23)."
+requires-python = ">=3.10"
+dependencies = ["bulwark"]
+
+# The one thing a plugin package must declare: an entry point in Bulwark's own group, pointing at a
+# module-level PluginManifest. core.plugins.registry.discover_plugins() finds this the moment the
+# package is installed (e.g. `pip install -e examples/bulwark-plugin-demo`) alongside Bulwark --
+# no other registration step, no Bulwark-specific build step, no code change in this repo.
+[project.entry-points."bulwark.scanner_adapters"]
+bulwark-plugin-demo = "bulwark_plugin_demo.plugin:manifest"
+
+[tool.setuptools.packages.find]
+where = ["src"]

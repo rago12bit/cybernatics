@@ -65,6 +65,7 @@ from api.schemas import (
     IssueHistoryEvent,
     IssueView,
     MessageView,
+    PluginView,
     PostMessageRequest,
     ProjectOverview,
     PromoteHypothesisResult,
@@ -81,6 +82,7 @@ from api.schemas import (
     ScanRequest,
     ScanSummary,
     ScanView,
+    SetPluginAllowedRequest,
     StartConversationRequest,
     StartDastCampaignRequest,
     StrideRowView,
@@ -110,6 +112,8 @@ from core.models import finding_from_dict
 from core.observability import bind_scan, configure_logging, cost, setup_tracing
 from core.persistence import repo
 from core.persistence.models import FindingRow, Scan
+from core.plugins.registry import discover_plugins
+from core.plugins.signing import PluginSignatureError, verify_plugin_image
 from core.rag.retrieve import context_for
 from core.rag.store import KnowledgeBase
 from core.risk import is_stale, read_meta
@@ -123,11 +127,22 @@ _ARCHIVE_EXT = (".zip", ".tar", ".tar.gz", ".tgz")
 MIN_TOKEN_LEN = 16
 
 
-def _tools(requested: list[str] | None) -> list[str]:
+def _tools(requested: list[str] | None, s: Session, org: str) -> list[str]:
+    """Validates against built-ins plus every *discovered* plugin tool name (Week 51 task 1, plan
+    §23) -- a plugin that isn't yet allowlisted for this org is still a recognized tool name (a
+    clear "not allowlisted" error, not a confusing "unknown tool"), but is rejected here rather than
+    silently queued to fail later inside the worker."""
     names = requested or list(DEFAULT_TOOLS)
-    unknown = [t for t in names if t not in ADAPTERS]
+    plugins = discover_plugins()
+    valid = set(ADAPTERS) | set(plugins)
+    unknown = [t for t in names if t not in valid]
     if unknown:
-        raise HTTPException(422, f"unknown tool(s): {', '.join(unknown)}; valid: {list(ADAPTERS)}")
+        raise HTTPException(422, f"unknown tool(s): {', '.join(unknown)}; valid: {sorted(valid)}")
+    not_allowed = [t for t in names if t in plugins and not repo.is_plugin_allowed(s, org, t)]
+    if not_allowed:
+        raise HTTPException(
+            422, f"plugin tool(s) not allowlisted for this organization: {', '.join(not_allowed)}"
+        )
     return list(dict.fromkeys(names))
 
 
@@ -318,7 +333,7 @@ def create_app(app_state: AppState) -> FastAPI:
         s: Session = Depends(db),
         org: str = Depends(current_org),
     ) -> ScanCreated:
-        tools = _tools(body.tools)
+        tools = _tools(body.tools, s, org)
         try:
             validate_git_url(body.source.url)  # fast feedback; re-validated again at clone time
         except GitUrlError as exc:
@@ -350,7 +365,9 @@ def create_app(app_state: AppState) -> FastAPI:
         name = Path(archive.filename or "").name  # never trust client paths
         if not name.lower().endswith(_ARCHIVE_EXT):
             raise HTTPException(422, f"archive must end with one of {_ARCHIVE_EXT}")
-        wanted = _tools([t.strip() for t in tools.split(",") if t.strip()] if tools else None)
+        wanted = _tools(
+            [t.strip() for t in tools.split(",") if t.strip()] if tools else None, s, org
+        )
         upload_dir = st.settings.upload_dir
         upload_dir.mkdir(parents=True, exist_ok=True)
         dest = upload_dir / f"{uuid.uuid4().hex}{Path(name).suffix}"  # server-chosen filename
@@ -1397,6 +1414,69 @@ def create_app(app_state: AppState) -> FastAPI:
     ) -> RetentionSettingsView:
         row = repo.set_retention_days(s, org, body.retention_days)
         return RetentionSettingsView(org_id=row.org_id, retention_days=row.retention_days)
+
+    def _plugin_view(manifest: Any, allowed: bool) -> PluginView:
+        return PluginView(
+            name=manifest.plugin_name,
+            package_name=manifest.package_name,
+            package_version=manifest.package_version,
+            image=manifest.adapter.spec.image,
+            certificate_identity=manifest.certificate_identity,
+            certificate_oidc_issuer=manifest.certificate_oidc_issuer,
+            allowed=allowed,
+        )
+
+    @app.get(
+        "/plugins",
+        response_model=list[PluginView],
+        dependencies=[Depends(require_scope("scans:read"))],
+    )
+    def list_plugins_endpoint(
+        s: Session = Depends(db), org: str = Depends(current_org)
+    ) -> list[PluginView]:
+        """Every plugin discovered via the `bulwark.scanner_adapters` entry point (Week 51 task 1,
+        plan §23), whether or not this organization has allowlisted it yet. `allowed` is this org's
+        allowlist row right now -- `core.plugins.signing` still re-verifies the image's Sigstore
+        signature at the moment a scan actually uses it, so `allowed=True` is not itself a guarantee
+        the plugin will run successfully."""
+        plugins = discover_plugins()
+        return [
+            _plugin_view(m, repo.is_plugin_allowed(s, org, name))
+            for name, m in sorted(plugins.items())
+        ]
+
+    @app.put(
+        "/plugins/{plugin_name}/allowlist",
+        response_model=PluginView,
+        dependencies=[Depends(require_scope("scans:write"))],
+    )
+    def set_plugin_allowed_endpoint(
+        plugin_name: str,
+        body: SetPluginAllowedRequest,
+        s: Session = Depends(db),
+        org: str = Depends(current_org),
+        auth: AuthContext = Depends(require_auth),
+    ) -> PluginView:
+        """Trusting a plugin is security-relevant (it will run inside the same sandbox as a built-in
+        scanner) -- recorded in the audit log by `core.persistence.repo.set_plugin_allowed` itself.
+        Turning a plugin ON re-verifies its Sigstore signature synchronously, right now, so a bad
+        publisher identity or an unsigned image fails loudly at the moment someone tries to trust it
+        rather than silently at the next scan that happens to request it; turning one off never
+        needs that check."""
+        manifest = discover_plugins().get(plugin_name)
+        if manifest is None:
+            raise HTTPException(404, "plugin not found")
+        if body.enabled:
+            try:
+                verify_plugin_image(
+                    manifest.adapter.spec.image,
+                    manifest.certificate_identity,
+                    manifest.certificate_oidc_issuer,
+                )
+            except PluginSignatureError as exc:
+                raise HTTPException(422, f"cannot allow {plugin_name}: {exc}") from exc
+        repo.set_plugin_allowed(s, org, plugin_name, enabled=body.enabled, allowed_by=auth.actor)
+        return _plugin_view(manifest, body.enabled)
 
     @app.get(
         "/assets/{asset_id}/attack-paths",

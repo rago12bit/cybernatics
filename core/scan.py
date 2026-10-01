@@ -6,7 +6,7 @@ import logging
 import shutil
 import tempfile
 import time
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterator, Mapping
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from dataclasses import dataclass, field
@@ -146,15 +146,27 @@ class ToolOutcome:
         )
 
 
-def execute_tool(name: str, target: Path, ctx: RepoContext | None = None) -> ToolOutcome:
+def execute_tool(
+    name: str,
+    target: Path,
+    ctx: RepoContext | None = None,
+    adapters: Mapping[str, ToolAdapter] | None = None,
+) -> ToolOutcome:
     """The unit of work: run one tool in its sandbox and parse. Used by threads and Celery.
 
     `ctx`: pass the *target repo's* context, not `target`'s own, when `target` is a subset
     directory standing in for it (`core.cache`'s cache-miss subset) -- otherwise a tool whose
     command depends on context (Semgrep's rule selection) would see only the subset's languages.
+
+    `adapters`: the built-in `ADAPTERS` registry by default. `core.pipeline` passes its own
+    per-scan, org-resolved table instead (`core.plugins.registry.resolve_adapters`) so a plugin
+    tool's adapter instance is used here without ever mutating the shared, process-global registry
+    (which concurrent scans for different organizations share and must not see each other's
+    plugins through).
     """
-    with bind_tool(name), span(f"tool.{name}", tool=name, image=ADAPTERS[name].spec.image) as sp:
-        outcome = _execute_tool(name, target, ctx)
+    adapters = adapters if adapters is not None else ADAPTERS
+    with bind_tool(name), span(f"tool.{name}", tool=name, image=adapters[name].spec.image) as sp:
+        outcome = _execute_tool(name, target, ctx, adapters)
         set_attributes(sp, status=outcome.status, findings=len(outcome.findings),
                        exit_code=outcome.exit_code)  # fmt: skip
         if outcome.status != "ok":
@@ -168,8 +180,13 @@ def execute_tool(name: str, target: Path, ctx: RepoContext | None = None) -> Too
         return outcome
 
 
-def _execute_tool(name: str, target: Path, ctx: RepoContext | None = None) -> ToolOutcome:
-    adapter = ADAPTERS[name]
+def _execute_tool(
+    name: str,
+    target: Path,
+    ctx: RepoContext | None = None,
+    adapters: Mapping[str, ToolAdapter] | None = None,
+) -> ToolOutcome:
+    adapter = (adapters if adapters is not None else ADAPTERS)[name]
     start = time.monotonic()
     try:
         run = run_tool(adapter, target, ctx if ctx is not None else detect_context(target))

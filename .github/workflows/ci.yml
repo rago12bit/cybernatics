@@ -21,6 +21,11 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - run: pip install -e ".[dev]"
+      # A real third-party-shaped package, installed exactly as a plugin author's own `pip install`
+      # would be (Week 51 task 1, plan §23) -- proves core.plugins.registry.discover_plugins() finds
+      # it via a genuine entry point in CI's own fresh environment, not only in a dev venv that
+      # happened to have it installed already. See examples/bulwark-plugin-demo/README.md.
+      - run: pip install -e examples/bulwark-plugin-demo --no-deps
       - run: ruff check .
       - run: black --check .
       - run: mypy
@@ -209,11 +214,16 @@ jobs:
         # what every real connection uses now. This CI job has no custom mTLS Postgres image or
         # certs, so it authenticates by the same password migration 0020 also sets on these roles
         # for exactly this reason -- production's pg_hba.conf never checks it, only the client cert.
+        #
+        # Every tests/integration/*_rls_docker.py file, by glob rather than listed one by one: two
+        # of these (test_maintenance_rls_docker.py, test_asset_verification_rls_docker.py) were
+        # previously verified locally only and silently never ran here -- found while adding this
+        # week's own plugin-allowlist RLS test (Week 51 task 1, plan §23), fixed so a real RLS
+        # regression in any of them is actually caught on every PR, not just whenever someone
+        # happens to re-run them by hand.
         env:
           BULWARK_RLS_TEST_DATABASE_URL: postgresql+psycopg://bulwark_worker:ci-app-password@localhost:5432/bulwark
-        run: >-
-          pytest tests/integration/test_tenancy_rls_docker.py
-          tests/integration/test_data_protection_rls_docker.py --no-cov
+        run: pytest tests/integration/*_rls_docker.py --no-cov
 
   licenses:
     # Regenerates THIRD_PARTY_LICENSES.md (kept as an artifact) and fails on an unknown or denied license.

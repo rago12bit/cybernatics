@@ -39,6 +39,7 @@ from core.persistence.models import (
     HypothesisRow,
     IssueRow,
     Organization,
+    PluginAllowlistRow,
     Scan,
     ScanDataKeyRow,
     ThreatModelRow,
@@ -1629,3 +1630,40 @@ def set_retention_days(s: Session, org_id: str, retention_days: int) -> DataRete
     s.commit()
     s.refresh(row)
     return row
+
+
+# ---- Plugin allowlist (Week 51 task 1, plan §23) -------------------------------------------------
+
+
+def is_plugin_allowed(s: Session, org_id: str, plugin_name: str) -> bool:
+    """Default-deny (PluginAllowlistRow's own docstring): no row, or a row with enabled=False, both
+    mean "not allowed" -- the opposite default sense of get_retention_days above."""
+    row = s.get(PluginAllowlistRow, (org_id, plugin_name))
+    return row is not None and row.enabled
+
+
+def set_plugin_allowed(
+    s: Session, org_id: str, plugin_name: str, *, enabled: bool, allowed_by: str
+) -> PluginAllowlistRow:
+    row = s.get(PluginAllowlistRow, (org_id, plugin_name))
+    if row is None:
+        row = PluginAllowlistRow(org_id=org_id, plugin_name=plugin_name, allowed_by=allowed_by)
+        s.add(row)
+    row.enabled, row.allowed_by, row.allowed_at = enabled, allowed_by, _now()
+    append_audit_entry(
+        s, actor=allowed_by, action="plugin.allow" if enabled else "plugin.revoke",
+        target=plugin_name, payload={"org_id": org_id},
+    )  # fmt: skip
+    s.commit()
+    s.refresh(row)
+    return row
+
+
+def list_plugin_allowlist(s: Session, org_id: str) -> list[PluginAllowlistRow]:
+    return list(
+        s.scalars(
+            select(PluginAllowlistRow)
+            .where(PluginAllowlistRow.org_id == org_id)
+            .order_by(PluginAllowlistRow.plugin_name)
+        )
+    )

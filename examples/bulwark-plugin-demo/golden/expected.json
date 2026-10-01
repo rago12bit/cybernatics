@@ -1,0 +1,120 @@
+[
+  {
+    "description": "bulwark-plugin-demo wrapping bandit: hardcoded_password_string (B105)",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "demo-bandit-plugin"
+      ],
+      "rule_ids": {
+        "demo-bandit-plugin": [
+          "B105"
+        ]
+      }
+    },
+    "fingerprint": "",
+    "id": "demo-bandit-plugin:B105:app.py:12",
+    "location": {
+      "end_line": 12,
+      "path": "app.py",
+      "route": "",
+      "snippet": "    password = \"hardcoded\"\n",
+      "snippet_hash": "sha256:fbd2e157f07437fee5a3d005943bac0a094be1502bc482adcf396bc5c56b22f8",
+      "start_line": 12
+    },
+    "package": null,
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [],
+      "suggested_patch": null,
+      "summary": ""
+    },
+    "scoring": {
+      "confidence": 0.6,
+      "cvss_v3_1": null,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "demo-bandit-plugin": "LOW"
+      },
+      "normalized_severity": "INFO",
+      "reachable": null,
+      "risk_factors": [],
+      "risk_score": null
+    },
+    "taint_path": [],
+    "taxonomy": {
+      "aliases": [],
+      "category": "sast",
+      "cve": [],
+      "cwe": [],
+      "owasp_top_10_2021": []
+    },
+    "title": "[demo plugin] Possible hardcoded password.",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  },
+  {
+    "description": "bulwark-plugin-demo wrapping bandit: subprocess_popen_with_shell_equals_true (B602)",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "demo-bandit-plugin"
+      ],
+      "rule_ids": {
+        "demo-bandit-plugin": [
+          "B602"
+        ]
+      }
+    },
+    "fingerprint": "",
+    "id": "demo-bandit-plugin:B602:util.py:30",
+    "location": {
+      "end_line": 30,
+      "path": "util.py",
+      "route": "",
+      "snippet": "    subprocess.call(cmd, shell=True)\n",
+      "snippet_hash": "sha256:8388f6172122f3e604843ad71e98d8e47993ab1bc769784edc42dc68ac960676",
+      "start_line": 30
+    },
+    "package": null,
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [],
+      "suggested_patch": null,
+      "summary": ""
+    },
+    "scoring": {
+      "confidence": 0.9,
+      "cvss_v3_1": null,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "demo-bandit-plugin": "HIGH"
+      },
+      "normalized_severity": "INFO",
+      "reachable": null,
+      "risk_factors": [],
+      "risk_score": null
+    },
+    "taint_path": [],
+    "taxonomy": {
+      "aliases": [],
+      "category": "sast",
+      "cve": [],
+      "cwe": [],
+      "owasp_top_10_2021": []
+    },
+    "title": "[demo plugin] subprocess call with shell=True identified, security issue.",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  }
+]
