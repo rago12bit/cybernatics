@@ -17,6 +17,7 @@
     "location": {
       "end_line": 15,
       "path": "main.go",
+      "route": "",
       "snippet": "\trows, _ := db.Query(\"SELECT * FROM users WHERE name = '\" + name + \"'\")",
       "snippet_hash": "sha256:d744d0deb02180f4eea35141c570cd5c57b23cb9c44dc7eba18cc65053084a80",
       "start_line": 15
@@ -79,6 +80,7 @@
     "location": {
       "end_line": 17,
       "path": "main.go",
+      "route": "",
       "snippet": "\tout, _ := exec.Command(\"sh\", \"-c\", \"echo \"+name).Output()",
       "snippet_hash": "sha256:7cccae0e4038f6909b45ec393a7ca9f902dabeaea254751531ba0aed37750d65",
       "start_line": 17
@@ -141,6 +143,7 @@
     "location": {
       "end_line": 18,
       "path": "main.go",
+      "route": "",
       "snippet": "\tfmt.Fprintf(w, \"%x %s\", md5.Sum(out), password)",
       "snippet_hash": "sha256:34f8c7fa5e2e5a3a21e1d0eeb89204ed9e343c071b84efc50dd07fc4f1d86f66",
       "start_line": 18
@@ -203,6 +206,7 @@
     "location": {
       "end_line": 18,
       "path": "main.go",
+      "route": "",
       "snippet": "\tfmt.Fprintf(w, \"%x %s\", md5.Sum(out), password)",
       "snippet_hash": "sha256:34f8c7fa5e2e5a3a21e1d0eeb89204ed9e343c071b84efc50dd07fc4f1d86f66",
       "start_line": 18
@@ -265,6 +269,7 @@
     "location": {
       "end_line": 23,
       "path": "main.go",
+      "route": "",
       "snippet": "\thttp.ListenAndServe(\"0.0.0.0:8080\", nil)",
       "snippet_hash": "sha256:6fd6d93e4f6590729dc8b6eddea6c90a321cef5f5e92664d29ea893322232efa",
       "start_line": 23
@@ -327,6 +332,7 @@
     "location": {
       "end_line": 17,
       "path": "main.go",
+      "route": "",
       "snippet": "\tout, _ := exec.Command(\"sh\", \"-c\", \"echo \"+name).Output()",
       "snippet_hash": "sha256:7cccae0e4038f6909b45ec393a7ca9f902dabeaea254751531ba0aed37750d65",
       "start_line": 17
@@ -389,6 +395,7 @@
     "location": {
       "end_line": 15,
       "path": "main.go",
+      "route": "",
       "snippet": "\trows, _ := db.Query(\"SELECT * FROM users WHERE name = '\" + name + \"'\")",
       "snippet_hash": "sha256:d744d0deb02180f4eea35141c570cd5c57b23cb9c44dc7eba18cc65053084a80",
       "start_line": 15
@@ -451,6 +458,7 @@
     "location": {
       "end_line": 4,
       "path": "main.go",
+      "route": "",
       "snippet": "\t\"crypto/md5\"",
       "snippet_hash": "sha256:727da4096983b659a57459ca49adf8c3bc4d23ef1692a1d62edb9bf96aad98b2",
       "start_line": 4
@@ -513,6 +521,7 @@
     "location": {
       "end_line": 23,
       "path": "main.go",
+      "route": "",
       "snippet": "\thttp.ListenAndServe(\"0.0.0.0:8080\", nil)",
       "snippet_hash": "sha256:6fd6d93e4f6590729dc8b6eddea6c90a321cef5f5e92664d29ea893322232efa",
       "start_line": 23

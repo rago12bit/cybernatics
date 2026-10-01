@@ -322,6 +322,18 @@ export const getAssetVerification = (assetId: string) =>
 export const verifyAsset = (assetId: string) =>
   request<AssetVerification>(`/assets/${encodeURIComponent(assetId)}/verify`, { method: "POST" });
 
+// DAST campaigns (plan §22.4, Week 49 task 3): "passive" (ZAP baseline) runs once ownership
+// verification passes; "active" (adds curated Nuclei) is additionally rate-limited server-side.
+export const listDastCampaigns = (assetId: string) =>
+  request<ScanSummary[]>(`/assets/${encodeURIComponent(assetId)}/campaigns`);
+
+export const startDastCampaign = (assetId: string, mode: "passive" | "active") =>
+  request<{ id: string; status: string }>(`/assets/${encodeURIComponent(assetId)}/campaigns`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ mode }),
+  });
+
 // The security copilot (plan §21.5): tool-grounded, cited chat about one project.
 export const startCopilotConversation = (
   assetId: string,

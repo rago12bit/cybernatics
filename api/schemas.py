@@ -116,6 +116,15 @@ class RegisterWebAssetRequest(BaseModel):
     method: Literal["dns_txt", "well_known"]
 
 
+class StartDastCampaignRequest(BaseModel):
+    """Start a DAST campaign (plan §22.4, Week 49 task 3) against an already ownership-verified web
+    Asset. "passive" (ZAP baseline only) runs unconditionally once verification passes; "active"
+    (adds curated Nuclei) is rate-limited to one per asset per
+    `core.dast.campaign.ACTIVE_SCAN_MIN_INTERVAL`."""
+
+    mode: Literal["passive", "active"]
+
+
 class AssetVerificationView(BaseModel):
     asset_id: str
     domain: str

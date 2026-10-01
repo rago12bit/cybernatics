@@ -22,6 +22,7 @@ class Category(str, Enum):
     SECRETS = "secrets"
     IAC = "iac"
     CONTAINER = "container"
+    DAST = "dast"
 
 
 class TriageState(str, Enum):
@@ -37,6 +38,12 @@ class Location:
     end_line: int
     snippet: str = ""
     snippet_hash: str = ""
+    # Set only for a DAST finding (plan §22.4, Week 49 task 3): the URL path the live scanner hit
+    # ("/admin/users"), as opposed to `path`'s filesystem meaning everywhere else. Kept as a
+    # distinct field rather than overloading `path` so a DAST Finding and the SAST Finding it may
+    # correlate against (Week 49 task 4, "same route+CWE") can both be read without a category
+    # check first.
+    route: str = ""
 
     @staticmethod
     def hash_snippet(snippet: str) -> str:

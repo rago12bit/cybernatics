@@ -17,6 +17,7 @@
     "location": {
       "end_line": 1,
       "path": "package-lock.json",
+      "route": "",
       "snippet": "lodash@4.17.4",
       "snippet_hash": "sha256:03970e5485933b6bb885cd9d15a7d2cdd4365cdf4c5d2fa8454530c70550c54e",
       "start_line": 1
@@ -89,6 +90,7 @@
     "location": {
       "end_line": 1,
       "path": "requirements.txt",
+      "route": "",
       "snippet": "requests@2.19.0",
       "snippet_hash": "sha256:86cf1dadc4a5e21125457e613ab496330e5f6da56777fb50c0f8da1598bdeb98",
       "start_line": 1
@@ -161,6 +163,7 @@
     "location": {
       "end_line": 1,
       "path": "package-lock.json",
+      "route": "",
       "snippet": "lodash@4.17.4",
       "snippet_hash": "sha256:03970e5485933b6bb885cd9d15a7d2cdd4365cdf4c5d2fa8454530c70550c54e",
       "start_line": 1
@@ -233,6 +236,7 @@
     "location": {
       "end_line": 1,
       "path": "package-lock.json",
+      "route": "",
       "snippet": "lodash@4.17.4",
       "snippet_hash": "sha256:03970e5485933b6bb885cd9d15a7d2cdd4365cdf4c5d2fa8454530c70550c54e",
       "start_line": 1
@@ -306,6 +310,7 @@
     "location": {
       "end_line": 1,
       "path": "package-lock.json",
+      "route": "",
       "snippet": "lodash@4.17.4",
       "snippet_hash": "sha256:03970e5485933b6bb885cd9d15a7d2cdd4365cdf4c5d2fa8454530c70550c54e",
       "start_line": 1
@@ -378,6 +383,7 @@
     "location": {
       "end_line": 1,
       "path": "requirements.txt",
+      "route": "",
       "snippet": "flask@0.12",
       "snippet_hash": "sha256:e9c39ffbba3ee08ed1d140f72f0d9e8614725691ec2cd5cea2731d4199bbefba",
       "start_line": 1
@@ -450,6 +456,7 @@
     "location": {
       "end_line": 1,
       "path": "package-lock.json",
+      "route": "",
       "snippet": "lodash@4.17.4",
       "snippet_hash": "sha256:03970e5485933b6bb885cd9d15a7d2cdd4365cdf4c5d2fa8454530c70550c54e",
       "start_line": 1
@@ -522,6 +529,7 @@
     "location": {
       "end_line": 1,
       "path": "package-lock.json",
+      "route": "",
       "snippet": "lodash@4.17.4",
       "snippet_hash": "sha256:03970e5485933b6bb885cd9d15a7d2cdd4365cdf4c5d2fa8454530c70550c54e",
       "start_line": 1
@@ -595,6 +603,7 @@
     "location": {
       "end_line": 1,
       "path": "requirements.txt",
+      "route": "",
       "snippet": "requests@2.19.0",
       "snippet_hash": "sha256:86cf1dadc4a5e21125457e613ab496330e5f6da56777fb50c0f8da1598bdeb98",
       "start_line": 1
@@ -667,6 +676,7 @@
     "location": {
       "end_line": 1,
       "path": "requirements.txt",
+      "route": "",
       "snippet": "flask@0.12",
       "snippet_hash": "sha256:e9c39ffbba3ee08ed1d140f72f0d9e8614725691ec2cd5cea2731d4199bbefba",
       "start_line": 1
@@ -737,6 +747,7 @@
     "location": {
       "end_line": 1,
       "path": "package-lock.json",
+      "route": "",
       "snippet": "lodash@4.17.4",
       "snippet_hash": "sha256:03970e5485933b6bb885cd9d15a7d2cdd4365cdf4c5d2fa8454530c70550c54e",
       "start_line": 1
@@ -810,6 +821,7 @@
     "location": {
       "end_line": 1,
       "path": "package-lock.json",
+      "route": "",
       "snippet": "lodash@4.17.4",
       "snippet_hash": "sha256:03970e5485933b6bb885cd9d15a7d2cdd4365cdf4c5d2fa8454530c70550c54e",
       "start_line": 1
@@ -882,6 +894,7 @@
     "location": {
       "end_line": 1,
       "path": "package-lock.json",
+      "route": "",
       "snippet": "lodash@4.17.4",
       "snippet_hash": "sha256:03970e5485933b6bb885cd9d15a7d2cdd4365cdf4c5d2fa8454530c70550c54e",
       "start_line": 1
@@ -954,6 +967,7 @@
     "location": {
       "end_line": 1,
       "path": "requirements.txt",
+      "route": "",
       "snippet": "flask@0.12",
       "snippet_hash": "sha256:e9c39ffbba3ee08ed1d140f72f0d9e8614725691ec2cd5cea2731d4199bbefba",
       "start_line": 1
@@ -1026,6 +1040,7 @@
     "location": {
       "end_line": 1,
       "path": "requirements.txt",
+      "route": "",
       "snippet": "requests@2.19.0",
       "snippet_hash": "sha256:86cf1dadc4a5e21125457e613ab496330e5f6da56777fb50c0f8da1598bdeb98",
       "start_line": 1
@@ -1098,6 +1113,7 @@
     "location": {
       "end_line": 1,
       "path": "package-lock.json",
+      "route": "",
       "snippet": "lodash@4.17.4",
       "snippet_hash": "sha256:03970e5485933b6bb885cd9d15a7d2cdd4365cdf4c5d2fa8454530c70550c54e",
       "start_line": 1
@@ -1170,6 +1186,7 @@
     "location": {
       "end_line": 1,
       "path": "requirements.txt",
+      "route": "",
       "snippet": "requests@2.19.0",
       "snippet_hash": "sha256:86cf1dadc4a5e21125457e613ab496330e5f6da56777fb50c0f8da1598bdeb98",
       "start_line": 1
@@ -1242,6 +1259,7 @@
     "location": {
       "end_line": 1,
       "path": "requirements.txt",
+      "route": "",
       "snippet": "flask@0.12",
       "snippet_hash": "sha256:e9c39ffbba3ee08ed1d140f72f0d9e8614725691ec2cd5cea2731d4199bbefba",
       "start_line": 1
@@ -1314,6 +1332,7 @@
     "location": {
       "end_line": 1,
       "path": "requirements.txt",
+      "route": "",
       "snippet": "requests@2.19.0",
       "snippet_hash": "sha256:86cf1dadc4a5e21125457e613ab496330e5f6da56777fb50c0f8da1598bdeb98",
       "start_line": 1

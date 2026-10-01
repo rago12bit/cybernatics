@@ -17,6 +17,7 @@
     "location": {
       "end_line": 7,
       "path": "src/users.py",
+      "route": "",
       "snippet": "    return conn.execute(query).fetchall()",
       "snippet_hash": "sha256:f71bfeb0d5931b3c7089d94f5a1aad92d5df2ca32f3def3f041580248327278f",
       "start_line": 7
@@ -79,6 +80,7 @@
     "location": {
       "end_line": 11,
       "path": "src/users.py",
+      "route": "",
       "snippet": "    return subprocess.call(cmd, shell=True)",
       "snippet_hash": "sha256:cd29438fe2e7db6a914705e129acbb7d5b9148c970f1d95607288eefb3b8802f",
       "start_line": 11
@@ -141,6 +143,7 @@
     "location": {
       "end_line": 11,
       "path": "src/users.py",
+      "route": "",
       "snippet": "    return subprocess.call(cmd, shell=True)",
       "snippet_hash": "sha256:cd29438fe2e7db6a914705e129acbb7d5b9148c970f1d95607288eefb3b8802f",
       "start_line": 11
@@ -203,6 +206,7 @@
     "location": {
       "end_line": 15,
       "path": "src/users.py",
+      "route": "",
       "snippet": "    return hashlib.md5(pw.encode()).hexdigest()",
       "snippet_hash": "sha256:a3647352554e19a46de097598f1d22e920b401cfdf77d5a357e02746a4003fb2",
       "start_line": 15

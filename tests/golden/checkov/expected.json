@@ -17,6 +17,7 @@
     "location": {
       "end_line": 3,
       "path": "Dockerfile",
+      "route": "",
       "snippet": "/Dockerfile.ADD",
       "snippet_hash": "sha256:eeba9f18e240bd7527c6a9ff53d1daaa4c7f0acee2d0f92bf3225e34b29609a5",
       "start_line": 3
@@ -75,6 +76,7 @@
     "location": {
       "end_line": 2,
       "path": "Dockerfile",
+      "route": "",
       "snippet": "/Dockerfile.USER",
       "snippet_hash": "sha256:d1dcf7c3f2e4f279faf625047dcee7c12d7ea6b1fa76e3e80a04e4ccb779f707",
       "start_line": 2
@@ -133,6 +135,7 @@
     "location": {
       "end_line": 5,
       "path": "Dockerfile",
+      "route": "",
       "snippet": "/Dockerfile.",
       "snippet_hash": "sha256:2ebd910207582b40ace02e9ffd7bc59cccb4f4cc629c534f623ca952c31c0ffc",
       "start_line": 1
@@ -191,6 +194,7 @@
     "location": {
       "end_line": 13,
       "path": "main.tf",
+      "route": "",
       "snippet": "aws_security_group_rule.r",
       "snippet_hash": "sha256:69a58ee82f8e5e4d626ac2b2fb159c7148a056ec9363fea8a80611ce34a2eb8b",
       "start_line": 6
@@ -249,6 +253,7 @@
     "location": {
       "end_line": 13,
       "path": "main.tf",
+      "route": "",
       "snippet": "aws_security_group_rule.r",
       "snippet_hash": "sha256:69a58ee82f8e5e4d626ac2b2fb159c7148a056ec9363fea8a80611ce34a2eb8b",
       "start_line": 6
@@ -307,6 +312,7 @@
     "location": {
       "end_line": 4,
       "path": "main.tf",
+      "route": "",
       "snippet": "aws_s3_bucket.b",
       "snippet_hash": "sha256:08e15df06990619037bedac8bcc0d321e5cf1bd9203eb7674f765eb2b9fe86ac",
       "start_line": 1
@@ -365,6 +371,7 @@
     "location": {
       "end_line": 4,
       "path": "main.tf",
+      "route": "",
       "snippet": "aws_s3_bucket.b",
       "snippet_hash": "sha256:08e15df06990619037bedac8bcc0d321e5cf1bd9203eb7674f765eb2b9fe86ac",
       "start_line": 1
@@ -423,6 +430,7 @@
     "location": {
       "end_line": 4,
       "path": "main.tf",
+      "route": "",
       "snippet": "aws_s3_bucket.b",
       "snippet_hash": "sha256:08e15df06990619037bedac8bcc0d321e5cf1bd9203eb7674f765eb2b9fe86ac",
       "start_line": 1
@@ -481,6 +489,7 @@
     "location": {
       "end_line": 4,
       "path": "main.tf",
+      "route": "",
       "snippet": "aws_s3_bucket.b",
       "snippet_hash": "sha256:08e15df06990619037bedac8bcc0d321e5cf1bd9203eb7674f765eb2b9fe86ac",
       "start_line": 1
@@ -539,6 +548,7 @@
     "location": {
       "end_line": 4,
       "path": "main.tf",
+      "route": "",
       "snippet": "aws_s3_bucket.b",
       "snippet_hash": "sha256:08e15df06990619037bedac8bcc0d321e5cf1bd9203eb7674f765eb2b9fe86ac",
       "start_line": 1
@@ -597,6 +607,7 @@
     "location": {
       "end_line": 4,
       "path": "main.tf",
+      "route": "",
       "snippet": "aws_s3_bucket.b",
       "snippet_hash": "sha256:08e15df06990619037bedac8bcc0d321e5cf1bd9203eb7674f765eb2b9fe86ac",
       "start_line": 1
@@ -655,6 +666,7 @@
     "location": {
       "end_line": 4,
       "path": "main.tf",
+      "route": "",
       "snippet": "aws_s3_bucket.b",
       "snippet_hash": "sha256:08e15df06990619037bedac8bcc0d321e5cf1bd9203eb7674f765eb2b9fe86ac",
       "start_line": 1
@@ -713,6 +725,7 @@
     "location": {
       "end_line": 4,
       "path": "main.tf",
+      "route": "",
       "snippet": "aws_s3_bucket.b",
       "snippet_hash": "sha256:08e15df06990619037bedac8bcc0d321e5cf1bd9203eb7674f765eb2b9fe86ac",
       "start_line": 1

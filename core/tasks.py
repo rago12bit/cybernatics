@@ -120,6 +120,24 @@ def run_scan_task(self: Any, scan_id: str, org_id: str | None = None) -> str:
     )
 
 
+@celery_app.task(name="bulwark.run_dast_campaign", bind=True, acks_late=True, ignore_result=True)  # type: ignore[untyped-decorator]
+def run_dast_campaign_task(self: Any, scan_id: str, org_id: str | None = None) -> str:
+    """Server-side DAST campaign job (used by the API). Same idempotent-redelivery and `org_id`
+    reasoning as `run_scan_task` -- see its docstring."""
+    from core.config import Settings
+    from core.dast.pipeline import run_dast_campaign_job
+    from core.events import RedisPublisher
+    from core.persistence.db import get_session_factory
+
+    settings = Settings.from_env()
+    return run_dast_campaign_job(
+        scan_id,
+        get_session_factory(),
+        RedisPublisher(settings.redis_url),
+        org_id=org_id,
+    )
+
+
 @celery_app.task(name="bulwark.update_feeds", ignore_result=True)  # type: ignore[untyped-decorator]
 def update_feeds_task() -> dict[str, str]:
     """Refresh the EPSS and CISA KEV caches; failures are recorded in meta.json, never raised."""

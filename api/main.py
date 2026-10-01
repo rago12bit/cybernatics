@@ -78,6 +78,7 @@ from api.schemas import (
     ScanSummary,
     ScanView,
     StartConversationRequest,
+    StartDastCampaignRequest,
     StrideRowView,
     SuggestionRequest,
     ThreatModelView,
@@ -90,6 +91,7 @@ from api.schemas import (
     VerifiedFixView,
 )
 from core.config import Settings
+from core.dast import campaign as campaign_rules
 from core.dast import ownership
 from core.export import FORMATS, ReportData, render
 from core.gitfetch import GitUrlError, validate_git_url
@@ -637,6 +639,75 @@ def create_app(app_state: AppState) -> FastAPI:
             s, verification, ok=outcome.ok, error=outcome.error
         )
         return _verification_view(asset, verification)
+
+    @app.post(
+        "/assets/{asset_id}/campaigns",
+        response_model=ScanCreated,
+        dependencies=[Depends(require_scope("scans:write"))],
+    )
+    def start_dast_campaign(
+        asset_id: str,
+        body: StartDastCampaignRequest,
+        st: AppState = Depends(state),
+        s: Session = Depends(db),
+        org: str = Depends(current_org),
+    ) -> ScanCreated:
+        """Start a DAST campaign (plan §22.4): gated on a LIVE ownership check right now (never a
+        cached "verified" status) and, for an active campaign, the rate limit -- both checked before
+        a Scan row is even created, so an unverified or rate-limited attempt never shows up as a
+        queued campaign waiting to run and fail."""
+        asset = _get_asset(s, asset_id, org)
+        verification = repo.get_asset_verification(s, asset.id, org_id=org)
+        if verification is None:
+            raise HTTPException(422, "this asset has no ownership verification on record")
+        outcome = ownership.verify(
+            verification.method,
+            asset.key,
+            verification.token,
+            resolver=ownership.DnsPythonResolver(),
+            fetcher=ownership.HttpxFetcher(),
+        )
+        repo.record_verification_check(s, verification, ok=outcome.ok, error=outcome.error)
+        if not outcome.ok:
+            raise HTTPException(422, f"ownership verification failed: {outcome.error}")
+        if body.mode == "active":
+            last_active = repo.last_active_campaign_started_at(s, asset.id, org_id=org)
+            limit = campaign_rules.check_active_scan_rate_limit(last_active)
+            if not limit.allowed:
+                hours = (limit.retry_after.total_seconds() / 3600) if limit.retry_after else 0
+                raise HTTPException(429, f"active scan rate limit: try again in {hours:.1f}h")
+        scan = repo.create_dast_campaign(s, asset=asset, mode=body.mode, org_id=org)
+        repo.append_audit_entry(
+            s, actor=f"api:{org}", action="dast.campaign.started", target=scan.id,
+            payload={"asset_id": asset.id, "mode": body.mode},
+        )  # fmt: skip
+        st.enqueue_dast_campaign(scan.id, org)
+        return ScanCreated(id=scan.id, status=scan.status)
+
+    @app.get(
+        "/assets/{asset_id}/campaigns",
+        response_model=list[ScanSummary],
+        dependencies=[Depends(require_scope("scans:read"))],
+    )
+    def list_dast_campaigns(
+        asset_id: str,
+        limit: int = Query(default=20, ge=1, le=50),
+        s: Session = Depends(db),
+        org: str = Depends(current_org),
+    ) -> list[ScanSummary]:
+        asset = _get_asset(s, asset_id, org)
+        out: list[ScanSummary] = []
+        for scan in repo.list_dast_campaigns(s, asset.id, org_id=org, limit=limit):
+            counts = repo.severity_counts(s, scan.id)
+            out.append(
+                ScanSummary(
+                    id=scan.id, status=scan.status, source_type=scan.source_type,
+                    source_label=scan.source_label, created_at=scan.created_at,
+                    finished_at=scan.finished_at, unique_findings=sum(counts.values()),
+                    severity_counts=counts,
+                )
+            )  # fmt: skip
+        return out
 
     @app.get(
         "/assets/{asset_id}/issues",
@@ -1697,7 +1768,7 @@ def build_default_app() -> FastAPI:
     from core.llm.gateway import Task, make_gateway_client
     from core.persistence.db import get_session_factory
     from core.persistence.storage import S3Store
-    from core.tasks import run_scan_task
+    from core.tasks import run_dast_campaign_task, run_scan_task
 
     settings = Settings.from_env()
     if settings.s3_endpoint or settings.s3_access_key:
@@ -1708,6 +1779,9 @@ def build_default_app() -> FastAPI:
             sessions=get_session_factory(),
             enqueue=lambda scan_id, org_id: run_scan_task.delay(scan_id, org_id),
             subscriber=RedisSubscriber(settings.redis_url),
+            enqueue_dast_campaign=lambda scan_id, org_id: run_dast_campaign_task.delay(
+                scan_id, org_id
+            ),
             # None unless the routed backend is enabled and ready; raises at startup, not on the
             # first request, if privacy mode is on with no local model configured (gateway.py).
             llm=make_gateway_client(Task.FIX),

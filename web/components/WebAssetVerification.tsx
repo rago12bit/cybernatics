@@ -150,7 +150,9 @@ export function WebAssetVerification({ assetId }: { assetId?: string }) {
         <p className="small muted" style={{ marginTop: "0.75rem" }}>
           This re-checks the moment any DAST campaign starts (plan §22.4) -- a passing check here
           isn&apos;t cached indefinitely.{" "}
-          <Link href={`/app/projects/${verification.asset_id}`}>Go to the project →</Link>
+          <Link href={`/app/projects/${verification.asset_id}/campaigns`}>
+            Start a DAST campaign →
+          </Link>
         </p>
       )}
     </div>

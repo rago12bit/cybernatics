@@ -32,6 +32,10 @@ class AppState:
     sessions: SessionFactory
     enqueue: Callable[[str, str], None]  # (scan_id, org_id) -> dispatches a scan job to the worker
     subscriber: EventSubscriber
+    # (scan_id, org_id) -> dispatches a DAST campaign job (Week 49 task 3, plan §22.4). Defaults to
+    # a no-op so every existing AppState(...) call built positionally (tests predating this field)
+    # keeps working unchanged rather than needing to pass one.
+    enqueue_dast_campaign: Callable[[str, str], None] = lambda *_: None
     llm: LLMClient | None = None  # None: AI suggestions are off; guidance is static reference text
     limiter: UsageLimiter = field(default_factory=UsageLimiter)  # caps real model calls (rate)
     llm_budget: BudgetConfig = field(default_factory=BudgetConfig.from_env)  # caps them by tokens

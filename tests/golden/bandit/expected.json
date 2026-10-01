@@ -17,6 +17,7 @@
     "location": {
       "end_line": 2,
       "path": "src/users.py",
+      "route": "",
       "snippet": "1 import hashlib\n2 import subprocess\n3 \n",
       "snippet_hash": "sha256:c3e2514d4492344926f72954be8ad1a0ac55b10f14f65b37b17c9eb03a020fbe",
       "start_line": 2
@@ -79,6 +80,7 @@
     "location": {
       "end_line": 6,
       "path": "src/users.py",
+      "route": "",
       "snippet": "5 def get_user(conn, user_id):\n6     query = \"SELECT * FROM users WHERE id=\" + user_id\n7     return conn.execute(query).fetchall()\n",
       "snippet_hash": "sha256:4dd0d38c7c7950ff5850408183a703833b4a23ccf55cef83fb15977eb1413406",
       "start_line": 6
@@ -141,6 +143,7 @@
     "location": {
       "end_line": 11,
       "path": "src/users.py",
+      "route": "",
       "snippet": "10 def run(cmd):\n11     return subprocess.call(cmd, shell=True)\n12 \n",
       "snippet_hash": "sha256:a5495e3b85d2c04150ea50bb554b421a85599824a693fb5449edc1792cb7c6ce",
       "start_line": 11
@@ -203,6 +206,7 @@
     "location": {
       "end_line": 15,
       "path": "src/users.py",
+      "route": "",
       "snippet": "14 def digest(pw):\n15     return hashlib.md5(pw.encode()).hexdigest()\n16 \n",
       "snippet_hash": "sha256:23ca88a7663af2e8b0adbd128469d6eb0d69e9aa41d0d2346c104b33fca246c5",
       "start_line": 15
@@ -265,6 +269,7 @@
     "location": {
       "end_line": 18,
       "path": "src/users.py",
+      "route": "",
       "snippet": "[snippet withheld: hardcoded credential]",
       "snippet_hash": "sha256:bd100294b444d14e7f49f0b8be9b82a82a08e5f220148ee85add4777ebdbba71",
       "start_line": 18
@@ -327,6 +332,7 @@
     "location": {
       "end_line": 20,
       "path": "src/users.py",
+      "route": "",
       "snippet": "[snippet withheld: hardcoded credential]",
       "snippet_hash": "sha256:bd100294b444d14e7f49f0b8be9b82a82a08e5f220148ee85add4777ebdbba71",
       "start_line": 20

@@ -119,6 +119,70 @@ def create_scan(
     return scan
 
 
+def create_dast_campaign(
+    s: Session, *, asset: Asset, mode: str, org_id: str = DEFAULT_ORG_ID
+) -> Scan:
+    """Unlike `create_scan`, this never calls `get_or_create_asset`: the Asset must already exist
+    and already be ownership-verified (`core.dast.ownership`) by the time a campaign is allowed to
+    start -- the caller (the API endpoint) is responsible for that gate, not this function."""
+    from core.dast.campaign import tools_for_mode
+
+    scan = Scan(
+        org_id=org_id,
+        source_type="web",
+        source_ref=f"https://{asset.key}",
+        source_label=asset.key,
+        tools=list(tools_for_mode(mode)),
+        asset_id=asset.id,
+        dast_mode=mode,
+    )
+    s.add(scan)
+    s.commit()
+    return scan
+
+
+def last_active_campaign_started_at(
+    s: Session, asset_id: str, *, org_id: str | None = None, exclude_scan_id: str | None = None
+) -> datetime | None:
+    """The most recent ACTIVE campaign's start time for this asset -- what `core.dast.campaign.
+    check_active_scan_rate_limit` compares "now" against. Passive campaigns never count: the rate
+    limit polices back-to-back active scans specifically (see that function's own docstring).
+
+    `exclude_scan_id`: the worker's own re-check (`core.dast.pipeline.run_dast_campaign_job`) must
+    not count the very campaign it's currently running as "the most recent prior one," or every
+    active campaign would rate-limit itself against its own start time. Filtering by id here is
+    exact and unambiguous -- comparing timestamps instead (e.g. "is this the same moment as my own
+    created_at?") breaks under SQLite, which returns naive datetimes even for tz-aware columns."""
+    q = (
+        select(Scan.created_at)
+        .where(Scan.asset_id == asset_id, Scan.dast_mode == "active")
+        .order_by(Scan.created_at.desc())
+        .limit(1)
+    )
+    if org_id is not None:
+        q = q.where(Scan.org_id == org_id)
+    if exclude_scan_id is not None:
+        q = q.where(Scan.id != exclude_scan_id)
+    started_at = s.scalars(q).first()
+    if started_at is not None and started_at.tzinfo is None:  # SQLite drops tzinfo even here
+        started_at = started_at.replace(tzinfo=timezone.utc)
+    return started_at
+
+
+def list_dast_campaigns(
+    s: Session, asset_id: str, *, org_id: str | None = None, limit: int = 20
+) -> list[Scan]:
+    q = (
+        select(Scan)
+        .where(Scan.asset_id == asset_id, Scan.dast_mode.is_not(None))
+        .order_by(Scan.created_at.desc())
+        .limit(limit)
+    )
+    if org_id is not None:
+        q = q.where(Scan.org_id == org_id)
+    return list(s.scalars(q))
+
+
 def list_scans(s: Session, limit: int = 20, *, org_id: str | None = None) -> list[Scan]:
     """`org_id=None` is a trusted-internal, unscoped read (no such caller is left in the API; every
     client-facing endpoint passes the request's real org). Application-level filtering here is

@@ -260,9 +260,15 @@ class Scan(Base):
         ForeignKey("organizations.id"), default=DEFAULT_ORG_ID, index=True
     )
     status: Mapped[str] = mapped_column(String(16), index=True, default="queued")
-    source_type: Mapped[str] = mapped_column(String(16))  # git | archive
-    source_ref: Mapped[str] = mapped_column(Text)  # git URL, or server-side archive path
+    source_type: Mapped[str] = mapped_column(String(16))  # git | archive | web
+    source_ref: Mapped[str] = mapped_column(
+        Text
+    )  # git URL, server-side archive path, or target URL
     source_label: Mapped[str] = mapped_column(String(300))  # safe display name
+    # Set only for a DAST campaign (source_type="web", Week 49 task 3, plan §22.4): "passive" (ZAP
+    # baseline only) or "active" (adds curated Nuclei, rate-limited -- core.dast.campaign). Null for
+    # every SAST/SCA scan, which has no such concept.
+    dast_mode: Mapped[str | None] = mapped_column(String(16), nullable=True, index=True)
     # A specific git ref to check out instead of the default branch (Week 30, ADR-0017) -- today
     # only ever `refs/pull/<n>/head`, set by a GitHub App pull_request webhook. Null for every
     # ordinary API-created scan, which still scans the default branch exactly as before.

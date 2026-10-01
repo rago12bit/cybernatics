@@ -991,3 +991,80 @@ def asset_show(
             typer.echo("error: this asset has no ownership verification on record", err=True)
             raise typer.Exit(1)
         typer.echo(json.dumps(_verification_dict(asset, verification), indent=2))
+
+
+@asset_app.command("campaign-start")
+def asset_campaign_start(
+    asset_id: str = typer.Argument(...),
+    mode: str = typer.Option("passive", help="passive (default) or active."),
+    org: str = typer.Option(DEFAULT_ORG_ID, help="Organization the asset belongs to."),
+) -> None:
+    """Start a DAST campaign (plan §22.4): same live ownership re-check and active-scan rate limit
+    the API enforces, so neither path can start what the other would refuse."""
+    from core.dast import campaign as campaign_rules
+    from core.dast import ownership
+    from core.persistence import repo
+    from core.persistence.db import get_session_factory
+    from core.tasks import run_dast_campaign_task
+    from core.tenancy import set_session_org
+
+    with get_session_factory()() as s:
+        set_session_org(s, org)
+        asset = repo.get_asset(s, asset_id, org_id=org)
+        if asset is None:
+            typer.echo("error: asset not found", err=True)
+            raise typer.Exit(1)
+        verification = repo.get_asset_verification(s, asset.id, org_id=org)
+        if verification is None:
+            typer.echo("error: this asset has no ownership verification on record", err=True)
+            raise typer.Exit(1)
+        outcome = ownership.verify(
+            verification.method, asset.key, verification.token,
+            resolver=ownership.DnsPythonResolver(), fetcher=ownership.HttpxFetcher(),
+        )  # fmt: skip
+        repo.record_verification_check(s, verification, ok=outcome.ok, error=outcome.error)
+        if not outcome.ok:
+            typer.echo(f"error: ownership verification failed: {outcome.error}", err=True)
+            raise typer.Exit(1)
+        if mode == "active":
+            last_active = repo.last_active_campaign_started_at(s, asset.id, org_id=org)
+            limit = campaign_rules.check_active_scan_rate_limit(last_active)
+            if not limit.allowed:
+                hours = (limit.retry_after.total_seconds() / 3600) if limit.retry_after else 0
+                typer.echo(f"error: active scan rate limit: try again in {hours:.1f}h", err=True)
+                raise typer.Exit(1)
+        scan = repo.create_dast_campaign(s, asset=asset, mode=mode, org_id=org)
+        repo.append_audit_entry(
+            s, actor="cli:asset-campaign-start", action="dast.campaign.started", target=scan.id,
+            payload={"asset_id": asset.id, "mode": mode},
+        )  # fmt: skip
+    run_dast_campaign_task.delay(scan.id, org)
+    typer.echo(json.dumps({"id": scan.id, "status": scan.status}, indent=2))
+
+
+@asset_app.command("campaign-list")
+def asset_campaign_list(
+    asset_id: str = typer.Argument(...),
+    org: str = typer.Option(DEFAULT_ORG_ID, help="Organization the asset belongs to."),
+    limit: int = typer.Option(20, help="Max campaigns to list, most recent first."),
+) -> None:
+    from core.persistence import repo
+    from core.persistence.db import get_session_factory
+    from core.tenancy import set_session_org
+
+    with get_session_factory()() as s:
+        set_session_org(s, org)
+        asset = repo.get_asset(s, asset_id, org_id=org)
+        if asset is None:
+            typer.echo("error: asset not found", err=True)
+            raise typer.Exit(1)
+        campaigns = repo.list_dast_campaigns(s, asset.id, org_id=org, limit=limit)
+        out = [
+            {
+                "id": c.id, "status": c.status, "mode": c.dast_mode,
+                "created_at": c.created_at.isoformat(),
+                "findings": repo.severity_counts(s, c.id),
+            }
+            for c in campaigns
+        ]  # fmt: skip
+    typer.echo(json.dumps(out, indent=2))

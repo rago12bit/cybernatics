@@ -1,0 +1,26 @@
+.ds-campaigns-intro {
+  margin-bottom: 1rem;
+  max-width: 65ch;
+}
+
+.ds-campaigns-error {
+  color: var(--ds-color-danger, #b00020);
+}
+
+.ds-campaigns-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.ds-campaigns-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ds-campaigns-table th,
+.ds-campaigns-table td {
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--ds-color-border, #d0d7de);
+}
