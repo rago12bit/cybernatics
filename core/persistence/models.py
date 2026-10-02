@@ -198,6 +198,51 @@ class AssetVerification(Base):
     asset: Mapped[Asset] = relationship()
 
 
+class Portfolio(Base):
+    """Groups projects/Assets by business unit (plan §40 change C11, Week 53, ADR-0039): "teams
+    group projects by business unit." Purely organizational -- an Engagement's `portfolio_id` is
+    nullable, so a project can exist (and be scanned) without ever being assigned to one."""
+
+    __tablename__ = "portfolios"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(
+        ForeignKey("organizations.id"), default=DEFAULT_ORG_ID, index=True
+    )
+    name: Mapped[str] = mapped_column(String(200))
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
+class Engagement(Base):
+    """A time-boxed activity against one Asset (plan §40 change C11, Week 53, ADR-0039): "pen tests
+    and audits are time-boxed engagements; imported reports need a home that isn't a scan." Every
+    Asset gets one "ci" Engagement automatically (migration 0026's own backfill, and
+    `core.persistence.repo.get_or_create_ci_engagement` for every Asset created since); a person (or
+    a later v3 import flow) creates "pentest"/"audit"/"adhoc" ones explicitly. A ToolRun belongs to
+    exactly one Engagement via its own `engagement_id` -- see that column's docstring for why
+    "Test" (plan §40/§42) is an existing ToolRun row, not a new table."""
+
+    __tablename__ = "engagements"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(
+        ForeignKey("organizations.id"), default=DEFAULT_ORG_ID, index=True
+    )
+    asset_id: Mapped[str] = mapped_column(ForeignKey("assets.id", ondelete="CASCADE"), index=True)
+    portfolio_id: Mapped[str | None] = mapped_column(
+        ForeignKey("portfolios.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    name: Mapped[str] = mapped_column(String(300))
+    engagement_type: Mapped[str] = mapped_column(String(16), default="ci")  # ci|pentest|audit|adhoc
+    status: Mapped[str] = mapped_column(String(16), default="active")  # active|completed
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+    target_end_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+    asset: Mapped[Asset] = relationship()
+
+
 class IssueRow(Base):
     """One vulnerability tracked across every scan of one asset (ADR-0012). `core/issues.py` is the
     pure logic that decides identity and lifecycle; this table just stores the result."""
@@ -343,6 +388,14 @@ class ToolRun(Base):
     error: Mapped[str | None] = mapped_column(Text, nullable=True)
     raw_object_key: Mapped[str | None] = mapped_column(String(300), nullable=True)
     raw_withheld_reason: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    # The v3 hierarchy's "Test" concept (plan §40 change C11, ADR-0039, migration 0026): a ToolRun
+    # already is "one tool's results," so Engagement attaches to the existing row instead of a new
+    # parallel table duplicating these same columns. Nullable because RLS on `tool_runs` itself is
+    # (and stays) the existing EXISTS-through-`scans` policy, not this column -- a null
+    # engagement_id is a data-migration/backfill state, never a tenancy gap.
+    engagement_id: Mapped[str | None] = mapped_column(
+        ForeignKey("engagements.id", ondelete="SET NULL"), nullable=True, index=True
+    )
 
     scan: Mapped[Scan] = relationship(back_populates="tool_runs")
 

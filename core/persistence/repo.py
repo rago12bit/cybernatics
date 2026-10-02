@@ -34,6 +34,7 @@ from core.persistence.models import (
     CopilotConversationRow,
     CopilotMessageRow,
     DataRetentionPolicyRow,
+    Engagement,
     ExternalIssueLinkRow,
     FindingRow,
     GithubInstallation,
@@ -42,6 +43,7 @@ from core.persistence.models import (
     IssueRow,
     Organization,
     PluginAllowlistRow,
+    Portfolio,
     Scan,
     ScanDataKeyRow,
     ThreatModelRow,
@@ -80,6 +82,106 @@ def get_or_create_asset(
         asset.label, asset.last_scanned_at = source_label, _now()
     s.commit()
     return asset
+
+
+def get_or_create_ci_engagement(s: Session, *, asset_id: str, org_id: str) -> Engagement:
+    """Every Asset's one standing "ci" Engagement (plan §40 change C11, Week 53, ADR-0039) --
+    created lazily on an asset's first ToolRun, the same way migration 0026 backfilled one for every
+    pre-existing Asset, so a project created before or after this feature shipped always has exactly
+    one. Idempotent: a second call for the same asset returns the same row, never a duplicate."""
+    existing = s.scalars(
+        select(Engagement).where(
+            Engagement.asset_id == asset_id, Engagement.org_id == org_id,
+            Engagement.engagement_type == "ci",
+        )
+    ).first()  # fmt: skip
+    if existing is not None:
+        return existing
+    asset = s.get(Asset, asset_id)
+    label = asset.label if asset is not None else asset_id
+    engagement = Engagement(
+        org_id=org_id, asset_id=asset_id, name=f"{label} CI", engagement_type="ci", status="active"
+    )
+    s.add(engagement)
+    s.commit()
+    return engagement
+
+
+def create_portfolio(
+    s: Session, *, org_id: str, name: str, description: str | None = None
+) -> Portfolio:
+    portfolio = Portfolio(org_id=org_id, name=name, description=description)
+    s.add(portfolio)
+    s.commit()
+    return portfolio
+
+
+def list_portfolios(s: Session, org_id: str) -> list[Portfolio]:
+    return list(
+        s.scalars(select(Portfolio).where(Portfolio.org_id == org_id).order_by(Portfolio.name))
+    )
+
+
+def get_portfolio(s: Session, portfolio_id: str, org_id: str) -> Portfolio | None:
+    return s.scalars(
+        select(Portfolio).where(Portfolio.id == portfolio_id, Portfolio.org_id == org_id)
+    ).one_or_none()
+
+
+def create_engagement(
+    s: Session,
+    *,
+    org_id: str,
+    asset_id: str,
+    name: str,
+    engagement_type: str = "adhoc",
+    portfolio_id: str | None = None,
+    target_end_at: datetime | None = None,
+) -> Engagement:
+    """A person-created Engagement -- "pentest"/"audit"/"adhoc" (plan §40 change C11): distinct from
+    `get_or_create_ci_engagement`'s own lazily-created, singleton "ci" one, and never that type
+    itself (a second "ci" engagement for the same asset would split its ToolRun history across two
+    rows, defeating the one-standing-engagement invariant that function maintains)."""
+    if engagement_type == "ci":
+        raise ValueError('engagement_type "ci" is reserved for get_or_create_ci_engagement')
+    engagement = Engagement(
+        org_id=org_id, asset_id=asset_id, portfolio_id=portfolio_id, name=name,
+        engagement_type=engagement_type, target_end_at=target_end_at,
+    )  # fmt: skip
+    s.add(engagement)
+    s.commit()
+    return engagement
+
+
+def get_engagement(s: Session, engagement_id: str, org_id: str) -> Engagement | None:
+    return s.scalars(
+        select(Engagement).where(Engagement.id == engagement_id, Engagement.org_id == org_id)
+    ).one_or_none()
+
+
+def list_engagements_for_asset(s: Session, asset_id: str, org_id: str) -> list[Engagement]:
+    return list(
+        s.scalars(
+            select(Engagement)
+            .where(Engagement.asset_id == asset_id, Engagement.org_id == org_id)
+            .order_by(Engagement.started_at.desc())
+        )
+    )
+
+
+def list_tool_runs_for_engagement(s: Session, engagement_id: str, org_id: str) -> list[ToolRun]:
+    """The Tests (plan §40/§42) within one Engagement -- a ToolRun joined back through `scans` to
+    confirm org membership, the same EXISTS-through-the-parent shape `tool_runs`' own RLS policy
+    already uses (migration 0005), so an engagement id from another org can't be used to read
+    another org's tool runs even if RLS were somehow bypassed at the application layer too."""
+    return list(
+        s.scalars(
+            select(ToolRun)
+            .join(Scan, Scan.id == ToolRun.scan_id)
+            .where(ToolRun.engagement_id == engagement_id, Scan.org_id == org_id)
+            .order_by(ToolRun.id.desc())
+        )
+    )
 
 
 def create_scan(
@@ -878,6 +980,18 @@ def mark_issue_confirmed_at_runtime(s: Session, issue_id: str, *, scan_id: str) 
 
 
 def add_tool_run(s: Session, scan_id: str, tool: str, block: dict[str, Any]) -> None:
+    """Every ToolRun is a Test within its asset's standing "ci" Engagement (plan §40/§42, ADR-0039)
+    -- resolved (and lazily created, for an asset old enough to predate this feature) from the
+    scan's own `org_id`/`asset_id` rather than threaded through every one of this function's several
+    call sites. A scan with no asset (none exist in practice -- `create_scan` always resolves one
+    first -- but the column is nullable) simply gets a ToolRun with no engagement, same as any
+    pre-migration-0026 row."""
+    scan = s.get(Scan, scan_id)
+    engagement_id = (
+        get_or_create_ci_engagement(s, asset_id=scan.asset_id, org_id=scan.org_id).id
+        if scan is not None and scan.asset_id is not None
+        else None
+    )
     s.add(
         ToolRun(
             scan_id=scan_id,
@@ -887,6 +1001,7 @@ def add_tool_run(s: Session, scan_id: str, tool: str, block: dict[str, Any]) -> 
             exit_code=block.get("exit_code"),
             duration_seconds=block.get("duration_seconds"),
             error=block.get("error") or block.get("reason"),
+            engagement_id=engagement_id,
         )
     )
     s.commit()
