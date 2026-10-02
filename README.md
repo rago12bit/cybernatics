@@ -91,6 +91,9 @@ Measured 2026-09-25. This measures duplicate reduction, not accuracy; precision/
   ([ADR-002](docs/adr/0002-docker-isolation-strategy.md)).
 - Semgrep's community rules may not be redistributed or offered as a service
   ([ADR-006](docs/adr/0006-semgrep-rules-licensing.md)); fine for your own use, undecided for a public demo.
+  `BULWARK_HOSTED_MODE=1` switches SAST to Opengrep with an originally-written starter ruleset instead
+  ([ADR-0038](docs/adr/0038-hosted-mode-opengrep.md)) — Opengrep's own bundled rules carry the identical
+  restriction, so this only solves the licensing problem, not the rule-coverage one.
 - Deduplication numbers measure duplicate reduction, not accuracy; precision/recall benchmarks are
   in [docs/evaluation.md](docs/evaluation.md) and [docs/evaluation-v2.md](docs/evaluation-v2.md), with
   five evaluation areas (verified-fix acceptance, triage assistant, hypotheses lane, Copilot, LLM

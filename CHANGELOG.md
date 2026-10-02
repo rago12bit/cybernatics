@@ -5,6 +5,22 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 
 ## [Unreleased]
 
+### Added
+- **Gate and hierarchy (Week 53, plan Phase 13/§39.5/§40, ADR-0038, ADR-0039):** the first week of
+  v3. Re-running v2's own pre-v3 gate found that "the two-tenant RLS test passes on every endpoint"
+  covered 4 of this API's 50+ endpoints, a scope that hadn't grown since Week 29/30 -- closed with a
+  new cross-org test covering every `/assets/{asset_id}/...` and remaining `/scans/{id}/...` route
+  against real Postgres. **Hosted mode** now runs Opengrep instead of Semgrep for SAST
+  (`BULWARK_HOSTED_MODE`, default off -- self-host is unchanged), closing the plan's own licensing
+  gate item: Semgrep's community rules are internal-use-only, and Opengrep's own bundled ruleset
+  turned out to carry the identical restriction on inspection, so hosted mode ships a small,
+  originally-written starter ruleset instead. New **Portfolio** and **Engagement** tables (plan §40:
+  "teams group projects by business unit"; "pen tests and audits are time-boxed engagements") with a
+  real data migration giving every existing project one "ci" Engagement and linking its scan history
+  to it -- "Test" (one tool's results within an engagement) is deliberately not a third new table,
+  since `ToolRun` already was exactly that. RLS and a two-tenant leak test cover both new tables,
+  live-verified against real Postgres.
+
 ## [2.0.0] - 2026-10-02
 
 Weeks 27-52 of the plan, Milestone M11: "v2.0 public launch." See
