@@ -22,6 +22,9 @@ sinks:
     category: command_injection
   - name: popen          # os.popen
     category: command_injection
+  - name: Popen          # subprocess.Popen(cmd, shell=True) -- a distinct name from os.popen above,
+    category: command_injection  # not a duplicate: real corpus scanning (pygoat) found this is the
+                                  # more common of the two in real vulnerable code and was missing
   - name: eval
     category: code_injection
   - name: exec

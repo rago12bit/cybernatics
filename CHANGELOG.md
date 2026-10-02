@@ -5,6 +5,18 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 
 ## [Unreleased]
 
+### Fixed
+- **Taint engine: a resolved call to an unrelated, same-named function could silently erase real
+  taint** (`core/taint/python_flow.py`, `js_flow.py`, `go_flow.py`), found expanding v2's own taint
+  engine spot-check from 1 repository to the full Python/JavaScript corpus
+  ([docs/v2-gap-closure-taint-corpus.md](docs/v2-gap-closure-taint-corpus.md)): a textbook
+  `request.POST.get(...)` → `eval(...)` case in pygoat went unconfirmed because `.get`'s only
+  project-wide name match was an unrelated Django view's own `get` handler, whose irrelevant summary
+  silently overrode the correct taint-preserving fallback. Also added `subprocess.Popen` (previously
+  only `os.popen`) to the Python catalog's command-injection sinks. Taint confirmations across the
+  corpus's 8 Python/JavaScript repositories went from 3 (one repository) to 9 (five repositories),
+  all hand-verified true positives.
+
 ### Added
 - **Gate and hierarchy (Week 53, plan Phase 13/§39.5/§40, ADR-0038, ADR-0039):** the first week of
   v3. Re-running v2's own pre-v3 gate found that "the two-tenant RLS test passes on every endpoint"

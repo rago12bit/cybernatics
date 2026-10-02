@@ -125,7 +125,10 @@ class _FunctionFlow:
             for tag in summary.returns:
                 if isinstance(tag, int) and tag < len(args):
                     result = result | self.expr_taint(args[tag])
-            return result
+            # See python_flow.py's identical fix: never return less taint than the unresolved
+            # fallback would -- a name-only resolution to an unrelated same-named function must
+            # not silently erase a receiver's real taint.
+            return result | arg_taint | receiver_taint
         return arg_taint | receiver_taint
 
     def expr_taint(self, node: Any) -> TaintSet:

@@ -166,7 +166,16 @@ class _FunctionFlow:
                     expr = _arg_expr(call, tag, summary.param_names)
                     if expr is not None:
                         result = result | self.expr_taint(expr)
-            return result
+            # Union with the unresolved-call fallback, never return *less* taint than treating
+            # this call as unresolved would have (see module docstring + _call_taint's own
+            # comment on `resolve_one`'s name-only matching): a project-defined function that
+            # happens to share a stdlib/framework method's name (`dict.get`, `QueryDict.get`,
+            # a class-based view's `get` handler, ...) can resolve here by pure bad luck, and
+            # its summary's own returns say nothing about a receiver this call never actually
+            # went through. Silently trusting that summary over the conservative fallback was
+            # a real false negative (a `request.POST.get(...)` call losing its taint because an
+            # unrelated same-named `View.get` elsewhere in the project resolved instead).
+            return result | arg_taint | receiver_taint
         # Unresolved call, stdlib/third-party function, or a callee with no summary yet: assume
         # taint passes through -- see module docstring on the false-positive/false-negative trade-off.
         return arg_taint | receiver_taint

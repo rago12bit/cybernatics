@@ -12,7 +12,7 @@ one place, not to re-litigate or soften what they already said.
 | Area | Metric | Result | Status |
 |---|---|---|---|
 | Incremental scanning | Median PR scan time; speedup over a full scan | NodeGoat: 71.2s cold → 19.6s warm (**3.6x**), target <60s met | Partial -- 1 repository, not the full "last 20 PRs × 30-repo corpus" ask |
-| Taint engine | Precision/recall, Python & JS, vs. Semgrep taint mode | 3/3 hand-verified true positives on NodeGoat, 0 false confirmations | Partial -- small real spot-check, not a corpus-scale study; no Semgrep-taint-mode comparison |
+| Taint engine | Precision/recall, Python & JS, vs. Semgrep taint mode | 9/9 hand-verified true positives across 5 of 8 corpus repositories, 0 false confirmations | Partial -- larger real spot-check (was 3/3 on 1 repo), not a corpus-scale study; no Semgrep-taint-mode comparison |
 | Ranking | Top-20 precision: risk score vs. severity-only vs. random | 63.3% / 52.4% / 48.2% (95% CI includes 0) | **Measured** -- already published, [below](#ranking-detail) |
 | Verified fixes | Share of TPs verified-fixed; blind human review; regressions | -- | **Not measured** -- needs a live model |
 | Triage assistant | Precision/recall of "likely false positive" vs. OWASP Benchmark labels | -- | **Not measured** -- needs a live model |
@@ -36,7 +36,7 @@ nothing about them changed since):
 Full detail: [docs/evaluation.md](evaluation.md), [docs/evaluation-owasp.md](evaluation-owasp.md),
 [docs/evaluation-juliet-corpus.md](evaluation-juliet-corpus.md).
 
-## Taint engine: what was actually measured this week
+## Taint engine: what was actually measured
 
 The taint engine (`core/taint/`) doesn't detect vulnerabilities on its own -- it confirms whether a
 SAST finding some other scanner already reported is *reachable* from a real HTTP entrypoint
@@ -44,34 +44,42 @@ SAST finding some other scanner already reported is *reachable* from a real HTTP
 means: of the SAST findings it could confirm, were the confirmations correct, and of the ones it
 could have confirmed, how many did it?
 
-**Method.** Ran the real scan pipeline (`bulwark scan --tools bandit,semgrep`, no mocks) against two
-already-cached, real, deliberately-vulnerable repositories from this project's own 25-repo corpus
-(NodeGoat, nodejs-goof), then read the flagged source by hand to check each confirmation against the
-real code.
+**Method.** Ran the real scan pipeline (`bulwark scan --tools bandit,semgrep`, no mocks) against 8
+already-cached, real, deliberately-vulnerable repositories from this project's own 25-repo corpus --
+every Python/JavaScript one it has (NodeGoat, nodejs-goof from Week 52; VAmPI, Vulnerable-Flask-App,
+pygoat, dvpwa, vulpy, dvna added afterward) -- then read the flagged source by hand to check each
+confirmation against the real code. Full method, two real bugs found and fixed along the way (a
+resolver name-collision that could silently erase real taint, and a missing `subprocess.Popen`
+catalog entry), and three freshly-confirmed real scope limits:
+[docs/v2-gap-closure-taint-corpus.md](v2-gap-closure-taint-corpus.md).
 
-**Result.**
-- NodeGoat: 3 findings got a taint path (`app/routes/contributions.js:32-34`, `eval(req.body.preTax)`
-  et al.). Read against the real source: this is NodeGoat's own documented "A1 SSJS Injection"
-  tutorial vulnerability -- the file's own comment reads `// Insecure use of eval() to parse inputs`,
-  with the fix commented out directly below it. All 3 are genuine true positives. **3/3 precision on
-  this sample.**
-- The other 3 SAST findings in NodeGoat's route files (an open redirect, a ReDoS-shaped regex, a lint
-  issue) were correctly left unconfirmed (`reachable: null`, never a fabricated "no"): none of them
-  are `eval`/`exec`/`query`-shaped calls, the only three sink categories
-  `core/taint/catalogs/javascript.yaml` declares. Not a missed detection -- outside the catalog's
-  stated scope.
-- nodejs-goof: 0 of its 8 SAST findings matched a declared sink category, so 0 taint confirmations --
-  consistent, not a gap, since nothing in that sample was eval/exec/query-shaped either.
-- The 3 confirmed findings were themselves originally flagged by Semgrep's plain pattern rule
-  `javascript.browser.security.eval-detected` -- which fires on *any* `eval()` call, tainted or not.
-  The taint engine's actual contribution here is narrowing that down to "and the argument provably
-  comes from this HTTP request," which the pattern rule alone cannot say.
+**Result: 9 confirmed reachable findings across 5 of 8 repositories, 9/9 hand-verified genuine true
+positives, 0 false confirmations** -- up from the original 3/3 on NodeGoat alone:
+- NodeGoat (unchanged): 3 findings, `app/routes/contributions.js:32-34`,
+  `eval(req.body.preTax)` et al. -- NodeGoat's own documented "A1 SSJS Injection" tutorial
+  vulnerability, the file's own comment reads `// Insecure use of eval() to parse inputs`.
+- pygoat: 4 SAST findings confirmed reachable (`cmd_lab`'s and `mitre_lab_17_api`'s
+  `subprocess.Popen` command injections, `cmd_lab2`'s and `mitre_lab_25_api`'s direct `eval`
+  injections -- one of the four only found after this week's bug fixes, see the linked doc), plus a
+  5th genuine reachable sink (`ImageMath.eval`) with no SAST finding at that exact line to attach to.
+- Vulnerable-Flask-App: 1 (`request.json`-sourced SQL injection via `db.engine.execute`).
+- dvna: 1 (`req.body.login`-sourced SQL injection via `db.sequelize.query`).
+- VAmPI, dvpwa, vulpy: 0 confirmed each, for three different, real, documented reasons (an
+  OpenAPI-path-parameter source the catalog doesn't recognize; an ambiguous same-named function
+  across the repo's own parallel `bad`/`good` implementations; an `aiohttp` app, a framework
+  `core.codeintel`'s entrypoint detector doesn't cover) -- not silent gaps, each confirmed and named
+  in the linked document.
+- Every confirmed finding's originating SAST rule fires on the pattern alone (`eval()`,
+  `subprocess.Popen(..., shell=True)`, a raw `.execute()`/`.query()` call), tainted or not -- the
+  taint engine's actual contribution is narrowing each one down to "and this argument provably comes
+  from this HTTP request," which the pattern rule alone cannot say.
 
 **What this is not**: a corpus-scale precision/recall study, and not a comparison against Semgrep's
 own taint mode specifically (its bundled community rules use pattern mode here; a taint-mode
 comparison would need hand-authored Semgrep taint rules for the same source/sink pairs, which wasn't
-built). This is a small, real, hand-verified spot-check -- 3 confirmed cases, 0 false confirmations --
-not the full "labelled Python and JavaScript corpus" the plan describes.
+built). This is a real, hand-verified spot-check, larger than before -- 9 confirmed cases across 8
+repositories, 0 false confirmations -- not the full "labelled Python and JavaScript corpus" the plan
+describes, and no Go-language vulnerable repository exists in the corpus at all.
 
 ## Ranking detail
 
@@ -114,9 +122,11 @@ probe-budget decision, not something to fake with a hardcoded number.
   (41/42/43/44) -- this document doesn't newly discover them, just collects them.
 - **The UX row has no "before" or "after."** The baseline usability study (Week 31) was never run
   with real participants; there is nothing to compare a redesign against yet.
-- **The taint engine measurement is a spot-check (N=3 confirmed cases on one repository), not a
+- **The taint engine measurement is a spot-check (N=9 confirmed cases across 5 of 8 repositories), not a
   corpus-scale study**, and makes no claim about recall against vulnerability classes outside its
-  three declared JS sink categories (or the Python/Go catalogs, not exercised here at all).
+  declared sink categories, or against the 4 corpus repositories whose own language (Java,
+  CloudFormation, Terraform) has no taint catalog at all. The Go catalog specifically has never been
+  run against a real vulnerable repository -- the corpus has none.
 - **Scale and platform-security numbers are a single developer laptop's**, not a provisioned
   server's -- see each one's own week for the full caveat.
 - **Incremental scanning is one repository with a 3-file edit**, not the plan's "last 20 merged PRs
