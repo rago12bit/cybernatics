@@ -84,7 +84,7 @@ describe("axe accessibility audit", () => {
   it("header marks the current page and shows Sign out only when signed in", async () => {
     path = "/";
     const a = await mount(<SiteHeader />);
-    expect(a.host.querySelector("nav a[aria-current='page']")?.textContent).toBe("Sample scan");
+    expect(a.host.querySelector("nav a[aria-current='page']")?.textContent).toBe("Home");
     expect(a.host.textContent).not.toContain("Sign out");
     await act(async () => a.root.unmount());
     sessionStorage.setItem("bulwark.token", "x".repeat(20));

@@ -8,10 +8,11 @@ import { APP_HREF, APP_NAV, DEMO_ONLY } from "@/lib/site";
 import { BrandMark } from "./graphics";
 
 const LINKS = [
+  { href: "/", label: "Home" },
   { href: "/about#product", label: "Product", id: "product" },
   { href: "/about#results", label: "Results", id: "results" },
   { href: "/about#scanners", label: "Scanners", id: "scanners" },
-  { href: "/", label: "Sample scan" },
+  { href: "/sample", label: "Sample scan" },
   { href: APP_HREF, label: APP_NAV },
 ];
 
@@ -43,6 +44,45 @@ export function SiteHeader() {
     return () => io.disconnect();
   }, [onLanding]);
 
+  // Arriving from another page (e.g. Home -> Scanners) the router changes the URL but doesn't
+  // scroll to the section: the landing content mounts after it looks for the target. Scroll to it
+  // ourselves, waiting briefly for it to exist.
+  useEffect(() => {
+    if (!onLanding) return;
+    const id = decodeURIComponent(window.location.hash.slice(1));
+    if (!id) return;
+    let timer: ReturnType<typeof setTimeout>;
+    let stopped = false;
+    const stop = () => { stopped = true; };
+    const opts = { passive: true } as const;
+    window.addEventListener("wheel", stop, opts);
+    window.addEventListener("touchstart", stop, opts);
+    window.addEventListener("keydown", stop);
+    const started = performance.now();
+    // The page keeps growing for a moment after it mounts (sections reveal, counters render), so
+    // a single scroll lands short of the target. Re-align until the section sits where the sticky
+    // header leaves room for it, or the reader scrolls on their own.
+    const align = () => {
+      if (stopped || performance.now() - started > 3000) return;
+      const el = document.getElementById(id);
+      if (el) {
+        setActive(id);
+        const want = parseFloat(getComputedStyle(el).scrollMarginTop) || 0;
+        if (Math.abs(el.getBoundingClientRect().top - want) > 2) {
+          el.scrollIntoView({ block: "start", behavior: "instant" });
+        }
+      }
+      timer = setTimeout(align, 100);
+    };
+    align();
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("wheel", stop);
+      window.removeEventListener("touchstart", stop);
+      window.removeEventListener("keydown", stop);
+    };
+  }, [onLanding, path]);
+
   useEffect(() => {
     if (!menu) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && setMenu(false);
@@ -56,7 +96,7 @@ export function SiteHeader() {
   const signOut = () => { clearToken(); setSignedIn(false); setMenu(false); router.push("/"); };
 
   const links = LINKS.map((l) => (
-    <Link key={l.href} href={l.href} aria-current={current(l)} onClick={() => setMenu(false)}>{l.label}</Link>
+    <Link key={l.href} href={l.href} aria-current={current(l)} onClick={() => { setMenu(false); if (l.id) setActive(l.id); }}>{l.label}</Link>
   ));
 
   return (
