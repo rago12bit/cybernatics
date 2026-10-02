@@ -11,7 +11,7 @@ one place, not to re-litigate or soften what they already said.
 
 | Area | Metric | Result | Status |
 |---|---|---|---|
-| Incremental scanning | Median PR scan time; speedup over a full scan | NodeGoat: 71.2s cold → 19.6s warm (**3.6x**), target <60s met | Partial -- 1 repository, not the full "last 20 PRs × 30-repo corpus" ask |
+| Incremental scanning | Median PR scan time; speedup over a full scan | 7 repositories, 1.2x-13.1x speedup (median 2.8x), target <60s met in all 7 | Partial -- 7 of 30 repositories (was 1), one synthetic edit each, not the full "last 20 PRs × 30-repo corpus" ask |
 | Taint engine | Precision/recall, Python & JS, vs. Semgrep taint mode | 9/9 hand-verified true positives across 5 of 8 corpus repositories, 0 false confirmations | Partial -- larger real spot-check (was 3/3 on 1 repo), not a corpus-scale study; no Semgrep-taint-mode comparison |
 | Ranking | Top-20 precision: risk score vs. severity-only vs. random | 63.3% / 52.4% / 48.2% (95% CI includes 0) | **Measured** -- already published, [below](#ranking-detail) |
 | Verified fixes | Share of TPs verified-fixed; blind human review; regressions | -- | **Not measured** -- needs a live model |
@@ -129,6 +129,9 @@ probe-budget decision, not something to fake with a hardcoded number.
   run against a real vulnerable repository -- the corpus has none.
 - **Scale and platform-security numbers are a single developer laptop's**, not a provisioned
   server's -- see each one's own week for the full caveat.
-- **Incremental scanning is one repository with a 3-file edit**, not the plan's "last 20 merged PRs
-  of each repository in the 30-repository corpus" -- `benchmarks/incremental/run.py` supports more
-  repos; running it across the full corpus was not done this week.
+- **Incremental scanning is 7 repositories with a 3-file edit each**, not the plan's "last 20 merged
+  PRs of each repository in the 30-repository corpus" -- `benchmarks/incremental/run.py` supports more
+  repos; running it across the full corpus, and against real historical PRs rather than a synthetic
+  edit, was not done. One repository (Vulnerable-Flask-App) showed a much smaller speedup (1.2x) than
+  the rest, plausibly but not confirmed-as-root-caused to a Semgrep per-rule timeout on that
+  repository: [docs/v2-gap-closure-incremental-corpus.md](v2-gap-closure-incremental-corpus.md).

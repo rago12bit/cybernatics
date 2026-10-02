@@ -1,0 +1,21 @@
+{
+  "repo": "VAmPI",
+  "commit": "f16052dce83f05847133ec98f01c5193a41de7d8",
+  "tools": [
+    "bandit",
+    "semgrep",
+    "gitleaks",
+    "trivy",
+    "osv-scanner"
+  ],
+  "files_touched_per_rep": 3,
+  "cold_full_scan_seconds": 5.4,
+  "warm_pr_scan_seconds": [
+    2.3,
+    2.2,
+    2.2
+  ],
+  "median_warm_pr_scan_seconds": 2.2,
+  "speedup": 2.5,
+  "measured_on": "2026-10-02"
+}

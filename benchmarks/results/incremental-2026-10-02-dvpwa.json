@@ -1,0 +1,21 @@
+{
+  "repo": "dvpwa",
+  "commit": "a1d8f89fac2e57093189853c6527c2b01fc1d9c1",
+  "tools": [
+    "bandit",
+    "semgrep",
+    "gitleaks",
+    "trivy",
+    "osv-scanner"
+  ],
+  "files_touched_per_rep": 3,
+  "cold_full_scan_seconds": 46.0,
+  "warm_pr_scan_seconds": [
+    3.6,
+    3.4,
+    3.5
+  ],
+  "median_warm_pr_scan_seconds": 3.5,
+  "speedup": 13.1,
+  "measured_on": "2026-10-02"
+}

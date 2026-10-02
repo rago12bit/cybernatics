@@ -1,0 +1,21 @@
+{
+  "repo": "dvna",
+  "commit": "9ba473add536f66ac9007966acb2a775dd31277a",
+  "tools": [
+    "bandit",
+    "semgrep",
+    "gitleaks",
+    "trivy",
+    "osv-scanner"
+  ],
+  "files_touched_per_rep": 3,
+  "cold_full_scan_seconds": 4.0,
+  "warm_pr_scan_seconds": [
+    1.9,
+    1.7,
+    1.9
+  ],
+  "median_warm_pr_scan_seconds": 1.9,
+  "speedup": 2.1,
+  "measured_on": "2026-10-02"
+}

@@ -17,6 +17,14 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   corpus's 8 Python/JavaScript repositories went from 3 (one repository) to 9 (five repositories),
   all hand-verified true positives.
 
+### Changed
+- **Incremental-scanning benchmark expanded from 1 corpus repository to 7** (NodeGoat plus pygoat,
+  vulpy, dvna, VAmPI, Vulnerable-Flask-App, dvpwa), closing part of the same gap
+  `docs/evaluation-v2.md` already disclosed. 6 of 7 show a real cache speedup (2.0x-13.1x); one
+  repository showed only 1.2x, plausibly linked to a Semgrep per-rule timeout observed on that same
+  repository, disclosed rather than smoothed over:
+  [docs/v2-gap-closure-incremental-corpus.md](docs/v2-gap-closure-incremental-corpus.md).
+
 ### Added
 - **Gate and hierarchy (Week 53, plan Phase 13/§39.5/§40, ADR-0038, ADR-0039):** the first week of
   v3. Re-running v2's own pre-v3 gate found that "the two-tenant RLS test passes on every endpoint"
