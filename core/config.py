@@ -43,6 +43,11 @@ class Settings:
     llm_cost_per_1k_tokens_usd: float | None = (
         None  # None -> core.observability.cost's per-model table
     )
+    # Hosted mode (Week 53, ADR-0038): Semgrep's community/Pro rules are licensed for internal
+    # business use only (ADR-006), which offering scans as a service to other people is not. False
+    # (self-host, the only mode this project ships configured for today) changes nothing; a real
+    # hosted deployment sets this to switch the SAST default to Opengrep and refuse "semgrep".
+    hosted_mode: bool = False
 
     @staticmethod
     def from_env() -> Settings:
@@ -80,6 +85,8 @@ class Settings:
                 if "BULWARK_LLM_COST_PER_1K_TOKENS_USD" in os.environ
                 else None
             ),
+            hosted_mode=os.environ.get("BULWARK_HOSTED_MODE", "").strip().lower()
+            in ("1", "true", "yes"),
         )
 
 

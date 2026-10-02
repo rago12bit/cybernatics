@@ -122,7 +122,7 @@ from core.plugins.signing import PluginSignatureError, verify_plugin_image
 from core.rag.retrieve import context_for
 from core.rag.store import KnowledgeBase
 from core.risk import is_stale, read_meta
-from core.scan import ADAPTERS, DEFAULT_TOOLS
+from core.scan import ADAPTERS, DEFAULT_TOOLS, HOSTED_DEFAULT_TOOLS
 from core.tenancy import DEFAULT_ORG_ID, set_session_org
 
 log = logging.getLogger(__name__)
@@ -132,12 +132,23 @@ _ARCHIVE_EXT = (".zip", ".tar", ".tar.gz", ".tgz")
 MIN_TOKEN_LEN = 16
 
 
-def _tools(requested: list[str] | None, s: Session, org: str) -> list[str]:
+def _tools(requested: list[str] | None, s: Session, org: str, hosted: bool = False) -> list[str]:
     """Validates against built-ins plus every *discovered* plugin tool name (Week 51 task 1, plan
     §23) -- a plugin that isn't yet allowlisted for this org is still a recognized tool name (a
     clear "not allowlisted" error, not a confusing "unknown tool"), but is rejected here rather than
-    silently queued to fail later inside the worker."""
-    names = requested or list(DEFAULT_TOOLS)
+    silently queued to fail later inside the worker.
+
+    `hosted` (Settings.hosted_mode, ADR-0038) swaps the no-tools-requested default from
+    DEFAULT_TOOLS to HOSTED_DEFAULT_TOOLS (Opengrep instead of Semgrep) and refuses an *explicit*
+    request for "semgrep" outright -- Semgrep's community/Pro rules are licensed for internal
+    business use only (ADR-006), which a hosted deployment offering scans to other people is not."""
+    names = requested or list(HOSTED_DEFAULT_TOOLS if hosted else DEFAULT_TOOLS)
+    if hosted and "semgrep" in names:
+        raise HTTPException(
+            422,
+            "semgrep is not available in hosted mode (its rules are licensed for internal use "
+            "only, ADR-006); use 'opengrep' instead (ADR-0038)",
+        )
     plugins = discover_plugins()
     valid = set(ADAPTERS) | set(plugins)
     unknown = [t for t in names if t not in valid]
@@ -338,7 +349,7 @@ def create_app(app_state: AppState) -> FastAPI:
         s: Session = Depends(db),
         org: str = Depends(current_org),
     ) -> ScanCreated:
-        tools = _tools(body.tools, s, org)
+        tools = _tools(body.tools, s, org, hosted=st.settings.hosted_mode)
         try:
             validate_git_url(body.source.url)  # fast feedback; re-validated again at clone time
         except GitUrlError as exc:
@@ -371,8 +382,9 @@ def create_app(app_state: AppState) -> FastAPI:
         if not name.lower().endswith(_ARCHIVE_EXT):
             raise HTTPException(422, f"archive must end with one of {_ARCHIVE_EXT}")
         wanted = _tools(
-            [t.strip() for t in tools.split(",") if t.strip()] if tools else None, s, org
-        )
+            [t.strip() for t in tools.split(",") if t.strip()] if tools else None, s, org,
+            hosted=st.settings.hosted_mode,
+        )  # fmt: skip
         upload_dir = st.settings.upload_dir
         upload_dir.mkdir(parents=True, exist_ok=True)
         dest = upload_dir / f"{uuid.uuid4().hex}{Path(name).suffix}"  # server-chosen filename
@@ -455,7 +467,8 @@ def create_app(app_state: AppState) -> FastAPI:
                 scan = repo.create_scan(
                     s, source_type="git", source_ref=pr.clone_url,
                     source_label=f"{pr.repo_full_name}#{pr.pr_number}", asset_label=pr.clone_url,
-                    tools=list(DEFAULT_TOOLS), org_id=installation.org_id, ref=pr.ref,
+                    tools=list(HOSTED_DEFAULT_TOOLS if st.settings.hosted_mode else DEFAULT_TOOLS),
+                    org_id=installation.org_id, ref=pr.ref,
                     github_repo=pr.repo_full_name, github_pr_number=pr.pr_number,
                     github_installation_id=pr.installation_id,
                 )  # fmt: skip

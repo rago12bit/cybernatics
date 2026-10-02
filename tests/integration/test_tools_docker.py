@@ -50,6 +50,20 @@ def test_bandit_end_to_end() -> None:
 
 @_flaky
 @pytest.mark.skipif(not _docker_ready(), reason="docker not available")
+def test_opengrep_end_to_end() -> None:
+    """Hosted mode's Semgrep replacement (ADR-0038), through the real sandboxed container --
+    docker/opengrep/'s own `HOME=/scratch TMPDIR=/scratch` matters here specifically: Opengrep's
+    binary self-extracts a child executable and execs it from there, which fails against the
+    sandbox's shared, `noexec` /tmp every other adapter gets (confirmed live while building this
+    adapter -- "couldn't launch child (exec): Permission denied")."""
+    r = scan(FIXTURE, ["opengrep"])
+    _assert_all_ok(r.tool_status, "opengrep")
+    rule_ids = {x for f in r.findings for x in f.evidence.rule_ids.get("opengrep", [])}
+    assert rule_ids >= {"rules.bulwark-py-subprocess-shell-true", "rules.bulwark-py-weak-hash"}
+
+
+@_flaky
+@pytest.mark.skipif(not _docker_ready(), reason="docker not available")
 def test_all_tools_end_to_end_and_secret_never_leaks() -> None:
     r = scan(FIXTURE, ["bandit", "semgrep", "gitleaks"])
     _assert_all_ok(r.tool_status, "bandit", "semgrep", "gitleaks")

@@ -31,6 +31,7 @@ jobs:
       - run: mypy
       - run: docker build -t bulwark/bandit:1.7.10 docker/bandit
       - run: docker build -t bulwark/semgrep:1.90.0 docker/semgrep
+      - run: docker build -t bulwark/opengrep:1.30.0 docker/opengrep
       - run: docker build -t bulwark/trivy:0.55.2 docker/trivy
       - run: docker build -t bulwark/osv-scanner:2.6.0 docker/osv-scanner
       - run: docker build -t bulwark/syft:1.52.0 docker/syft

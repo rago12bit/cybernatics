@@ -13,6 +13,8 @@ S = Severity
 # tool -> {native label (upper-case) -> normalized severity}. "*" matches any label.
 MATRIX: dict[str, dict[str, Severity]] = {
     "semgrep": {"ERROR": S.HIGH, "WARNING": S.MEDIUM, "INFO": S.LOW},
+    # Hosted mode's Semgrep replacement (ADR-0038) -- same engine lineage, same severity labels.
+    "opengrep": {"ERROR": S.HIGH, "WARNING": S.MEDIUM, "INFO": S.LOW},
     "bandit": {"HIGH": S.HIGH, "MEDIUM": S.MEDIUM, "LOW": S.LOW},
     "trivy": {
         "CRITICAL": S.CRITICAL,

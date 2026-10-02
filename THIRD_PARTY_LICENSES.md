@@ -18,6 +18,7 @@ inventory, not legal advice: check licenses that matter to you at the source.
 | grafana | AGPL-3.0-only | <https://github.com/grafana/grafana> | optional compose profile, run unmodified as a separate container; nothing links to it |
 | grype | Apache-2.0 | <https://github.com/anchore/grype> | runs in a container |
 | jaeger | Apache-2.0 | <https://github.com/jaegertracing/jaeger> | optional compose profile |
+| opengrep | LGPL-2.1-only (engine) | <https://github.com/opengrep/opengrep> | hosted mode's SAST tool (ADR-0038); runs in a container, binary pinned by sha256 -- never bundles opengrep-rules (Commons Clause), uses docker/opengrep/rules/ instead, originally written for this project under its own Apache-2.0 license |
 | osv-scanner | Apache-2.0 | <https://github.com/google/osv-scanner> | runs in a container |
 | pgvector | PostgreSQL License | <https://github.com/pgvector/pgvector> | built into the database image |
 | postgres | PostgreSQL License | <https://www.postgresql.org/> | container image |
@@ -47,7 +48,7 @@ optional separate container.
 | CycloneDX 1.6 JSON schema | Apache-2.0 | test fixture (tests/fixtures/cyclonedx) |
 | SARIF 2.1.0 JSON schema | OASIS | test fixture (tests/fixtures) |
 
-## Python dependencies (89)
+## Python dependencies (90)
 
 | Package | Version | License |
 |---|---|---|
@@ -69,6 +70,7 @@ optional separate container.
 | click-didyoumean | 0.3.1 | MIT |
 | click-plugins | 1.1.1.2 | New BSD |
 | click-repl | 0.4.0 | MIT |
+| colorama | 0.4.6 | BSD License |
 | cryptography | 50.0.1 | Apache-2.0 OR BSD-3-Clause |
 | dnspython | 2.8.0 | ISC |
 | docstring-parser | 0.18.0 | MIT |

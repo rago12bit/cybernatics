@@ -271,6 +271,12 @@ services:
     profiles: [scanners]
     build: docker/semgrep
     image: bulwark/semgrep:1.90.0
+  scanner-opengrep:
+    # Hosted mode's Semgrep replacement (ADR-0038) -- built here too, so a developer testing
+    # BULWARK_HOSTED_MODE=1 locally doesn't need a separate build step.
+    profiles: [scanners]
+    build: docker/opengrep
+    image: bulwark/opengrep:1.30.0
   scanner-trivy:
     profiles: [scanners]
     build: docker/trivy

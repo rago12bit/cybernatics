@@ -1,0 +1,7 @@
+The rule files in this directory (python.yaml, javascript.yaml) are original work written for the
+Bulwark project, Apache-2.0 licensed -- the same license as the rest of this repository (see
+/LICENSE at the repository root). They are not copied, transcribed, or adapted from
+github.com/semgrep/semgrep-rules or github.com/opengrep/opengrep-rules, both of which carry
+restrictions ("Semgrep Rules License v1.0" and a Commons Clause condition, respectively) that are
+incompatible with a hosted, multi-tenant deployment -- the entire reason this starter set exists
+(see docs/adr/0038-hosted-mode-opengrep.md).

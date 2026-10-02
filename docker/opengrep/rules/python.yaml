@@ -1,0 +1,114 @@
+# Original starter ruleset for hosted-mode Opengrep (ADR-0038). Deliberately small and
+# high-confidence rather than broad -- a hosted deployment's own curated set, not an attempt to
+# reproduce Semgrep's community ruleset's breadth under a different license.
+rules:
+  - id: bulwark-py-eval-exec
+    languages: [python]
+    severity: ERROR
+    message: >-
+      eval()/exec() on a value that may not be a fixed, trusted literal can execute arbitrary code.
+      Prefer a safe parser (ast.literal_eval for simple literals, json.loads for JSON) or an
+      explicit allowlist of accepted operations.
+    metadata:
+      cwe: ["CWE-95"]
+      owasp: ["A03:2021"]
+      category: security
+    patterns:
+      - pattern-either:
+          - pattern: eval(...)
+          - pattern: exec(...)
+
+  - id: bulwark-py-subprocess-shell-true
+    languages: [python]
+    severity: ERROR
+    message: >-
+      subprocess.*(..., shell=True) runs its argument through a shell, so any part of it built
+      from untrusted input can inject additional commands. Pass argv as a list and drop shell=True,
+      or use shlex.quote on every interpolated piece if a shell is unavoidable.
+    metadata:
+      cwe: ["CWE-78"]
+      owasp: ["A03:2021"]
+      category: security
+    patterns:
+      - pattern-either:
+          - pattern: subprocess.run(..., shell=True, ...)
+          - pattern: subprocess.call(..., shell=True, ...)
+          - pattern: subprocess.check_call(..., shell=True, ...)
+          - pattern: subprocess.check_output(..., shell=True, ...)
+          - pattern: subprocess.Popen(..., shell=True, ...)
+
+  - id: bulwark-py-os-system
+    languages: [python]
+    severity: ERROR
+    message: >-
+      os.system()/os.popen() always runs through a shell. Prefer subprocess with an argv list and
+      no shell.
+    metadata:
+      cwe: ["CWE-78"]
+      owasp: ["A03:2021"]
+      category: security
+    patterns:
+      - pattern-either:
+          - pattern: os.system(...)
+          - pattern: os.popen(...)
+
+  - id: bulwark-py-pickle-load
+    languages: [python]
+    severity: WARNING
+    message: >-
+      pickle.load()/pickle.loads() can execute arbitrary code when given untrusted input. Prefer a
+      data-only format (JSON, msgpack) for anything that didn't come from a source you fully trust.
+    metadata:
+      cwe: ["CWE-502"]
+      owasp: ["A08:2021"]
+      category: security
+    patterns:
+      - pattern-either:
+          - pattern: pickle.load(...)
+          - pattern: pickle.loads(...)
+
+  - id: bulwark-py-yaml-load-unsafe
+    languages: [python]
+    severity: WARNING
+    message: >-
+      yaml.load() without Loader=yaml.SafeLoader can construct arbitrary Python objects from the
+      input. Use yaml.safe_load(), or yaml.load(..., Loader=yaml.SafeLoader) explicitly.
+    metadata:
+      cwe: ["CWE-502"]
+      owasp: ["A08:2021"]
+      category: security
+    patterns:
+      - pattern: yaml.load($DATA)
+      - pattern-not: yaml.load($DATA, Loader=yaml.SafeLoader)
+      - pattern-not: yaml.load($DATA, Loader=yaml.CSafeLoader)
+
+  - id: bulwark-py-weak-hash
+    languages: [python]
+    severity: INFO
+    message: >-
+      MD5 and SHA-1 are cryptographically broken: unsuitable for passwords, signatures, or anywhere
+      collision resistance matters. Use hashlib.sha256 or stronger; for passwords, use a dedicated
+      KDF (bcrypt/scrypt/argon2), never a general-purpose hash alone.
+    metadata:
+      cwe: ["CWE-327"]
+      owasp: ["A02:2021"]
+      category: security
+    patterns:
+      - pattern-either:
+          - pattern: hashlib.md5(...)
+          - pattern: hashlib.sha1(...)
+
+  - id: bulwark-py-requests-verify-false
+    languages: [python]
+    severity: ERROR
+    message: >-
+      verify=False disables TLS certificate verification entirely, making the request vulnerable to
+      interception. Fix the underlying certificate problem instead of disabling verification.
+    metadata:
+      cwe: ["CWE-295"]
+      owasp: ["A02:2021"]
+      category: security
+    patterns:
+      - pattern-either:
+          - pattern: requests.$METHOD(..., verify=False, ...)
+          - pattern: requests.Session().$METHOD(..., verify=False, ...)

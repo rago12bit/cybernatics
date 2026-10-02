@@ -1,0 +1,124 @@
+[
+  {
+    "description": "child_process.exec()/execSync() run their command string through a shell, so any part built from untrusted input can inject additional commands. Prefer execFile()/execFileSync() with an argv array, which never invokes a shell.",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "opengrep"
+      ],
+      "rule_ids": {
+        "opengrep": [
+          "rules.bulwark-js-child-process-exec"
+        ]
+      }
+    },
+    "fingerprint": "",
+    "id": "opengrep:rules.bulwark-js-child-process-exec:app.js:2",
+    "location": {
+      "end_line": 2,
+      "path": "app.js",
+      "route": "",
+      "snippet": "function run(cmd) { cp.exec(cmd); }",
+      "snippet_hash": "sha256:6dabeda23791d5c142aee26d48cf44b046d2ce9001d0dd7875dfed254226bc55",
+      "start_line": 2
+    },
+    "package": null,
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [],
+      "suggested_patch": null,
+      "summary": ""
+    },
+    "scoring": {
+      "confidence": 0.6,
+      "cvss_v3_1": null,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "opengrep": "ERROR"
+      },
+      "normalized_severity": "HIGH",
+      "reachable": null,
+      "risk_factors": [],
+      "risk_score": null
+    },
+    "taint_path": [],
+    "taxonomy": {
+      "aliases": [],
+      "category": "sast",
+      "cve": [],
+      "cwe": [
+        "CWE-78"
+      ],
+      "owasp_top_10_2021": []
+    },
+    "title": "child_process.exec()/execSync() run their command string through a shell, so any part built from untrusted input can inject additional commands. Prefer execFile()/execFileSync() with an argv array, which never invokes a shell.",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  },
+  {
+    "description": "subprocess.*(..., shell=True) runs its argument through a shell, so any part of it built from untrusted input can inject additional commands. Pass argv as a list and drop shell=True, or use shlex.quote on every interpolated piece if a shell is unavoidable.",
+    "evidence": {
+      "agreement_count": 1,
+      "reported_by": [
+        "opengrep"
+      ],
+      "rule_ids": {
+        "opengrep": [
+          "rules.bulwark-py-subprocess-shell-true"
+        ]
+      }
+    },
+    "fingerprint": "",
+    "id": "opengrep:rules.bulwark-py-subprocess-shell-true:app.py:3",
+    "location": {
+      "end_line": 3,
+      "path": "app.py",
+      "route": "",
+      "snippet": "    subprocess.run(cmd, shell=True)",
+      "snippet_hash": "sha256:93822c714c83f05b94691cadf438406b3d5cb553660ae8bf4877ffe4c21f1e76",
+      "start_line": 3
+    },
+    "package": null,
+    "remediation": {
+      "generated_by": "static",
+      "is_suggestion": true,
+      "references": [],
+      "suggested_patch": null,
+      "summary": ""
+    },
+    "scoring": {
+      "confidence": 0.6,
+      "cvss_v3_1": null,
+      "epss_score": null,
+      "in_cisa_kev": false,
+      "native_severity": {
+        "opengrep": "ERROR"
+      },
+      "normalized_severity": "HIGH",
+      "reachable": null,
+      "risk_factors": [],
+      "risk_score": null
+    },
+    "taint_path": [],
+    "taxonomy": {
+      "aliases": [],
+      "category": "sast",
+      "cve": [],
+      "cwe": [
+        "CWE-78"
+      ],
+      "owasp_top_10_2021": []
+    },
+    "title": "subprocess.*(..., shell=True) runs its argument through a shell, so any part of it built from untrusted input can inject additional commands. Pass argv as a list and drop shell=True, or use shlex.quote on every interpolated piece if a shell is unavoidable.",
+    "triage": {
+      "state": "open",
+      "suppression_reason": null,
+      "user_marked_false_positive": false
+    }
+  }
+]

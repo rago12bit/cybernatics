@@ -20,6 +20,7 @@ from core.adapters.dockle import IMAGE_ARCHIVE, DockleAdapter
 from core.adapters.gitleaks import GitleaksAdapter
 from core.adapters.gosec import GosecAdapter
 from core.adapters.grype import GrypeAdapter
+from core.adapters.opengrep import OpengrepAdapter
 from core.adapters.osv_scanner import OsvScannerAdapter
 from core.adapters.semgrep import SemgrepAdapter
 from core.adapters.trivy import TrivyAdapter
@@ -53,9 +54,17 @@ ADAPTERS: dict[str, ToolAdapter] = {
         # and OpenSSF Scorecard for direct dependencies (`core.pipeline`), not just the raw SBOM
         # artifact -- one toggle for the whole feature area, not three.
         SyftAdapter(),
+        # Hosted mode's SAST tool (ADR-0038, Week 53): not in DEFAULT_TOOLS below -- self-host
+        # deployments keep using Semgrep, since nothing about their own use needs Opengrep's
+        # narrower, originally-authored ruleset. Selected instead of Semgrep only when
+        # `Settings.hosted_mode` is set (api/main.py's `_tools`), which also then refuses "semgrep".
+        OpengrepAdapter(),
     )
 }
 DEFAULT_TOOLS: tuple[str, ...] = ("bandit", "semgrep", "gitleaks", "trivy", "osv-scanner")
+# Hosted mode's equivalent (ADR-0038): Opengrep instead of Semgrep, so a hosted deployment's own
+# default scan never runs a tool licensed for internal use only.
+HOSTED_DEFAULT_TOOLS: tuple[str, ...] = ("bandit", "opengrep", "gitleaks", "trivy", "osv-scanner")
 
 _EXT_LANG = {
     ".py": "python",

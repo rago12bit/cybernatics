@@ -7,6 +7,7 @@ Tool severity vocabularies are not comparable. This table is a **judgment call**
 | Tool | CRITICAL | HIGH | MEDIUM | LOW | INFO |
 |---|---|---|---|---|---|
 | semgrep | — | ERROR | WARNING | INFO | — |
+| opengrep | — | ERROR | WARNING | INFO | — |
 | bandit | — | HIGH | MEDIUM | LOW | — |
 | trivy | CRITICAL | HIGH | MEDIUM | LOW | UNKNOWN |
 | grype | CRITICAL | HIGH | MEDIUM | LOW | NEGLIGIBLE, UNKNOWN |

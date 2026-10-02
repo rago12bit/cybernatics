@@ -1,0 +1,67 @@
+# Original starter ruleset for hosted-mode Opengrep (ADR-0038). See python.yaml's own header for
+# why this is deliberately small, and docker/opengrep/rules/LICENSE for its own license.
+rules:
+  - id: bulwark-js-eval
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: >-
+      eval() (or the Function constructor) on a value that may not be a fixed, trusted literal can
+      execute arbitrary code. Parse data with JSON.parse or an explicit, narrow interpreter instead.
+    metadata:
+      cwe: ["CWE-95"]
+      owasp: ["A03:2021"]
+      category: security
+    patterns:
+      - pattern-either:
+          - pattern: eval(...)
+          - pattern: new Function(...)
+
+  - id: bulwark-js-child-process-exec
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: >-
+      child_process.exec()/execSync() run their command string through a shell, so any part built
+      from untrusted input can inject additional commands. Prefer execFile()/execFileSync() with an
+      argv array, which never invokes a shell.
+    metadata:
+      cwe: ["CWE-78"]
+      owasp: ["A03:2021"]
+      category: security
+    patterns:
+      - pattern-either:
+          - pattern: require("child_process").exec(...)
+          - pattern: require("child_process").execSync(...)
+          - pattern: child_process.exec(...)
+          - pattern: child_process.execSync(...)
+
+  - id: bulwark-js-weak-hash
+    languages: [javascript, typescript]
+    severity: INFO
+    message: >-
+      MD5 and SHA-1 are cryptographically broken: unsuitable for passwords, signatures, or anywhere
+      collision resistance matters. Use crypto.createHash("sha256") or stronger; for passwords, use
+      a dedicated KDF (bcrypt/scrypt/argon2), never a general-purpose hash alone.
+    metadata:
+      cwe: ["CWE-327"]
+      owasp: ["A02:2021"]
+      category: security
+    patterns:
+      - pattern-either:
+          - pattern: crypto.createHash("md5")
+          - pattern: crypto.createHash("sha1")
+
+  - id: bulwark-js-disabled-tls-rejection
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: >-
+      Setting NODE_TLS_REJECT_UNAUTHORIZED="0" (or rejectUnauthorized: false on an https/tls
+      options object) disables TLS certificate verification process-wide or per-request. Fix the
+      underlying certificate problem instead of disabling verification.
+    metadata:
+      cwe: ["CWE-295"]
+      owasp: ["A02:2021"]
+      category: security
+    patterns:
+      - pattern-either:
+          - pattern: process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"
+          - pattern: '{..., rejectUnauthorized: false, ...}'

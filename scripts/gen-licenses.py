@@ -34,6 +34,10 @@ TOOLS: dict[str, tuple[str, str, str]] = {
     "semgrep": ("LGPL-2.1-only (engine)", "https://github.com/semgrep/semgrep", "runs in a container"),
     "semgrep-rules": ("Semgrep Rules License v1.0", "https://github.com/semgrep/semgrep-rules",
                       "fetched at image build; never committed or redistributed (ADR-006)"),
+    "opengrep": ("LGPL-2.1-only (engine)", "https://github.com/opengrep/opengrep",
+                 "hosted mode's SAST tool (ADR-0038); runs in a container, binary pinned by sha256 "
+                 "-- never bundles opengrep-rules (Commons Clause), uses docker/opengrep/rules/ "
+                 "instead, originally written for this project under its own Apache-2.0 license"),
     "gitleaks": ("MIT", "https://github.com/gitleaks/gitleaks", "upstream image, runs in a container"),
     "trivy": ("Apache-2.0", "https://github.com/aquasecurity/trivy", "runs in a container"),
     "osv-scanner": ("Apache-2.0", "https://github.com/google/osv-scanner", "runs in a container"),
