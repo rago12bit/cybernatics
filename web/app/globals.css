@@ -488,7 +488,7 @@ main:focus { outline: none; }
 /* ---------- Header: mobile menu ---------- */
 .menu-btn { display: none; }
 .top nav.nav-mobile { display: none; } /* specificity must beat `.top nav { display: flex }` */
-.top nav.nav-desktop a[aria-current="location"] { color: var(--text); box-shadow: inset 0 -1px 0 var(--teal); }
+.top nav.nav-desktop a[aria-current="location"], .top nav.nav-desktop a[aria-current="page"] { color: var(--text); box-shadow: inset 0 -1px 0 var(--teal); }
 @media (max-width: 960px) {
   .top nav.nav-desktop { display: none; }
   .menu-btn { display: inline-flex; }

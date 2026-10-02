@@ -57,7 +57,7 @@ export function TokenGate({ children }: { children: ReactNode }) {
         </div>
         {error && <p id="token-err" className="error small" role="alert">{error}</p>}
         <button className="btn primary" disabled={busy || !value.trim()}>{busy ? "Checking…" : "Continue →"}</button>
-        <p className="small muted gate-alt">No server handy? <Link href="/">Explore a sample scan</Link>, no token needed.</p>
+        <p className="small muted gate-alt">No server handy? <Link href="/sample">Explore a sample scan</Link>, no token needed.</p>
       </form>
     </div>
   );

@@ -18,6 +18,11 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   all hand-verified true positives.
 
 ### Changed
+- **The opening screen is now the product page.** `/` shows the hero, results and scanners
+  (previously at `/about`, which now redirects there); the real Juice Shop scan replay moved to
+  `/sample`, and `/demo` redirects to it. The header reads Home, Results, Scanners, Sample scan, App,
+  and clicking a section from another page now scrolls to it and highlights it (the router's one-shot
+  hash scroll used to land at the top of the page and leave the wrong item highlighted).
 - **Incremental-scanning benchmark expanded from 1 corpus repository to 7** (NodeGoat plus pygoat,
   vulpy, dvna, VAmPI, Vulnerable-Flask-App, dvpwa), closing part of the same gap
   `docs/evaluation-v2.md` already disclosed. 6 of 7 show a real cache speedup (2.0x-13.1x); one
@@ -753,6 +758,11 @@ changes since `v0.1.0`, not only since `v0.2.0`.
   output that `action.yml` has had since Week 20.
 
 ### Changed
+- **The opening screen is now the product page.** `/` shows the hero, results and scanners
+  (previously at `/about`, which now redirects there); the real Juice Shop scan replay moved to
+  `/sample`, and `/demo` redirects to it. The header reads Home, Results, Scanners, Sample scan, App,
+  and clicking a section from another page now scrolls to it and highlights it (the router's one-shot
+  hash scroll used to land at the top of the page and leave the wrong item highlighted).
 - **Landing-page motion:** headline words rise on load (pure CSS), hero and results numbers count up when first seen,
   feature cards fade in as they scroll into view, feature and diagram panels get a soft pointer spotlight, and a
   hairline shows reading progress. Dependency-free, CSP-safe (styles set through the CSSOM), and all of it is off under

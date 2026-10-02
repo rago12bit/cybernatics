@@ -33,8 +33,8 @@ pip install -e ".[dev]"
 bulwark scan ./my-project --format html -o report.html`}</code></pre>
         <p className="muted">Needs Docker. The first build downloads scanner databases (about 1.4 GB for Trivy).</p>
         <div className="hero-actions">
-          <Link href="/" className="btn primary">Back to the sample report</Link>
-          <Link href="/about" className="btn">About Bulwark</Link>
+          <Link href="/sample" className="btn primary">Back to the sample report</Link>
+          <Link href="/" className="btn">About Bulwark</Link>
           {REPO_URL && <a href={REPO_URL} className="btn" rel="noopener noreferrer">Source code</a>}
           {CONTACT_URL && <a href={CONTACT_URL} className="btn" rel="noopener noreferrer">Contact</a>}
         </div>

@@ -12,7 +12,7 @@ Build with `NEXT_PUBLIC_DEMO_ONLY=1` (a build argument in `web/Dockerfile`):
 
 | | Normal build | Sample build |
 |---|---|---|
-| `/` sample report, `/about` | yes | yes |
+| `/` home, `/sample` | yes | yes |
 | `/app`, `/scans/*` | scanning UI | redirect (307) to `/self-host` |
 | `/self-host` | n/a | how to run Bulwark locally, and why there is no hosted scanner |
 | Header / hero buttons | "Open the app" | "Run it yourself" |
@@ -25,8 +25,8 @@ contains no reference to an API address.
 
 ## Verified locally
 
-The sample image was built and run: `/`, `/about`, `/self-host` return 200; `/app` and `/scans/x` redirect to
-`/self-host`; `/demo` redirects to `/`; the container runs as a non-root user (uid 1000) and passes its
+The sample image was built and run: `/`, `/sample`, `/self-host` return 200; `/app` and `/scans/x` redirect to
+`/self-host`; `/about` redirects to `/` and `/demo` to `/sample`; the container runs as a non-root user (uid 1000) and passes its
 health check; the browser page contacts only its own origin, with a clean console; and no built file
 contains `localhost:8000`. It has **not** been deployed to a real host from this repository.
 

@@ -59,7 +59,7 @@ export function DemoReport() {
         </div>
         <Link href={APP_HREF} className="btn primary sm">{DEMO_ONLY ? "Run it yourself →" : "Scan your own →"}</Link>
       </div>
-      <ScanReport scan={scan} connection="done" version={0} fetchFindings={fetchFindings} guidance={demoGuidance} crumb={{ href: "/about", label: "← About Bulwark" }} />
+      <ScanReport scan={scan} connection="done" version={0} fetchFindings={fetchFindings} guidance={demoGuidance} crumb={{ href: "/", label: "← Home" }} />
     </div>
   );
 }

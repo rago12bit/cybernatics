@@ -28,7 +28,7 @@ export function Landing() {
             </p>
             <div className="hero-actions">
               <Link href={APP_HREF} className="btn primary">{APP_CTA}</Link>
-              <Link href="/" className="btn">View a sample scan</Link>
+              <Link href="/sample" className="btn">View a sample scan</Link>
             </div>
           </div>
           <div className="hero-stats">
@@ -190,7 +190,7 @@ export function Landing() {
       </section>
       <footer className="foot">
         <div className="foot-links">
-          <div><h3>Product</h3><ul><li><Link href={APP_HREF}>{DEMO_ONLY ? "Run it yourself" : "Open app"}</Link></li><li><Link href="/about#results">Results</Link></li><li><Link href="/about#scanners">Scanners</Link></li></ul></div>
+          <div><h3>Product</h3><ul><li><Link href={APP_HREF}>{DEMO_ONLY ? "Run it yourself" : "Open app"}</Link></li><li><Link href="/#results">Results</Link></li><li><Link href="/#scanners">Scanners</Link></li></ul></div>
           <div><h3>Developers</h3><ul><li><a href={DOCS_HREF}>API reference</a></li><li>CLI: bulwark scan</li><li>WebSocket progress</li></ul></div>
           <div><h3>Security</h3><ul><li>Sandboxed runners</li><li>SSRF + zip-slip guards</li><li>Secret redaction</li></ul></div>
           <div><h3>Project</h3><ul><li>Apache-2.0</li>{REPO_URL && <li><a href={REPO_URL} rel="noopener noreferrer">Source code</a></li>}{CONTACT_URL && <li><a href={CONTACT_URL} rel="noopener noreferrer">Contact</a></li>}<li>Benchmarks published</li></ul></div>

@@ -107,7 +107,7 @@ export function LiveJuiceShopDemo() {
         connection={done ? "done" : "live"}
         version={runId}
         fetchFindings={fetchFindings}
-        crumb={{ href: "/about", label: "← About Bulwark" }}
+        crumb={{ href: "/", label: "← Home" }}
       />
     </div>
   );

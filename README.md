@@ -112,7 +112,7 @@ docker compose --profile scanners build     # builds the app image and the 4 cus
 docker compose up -d
 ```
 
-Open **http://localhost:3000** for the web UI (the first page is a full sample report that needs no server; the product pitch is at **/about**): paste your API token once, submit a Git URL or an
+Open **http://localhost:3000** for the web UI (the first page is the product pitch; a real sample scan that needs no server is at **/sample**): paste your API token once, submit a Git URL or an
 archive, watch scanners report live, then filter and sort the merged findings and open any finding for
 the code, per-scanner severities and fix guidance. The UI is served with a strict per-request-nonce
 CSP and renders all scanner data as text, never HTML (threat T9; covered by `web/tests/xss.test.tsx`).
@@ -405,7 +405,7 @@ The web app can be built as a **sample-only site** (no API, no scanning) for pub
 
 ## Web UI development
 
-The `/about` page uses a scroll-driven section stack (each section pins while the next slides over it).
+The home page (`/`) uses a scroll-driven section stack (each section pins while the next slides over it).
 It is disabled under `prefers-reduced-motion` and below 961px, where sections simply flow; the geometry
 lives in `web/lib/stack.ts` and is unit-tested.
 

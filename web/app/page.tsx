@@ -1,8 +1,7 @@
-import { LiveJuiceShopDemo } from "@/components/LiveJuiceShopDemo";
+import { Landing } from "@/components/site/Landing";
 
-// The first thing anyone sees is a real scan happening, not a block of statistics (plan §33, Week
-// 52's launch page); the pitch lives at /about, a smaller fixed sample at /sample, and scanning
-// your own code at /app.
+// The opening screen is the product pitch; a real scan to explore lives at /sample, and scanning
+// your own code at /app. (/about used to hold this page and now redirects here.)
 export default function Home() {
-  return <LiveJuiceShopDemo />;
+  return <Landing />;
 }

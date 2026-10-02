@@ -136,15 +136,15 @@ describe("live scan updates (useScan)", () => {
 });
 
 describe("site header navigation", () => {
-  it("starts with Home, keeps the landing sections, and gives the sample its own page", async () => {
+  it("starts with Home, links the landing sections, and gives the sample its own page", async () => {
     const h = await mount(<SiteHeader />);
     const links = [...h.querySelectorAll("nav.nav-desktop a")].map((a) => [a.textContent, a.getAttribute("href")]);
     expect(links.slice(0, 5)).toEqual([
       ["Home", "/"],
-      ["Product", "/about#product"],
-      ["Results", "/about#results"],
-      ["Scanners", "/about#scanners"],
+      ["Results", "/#results"],
+      ["Scanners", "/#scanners"],
       ["Sample scan", "/sample"],
+      ["App", "/app"],
     ]);
   });
 });

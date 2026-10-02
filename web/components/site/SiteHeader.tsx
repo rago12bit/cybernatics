@@ -8,10 +8,9 @@ import { APP_HREF, APP_NAV, DEMO_ONLY } from "@/lib/site";
 import { BrandMark } from "./graphics";
 
 const LINKS = [
-  { href: "/", label: "Home" },
-  { href: "/about#product", label: "Product", id: "product" },
-  { href: "/about#results", label: "Results", id: "results" },
-  { href: "/about#scanners", label: "Scanners", id: "scanners" },
+  { href: "/", label: "Home", id: "product" },
+  { href: "/#results", label: "Results", id: "results" },
+  { href: "/#scanners", label: "Scanners", id: "scanners" },
   { href: "/sample", label: "Sample scan" },
   { href: APP_HREF, label: APP_NAV },
 ];
@@ -22,7 +21,7 @@ export function SiteHeader() {
   const [menu, setMenu] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
   const [active, setActive] = useState("product");
-  const onLanding = path === "/about";
+  const onLanding = path === "/";
   const inApp = path.startsWith("/app") || path.startsWith("/scans");
 
   useEffect(() => { setMenu(false); }, [path]);
@@ -90,8 +89,13 @@ export function SiteHeader() {
     return () => document.removeEventListener("keydown", onKey);
   }, [menu]);
 
-  const current = (l: (typeof LINKS)[number]) =>
-    l.id ? (onLanding && active === l.id ? "location" : undefined) : (l.href === "/" ? path === "/" : path.startsWith(l.href) || (l.href === "/app" && inApp)) ? "page" : undefined;
+  // Home is the top of the landing page, so it is the current *page* while that section is in view;
+  // Results and Scanners are sections of it ("location"). Sample scan and App are pages.
+  const current = (l: (typeof LINKS)[number]) => {
+    if (l.href === "/") return path === "/" && active === "product" ? "page" : undefined;
+    if (l.id) return onLanding && active === l.id ? "location" : undefined;
+    return path.startsWith(l.href) || (l.href === "/app" && inApp) ? "page" : undefined;
+  };
 
   const signOut = () => { clearToken(); setSignedIn(false); setMenu(false); router.push("/"); };
 

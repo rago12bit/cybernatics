@@ -50,7 +50,7 @@ export function RecentScans() {
       {rows?.length === 0 && (
         <div className="empty">
           <p className="muted">No scans yet. Start one on the left, or take a look at what a finished report looks like.</p>
-          <Link href="/" className="btn sm">View a sample scan →</Link>
+          <Link href="/sample" className="btn sm">View a sample scan →</Link>
         </div>
       )}
       {rows && rows.length > 0 && (

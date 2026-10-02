@@ -9,7 +9,7 @@ export default function NotFound() {
         <p className="lede">The link may be old, or the scan may have been removed.</p>
         <div className="hero-actions">
           <Link href="/" className="btn primary">Back home →</Link>
-          <Link href="/" className="btn">View a sample scan</Link>
+          <Link href="/sample" className="btn">View a sample scan</Link>
         </div>
       </div>
     </div>

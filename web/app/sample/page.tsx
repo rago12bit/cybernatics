@@ -1,7 +1,12 @@
-import { DemoReport } from "@/components/DemoReport";
+import type { Metadata } from "next";
+import { LiveJuiceShopDemo } from "@/components/LiveJuiceShopDemo";
 
-// The smaller, fixed sample report that used to live at "/" before Week 52 made the live Juice
-// Shop replay the homepage -- kept at its own route rather than removed.
+export const metadata: Metadata = {
+  title: "Sample scan · Bulwark",
+  description: "A real scan of the public OWASP Juice Shop, replayed so you can explore the report without running anything.",
+};
+
+// A real scan of the public OWASP Juice Shop replaying as it would live (plan §33, Week 52).
 export default function Sample() {
-  return <DemoReport />;
+  return <LiveJuiceShopDemo />;
 }

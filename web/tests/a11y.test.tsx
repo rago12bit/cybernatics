@@ -64,7 +64,7 @@ describe("axe accessibility audit", () => {
     const { host } = await mount(<TokenGate><p>secret app</p></TokenGate>);
     expect(host.textContent).not.toContain("secret app"); // the wall really blocks the app
     expect(host.querySelector("label[for=token]")).not.toBeNull(); // input has a real label
-    expect(host.querySelector("a[href='/']")).not.toBeNull(); // and a way forward without a token
+    expect(host.querySelector("a[href='/sample']")).not.toBeNull(); // and a way forward without a token
     expect(await violations(host)).toEqual([]);
   });
 
