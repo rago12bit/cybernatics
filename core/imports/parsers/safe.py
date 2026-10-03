@@ -8,6 +8,9 @@ only point at which a hostile file can still be stopped cheaply.
 
 from __future__ import annotations
 
+import codecs
+import csv
+import itertools
 import re as _stdlib_re
 from collections.abc import Callable, Iterator
 from typing import Any, BinaryIO
@@ -113,19 +116,51 @@ def stream_objects(
                 builder = None
 
 
+class _Prefixed:
+    """A stream with some already-read bytes put back in front of it."""
+
+    def __init__(self, head: bytes, stream: BinaryIO) -> None:
+        self._head, self._stream = head, stream
+
+    def read(self, size: int = -1) -> bytes:
+        if self._head:
+            take = self._head if size < 0 else self._head[:size]
+            self._head = self._head[len(take) :]
+            return take
+        return self._stream.read(size)
+
+
+_EXTERNAL_DTD = _stdlib_re.compile(rb"<!DOCTYPE[^>\[]*\b(?:SYSTEM|PUBLIC)\b", _stdlib_re.IGNORECASE)
+
+
 def iter_xml(
-    stream: BinaryIO, ctx: ParseContext, events: tuple[str, ...] = ("start", "end")
+    stream: BinaryIO,
+    ctx: ParseContext,
+    events: tuple[str, ...] = ("start", "end"),
+    *,
+    allow_dtd: bool = False,
 ) -> Iterator[tuple[str, Any]]:
     """Streaming XML with DTDs, entities and external references all refused (`defusedxml`: XXE,
-    billion laughs, quadratic blowup), plus the same size, depth and time limits as JSON."""
+    billion laughs, quadratic blowup), plus the same size, depth and time limits as JSON.
+
+    `allow_dtd` is for the one real-world case that needs it: Burp Suite writes an internal
+    `<!DOCTYPE issues [<!ELEMENT ...>]>` declaration at the top of every report, so refusing every
+    DTD would refuse every real Burp file. It admits *that* and nothing more: entity declarations
+    (the whole of what XXE and entity expansion need) and external references stay forbidden, so a
+    DOCTYPE that declares an entity or points at an external subset is still an error."""
     limits = ctx.limits
     depth = 0
     count = 0
+    if allow_dtd:
+        head = stream.read(4096)
+        if _EXTERNAL_DTD.search(head):
+            raise ParseAborted("XML points at an external DTD, which is refused")
+        stream = _Prefixed(head, stream)  # type: ignore[assignment]
     try:
         for event, element in SafeET.iterparse(
             LimitedStream(stream, limits.max_bytes),
             events=events,
-            forbid_dtd=True,
+            forbid_dtd=not allow_dtd,
             forbid_entities=True,
             forbid_external=True,
         ):
@@ -140,9 +175,31 @@ def iter_xml(
                 ctx.check_time()
             yield event, element
     except DefusedXmlException as exc:
-        raise ParseAborted(f"XML uses a DTD or entity, which is refused ({exc})") from exc
+        raise ParseAborted(
+            f"XML uses a DTD, entity or external reference, which is refused ({exc})"
+        ) from exc
     except SafeET.ParseError as exc:
         raise ParseAborted(f"not valid XML ({exc})") from exc
+
+
+def iter_csv(stream: BinaryIO, ctx: ParseContext) -> Iterator[list[str]]:
+    """Rows of a CSV file (UTF-8, with or without a BOM), with the size, time and field-length
+    limits enforced while reading, and an unterminated quoted field -- what a file cut off mid-row
+    looks like -- an error. The delimiter is `;` or `,`, whichever the header line uses more."""
+    limits = ctx.limits
+    csv.field_size_limit(max(csv.field_size_limit(), 16 * 1024 * 1024))
+    limited: Any = LimitedStream(stream, limits.max_bytes)  # read() is all the reader needs
+    text = codecs.getreader("utf-8-sig")(limited, "replace")
+    first = text.readline()
+    delimiter = ";" if first.count(";") > first.count(",") else ","
+    reader = csv.reader(itertools.chain([first], text), delimiter=delimiter, strict=True)
+    try:
+        for n, row in enumerate(reader):
+            if n % 1024 == 0:
+                ctx.check_time()
+            yield row
+    except csv.Error as exc:
+        raise ParseAborted(f"not valid CSV ({exc}); the file may be cut off") from exc
 
 
 class SafePattern:

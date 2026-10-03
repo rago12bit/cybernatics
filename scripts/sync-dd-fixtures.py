@@ -32,7 +32,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "tests" / "golden" / "ingest" / "defectdojo"
-MAX_VENDORED = 1_000_000  # bytes; bigger samples stay out of the repository's history
+MAX_VENDORED = 3_000_000  # bytes (git stores them compressed); bigger samples stay out
 ATTRS = {"title", "severity", "vuln_id_from_tool", "cwe", "cvssv3_score"}
 
 # tool -> (DefectDojo test file, the scans directory it reads, helper functions that open a file in it)
@@ -41,10 +41,14 @@ TOOLS: dict[str, dict[str, Any]] = {
     "nuclei": {"test": "test_nuclei_parser.py", "dir": "nuclei"},
     "burp": {"test": "test_burp_parser.py", "dir": "burp"},
     "nessus": {"test": "test_tenable_parser.py", "dir": "tenable/nessus"},
+    # DefectDojo has two OpenVAS parsers; Bulwark ports the current one ("v2"), so only its tests
+    # are expectations. The older layout's sample files are still vendored and parsed.
     "openvas": {
         "test": "test_openvas_parser.py",
         "dir": "openvas",
         "helpers": {"openvas_open": "openvas"},
+        "classes": ["TestOpenVASParserV2"],
+        "parse_methods": ["setup_openvas_v2_test"],
     },
 }
 
@@ -64,8 +68,9 @@ def _index(node: ast.AST) -> int | None:
 class _Case(ast.NodeVisitor):
     """Walk one test method in source order, tracking which finding a name currently holds."""
 
-    def __init__(self, helpers: dict[str, str]) -> None:
+    def __init__(self, helpers: dict[str, str], parsers: frozenset[str]) -> None:
         self.helpers = helpers
+        self.parsers = parsers  # method names that parse a file and return findings
         self.files: set[str] = set()
         self.count: int | None = None
         self.per: dict[int, dict[str, Any]] = {}
@@ -103,7 +108,7 @@ class _Case(ast.NodeVisitor):
         if name in self.helpers and node.args and isinstance(node.args[0], ast.Constant):
             self.files.add(f"{self.helpers[name]}/{node.args[0].value}")
         if isinstance(node.func, ast.Attribute):
-            if node.func.attr == "get_findings":
+            if node.func.attr in self.parsers:
                 self.parses += 1
             elif node.func.attr == "assertEqual" and len(node.args) == 2:
                 self._equal(*node.args)
@@ -138,14 +143,28 @@ class _Case(ast.NodeVisitor):
             self.per.setdefault(idx, {})[actual.attr] = value
 
 
-def extract(test_file: Path, directory: str, helpers: dict[str, str]) -> dict[str, list[dict]]:
+def extract(
+    test_file: Path,
+    directory: str,
+    helpers: dict[str, str],
+    classes: list[str] | None = None,
+    parse_methods: tuple[str, ...] = (),
+) -> dict[str, list[dict]]:
     """file name (inside `directory`) -> the expectations DefectDojo's tests make about it."""
     tree = ast.parse(test_file.read_text(encoding="utf-8"))
     by_file: dict[str, list[dict]] = {}
     for fn in ast.walk(tree):
         if not (isinstance(fn, ast.FunctionDef) and fn.name.startswith("test_")):
             continue
-        case = _Case(helpers)
+        if classes is not None and fn.name not in {
+            f.name
+            for c in ast.walk(tree)
+            if isinstance(c, ast.ClassDef) and c.name in classes
+            for f in c.body
+            if isinstance(f, ast.FunctionDef)
+        }:
+            continue
+        case = _Case(helpers, frozenset({"get_findings", *parse_methods}))
         case.visit(fn)
         # A test that parses two files (xml/csv parity) says nothing about either alone.
         if len(case.files) != 1 or case.parses != 1:
@@ -179,7 +198,11 @@ def main() -> int:
         cfg = TOOLS[tool]
         scans = dd / "unittests" / "scans" / cfg["dir"]
         expected = extract(
-            dd / "unittests" / "tools" / cfg["test"], cfg["dir"], cfg.get("helpers", {})
+            dd / "unittests" / "tools" / cfg["test"],
+            cfg["dir"],
+            cfg.get("helpers", {}),
+            cfg.get("classes"),
+            tuple(cfg.get("parse_methods", ())),
         )
         dest = OUT / tool
         shutil.rmtree(dest, ignore_errors=True)

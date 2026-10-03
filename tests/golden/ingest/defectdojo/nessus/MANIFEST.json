@@ -1,0 +1,199 @@
+{
+ "files": {
+  "issue_6992.nessus": {
+   "bytes": 1324670,
+   "expect": [
+    {
+     "count": 1,
+     "findings": {
+      "0": {
+       "severity": "High"
+      }
+     },
+     "test": "test_parse_issue_6992"
+    }
+   ],
+   "sha256": "e36d502a1f1332bafdc8efcbb17f598d9d82750032543ecdf36e29fbf377a299",
+   "vendored": true
+  },
+  "nessus-template.csv": {
+   "bytes": 8847,
+   "expect": [
+    {
+     "count": 5,
+     "findings": {
+      "0": {
+       "cwe": 0,
+       "severity": "High",
+       "title": "SSL Medium Strength Cipher Suites Supported (SWEET32)"
+      },
+      "1": {
+       "cwe": 0,
+       "severity": "Medium",
+       "title": "HTTP TRACE / TRACK Methods Allowed"
+      }
+     },
+     "test": "test_parse_findings_all_nessus"
+    }
+   ],
+   "sha256": "75515bd2972044d82ddcafa38bce56d8ad8c392a2721527057d9ba97546276ab",
+   "vendored": true
+  },
+  "nessus_many_vuln.csv": {
+   "bytes": 28093,
+   "expect": [
+    {
+     "count": 4,
+     "findings": {
+      "0": {
+       "locations": 1
+      }
+     },
+     "test": "test_parse_some_findings_csv_nessus_legacy"
+    }
+   ],
+   "sha256": "10c4c5d630718258970f2c0ecc4690988006c06b445115b62575a08d90e629cc",
+   "vendored": true
+  },
+  "nessus_many_vuln.xml": {
+   "bytes": 449217,
+   "expect": [
+    {
+     "count": 6,
+     "findings": {
+      "5": {
+       "cwe": null,
+       "severity": "Info"
+      }
+     },
+     "test": "test_parse_some_findings_nessus_legacy"
+    }
+   ],
+   "sha256": "9c832e248c0c6e26571f7b680e3d2dfb2d5c905d6958080dd3ed6212e8ff6280",
+   "vendored": true
+  },
+  "nessus_many_vuln2-all.csv": {
+   "bytes": 32409,
+   "expect": [
+    {
+     "count": 29,
+     "findings": {
+      "0": {
+       "cwe": 0,
+       "severity": "Info",
+       "title": "HTTP Server Type and Version"
+      },
+      "25": {
+       "severity": "Info",
+       "title": "SSL Certificate Signed Using Weak Hashing Algorithm (Known CA)"
+      }
+     },
+     "test": "test_parse_some_findings_csv2_all_nessus_legacy"
+    }
+   ],
+   "sha256": "2e5ebf0b7e11fc4849960fc169e36acee0038ee27301f7ba39b63ecdcf05b8f4",
+   "vendored": true
+  },
+  "nessus_many_vuln2-default.csv": {
+   "bytes": 30267,
+   "expect": [
+    {
+     "count": 29,
+     "findings": {
+      "0": {
+       "cwe": 0,
+       "severity": "Info",
+       "title": "HTTP Server Type and Version"
+      },
+      "25": {
+       "severity": "Info",
+       "title": "SSL Certificate Signed Using Weak Hashing Algorithm (Known CA)"
+      }
+     },
+     "test": "test_parse_some_findings_csv2_nessus_legacy"
+    }
+   ],
+   "sha256": "98ae31c89406eb6791a57d2c9c9d3bc9178f0feeb7557d17c4ff7e4b4e3d237b",
+   "vendored": true
+  },
+  "nessus_new.csv": {
+   "bytes": 256646,
+   "expect": [
+    {
+     "count": 99,
+     "findings": {
+      "0": {
+       "cvssv3_score": "3.1",
+       "severity": "Low",
+       "title": "Blah1"
+      }
+     },
+     "test": "test_parse_nessus_new"
+    }
+   ],
+   "sha256": "b6a5f14ef4798eb29da3be5732934816c437095496ceb1db47f7229619ad2d5a",
+   "vendored": true
+  },
+  "nessus_v_unknown.xml": {
+   "bytes": 961807,
+   "expect": [
+    {
+     "count": 32,
+     "findings": {
+      "0": {
+       "severity": "Info",
+       "title": "Nessus Scan Information"
+      },
+      "25": {
+       "severity": "Info",
+       "title": "Nessus SYN scanner"
+      }
+     },
+     "test": "test_parse_some_findings_samples_nessus_legacy"
+    }
+   ],
+   "sha256": "2e81c9969845da0cae7c7f91ab3133e58fd07592446ca688734942d53088fd50",
+   "vendored": true
+  },
+  "nessus_with_cvssv3.nessus": {
+   "bytes": 1492498,
+   "expect": [
+    {
+     "count": 48,
+     "findings": {
+      "3": {
+       "cwe": null,
+       "severity": "Medium"
+      }
+     },
+     "test": "test_parse_some_findings_with_cvssv3_nessus_legacy"
+    }
+   ],
+   "sha256": "ffe0306a4ec2b33b4a0c39031fe556aa0425f1359fd7f0fef24700eb79de6928",
+   "vendored": true
+  },
+  "nessus_with_cwe-.nessus": {
+   "bytes": 1326274,
+   "expect": [
+    {
+     "findings": {
+      "0": {
+       "cwe": 94
+      }
+     },
+     "test": "test_parse_some_findings_with_nessus_with_cwe"
+    }
+   ],
+   "sha256": "99f3d3e6b3da9463b50aaa3a455089340f155d821f184a9771e0e96be0e02dc2",
+   "vendored": true
+  }
+ },
+ "source": {
+  "commit": "8b12d80ae30904fed44f5a84ff71f28da14bebaf",
+  "license": "BSD-3-Clause (see ../LICENSE)",
+  "repository": "https://github.com/DefectDojo/django-DefectDojo",
+  "scans": "unittests/scans/tenable/nessus",
+  "tests": "unittests/tools/test_tenable_parser.py"
+ },
+ "tool": "nessus"
+}

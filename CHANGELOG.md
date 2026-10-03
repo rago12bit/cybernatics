@@ -6,9 +6,11 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 ## [Unreleased]
 
 ### Added
-- **Ported parsers, batch 1 (Week 57, ADR-0041): ZAP and Nuclei so far.** `zap` reads ZAP's XML
-  (including the requests-and-responses variant) and JSON reports; `nuclei` reads JSONL and the JSON
-  array. Both are derived from DefectDojo's parsers (BSD-3-Clause, notice in
+- **Ported parsers, batch 1 (Week 57, ADR-0041): ZAP, Nuclei, Burp, Nessus, OpenVAS.** `zap` reads
+  ZAP's XML (including the requests-and-responses variant) and JSON reports; `nuclei` reads JSONL and
+  the JSON array; `burp` the XML issue export (the one parser that admits Burp's internal DOCTYPE, and
+  nothing more); `nessus` the `.nessus` XML and Nessus Pro / Tenable.io CSV; `openvas` the GMP XML and
+  CSV. A scan that did not finish, scanned no hosts, or is an empty CSV closes nothing. Both are derived from DefectDojo's parsers (BSD-3-Clause, notice in
   `THIRD_PARTY_LICENSES.md`, generated from each parser's `ported_from`) and run against DefectDojo's
   own sample reports and the results its tests expect (`scripts/sync-dd-fixtures.py` vendors them from
   a pinned commit). They share one reading of an alert with the native DAST campaigns

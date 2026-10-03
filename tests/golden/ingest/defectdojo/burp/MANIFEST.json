@@ -1,0 +1,96 @@
+{
+ "files": {
+  "issue4399.xml": {
+   "bytes": 2223458,
+   "expect": [
+    {
+     "count": 27,
+     "test": "test_burp_issue4399"
+    }
+   ],
+   "sha256": "24876fee26c558c5f6b371110d1498dd1bb92e2bbf1a0d260800480634336187",
+   "vendored": true
+  },
+  "one_finding.xml": {
+   "bytes": 37204,
+   "expect": [
+    {
+     "count": 1,
+     "findings": {
+      "0": {
+       "locations": 3,
+       "vuln_id_from_tool": "1049088"
+      }
+     },
+     "test": "test_burp_with_one_vuln_has_one_finding"
+    }
+   ],
+   "sha256": "f6c1f805f5f73f81c8765be2e44e1e1d6276b94bed909776054e2f52512a18dc",
+   "vendored": true
+  },
+  "one_finding_with_blank_response.xml": {
+   "bytes": 6240,
+   "expect": [
+    {
+     "count": 1,
+     "findings": {
+      "0": {
+       "locations": 1,
+       "severity": "High",
+       "title": "SQL injection",
+       "vuln_id_from_tool": "1049088"
+      }
+     },
+     "test": "test_burp_with_one_vuln_with_blank_response"
+    }
+   ],
+   "sha256": "c02ac8c9d2d2db63bdbd28b7fe339b94ae2fa16b841ffd41720c37f323e04bba",
+   "vendored": true
+  },
+  "one_finding_with_cwe.xml": {
+   "bytes": 5659,
+   "expect": [
+    {
+     "count": 1,
+     "findings": {
+      "0": {
+       "cwe": 524,
+       "severity": "Info",
+       "title": "Cacheable HTTPS response",
+       "vuln_id_from_tool": "7340288"
+      }
+     },
+     "test": "test_burp_with_one_vuln_with_cwe"
+    }
+   ],
+   "sha256": "480730e895e45889d115606fc710c80497a3ee36bd0d2e2b1acdadc9feed5b5c",
+   "vendored": true
+  },
+  "seven_findings.xml": {
+   "bytes": 123303,
+   "expect": [
+    {
+     "count": 7,
+     "findings": {
+      "0": {
+       "severity": "Info",
+       "title": "Frameable response (potential Clickjacking)",
+       "vuln_id_from_tool": "5245344"
+      }
+     },
+     "test": "test_burp_with_multiple_vulns_has_multiple_findings"
+    }
+   ],
+   "sha256": "2a0b7a060ccbc2e9b8676d054df1268606ac49b8bb7f2635b865ca17a3404629",
+   "vendored": true
+  }
+ },
+ "source": {
+  "commit": "8b12d80ae30904fed44f5a84ff71f28da14bebaf",
+  "license": "BSD-3-Clause (see ../LICENSE)",
+  "repository": "https://github.com/DefectDojo/django-DefectDojo",
+  "scans": "unittests/scans/burp",
+  "tests": "unittests/tools/test_burp_parser.py"
+ },
+ "tool": "burp"
+}

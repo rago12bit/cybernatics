@@ -17,11 +17,21 @@ import pytest
 from core.imports.parsers import get_parser, run_parser_on_bytes
 from tests.unit import ddview
 
-TOOLS = ["zap", "nuclei"]
+TOOLS = ["zap", "nuclei", "burp", "nessus", "openvas"]
 
 # (tool, file, test, finding index, field) -> why ours differs from what DefectDojo's test asserts.
 # Reviewed one by one; each is a deliberate decision, not a miss.
-DIFFERENCES: dict[tuple[str, str, str, str, str], str] = {}
+DIFFERENCES: dict[tuple[str, str, str, str, str], str] = {
+    ("nessus", "nessus_new.csv", "test_parse_nessus_new", "0", "title"): (
+        "DefectDojo titles every finding in a Tenable.io export with the ASSET's name (its "
+        "title lookup falls through to `asset.name` because the export has no `Name` column); the "
+        "finding's name is `definition.name`, which is what is used here"
+    ),
+    ("openvas", "report_detail_v2.csv", "test_openvas_parser_csv_detail", "0", "cvssv3_score"): (
+        "this CSV has a CVSS score and no vector, so the version is unknown; DefectDojo records "
+        "the score as v3 anyway, Bulwark leaves cvss_v3_1 empty rather than guess"
+    ),
+}
 
 
 def _cases() -> list[Any]:
@@ -48,7 +58,7 @@ def test_matches_defectdojo(tool: str, name: str, info: dict[str, Any]) -> None:
         parser.sniff(data[:65536]) > 0 or len(data) == 0
     ), "sniff() does not recognise its own sample"
 
-    groups = ddview.GROUPERS[tool](result.findings)
+    groups = ddview.GROUPERS[tool](result.findings, name)
     for exp in info["expect"]:
         where = f"{tool}/{name}::{exp['test']}"
         if "count" in exp:
@@ -57,6 +67,8 @@ def test_matches_defectdojo(tool: str, name: str, info: dict[str, Any]) -> None:
             got = ddview.view(tool, groups[int(index)])
             for field, want in fields.items():
                 want = 0 if (field == "cwe" and want is None) else want
+                if field == "cvssv3_score" and isinstance(want, str):
+                    want = float(want)  # DefectDojo keeps some scores as strings
                 reason = DIFFERENCES.get((tool, name, exp["test"], index, field))
                 if reason:
                     assert got[field] != want, f"{where}[{index}].{field}: no longer differs"

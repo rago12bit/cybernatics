@@ -268,7 +268,7 @@ def test_naming_the_parser_skips_detection(env: Env) -> None:
 
 
 def test_an_unknown_parser_an_empty_file_and_bad_options_are_refused(env: Env) -> None:
-    assert env.post(SARIF, parser="nessus").status_code == 422
+    assert env.post(SARIF, parser="no-such-parser").status_code == 422
     assert env.post(b"").status_code == 422
     assert env.post(SARIF, scope="galaxy").status_code == 422
     assert env.post(SARIF, source="connector").status_code == 422

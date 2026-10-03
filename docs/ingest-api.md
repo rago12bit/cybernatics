@@ -29,6 +29,9 @@ until `status` is `applied`, `previewed` or `failed`.
 | `spdx` | SPDX 2.x JSON | nothing: see below |
 | `zap` | OWASP ZAP XML or JSON report | each `alertitem`, one finding per URL it was seen at |
 | `nuclei` | Nuclei JSONL or JSON array | each result, one finding per matcher that fired |
+| `burp` | Burp Suite XML issue export | each `<issue>` |
+| `nessus` | Nessus `.nessus` XML; Nessus Pro and Tenable.io CSV | each plugin on each host and port |
+| `openvas` | OpenVAS / Greenbone XML or CSV | each result (an NVT on a host and port) |
 
 The format is detected from the file; if detection is not confident (below 90%) the call is refused
 with the candidates and you pass `parser=` yourself. `GET /v2/parsers` lists what is available.
@@ -40,7 +43,7 @@ such a file imports no findings and **can never close anything**, even with `clo
 
 ### Ported parsers (DefectDojo)
 
-`zap` and `nuclei` are derived from [DefectDojo](https://github.com/DefectDojo/django-DefectDojo)'s
+`zap`, `nuclei`, `burp`, `nessus` and `openvas` are derived from [DefectDojo](https://github.com/DefectDojo/django-DefectDojo)'s
 parsers (BSD-3-Clause; the notice is in `THIRD_PARTY_LICENSES.md`) and are tested against DefectDojo's
 own sample reports and the results its tests expect. Three things differ on purpose:
 
@@ -55,8 +58,23 @@ own sample reports and the results its tests expect. Three things differ on purp
   refused the right to close (with a warning). Export JSON (`-json-export`), which writes `[]`, to
   record a clean run.
 
-Request and response bodies in a ZAP report are not stored; the finding keeps the method,
-parameter, attack, evidence and the response's status line.
+Request and response bodies in a ZAP or Burp report are not stored; the finding keeps the method,
+parameter, attack, evidence and one line each of the request and response.
+
+**When a scanner report may close Issues.** A report is evidence of what was fixed only if the scan
+finished and reached something, so these close nothing (the import says so in its `warnings`):
+an OpenVAS scan whose `scan_run_status` is not `Done`, an OpenVAS or Nessus report that scanned no
+hosts, and a CSV with a header and no rows. An OpenVAS export made with a severity filter
+(`levels=hm`) is imported with a warning, because what the filter hides will read as fixed.
+A CSV cut exactly between two rows cannot be told from a shorter CSV; any other cut is an error.
+
+**A report that covers fewer hosts than the last one will list the missing hosts' Issues as closed.**
+Closing is scoped to the Test, not to the hosts a report covers, and the preview shows the count
+before anything is saved -- so read "closed" before you confirm, or import each scan range into
+its own Test.
+
+Burp reports start with an internal `<!DOCTYPE issues [<!ELEMENT ...>]>`; the `burp` parser admits
+that and nothing more (an entity declaration or an external DTD is still refused).
 
 ## Where it goes
 

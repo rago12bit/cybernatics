@@ -59,7 +59,10 @@ Bulwark is not affiliated with or endorsed by DefectDojo, Inc.
 
 | Bulwark file | Derived from | Parser |
 |---|---|---|
+| `core/imports/parsers/burp.py`, `core/dast/mapping.py` | `dojo/tools/burp/parser.py` | burp |
+| `core/imports/parsers/nessus.py`, `core/dast/mapping.py` | `dojo/tools/tenable/` | nessus |
 | `core/imports/parsers/nuclei.py`, `core/dast/mapping.py` | `dojo/tools/nuclei/parser.py` | nuclei |
+| `core/imports/parsers/openvas.py`, `core/dast/mapping.py` | `dojo/tools/openvas/parser_v2/` | openvas |
 | `core/imports/parsers/zap.py`, `core/dast/mapping.py` | `dojo/tools/zap/parser.py` | zap |
 
 > Copyright (c) 2015-2023 DefectDojo, Inc. All rights reserved.

@@ -162,6 +162,7 @@ def dast_finding(
     references: Iterable[str | None] = (),
     cvss: float | None = None,
     confidence: float = 0.5,
+    epss: float | None = None,
     digest_of: str = "",
     reported_by: str = "",
 ) -> Finding:
@@ -185,6 +186,7 @@ def dast_finding(
             native_severity={tool: native},
             normalized_severity=severity,
             cvss_v3_1=cvss,
+            epss_score=epss,
             confidence=confidence,
         ),
         evidence=Evidence(reported_by=[tool_name], rule_ids={tool_name: [rule]}),

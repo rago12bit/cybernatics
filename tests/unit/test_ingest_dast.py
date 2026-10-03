@@ -155,7 +155,7 @@ def test_a_deeply_nested_nuclei_record_is_refused() -> None:
 # --- detection ------------------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("tool", ["zap", "nuclei"])
+@pytest.mark.parametrize("tool", ["zap", "nuclei", "burp", "nessus", "openvas"])
 def test_every_vendored_sample_is_detected_as_its_own_tool_and_nothing_else(tool: str) -> None:
     for path in sorted((DD / tool).iterdir()):
         if path.name == "MANIFEST.json" or path.stat().st_size == 0:
@@ -170,7 +170,7 @@ def test_other_formats_are_not_mistaken_for_zap_or_nuclei() -> None:
     for path in [Path("tests/golden/semgrep/raw.json"), Path("tests/golden/osv-scanner/raw.json"),
                  *Path("tests/golden/ingest").glob("cyclonedx-*"), Path("tests/golden/ingest/spdx.json")]:  # fmt: skip
         names = {p.name for p, _ in detect(path.read_bytes()[:65536])}
-        assert not names & {"zap", "nuclei"}, path
+        assert not names & {"zap", "nuclei", "burp", "nessus", "openvas"}, path
 
 
 # --- hostile input --------------------------------------------------------------------------------
@@ -225,7 +225,9 @@ def test_no_strict_prefix_of_a_report_reads_as_a_complete_one(which: str, fracti
     r = run(parser, raw[:cut])
     # A JSONL file cut exactly at a record boundary is a valid shorter JSONL file; nothing in the
     # format says otherwise. Every other cut must fail.
-    at_boundary = which == "nuclei-lines" and (cut == 0 or raw[cut - 1 : cut] == b"\n")
+    at_boundary = which == "nuclei-lines" and (
+        cut == 0 or raw[cut - 1 : cut] == b"\n" or raw[cut : cut + 1] in (b"\n", b"\r")
+    )
     assert not r.complete or at_boundary or (cut == 0 and r.findings == []), (which, cut)
 
 

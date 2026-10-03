@@ -4,8 +4,11 @@ confidence 0-1 that a file is this format. Drives auto-detection")."""
 from __future__ import annotations
 
 from core.imports.parsers.base import IngestParser
+from core.imports.parsers.burp import BurpParser
 from core.imports.parsers.cyclonedx import CycloneDxParser
+from core.imports.parsers.nessus import NessusParser
 from core.imports.parsers.nuclei import NucleiParser
+from core.imports.parsers.openvas import OpenVasParser
 from core.imports.parsers.osv import OsvParser
 from core.imports.parsers.sarif import SarifParser
 from core.imports.parsers.spdx import SpdxParser
@@ -20,6 +23,9 @@ PARSERS: dict[str, IngestParser] = {
         OsvParser(),
         ZapParser(),
         NucleiParser(),
+        BurpParser(),
+        NessusParser(),
+        OpenVasParser(),
     )
 }
 

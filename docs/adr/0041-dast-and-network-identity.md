@@ -48,6 +48,19 @@ A DAST or network finding's **place is its identity**, and it is carried explici
 - The map from a tool's record to a Finding lives in `core/dast/mapping.py` and is shared by the
   native campaign adapters and the import parsers, so a defect has one reading however it arrives.
 
+### Parsing policy for the batch
+
+- **Burp's DOCTYPE.** Burp writes `<!DOCTYPE issues [<!ELEMENT ...>]>` at the top of every export,
+  so refusing every DTD (the rule for all other XML) would refuse every real Burp file. `iter_xml`
+  gains `allow_dtd`, used only by the Burp parser, which admits *an internal subset without entity
+  declarations*: an `<!ENTITY>` (which is all XXE and entity expansion need) and an external DTD
+  (`SYSTEM`/`PUBLIC`) are still errors.
+- **A report must have reached something to close anything.** A scanner report that is a sample of a
+  scan, not a complete one -- an OpenVAS scan that is not `Done`, a report with no hosts, a CSV with
+  no rows, an empty Nuclei file -- imports what it has and closes nothing.
+- **CSV truncation.** A row with fewer fields than the header, or an unterminated quoted field, is
+  an error. A cut exactly between two rows is a valid shorter CSV and cannot be detected.
+
 ## Consequences
 
 - **One-time churn for existing DAST Issues.** Native DAST Issues created before this change have
@@ -68,6 +81,10 @@ A DAST or network finding's **place is its identity**, and it is carried explici
 - Request and response bodies are not stored. A ZAP "XML plus requests and responses" report is read;
   the finding keeps the method, parameter, attack, evidence and the response's status line, not
   kilobytes of HTTP. Evidence attachments belong with the manual-findings work (Week 59, §43.2).
+- **Closing is scoped to the Test, not to the hosts a report covers.** A Nessus or OpenVAS report
+  that covers fewer hosts than the last one lists the missing hosts' Issues as closed. The preview
+  shows the count before it is saved, and the docs say to read it; making closure host-aware needs
+  a coverage set on the parse result and a host column on stored findings, and is not done.
 - Cross-tool merging of DAST findings (ZAP and Nuclei both seeing the same missing header) is not
   attempted. It would need per-weakness rules and is better done as an explicit, previewed
   deduplication strategy (Week 58, §42.3) than as an implicit merge.

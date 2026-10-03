@@ -67,6 +67,36 @@ MATRIX: dict[str, dict[str, Severity]] = {
         "CRITICAL": S.CRITICAL,
         "UNKNOWN": S.INFO,
     },
+    # Burp's own words (its "Information" is Info; it has no Critical).
+    "burp": {
+        "HIGH": S.HIGH,
+        "MEDIUM": S.MEDIUM,
+        "LOW": S.LOW,
+        "INFORMATION": S.INFO,
+        "INFO": S.INFO,
+    },
+    # Nessus's 0-4 scale by name (core.imports.parsers.nessus maps the digit); "None" is Info.
+    "nessus": {
+        "CRITICAL": S.CRITICAL,
+        "HIGH": S.HIGH,
+        "MEDIUM": S.MEDIUM,
+        "LOW": S.LOW,
+        "NONE": S.INFO,
+        "INFO": S.INFO,
+        "INFORMATIONAL": S.INFO,
+    },
+    # OpenVAS "threat" levels. It reports Critical as High; Log, Debug and an overridden False
+    # Positive carry no risk of their own, so they are Info (all defined by OpenVAS, so no warning).
+    "openvas": {
+        "CRITICAL": S.CRITICAL,
+        "HIGH": S.HIGH,
+        "MEDIUM": S.MEDIUM,
+        "LOW": S.LOW,
+        "LOG": S.INFO,
+        "INFO": S.INFO,
+        "DEBUG": S.INFO,
+        "FALSE POSITIVE": S.INFO,
+    },
     # CycloneDX defines exactly these rating severities (core.imports.parsers.cyclonedx); anything
     # else a file says is unknown, imported as INFO, and reported.
     "cyclonedx": {
