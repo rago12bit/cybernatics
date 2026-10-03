@@ -17,6 +17,7 @@ import tempfile
 from pathlib import Path
 
 from core.adapters.base import RepoContext, ToolAdapter, ToolSpec
+from core.config import scratch_dir
 from core.imports.parsers.base import ParseLimits, ParseResult
 from core.models import Finding, finding_from_dict
 from core.runner import RunResult, run_tool
@@ -92,7 +93,10 @@ def parse_in_sandbox(
     "the report lists nothing" and close everything it used to list."""
     limits = limits or ParseLimits()
     adapter = IngestParseAdapter(parser_name, limits)
-    with tempfile.TemporaryDirectory(prefix="bulwark-ingest-") as tmp:
+    # The shared scratch directory, not the process's own /tmp: in the worker container the Docker
+    # daemon is on the host, so the bind-mount source must be a path that exists on both (the same
+    # reason `core.runner.run_tool` uses it for its own output directory).
+    with tempfile.TemporaryDirectory(prefix="bulwark-ingest-", dir=scratch_dir()) as tmp:
         shutil.copyfile(path, Path(tmp) / INPUT_NAME)
         Path(tmp).chmod(0o755)
         (Path(tmp) / INPUT_NAME).chmod(0o644)  # the container runs as a different, non-root uid

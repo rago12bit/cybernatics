@@ -19,8 +19,11 @@ _CHECKSUM_LEN = 6
 #: Real, enforced scopes today. Deliberately small: `issues:read` isn't listed here (unlike the
 #: plan's example) because there is no dedicated issues endpoint yet (ADR-0012 already deferred
 #: that) -- declaring a scope nothing checks would be a scope that lies about what it does. Add to
-#: this set only alongside the endpoint it actually gates.
-SCOPES = frozenset({"scans:read", "scans:write", "fixes:read", "fixes:write"})
+#: this set only alongside the endpoint it actually gates. `ingest:write` is separate from
+#: `scans:write` on purpose: an import can close Issues, which starting a scan cannot.
+SCOPES = frozenset(
+    {"scans:read", "scans:write", "fixes:read", "fixes:write", "ingest:read", "ingest:write"}
+)
 
 
 class TokenError(ValueError):

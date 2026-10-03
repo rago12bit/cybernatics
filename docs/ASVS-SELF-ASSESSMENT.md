@@ -35,7 +35,7 @@ there is no password to have a policy about.
 |---|---|---|
 | Credentials are compared in constant time, not with `==` | Met | `api/deps.py:49-50` — `hmac.compare_digest` for the shared token |
 | Tokens are not stored or logged in recoverable form | Met | `core/tokens.py:58-59` — SHA-256 hash stored, never the raw token; raw token is shown to the operator exactly once at creation (`cli/main.py`'s `token create` command) |
-| Tokens can be scoped to least privilege | Met | `core/tokens.py:23` — `SCOPES = frozenset({"scans:read","scans:write","fixes:read","fixes:write"})`; `api/deps.py:116-125`'s `require_scope` |
+| Tokens can be scoped to least privilege | Met | `core/tokens.py:23` — `SCOPES` (`scans:read`/`scans:write`, `fixes:read`/`fixes:write`, `ingest:read`/`ingest:write`); `api/deps.py:116-125`'s `require_scope` |
 | Tokens can expire and be revoked | Met | `api/deps.py:83-93` (expiry check on every request); `cli/main.py`'s `token revoke` command |
 | Rate limiting on authentication attempts (brute-force resistance) | **Not met** | No rate limiting found on the auth path itself in `api/deps.py`. The only rate limiting in the codebase (`core/llm/limits.py`'s `UsageLimiter`) gates LLM-feature cost, not authentication attempts. A high-entropy 40-hex-char token (`core/tokens.py:14-23`) makes brute-forcing impractical regardless, but there is no explicit lockout/backoff mechanism |
 | Multi-factor authentication | N/A | No user-identity concept exists yet (real per-user auth is plan §19.2, not built — this is a known, disclosed future item, not an oversight) |

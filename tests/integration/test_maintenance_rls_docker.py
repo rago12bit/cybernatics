@@ -103,7 +103,9 @@ def test_a_stale_scan_is_reaped_even_though_no_org_context_is_set_before_the_cal
 
     reaped = maintenance.reap_stale_scans(sessions, timedelta(minutes=30), MemoryPublisher(), now)
 
-    assert sorted(reaped) == sorted([stuck_a, stuck_b])
+    # The sweep is global (every org), so a stale scan some other test left in a shared database
+    # would be reaped too: assert on the two this test made, not on the whole result.
+    assert {stuck_a, stuck_b} <= set(reaped)
     with sessions() as s:
         set_session_org(s, org_a)
         assert repo.get_scan(s, stuck_a, org_id=org_a).status == "failed"  # type: ignore[union-attr]
@@ -122,7 +124,7 @@ def test_a_fresh_scan_in_one_org_is_not_reaped_by_another_orgs_sweep(
 
     reaped = maintenance.reap_stale_scans(sessions, timedelta(minutes=30), None, now)
 
-    assert reaped == [stuck_a]
+    assert stuck_a in reaped and fresh_b not in reaped
     with sessions() as s:
         set_session_org(s, org_b)
         assert repo.get_scan(s, fresh_b, org_id=org_b).status == "running"  # type: ignore[union-attr]

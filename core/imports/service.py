@@ -28,6 +28,13 @@ from core.persistence.models import (
 )
 
 SCOPES = ("test", "engagement")
+_COUNT_FIELDS = (
+    "new_count",
+    "unchanged_count",
+    "reopened_count",
+    "closed_count",
+    "detached_count",
+)
 
 
 class ImportRequestError(ValueError):
@@ -162,10 +169,15 @@ def apply_import(
     scope: str = "test",
     created_by: str | None = None,
     warnings: list[str] | None = None,
+    record: ImportRecord | None = None,
 ) -> ImportResult:
     """Apply an import. The same file (same digest) as the Test's latest import is a no-op that
     returns that import's original result -- "idempotent" (plan §42.1) -- decided under a lock on
-    the Test, so two simultaneous uploads of one file cannot both be applied."""
+    the Test, so two simultaneous uploads of one file cannot both be applied.
+
+    `record` is a queued ImportRecord (the API creates one before a worker parses the upload); it is
+    completed in place instead of a new one being added. If it turns out to repeat the Test's latest
+    import, it is marked `duplicate` and carries that import's counts."""
     try:
         _load(s, org_id, test_id)  # reject an unknown Test before taking any lock
         # Serialize imports into one Test: the snapshot we compare against must not move under us.
@@ -176,6 +188,12 @@ def apply_import(
         test, engagement = _load(s, org_id, test_id)
         latest = repo.latest_applied_import(s, test.id, org_id)
         if latest is not None and latest.file_digest == file_digest:
+            if record is not None:
+                record.status, record.upload_path, record.error = "duplicate", None, None
+                for field in _COUNT_FIELDS:
+                    setattr(record, field, getattr(latest, field))
+                s.commit()
+                return ImportResult(record, created=False)
             s.rollback()  # release the lock; nothing was written
             return ImportResult(latest, created=False)
 
@@ -216,18 +234,30 @@ def apply_import(
         # between the two to order them (SQLite never notices; Postgres does).
         s.flush()
         repo.add_findings(s, scan.id, findings, list(plan.updates), commit=False)
-        record = repo.add_import_record(
-            s,
-            org_id=org_id,
-            test_id=test.id,
-            scan_id=scan.id,
-            parser=parser,
-            file_digest=file_digest,
-            file_name=file_name,
-            size_bytes=size_bytes,
-            close_missing=close_missing,
-            scope=scope,
-            created_by=created_by,
+        if record is None:
+            record = repo.add_import_record(
+                s,
+                org_id=org_id,
+                test_id=test.id,
+                scan_id=scan.id,
+                parser=parser,
+                file_digest=file_digest,
+                file_name=file_name,
+                size_bytes=size_bytes,
+                close_missing=close_missing,
+                scope=scope,
+                created_by=created_by,
+            )
+        else:
+            record.scan_id, record.close_missing, record.scope = scan.id, close_missing, scope
+            # A Test's current snapshot is its latest import by time, and a queued import is created
+            # before it is applied: re-stamp it, so application order is what "latest" means.
+            record.created_at = now
+        record.status, record.mode, record.upload_path, record.error = (
+            "applied",
+            "apply",
+            None,
+            None,
         )
         record.new_count = len(plan.new_issue_ids)
         record.unchanged_count = len(plan.unchanged_issue_ids)

@@ -317,6 +317,46 @@ Export Scan
 - `scan_id` (path, required)
 - `format` (query)
 
+## `POST /v2/ingest`
+
+Ingest
+
+
+## `GET /v2/imports/{import_id}`
+
+Get Import
+
+- `import_id` (path, required)
+
+## `POST /v2/imports/{import_id}/confirm`
+
+Confirm Import
+
+- `import_id` (path, required)
+
+## `POST /v2/imports/{import_id}/cancel`
+
+Cancel Import
+
+- `import_id` (path, required)
+
+## `POST /v2/imports/{import_id}/revert`
+
+Revert Import
+
+- `import_id` (path, required)
+
+## `GET /v2/tests/{test_id}/imports`
+
+List Test Imports
+
+- `test_id` (path, required)
+
+## `GET /v2/parsers`
+
+List Parsers
+
+
 ## Live progress (WebSocket)
 
 `GET /scans/{scan_id}/ws` (not part of OpenAPI).

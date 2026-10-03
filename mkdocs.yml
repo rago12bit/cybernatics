@@ -16,6 +16,7 @@ nav:
       - Reachability: reachability.md
   - Writing a plugin: plugins.md
   - Policy cookbook: policy.md
+  - Importing reports: ingest-api.md
   - API reference: api.md
 
 theme:

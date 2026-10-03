@@ -45,6 +45,7 @@ from api.deps import (
     state,
     token_ok,
 )
+from api.ingest import register_ingest_routes
 from api.schemas import (
     AssetSummary,
     AssetVerificationView,
@@ -2057,6 +2058,7 @@ def create_app(app_state: AppState) -> FastAPI:
             with contextlib.suppress(RuntimeError):
                 await ws.close(code=1008)
 
+    register_ingest_routes(app)
     return app
 
 
@@ -2089,7 +2091,7 @@ def build_default_app() -> FastAPI:
     from core.llm.gateway import Task, make_gateway_client
     from core.persistence.db import get_session_factory
     from core.persistence.storage import S3Store
-    from core.tasks import run_dast_campaign_task, run_scan_task
+    from core.tasks import run_dast_campaign_task, run_import_task, run_scan_task
 
     settings = Settings.from_env()
     if settings.s3_endpoint or settings.s3_access_key:
@@ -2103,6 +2105,7 @@ def build_default_app() -> FastAPI:
             enqueue_dast_campaign=lambda scan_id, org_id: run_dast_campaign_task.delay(
                 scan_id, org_id
             ),
+            enqueue_import=lambda import_id, org_id: run_import_task.delay(import_id, org_id),
             # None unless the routed backend is enabled and ready; raises at startup, not on the
             # first request, if privacy mode is on with no local model configured (gateway.py).
             llm=make_gateway_client(Task.FIX),

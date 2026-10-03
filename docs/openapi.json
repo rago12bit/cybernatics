@@ -2578,6 +2578,321 @@
           }
         }
       }
+    },
+    "/v2/ingest": {
+      "post": {
+        "tags": [
+          "ingest"
+        ],
+        "summary": "Ingest",
+        "operationId": "ingest_v2_ingest_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_ingest_v2_ingest_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportCreated"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v2/imports/{import_id}": {
+      "get": {
+        "tags": [
+          "ingest"
+        ],
+        "summary": "Get Import",
+        "operationId": "get_import_v2_imports__import_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "import_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Import Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/imports/{import_id}/confirm": {
+      "post": {
+        "tags": [
+          "ingest"
+        ],
+        "summary": "Confirm Import",
+        "operationId": "confirm_import_v2_imports__import_id__confirm_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "import_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Import Id"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/imports/{import_id}/cancel": {
+      "post": {
+        "tags": [
+          "ingest"
+        ],
+        "summary": "Cancel Import",
+        "operationId": "cancel_import_v2_imports__import_id__cancel_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "import_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Import Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/imports/{import_id}/revert": {
+      "post": {
+        "tags": [
+          "ingest"
+        ],
+        "summary": "Revert Import",
+        "operationId": "revert_import_v2_imports__import_id__revert_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "import_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Import Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevertView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/tests/{test_id}/imports": {
+      "get": {
+        "tags": [
+          "ingest"
+        ],
+        "summary": "List Test Imports",
+        "operationId": "list_test_imports_v2_tests__test_id__imports_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "test_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Test Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ImportView"
+                  },
+                  "title": "Response List Test Imports V2 Tests  Test Id  Imports Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/parsers": {
+      "get": {
+        "tags": [
+          "ingest"
+        ],
+        "summary": "List Parsers",
+        "operationId": "list_parsers_v2_parsers_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ParserInfo"
+                  },
+                  "type": "array",
+                  "title": "Response List Parsers V2 Parsers Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -2914,6 +3229,128 @@
         ],
         "title": "AttackPathView",
         "description": "One ranked attack path (plan \u00a721.6, \u00a728.5). `narrative` is `None` when no model is routed\nfor Task.ATTACK_PATH -- unlike the copilot, this never 409s for that: the graph itself (nodes,\nedges, ranking, cheapest_link) is always real and useful without a model, only the prose\ndescription is best-effort on top of it."
+      },
+      "Body_ingest_v2_ingest_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "description": "The report."
+          },
+          "project": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Project",
+            "description": "Project (asset) id; or give `test_id`."
+          },
+          "engagement": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Engagement",
+            "description": "Engagement id within the project."
+          },
+          "engagement_type": {
+            "type": "string",
+            "title": "Engagement Type",
+            "description": "'import' (the project's standing one) or 'assessment' (new).",
+            "default": "import"
+          },
+          "engagement_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Engagement Name",
+            "description": "Name for a new assessment."
+          },
+          "test": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Test",
+            "description": "Test name; defaults to the parser's name."
+          },
+          "test_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Test Id",
+            "description": "An existing Test; overrides the above."
+          },
+          "parser": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parser",
+            "description": "Skip detection; see GET /v2/parsers."
+          },
+          "source": {
+            "type": "string",
+            "title": "Source",
+            "default": "upload"
+          },
+          "close_missing": {
+            "type": "boolean",
+            "title": "Close Missing",
+            "description": "Close Issues this file no longer lists.",
+            "default": true
+          },
+          "scope": {
+            "type": "string",
+            "title": "Scope",
+            "description": "'test' (default) or 'engagement'.",
+            "default": "test"
+          },
+          "wait_for_dedup": {
+            "type": "boolean",
+            "title": "Wait For Dedup",
+            "description": "Accepted for forward compatibility; dedup is not asynchronous yet.",
+            "default": false
+          },
+          "preview": {
+            "type": "boolean",
+            "title": "Preview",
+            "description": "Compute the counts, save nothing, keep the file.",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_ingest_v2_ingest_post"
       },
       "Body_upload_scan_scans_upload_post": {
         "properties": {
@@ -3584,6 +4021,240 @@
         "title": "HypothesisView",
         "description": "One Hypotheses-lane candidate (plan \u00a721.4) -- off by default, its own tab, excluded from the\nrisk score and policy gates until a person promotes it. `promoted_issue_id` is set only once\n`status` is \"promoted\"."
       },
+      "ImportCounts": {
+        "properties": {
+          "new": {
+            "type": "integer",
+            "title": "New"
+          },
+          "unchanged": {
+            "type": "integer",
+            "title": "Unchanged"
+          },
+          "reopened": {
+            "type": "integer",
+            "title": "Reopened"
+          },
+          "closed": {
+            "type": "integer",
+            "title": "Closed"
+          },
+          "detached": {
+            "type": "integer",
+            "title": "Detached",
+            "description": "Issues this file stopped listing that stay open because another source still reports them. Not 'closed': they are not fixed."
+          }
+        },
+        "type": "object",
+        "required": [
+          "new",
+          "unchanged",
+          "reopened",
+          "closed",
+          "detached"
+        ],
+        "title": "ImportCounts"
+      },
+      "ImportCreated": {
+        "properties": {
+          "import_id": {
+            "type": "string",
+            "title": "Import Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "parser": {
+            "type": "string",
+            "title": "Parser"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence",
+            "description": "How sure format detection was; null when the caller named the parser."
+          },
+          "test_id": {
+            "type": "string",
+            "title": "Test Id"
+          },
+          "duplicate": {
+            "type": "boolean",
+            "title": "Duplicate",
+            "description": "True when this exact file was already the Test's latest import: nothing was queued, and `import_id` is the original's.",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "import_id",
+          "status",
+          "parser",
+          "confidence",
+          "test_id"
+        ],
+        "title": "ImportCreated"
+      },
+      "ImportView": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "queued, processing, previewed, applied, duplicate, failed, cancelled, reverted"
+          },
+          "mode": {
+            "type": "string",
+            "title": "Mode"
+          },
+          "parser": {
+            "type": "string",
+            "title": "Parser"
+          },
+          "file_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "File Name"
+          },
+          "test_id": {
+            "type": "string",
+            "title": "Test Id"
+          },
+          "engagement_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Engagement Id"
+          },
+          "counts": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ImportCounts"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reopened_issue_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Reopened Issue Ids"
+          },
+          "closed_issue_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Closed Issue Ids"
+          },
+          "detached_issue_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Detached Issue Ids"
+          },
+          "ids_truncated": {
+            "type": "boolean",
+            "title": "Ids Truncated"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "close_missing": {
+            "type": "boolean",
+            "title": "Close Missing"
+          },
+          "scope": {
+            "type": "string",
+            "title": "Scope"
+          },
+          "dedup_complete": {
+            "type": "boolean",
+            "title": "Dedup Complete",
+            "description": "Always true today: per-source deduplication strategies (plan \u00a742.3) arrive later, and until then an import matches Issues the same way every scan does."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "reverted_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reverted At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "mode",
+          "parser",
+          "file_name",
+          "test_id",
+          "engagement_id",
+          "counts",
+          "reopened_issue_ids",
+          "closed_issue_ids",
+          "detached_issue_ids",
+          "ids_truncated",
+          "warnings",
+          "error",
+          "close_missing",
+          "scope",
+          "dedup_complete",
+          "created_at",
+          "reverted_at"
+        ],
+        "title": "ImportView"
+      },
       "IntegrationSettingsView": {
         "properties": {
           "org_id": {
@@ -3773,6 +4444,40 @@
           "created_at"
         ],
         "title": "MessageView"
+      },
+      "ParserInfo": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "formats": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Formats"
+          },
+          "categories": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Categories"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "label",
+          "formats",
+          "categories"
+        ],
+        "title": "ParserInfo"
       },
       "PluginView": {
         "properties": {
@@ -4117,6 +4822,39 @@
         ],
         "title": "RetentionSettingsView",
         "description": "How long this organization keeps a scan's encrypted artifacts before crypto-shredding them\n(Week 47 task 2, plan \u00a722.2). Never having set one returns the plan's own default (7 days), not\nan error or a null -- there is always an effective policy, even if no row exists for it yet."
+      },
+      "RevertView": {
+        "properties": {
+          "import_id": {
+            "type": "string",
+            "title": "Import Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "restored": {
+            "type": "integer",
+            "title": "Restored"
+          },
+          "deleted": {
+            "type": "integer",
+            "title": "Deleted"
+          },
+          "skipped": {
+            "type": "integer",
+            "title": "Skipped"
+          }
+        },
+        "type": "object",
+        "required": [
+          "import_id",
+          "status",
+          "restored",
+          "deleted",
+          "skipped"
+        ],
+        "title": "RevertView"
       },
       "SaveIntegrationSettingsRequest": {
         "properties": {

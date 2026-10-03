@@ -39,3 +39,30 @@ def redact_near_secrets(findings: list[Finding]) -> list[Finding]:
                 loc.path, loc.start_line, loc.end_line, WITHHELD, Location.hash_snippet(WITHHELD)
             )
     return findings
+
+
+SECRET_PLACEHOLDER = "[secret redacted]"  # what the Gitleaks adapter writes at the source
+
+
+def redact_secret_findings(findings: list[Finding]) -> list[Finding]:
+    """For a report Bulwark did not produce: a secret finding's own snippet, and any quoted value in
+    its title or description, may contain the secret itself.
+
+    Native Gitleaks runs with `--redact`, so its output is already clean; an uploaded file carries
+    no such guarantee, so it is applied here -- with the same placeholder, and *before* correlation,
+    as at the source: a fingerprint is a hash of the snippet, and hashing the real secret would
+    store a guessable function of it. Identity then rests on rule, path and line, exactly as it
+    does for a scan."""
+    for f in findings:
+        if f.taxonomy.category is Category.SECRETS:
+            loc = f.location
+            f.location = Location(
+                loc.path,
+                loc.start_line,
+                loc.end_line,
+                SECRET_PLACEHOLDER,
+                Location.hash_snippet(SECRET_PLACEHOLDER),
+            )
+            f.title = _QUOTED.sub("'[redacted]'", f.title)
+            f.description = _QUOTED.sub("'[redacted]'", f.description)
+    return findings

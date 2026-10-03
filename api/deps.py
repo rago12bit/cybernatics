@@ -36,6 +36,9 @@ class AppState:
     # a no-op so every existing AppState(...) call built positionally (tests predating this field)
     # keeps working unchanged rather than needing to pass one.
     enqueue_dast_campaign: Callable[[str, str], None] = lambda *_: None
+    # (import_id, org_id) -> dispatches an uploaded report to the worker (Week 54 task 7, ADR-0040).
+    # A no-op default for the same reason as above: an AppState built without it still works.
+    enqueue_import: Callable[[str, str], None] = lambda *_: None
     llm: LLMClient | None = None  # None: AI suggestions are off; guidance is static reference text
     limiter: UsageLimiter = field(default_factory=UsageLimiter)  # caps real model calls (rate)
     llm_budget: BudgetConfig = field(default_factory=BudgetConfig.from_env)  # caps them by tokens

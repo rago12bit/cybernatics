@@ -48,6 +48,10 @@ class Settings:
     # (self-host, the only mode this project ships configured for today) changes nothing; a real
     # hosted deployment sets this to switch the SAST default to Opengrep and refuse "semgrep".
     hosted_mode: bool = False
+    # Uploaded reports are parsed in the scanner sandbox (ADR-0040, `core.imports.parsers.sandbox`).
+    # True is the default and the only safe production setting; False parses in the worker's own
+    # process and exists for tests and for local development without Docker.
+    ingest_sandbox: bool = True
 
     @staticmethod
     def from_env() -> Settings:
@@ -87,6 +91,8 @@ class Settings:
             ),
             hosted_mode=os.environ.get("BULWARK_HOSTED_MODE", "").strip().lower()
             in ("1", "true", "yes"),
+            ingest_sandbox=os.environ.get("BULWARK_INGEST_SANDBOX", "1").strip().lower()
+            not in ("0", "false", "no"),
         )
 
 

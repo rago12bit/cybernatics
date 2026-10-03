@@ -118,6 +118,30 @@ def get_or_create_ci_engagement(s: Session, *, asset_id: str, org_id: str) -> En
     return engagement
 
 
+def get_or_create_import_engagement(s: Session, *, asset_id: str, org_id: str) -> Engagement:
+    """The standing "import" Engagement of an asset (ADR-0040): the default home for a report
+    uploaded without naming an engagement, created lazily the way the "ci" one is. A pen test or
+    audit that needs its own scope, dates and lead is a separate "assessment" engagement a person
+    creates explicitly (`create_engagement`); this one is just "reports from tools we don't run"."""
+    existing = s.scalars(
+        select(Engagement).where(
+            Engagement.asset_id == asset_id,
+            Engagement.org_id == org_id,
+            Engagement.engagement_type == "import",
+        )
+    ).first()
+    if existing is not None:
+        return existing
+    asset = s.get(Asset, asset_id)
+    label = asset.label if asset is not None else asset_id
+    engagement = Engagement(
+        org_id=org_id, asset_id=asset_id, name=f"{label} imports", engagement_type="import"
+    )
+    s.add(engagement)
+    s.commit()
+    return engagement
+
+
 def create_portfolio(
     s: Session, *, org_id: str, name: str, description: str | None = None
 ) -> Portfolio:
@@ -251,13 +275,16 @@ def add_import_record(
     close_missing: bool = True,
     scope: str = "test",
     created_by: str | None = None,
+    status: str = "applied",
+    mode: str = "apply",
+    upload_path: str | None = None,
 ) -> ImportRecord:
     """Stages (does not commit) a new ImportRecord: the ingest service writes it in the same
     transaction as the Issue changes it describes, so a crash can't leave one without the other."""
     record = ImportRecord(
         org_id=org_id, test_id=test_id, scan_id=scan_id, parser=parser, file_digest=file_digest,
         file_name=file_name, size_bytes=size_bytes, close_missing=close_missing, scope=scope,
-        created_by=created_by,
+        created_by=created_by, status=status, mode=mode, upload_path=upload_path,
     )  # fmt: skip
     s.add(record)
     s.flush()

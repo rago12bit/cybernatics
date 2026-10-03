@@ -138,6 +138,22 @@ def run_dast_campaign_task(self: Any, scan_id: str, org_id: str | None = None) -
     )
 
 
+@celery_app.task(name="bulwark.run_import", bind=True, acks_late=True, ignore_result=True)  # type: ignore[untyped-decorator]
+def run_import_task(self: Any, import_id: str, org_id: str) -> str:
+    """Server-side import job (Week 54 task 7, ADR-0040): parse an uploaded report in the sandbox
+    and preview or apply it. Idempotent -- a redelivered task finds the import no longer queued and
+    does nothing -- and run under `org_id` the way every other worker job is."""
+    from core.config import Settings
+    from core.imports.jobs import process_import
+    from core.persistence.db import get_session_factory
+    from core.tenancy import scoped_sessions
+
+    sessions = scoped_sessions(get_session_factory(), org_id)
+    with sessions() as s:
+        record = process_import(s, import_id, org_id, Settings.from_env())
+        return record.status if record is not None else "missing"
+
+
 @celery_app.task(name="bulwark.update_feeds", ignore_result=True)  # type: ignore[untyped-decorator]
 def update_feeds_task() -> dict[str, str]:
     """Refresh the EPSS and CISA KEV caches; failures are recorded in meta.json, never raised."""

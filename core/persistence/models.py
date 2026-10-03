@@ -813,7 +813,16 @@ class ImportRecord(Base):
     file_name: Mapped[str | None] = mapped_column(String(300), nullable=True)
     file_digest: Mapped[str] = mapped_column(String(64))  # sha256 hex of the uploaded bytes
     size_bytes: Mapped[int] = mapped_column(Integer, default=0)
-    status: Mapped[str] = mapped_column(String(16), default="applied")  # applied | reverted
+    # queued -> processing -> applied | previewed | failed | duplicate; applied -> reverted.
+    # "previewed" waits (with its upload kept) for a person to confirm; "duplicate" is a second
+    # upload of a file that was already the Test's latest import, noticed once it reached the
+    # front of the queue (the API catches the ordinary case before ever creating a record).
+    status: Mapped[str] = mapped_column(String(16), default="applied")
+    mode: Mapped[str] = mapped_column(String(16), default="apply")  # apply | preview
+    upload_path: Mapped[str | None] = mapped_column(Text, nullable=True)  # until applied or failed
+    error: Mapped[str | None] = mapped_column(Text, nullable=True)  # why a failed import failed
+    # What a preview computed: counts, and the reopened/closed/detached Issue ids (ImportPreview).
+    preview: Mapped[dict[str, Any] | None] = mapped_column(JsonType, nullable=True)
     close_missing: Mapped[bool] = mapped_column(Boolean, default=True)
     scope: Mapped[str] = mapped_column(String(16), default="test")  # test | engagement
     new_count: Mapped[int] = mapped_column(Integer, default=0)
