@@ -35,13 +35,16 @@ from core.persistence.models import (
     CopilotMessageRow,
     DataRetentionPolicyRow,
     Engagement,
+    EngagementTest,
     ExternalIssueLinkRow,
     FindingRow,
     GithubInstallation,
     HypothesisRow,
+    ImportRecord,
     IntegrationSettingsRow,
     IssueRow,
     Organization,
+    OutboxEvent,
     PluginAllowlistRow,
     Portfolio,
     Scan,
@@ -182,6 +185,140 @@ def list_tool_runs_for_engagement(s: Session, engagement_id: str, org_id: str) -
             .order_by(ToolRun.id.desc())
         )
     )
+
+
+def get_or_create_engagement_test(
+    s: Session, *, org_id: str, engagement_id: str, name: str, parser: str | None = None
+) -> EngagementTest:
+    """The persistent Test (ADR-0040) an uploaded report is reimported into, created on first use
+    and reused after: a second upload "into the same Test" must find the same row, or there would
+    be no previous snapshot to compare against. Raises ValueError for an engagement that isn't in
+    this org (or doesn't exist) rather than minting a Test under someone else's engagement.
+
+    Engagement types for person-created work are free text; the plan names "assessment" and
+    "import" alongside the "ci" one `get_or_create_ci_engagement` owns."""
+    if get_engagement(s, engagement_id, org_id) is None:
+        raise ValueError(f"engagement {engagement_id} not found")
+    existing = s.scalars(
+        select(EngagementTest).where(
+            EngagementTest.engagement_id == engagement_id,
+            EngagementTest.org_id == org_id,
+            EngagementTest.name == name,
+        )
+    ).one_or_none()
+    if existing is not None:
+        return existing
+    test = EngagementTest(org_id=org_id, engagement_id=engagement_id, name=name, parser=parser)
+    s.add(test)
+    s.commit()
+    return test
+
+
+def get_engagement_test(s: Session, test_id: str, org_id: str) -> EngagementTest | None:
+    return s.scalars(
+        select(EngagementTest).where(EngagementTest.id == test_id, EngagementTest.org_id == org_id)
+    ).one_or_none()
+
+
+def list_engagement_tests(s: Session, engagement_id: str, org_id: str) -> list[EngagementTest]:
+    return list(
+        s.scalars(
+            select(EngagementTest)
+            .where(EngagementTest.engagement_id == engagement_id, EngagementTest.org_id == org_id)
+            .order_by(EngagementTest.name)
+        )
+    )
+
+
+def add_import_record(
+    s: Session,
+    *,
+    org_id: str,
+    test_id: str,
+    scan_id: str | None,
+    parser: str,
+    file_digest: str,
+    file_name: str | None = None,
+    size_bytes: int = 0,
+    close_missing: bool = True,
+    scope: str = "test",
+    created_by: str | None = None,
+) -> ImportRecord:
+    """Stages (does not commit) a new ImportRecord: the ingest service writes it in the same
+    transaction as the Issue changes it describes, so a crash can't leave one without the other."""
+    record = ImportRecord(
+        org_id=org_id, test_id=test_id, scan_id=scan_id, parser=parser, file_digest=file_digest,
+        file_name=file_name, size_bytes=size_bytes, close_missing=close_missing, scope=scope,
+        created_by=created_by,
+    )  # fmt: skip
+    s.add(record)
+    s.flush()
+    return record
+
+
+def get_import_record(s: Session, import_id: str, org_id: str) -> ImportRecord | None:
+    return s.scalars(
+        select(ImportRecord).where(ImportRecord.id == import_id, ImportRecord.org_id == org_id)
+    ).one_or_none()
+
+
+def list_import_records(
+    s: Session, test_id: str, org_id: str, *, limit: int = 50
+) -> list[ImportRecord]:
+    """A Test's import history, newest first -- the "import history with counts" (plan §54)."""
+    return list(
+        s.scalars(
+            select(ImportRecord)
+            .where(ImportRecord.test_id == test_id, ImportRecord.org_id == org_id)
+            .order_by(ImportRecord.created_at.desc(), ImportRecord.id.desc())
+            .limit(limit)
+        )
+    )
+
+
+def latest_applied_import(s: Session, test_id: str, org_id: str) -> ImportRecord | None:
+    """The Test's current snapshot: what the next upload is compared against, and the only import
+    that can be reverted (ADR-0040). A reverted import is history, not a snapshot."""
+    return s.scalars(
+        select(ImportRecord)
+        .where(
+            ImportRecord.test_id == test_id,
+            ImportRecord.org_id == org_id,
+            ImportRecord.status == "applied",
+        )
+        .order_by(ImportRecord.created_at.desc(), ImportRecord.id.desc())
+        .limit(1)
+    ).one_or_none()
+
+
+def add_outbox_event(
+    s: Session, *, org_id: str, event_type: str, payload: dict[str, Any]
+) -> OutboxEvent:
+    """Stages (does not commit) a domain event -- the outbox pattern (plan §41.1): it commits or
+    rolls back together with the change that caused it, so "saved" and "announced" can't diverge."""
+    event = OutboxEvent(org_id=org_id, event_type=event_type, payload=payload)
+    s.add(event)
+    return event
+
+
+def pending_outbox_events(s: Session, org_id: str, *, limit: int = 100) -> list[OutboxEvent]:
+    return list(
+        s.scalars(
+            select(OutboxEvent)
+            .where(OutboxEvent.org_id == org_id, OutboxEvent.dispatched_at.is_(None))
+            .order_by(OutboxEvent.id)
+            .limit(limit)
+        )
+    )
+
+
+def mark_outbox_dispatched(s: Session, org_id: str, event_ids: list[int]) -> None:
+    now = _now()
+    for event in s.scalars(
+        select(OutboxEvent).where(OutboxEvent.org_id == org_id, OutboxEvent.id.in_(event_ids))
+    ):
+        event.dispatched_at = now
+    s.commit()
 
 
 def create_scan(
