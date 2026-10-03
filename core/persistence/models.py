@@ -750,3 +750,107 @@ class ExternalIssueLinkRow(Base):
         UniqueConstraint("issue_id", "provider", name="uq_external_links_issue_provider"),
         Index("ix_external_links_org_provider_external_id", "org_id", "provider", "external_id"),
     )
+
+
+class EngagementTest(Base):
+    """A persistent Test (plan §40 change C11, §41.2, ADR-0040): "one tool's results within an
+    engagement," which stays the same row across every report uploaded into it -- the thing a
+    reimport is compared against ("every later upload is compared against that Test's previous
+    Occurrences"). Named `EngagementTest`, not `Test`, so pytest never tries to collect it.
+
+    This is deliberately *not* where a CI scanner's results live: each pipeline run's per-tool
+    result is still a `ToolRun` (ADR-0039), one per run, which is exactly the plan's "each run of
+    your own pipeline creates one Test per scanner." A person-created Assessment or Import
+    engagement has no scan to hang a ToolRun on and needs one row that outlives each upload."""
+
+    __tablename__ = "engagement_tests"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(
+        ForeignKey("organizations.id"), default=DEFAULT_ORG_ID, index=True
+    )
+    engagement_id: Mapped[str] = mapped_column(
+        ForeignKey("engagements.id", ondelete="CASCADE"), index=True
+    )
+    name: Mapped[str] = mapped_column(String(200))
+    parser: Mapped[str | None] = mapped_column(String(40), nullable=True)  # "sarif", "nessus", ...
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+    engagement: Mapped[Engagement] = relationship()
+
+    __table_args__ = (UniqueConstraint("engagement_id", "name", name="uq_engagement_tests_name"),)
+
+
+class ImportRecord(Base):
+    """One upload into a Test, and exactly what it changed (plan §42.1, ADR-0040).
+
+    Each import is backed by a real `Scan` row (`source_type="import"`) that owns its findings, so
+    every Occurrence keeps the scan-scoped foreign keys and RLS policy the rest of the system
+    already relies on; this record adds what a Scan doesn't carry -- the file's digest
+    (idempotency), the four counts the import screen shows, and `changes`, the prior state of every
+    Issue this import touched, which is what makes the most recent import into a Test reversible.
+
+    `status` is "applied" or "reverted". A reverted record is kept (the audit trail of a mistaken
+    upload is worth more than the row), but its Scan and findings are removed, so it no longer
+    counts as the Test's previous snapshot."""
+
+    __tablename__ = "import_records"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(
+        ForeignKey("organizations.id"), default=DEFAULT_ORG_ID, index=True
+    )
+    test_id: Mapped[str] = mapped_column(
+        ForeignKey("engagement_tests.id", ondelete="CASCADE"), index=True
+    )
+    # SET NULL, not CASCADE: retention deleting an old scan's data must not erase the record that
+    # an import happened (its counts and digest are still the audit trail); a null scan_id just
+    # means "its findings have been purged."
+    scan_id: Mapped[str | None] = mapped_column(
+        ForeignKey("scans.id", ondelete="SET NULL"), nullable=True, unique=True
+    )
+    parser: Mapped[str] = mapped_column(String(40))
+    file_name: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    file_digest: Mapped[str] = mapped_column(String(64))  # sha256 hex of the uploaded bytes
+    size_bytes: Mapped[int] = mapped_column(Integer, default=0)
+    status: Mapped[str] = mapped_column(String(16), default="applied")  # applied | reverted
+    close_missing: Mapped[bool] = mapped_column(Boolean, default=True)
+    scope: Mapped[str] = mapped_column(String(16), default="test")  # test | engagement
+    new_count: Mapped[int] = mapped_column(Integer, default=0)
+    unchanged_count: Mapped[int] = mapped_column(Integer, default=0)
+    reopened_count: Mapped[int] = mapped_column(Integer, default=0)
+    closed_count: Mapped[int] = mapped_column(Integer, default=0)
+    # Issues this file stopped reporting that stay open because another source still reports
+    # them: honest about "no longer in this file" versus "actually fixed" (ADR-0040).
+    detached_count: Mapped[int] = mapped_column(Integer, default=0)
+    warnings: Mapped[list[Any]] = mapped_column(JsonType, default=list)
+    # [{"issue_id", "created": bool, "prior_state", "prior_fixed_at"}, ...] -- enough to undo it.
+    changes: Mapped[list[Any]] = mapped_column(JsonType, default=list)
+    created_by: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+    reverted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    __table_args__ = (
+        Index("ix_import_records_test_created", "test_id", "created_at"),
+        Index("ix_import_records_test_digest", "test_id", "file_digest"),
+    )
+
+
+class OutboxEvent(Base):
+    """A domain event waiting to be announced (plan §41.1): "write each event to an outbox table in
+    the same transaction as the change that caused it, and publish from there. A crash between
+    'saved' and 'announced' then can't lose an event." `dispatched_at` is null until a dispatcher
+    has handed it to every subscriber; the integer primary key gives dispatch a stable order."""
+
+    __tablename__ = "outbox_events"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    org_id: Mapped[str] = mapped_column(
+        ForeignKey("organizations.id"), default=DEFAULT_ORG_ID, index=True
+    )
+    event_type: Mapped[str] = mapped_column(String(64), index=True)  # issue.created, scan.completed
+    payload: Mapped[dict[str, Any]] = mapped_column(JsonType, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+    dispatched_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, index=True
+    )
