@@ -7,9 +7,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import text
+from sqlalchemy import event, text
+from sqlalchemy.orm import Session as _SessionBase
 
 if TYPE_CHECKING:
+    from sqlalchemy import Connection
     from sqlalchemy.orm import Session
 
     from core.persistence.db import SessionFactory
@@ -36,22 +38,51 @@ CURRENT_ORG_SETTING = "app.current_org"
 ORG_HEADER = "X-Bulwark-Org"
 
 
+#: Where a session remembers which org it acts for, so every transaction it opens can re-apply it.
+_ORG_INFO_KEY = "bulwark.org_id"
+
+
+def _apply_org(conn: Connection, org_id: str) -> None:
+    # `true` = local to the current transaction: it can never outlive it, so a connection returned
+    # to the pool carries no org, and the next session to check it out cannot inherit this one's.
+    conn.execute(
+        text("SELECT set_config(:key, :org, true)"),
+        {"key": CURRENT_ORG_SETTING, "org": org_id},
+    )
+
+
+@event.listens_for(_SessionBase, "after_begin")
+def _reapply_org_on_every_transaction(
+    session: Session, transaction: object, connection: Connection
+) -> None:
+    """Row-Level Security reads `app.current_org` from the *connection*, but a Session does not own
+    one: it hands its connection back to the pool on every commit or rollback and takes whichever
+    one is free for the next transaction. Setting the org once per session (the original
+    `set_config(..., false)`) therefore left it on a connection the session might never see again,
+    and left the connection carrying that org for whoever checked it out next -- found live: with
+    two overlapping sessions for different orgs, the first one's next statement after a commit ran
+    as the *second* org. Re-applying the org at the start of every transaction, scoped to that
+    transaction, closes both halves: a session always runs as its own org, and an idle pooled
+    connection always has none (which RLS reads as "see nothing")."""
+    org_id = session.info.get(_ORG_INFO_KEY)
+    if org_id is not None and connection.dialect.name == "postgresql":
+        _apply_org(connection, org_id)
+
+
 def set_session_org(s: Session, org_id: str) -> None:
-    """Set `app.current_org` on an already-open session, for the rest of its life (session-scoped,
-    not transaction-local -- see `api.deps.db`'s docstring for why `true`/local breaks the moment a
-    caller commits more than once in one session, which several `repo.py` functions do). A no-op on
-    SQLite, which has no RLS to set up in the first place.
+    """Declare which org this session acts for, for the rest of its life. The org is remembered on
+    the session and applied (transaction-locally, see `_reapply_org_on_every_transaction`) at the
+    start of every transaction it opens, including the one open right now. A no-op on SQLite, which
+    has no RLS to set up in the first place.
 
     Shared by every place that establishes org context for a session: `api.deps.db` (from the
     request's `X-Bulwark-Org` header), `scoped_sessions` below (from a worker task's payload), and
     the GitHub webhook handler (from a *resolved* installation -> org mapping, only knowable
     after looking one up -- see `core.persistence.repo.get_or_create_installation`'s docstring for
     why that lookup itself must not be RLS-gated)."""
+    s.info[_ORG_INFO_KEY] = org_id
     if s.bind is not None and s.bind.dialect.name == "postgresql":
-        s.execute(
-            text("SELECT set_config(:key, :org, false)"),
-            {"key": CURRENT_ORG_SETTING, "org": org_id},
-        )
+        _apply_org(s.connection(), org_id)  # the transaction already open (if any) began earlier
 
 
 def scoped_sessions(factory: SessionFactory, org_id: str) -> SessionFactory:
