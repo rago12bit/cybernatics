@@ -15,13 +15,14 @@ from core.models import (
     Location,
     Remediation,
     Scoring,
+    Severity,
     Taxonomy,
 )
-from core.scoring.severity import normalize
+from core.scoring.severity import from_cvss, normalize
 
 log = logging.getLogger(__name__)
 
-_CWE_RE = re.compile(r"\bCWE-\d+\b")
+_CWE_RE = re.compile(r"\bCWE-0*(\d+)\b", re.IGNORECASE)  # CodeQL writes "external/cwe/cwe-079"
 _OWASP_2021_RE = re.compile(r"\bOWASP-(A\d{2}:2021)\b")
 _CONFIDENCE_RE = re.compile(r"\b(LOW|MEDIUM|HIGH) CONFIDENCE\b", re.IGNORECASE)
 # SARIF levels -> the tool's own vocabulary in the matrix (Semgrep says ERROR/WARNING/INFO).
@@ -43,7 +44,7 @@ def parse_sarif(
         for run in doc["runs"]:
             rules = {r["id"]: r for r in run.get("tool", {}).get("driver", {}).get("rules", [])}
             for result in run.get("results", []):
-                f = _to_finding(result, rules, tool, category, strip_rule_prefix)
+                f = result_to_finding(result, rules, tool, category, strip_rule_prefix)
                 if f is not None:
                     findings.append(f)
         return findings
@@ -52,21 +53,34 @@ def parse_sarif(
         return []
 
 
-def _to_finding(
+def result_to_finding(
     result: dict[str, Any],
     rules: dict[str, dict[str, Any]],
     tool: str,
     category: Category,
-    strip_prefix: str,
+    strip_prefix: str = "",
+    *,
+    severity_tool: str | None = None,
+    use_security_severity: bool = False,
 ) -> Finding | None:
+    """One SARIF result -> a Finding, or None when it has no usable rule or file. The single place a
+    SARIF result is normalised: native scans (`parse_sarif`) and uploaded reports
+    (`core.imports.parsers.sarif`) both go through it, so they cannot drift apart.
+
+    `severity_tool` selects the severity-matrix row when it differs from `tool` (an uploaded report
+    from a tool Bulwark has no row for); `use_security_severity` prefers the numeric
+    `security-severity` rule property (GitHub's convention, used by CodeQL and Trivy) over the
+    coarse SARIF level. Both are off for native scans, whose output is unchanged."""
     try:
-        raw_rule_id = str(result["ruleId"])
+        raw_rule_id = str(result.get("ruleId") or result["rule"]["id"])
         rule = rules.get(raw_rule_id, {})
         rule_id = raw_rule_id.removeprefix(strip_prefix)
         phys = result["locations"][0]["physicalLocation"]
-        region = phys["region"]
+        # SARIF makes the region optional (a finding about a whole file, e.g. a vulnerable
+        # dependency in a manifest); dropping those would silently lose valid findings.
+        region = phys.get("region") or {}
         path = str(phys["artifactLocation"]["uri"]).removeprefix(TARGET_PREFIX)
-        start = int(region["startLine"])
+        start = int(region.get("startLine", 1))
         end = int(region.get("endLine", start))
         snippet = str(region.get("snippet", {}).get("text", ""))
         level = str(result.get("level") or rule.get("defaultConfiguration", {}).get("level", ""))
@@ -82,12 +96,14 @@ def _to_finding(
             location=Location(path, start, end, snippet, Location.hash_snippet(snippet)),
             taxonomy=Taxonomy(
                 category,
-                cwe=tuple(dict.fromkeys(_CWE_RE.findall(tag_text))),
+                cwe=tuple(dict.fromkeys(f"CWE-{n}" for n in _CWE_RE.findall(tag_text))),
                 owasp_top_10_2021=tuple(dict.fromkeys(_OWASP_2021_RE.findall(tag_text))),
             ),
             scoring=Scoring(
                 native_severity={tool: level.upper()},
-                normalized_severity=normalize(tool, _SARIF_LEVELS.get(level.lower(), level)),
+                normalized_severity=_severity(
+                    severity_tool or tool, level, rule, use_security_severity
+                ),
                 confidence=_CONFIDENCE[conf.group(1).upper()] if conf else 0.5,
             ),
             evidence=Evidence(reported_by=[tool], rule_ids={tool: [rule_id]}),
@@ -99,6 +115,17 @@ def _to_finding(
     except (KeyError, IndexError, TypeError, ValueError) as exc:
         log.warning("%s: skipping malformed SARIF result: %s", tool, exc)
         return None
+
+
+def _severity(tool: str, level: str, rule: dict[str, Any], use_security_severity: bool) -> Severity:
+    if use_security_severity:
+        raw = (rule.get("properties") or {}).get("security-severity")
+        if raw is not None:
+            try:
+                return from_cvss(float(raw))
+            except (TypeError, ValueError):
+                pass  # not a number: fall back to the SARIF level
+    return normalize(tool, _SARIF_LEVELS.get(level.lower(), level))
 
 
 MAX_PATCH_CHARS = 4000

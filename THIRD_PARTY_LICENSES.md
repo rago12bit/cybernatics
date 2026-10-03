@@ -17,6 +17,7 @@ inventory, not legal advice: check licenses that matter to you at the source.
 | gosec | Apache-2.0 | <https://github.com/securego/gosec> | runs in a container |
 | grafana | AGPL-3.0-only | <https://github.com/grafana/grafana> | optional compose profile, run unmodified as a separate container; nothing links to it |
 | grype | Apache-2.0 | <https://github.com/anchore/grype> | runs in a container |
+| ingest-parser | Apache-2.0 (Bulwark's own code; ijson BSD-3-Clause/ISC, google-re2 BSD-3-Clause, defusedxml PSF-2.0) | <https://pypi.org/project/ijson/> | Bulwark's own image (docker/ingest-parser, Week 54 §42.2): parses uploaded reports inside the scanner sandbox. Three permissive Python libraries, pip-installed into the image: ijson (streaming JSON), google-re2 (linear-time regular expressions) and defusedxml (XML without entity expansion) |
 | jaeger | Apache-2.0 | <https://github.com/jaegertracing/jaeger> | optional compose profile |
 | opengrep | LGPL-2.1-only (engine) | <https://github.com/opengrep/opengrep> | hosted mode's SAST tool (ADR-0038); runs in a container, binary pinned by sha256 -- never bundles opengrep-rules (Commons Clause), uses docker/opengrep/rules/ instead, originally written for this project under its own Apache-2.0 license |
 | osv-scanner | Apache-2.0 | <https://github.com/google/osv-scanner> | runs in a container |

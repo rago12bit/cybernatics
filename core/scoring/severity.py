@@ -51,6 +51,10 @@ MATRIX: dict[str, dict[str, Severity]] = {
     # severity ever reaches `normalize()` for it. An empty row, not an absent one: every registered
     # tool gets a row in the published matrix, even a trivially unreachable one.
     "syft": {},
+    # An uploaded SARIF report from a tool Bulwark has no row for (core.imports.parsers.sarif): the
+    # SARIF level, which `core.sarif` maps note -> INFO. A `security-severity` score, when the rule
+    # carries one, overrides this.
+    "sarif": {"ERROR": S.HIGH, "WARNING": S.MEDIUM, "INFO": S.LOW},
 }
 
 # CVSS v3.1 base-score bands (FIRST.org qualitative severity rating scale).

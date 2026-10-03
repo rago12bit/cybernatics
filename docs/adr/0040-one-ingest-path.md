@@ -90,6 +90,33 @@ as a whole.
 written in the same transaction as the change that caused them, then dispatched. A crash between
 "saved" and "announced" cannot lose an event.
 
+### Parsers
+
+`core/imports/parsers/` holds the `IngestParser` interface (`sniff(head) -> confidence`, streaming
+`parse(stream)`), a registry, and one parser per format. Decisions, and where this departs from the
+plan's wording:
+
+- **A parser yields canonical `Finding`s, not a separate `RawOccurrence` type.** A second
+  intermediate type would need its own mapping into `Finding` and so a second place that mapping can
+  drift. SARIF results go through `core.sarif.result_to_finding`, the function native scans already
+  use, so an uploaded Semgrep SARIF and a Semgrep run Bulwark did itself cannot disagree.
+- **A parse that did not reach the end of the file is an error, never a smaller report.** Reimport
+  closes what a file no longer lists, so a truncated or half-parsed file would read as "everything
+  was fixed." `parse` never raises on bad input; it records `ctx.error`, and `ParseResult.complete`
+  is false. Callers must refuse to apply an incomplete result. The same holds for a sandbox that
+  fails or times out: that is an error, not an empty report.
+- **Limits are enforced while reading**, not after: byte size, JSON/XML nesting depth, wall-clock
+  time and finding count (`parsers/safe.py`), so a hostile file is stopped before it exhausts memory.
+  XML goes through `defusedxml` with DTDs, entities and external references refused; identifiers are
+  extracted from free text with RE2 and bounded input.
+- **Streaming is real for JSON** (`ijson`): memory is bounded by the largest record. SARIF is read
+  twice (rule metadata, then results) because SARIF does not say which a file lists first.
+- **Parsing runs in the scanner sandbox.** `docker/ingest-parser` holds only the parser modules (no
+  API, no database layer, no credentials); `core.runner.run_tool` runs it with the same no-network,
+  read-only, all-capabilities-dropped flags as every scanner, through a pseudo-adapter, so there is
+  no second sandbox to keep as strict as the first. In-process parsing exists for tests and local
+  development and is an explicit opt-out, never the default.
+
 ## Consequences
 
 - Imports show up as ordinary scans in anything that lists scans. They are identifiable by

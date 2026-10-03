@@ -63,6 +63,12 @@ TOOLS: dict[str, tuple[str, str, str]] = {
     "dast-egress-proxy": ("Apache-2.0 (Bulwark's own code)", "https://www.python.org/",
                           "Bulwark's own image (docker/dast-egress-proxy, Week 49 §22.4): a pure-"
                           "stdlib asyncio allow-list proxy, no third-party packages installed"),
+    "ingest-parser": ("Apache-2.0 (Bulwark's own code; ijson BSD-3-Clause/ISC, google-re2 "
+                      "BSD-3-Clause, defusedxml PSF-2.0)", "https://pypi.org/project/ijson/",
+                      "Bulwark's own image (docker/ingest-parser, Week 54 §42.2): parses uploaded "
+                      "reports inside the scanner sandbox. Three permissive Python libraries, "
+                      "pip-installed into the image: ijson (streaming JSON), google-re2 (linear-"
+                      "time regular expressions) and defusedxml (XML without entity expansion)"),
 }  # fmt: skip
 DATA: list[tuple[str, str, str]] = [
     (

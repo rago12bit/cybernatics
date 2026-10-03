@@ -277,6 +277,14 @@ services:
     profiles: [scanners]
     build: docker/opengrep
     image: bulwark/opengrep:1.30.0
+  ingest-parser:
+    # Parses uploaded reports in the same locked-down sandbox as the scanners (plan §42.2, ADR-0040).
+    # Built from the repository root: it copies in just the parser modules, never the API or DB layer.
+    profiles: [scanners]
+    build:
+      context: .
+      dockerfile: docker/ingest-parser/Dockerfile
+    image: bulwark/ingest-parser:1
   scanner-trivy:
     profiles: [scanners]
     build: docker/trivy

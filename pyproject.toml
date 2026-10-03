@@ -18,6 +18,9 @@ dependencies = [
     "reportlab>=4.0",
     "tomli>=2; python_version < '3.11'",
     "prometheus-client>=0.20",
+    "ijson>=3.2",
+    "google-re2>=1.1",
+    "defusedxml>=0.7",
     "opentelemetry-api>=1.27",
     "tree-sitter>=0.23",
     "tree-sitter-javascript>=0.23",
@@ -94,6 +97,7 @@ files = ["core", "api"]
 module = [
     "celery.*", "kombu.*", "boto3.*", "botocore.*", "reportlab.*", "anthropic.*",
     "presidio_analyzer.*", "presidio_anonymizer.*", "dns.*",
+    "ijson.*", "re2", "defusedxml.*",  # untrusted-report parsing (core.imports.parsers)
 ]  # fmt: skip
 ignore_missing_imports = true
 
