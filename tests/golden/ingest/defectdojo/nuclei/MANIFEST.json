@@ -1,0 +1,216 @@
+{
+ "files": {
+  "empty.jsonl": {
+   "bytes": 0,
+   "expect": [
+    {
+     "count": 0,
+     "test": "test_parse_no_empty"
+    }
+   ],
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "vendored": true
+  },
+  "invalid_cwe.json": {
+   "bytes": 507,
+   "expect": [
+    {
+     "count": 1,
+     "findings": {
+      "-1": {
+       "cwe": 0
+      }
+     },
+     "test": "test_parse_invalid_cwe"
+    }
+   ],
+   "sha256": "adfca7f94aa9589ebe2bf23c3789bce1219608bcee5ae67237ee1b3c9ad83fd9",
+   "vendored": true
+  },
+  "issue_14071.json": {
+   "bytes": 384621,
+   "expect": [
+    {
+     "count": 27,
+     "test": "test_parse_issue_14071"
+    }
+   ],
+   "sha256": "bc82d37d223fd302cf2ea13a22afce67ff1b0a7e6731af35d2cb467d27ad9bd0",
+   "vendored": true
+  },
+  "issue_9201.json": {
+   "bytes": 1238,
+   "expect": [
+    {
+     "count": 1,
+     "test": "test_parse_issue_9201"
+    }
+   ],
+   "sha256": "2af82b0e8d78034396b6f526d4c1ed936c240ea6d8b621027f6075ab23ae38a1",
+   "vendored": true
+  },
+  "many_findings.json": {
+   "bytes": 6015,
+   "expect": [
+    {
+     "count": 16,
+     "findings": {
+      "0": {
+       "severity": "Low",
+       "title": "OpenSSH 5.3 Detection",
+       "vuln_id_from_tool": "openssh5.3-detect"
+      },
+      "1": {
+       "severity": "Info",
+       "title": "nginx version detect",
+       "vuln_id_from_tool": "nginx-version"
+      },
+      "12": {
+       "severity": "Info",
+       "title": "WAF Detection",
+       "vuln_id_from_tool": "waf-detect"
+      },
+      "14": {
+       "severity": "Info",
+       "title": "phpMyAdmin Panel",
+       "vuln_id_from_tool": "phpmyadmin-panel"
+      },
+      "15": {
+       "severity": "Info",
+       "title": "MySQL DB with enabled native password",
+       "vuln_id_from_tool": "mysql-native-password-bruteforce"
+      },
+      "2": {
+       "severity": "Medium",
+       "title": "phpMyAdmin setup page",
+       "vuln_id_from_tool": "phpmyadmin-setup"
+      },
+      "3": {
+       "severity": "Info",
+       "title": "Wappalyzer Technology Detection",
+       "vuln_id_from_tool": "tech-detect"
+      },
+      "4": {
+       "severity": "Info",
+       "title": "Wappalyzer Technology Detection",
+       "vuln_id_from_tool": "tech-detect"
+      }
+     },
+     "test": "test_parse_many_findings"
+    }
+   ],
+   "sha256": "f46e7a9c85a957621deac8a76637442da12e92a5e7309805fe0b89f2d1b6809f",
+   "vendored": true
+  },
+  "many_findings_new.json": {
+   "bytes": 2016,
+   "expect": [
+    {
+     "count": 2,
+     "findings": {
+      "0": {
+       "cvssv3_score": 5.3,
+       "cwe": 362,
+       "severity": "Medium",
+       "title": "OpenSSH Username Enumeration v7.7",
+       "vuln_id_from_tool": "CVE-2018-15473"
+      },
+      "1": {
+       "severity": "Low",
+       "title": "Exposed Prometheus metrics",
+       "vuln_id_from_tool": "prometheus-metrics"
+      }
+     },
+     "test": "test_parse_many_findings_new"
+    }
+   ],
+   "sha256": "5dcd44927c7de4f4e93095051424167bdd3685639ae6725b5fd030aa3b5938b7",
+   "vendored": true
+  },
+  "many_findings_third.json": {
+   "bytes": 3033,
+   "expect": [
+    {
+     "count": 2,
+     "findings": {
+      "0": {
+       "severity": "Info",
+       "title": "HTTP Missing Security Headers",
+       "vuln_id_from_tool": "http-missing-security-headers"
+      },
+      "1": {
+       "severity": "Info",
+       "title": "favicon-detection",
+       "vuln_id_from_tool": "favicon-detect"
+      }
+     },
+     "test": "test_parse_many_findings_third"
+    }
+   ],
+   "sha256": "d3386dfa817b3263524f05136bb4693f7dd4a5911ce17d458e14421a7e94b393",
+   "vendored": true
+  },
+  "multi_cwe_fabricated.json": {
+   "bytes": 685,
+   "expect": [
+    {
+     "count": 1,
+     "findings": {
+      "0": {
+       "cwe": 79
+      }
+     },
+     "test": "test_parse_multi_cwe"
+    }
+   ],
+   "sha256": "6453c5aaa8ab8347b00cd2f8dd9a450f286857a4b200f63e4244b3e8376c284f",
+   "vendored": true
+  },
+  "multiple_matches.json": {
+   "bytes": 3961,
+   "expect": [
+    {
+     "count": 2,
+     "test": "test_parse_same_template_multiple_matches"
+    }
+   ],
+   "sha256": "62105cb9ce4cca9bc011ad4f7cfb117de0b05f7adb197d81fd50a3c811a86af0",
+   "vendored": true
+  },
+  "multiple_v3.json": {
+   "bytes": 7536,
+   "expect": [
+    {
+     "count": 5,
+     "findings": {
+      "0": {
+       "severity": "Info"
+      }
+     },
+     "test": "test_parse_many_findings_v3"
+    }
+   ],
+   "sha256": "5a42270fb6c83e786a1adea3a02c522ae4d4e862bf465e84f65b2665572025a9",
+   "vendored": true
+  },
+  "no_findings.json": {
+   "bytes": 0,
+   "expect": [
+    {
+     "count": 0,
+     "test": "test_parse_no_findings"
+    }
+   ],
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "vendored": true
+  }
+ },
+ "source": {
+  "commit": "8b12d80ae30904fed44f5a84ff71f28da14bebaf",
+  "license": "BSD-3-Clause (see ../LICENSE)",
+  "repository": "https://github.com/DefectDojo/django-DefectDojo",
+  "scans": "unittests/scans/nuclei",
+  "tests": "unittests/tools/test_nuclei_parser.py"
+ },
+ "tool": "nuclei"
+}

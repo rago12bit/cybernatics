@@ -16,6 +16,7 @@
     "id": "bandit:B404:src/users.py:2",
     "location": {
       "end_line": 2,
+      "host": "",
       "path": "src/users.py",
       "route": "",
       "snippet": "1 import hashlib\n2 import subprocess\n3 \n",
@@ -79,6 +80,7 @@
     "id": "bandit:B608:src/users.py:6",
     "location": {
       "end_line": 6,
+      "host": "",
       "path": "src/users.py",
       "route": "",
       "snippet": "5 def get_user(conn, user_id):\n6     query = \"SELECT * FROM users WHERE id=\" + user_id\n7     return conn.execute(query).fetchall()\n",
@@ -142,6 +144,7 @@
     "id": "bandit:B602:src/users.py:11",
     "location": {
       "end_line": 11,
+      "host": "",
       "path": "src/users.py",
       "route": "",
       "snippet": "10 def run(cmd):\n11     return subprocess.call(cmd, shell=True)\n12 \n",
@@ -205,6 +208,7 @@
     "id": "bandit:B324:src/users.py:15",
     "location": {
       "end_line": 15,
+      "host": "",
       "path": "src/users.py",
       "route": "",
       "snippet": "14 def digest(pw):\n15     return hashlib.md5(pw.encode()).hexdigest()\n16 \n",
@@ -268,6 +272,7 @@
     "id": "bandit:B105:src/users.py:18",
     "location": {
       "end_line": 18,
+      "host": "",
       "path": "src/users.py",
       "route": "",
       "snippet": "[snippet withheld: hardcoded credential]",
@@ -331,6 +336,7 @@
     "id": "bandit:B105:src/users.py:20",
     "location": {
       "end_line": 20,
+      "host": "",
       "path": "src/users.py",
       "route": "",
       "snippet": "[snippet withheld: hardcoded credential]",

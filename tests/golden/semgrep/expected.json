@@ -16,6 +16,7 @@
     "id": "semgrep:python.sqlalchemy.security.sqlalchemy-execute-raw-query:src/users.py:7",
     "location": {
       "end_line": 7,
+      "host": "",
       "path": "src/users.py",
       "route": "",
       "snippet": "    return conn.execute(query).fetchall()",
@@ -79,6 +80,7 @@
     "id": "semgrep:python.lang.security.audit.dangerous-subprocess-use-audit:src/users.py:11",
     "location": {
       "end_line": 11,
+      "host": "",
       "path": "src/users.py",
       "route": "",
       "snippet": "    return subprocess.call(cmd, shell=True)",
@@ -142,6 +144,7 @@
     "id": "semgrep:python.lang.security.audit.subprocess-shell-true:src/users.py:11",
     "location": {
       "end_line": 11,
+      "host": "",
       "path": "src/users.py",
       "route": "",
       "snippet": "    return subprocess.call(cmd, shell=True)",
@@ -205,6 +208,7 @@
     "id": "semgrep:python.lang.security.insecure-hash-algorithm-md5:src/users.py:15",
     "location": {
       "end_line": 15,
+      "host": "",
       "path": "src/users.py",
       "route": "",
       "snippet": "    return hashlib.md5(pw.encode()).hexdigest()",

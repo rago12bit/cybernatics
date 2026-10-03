@@ -14,6 +14,7 @@ COPY core/__init__.py /app/core/__init__.py
 COPY core/models /app/core/models
 COPY core/scoring /app/core/scoring
 COPY core/sarif.py /app/core/sarif.py
+COPY core/dast/__init__.py core/dast/mapping.py /app/core/dast/
 COPY core/adapters/__init__.py core/adapters/base.py core/adapters/osv_scanner.py /app/core/adapters/
 COPY core/imports/__init__.py /app/core/imports/__init__.py
 COPY core/imports/parsers /app/core/imports/parsers

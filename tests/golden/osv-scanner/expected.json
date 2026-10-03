@@ -16,6 +16,7 @@
     "id": "osv-scanner:GHSA-29mw-wpgm-hmr9:package-lock.json:lodash@4.17.4",
     "location": {
       "end_line": 1,
+      "host": "",
       "path": "package-lock.json",
       "route": "",
       "snippet": "lodash@4.17.4",
@@ -90,6 +91,7 @@
     "id": "osv-scanner:GHSA-35jh-r3h4-6jhm:package-lock.json:lodash@4.17.4",
     "location": {
       "end_line": 1,
+      "host": "",
       "path": "package-lock.json",
       "route": "",
       "snippet": "lodash@4.17.4",
@@ -167,6 +169,7 @@
     "id": "osv-scanner:GHSA-4xc9-xhrj-v574:package-lock.json:lodash@4.17.4",
     "location": {
       "end_line": 1,
+      "host": "",
       "path": "package-lock.json",
       "route": "",
       "snippet": "lodash@4.17.4",
@@ -240,6 +243,7 @@
     "id": "osv-scanner:GHSA-f23m-r3pf-42rh:package-lock.json:lodash@4.17.4",
     "location": {
       "end_line": 1,
+      "host": "",
       "path": "package-lock.json",
       "route": "",
       "snippet": "lodash@4.17.4",
@@ -316,6 +320,7 @@
     "id": "osv-scanner:GHSA-fvqr-27wr-82fm:package-lock.json:lodash@4.17.4",
     "location": {
       "end_line": 1,
+      "host": "",
       "path": "package-lock.json",
       "route": "",
       "snippet": "lodash@4.17.4",
@@ -390,6 +395,7 @@
     "id": "osv-scanner:GHSA-jf85-cpcp-j695:package-lock.json:lodash@4.17.4",
     "location": {
       "end_line": 1,
+      "host": "",
       "path": "package-lock.json",
       "route": "",
       "snippet": "lodash@4.17.4",
@@ -465,6 +471,7 @@
     "id": "osv-scanner:GHSA-p6mc-m468-83gw:package-lock.json:lodash@4.17.4",
     "location": {
       "end_line": 1,
+      "host": "",
       "path": "package-lock.json",
       "route": "",
       "snippet": "lodash@4.17.4",
@@ -539,6 +546,7 @@
     "id": "osv-scanner:GHSA-x5rq-j2xg-h7qm:package-lock.json:lodash@4.17.4",
     "location": {
       "end_line": 1,
+      "host": "",
       "path": "package-lock.json",
       "route": "",
       "snippet": "lodash@4.17.4",
@@ -613,6 +621,7 @@
     "id": "osv-scanner:PYSEC-2018-66:requirements.txt:flask@0.12",
     "location": {
       "end_line": 1,
+      "host": "",
       "path": "requirements.txt",
       "route": "",
       "snippet": "flask@0.12",
@@ -685,6 +694,7 @@
     "id": "osv-scanner:PYSEC-2019-179:requirements.txt:flask@0.12",
     "location": {
       "end_line": 1,
+      "host": "",
       "path": "requirements.txt",
       "route": "",
       "snippet": "flask@0.12",
@@ -757,6 +767,7 @@
     "id": "osv-scanner:PYSEC-2023-62:requirements.txt:flask@0.12",
     "location": {
       "end_line": 1,
+      "host": "",
       "path": "requirements.txt",
       "route": "",
       "snippet": "flask@0.12",
@@ -829,6 +840,7 @@
     "id": "osv-scanner:PYSEC-2026-2151:requirements.txt:flask@0.12",
     "location": {
       "end_line": 1,
+      "host": "",
       "path": "requirements.txt",
       "route": "",
       "snippet": "flask@0.12",
@@ -901,6 +913,7 @@
     "id": "osv-scanner:PYSEC-2018-28:requirements.txt:requests@2.19.0",
     "location": {
       "end_line": 1,
+      "host": "",
       "path": "requirements.txt",
       "route": "",
       "snippet": "requests@2.19.0",
@@ -973,6 +986,7 @@
     "id": "osv-scanner:PYSEC-2023-74:requirements.txt:requests@2.19.0",
     "location": {
       "end_line": 1,
+      "host": "",
       "path": "requirements.txt",
       "route": "",
       "snippet": "requests@2.19.0",
@@ -1045,6 +1059,7 @@
     "id": "osv-scanner:PYSEC-2026-1872:requirements.txt:requests@2.19.0",
     "location": {
       "end_line": 1,
+      "host": "",
       "path": "requirements.txt",
       "route": "",
       "snippet": "requests@2.19.0",
@@ -1117,6 +1132,7 @@
     "id": "osv-scanner:PYSEC-2026-1873:requirements.txt:requests@2.19.0",
     "location": {
       "end_line": 1,
+      "host": "",
       "path": "requirements.txt",
       "route": "",
       "snippet": "requests@2.19.0",
@@ -1189,6 +1205,7 @@
     "id": "osv-scanner:PYSEC-2026-2275:requirements.txt:requests@2.19.0",
     "location": {
       "end_line": 1,
+      "host": "",
       "path": "requirements.txt",
       "route": "",
       "snippet": "requests@2.19.0",

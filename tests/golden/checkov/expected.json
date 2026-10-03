@@ -16,6 +16,7 @@
     "id": "checkov:CKV_DOCKER_4:Dockerfile:3",
     "location": {
       "end_line": 3,
+      "host": "",
       "path": "Dockerfile",
       "route": "",
       "snippet": "/Dockerfile.ADD",
@@ -75,6 +76,7 @@
     "id": "checkov:CKV_DOCKER_8:Dockerfile:2",
     "location": {
       "end_line": 2,
+      "host": "",
       "path": "Dockerfile",
       "route": "",
       "snippet": "/Dockerfile.USER",
@@ -134,6 +136,7 @@
     "id": "checkov:CKV_DOCKER_2:Dockerfile:1",
     "location": {
       "end_line": 5,
+      "host": "",
       "path": "Dockerfile",
       "route": "",
       "snippet": "/Dockerfile.",
@@ -193,6 +196,7 @@
     "id": "checkov:CKV_AWS_24:main.tf:6",
     "location": {
       "end_line": 13,
+      "host": "",
       "path": "main.tf",
       "route": "",
       "snippet": "aws_security_group_rule.r",
@@ -252,6 +256,7 @@
     "id": "checkov:CKV_AWS_23:main.tf:6",
     "location": {
       "end_line": 13,
+      "host": "",
       "path": "main.tf",
       "route": "",
       "snippet": "aws_security_group_rule.r",
@@ -311,6 +316,7 @@
     "id": "checkov:CKV_AWS_144:main.tf:1",
     "location": {
       "end_line": 4,
+      "host": "",
       "path": "main.tf",
       "route": "",
       "snippet": "aws_s3_bucket.b",
@@ -370,6 +376,7 @@
     "id": "checkov:CKV2_AWS_6:main.tf:1",
     "location": {
       "end_line": 4,
+      "host": "",
       "path": "main.tf",
       "route": "",
       "snippet": "aws_s3_bucket.b",
@@ -429,6 +436,7 @@
     "id": "checkov:CKV2_AWS_62:main.tf:1",
     "location": {
       "end_line": 4,
+      "host": "",
       "path": "main.tf",
       "route": "",
       "snippet": "aws_s3_bucket.b",
@@ -488,6 +496,7 @@
     "id": "checkov:CKV_AWS_20:main.tf:1",
     "location": {
       "end_line": 4,
+      "host": "",
       "path": "main.tf",
       "route": "",
       "snippet": "aws_s3_bucket.b",
@@ -547,6 +556,7 @@
     "id": "checkov:CKV_AWS_18:main.tf:1",
     "location": {
       "end_line": 4,
+      "host": "",
       "path": "main.tf",
       "route": "",
       "snippet": "aws_s3_bucket.b",
@@ -606,6 +616,7 @@
     "id": "checkov:CKV_AWS_21:main.tf:1",
     "location": {
       "end_line": 4,
+      "host": "",
       "path": "main.tf",
       "route": "",
       "snippet": "aws_s3_bucket.b",
@@ -665,6 +676,7 @@
     "id": "checkov:CKV_AWS_145:main.tf:1",
     "location": {
       "end_line": 4,
+      "host": "",
       "path": "main.tf",
       "route": "",
       "snippet": "aws_s3_bucket.b",
@@ -724,6 +736,7 @@
     "id": "checkov:CKV2_AWS_61:main.tf:1",
     "location": {
       "end_line": 4,
+      "host": "",
       "path": "main.tf",
       "route": "",
       "snippet": "aws_s3_bucket.b",

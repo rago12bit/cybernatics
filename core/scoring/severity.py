@@ -55,6 +55,18 @@ MATRIX: dict[str, dict[str, Severity]] = {
     # SARIF level, which `core.sarif` maps note -> INFO. A `security-severity` score, when the rule
     # carries one, overrides this.
     "sarif": {"ERROR": S.HIGH, "WARNING": S.MEDIUM, "INFO": S.LOW},
+    # DAST and network tools' own words, read by `core.dast.mapping`. ZAP's `riskcode` 0-3 is
+    # Informational/Low/Medium/High (it has no Critical); Nuclei's own "unknown" is defined by
+    # Nuclei, so it is Info without a warning, while a word Nuclei does not define still warns.
+    "zap": {"INFORMATIONAL": S.INFO, "LOW": S.LOW, "MEDIUM": S.MEDIUM, "HIGH": S.HIGH},
+    "nuclei": {
+        "INFO": S.INFO,
+        "LOW": S.LOW,
+        "MEDIUM": S.MEDIUM,
+        "HIGH": S.HIGH,
+        "CRITICAL": S.CRITICAL,
+        "UNKNOWN": S.INFO,
+    },
     # CycloneDX defines exactly these rating severities (core.imports.parsers.cyclonedx); anything
     # else a file says is unknown, imported as INFO, and reported.
     "cyclonedx": {

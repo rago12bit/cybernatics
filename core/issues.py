@@ -17,7 +17,7 @@ from typing import Literal
 
 from core.correlation import cwe_family
 from core.correlation.normalize import is_placeholder, snippet_hash
-from core.models.finding import Finding
+from core.models.finding import Category, Finding
 
 State = Literal["new", "open", "fixed", "reintroduced"]
 
@@ -31,19 +31,23 @@ def fallback_key(f: Finding) -> str | None:
     the file path, so moving a function to another file does not manufacture a spurious "new" issue
     alongside a spurious "fixed" one.
 
-    Returns None only for SCA findings (the package/version/CVE triple is already
+    Returns None for SCA findings (the package/version/CVE triple is already
     location-independent, so the primary fingerprint already serves as its own fallback and this
-    would just duplicate it). Every other case anchors on the rule id(s) that fired, same as the
-    primary fingerprint (`core.correlation.engine.fingerprint` -- see its docstring for the two real
-    collisions, confirmed against this repo's own golden scan data, that made this necessary): a
-    placeholder or empty snippet alone gives literally nothing to anchor on, and even a real,
-    non-empty snippet isn't always unique -- an IaC linter (Trivy's Terraform checks, for one)
-    routinely quotes the *entire resource block* verbatim for every distinct rule that fires against
-    it, so several genuinely different findings can share one snippet. Without the rule id here too,
-    this key -- already path-independent by design -- would match those collisions *anywhere in the
-    asset*, which is a strictly worse version of the same bug than the primary fingerprint has.
+    would just duplicate it) and for DAST findings (where a defect is -- host and route -- *is*
+    its identity, there being no file to move between; a path-free fallback would match every
+    URL an alert fires on to the first Issue made for it, turning fifty places into one Issue).
+    Every other case anchors on the rule id(s) that fired, same as the primary fingerprint
+    (`core.correlation.engine.fingerprint` -- see its docstring for the two real collisions,
+    confirmed against this repo's own golden scan data, that made this necessary): a placeholder
+    or empty snippet alone gives literally nothing to anchor on, and even a real, non-empty
+    snippet isn't always unique -- an IaC linter (Trivy's Terraform checks, for one) routinely
+    quotes the *entire resource block* verbatim for every distinct rule that fires against it,
+    so several genuinely different findings can share one snippet. Without the rule id here too,
+    this key -- already path-independent by design -- would match those collisions *anywhere in
+    the asset*, which is a strictly worse version of the same bug than the primary fingerprint
+    has.
     """
-    if f.package:
+    if f.package or f.taxonomy.category is Category.DAST:
         return None
     snip = f.location.snippet
     cwe = min(cwe_family(f) or {"none"})

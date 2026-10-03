@@ -48,6 +48,31 @@ optional separate container.
 | CISA KEV catalog | US Government work, public | downloaded at run time |
 | CycloneDX 1.6 JSON schema | Apache-2.0 | test fixture (tests/fixtures/cyclonedx) |
 | SARIF 2.1.0 JSON schema | OASIS | test fixture (tests/fixtures) |
+| DefectDojo sample reports and expected results | BSD-3-Clause (tests/golden/ingest/defectdojo/LICENSE) | golden fixtures for the ported parsers, with the commit they came from in each MANIFEST.json |
+
+## Code ported from other projects
+
+Each file below is derived from the named file in [DefectDojo](https://github.com/DefectDojo/django-DefectDojo) (BSD-3-Clause): the field
+mapping and severity rules are DefectDojo's, reimplemented here as streaming parsers over
+Bulwark's own model, so nothing is copied verbatim. DefectDojo's notice and licence follow.
+Bulwark is not affiliated with or endorsed by DefectDojo, Inc.
+
+| Bulwark file | Derived from | Parser |
+|---|---|---|
+| `core/imports/parsers/nuclei.py`, `core/dast/mapping.py` | `dojo/tools/nuclei/parser.py` | nuclei |
+| `core/imports/parsers/zap.py`, `core/dast/mapping.py` | `dojo/tools/zap/parser.py` | zap |
+
+> Copyright (c) 2015-2023 DefectDojo, Inc. All rights reserved.
+>
+> Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+>
+> 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+>
+> 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+>
+> 3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+>
+> THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ## Python dependencies (90)
 

@@ -16,6 +16,7 @@
     "id": "gitleaks:df8c6cb92ed6",
     "location": {
       "end_line": 20,
+      "host": "",
       "path": "src/users.py",
       "route": "",
       "snippet": "[secret redacted]",

@@ -6,6 +6,14 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 ## [Unreleased]
 
 ### Added
+- **Ported parsers, batch 1 (Week 57, ADR-0041): ZAP and Nuclei so far.** `zap` reads ZAP's XML
+  (including the requests-and-responses variant) and JSON reports; `nuclei` reads JSONL and the JSON
+  array. Both are derived from DefectDojo's parsers (BSD-3-Clause, notice in
+  `THIRD_PARTY_LICENSES.md`, generated from each parser's `ported_from`) and run against DefectDojo's
+  own sample reports and the results its tests expect (`scripts/sync-dd-fixtures.py` vendors them from
+  a pinned commit). They share one reading of an alert with the native DAST campaigns
+  (`core/dast/mapping.py`), run in the parser sandbox and are in the nightly fuzz matrix. An empty
+  Nuclei file closes nothing.
 - **Import anything standard, and reimport it correctly (Weeks 54-56, plan Phase 13, ADR-0040).**
   `POST /v2/ingest` takes a SARIF, CycloneDX (JSON or XML), OSV-Scanner or SPDX report and compares it
   with that Test's previous upload: **new, unchanged, reopened, closed** (plus `detached`: no longer
@@ -22,6 +30,16 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   Verification record: [docs/v2-week54-verification.md](docs/v2-week54-verification.md).
 
 ### Fixed
+- **DAST findings were merged and collapsed (found importing a real ZAP report; also affected native
+  DAST campaigns).** Two different alerts sharing a CWE were merged into one finding (which survived
+  depended on input order); the fingerprint ignored the route, so one alert on fifty URLs was one
+  Issue; and the location-independent fallback key matched every URL to the first Issue made for the
+  alert -- 130 findings of one real report became 15 Issues. A finding's host and route are now its
+  identity (new `Location.host`), DAST findings are never merged, and correlation no longer compares
+  every DAST finding to every other (it was quadratic). **One-time effect:** DAST Issues recorded
+  before this release have route-free fingerprints, so the next DAST campaign closes them as fixed and
+  reports the same defects as new, per place; triage marks on the old Issues do not carry over.
+  Details in [ADR-0041](docs/adr/0041-dast-and-network-identity.md).
 - **Cross-tenant leak: a database session could run as another organization after a commit.**
   Row-Level Security reads `app.current_org` from the *connection*, but a session returns its
   connection to the pool on every commit and takes whichever is free next; the org was set once per

@@ -20,23 +20,13 @@ the one relationship DAST is actually authorized for: an HTTP(S) request to the 
 
 from __future__ import annotations
 
-import hashlib
 import json
 import subprocess
 from typing import Any
-from urllib.parse import urlsplit
 
+from core.dast.mapping import nuclei_finding
 from core.dast.proxy import ProxyConfig
-from core.models import (
-    Category,
-    Evidence,
-    Finding,
-    Location,
-    Remediation,
-    Scoring,
-    Severity,
-    Taxonomy,
-)
+from core.models import Finding
 
 NUCLEI_IMAGE = "projectdiscovery/nuclei:latest"
 
@@ -45,14 +35,6 @@ EXCLUDED_TAGS = ("dos", "fuzz", "intrusive", "bruteforce")
 
 # Never run anything but an HTTP(S) request to the target itself -- see the module docstring.
 ALLOWED_PROTOCOL_TYPES = ("http",)
-
-_SEVERITY_MAP = {
-    "info": Severity.INFO,
-    "low": Severity.LOW,
-    "medium": Severity.MEDIUM,
-    "high": Severity.HIGH,
-    "critical": Severity.CRITICAL,
-}
 
 
 class NucleiError(Exception):
@@ -97,42 +79,10 @@ def _parse_jsonl(output: str) -> list[Finding]:
             rec: dict[str, Any] = json.loads(line)
         except json.JSONDecodeError:
             continue  # nuclei occasionally interleaves a non-JSON progress line even with -silent
-        info = rec.get("info") or {}
-        template_id = str(rec.get("template-id", "unknown"))
-        severity = _SEVERITY_MAP.get(str(info.get("severity", "info")).lower(), Severity.INFO)
-        raw_cwe = (info.get("classification") or {}).get("cwe-id")
-        if isinstance(raw_cwe, list):
-            cwe = tuple(c.upper() for c in raw_cwe)
-        elif raw_cwe:
-            cwe = (str(raw_cwe).upper(),)
-        else:
-            cwe = ()
-        matched_at = rec.get("matched-at") or rec.get("host") or ""
-        route = urlsplit(matched_at).path or "/"
-        # A real live scan found this: nuclei can report the SAME template-id against the SAME
-        # matched-at more than once (e.g. one match per extracted value, or per matcher within a
-        # template) -- keying the digest on matched_at alone collided repeatedly. Hashing the whole
-        # raw record is unique unless two records are genuinely byte-for-byte identical, in which
-        # case they really are the same finding.
-        digest = hashlib.sha256(line.encode()).hexdigest()[:12]
-        references = info.get("reference")
-        if isinstance(references, str):
-            references = [references]
-        findings.append(
-            Finding(
-                id=f"nuclei-{template_id}-{digest}",
-                title=info.get("name", template_id),
-                description=info.get("description", "") or "",
-                location=Location(path="", start_line=0, end_line=0, route=route),
-                taxonomy=Taxonomy(category=Category.DAST, cwe=cwe),
-                scoring=Scoring(
-                    normalized_severity=severity,
-                    native_severity={"nuclei": info.get("severity", "")},
-                ),
-                evidence=Evidence(reported_by=["nuclei"], rule_ids={"nuclei": [template_id]}),
-                remediation=Remediation(
-                    summary="", references=references or [], generated_by="static"
-                ),
-            )
-        )
+        # The whole raw line is hashed into the id: a real live scan found nuclei reporting the SAME
+        # template against the SAME matched-at more than once (one match per extracted value, or
+        # per matcher), so neither of those alone is unique.
+        finding = nuclei_finding(rec, line) if isinstance(rec, dict) else None
+        if finding is not None:
+            findings.append(finding)
     return findings

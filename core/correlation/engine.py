@@ -5,6 +5,7 @@ Rules (ADR-004):
   Code/IaC   same file, compatible category, overlapping CWE family, lines within LINE_WINDOW, and
              either a similar normalized snippet or (when a snippet is a redaction placeholder or
              too short to compare) an adjacent line.
+  DAST       never merged (see `same_defect`).
   Never      merge two findings from the same tool and the same rule: those are distinct
              occurrences, even when a third tool's finding spans both.
 """
@@ -86,6 +87,13 @@ def _same_code(a: Finding, b: Finding) -> bool:
 
 
 def same_defect(a: Finding, b: Finding) -> bool:
+    # A DAST or network finding has no file, line or snippet to compare, so every one of them looks
+    # "at the same place" (path "", line 0) to `_same_code`, and two different alerts that share a
+    # CWE -- ZAP's X-Frame-Options and CSP rules are both CWE-1021 -- were merged into one finding,
+    # which one survived depending on input order. What a target's route and host say is already in
+    # the fingerprint, so these stay as the tool reported them: one finding per alert per place.
+    if a.taxonomy.category is Category.DAST or b.taxonomy.category is Category.DAST:
+        return False
     if a.package or b.package:
         return _same_sca(a, b)
     return _same_code(a, b)
@@ -126,11 +134,12 @@ def correlate(findings: Iterable[Finding]) -> tuple[list[Finding], CorrelationSt
     buckets: dict[str, list[int]] = defaultdict(list)
     for i, f in enumerate(items):
         # SCA findings meet by package; everything else by file. (Candidate pruning only.)
-        key = (
-            f"pkg:{f.package.ecosystem}:{f.package.name}"
-            if f.package
-            else f"file:{f.location.path}"
-        )
+        if f.taxonomy.category is Category.DAST:
+            key = f"dast:{i}"  # never merged, so never compared (and not quadratic on a big scan)
+        elif f.package:
+            key = f"pkg:{f.package.ecosystem}:{f.package.name}"
+        else:
+            key = f"file:{f.location.path}"
         buckets[key].append(i)
     for idxs in buckets.values():
         for x in range(len(idxs)):
@@ -251,7 +260,13 @@ def fingerprint(f: Finding) -> str:
         snip = f.location.snippet
         rule_ids = sorted({r for rules in f.evidence.rule_ids.values() for r in rules})
         rules_part = "|".join(rule_ids) if rule_ids else "no-rule-id"
-        if norm.is_placeholder(snip) or not snip.strip():
+        if f.taxonomy.category is Category.DAST:
+            # Where a DAST finding is -- target and route -- is its identity. Without them, every
+            # instance of one alert on a site shared a fingerprint, and the same route on two
+            # hosts was one Issue. Tool names stay out: ZAP run natively and a ZAP report
+            # imported later describe one defect, and must match.
+            raw = f"dast|{cwe}|{f.location.host}|{f.location.route}|{rules_part}"
+        elif norm.is_placeholder(snip) or not snip.strip():
             raw = f"{cwe}|{f.location.path}|placeholder|{f.location.start_line}|{rules_part}"
         else:
             raw = f"{cwe}|{f.location.path}|{norm.snippet_hash(snip)}|{rules_part}"

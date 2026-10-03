@@ -184,3 +184,43 @@ def test_osv_scanner_output_is_parsed_in_the_sandbox_like_in_process(tmp_path: P
     in_process = run_parser_on_bytes(get_parser("osv"), raw)
     assert sandboxed.complete and len(sandboxed.findings) == 17
     assert [f.to_dict() for f in sandboxed.findings] == [f.to_dict() for f in in_process.findings]
+
+
+def _ported_samples() -> list[tuple[str, Path]]:
+    """For each ported parser, its smallest and its largest vendored real sample (two containers
+    per parser keeps this fast; tests/unit/test_ingest_defectdojo.py runs every file in-process)."""
+    out: list[tuple[str, Path]] = []
+    base = ROOT / "tests" / "golden" / "ingest" / "defectdojo"
+    for d in sorted(p for p in base.iterdir() if p.is_dir()):
+        files = sorted(
+            (f for f in d.iterdir() if f.name != "MANIFEST.json" and f.stat().st_size > 0),
+            key=lambda f: f.stat().st_size,
+        )
+        out += [(d.name, f) for f in {files[0], files[-1]}]
+    return sorted(out, key=lambda t: (t[0], t[1].name))
+
+
+@pytest.mark.parametrize("parser,sample", _ported_samples(), ids=lambda v: getattr(v, "name", v))
+def test_a_ported_parser_gives_the_same_findings_in_the_sandbox_as_in_process(
+    parser: str, sample: Path, tmp_path: Path
+) -> None:
+    report = tmp_path / sample.name
+    report.write_bytes(sample.read_bytes())
+    in_process = run_parser_on_bytes(get_parser(parser), sample.read_bytes())
+    sandboxed = parse_in_sandbox(report, parser)
+    assert sandboxed.error == in_process.error
+    assert [f.to_dict() for f in sandboxed.findings] == [f.to_dict() for f in in_process.findings]
+    if sample.stat().st_size > 5_000:  # the smallest sample may legitimately be a clean report
+        assert sandboxed.findings, f"{sample.name} should have findings"
+
+
+def test_zap_xml_with_an_external_entity_is_refused_inside_the_container(tmp_path: Path) -> None:
+    report = tmp_path / "xxe.xml"
+    report.write_bytes(
+        b'<?xml version="1.0"?><!DOCTYPE r [<!ENTITY x SYSTEM "file:///etc/passwd">]>'
+        b"<OWASPZAPReport><site name='http://t'><alerts><alertitem><pluginid>1</pluginid>"
+        b"<alert>&x;</alert><riskcode>1</riskcode></alertitem></alerts></site></OWASPZAPReport>"
+    )
+    result = parse_in_sandbox(report, "zap")
+    assert not result.complete and result.findings == []
+    assert "root:" not in (result.error or "")

@@ -1,0 +1,263 @@
+{
+ "files": {
+  "0_zap_sample.xml": {
+   "bytes": 7203,
+   "expect": [
+    {
+     "count": 4,
+     "test": "test_parse_some_findings_0"
+    }
+   ],
+   "sha256": "da79adaa7f867fc723376cbde04731398882ae24b5c4d49a72cd3efcbd25a63e",
+   "vendored": true
+  },
+  "0_zap_sample_without_zap3.xml": {
+   "bytes": 7212,
+   "expect": [],
+   "sha256": "152861f1c61fe96dea5d2d9a05610c10cef1781aedf3ac5270cf2866aca4acd9",
+   "vendored": true
+  },
+  "1_zap_sample_0_and_new_absent.xml": {
+   "bytes": 7281,
+   "expect": [
+    {
+     "count": 4,
+     "test": "test_parse_some_findings_1"
+    }
+   ],
+   "sha256": "ca70dad51ce24b4b16dcd5bb6b1079da86115d0f86eeebe82081ec2645dbdd1a",
+   "vendored": true
+  },
+  "2_zap_sample_0_and_new_endpoint.xml": {
+   "bytes": 7371,
+   "expect": [
+    {
+     "count": 4,
+     "test": "test_parse_some_findings_2"
+    }
+   ],
+   "sha256": "a2b2cb5f134c35f8ca5bcbae6f0663e5d1445b775adcbf2b835bf66d0f67a07b",
+   "vendored": true
+  },
+  "3_zap_sampl_0_and_different_severities.xml": {
+   "bytes": 7209,
+   "expect": [
+    {
+     "count": 4,
+     "test": "test_parse_some_findings_3"
+    }
+   ],
+   "sha256": "0b2e8ce3e73c020886113fcfbf5ace49df424d8e8d97309fbf47d4a7903c6cd5",
+   "vendored": true
+  },
+  "5_zap_sample_one.xml": {
+   "bytes": 2977,
+   "expect": [
+    {
+     "count": 2,
+     "test": "test_parse_some_findings_5"
+    }
+   ],
+   "sha256": "4547aaeb127cf340f915b1c9d030b079c30dccce889d2d414be2429dce68bf05",
+   "vendored": true
+  },
+  "dvwa_baseline_dojo.xml": {
+   "bytes": 46558,
+   "expect": [
+    {
+     "count": 19,
+     "findings": {
+      "0": {
+       "locations": 11,
+       "severity": "Medium",
+       "title": "X-Frame-Options Header Not Set",
+       "vuln_id_from_tool": "10020"
+      },
+      "18": {
+       "locations": 3,
+       "severity": "Low",
+       "title": "Private IP Disclosure",
+       "vuln_id_from_tool": "2"
+      }
+     },
+     "test": "test_parse_issue4360"
+    }
+   ],
+   "sha256": "9b4bbe096dd16261aa34a971f5f32511010b29fd9942d43faf4d66c2d9405b97",
+   "vendored": true
+  },
+  "dvwa_baseline_dojo_fabricated_internal_duplicates.xml": {
+   "bytes": 43137,
+   "expect": [],
+   "sha256": "99f8549903a73dc86cd8a2fe24d0d909875ceba21dae8e25ead335a39a4c4923",
+   "vendored": true
+  },
+  "dvwa_baseline_dojo_fabricated_internal_duplicates_subset.xml": {
+   "bytes": 20213,
+   "expect": [],
+   "sha256": "cc8f359f2b50deaf7e20e04ee9966079c4354e8438090faaf43689634a274ade",
+   "vendored": true
+  },
+  "dvwa_baseline_dojo_subset.xml": {
+   "bytes": 32185,
+   "expect": [],
+   "sha256": "ddf26cbbbe9adeda22edae17802d533e77241b9a36005e729954ec0594bba65b",
+   "vendored": true
+  },
+  "empty_2.9.0.xml": {
+   "bytes": 201,
+   "expect": [
+    {
+     "count": 0,
+     "test": "test_parse_no_findings"
+    }
+   ],
+   "sha256": "ddcfe5c73ee685c8b652f02c533ed08a8f675bc0ca4ecd0c2ca889944419abdc",
+   "vendored": true
+  },
+  "juicy2.xml": {
+   "bytes": 25879,
+   "expect": [
+    {
+     "count": 6,
+     "findings": {
+      "0": {
+       "locations": 20,
+       "severity": "Low",
+       "title": "Incomplete or No Cache-control Header Set",
+       "vuln_id_from_tool": "10015"
+      },
+      "5": {
+       "cwe": 693,
+       "locations": 2,
+       "severity": "Medium",
+       "title": "CSP: Wildcard Directive",
+       "vuln_id_from_tool": "10055"
+      }
+     },
+     "test": "test_parse_juicy"
+    }
+   ],
+   "sha256": "2cbb6f2c8f71807ac15075144514cef833839301206347e91e78f6760478a89f",
+   "vendored": true
+  },
+  "some_2.9.0.xml": {
+   "bytes": 9294,
+   "expect": [
+    {
+     "count": 7,
+     "test": "test_parse_some_findings"
+    }
+   ],
+   "sha256": "a4fc12621b507d6bc7b5d85c76e0500e62a9baa8e09a6d9674113a89d5986892",
+   "vendored": true
+  },
+  "zap-results-first-scan.xml": {
+   "bytes": 74229,
+   "expect": [
+    {
+     "count": 15,
+     "findings": {
+      "0": {
+       "locations": 11,
+       "severity": "Info",
+       "title": "User Controllable HTML Element Attribute (Potential XSS)",
+       "vuln_id_from_tool": "10031"
+      },
+      "14": {
+       "cwe": 359,
+       "locations": 1,
+       "severity": "High",
+       "title": "PII Disclosure",
+       "vuln_id_from_tool": "10062"
+      }
+     },
+     "test": "test_parse_issue4697"
+    }
+   ],
+   "sha256": "5901acc506737e0d85385bf8dcaff78063ec1c92e46f0a04735a64ba3aa1811c",
+   "vendored": true
+  },
+  "zap-results-second-scan.xml": {
+   "bytes": 65985,
+   "expect": [],
+   "sha256": "529f9221a059d49a83a9b5cfcc40805f5832f34b9061fc74ab988c7c6990a93a",
+   "vendored": true
+  },
+  "zap-xml-plus-format.xml": {
+   "bytes": 3713,
+   "expect": [
+    {
+     "count": 1,
+     "findings": {
+      "0": {
+       "locations": 1,
+       "severity": "Medium",
+       "title": "Insecure HTTP Method - PUT",
+       "vuln_id_from_tool": "90028"
+      }
+     },
+     "test": "test_parse_xml_plus_format"
+    }
+   ],
+   "sha256": "ce89377056c6aa6a2feb23aa1f0287e29754391fbd622678fb05f75695f13414",
+   "vendored": true
+  },
+  "zap_2.16.1_with_req_resp.xml": {
+   "bytes": 58019,
+   "expect": [
+    {
+     "count": 4,
+     "findings": {
+      "0": {
+       "locations": 1,
+       "severity": "Info",
+       "title": "Authentication Request Identified",
+       "vuln_id_from_tool": "10111"
+      },
+      "1": {
+       "locations": 5,
+       "severity": "Info",
+       "title": "Cookie Poisoning",
+       "vuln_id_from_tool": "10029"
+      },
+      "2": {
+       "locations": 3,
+       "severity": "Info",
+       "title": "Information Disclosure - Sensitive Information in URL",
+       "vuln_id_from_tool": "10024"
+      },
+      "3": {
+       "locations": 4,
+       "severity": "Info",
+       "title": "Re-examine Cache-control Directives",
+       "vuln_id_from_tool": "10015"
+      }
+     },
+     "test": "test_parse_xml_2_16_1_with_req_resp"
+    }
+   ],
+   "sha256": "7103a8aeb233b8c9fbfbc6f84533b25f389c388f04e778c9be235750d0cb2d44",
+   "vendored": true
+  },
+  "zap_missing_body.xml": {
+   "bytes": 1572,
+   "expect": [
+    {
+     "count": 1,
+     "test": "test_parse_xml_missing_body"
+    }
+   ],
+   "sha256": "f902d262347663784a13f501ad37eb118a2b062ba22606a1523a4dc2dde9cd14",
+   "vendored": true
+  }
+ },
+ "source": {
+  "commit": "8b12d80ae30904fed44f5a84ff71f28da14bebaf",
+  "license": "BSD-3-Clause (see ../LICENSE)",
+  "repository": "https://github.com/DefectDojo/django-DefectDojo",
+  "scans": "unittests/scans/zap",
+  "tests": "unittests/tools/test_zap_parser.py"
+ },
+ "tool": "zap"
+}

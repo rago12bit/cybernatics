@@ -44,6 +44,10 @@ class Location:
     # correlate against (Week 49 task 4, "same route+CWE") can both be read without a category
     # check first.
     route: str = ""
+    # Set only for a DAST or network finding: which target it was found on -- `scheme://host:port`
+    # for a web target, the bare host or IP for a network scan -- so the same route on two hosts
+    # ("/login" on staging and on production) is two defects, not one. Empty everywhere else.
+    host: str = ""
 
     @staticmethod
     def hash_snippet(snippet: str) -> str:

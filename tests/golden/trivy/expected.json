@@ -16,6 +16,7 @@
     "id": "trivy:CVE-2019-10744:package-lock.json:lodash@4.17.4",
     "location": {
       "end_line": 1,
+      "host": "",
       "path": "package-lock.json",
       "route": "",
       "snippet": "lodash@4.17.4",
@@ -88,6 +89,7 @@
     "id": "trivy:CVE-2018-16487:package-lock.json:lodash@4.17.4",
     "location": {
       "end_line": 1,
+      "host": "",
       "path": "package-lock.json",
       "route": "",
       "snippet": "lodash@4.17.4",
@@ -160,6 +162,7 @@
     "id": "trivy:CVE-2020-8203:package-lock.json:lodash@4.17.4",
     "location": {
       "end_line": 1,
+      "host": "",
       "path": "package-lock.json",
       "route": "",
       "snippet": "lodash@4.17.4",
@@ -233,6 +236,7 @@
     "id": "trivy:CVE-2021-23337:package-lock.json:lodash@4.17.4",
     "location": {
       "end_line": 1,
+      "host": "",
       "path": "package-lock.json",
       "route": "",
       "snippet": "lodash@4.17.4",
@@ -305,6 +309,7 @@
     "id": "trivy:CVE-2026-4800:package-lock.json:lodash@4.17.4",
     "location": {
       "end_line": 1,
+      "host": "",
       "path": "package-lock.json",
       "route": "",
       "snippet": "lodash@4.17.4",
@@ -377,6 +382,7 @@
     "id": "trivy:CVE-2019-1010266:package-lock.json:lodash@4.17.4",
     "location": {
       "end_line": 1,
+      "host": "",
       "path": "package-lock.json",
       "route": "",
       "snippet": "lodash@4.17.4",
@@ -450,6 +456,7 @@
     "id": "trivy:CVE-2020-28500:package-lock.json:lodash@4.17.4",
     "location": {
       "end_line": 1,
+      "host": "",
       "path": "package-lock.json",
       "route": "",
       "snippet": "lodash@4.17.4",
@@ -520,6 +527,7 @@
     "id": "trivy:CVE-2025-13465:package-lock.json:lodash@4.17.4",
     "location": {
       "end_line": 1,
+      "host": "",
       "path": "package-lock.json",
       "route": "",
       "snippet": "lodash@4.17.4",
@@ -592,6 +600,7 @@
     "id": "trivy:CVE-2026-2950:package-lock.json:lodash@4.17.4",
     "location": {
       "end_line": 1,
+      "host": "",
       "path": "package-lock.json",
       "route": "",
       "snippet": "lodash@4.17.4",
@@ -664,6 +673,7 @@
     "id": "trivy:CVE-2018-3721:package-lock.json:lodash@4.17.4",
     "location": {
       "end_line": 1,
+      "host": "",
       "path": "package-lock.json",
       "route": "",
       "snippet": "lodash@4.17.4",
@@ -737,6 +747,7 @@
     "id": "trivy:CVE-2018-1000656:requirements.txt:flask@0.12",
     "location": {
       "end_line": 1,
+      "host": "",
       "path": "requirements.txt",
       "route": "",
       "snippet": "flask@0.12",
@@ -809,6 +820,7 @@
     "id": "trivy:CVE-2019-1010083:requirements.txt:flask@0.12",
     "location": {
       "end_line": 1,
+      "host": "",
       "path": "requirements.txt",
       "route": "",
       "snippet": "flask@0.12",
@@ -879,6 +891,7 @@
     "id": "trivy:CVE-2023-30861:requirements.txt:flask@0.12",
     "location": {
       "end_line": 1,
+      "host": "",
       "path": "requirements.txt",
       "route": "",
       "snippet": "flask@0.12",
@@ -951,6 +964,7 @@
     "id": "trivy:CVE-2026-27205:requirements.txt:flask@0.12",
     "location": {
       "end_line": 1,
+      "host": "",
       "path": "requirements.txt",
       "route": "",
       "snippet": "flask@0.12",
@@ -1023,6 +1037,7 @@
     "id": "trivy:CVE-2018-18074:requirements.txt:requests@2.19.0",
     "location": {
       "end_line": 1,
+      "host": "",
       "path": "requirements.txt",
       "route": "",
       "snippet": "requests@2.19.0",
@@ -1095,6 +1110,7 @@
     "id": "trivy:CVE-2023-32681:requirements.txt:requests@2.19.0",
     "location": {
       "end_line": 1,
+      "host": "",
       "path": "requirements.txt",
       "route": "",
       "snippet": "requests@2.19.0",
@@ -1167,6 +1183,7 @@
     "id": "trivy:CVE-2024-35195:requirements.txt:requests@2.19.0",
     "location": {
       "end_line": 1,
+      "host": "",
       "path": "requirements.txt",
       "route": "",
       "snippet": "requests@2.19.0",
@@ -1239,6 +1256,7 @@
     "id": "trivy:CVE-2024-47081:requirements.txt:requests@2.19.0",
     "location": {
       "end_line": 1,
+      "host": "",
       "path": "requirements.txt",
       "route": "",
       "snippet": "requests@2.19.0",
@@ -1311,6 +1329,7 @@
     "id": "trivy:CVE-2026-25645:requirements.txt:requests@2.19.0",
     "location": {
       "end_line": 1,
+      "host": "",
       "path": "requirements.txt",
       "route": "",
       "snippet": "requests@2.19.0",
@@ -1383,6 +1402,7 @@
     "id": "trivy:DS002:Dockerfile:2",
     "location": {
       "end_line": 2,
+      "host": "",
       "path": "Dockerfile",
       "route": "",
       "snippet": "USER root",
@@ -1444,6 +1464,7 @@
     "id": "trivy:DS026:Dockerfile:1",
     "location": {
       "end_line": 1,
+      "host": "",
       "path": "Dockerfile",
       "route": "",
       "snippet": "",
@@ -1505,6 +1526,7 @@
     "id": "trivy:DS029:Dockerfile:4",
     "location": {
       "end_line": 4,
+      "host": "",
       "path": "Dockerfile",
       "route": "",
       "snippet": "RUN apt-get update && apt-get install -y curl",
@@ -1566,6 +1588,7 @@
     "id": "trivy:AVD-AWS-0086:main.tf:1",
     "location": {
       "end_line": 4,
+      "host": "",
       "path": "main.tf",
       "route": "",
       "snippet": "resource \"aws_s3_bucket\" \"b\" {\n  bucket = \"example-bucket\"\n  acl    = \"public-read\"\n}",
@@ -1627,6 +1650,7 @@
     "id": "trivy:AVD-AWS-0087:main.tf:1",
     "location": {
       "end_line": 4,
+      "host": "",
       "path": "main.tf",
       "route": "",
       "snippet": "resource \"aws_s3_bucket\" \"b\" {\n  bucket = \"example-bucket\"\n  acl    = \"public-read\"\n}",
@@ -1688,6 +1712,7 @@
     "id": "trivy:AVD-AWS-0088:main.tf:1",
     "location": {
       "end_line": 4,
+      "host": "",
       "path": "main.tf",
       "route": "",
       "snippet": "resource \"aws_s3_bucket\" \"b\" {\n  bucket = \"example-bucket\"\n  acl    = \"public-read\"\n}",
@@ -1749,6 +1774,7 @@
     "id": "trivy:s3-bucket-logging:main.tf:1",
     "location": {
       "end_line": 4,
+      "host": "",
       "path": "main.tf",
       "route": "",
       "snippet": "resource \"aws_s3_bucket\" \"b\" {\n  bucket = \"example-bucket\"\n  acl    = \"public-read\"\n}",
@@ -1810,6 +1836,7 @@
     "id": "trivy:AVD-AWS-0090:main.tf:1",
     "location": {
       "end_line": 4,
+      "host": "",
       "path": "main.tf",
       "route": "",
       "snippet": "resource \"aws_s3_bucket\" \"b\" {\n  bucket = \"example-bucket\"\n  acl    = \"public-read\"\n}",
@@ -1871,6 +1898,7 @@
     "id": "trivy:AVD-AWS-0091:main.tf:1",
     "location": {
       "end_line": 4,
+      "host": "",
       "path": "main.tf",
       "route": "",
       "snippet": "resource \"aws_s3_bucket\" \"b\" {\n  bucket = \"example-bucket\"\n  acl    = \"public-read\"\n}",
@@ -1932,6 +1960,7 @@
     "id": "trivy:AVD-AWS-0092:main.tf:3",
     "location": {
       "end_line": 3,
+      "host": "",
       "path": "main.tf",
       "route": "",
       "snippet": "resource \"aws_s3_bucket\" \"b\" {\n  bucket = \"example-bucket\"\n  acl    = \"public-read\"\n}",
@@ -1993,6 +2022,7 @@
     "id": "trivy:AVD-AWS-0093:main.tf:1",
     "location": {
       "end_line": 4,
+      "host": "",
       "path": "main.tf",
       "route": "",
       "snippet": "resource \"aws_s3_bucket\" \"b\" {\n  bucket = \"example-bucket\"\n  acl    = \"public-read\"\n}",
@@ -2054,6 +2084,7 @@
     "id": "trivy:AVD-AWS-0094:main.tf:1",
     "location": {
       "end_line": 4,
+      "host": "",
       "path": "main.tf",
       "route": "",
       "snippet": "resource \"aws_s3_bucket\" \"b\" {\n  bucket = \"example-bucket\"\n  acl    = \"public-read\"\n}",
@@ -2115,6 +2146,7 @@
     "id": "trivy:AVD-AWS-0107:main.tf:11",
     "location": {
       "end_line": 11,
+      "host": "",
       "path": "main.tf",
       "route": "",
       "snippet": "resource \"aws_security_group_rule\" \"r\" {\n  type              = \"ingress\"\n  from_port         = 22\n  to_port           = 22\n  protocol          = \"tcp\"\n  cidr_blocks       = [\"0.0.0.0/0\"]\n  security_group_id = \"sg-123456\"\n}",
@@ -2176,6 +2208,7 @@
     "id": "trivy:AVD-AWS-0124:main.tf:6",
     "location": {
       "end_line": 13,
+      "host": "",
       "path": "main.tf",
       "route": "",
       "snippet": "resource \"aws_security_group_rule\" \"r\" {\n  type              = \"ingress\"\n  from_port         = 22\n  to_port           = 22\n  protocol          = \"tcp\"\n  cidr_blocks       = [\"0.0.0.0/0\"]\n  security_group_id = \"sg-123456\"\n}",
@@ -2237,6 +2270,7 @@
     "id": "trivy:AVD-AWS-0132:main.tf:1",
     "location": {
       "end_line": 4,
+      "host": "",
       "path": "main.tf",
       "route": "",
       "snippet": "resource \"aws_s3_bucket\" \"b\" {\n  bucket = \"example-bucket\"\n  acl    = \"public-read\"\n}",

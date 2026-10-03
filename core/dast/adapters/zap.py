@@ -17,34 +17,17 @@ normally regardless.
 
 from __future__ import annotations
 
-import hashlib
 import json
 import subprocess
 import tempfile
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlsplit
 
+from core.dast.mapping import zap_alert_findings
 from core.dast.proxy import ProxyConfig
-from core.models import (
-    Category,
-    Evidence,
-    Finding,
-    Location,
-    Remediation,
-    Scoring,
-    Severity,
-    Taxonomy,
-)
+from core.models import Finding
 
 ZAP_IMAGE = "ghcr.io/zaproxy/zaproxy:stable"
-
-_RISK_TO_SEVERITY = {
-    "0": Severity.INFO,
-    "1": Severity.LOW,
-    "2": Severity.MEDIUM,
-    "3": Severity.HIGH,
-}
 
 
 class ZapError(Exception):
@@ -100,40 +83,5 @@ def _parse_report(data: dict[str, Any]) -> list[Finding]:
     for site in data.get("site", []):
         site_name = site.get("@name", "")
         for alert in site.get("alerts", []):
-            cwe_id = str(alert.get("cweid", "-1"))
-            cwe = (f"CWE-{cwe_id}",) if cwe_id not in ("-1", "0", "") else ()
-            severity = _RISK_TO_SEVERITY.get(str(alert.get("riskcode", "0")), Severity.INFO)
-            plugin_id = str(alert.get("pluginid", "0"))
-            references = [r for r in alert.get("reference", "").split("\n") if r.strip()]
-            instances = alert.get("instances") or [{"uri": site_name}]
-            alert_name = alert.get("name", "")
-            for instance in instances:
-                uri = instance.get("uri", site_name)
-                route = urlsplit(uri).path or "/"
-                # Plugin id alone is not a unique key: ZAP's own 90004 rule reports three distinct
-                # alerts (COEP/COOP/CORP, each a separate `alert` entry) that all share pluginid
-                # 90004 against the same uri -- found by running a real scan, not by inspection; the
-                # alert's name is what actually distinguishes them.
-                digest = hashlib.sha256(f"{alert_name}|{uri}".encode()).hexdigest()[:12]
-                findings.append(
-                    Finding(
-                        id=f"zap-{plugin_id}-{digest}",
-                        title=alert.get("name", "ZAP finding"),
-                        description=alert.get("desc", ""),
-                        location=Location(path="", start_line=0, end_line=0, route=route),
-                        taxonomy=Taxonomy(category=Category.DAST, cwe=cwe),
-                        scoring=Scoring(
-                            normalized_severity=severity,
-                            native_severity={"zap": alert.get("riskdesc", "")},
-                        ),
-                        evidence=Evidence(
-                            reported_by=["zap-baseline"], rule_ids={"zap-baseline": [plugin_id]}
-                        ),
-                        remediation=Remediation(
-                            summary=alert.get("solution", ""),
-                            references=references,
-                            generated_by="static",
-                        ),
-                    )
-                )
+            findings.extend(zap_alert_findings(alert, site_name, "zap", reported_by="zap-baseline"))
     return findings

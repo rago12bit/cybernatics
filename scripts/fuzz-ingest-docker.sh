@@ -4,14 +4,15 @@
 # once (Clang + Atheris from source: there is no prebuilt aarch64 wheel), seeds a throwaway corpus
 # from the real files in tests/golden, and fuzzes each parser for SECONDS (default 60).
 #
-#   scripts/fuzz-ingest-docker.sh                # all four parsers
+#   scripts/fuzz-ingest-docker.sh                # every registered parser
 #   scripts/fuzz-ingest-docker.sh cyclonedx 300  # one parser, five minutes
 #
 # Corpus and any crash-<hash> file land in $WORK (default /tmp/bulwark-fuzz), never in the repo; copy
 # a crash into tests/fuzz_regressions/ingest-<parser>/ once it is fixed.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-PARSERS="${1:-sarif cyclonedx spdx osv}"
+PYTHON="$([ -x .venv/bin/python ] && echo .venv/bin/python || echo python3)"
+PARSERS="${1:-$(PYTHONPATH=. "$PYTHON" -c 'from core.imports.parsers import PARSERS; print(" ".join(sorted(PARSERS)))')}"
 SECONDS_PER="${2:-60}"
 WORK="${WORK:-/tmp/bulwark-fuzz}"
 IMAGE=bulwark-fuzz-local
@@ -30,6 +31,12 @@ seed sarif tests/golden/semgrep/raw.json tests/golden/opengrep/raw.json
 seed cyclonedx tests/golden/ingest/cyclonedx-*.json tests/golden/ingest/cyclonedx-*.xml
 seed spdx tests/golden/ingest/spdx.json
 seed osv tests/golden/osv-scanner/raw.json
+# Ported parsers: one vendored DefectDojo directory per parser, named for it.
+for d in tests/golden/ingest/defectdojo/*/; do
+  name="$(basename "$d")"
+  files=(); for f in "$d"*; do [[ "$(basename "$f")" == MANIFEST.json ]] || files+=("$f"); done
+  seed "$name" "${files[@]}"
+done
 chmod -R 777 "$WORK"
 
 status=0

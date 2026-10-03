@@ -27,6 +27,8 @@ until `status` is `applied`, `previewed` or `failed`.
 | `cyclonedx` | CycloneDX JSON or XML | `vulnerabilities[]`, each resolved to the component it `affects` |
 | `osv` | OSV-Scanner JSON | `results[].packages[].vulnerabilities` |
 | `spdx` | SPDX 2.x JSON | nothing: see below |
+| `zap` | OWASP ZAP XML or JSON report | each `alertitem`, one finding per URL it was seen at |
+| `nuclei` | Nuclei JSONL or JSON array | each result, one finding per matcher that fired |
 
 The format is detected from the file; if detection is not confident (below 90%) the call is refused
 with the candidates and you pass `parser=` yourself. `GET /v2/parsers` lists what is available.
@@ -35,6 +37,26 @@ with the candidates and you pass `parser=` yourself. `GET /v2/parsers` lists wha
 `vulnerabilities` section) lists what is *in* a project, not that it is free of vulnerabilities. So
 such a file imports no findings and **can never close anything**, even with `close_missing=true`
 (the import says so in its `warnings`).
+
+### Ported parsers (DefectDojo)
+
+`zap` and `nuclei` are derived from [DefectDojo](https://github.com/DefectDojo/django-DefectDojo)'s
+parsers (BSD-3-Clause; the notice is in `THIRD_PARTY_LICENSES.md`) and are tested against DefectDojo's
+own sample reports and the results its tests expect. Three things differ on purpose:
+
+- **One finding per place.** DefectDojo folds a ZAP alert hit at fifty URLs into one finding with
+  fifty endpoints. Here each URL is its own finding and its own Issue (ADR-0041), so fixing one place
+  closes that place and not the others. Counts after an import are of Issues, so they are higher than
+  DefectDojo's for the same file.
+- **An unknown severity is Info**, and the import says how many findings it applied to. (DefectDojo's
+  Nuclei parser makes it Low.)
+- **An empty Nuclei file closes nothing.** Nuclei writes an empty file when it finds nothing, but an
+  empty upload is also what a failed export looks like, so an empty file imports nothing and is
+  refused the right to close (with a warning). Export JSON (`-json-export`), which writes `[]`, to
+  record a clean run.
+
+Request and response bodies in a ZAP report are not stored; the finding keeps the method,
+parameter, attack, evidence and the response's status line.
 
 ## Where it goes
 

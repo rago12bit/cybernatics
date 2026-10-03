@@ -106,6 +106,11 @@ class IngestParser(ABC):
     formats: frozenset[str]  # {"json"}; what the file can be
     categories: frozenset[str]  # {"sast"}: what it can produce
     label: str = ""  # "SARIF 2.1.0" -- how the import screen says "looks like ..."
+    # Set when this parser is derived from another project's (the DefectDojo parsers, BSD-3-Clause):
+    # the upstream file path, e.g. "dojo/tools/zap/parser.py". scripts/gen-licenses.py turns every
+    # such parser into a THIRD_PARTY_LICENSES.md entry, so a ported file cannot ship without one.
+    ported_from: str = ""
+    ported_into: tuple[str, ...] = ()  # other Bulwark files the port lives in (a shared mapper)
 
     @abstractmethod
     def sniff(self, head: bytes) -> float:

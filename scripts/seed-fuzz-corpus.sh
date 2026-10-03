@@ -28,4 +28,9 @@ seed sarif tests/golden/semgrep/raw.json tests/golden/opengrep/raw.json
 seed cyclonedx tests/golden/ingest/cyclonedx-*.json tests/golden/ingest/cyclonedx-*.xml
 seed spdx tests/golden/ingest/spdx.json
 seed osv tests/golden/osv-scanner/raw.json
+# Ported parsers: one vendored DefectDojo directory per parser, named for it.
+for d in tests/golden/ingest/defectdojo/*/; do
+  files=(); for f in "$d"*; do [[ "$(basename "$f")" == MANIFEST.json ]] || files+=("$f"); done
+  seed "$(basename "$d")" "${files[@]}"
+done
 echo "Seeded tests/fuzz_corpus/<adapter>/ and tests/fuzz_corpus/ingest-<parser>/ from real files."

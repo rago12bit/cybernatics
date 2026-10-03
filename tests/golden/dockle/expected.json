@@ -16,6 +16,7 @@
     "id": "dockle:CIS-DI-0001:bulwark-image.tar:1",
     "location": {
       "end_line": 1,
+      "host": "",
       "path": "bulwark-image.tar",
       "route": "",
       "snippet": "Last user should not be root",
@@ -79,6 +80,7 @@
     "id": "dockle:CIS-DI-0005:bulwark-image.tar:1",
     "location": {
       "end_line": 1,
+      "host": "",
       "path": "bulwark-image.tar",
       "route": "",
       "snippet": "export DOCKER_CONTENT_TRUST=1 before docker pull/build",
@@ -142,6 +144,7 @@
     "id": "dockle:CIS-DI-0006:bulwark-image.tar:1",
     "location": {
       "end_line": 1,
+      "host": "",
       "path": "bulwark-image.tar",
       "route": "",
       "snippet": "not found HEALTHCHECK statement",

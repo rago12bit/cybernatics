@@ -16,6 +16,7 @@
     "id": "gosec:G701:main.go:15",
     "location": {
       "end_line": 15,
+      "host": "",
       "path": "main.go",
       "route": "",
       "snippet": "\trows, _ := db.Query(\"SELECT * FROM users WHERE name = '\" + name + \"'\")",
@@ -79,6 +80,7 @@
     "id": "gosec:G702:main.go:17",
     "location": {
       "end_line": 17,
+      "host": "",
       "path": "main.go",
       "route": "",
       "snippet": "\tout, _ := exec.Command(\"sh\", \"-c\", \"echo \"+name).Output()",
@@ -142,6 +144,7 @@
     "id": "gosec:G705:main.go:18",
     "location": {
       "end_line": 18,
+      "host": "",
       "path": "main.go",
       "route": "",
       "snippet": "\tfmt.Fprintf(w, \"%x %s\", md5.Sum(out), password)",
@@ -205,6 +208,7 @@
     "id": "gosec:G401:main.go:18",
     "location": {
       "end_line": 18,
+      "host": "",
       "path": "main.go",
       "route": "",
       "snippet": "\tfmt.Fprintf(w, \"%x %s\", md5.Sum(out), password)",
@@ -268,6 +272,7 @@
     "id": "gosec:G114:main.go:23",
     "location": {
       "end_line": 23,
+      "host": "",
       "path": "main.go",
       "route": "",
       "snippet": "\thttp.ListenAndServe(\"0.0.0.0:8080\", nil)",
@@ -331,6 +336,7 @@
     "id": "gosec:G204:main.go:17",
     "location": {
       "end_line": 17,
+      "host": "",
       "path": "main.go",
       "route": "",
       "snippet": "\tout, _ := exec.Command(\"sh\", \"-c\", \"echo \"+name).Output()",
@@ -394,6 +400,7 @@
     "id": "gosec:G202:main.go:15",
     "location": {
       "end_line": 15,
+      "host": "",
       "path": "main.go",
       "route": "",
       "snippet": "\trows, _ := db.Query(\"SELECT * FROM users WHERE name = '\" + name + \"'\")",
@@ -457,6 +464,7 @@
     "id": "gosec:G501:main.go:4",
     "location": {
       "end_line": 4,
+      "host": "",
       "path": "main.go",
       "route": "",
       "snippet": "\t\"crypto/md5\"",
@@ -520,6 +528,7 @@
     "id": "gosec:G104:main.go:23",
     "location": {
       "end_line": 23,
+      "host": "",
       "path": "main.go",
       "route": "",
       "snippet": "\thttp.ListenAndServe(\"0.0.0.0:8080\", nil)",

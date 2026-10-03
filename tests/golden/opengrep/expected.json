@@ -16,6 +16,7 @@
     "id": "opengrep:rules.bulwark-js-child-process-exec:app.js:2",
     "location": {
       "end_line": 2,
+      "host": "",
       "path": "app.js",
       "route": "",
       "snippet": "function run(cmd) { cp.exec(cmd); }",
@@ -77,6 +78,7 @@
     "id": "opengrep:rules.bulwark-py-subprocess-shell-true:app.py:3",
     "location": {
       "end_line": 3,
+      "host": "",
       "path": "app.py",
       "route": "",
       "snippet": "    subprocess.run(cmd, shell=True)",

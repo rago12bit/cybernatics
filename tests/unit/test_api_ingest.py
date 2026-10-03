@@ -18,6 +18,7 @@ from api.deps import AppState
 from api.main import create_app
 from core.config import Settings
 from core.imports.jobs import process_import
+from core.imports.parsers import PARSERS
 from core.persistence import repo
 from core.persistence.models import FindingRow, ImportRecord, IssueRow, Organization, Scan
 from core.tenancy import DEFAULT_ORG_ID
@@ -256,7 +257,8 @@ def test_a_file_in_a_format_nothing_recognises_is_refused_with_the_candidates(en
     assert r.status_code == 422
     detail = r.json()["detail"]
     assert "pass `parser`" in detail["message"] and detail["detected"] == []
-    assert sorted(detail["available"]) == ["cyclonedx", "osv", "sarif", "spdx"]
+    assert sorted(detail["available"]) == sorted(PARSERS)
+    assert {"sarif", "cyclonedx", "spdx", "osv", "zap", "nuclei"} <= set(PARSERS)
     assert uploads_left(env) == [] and count(env, ImportRecord) == 0
 
 
@@ -423,8 +425,10 @@ def test_the_available_parsers_are_listed(env: Env) -> None:
     r = env.client.get("/v2/parsers", headers=AUTH)
     assert r.status_code == 200
     by_name = {p["name"]: p for p in r.json()}
-    assert sorted(by_name) == ["cyclonedx", "osv", "sarif", "spdx"]
+    assert sorted(by_name) == sorted(PARSERS)
     assert by_name["cyclonedx"]["formats"] == ["json", "xml"]
+    assert by_name["zap"]["formats"] == ["json", "xml"] and by_name["zap"]["categories"] == ["dast"]
+    assert by_name["nuclei"]["formats"] == ["json", "jsonl"]
 
 
 def test_the_endpoints_are_in_the_published_api_description(env: Env) -> None:

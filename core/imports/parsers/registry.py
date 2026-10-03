@@ -5,12 +5,22 @@ from __future__ import annotations
 
 from core.imports.parsers.base import IngestParser
 from core.imports.parsers.cyclonedx import CycloneDxParser
+from core.imports.parsers.nuclei import NucleiParser
 from core.imports.parsers.osv import OsvParser
 from core.imports.parsers.sarif import SarifParser
 from core.imports.parsers.spdx import SpdxParser
+from core.imports.parsers.zap import ZapParser
 
 PARSERS: dict[str, IngestParser] = {
-    p.name: p for p in (SarifParser(), CycloneDxParser(), SpdxParser(), OsvParser())
+    p.name: p
+    for p in (
+        SarifParser(),
+        CycloneDxParser(),
+        SpdxParser(),
+        OsvParser(),
+        ZapParser(),
+        NucleiParser(),
+    )
 }
 
 # Below this the import screen asks the person to confirm the format before showing counts (§55.1).
