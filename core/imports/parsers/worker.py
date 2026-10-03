@@ -17,7 +17,7 @@ import json
 import sys
 from pathlib import Path
 
-from core.imports.parsers.base import ParseLimits, run_parser
+from core.imports.parsers.base import ParseContext, ParseLimits
 from core.imports.parsers.registry import get_parser
 
 
@@ -30,21 +30,31 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--max-seconds", type=float, default=ParseLimits().max_seconds)
     args = ap.parse_args(argv)
 
-    limits = ParseLimits(max_bytes=args.max_bytes, max_seconds=args.max_seconds)
-    try:
-        parser = get_parser(args.parser)
-        with args.input.open("rb") as fh:
-            result = run_parser(parser, fh, limits)
-        payload = {
-            "parser": result.parser,
-            "error": result.error,
-            "can_close_missing": result.can_close_missing,
-            "warnings": result.warnings,
-            "findings": [f.to_dict() for f in result.findings],
+    ctx = ParseContext(limits=ParseLimits(max_bytes=args.max_bytes, max_seconds=args.max_seconds))
+    name = args.parser
+    # The result is written as it is produced: one finding in memory at a time, not a list, then
+    # a list of dicts, then one giant string (three copies, which ran a 1 GiB container out of
+    # memory at about 250,000 findings). `findings` comes first and the verdict (`error`,
+    # `warnings`, ...) last, because only the end of the file says whether it was read in full.
+    with args.output.open("w") as out:
+        out.write('{"findings":[')
+        try:
+            parser = get_parser(name)
+            name = parser.name
+            first = True
+            with args.input.open("rb") as fh:
+                for finding in parser.parse(fh, ctx):
+                    out.write(("" if first else ",") + json.dumps(finding.to_dict()))
+                    first = False
+        except (ValueError, OSError) as exc:  # unknown parser, unreadable input
+            ctx.error = str(exc)
+        verdict = {
+            "parser": name,
+            "error": ctx.error,
+            "can_close_missing": ctx.can_close_missing,
+            "warnings": ctx.all_warnings(),
         }
-    except (ValueError, OSError) as exc:  # unknown parser, unreadable input
-        payload = {"parser": args.parser, "error": str(exc), "warnings": [], "findings": []}
-    args.output.write_text(json.dumps(payload))
+        out.write("]," + json.dumps(verdict)[1:])
     return 0
 
 

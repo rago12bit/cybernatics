@@ -1,0 +1,74 @@
+{
+ "date": "2026-10-04",
+ "machine": "macOS-26.5.1-arm64-arm-64bit",
+ "python": "3.10.5",
+ "database": "postgres",
+ "results": [
+  {
+   "file": "Nessus XML",
+   "mb": 95.0,
+   "records": 27342,
+   "stage": "parse",
+   "findings": 27342,
+   "seconds": 1.447143249999499,
+   "peak_mb": 32.21875,
+   "error": null,
+   "findings_per_second": 18893.77571986012
+  },
+  {
+   "file": "Nessus XML",
+   "mb": 95.0,
+   "records": 27342,
+   "stage": "parse+prepare",
+   "findings": 27342,
+   "seconds": 2.2647395830135792,
+   "peak_mb": 235.671875,
+   "error": null,
+   "findings_per_second": 12072.911254378008
+  },
+  {
+   "file": "Nessus XML",
+   "mb": 95.0,
+   "records": 27342,
+   "stage": "parse+prepare+apply",
+   "findings": 27342,
+   "seconds": 11.436874499981059,
+   "peak_mb": 515.75,
+   "error": null,
+   "findings_per_second": 2390.6881202591917
+  },
+  {
+   "file": "SARIF",
+   "mb": 95.0,
+   "records": 117504,
+   "stage": "parse",
+   "findings": 117504,
+   "seconds": 3.917160250013694,
+   "peak_mb": 31.125,
+   "error": null,
+   "findings_per_second": 29997.24098588747
+  },
+  {
+   "file": "SARIF",
+   "mb": 95.0,
+   "records": 117504,
+   "stage": "parse+prepare",
+   "findings": 117504,
+   "seconds": 7.71801849998883,
+   "peak_mb": 745.453125,
+   "error": null,
+   "findings_per_second": 15224.633110191438
+  },
+  {
+   "file": "SARIF",
+   "mb": 95.0,
+   "records": 117504,
+   "stage": "parse+prepare+apply",
+   "findings": 117504,
+   "seconds": 31.971798957994906,
+   "peak_mb": 1547.015625,
+   "error": null,
+   "findings_per_second": 3675.2389239773074
+  }
+ ]
+}

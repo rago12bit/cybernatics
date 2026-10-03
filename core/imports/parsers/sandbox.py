@@ -65,8 +65,9 @@ def _decode(raw: bytes, parser_name: str) -> ParseResult:
     malformed result is reported as an error rather than trusted or crashed on."""
     try:
         doc = json.loads(raw)
-        findings = [finding_from_dict(d) for d in doc["findings"]]
         error = doc.get("error")
+        # A file that was not read in full is never applied, so its partial findings are not built.
+        findings = [] if error else [finding_from_dict(d) for d in doc["findings"]]
         return ParseResult(
             str(doc.get("parser", parser_name)),
             findings,
@@ -79,6 +80,22 @@ def _decode(raw: bytes, parser_name: str) -> ParseResult:
         return ParseResult(
             parser_name, [], [], f"the parser sandbox returned unreadable output ({exc})"
         )
+
+
+def _failure(run: RunResult, spec: ToolSpec) -> str:
+    """What to tell a person when the container produced nothing. Retrying only helps for a
+    transient failure, which is not what a timeout or an exhausted memory limit is."""
+    if run.status == "timeout":
+        return (
+            f"the parser did not finish within {spec.timeout_seconds}s; the file is too large or "
+            "too slow to import"
+        )
+    if run.exit_code == 137:  # SIGKILL: what the kernel does to a container over its memory limit
+        return (
+            f"the parser was stopped for using more than its {spec.memory_limit} memory limit; "
+            "the file has too many findings to import in one piece -- split it"
+        )
+    return f"the parser sandbox did not finish ({run.status}, exit {run.exit_code}); try again"
 
 
 def parse_in_sandbox(
@@ -101,9 +118,9 @@ def parse_in_sandbox(
         Path(tmp).chmod(0o755)
         (Path(tmp) / INPUT_NAME).chmod(0o644)  # the container runs as a different, non-root uid
         run: RunResult = run_tool(adapter, Path(tmp), runtime=runtime)
-    if run.status != "ok":
+    # The worker exits 0 whenever it finished, even on a bad file (the verdict is in its output). A
+    # non-zero exit with output means it was killed part-way through writing it.
+    if run.status != "ok" or run.exit_code not in (0, None):
         log.warning("ingest sandbox: %s (%s)", run.status, run.stderr.strip()[-300:])
-        return ParseResult(
-            parser_name, [], [], f"the parser sandbox did not finish ({run.status}); try again"
-        )
+        return ParseResult(parser_name, [], [], _failure(run, adapter.spec))
     return _decode(run.raw, parser_name)
