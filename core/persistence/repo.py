@@ -18,8 +18,16 @@ import core.audit as audit
 from core.assets import asset_key
 from core.dast import ownership
 from core.embeddings.chunk import CodeChunk
-from core.issues import ExistingIssue, IssueUpdate, State, SyncResult, classify_for_pr, fallback_key
-from core.issues import sync as sync_issues
+from core.imports.reimport import ReimportPlan, plan_reimport
+from core.issues import (
+    LIVE_STATES,
+    ExistingIssue,
+    IssueUpdate,
+    State,
+    SyncResult,
+    classify_for_pr,
+    fallback_key,
+)
 from core.models import Finding, finding_from_dict
 from core.persistence.models import (
     DEFAULT_RETENTION_DAYS,
@@ -573,8 +581,13 @@ def latest_scan_for_asset(
     s: Session, asset_id: str, *, org_id: str | None = None, statuses: frozenset[str] = TERMINAL
 ) -> Scan | None:
     """The most recent scan of this asset that actually finished -- a queued or running scan has
-    no findings to build an overview from yet."""
-    q = select(Scan).where(Scan.asset_id == asset_id).order_by(Scan.created_at.desc())
+    no findings to build an overview from yet. An import (ADR-0040) is stored as a scan but is a
+    different thing -- a file someone uploaded -- so it is never "the latest scan"."""
+    q = (
+        select(Scan)
+        .where(Scan.asset_id == asset_id, Scan.source_type != "import")
+        .order_by(Scan.created_at.desc())
+    )
     if org_id is not None:
         q = q.where(Scan.org_id == org_id)
     for scan in s.scalars(q):
@@ -594,7 +607,11 @@ def previous_scan_for_asset(
     """The completed scan immediately before `before`, for "since previous scan" deltas."""
     q = (
         select(Scan)
-        .where(Scan.asset_id == asset_id, Scan.created_at < before.created_at)
+        .where(
+            Scan.asset_id == asset_id,
+            Scan.created_at < before.created_at,
+            Scan.source_type != "import",
+        )
         .order_by(Scan.created_at.desc())
     )
     if org_id is not None:
@@ -1038,6 +1055,12 @@ def finish_scan(s: Session, scan_id: str, status: str, error: str | None = None)
     scan = s.get(Scan, scan_id)
     assert scan is not None
     scan.status, scan.finished_at, scan.error = status, _now(), error
+    add_outbox_event(
+        s,
+        org_id=scan.org_id,
+        event_type="scan.completed",
+        payload={"scan_id": scan_id, "asset_id": scan.asset_id, "status": status, "source": "scan"},
+    )
     s.commit()
 
 
@@ -1175,34 +1198,107 @@ def classify_findings_for_pr(
     return classify_for_pr(findings, existing)
 
 
-def sync_issues_for_scan(s: Session, scan_id: str, findings: list[Finding]) -> SyncResult:
-    """Match this scan's findings against the asset's existing issues (ADR-0012, `core/issues.py`)
-    and persist the lifecycle transitions. Returns one `IssueUpdate` per input finding, in the same
-    order, so the caller can attach `issue_id`/`state` to each finding's stored row without relying
-    on finding ids (which `add_findings` may rename on collision).
+def import_snapshot_scan_ids(
+    s: Session, org_id: str, asset_id: str, *, exclude_test_ids: frozenset[str] = frozenset()
+) -> list[str]:
+    """The scan behind each Test's current snapshot (its latest applied import) across every
+    engagement of this asset: the "other sources" a native scan, or an import into a different Test,
+    must not close an Issue out from under (ADR-0040)."""
+    test_ids = s.scalars(
+        select(EngagementTest.id)
+        .join(Engagement, Engagement.id == EngagementTest.engagement_id)
+        .where(Engagement.asset_id == asset_id, EngagementTest.org_id == org_id)
+    )
+    out = []
+    for test_id in test_ids:
+        if test_id in exclude_test_ids:
+            continue
+        latest = latest_applied_import(s, test_id, org_id)
+        if latest is not None and latest.scan_id is not None:
+            out.append(latest.scan_id)
+    return out
 
-    A scan with no asset (there is always one from `create_scan`, but a row could predate this
-    column) is a no-op: every finding gets no issue.
-    """
-    scan = s.get(Scan, scan_id)
-    assert scan is not None
-    if scan.asset_id is None:
-        return SyncResult()
-    existing_rows, existing = _existing_issues(s, scan.asset_id)
-    by_id = {r.id: r for r in existing_rows}
-    result = sync_issues(findings, existing, new_issue_id=_new_issue_id)
 
+def latest_native_snapshot_scan_id(s: Session, org_id: str, asset_id: str) -> str | None:
+    """The asset's latest ordinary scan of its default branch that finished: the "CI" source. A
+    pull-request scan (`ref` set) never syncs Issues, and an import is not native, so neither is
+    the snapshot Issue state follows."""
+    return s.scalars(
+        select(Scan.id)
+        .where(
+            Scan.asset_id == asset_id,
+            Scan.org_id == org_id,
+            Scan.source_type != "import",
+            Scan.ref.is_(None),
+            Scan.status.in_(("completed", "partial")),
+        )
+        .order_by(Scan.created_at.desc())
+        .limit(1)
+    ).first()
+
+
+def issue_ids_in_scans(s: Session, scan_ids: list[str]) -> set[str]:
+    if not scan_ids:
+        return set()
+    return {
+        i
+        for i in s.scalars(
+            select(FindingRow.issue_id).where(
+                FindingRow.scan_id.in_(scan_ids), FindingRow.issue_id.is_not(None)
+            )
+        )
+        if i is not None
+    }
+
+
+def _issue_prior(row: IssueRow) -> dict[str, Any]:
+    return {
+        "state": row.state,
+        "fixed_at": row.fixed_at.isoformat() if row.fixed_at else None,
+        "last_seen_at": row.last_seen_at.isoformat() if row.last_seen_at else None,
+        "severity": row.severity,
+        "title": row.title,
+        "path": row.path,
+        "category": row.category,
+        "fingerprint": row.fingerprint,
+        "fallback_fingerprint": row.fallback_fingerprint,
+    }
+
+
+def apply_reimport_plan(
+    s: Session,
+    *,
+    asset_id: str,
+    findings: list[Finding],
+    plan: ReimportPlan,
+    existing_rows: list[IssueRow],
+    record_changes: bool = False,
+) -> list[dict[str, Any]]:
+    """Write a decided `ReimportPlan` to the `issues` table. The one writer for both a native scan
+    and an import (ADR-0040): the *decision* is `plan_reimport`, shared; so is this. Stages only --
+    the caller commits, so an import can write its findings, record and events in one transaction.
+
+    With `record_changes`, returns what an import needs to be undone: for every Issue touched, its
+    state before (None for one this call created) and the state it was left in."""
     now = _now()
-    for f, u in zip(findings, result.updates, strict=True):
+    by_id = {r.id: r for r in existing_rows}
+    final = plan.resulting_states()
+    changes: dict[str, dict[str, Any]] = {}
+
+    def remember(row: IssueRow) -> None:
+        if record_changes and row.id not in changes:
+            changes[row.id] = {"issue_id": row.id, "created": False, "prior": _issue_prior(row)}
+
+    for f, u in zip(findings, plan.updates, strict=True):
         assert u.issue_id is not None  # sync() (unlike classify_for_pr) always allocates a real id
         row = by_id.get(u.issue_id)
         if row is None:  # brand new issue
             row = IssueRow(
                 id=u.issue_id,
-                asset_id=scan.asset_id,
+                asset_id=asset_id,
                 fingerprint=u.fingerprint,
                 fallback_fingerprint=None,
-                state=u.state,
+                state=final[u.issue_id],
                 category=f.taxonomy.category.value,
                 severity=f.scoring.normalized_severity.value,
                 path=f.location.path,
@@ -1212,9 +1308,12 @@ def sync_issues_for_scan(s: Session, scan_id: str, findings: list[Finding]) -> S
             )
             s.add(row)
             by_id[u.issue_id] = row
+            if record_changes:
+                changes[row.id] = {"issue_id": row.id, "created": True, "prior": None}
         else:
+            remember(row)
             row.fingerprint = u.fingerprint
-            row.state = u.state
+            row.state = final[u.issue_id]
             row.category = f.taxonomy.category.value
             row.severity = f.scoring.normalized_severity.value
             row.path = f.location.path
@@ -1226,11 +1325,85 @@ def sync_issues_for_scan(s: Session, scan_id: str, findings: list[Finding]) -> S
         # module focused on identity decisions, not field bookkeeping.
         row.fallback_fingerprint = fallback_key(f)
 
-    for issue_id in result.fixed_issue_ids:
+    for issue_id in plan.closed_issue_ids:
         row = by_id[issue_id]
+        remember(row)
         row.state, row.fixed_at = "fixed", now
+
+    out = list(changes.values())
+    for change in out:
+        change["after_state"] = by_id[change["issue_id"]].state
+    return out
+
+
+def stage_issue_events(
+    s: Session,
+    *,
+    org_id: str,
+    asset_id: str,
+    scan_id: str,
+    plan: ReimportPlan,
+    source: str,
+    import_id: str | None = None,
+) -> None:
+    """One outbox event per Issue that appeared, came back, or was closed -- written in the same
+    transaction as the change (plan §41.1)."""
+    base = {"asset_id": asset_id, "scan_id": scan_id, "source": source}
+    if import_id is not None:
+        base["import_id"] = import_id
+    for event_type, ids in (
+        ("issue.created", plan.new_issue_ids),
+        ("issue.reopened", plan.reopened_issue_ids),
+        ("issue.closed", plan.closed_issue_ids),
+    ):
+        for issue_id in ids:
+            add_outbox_event(
+                s, org_id=org_id, event_type=event_type, payload={**base, "issue_id": issue_id}
+            )
+
+
+def sync_issues_for_scan(s: Session, scan_id: str, findings: list[Finding]) -> SyncResult:
+    """Match this scan's findings against the asset's existing issues (ADR-0012, `core/issues.py`)
+    and persist the lifecycle transitions. Returns one `IssueUpdate` per input finding, in the same
+    order, so the caller can attach `issue_id`/`state` to each finding's stored row without relying
+    on finding ids (which `add_findings` may rename on collision).
+
+    This is the same decision and the same writer an import uses (`core.imports`, ADR-0040): a
+    native scan is a source that owns every live Issue (so it can close any of them by not seeing
+    it), except one an imported report still lists -- a scan that no longer sees something a pen
+    tester's file still reports has not fixed it.
+
+    A scan with no asset (there is always one from `create_scan`, but a row could predate this
+    column) is a no-op: every finding gets no issue.
+    """
+    scan = s.get(Scan, scan_id)
+    assert scan is not None
+    if scan.asset_id is None:
+        return SyncResult()
+    existing_rows, existing = _existing_issues(s, scan.asset_id)
+    plan = plan_reimport(
+        findings,
+        existing,
+        previous_issue_ids={i.id for i in existing if i.state in LIVE_STATES},
+        other_live_issue_ids=issue_ids_in_scans(
+            s, import_snapshot_scan_ids(s, scan.org_id, scan.asset_id)
+        ),
+        new_issue_id=_new_issue_id,
+    )
+    apply_reimport_plan(
+        s, asset_id=scan.asset_id, findings=findings, plan=plan, existing_rows=existing_rows
+    )
+    stage_issue_events(
+        s, org_id=scan.org_id, asset_id=scan.asset_id, scan_id=scan_id, plan=plan, source="scan"
+    )
     s.commit()
-    return result
+    return SyncResult(
+        updates=list(plan.updates),
+        fixed_issue_ids=list(plan.closed_issue_ids),
+        new_count=len(plan.new_issue_ids),
+        reintroduced_count=len(plan.reopened_issue_ids),
+        fixed_count=len(plan.closed_issue_ids),
+    )
 
 
 def _new_issue_id() -> str:
@@ -1242,6 +1415,8 @@ def add_findings(
     scan_id: str,
     findings: list[Finding],
     issue_updates: list[IssueUpdate] | None = None,
+    *,
+    commit: bool = True,
 ) -> None:
     seen: set[str] = set()
     updates_by_position: list[IssueUpdate | None] = (
@@ -1274,7 +1449,8 @@ def add_findings(
                 issue_state=upd.state if upd else None,
             )
         )
-    s.commit()
+    if commit:
+        s.commit()
 
 
 def _with_issue(row: FindingRow) -> dict[str, Any]:

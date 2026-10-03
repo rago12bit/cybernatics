@@ -69,6 +69,7 @@ def two_orgs(sessions: sessionmaker[Session]) -> Iterator[tuple[str, str]]:
     with sessions() as s:
         for org in (a, b):
             set_session_org(s, org)
+            s.execute(text("DELETE FROM outbox_events WHERE org_id = :o"), {"o": org})
             s.execute(text("DELETE FROM scans WHERE org_id = :o"), {"o": org})
             s.execute(text("DELETE FROM assets WHERE org_id = :o"), {"o": org})
         s.execute(text("DELETE FROM organizations WHERE id IN (:a, :b)"), {"a": a, "b": b})
