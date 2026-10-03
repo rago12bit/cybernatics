@@ -1,0 +1,173 @@
+.ds-import {
+  max-width: 48rem;
+}
+
+.ds-import-title {
+  margin: 0 0 var(--ds-space-3, 0.75rem);
+}
+
+.ds-import-intro {
+  margin-bottom: var(--ds-space-4, 1rem);
+  max-width: 62ch;
+}
+
+.ds-import-h {
+  margin: var(--ds-space-4, 1rem) 0 var(--ds-space-2, 0.5rem);
+}
+
+.ds-import-h3 {
+  margin: var(--ds-space-4, 1rem) 0 var(--ds-space-2, 0.5rem);
+  font-size: 1rem;
+}
+
+.ds-import-label {
+  display: block;
+  font-weight: 600;
+  margin: var(--ds-space-3, 0.75rem) 0 0.4rem;
+}
+
+.ds-import-error {
+  color: var(--ds-sev-critical, #b00020);
+  margin-bottom: var(--ds-space-3, 0.75rem);
+}
+
+.ds-import-status {
+  padding: var(--ds-space-3, 0.75rem) 0;
+}
+
+/* The File / Into / Matching header of the preview. */
+.ds-import-facts {
+  margin: 0;
+  border: 1px solid var(--ds-rule, #ccc);
+  border-radius: var(--ds-radius-panel, 6px);
+}
+
+.ds-import-facts > div {
+  display: grid;
+  grid-template-columns: 7rem 1fr;
+  gap: var(--ds-space-3, 0.75rem);
+  padding: var(--ds-space-2, 0.5rem) var(--ds-space-3, 0.75rem);
+  border-bottom: 1px solid var(--ds-rule, #ccc);
+}
+
+.ds-import-facts > div:last-child {
+  border-bottom: 0;
+}
+
+.ds-import-facts dt {
+  color: var(--ds-muted, #666);
+}
+
+.ds-import-facts dd {
+  margin: 0;
+}
+
+.ds-import-link {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--ds-brand, #0a58ca);
+  text-decoration: underline;
+  cursor: pointer;
+  font: inherit;
+}
+
+.ds-import-inline {
+  margin-left: var(--ds-space-2, 0.5rem);
+}
+
+.ds-import-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.ds-import-missing {
+  border: 0;
+  padding: 0;
+  margin: var(--ds-space-3, 0.75rem) 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ds-space-2, 0.5rem) var(--ds-space-4, 1rem);
+}
+
+.ds-import-missing legend {
+  width: 100%;
+}
+
+.ds-import-missing label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: normal;
+}
+
+.ds-import-into {
+  margin-top: var(--ds-space-3, 0.75rem);
+  padding: var(--ds-space-3, 0.75rem);
+  border: 1px dashed var(--ds-rule, #ccc);
+  border-radius: var(--ds-radius-panel, 6px);
+}
+
+/* The four counts are the point of the screen: large, in a row, never colour-alone. */
+.ds-import-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ds-space-3, 0.75rem) var(--ds-space-5, 1.5rem);
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--ds-space-3, 0.75rem);
+  font-size: 1.1rem;
+}
+
+.ds-import-counts strong {
+  font-size: 1.6rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.ds-import-line {
+  margin: var(--ds-space-2, 0.5rem) 0;
+}
+
+.ds-import-ids {
+  columns: 3 8rem;
+  list-style: none;
+  padding: 0;
+  margin: var(--ds-space-2, 0.5rem) 0 0;
+  font-family: var(--ds-font-mono, monospace);
+}
+
+.ds-import-id {
+  font-family: var(--ds-font-mono, monospace);
+}
+
+.ds-import-check {
+  border-left: 3px solid var(--ds-sev-medium, #b58100);
+  padding-left: var(--ds-space-3, 0.75rem);
+  margin-top: var(--ds-space-3, 0.75rem);
+}
+
+.ds-import-check ul {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+.ds-import-saved-note {
+  margin: var(--ds-space-4, 1rem) 0 var(--ds-space-2, 0.5rem);
+  font-weight: 600;
+}
+
+.ds-import-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ds-space-2, 0.5rem);
+  margin-top: var(--ds-space-3, 0.75rem);
+}
+
+.ds-import-done {
+  font-size: 1.15rem;
+  font-weight: 600;
+}

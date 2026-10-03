@@ -219,6 +219,18 @@ scanner uses, and trusted only after a real keyless Sigstore signature check and
 See [the plugin guide](docs/plugins.md) and the real, installable
 [`examples/bulwark-plugin-demo`](examples/bulwark-plugin-demo) package (ADR-0037).
 
+## Importing reports
+
+Bulwark can also take findings from tools it does not run: SARIF, CycloneDX (JSON or XML), OSV-Scanner
+JSON and SPDX. One endpoint, `POST /v2/ingest`, with reimport semantics: the first upload into a Test
+creates everything, every later one is compared with the previous one and reports **new, unchanged,
+reopened and closed**; the same file twice changes nothing; the most recent import can be undone.
+Reports are untrusted input, so they are parsed in the scanner sandbox, a file that cannot be read
+completely is refused rather than applied, and an SBOM (which lists packages, not the absence of
+vulnerabilities) can never close anything. The web app has an **Import a report** screen on every
+project that shows the four counts before anything is saved. See [docs/ingest-api.md](docs/ingest-api.md)
+and [ADR-0040](docs/adr/0040-one-ingest-path.md).
+
 ## Integrations
 
 Slack and Discord notifications, generic HMAC-signed outbound webhooks, and two-way GitHub

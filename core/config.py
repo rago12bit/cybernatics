@@ -53,6 +53,15 @@ class Settings:
     # process and exists for tests and for local development without Docker.
     ingest_sandbox: bool = True
 
+    @property
+    def ingest_dir(self) -> Path:
+        """Uploaded reports waiting to be parsed or confirmed. Deliberately *not* under
+        `upload_dir`: the periodic scratch cleanup deletes anything there after two hours, which
+        would delete a previewed upload while a person is still deciding. These files' lifetime is
+        managed from the import record's own status instead
+        (`core.maintenance.expire_stale_imports`)."""
+        return self.workdir / "ingest"
+
     @staticmethod
     def from_env() -> Settings:
         workdir = Path(os.environ.get("BULWARK_WORKDIR", tempfile.gettempdir())) / "bulwark-work"

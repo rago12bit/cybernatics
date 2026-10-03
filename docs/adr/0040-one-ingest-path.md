@@ -119,9 +119,11 @@ plan's wording:
 
 ## Consequences
 
-- Imports show up as ordinary scans in anything that lists scans. They are identifiable by
-  `source_type="import"`, and `Scan.tools` holds the parser name. Screens that should not list them
-  filter on it.
+- An import is stored as a scan (`source_type="import"`, `Scan.tools` holds the parser name), so
+  anything that reads "the findings of a scan" works on one. Two places must not treat it as a scan
+  someone ran and exclude it: "the latest/previous scan of an asset" (the project overview and trend
+  deltas) and the recent-scans list. Its own scan page still opens by id, and its history is listed
+  under its Test (`GET /v2/tests/{id}/imports`).
 - Retention deleting an import's scan leaves its `ImportRecord` (`scan_id` becomes null): the audit
   trail that an import happened and what it changed outlives the findings.
 - A reverted `ImportRecord` is kept with `status="reverted"`; its Scan and findings are removed, so

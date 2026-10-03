@@ -66,8 +66,15 @@ def json_events(stream: BinaryIO, ctx: ParseContext) -> Iterator[tuple[str, str,
             if count % 4096 == 0:
                 ctx.check_time()
             yield prefix, event, value
-    except ijson.JSONError as exc:  # IncompleteJSONError (truncated) is a JSONError too
-        raise ParseAborted(f"not valid JSON ({exc})") from exc
+    except ijson.IncompleteJSONError as exc:
+        raise ParseAborted(
+            "not valid JSON: the file ends unexpectedly (it may be cut off)"
+        ) from exc
+    except ijson.JSONError as exc:
+        # The library's message is several lines with a caret pointing into the file; one line says
+        # all a person can act on.
+        first = (str(exc).strip().splitlines() or ["malformed"])[0]
+        raise ParseAborted(f"not valid JSON ({first})") from exc
 
 
 def stream_objects(

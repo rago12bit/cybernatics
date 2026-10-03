@@ -2864,6 +2864,57 @@
         }
       }
     },
+    "/v2/projects/{project_id}/tests": {
+      "get": {
+        "tags": [
+          "ingest"
+        ],
+        "summary": "List Project Tests",
+        "operationId": "list_project_tests_v2_projects__project_id__tests_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProjectTest"
+                  },
+                  "title": "Response List Project Tests V2 Projects  Project Id  Tests Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v2/parsers": {
       "get": {
         "tags": [
@@ -4102,6 +4153,34 @@
         ],
         "title": "ImportCreated"
       },
+      "ImportSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "counts": {
+            "$ref": "#/components/schemas/ImportCounts"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "created_at",
+          "counts"
+        ],
+        "title": "ImportSummary"
+      },
       "ImportView": {
         "properties": {
           "id": {
@@ -4621,6 +4700,63 @@
         ],
         "title": "ProjectOverview",
         "description": "Plan \u00a728.1's project overview screen, built entirely from existing scan/issue data \u2014\nsee core/persistence/repo.py's asset-overview functions for how each field is derived."
+      },
+      "ProjectTest": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "parser": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parser"
+          },
+          "engagement_id": {
+            "type": "string",
+            "title": "Engagement Id"
+          },
+          "engagement_name": {
+            "type": "string",
+            "title": "Engagement Name"
+          },
+          "engagement_type": {
+            "type": "string",
+            "title": "Engagement Type"
+          },
+          "last_import": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ImportSummary"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The Test's current snapshot: what the next upload is compared with."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "parser",
+          "engagement_id",
+          "engagement_name",
+          "engagement_type",
+          "last_import"
+        ],
+        "title": "ProjectTest"
       },
       "PromoteHypothesisResult": {
         "properties": {

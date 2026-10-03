@@ -488,3 +488,70 @@ export interface AssetVerification {
   last_checked_at: string | null;
   last_error: string | null;
 }
+
+// --- Importing reports (Week 54, plan §42.1, ADR-0040) -------------------------------------------
+
+export type ImportCounts = {
+  new: number;
+  unchanged: number;
+  reopened: number;
+  closed: number;
+  /** Issues the file stopped listing that stay open because another source still reports them. */
+  detached: number;
+};
+
+export type ImportStatus =
+  | "queued" | "processing" | "previewed" | "applied" | "duplicate" | "failed" | "cancelled" | "reverted";
+
+export type ImportCreated = {
+  import_id: string;
+  status: ImportStatus;
+  parser: string;
+  /** How sure format detection was; null when the caller named the parser. */
+  confidence: number | null;
+  test_id: string;
+  duplicate: boolean;
+};
+
+export type ImportView = {
+  id: string;
+  status: ImportStatus;
+  mode: "apply" | "preview";
+  parser: string;
+  file_name: string | null;
+  test_id: string;
+  engagement_id: string | null;
+  counts: ImportCounts | null;
+  reopened_issue_ids: string[];
+  closed_issue_ids: string[];
+  detached_issue_ids: string[];
+  ids_truncated: boolean;
+  warnings: string[];
+  error: string | null;
+  close_missing: boolean;
+  scope: "test" | "engagement";
+  dedup_complete: boolean;
+  created_at: string;
+  reverted_at: string | null;
+};
+
+export type ParserInfo = { name: string; label: string; formats: string[]; categories: string[] };
+
+export type ProjectTest = {
+  id: string;
+  name: string;
+  parser: string | null;
+  engagement_id: string;
+  engagement_name: string;
+  engagement_type: string;
+  last_import: { id: string; status: ImportStatus; created_at: string; counts: ImportCounts } | null;
+};
+
+export type RevertView = { import_id: string; status: ImportStatus; restored: number; deleted: number; skipped: number };
+
+/** What the API sends back (422) when a file's format could not be identified with confidence. */
+export type FormatCandidates = {
+  message: string;
+  detected: { parser: string; confidence: number }[];
+  available: string[];
+};

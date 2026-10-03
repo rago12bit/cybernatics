@@ -169,7 +169,12 @@ def maintenance_task() -> dict[str, int]:
 
     from core.config import Settings
     from core.events import RedisPublisher
-    from core.maintenance import cleanup_containers, cleanup_scratch, reap_stale_scans
+    from core.maintenance import (
+        cleanup_containers,
+        cleanup_scratch,
+        expire_stale_imports,
+        reap_stale_scans,
+    )
     from core.persistence.db import get_session_factory
 
     settings = Settings.from_env()
@@ -179,10 +184,17 @@ def maintenance_task() -> dict[str, int]:
     )
     killed = cleanup_containers()
     removed = cleanup_scratch(settings.workdir / "tmp") + cleanup_scratch(settings.upload_dir)
+    # Ingest uploads have their own lifetime (a preview waits for a person), tied to the import's
+    # status: expire the abandoned ones, then sweep any file no record owns any more (a day later,
+    # so a live preview's file is never the one removed).
+    imports_expired = expire_stale_imports(get_session_factory(), timedelta(hours=24))
+    orphans = cleanup_scratch(settings.ingest_dir, max_age_seconds=48 * 3600)
     return {
         "scans_reaped": len(reaped),
         "containers_killed": len(killed),
         "scratch_removed": len(removed),
+        "imports_expired": len(imports_expired),
+        "ingest_orphans_removed": len(orphans),
     }
 
 

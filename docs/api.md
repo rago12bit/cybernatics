@@ -352,6 +352,12 @@ List Test Imports
 
 - `test_id` (path, required)
 
+## `GET /v2/projects/{project_id}/tests`
+
+List Project Tests
+
+- `project_id` (path, required)
+
 ## `GET /v2/parsers`
 
 List Parsers

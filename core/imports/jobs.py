@@ -74,7 +74,7 @@ def process_import(
         if not result.complete:
             # An incomplete parse is refused outright: reimport closes what a file no longer
             # lists, so a half-read file must never be applied (ADR-0040, parsers/base.py).
-            return _fail(s, record, result.error or "the file could not be read")
+            return _fail(s, record, f"The file could not be read: {result.error or 'unreadable'}")
 
         findings = prepare(result.findings)
         warnings = list(result.warnings)

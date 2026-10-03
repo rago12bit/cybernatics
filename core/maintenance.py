@@ -3,6 +3,7 @@
   * reap_stale_scans   scans stuck in queued/running (worker died, queue lost) -> failed
   * cleanup_containers scanner containers that outlived their wall-clock timeout -> killed
   * cleanup_scratch    leftover temp workspaces / uploads from crashed jobs -> removed
+  * expire_stale_imports  previewed imports nobody confirmed, and imports a worker never finished
 Run periodically by Celery beat (core.tasks.maintenance_task).
 """
 
@@ -20,7 +21,7 @@ from sqlalchemy import or_, select
 
 from core.persistence import repo
 from core.persistence.db import SessionFactory
-from core.persistence.models import Organization, Scan
+from core.persistence.models import ImportRecord, Organization, Scan
 from core.tenancy import set_session_org
 
 log = logging.getLogger(__name__)
@@ -86,6 +87,49 @@ def reap_stale_scans(
                 )
                 reaped.append(scan.id)
     return reaped
+
+
+IMPORT_EXPIRED = "this import expired before it was confirmed; upload the file again"
+IMPORT_STUCK = "this import did not finish in time (the worker may have stopped); upload it again"
+
+
+def expire_stale_imports(
+    sessions: SessionFactory, max_age: timedelta, now: datetime | None = None
+) -> list[str]:
+    """Clean up imports that will never finish, across every organization, and delete their files.
+
+    A *previewed* import keeps its upload so a person can confirm it; one nobody confirms within
+    `max_age` is cancelled and its file removed. A *queued* or *processing* one that old means its
+    worker died: it is failed, so it does not look in progress forever. Iterates one organization at
+    a time under that org's context for the same reason as `reap_stale_scans`. Returns the ids."""
+    now = now or datetime.now(timezone.utc)
+    cutoff = now - max_age
+    with sessions() as s:
+        org_ids = list(s.scalars(select(Organization.id)))
+
+    expired: list[str] = []
+    for org_id in org_ids:
+        with sessions() as s:
+            set_session_org(s, org_id)
+            stale = s.scalars(
+                select(ImportRecord).where(
+                    ImportRecord.org_id == org_id,
+                    ImportRecord.status.in_(("previewed", "queued", "processing")),
+                )
+            )
+            for record in stale:
+                if _aware(record.created_at) > cutoff:
+                    continue
+                if record.status == "previewed":
+                    record.status, record.error = "cancelled", IMPORT_EXPIRED
+                else:
+                    record.status, record.error = "failed", IMPORT_STUCK
+                if record.upload_path:
+                    Path(record.upload_path).unlink(missing_ok=True)
+                    record.upload_path = None
+                expired.append(record.id)
+            s.commit()
+    return expired
 
 
 def _docker(*args: str) -> subprocess.CompletedProcess[str]:

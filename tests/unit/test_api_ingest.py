@@ -109,7 +109,7 @@ def issue_states(env: Env) -> list[str]:
 
 
 def uploads_left(env: Env) -> list[Path]:
-    d = env.settings.upload_dir / "ingest"
+    d = env.settings.ingest_dir
     return sorted(d.iterdir()) if d.exists() else []
 
 
@@ -281,7 +281,7 @@ def test_an_oversized_upload_is_refused_mid_stream_and_leaves_no_file(env: Env) 
         "/v2/ingest", data={"project": env.asset_id}, files={"file": ("big", SARIF)}, headers=AUTH
     )
     assert r.status_code == 413
-    d = tight.upload_dir / "ingest"
+    d = tight.ingest_dir
     assert not d.exists() or list(d.iterdir()) == []
 
 
@@ -290,7 +290,7 @@ def test_the_clients_filename_is_never_used_as_a_path(env: Env) -> None:
     assert r.status_code == 202
     env.drain()
     assert env.get(r.json()["import_id"])["file_name"] == "passwd"  # a basename, for display only
-    assert not (env.settings.upload_dir.parent / "etc").exists()
+    assert not (env.settings.workdir.parent / "etc").exists()
 
 
 def test_a_queue_outage_fails_the_import_cleanly(env: Env, tmp_path: Path) -> None:
@@ -485,3 +485,33 @@ def test_secrets_in_an_uploaded_report_never_reach_the_database(env: Env) -> Non
         stored = json.dumps([r.data for r in s.scalars(select(FindingRow))])
         titles = [i.title for i in s.scalars(select(IssueRow))]
     assert "SECRETVALUE" not in stored and all("SECRETVALUE" not in t for t in titles)
+
+
+def test_a_projects_tests_are_listed_with_their_latest_import(env: Env) -> None:
+    empty = env.client.get(f"/v2/projects/{env.asset_id}/tests", headers=AUTH)
+    assert empty.status_code == 200 and empty.json() == []
+    first = env.import_and_get(SARIF)
+    env.import_and_get(sarif_without_last_result())
+    (t,) = env.client.get(f"/v2/projects/{env.asset_id}/tests", headers=AUTH).json()
+    assert (t["id"], t["name"], t["parser"]) == (first["test_id"], "SARIF 2.1.0", "sarif")
+    assert t["engagement_type"] == "import" and t["engagement_name"].endswith("imports")
+    assert t["last_import"]["counts"]["closed"] == 1  # the second import is the current snapshot
+
+
+def test_another_orgs_project_tests_are_not_listed(env: Env) -> None:
+    env.import_and_get(SARIF)
+    assert env.client.get(f"/v2/projects/{env.asset_id}/tests", headers=ORG_B).status_code == 404
+    assert env.client.get("/v2/projects/not-a-uuid/tests", headers=AUTH).status_code == 404
+
+
+def test_an_import_is_not_listed_as_a_recent_scan_but_its_scan_page_still_opens(env: Env) -> None:
+    """Imports are stored as scans (ADR-0040) but are files someone uploaded, not scans someone ran."""
+    view = env.import_and_get(SARIF)
+    assert env.client.get("/scans", headers=AUTH).json() == []
+    with env.sessions() as s:
+        rec = repo.get_import_record(s, view["id"], DEFAULT_ORG_ID)
+        scan_id = rec.scan_id  # type: ignore[union-attr]
+    r = env.client.get(f"/scans/{scan_id}", headers=AUTH)
+    assert r.status_code == 200 and r.json()["status"] == "completed"
+    findings = env.client.get(f"/scans/{scan_id}/findings", headers=AUTH)
+    assert findings.status_code == 200 and findings.json()["total"] == 3

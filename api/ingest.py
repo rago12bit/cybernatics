@@ -7,6 +7,7 @@ scan Bulwark ran, with reimport semantics.
     POST /v2/imports/{id}/cancel    discard a previewed import
     POST /v2/imports/{id}/revert    undo the latest applied import of a Test
     GET  /v2/tests/{id}/imports  a Test's import history, with counts
+    GET  /v2/projects/{id}/tests a project's Tests, with each one's latest import
     GET  /v2/parsers             the formats that can be imported
 
 Import is reimport with an empty history: the first upload into a Test creates everything, every
@@ -105,6 +106,25 @@ class ParserInfo(BaseModel):
     label: str
     formats: list[str]
     categories: list[str]
+
+
+class ImportSummary(BaseModel):
+    id: str
+    status: str
+    created_at: datetime
+    counts: ImportCounts
+
+
+class ProjectTest(BaseModel):
+    id: str
+    name: str
+    parser: str | None
+    engagement_id: str
+    engagement_name: str
+    engagement_type: str
+    last_import: ImportSummary | None = Field(
+        description="The Test's current snapshot: what the next upload is compared with."
+    )
 
 
 class RevertView(BaseModel):
@@ -317,7 +337,7 @@ def register_ingest_routes(app: FastAPI) -> None:
             raise HTTPException(422, f"scope must be one of {SCOPES}")
         _ = wait_for_dedup  # deduplication is synchronous today; see ImportView.dedup_complete
         path, digest, size, head = await _store_upload(
-            file, st.settings.upload_dir / "ingest", st.settings.max_upload_bytes
+            file, st.settings.ingest_dir, st.settings.max_upload_bytes
         )
         try:
             if size == 0:
@@ -450,6 +470,48 @@ def register_ingest_routes(app: FastAPI) -> None:
         if not _UUID.match(test_id) or repo.get_engagement_test(s, test_id, org) is None:
             raise HTTPException(404, "test not found")
         return [_view(s, r, org) for r in repo.list_import_records(s, test_id, org)]
+
+    @app.get(
+        "/v2/projects/{project_id}/tests",
+        response_model=list[ProjectTest],
+        tags=["ingest"],
+        dependencies=[Depends(require_scope("ingest:read"))],
+    )
+    def list_project_tests(
+        project_id: str, s: Session = Depends(db), org: str = Depends(current_org)
+    ) -> list[ProjectTest]:
+        if not _UUID.match(project_id) or repo.get_asset(s, project_id, org_id=org) is None:
+            raise HTTPException(404, "project not found")
+        out = []
+        for test, eng in repo.list_tests_for_asset(s, project_id, org):
+            latest = repo.latest_applied_import(s, test.id, org)
+            out.append(
+                ProjectTest(
+                    id=test.id,
+                    name=test.name,
+                    parser=test.parser,
+                    engagement_id=eng.id,
+                    engagement_name=eng.name,
+                    engagement_type=eng.engagement_type,
+                    last_import=(
+                        ImportSummary(
+                            id=latest.id,
+                            status=latest.status,
+                            created_at=latest.created_at,
+                            counts=ImportCounts(
+                                new=latest.new_count,
+                                unchanged=latest.unchanged_count,
+                                reopened=latest.reopened_count,
+                                closed=latest.closed_count,
+                                detached=latest.detached_count,
+                            ),
+                        )
+                        if latest is not None
+                        else None
+                    ),
+                )
+            )
+        return out
 
     @app.get(
         "/v2/parsers",

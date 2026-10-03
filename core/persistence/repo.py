@@ -262,6 +262,21 @@ def list_engagement_tests(s: Session, engagement_id: str, org_id: str) -> list[E
     )
 
 
+def list_tests_for_asset(
+    s: Session, asset_id: str, org_id: str
+) -> list[tuple[EngagementTest, Engagement]]:
+    """Every persistent Test of a project with its engagement, for choosing where an upload goes."""
+    return [
+        (t, e)
+        for t, e in s.execute(
+            select(EngagementTest, Engagement)
+            .join(Engagement, Engagement.id == EngagementTest.engagement_id)
+            .where(Engagement.asset_id == asset_id, EngagementTest.org_id == org_id)
+            .order_by(Engagement.name, EngagementTest.name)
+        )
+    ]
+
+
 def add_import_record(
     s: Session,
     *,
@@ -465,7 +480,15 @@ def list_scans(s: Session, limit: int = 20, *, org_id: str | None = None) -> lis
     client-facing endpoint passes the request's real org). Application-level filtering here is
     belt-and-suspenders alongside Postgres RLS (ADR-0013) — SQLite test runs have no RLS, so this
     is what actually proves isolation in the fast test suite."""
-    q = select(Scan).order_by(Scan.created_at.desc()).limit(limit)
+    # An import (ADR-0040) is stored as a scan so its findings keep their foreign keys and RLS, but
+    # it is a file someone uploaded, not a scan someone ran: "recent scans" is not where it belongs
+    # (its history is under its Test), though its own scan page still opens by id.
+    q = (
+        select(Scan)
+        .where(Scan.source_type != "import")
+        .order_by(Scan.created_at.desc())
+        .limit(limit)
+    )
     if org_id is not None:
         q = q.where(Scan.org_id == org_id)
     return list(s.scalars(q))

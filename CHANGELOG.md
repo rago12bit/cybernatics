@@ -5,7 +5,33 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 
 ## [Unreleased]
 
+### Added
+- **Import anything standard, and reimport it correctly (Weeks 54-56, plan Phase 13, ADR-0040).**
+  `POST /v2/ingest` takes a SARIF, CycloneDX (JSON or XML), OSV-Scanner or SPDX report and compares it
+  with that Test's previous upload: **new, unchanged, reopened, closed** (plus `detached`: no longer
+  in the file but still reported by another source, so not fixed). The same file twice is a no-op, the
+  latest import can be undone, and a preview shows the counts before anything is saved -- they are the
+  same computation as the import itself. Reports are untrusted input: they are parsed inside the scanner
+  sandbox (no network, read-only, no capabilities), limits are enforced while reading, XML entities are
+  refused, a truncated file is an error and never a smaller report, and an SBOM cannot close anything.
+  New scopes `ingest:read` / `ingest:write` (importing can close Issues; starting a scan cannot). New
+  **Import a report** screen on each project. Migrations 0027 (persistent Tests, import records, event
+  outbox) and 0028 (import lifecycle). Native scans now go through the same reimport decision and
+  writer, so a scan no longer closes an Issue an imported report still lists. Fuzzing: an Atheris
+  harness for the parsers (nightly CI job; `scripts/fuzz-ingest-docker.sh` runs it on a Mac).
+  Verification record: [docs/v2-week54-verification.md](docs/v2-week54-verification.md).
+
 ### Fixed
+- **Cross-tenant leak: a database session could run as another organization after a commit.**
+  Row-Level Security reads `app.current_org` from the *connection*, but a session returns its
+  connection to the pool on every commit and takes whichever is free next; the org was set once per
+  session, so it could land on a connection the session never saw again and stay there for the next
+  session to inherit. Reproduced on real Postgres: with two overlapping sessions for different orgs the
+  first one's next statement after a commit ran as the second org. Only reachable with concurrent
+  requests from different organizations (so single-org self-hosting was unaffected, and every
+  single-session test missed it). The org is now re-applied, transaction-local, at the start of every
+  transaction. Regression tests interleave sessions on a two-connection pool; all five fail without the
+  fix.
 - **Taint engine: a resolved call to an unrelated, same-named function could silently erase real
   taint** (`core/taint/python_flow.py`, `js_flow.py`, `go_flow.py`), found expanding v2's own taint
   engine spot-check from 1 repository to the full Python/JavaScript corpus

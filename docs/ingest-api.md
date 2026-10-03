@@ -69,7 +69,8 @@ findings; `scope=engagement` considers every Test in the engagement.
 
 `-F preview=true` parses and counts but saves nothing and keeps the file; the import ends in
 `previewed` with the counts and the reopened and closed Issue ids. Then
-`POST /v2/imports/{id}/confirm` applies it, or `POST /v2/imports/{id}/cancel` discards it. The
+`POST /v2/imports/{id}/confirm` applies it, or `POST /v2/imports/{id}/cancel` discards it. A
+preview nobody confirms is cancelled, and its file deleted, after 24 hours. The
 preview and the import are the same computation, so the counts do not differ.
 
 ## Safety

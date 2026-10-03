@@ -1,4 +1,5 @@
-import type { AssetSummary, AssetVerification, AttackPath, BulkTriageResult,
+import type { ImportCreated, ImportView, ParserInfo, ProjectTest, RevertView,
+  AssetSummary, AssetVerification, AttackPath, BulkTriageResult,
   StrideRow, ThreatModel, RetentionSettings, Citation, CopilotConversation, CopilotMessage, CostSummary, DependenciesView, Finding, FindingsPage, FindingsQuery, GenerateHypothesesResult, Guidance, GuidanceApi, Hypothesis, IssueHistoryEvent, ProjectOverview, Remediation, ScanComparison, ScanCost, ScanSummary, ScanView, TriageAssistantView, TriageStatus, VerifiedFixStarted, VerifiedFixView } from "./types";
 import { findingsQueryString } from "./format";
 
@@ -6,7 +7,9 @@ export const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:800
 const TOKEN_KEY = "bulwark.token";
 
 export class ApiError extends Error {
-  constructor(public status: number, message: string) {
+  /** `data` is the structured error body when the API sent one (e.g. the candidate formats when a
+   * file's format could not be identified) -- `message` alone would lose it. */
+  constructor(public status: number, message: string, public data?: unknown) {
     super(message);
   }
 }
@@ -61,13 +64,18 @@ async function request<T>(path: string, init: RequestInit = {}, token = getToken
   }
   if (!res.ok) {
     let detail = res.statusText;
+    let data: unknown;
     try {
       const body = await res.json();
       if (typeof body?.detail === "string") detail = body.detail;
+      else if (body?.detail && typeof body.detail === "object") {
+        data = body.detail;
+        if (typeof body.detail.message === "string") detail = body.detail.message;
+      }
     } catch {
       /* non-JSON error body */
     }
-    throw new ApiError(res.status, detail);
+    throw new ApiError(res.status, detail, data);
   }
   return (await res.json()) as T;
 }
@@ -363,3 +371,42 @@ export const listCopilotMessages = (assetId: string, conversationId: string) =>
   request<CopilotMessage[]>(
     `/assets/${encodeURIComponent(assetId)}/copilot/conversations/${encodeURIComponent(conversationId)}/messages`,
   );
+
+// --- Importing reports (Week 54, plan §42.1, ADR-0040) ---------------------------------------------
+
+export type ImportOptions = {
+  /** Skip format detection: the format the person picked. */
+  parser?: string;
+  /** Test name; the server names it after the format when absent. */
+  test?: string;
+  engagementType?: "import" | "assessment";
+  engagementName?: string;
+  closeMissing: boolean;
+  scope: "test" | "engagement";
+  /** Count what would change and save nothing; the file is kept until confirmed or cancelled. */
+  preview: boolean;
+};
+
+export function startImport(assetId: string, file: File, o: ImportOptions) {
+  const form = new FormData();
+  form.set("project", assetId);
+  form.set("preview", String(o.preview));
+  form.set("close_missing", String(o.closeMissing));
+  form.set("scope", o.scope);
+  if (o.parser) form.set("parser", o.parser);
+  if (o.test) form.set("test", o.test);
+  if (o.engagementType) form.set("engagement_type", o.engagementType);
+  if (o.engagementName) form.set("engagement_name", o.engagementName);
+  form.set("file", file); // last, so the server sees the options before the (large) body
+  return request<ImportCreated>("/v2/ingest", { method: "POST", body: form });
+}
+export const getImport = (id: string) => request<ImportView>(`/v2/imports/${encodeURIComponent(id)}`);
+export const confirmImport = (id: string) =>
+  request<ImportView>(`/v2/imports/${encodeURIComponent(id)}/confirm`, { method: "POST" });
+export const cancelImport = (id: string) =>
+  request<ImportView>(`/v2/imports/${encodeURIComponent(id)}/cancel`, { method: "POST" });
+export const revertImport = (id: string) =>
+  request<RevertView>(`/v2/imports/${encodeURIComponent(id)}/revert`, { method: "POST" });
+export const listParsers = () => request<ParserInfo[]>("/v2/parsers");
+export const listProjectTests = (assetId: string) =>
+  request<ProjectTest[]>(`/v2/projects/${encodeURIComponent(assetId)}/tests`);

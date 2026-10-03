@@ -141,3 +141,84 @@ def test_maintenance_task_is_scheduled_and_runs(
         )
     out = tasks.maintenance_task()
     assert out["scans_reaped"] == 1 and out["containers_killed"] == 0
+
+
+# --- expire_stale_imports (Week 54 task 8, ADR-0040) -----------------------------------------------
+
+
+def _import(s: Session, tmp_path: Path, status: str, created: datetime, name: str):
+    if s.get(Organization, DEFAULT_ORG_ID) is None:
+        s.add(Organization(id=DEFAULT_ORG_ID, name=DEFAULT_ORG_ID))
+        s.commit()
+    asset = repo.get_or_create_asset(
+        s, source_type="git", source_label="a/b", org_id=DEFAULT_ORG_ID
+    )
+    eng = repo.get_or_create_import_engagement(s, asset_id=asset.id, org_id=DEFAULT_ORG_ID)
+    test = repo.get_or_create_engagement_test(
+        s, org_id=DEFAULT_ORG_ID, engagement_id=eng.id, name="T"
+    )
+    upload = tmp_path / name
+    upload.write_text("{}")
+    rec = repo.add_import_record(
+        s, org_id=DEFAULT_ORG_ID, test_id=test.id, scan_id=None, parser="sarif",
+        file_digest=name.ljust(64, "0"), status=status, upload_path=str(upload),
+    )  # fmt: skip
+    rec.created_at = created
+    s.commit()
+    return rec.id, upload
+
+
+def test_an_abandoned_preview_is_cancelled_and_its_file_deleted(
+    sessions: sessionmaker[Session], tmp_path: Path
+) -> None:
+    with sessions() as s:
+        old, old_file = _import(s, tmp_path, "previewed", NOW - timedelta(hours=30), "old")
+        fresh, fresh_file = _import(s, tmp_path, "previewed", NOW - timedelta(hours=1), "fresh")
+    expired = maintenance.expire_stale_imports(sessions, timedelta(hours=24), NOW)
+    assert expired == [old]
+    assert not old_file.exists() and fresh_file.exists()  # a live preview keeps its file
+    with sessions() as s:
+        rec = repo.get_import_record(s, old, DEFAULT_ORG_ID)
+        assert rec is not None and rec.status == "cancelled" and "expired" in (rec.error or "")
+        assert rec.upload_path is None
+        kept = repo.get_import_record(s, fresh, DEFAULT_ORG_ID)
+        assert kept is not None and kept.status == "previewed" and kept.upload_path is not None
+
+
+def test_an_import_a_worker_never_finished_is_failed_not_left_in_progress(
+    sessions: sessionmaker[Session], tmp_path: Path
+) -> None:
+    with sessions() as s:
+        stuck, f1 = _import(s, tmp_path, "processing", NOW - timedelta(hours=30), "a")
+        queued, f2 = _import(s, tmp_path, "queued", NOW - timedelta(hours=30), "b")
+        recent, f3 = _import(s, tmp_path, "processing", NOW - timedelta(minutes=5), "c")
+    expired = maintenance.expire_stale_imports(sessions, timedelta(hours=24), NOW)
+    assert sorted(expired) == sorted([stuck, queued])
+    assert not f1.exists() and not f2.exists() and f3.exists()
+    with sessions() as s:
+        rec = repo.get_import_record(s, stuck, DEFAULT_ORG_ID)
+        assert rec is not None and rec.status == "failed" and "did not finish" in (rec.error or "")
+        still = repo.get_import_record(s, recent, DEFAULT_ORG_ID)
+        assert still is not None and still.status == "processing"
+
+
+def test_finished_imports_are_never_touched_by_the_expiry(
+    sessions: sessionmaker[Session], tmp_path: Path
+) -> None:
+    with sessions() as s:
+        applied, _ = _import(s, tmp_path, "applied", NOW - timedelta(days=90), "done")
+        failed, _ = _import(s, tmp_path, "failed", NOW - timedelta(days=90), "bad")
+    assert maintenance.expire_stale_imports(sessions, timedelta(hours=24), NOW) == []
+    with sessions() as s:
+        assert repo.get_import_record(s, applied, DEFAULT_ORG_ID).status == "applied"  # type: ignore[union-attr]
+        assert repo.get_import_record(s, failed, DEFAULT_ORG_ID).status == "failed"  # type: ignore[union-attr]
+
+
+def test_ingest_uploads_live_outside_the_generic_two_hour_scratch_cleanup() -> None:
+    """A previewed upload waits for a person for hours; the scratch cleanup deletes uploads after
+    two. They must not share a directory (this is the bug that made `ingest_dir` a separate setting).
+    """
+    from core.config import Settings
+
+    s = Settings.from_env()
+    assert s.ingest_dir != s.upload_dir and s.upload_dir not in s.ingest_dir.parents
