@@ -38,6 +38,7 @@ def main(argv: list[str] | None = None) -> int:
         payload = {
             "parser": result.parser,
             "error": result.error,
+            "can_close_missing": result.can_close_missing,
             "warnings": result.warnings,
             "findings": [f.to_dict() for f in result.findings],
         }

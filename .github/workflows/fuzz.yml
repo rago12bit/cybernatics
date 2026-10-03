@@ -49,3 +49,32 @@ jobs:
           name: fuzz-crash-${{ matrix.adapter }}
           path: tests/fuzz_corpus/${{ matrix.adapter }}/crash-*
           if-no-files-found: ignore
+
+  fuzz-ingest:
+    # The uploaded-report parsers (Week 54 task 6, plan §42.2/§22.3): same budget, same seeding
+    # from real files, with libFuzzer's timeout and memory caps on too -- a parse that hangs or
+    # balloons on a hostile report is a bug even if it never raises.
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        parser: [sarif, cyclonedx, spdx, osv]
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[dev]" atheris
+      - run: ./scripts/seed-fuzz-corpus.sh
+      - name: Fuzz ${{ matrix.parser }} for ${{ env.FUZZ_SECONDS }}s
+        run: >-
+          python tests/fuzz/fuzz_ingest_parser.py ${{ matrix.parser }}
+          tests/fuzz_corpus/ingest-${{ matrix.parser }}
+          -max_total_time=${{ env.FUZZ_SECONDS }} -timeout=10 -rss_limit_mb=2048
+      - name: Upload any crash found
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: fuzz-crash-ingest-${{ matrix.parser }}
+          path: tests/fuzz_corpus/ingest-${{ matrix.parser }}/crash-*
+          if-no-files-found: ignore

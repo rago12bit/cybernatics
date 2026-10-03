@@ -21,6 +21,7 @@ import logging
 import tempfile
 import time
 from abc import ABC, abstractmethod
+from collections import Counter
 from collections.abc import Iterator
 from dataclasses import dataclass, field
 from typing import BinaryIO
@@ -52,7 +53,13 @@ class ParseContext:
     limits: ParseLimits = field(default_factory=ParseLimits)
     warnings: list[str] = field(default_factory=list)
     error: str | None = None
+    # Whether this file can say a finding is *gone*. A scan report can ("it isn't listed, so it's
+    # fixed"); an SBOM cannot -- it lists packages, not the absence of vulnerabilities -- so
+    # importing one must never close anything. Parsers set this to False for such files, and the
+    # importer then ignores `close_missing` (a request to close is not a licence to).
+    can_close_missing: bool = True
     findings_seen: int = 0
+    unknown_severities: Counter[str] = field(default_factory=Counter)
     _started: float = field(default_factory=time.monotonic, repr=False)
     _dropped_warnings: int = field(default=0, repr=False)
 
@@ -61,6 +68,10 @@ class ParseContext:
             self.warnings.append(message)
         else:
             self._dropped_warnings += 1
+
+    def unknown_severity(self, label: str) -> None:
+        """A severity this format does not define: imported as Info, and said so at the end."""
+        self.unknown_severities[label.strip().lower() or "(empty)"] += 1
 
     def all_warnings(self) -> list[str]:
         more = [f"... and {self._dropped_warnings} more warnings"] if self._dropped_warnings else []
@@ -82,6 +93,7 @@ class ParseResult:
     findings: list[Finding]
     warnings: list[str]
     error: str | None
+    can_close_missing: bool = True
 
     @property
     def complete(self) -> bool:
@@ -121,6 +133,11 @@ class IngestParser(ABC):
         except Exception as exc:  # noqa: BLE001 - untrusted input must never crash the importer
             log.exception("%s parser failed unexpectedly", self.name)
             ctx.error = f"{self.name} parser failed unexpectedly ({type(exc).__name__})"
+        for label, n in sorted(ctx.unknown_severities.items()):
+            ctx.warn(
+                f"{n} finding(s) use the severity {label!r}, which is not a known severity; "
+                "imported as Info"
+            )
         if ctx.error:
             log.warning("%s: %s", self.name, ctx.error)
 
@@ -131,7 +148,7 @@ def run_parser(
     """Run a parser to completion and collect everything it reports."""
     ctx = ParseContext(limits=limits or ParseLimits())
     findings = list(parser.parse(stream, ctx))
-    return ParseResult(parser.name, findings, ctx.all_warnings(), ctx.error)
+    return ParseResult(parser.name, findings, ctx.all_warnings(), ctx.error, ctx.can_close_missing)
 
 
 def run_parser_on_bytes(

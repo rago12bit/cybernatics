@@ -24,6 +24,7 @@ from core.scoring.severity import MATRIX
 _RUN = "runs.item"
 _SECRET_TOOLS = frozenset({"gitleaks", "trufflehog", "detect-secrets"})
 _MARKERS = frozenset({_RUN})
+_KNOWN_LEVELS = frozenset({"error", "warning", "note", "none"})  # the SARIF 2.1.0 levels
 
 
 def _tool_slug(name: str) -> str:
@@ -101,6 +102,13 @@ class SarifParser(IngestParser):
                 idx = value.get("ruleIndex")
                 if isinstance(idx, int) and 0 <= idx < len(ordered[run]):
                     value["ruleId"] = ordered[run][idx].get("id")
+            rule = rules.get(str(value.get("ruleId") or (value.get("rule") or {}).get("id")), {})
+            level = str(
+                value.get("level") or (rule.get("defaultConfiguration") or {}).get("level") or ""
+            ).lower()
+            has_score = (rule.get("properties") or {}).get("security-severity") is not None
+            if level and level not in _KNOWN_LEVELS and not has_score:
+                ctx.unknown_severity(level)
             tool = _tool_slug(names[run])
             category = Category.SECRETS if tool in _SECRET_TOOLS else Category.SAST
             finding = result_to_finding(

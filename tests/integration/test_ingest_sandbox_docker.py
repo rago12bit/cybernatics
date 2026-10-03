@@ -31,15 +31,15 @@ pytestmark = pytest.mark.skipif(not _docker_ready(), reason="docker not availabl
 
 @pytest.fixture(scope="module", autouse=True)
 def image() -> None:
-    """The parser image, built from the repo root if this machine does not have it (CI builds it
-    in an explicit step; this makes the test self-sufficient anywhere else)."""
-    if subprocess.run(["docker", "image", "inspect", IMAGE], capture_output=True).returncode != 0:
-        subprocess.run(
-            ["docker", "build", "-q", "-f", "docker/ingest-parser/Dockerfile", "-t", IMAGE, "."],
-            cwd=ROOT,
-            check=True,
-            capture_output=True,
-        )
+    """The parser image, rebuilt from the repo root (cached layers make an unchanged build instant),
+    so a stale local image can neither fake a pass nor hide a missing COPY line in the Dockerfile.
+    """
+    subprocess.run(
+        ["docker", "build", "-q", "-f", "docker/ingest-parser/Dockerfile", "-t", IMAGE, "."],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+    )
 
 
 def test_a_report_gives_the_same_findings_in_the_sandbox_as_in_process(tmp_path: Path) -> None:
@@ -122,3 +122,65 @@ def test_a_container_that_cannot_start_is_an_error_not_an_empty_report(
     result = parse_in_sandbox(report, "sarif")
     assert not result.complete and "did not finish" in (result.error or "")
     assert result.findings == []
+
+
+GOLDEN_INGEST = ROOT / "tests" / "golden" / "ingest"
+
+
+@pytest.mark.parametrize(
+    "name,filename,parser",
+    [
+        ("cyclonedx json", "cyclonedx-vulnerabilities.json", "cyclonedx"),
+        ("cyclonedx xml", "cyclonedx-vulnerabilities.xml", "cyclonedx"),
+    ],
+)
+def test_real_cyclonedx_files_give_the_same_findings_in_the_sandbox(
+    tmp_path: Path, name: str, filename: str, parser: str
+) -> None:
+    raw = (GOLDEN_INGEST / filename).read_bytes()
+    report = tmp_path / filename
+    report.write_bytes(raw)
+    sandboxed = parse_in_sandbox(report, parser)
+    in_process = run_parser_on_bytes(get_parser(parser), raw)
+    assert sandboxed.complete, (name, sandboxed.error)
+    assert len(sandboxed.findings) == 19
+    assert [f.to_dict() for f in sandboxed.findings] == [f.to_dict() for f in in_process.findings]
+    assert sandboxed.can_close_missing is True
+
+
+def test_an_inventory_file_still_cannot_close_anything_after_crossing_the_container(
+    tmp_path: Path,
+) -> None:
+    """The flag that stops an SBOM from closing Issues is set inside the container; it must survive
+    the trip back, and a container that does not say must not be trusted to allow closing."""
+    for filename, parser in (("spdx.json", "spdx"), ("cyclonedx-sbom.json", "cyclonedx")):
+        report = tmp_path / filename
+        report.write_bytes((GOLDEN_INGEST / filename).read_bytes())
+        result = parse_in_sandbox(report, parser)
+        assert result.complete and result.findings == []
+        assert result.can_close_missing is False, filename
+
+
+def test_xml_entity_attacks_are_refused_inside_the_container(tmp_path: Path) -> None:
+    evil = tmp_path / "evil.xml"
+    evil.write_text(
+        '<?xml version="1.0"?><!DOCTYPE bom [<!ENTITY xxe SYSTEM "file:///etc/passwd">]>'
+        '<bom xmlns="http://cyclonedx.org/schema/bom/1.6"><components><component type="library">'
+        "<name>&xxe;</name><version>1</version></component></components></bom>"
+    )
+    result = parse_in_sandbox(evil, "cyclonedx")
+    assert not result.complete and (
+        "DTD" in (result.error or "") or "entity" in (result.error or "")
+    )
+    assert result.findings == []
+    assert "root:" not in str([result.error, result.warnings])
+
+
+def test_osv_scanner_output_is_parsed_in_the_sandbox_like_in_process(tmp_path: Path) -> None:
+    raw = (ROOT / "tests" / "golden" / "osv-scanner" / "raw.json").read_bytes()
+    report = tmp_path / "osv.json"
+    report.write_bytes(raw)
+    sandboxed = parse_in_sandbox(report, "osv")
+    in_process = run_parser_on_bytes(get_parser("osv"), raw)
+    assert sandboxed.complete and len(sandboxed.findings) == 17
+    assert [f.to_dict() for f in sandboxed.findings] == [f.to_dict() for f in in_process.findings]

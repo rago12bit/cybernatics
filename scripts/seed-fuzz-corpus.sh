@@ -18,4 +18,14 @@ for name in bandit semgrep gitleaks trivy osv-scanner grype checkov gosec dockle
   mkdir -p "$corpus"
   cp "$golden" "$corpus/seed-golden.bin"
 done
-echo "Seeded tests/fuzz_corpus/<adapter>/ from each adapter's golden raw.json."
+
+# Uploaded-report parsers (Week 54 task 6): seeded from real Syft/Grype/Semgrep/OSV-Scanner files.
+seed() { # <parser> <file>...
+  corpus="tests/fuzz_corpus/ingest-$1"; mkdir -p "$corpus"; shift
+  for f in "$@"; do cp "$f" "$corpus/seed-$(basename "$f")"; done
+}
+seed sarif tests/golden/semgrep/raw.json tests/golden/opengrep/raw.json
+seed cyclonedx tests/golden/ingest/cyclonedx-*.json tests/golden/ingest/cyclonedx-*.xml
+seed spdx tests/golden/ingest/spdx.json
+seed osv tests/golden/osv-scanner/raw.json
+echo "Seeded tests/fuzz_corpus/<adapter>/ and tests/fuzz_corpus/ingest-<parser>/ from real files."

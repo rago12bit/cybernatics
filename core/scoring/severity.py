@@ -55,6 +55,17 @@ MATRIX: dict[str, dict[str, Severity]] = {
     # SARIF level, which `core.sarif` maps note -> INFO. A `security-severity` score, when the rule
     # carries one, overrides this.
     "sarif": {"ERROR": S.HIGH, "WARNING": S.MEDIUM, "INFO": S.LOW},
+    # CycloneDX defines exactly these rating severities (core.imports.parsers.cyclonedx); anything
+    # else a file says is unknown, imported as INFO, and reported.
+    "cyclonedx": {
+        "CRITICAL": S.CRITICAL,
+        "HIGH": S.HIGH,
+        "MEDIUM": S.MEDIUM,
+        "LOW": S.LOW,
+        "INFO": S.INFO,
+        "NONE": S.INFO,
+        "UNKNOWN": S.INFO,
+    },
 }
 
 # CVSS v3.1 base-score bands (FIRST.org qualitative severity rating scale).

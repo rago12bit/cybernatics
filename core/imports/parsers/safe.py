@@ -144,8 +144,9 @@ class SafePattern:
     is attacker-chosen, so the engine and the input length are both bounded."""
 
     def __init__(self, pattern: str, flags: int = 0) -> None:
+        # RE2 takes flags inline ("(?i)"), not as a constant.
         self._re = (
-            _re2.compile(pattern, _re2.IGNORECASE if flags & _stdlib_re.IGNORECASE else 0)
+            _re2.compile(("(?i)" if flags & _stdlib_re.IGNORECASE else "") + pattern)
             if _re2 is not None
             else _stdlib_re.compile(pattern, flags)
         )

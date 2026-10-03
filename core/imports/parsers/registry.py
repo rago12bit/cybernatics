@@ -4,9 +4,14 @@ confidence 0-1 that a file is this format. Drives auto-detection")."""
 from __future__ import annotations
 
 from core.imports.parsers.base import IngestParser
+from core.imports.parsers.cyclonedx import CycloneDxParser
+from core.imports.parsers.osv import OsvParser
 from core.imports.parsers.sarif import SarifParser
+from core.imports.parsers.spdx import SpdxParser
 
-PARSERS: dict[str, IngestParser] = {p.name: p for p in (SarifParser(),)}
+PARSERS: dict[str, IngestParser] = {
+    p.name: p for p in (SarifParser(), CycloneDxParser(), SpdxParser(), OsvParser())
+}
 
 # Below this the import screen asks the person to confirm the format before showing counts (§55.1).
 CONFIDENT = 0.9

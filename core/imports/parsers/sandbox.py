@@ -71,6 +71,8 @@ def _decode(raw: bytes, parser_name: str) -> ParseResult:
             findings,
             [str(w) for w in doc.get("warnings", [])],
             None if error is None else str(error),
+            # A container that does not say, or says something odd, is not trusted to allow closing.
+            doc.get("can_close_missing") is True,
         )
     except (ValueError, KeyError, TypeError, AttributeError) as exc:
         return ParseResult(

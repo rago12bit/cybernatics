@@ -65,13 +65,22 @@ class OsvScannerAdapter(ToolAdapter):
             return []
         findings: list[Finding] = []
         for res in results:
-            try:
-                path = str(res["source"]["path"]).removeprefix(TARGET_PREFIX)
-                for pkg in res.get("packages") or []:
-                    findings.extend(self._package_findings(pkg, path))
-            except (KeyError, TypeError, AttributeError) as exc:
-                log.warning("osv-scanner: skipping malformed result: %s", exc)
+            findings.extend(self.result_findings(res))
         return findings
+
+    def result_findings(self, res: Any) -> list[Finding]:
+        """The Findings in one `results[]` entry (one lockfile). Shared with the uploaded-report
+        parser (`core.imports.parsers.osv`), so a report Bulwark ran and one a person uploads are
+        read by the same code. A malformed entry yields nothing rather than raising."""
+        try:
+            path = str(res["source"]["path"]).removeprefix(TARGET_PREFIX)
+            out: list[Finding] = []
+            for pkg in res.get("packages") or []:
+                out.extend(self._package_findings(pkg, path))
+            return out
+        except (KeyError, TypeError, AttributeError) as exc:
+            log.warning("osv-scanner: skipping malformed result: %s", exc)
+            return []
 
     def _package_findings(self, pkg: dict[str, Any], path: str) -> list[Finding]:
         info = pkg["package"]

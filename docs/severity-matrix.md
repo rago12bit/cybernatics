@@ -20,4 +20,5 @@ Tool severity vocabularies are not comparable. This table is a **judgment call**
 | osv-scanner | CRITICAL | HIGH | MODERATE, MEDIUM | LOW | — |
 | syft | — | — | — | — | — |
 | sarif | — | ERROR | WARNING | INFO | — |
+| cyclonedx | CRITICAL | HIGH | MEDIUM | LOW | INFO, NONE, UNKNOWN |
 | OSV via CVSS v3.1 | ≥ 9.0 | 7.0–8.9 | 4.0–6.9 | 0.1–3.9 | 0 / none |
