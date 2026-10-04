@@ -6,14 +6,17 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 ## [Unreleased]
 
 ### Added
-- **Deduplication strategies per source (Week 58, ADR-0042), part 1: the engine.** A project can
-  choose, per source, what makes two findings one Issue: `fingerprint_v2` (the existing fingerprint,
-  and the default, so nothing changes until someone chooses), `tool_id` (the scanner's rule id and
-  where), `hash_fields` (chosen fields), `tool_id_or_hash` and `package`. Settings are versioned by
-  insertion (migration 0029, tenant-isolated) and applied to imports and native scans before findings
-  are matched to Issues; a chosen key also switches off the path-free fallback match, so it means
-  exactly what was chosen. Changing a setting for existing Issues (the previewed dry run) is the
-  next part.
+- **Deduplication strategies per source, with a dry run (Week 58, ADR-0042).** A project can choose,
+  per source, what makes two findings one Issue: `fingerprint_v2` (the existing fingerprint, and the
+  default, so nothing changes until someone chooses), `tool_id`, `hash_fields`, `tool_id_or_hash`
+  and `package`. Settings are versioned by insertion (migration 0029, tenant-isolated) and applied to
+  imports and native scans before findings are matched to Issues. Changing one for existing Issues is
+  previewed first -- "would merge 75 issues into 9 and split none" -- and then applied exactly as
+  previewed (a digest refuses a stale preview) in one transaction: occurrences, tickets and fix runs
+  are never lost, and a merge never hides an open Issue behind a triage decision. New
+  `GET/POST /v2/projects/{id}/dedup[/preview|/apply|/history]`, a **Matching** screen on each project,
+  a live Matching row on the import screen, `wait_for_dedup` that actually waits, and
+  `dedup_complete` that follows the import's status.
 - **Ported parsers, batch 2: Grype, Trivy, Snyk, GitLab security reports, Checkov.** `gitlab` is
   one parser for GitLab's SAST, dependency, container, secret-detection and DAST/API-fuzzing reports
   (classified by where each record is, GitLab's own `id` not used as identity); `checkov` reads a

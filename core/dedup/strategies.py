@@ -116,7 +116,10 @@ def key_for(strategy: str, f: Finding, fields: tuple[str, ...] = ()) -> str:
         )
         return _digest("tool_id", raw)
     use = fields or DEFAULT_HASH_FIELDS
-    return _digest("hash_fields", "|".join(f"{n}={_field(f, n)}" for n in sorted(use)))
+    # The source is in the key: a strategy is per source, so two sources that happen to hash the
+    # same fields to the same values are still two sources' findings, not one Issue.
+    raw = "|".join([source_of(f), *(f"{n}={_field(f, n)}" for n in sorted(use))])
+    return _digest("hash_fields", raw)
 
 
 def is_namespaced(key: str) -> bool:

@@ -535,7 +535,70 @@ export type ImportView = {
   reverted_at: string | null;
 };
 
-export type ParserInfo = { name: string; label: string; formats: string[]; categories: string[] };
+export type ParserInfo = {
+  name: string;
+  label: string;
+  formats: string[];
+  categories: string[];
+  recommended_dedup?: string;
+};
+
+// --- Matching: deduplication per source (Week 58, plan §42.3, ADR-0042) ------------------------------
+
+export type DedupStrategyName = "fingerprint_v2" | "tool_id" | "hash_fields" | "tool_id_or_hash" | "package";
+export type DedupSource = {
+  source: string;
+  strategy: DedupStrategyName;
+  fields: string[];
+  version: number;
+  recommended: DedupStrategyName | null;
+  issues_seen: number;
+  changed_at: string | null;
+  changed_by: string | null;
+  effect: Record<string, number | string>;
+};
+export type DedupOverview = {
+  default: DedupStrategyName;
+  strategies: { name: DedupStrategyName; description: string }[];
+  fields: string[];
+  sources: DedupSource[];
+};
+export type DedupChangeRequest = { source: string; strategy: DedupStrategyName; fields: string[] };
+export type DedupPreview = {
+  source: string;
+  from: { strategy: DedupStrategyName; version: number };
+  to: { strategy: DedupStrategyName; version: number; fields: string[] };
+  summary: string;
+  issues_before: number;
+  issues_after: number;
+  merge_groups: number;
+  issues_merged_away: number;
+  issues_split: number;
+  new_issues_from_split: number;
+  skipped_multi_source: number;
+  triage_conflicts: number;
+  conflicts: string[];
+  examples: {
+    kind: "merge" | "split";
+    issues: string[];
+    issue_count: number;
+    titles: string[];
+    occurrences: number;
+  }[];
+  digest: string;
+  changes_anything: boolean;
+};
+export type DedupApplied = { source: string; version: number; effect: Record<string, number>; summary: string };
+export type DedupHistoryEntry = {
+  source: string;
+  version: number;
+  strategy: DedupStrategyName;
+  fields: string[];
+  note: string | null;
+  created_by: string | null;
+  created_at: string;
+  effect: Record<string, number | string>;
+};
 
 export type ProjectTest = {
   id: string;

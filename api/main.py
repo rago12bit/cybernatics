@@ -34,6 +34,7 @@ from fastapi.websockets import WebSocketDisconnect
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from api.dedup import register_dedup_routes
 from api.deps import (
     AppState,
     AuthContext,
@@ -2059,6 +2060,7 @@ def create_app(app_state: AppState) -> FastAPI:
                 await ws.close(code=1008)
 
     register_ingest_routes(app)
+    register_dedup_routes(app)
     return app
 
 

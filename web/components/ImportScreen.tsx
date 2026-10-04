@@ -3,10 +3,12 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  ApiError, cancelImport, confirmImport, getImport, listAssets, listParsers, listProjectTests,
+  ApiError, cancelImport, confirmImport, getDedup, getImport, listAssets, listParsers, listProjectTests,
   revertImport, startImport,
 } from "@/lib/api";
-import type { FormatCandidates, ImportCounts, ImportView, ParserInfo, ProjectTest } from "@/lib/types";
+import type {
+  DedupSource, FormatCandidates, ImportCounts, ImportView, ParserInfo, ProjectTest,
+} from "@/lib/types";
 import { Button } from "@/design-system/primitives/Button";
 import "./import-screen.css";
 
@@ -35,6 +37,14 @@ function isCandidates(x: unknown): x is FormatCandidates {
   return !!x && typeof x === "object" && Array.isArray((x as FormatCandidates).available);
 }
 
+const STRATEGY_WORDS = {
+  fingerprint_v2: "fingerprint",
+  tool_id: "tool ID",
+  hash_fields: "chosen fields",
+  tool_id_or_hash: "tool ID or chosen fields",
+  package: "package and vulnerability",
+} as const;
+
 const doneLine = (c: ImportCounts) => `${c.new} new, ${c.reopened} reopened, ${c.closed} closed`;
 
 export function ImportScreen({ assetId, pollMs = 800 }: { assetId: string; pollMs?: number }) {
@@ -56,6 +66,7 @@ export function ImportScreen({ assetId, pollMs = 800 }: { assetId: string; pollM
   const [parsers, setParsers] = useState<ParserInfo[]>([]);
   const [tests, setTests] = useState<ProjectTest[]>([]);
   const [projectLabel, setProjectLabel] = useState<string>(assetId);
+  const [matching, setMatching] = useState<DedupSource[]>([]);
 
   const run = useRef(0); // each analysis gets a number; a stale one's results are dropped
   const mounted = useRef(true);
@@ -69,6 +80,7 @@ export function ImportScreen({ assetId, pollMs = 800 }: { assetId: string; pollM
   useEffect(() => {
     listParsers().then(setParsers, () => setParsers([]));
     listProjectTests(assetId).then(setTests, () => setTests([]));
+    getDedup(assetId).then((d) => setMatching(d.sources.filter((s) => s.version > 0)), () => setMatching([]));
     listAssets().then(
       (all) => setProjectLabel(all.find((a) => a.id === assetId)?.label ?? assetId),
       () => undefined,
@@ -336,8 +348,10 @@ export function ImportScreen({ assetId, pollMs = 800 }: { assetId: string; pollM
             <div>
               <dt>Matching</dt>
               <dd>
-                Issue fingerprints, the way every scan matches{" "}
-                <span className="muted">(per-source strategies come in a later release)</span>
+                {matching.length === 0
+                  ? "Issue fingerprints, the way every scan matches"
+                  : `${matching.map((m) => `${m.source}: ${STRATEGY_WORDS[m.strategy]}`).join("; ")} — issue fingerprints for every other source`}{" "}
+                <Link href={`/app/projects/${assetId}/matching`}>Matching settings</Link>
               </dd>
             </div>
           </dl>

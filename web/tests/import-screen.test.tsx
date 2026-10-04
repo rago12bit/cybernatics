@@ -41,6 +41,7 @@ function api(opts: {
   applied?: ImportView;
   ingest?: (form: FormData) => Response | undefined;
   tests?: unknown[];
+  dedup?: unknown;
 } = {}) {
   const calls: Call[] = [];
   let polls = 0;
@@ -53,6 +54,7 @@ function api(opts: {
     if (path === "/v2/parsers") return json(PARSERS);
     if (path === `/v2/projects/${ASSET}/tests`) return json(opts.tests ?? []);
     if (path === "/assets") return json([{ id: ASSET, label: "payments-api" }]);
+    if (path === `/v2/projects/${ASSET}/dedup`) return opts.dedup ? json(opts.dedup) : json({}, 404);
     if (path === "/v2/ingest") {
       const forced = opts.ingest?.(form!);
       if (forced) return forced;
@@ -324,5 +326,25 @@ describe("ImportScreen", () => {
     await pickFile(host);
     await act(async () => button(host, "Show all").click());
     expect(await violations(host)).toEqual([]); // the results, expanded
+  });
+
+  it("says how the project matches findings, and links to where that is changed", async () => {
+    api();
+    let host = await mount();
+    await pickFile(host);
+    const row = () => Array.from(host.querySelectorAll(".ds-import-facts > div")).find((d) => d.querySelector("dt")?.textContent === "Matching")!;
+    expect(row().textContent).toContain("Issue fingerprints, the way every scan matches");
+    expect(row().querySelector("a")?.getAttribute("href")).toBe(`/app/projects/${ASSET}/matching`);
+    await act(async () => root?.unmount());
+
+    api({ dedup: { default: "fingerprint_v2", strategies: [], fields: [], sources: [
+      { source: "nessus", strategy: "tool_id", fields: [], version: 1, recommended: "tool_id", issues_seen: 3,
+        changed_at: null, changed_by: null, effect: {} },
+      { source: "zap", strategy: "fingerprint_v2", fields: [], version: 0, recommended: "tool_id", issues_seen: 1,
+        changed_at: null, changed_by: null, effect: {} }] } });
+    host = await mount();
+    await pickFile(host);
+    expect(row().textContent).toContain("nessus: tool ID — issue fingerprints for every other source");
+    expect(row().textContent).not.toContain("zap"); // an unchanged source is not "custom"
   });
 });

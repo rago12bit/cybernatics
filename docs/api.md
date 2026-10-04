@@ -363,6 +363,31 @@ List Project Tests
 List Parsers
 
 
+## `GET /v2/projects/{project_id}/dedup`
+
+Dedup Overview
+
+- `project_id` (path, required)
+
+## `GET /v2/projects/{project_id}/dedup/history`
+
+Dedup History
+
+- `project_id` (path, required)
+- `source` (query)
+
+## `POST /v2/projects/{project_id}/dedup/preview`
+
+Dedup Preview
+
+- `project_id` (path, required)
+
+## `POST /v2/projects/{project_id}/dedup/apply`
+
+Dedup Apply
+
+- `project_id` (path, required)
+
 ## Live progress (WebSocket)
 
 `GET /scans/{scan_id}/ws` (not part of OpenAPI).

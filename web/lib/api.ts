@@ -1,4 +1,5 @@
-import type { ImportCreated, ImportView, ParserInfo, ProjectTest, RevertView,
+import type { DedupApplied, DedupChangeRequest, DedupHistoryEntry, DedupOverview, DedupPreview,
+  ImportCreated, ImportView, ParserInfo, ProjectTest, RevertView,
   AssetSummary, AssetVerification, AttackPath, BulkTriageResult,
   StrideRow, ThreatModel, RetentionSettings, Citation, CopilotConversation, CopilotMessage, CostSummary, DependenciesView, Finding, FindingsPage, FindingsQuery, GenerateHypothesesResult, Guidance, GuidanceApi, Hypothesis, IssueHistoryEvent, ProjectOverview, Remediation, ScanComparison, ScanCost, ScanSummary, ScanView, TriageAssistantView, TriageStatus, VerifiedFixStarted, VerifiedFixView } from "./types";
 import { findingsQueryString } from "./format";
@@ -408,5 +409,25 @@ export const cancelImport = (id: string) =>
 export const revertImport = (id: string) =>
   request<RevertView>(`/v2/imports/${encodeURIComponent(id)}/revert`, { method: "POST" });
 export const listParsers = () => request<ParserInfo[]>("/v2/parsers");
+
+// --- Matching: deduplication per source (Week 58, plan §42.3, ADR-0042) ---------------------------
+const dedupBase = (assetId: string) => `/v2/projects/${encodeURIComponent(assetId)}/dedup`;
+export const getDedup = (assetId: string) => request<DedupOverview>(dedupBase(assetId));
+export const getDedupHistory = (assetId: string, source?: string) =>
+  request<DedupHistoryEntry[]>(
+    `${dedupBase(assetId)}/history${source ? `?source=${encodeURIComponent(source)}` : ""}`,
+  );
+export const previewDedup = (assetId: string, body: DedupChangeRequest) =>
+  request<DedupPreview>(`${dedupBase(assetId)}/preview`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+export const applyDedup = (assetId: string, body: DedupChangeRequest & { digest: string; note?: string }) =>
+  request<DedupApplied>(`${dedupBase(assetId)}/apply`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
 export const listProjectTests = (assetId: string) =>
   request<ProjectTest[]>(`/v2/projects/${encodeURIComponent(assetId)}/tests`);

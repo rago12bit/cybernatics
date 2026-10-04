@@ -22,6 +22,7 @@ starting a scan cannot.
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import logging
 import re
@@ -45,6 +46,7 @@ log = logging.getLogger(__name__)
 _UUID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
 SNIFF_BYTES = 64 * 1024
 MAX_IDS_RETURNED = 1000  # an import can touch tens of thousands of Issues; the counts stay exact
+WAIT_SECONDS = 20  # the longest `wait_for_dedup` holds a request
 SOURCES = ("upload",)  # runner / connector / manual arrive with their own weeks (plan §42.5, §43.2)
 
 
@@ -94,8 +96,10 @@ class ImportView(BaseModel):
     close_missing: bool
     scope: str
     dedup_complete: bool = Field(
-        description="Always true today: per-source deduplication strategies (plan §42.3) arrive "
-        "later, and until then an import matches Issues the same way every scan does."
+        description="True once the import has been matched to Issues by the project's "
+        "deduplication settings (plan §42.3) -- which happens inside the import itself, so this is "
+        "true from the moment the import leaves queued and processing (applied, previewed, "
+        "duplicate, reverted, cancelled or failed: nothing is pending)."
     )
     created_at: datetime
     reverted_at: datetime | None
@@ -106,6 +110,10 @@ class ParserInfo(BaseModel):
     label: str
     formats: list[str]
     categories: list[str]
+    recommended_dedup: str = Field(
+        description="The deduplication strategy that suits this source (plan §42.2); every source "
+        "is matched by `fingerprint_v2` until a project chooses (GET /v2/projects/{id}/dedup)."
+    )
 
 
 class ImportSummary(BaseModel):
@@ -188,7 +196,7 @@ def _view(s: Session, record: ImportRecord, org: str) -> ImportView:
         error=record.error,
         close_missing=record.close_missing,
         scope=record.scope,
-        dedup_complete=True,
+        dedup_complete=record.status not in ("queued", "processing"),
         created_at=record.created_at,
         reverted_at=record.reverted_at,
     )
@@ -321,7 +329,10 @@ def register_ingest_routes(app: FastAPI) -> None:
         close_missing: bool = Form(True, description="Close Issues this file no longer lists."),
         scope: str = Form("test", description="'test' (default) or 'engagement'."),
         wait_for_dedup: bool = Form(
-            False, description="Accepted for forward compatibility; dedup is not asynchronous yet."
+            False,
+            description="Hold the response until the import is matched to Issues (its "
+            f"`dedup_complete`), up to {WAIT_SECONDS} s; the 202 then carries its resting status. "
+            "Otherwise poll GET /v2/imports/{id}.",
         ),
         preview: bool = Form(False, description="Compute the counts, save nothing, keep the file."),
         st: AppState = Depends(state),
@@ -335,7 +346,6 @@ def register_ingest_routes(app: FastAPI) -> None:
             )
         if scope not in SCOPES:
             raise HTTPException(422, f"scope must be one of {SCOPES}")
-        _ = wait_for_dedup  # deduplication is synchronous today; see ImportView.dedup_complete
         path, digest, size, head = await _store_upload(
             file, st.settings.ingest_dir, st.settings.max_upload_bytes
         )
@@ -379,6 +389,12 @@ def register_ingest_routes(app: FastAPI) -> None:
             path.unlink(missing_ok=True)
             raise
         _dispatch(st, s, record)
+        if wait_for_dedup:
+            for _ in range(WAIT_SECONDS * 4):
+                s.refresh(record)
+                if record.status not in ("queued", "processing"):
+                    break
+                await asyncio.sleep(0.25)
         return ImportCreated(
             import_id=record.id, status=record.status, parser=parser_name,
             confidence=confidence, test_id=test_id_resolved,
@@ -524,6 +540,7 @@ def register_ingest_routes(app: FastAPI) -> None:
             ParserInfo(
                 name=p.name, label=p.label or p.name,
                 formats=sorted(p.formats), categories=sorted(p.categories),
+                recommended_dedup=p.default_dedup,
             )
             for p in PARSERS.values()
         ]  # fmt: skip

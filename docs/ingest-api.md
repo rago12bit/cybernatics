@@ -94,6 +94,25 @@ its own Test.
 Burp reports start with an internal `<!DOCTYPE issues [<!ELEMENT ...>]>`; the `burp` parser admits
 that and nothing more (an entity declaration or an external DTD is still refused).
 
+## Matching: how findings become Issues, per source
+
+Every source is matched into Issues by its fingerprint until a project chooses otherwise. A choice
+is made per project **per source** (the tool that reported the finding: `nessus`, `zap`,
+`semgrep-oss`), from five strategies -- `fingerprint_v2` (the default), `tool_id`, `hash_fields`,
+`tool_id_or_hash`, `package` -- and is always previewed first ([ADR-0042](adr/0042-dedup-strategies-per-source.md)):
+
+| | |
+|---|---|
+| `GET /v2/projects/{id}/dedup` | each source of the project, its strategy, version, and the suggestion |
+| `POST /v2/projects/{id}/dedup/preview` | the dry run: "would merge 75 issues into 9 and split none"; changes nothing |
+| `POST /v2/projects/{id}/dedup/apply` | make exactly the previewed change (send the preview's `digest`); 409 if the project moved |
+| `GET /v2/projects/{id}/dedup/history` | every version of every setting, with who, why and what it did |
+
+Applying merges and splits existing Issues. Occurrences are never lost, tickets and fix runs follow
+the surviving Issue, and a merge that would hide an open Issue behind a triage decision reopens it for
+triage instead. `GET /v2/parsers` names the strategy each source suggests. On `POST /v2/ingest`,
+`wait_for_dedup=true` holds the response until the import has been matched (up to 20 s).
+
 ## Where it goes
 
 A **Test** is the thing a later upload is compared with. By default an upload goes into the project's

@@ -65,3 +65,12 @@ def test_a_ported_parser_has_its_fixtures_and_its_licence_entry(name: str) -> No
     src = Path(sys.modules[type(parser).__module__].__file__ or "").read_text()
     assert "THIRD_PARTY_LICENSES.md" in src, "the ported file must point at the licence"
     assert parser.ported_from.startswith("dojo/tools/")
+
+
+def test_every_parser_suggests_a_real_deduplication_strategy() -> None:
+    from core.dedup.strategies import STRATEGIES
+
+    assert {p.default_dedup for p in PARSERS.values()} <= set(STRATEGIES)
+    assert (
+        PARSERS["nessus"].default_dedup == "tool_id" and PARSERS["grype"].default_dedup == "package"
+    )

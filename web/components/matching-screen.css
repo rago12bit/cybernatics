@@ -1,0 +1,160 @@
+.ds-match {
+  max-width: 56rem;
+}
+
+.ds-match-title {
+  margin: 0 0 var(--ds-space-3, 0.75rem);
+}
+
+.ds-match-intro {
+  max-width: 64ch;
+  margin-bottom: var(--ds-space-4, 1rem);
+}
+
+.ds-match-table,
+.ds-match-counts,
+.ds-match-history table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: var(--ds-space-3, 0.75rem) 0;
+}
+
+.ds-match-table caption,
+.ds-match-counts caption,
+.ds-match-history caption {
+  text-align: left;
+  font-weight: 600;
+  padding-bottom: var(--ds-space-2, 0.5rem);
+}
+
+.ds-match-table th,
+.ds-match-table td,
+.ds-match-counts th,
+.ds-match-counts td,
+.ds-match-history th,
+.ds-match-history td {
+  text-align: left;
+  padding: var(--ds-space-2, 0.5rem) var(--ds-space-3, 0.75rem);
+  border-bottom: 1px solid var(--ds-rule, #ccc);
+  vertical-align: top;
+}
+
+.ds-match-counts td {
+  font-variant-numeric: tabular-nums;
+}
+
+.ds-match-link {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--ds-brand, #0a58ca);
+  text-decoration: underline;
+  cursor: pointer;
+  font: inherit;
+}
+
+.ds-match-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.ds-match-panel {
+  margin-top: var(--ds-space-4, 1rem);
+  padding: var(--ds-space-4, 1rem);
+  border: 1px solid var(--ds-rule, #ccc);
+  border-radius: var(--ds-radius-panel, 6px);
+}
+
+.ds-match-h {
+  margin: 0 0 var(--ds-space-3, 0.75rem);
+}
+
+.ds-match-h3 {
+  margin: var(--ds-space-3, 0.75rem) 0 var(--ds-space-2, 0.5rem);
+  font-size: 1rem;
+}
+
+.ds-match-strategies,
+.ds-match-fields {
+  border: 0;
+  padding: 0;
+  margin: 0 0 var(--ds-space-3, 0.75rem);
+}
+
+.ds-match-strategies legend,
+.ds-match-fields legend {
+  font-weight: 600;
+  margin-bottom: var(--ds-space-2, 0.5rem);
+}
+
+.ds-match-option {
+  display: flex;
+  gap: var(--ds-space-2, 0.5rem);
+  align-items: flex-start;
+  padding: var(--ds-space-1, 0.25rem) 0;
+}
+
+.ds-match-fields label {
+  display: inline-flex;
+  margin-right: var(--ds-space-4, 1rem);
+}
+
+.ds-match-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ds-space-2, 0.5rem);
+  align-items: center;
+  margin-top: var(--ds-space-3, 0.75rem);
+}
+
+.ds-match-preview {
+  margin-top: var(--ds-space-4, 1rem);
+}
+
+/* The sentence is the point of the preview: large, plain, first. */
+.ds-match-summary {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0 0 var(--ds-space-2, 0.5rem);
+}
+
+.ds-match-error {
+  color: var(--ds-sev-critical, #b00020);
+}
+
+.ds-match-warn {
+  border-left: 3px solid var(--ds-sev-medium, #b58100);
+  padding-left: var(--ds-space-3, 0.75rem);
+}
+
+.ds-match-done {
+  font-weight: 600;
+}
+
+.ds-match-examples {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+.ds-match-caution {
+  margin-top: var(--ds-space-3, 0.75rem);
+}
+
+.ds-match-label {
+  display: block;
+  font-weight: 600;
+  margin: var(--ds-space-3, 0.75rem) 0 0.4rem;
+}
+
+.ds-match-history {
+  margin-top: var(--ds-space-5, 1.5rem);
+}
+
+.ds-match textarea {
+  width: 100%;
+  max-width: 40rem;
+}

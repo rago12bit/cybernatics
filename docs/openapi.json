@@ -2944,10 +2944,314 @@
           }
         ]
       }
+    },
+    "/v2/projects/{project_id}/dedup": {
+      "get": {
+        "tags": [
+          "ingest"
+        ],
+        "summary": "Dedup Overview",
+        "operationId": "dedup_overview_v2_projects__project_id__dedup_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DedupOverview"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/projects/{project_id}/dedup/history": {
+      "get": {
+        "tags": [
+          "ingest"
+        ],
+        "summary": "Dedup History",
+        "operationId": "dedup_history_v2_projects__project_id__dedup_history_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Source"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HistoryEntry"
+                  },
+                  "title": "Response Dedup History V2 Projects  Project Id  Dedup History Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/projects/{project_id}/dedup/preview": {
+      "post": {
+        "tags": [
+          "ingest"
+        ],
+        "summary": "Dedup Preview",
+        "operationId": "dedup_preview_v2_projects__project_id__dedup_preview_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Dedup Preview V2 Projects  Project Id  Dedup Preview Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/projects/{project_id}/dedup/apply": {
+      "post": {
+        "tags": [
+          "ingest"
+        ],
+        "summary": "Dedup Apply",
+        "operationId": "dedup_apply_v2_projects__project_id__dedup_apply_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplyRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppliedView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "AppliedView": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "effect": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Effect"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "version",
+          "effect",
+          "summary"
+        ],
+        "title": "AppliedView"
+      },
+      "ApplyRequest": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "maxLength": 60,
+            "minLength": 1,
+            "title": "Source"
+          },
+          "strategy": {
+            "type": "string",
+            "title": "Strategy"
+          },
+          "fields": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Fields"
+          },
+          "digest": {
+            "type": "string",
+            "title": "Digest",
+            "description": "The `digest` of the preview being confirmed."
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "strategy",
+          "digest"
+        ],
+        "title": "ApplyRequest"
+      },
       "AssetSummary": {
         "properties": {
           "id": {
@@ -3387,7 +3691,7 @@
           "wait_for_dedup": {
             "type": "boolean",
             "title": "Wait For Dedup",
-            "description": "Accepted for forward compatibility; dedup is not asynchronous yet.",
+            "description": "Hold the response until the import is matched to Issues (its `dedup_complete`), up to 20 s; the 202 then carries its resting status. Otherwise poll GET /v2/imports/{id}.",
             "default": false
           },
           "preview": {
@@ -3508,6 +3812,33 @@
           "failed"
         ],
         "title": "BulkTriageResult"
+      },
+      "ChangeRequest": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "maxLength": 60,
+            "minLength": 1,
+            "title": "Source"
+          },
+          "strategy": {
+            "type": "string",
+            "title": "Strategy"
+          },
+          "fields": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Fields"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "strategy"
+        ],
+        "title": "ChangeRequest"
       },
       "CitationView": {
         "properties": {
@@ -3735,6 +4066,43 @@
           "scans"
         ],
         "title": "CostSummaryView"
+      },
+      "DedupOverview": {
+        "properties": {
+          "default": {
+            "type": "string",
+            "title": "Default"
+          },
+          "strategies": {
+            "items": {
+              "$ref": "#/components/schemas/StrategyInfo"
+            },
+            "type": "array",
+            "title": "Strategies"
+          },
+          "fields": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Fields"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/SourceSetting"
+            },
+            "type": "array",
+            "title": "Sources"
+          }
+        },
+        "type": "object",
+        "required": [
+          "default",
+          "strategies",
+          "fields",
+          "sources"
+        ],
+        "title": "DedupOverview"
       },
       "DependenciesView": {
         "properties": {
@@ -3984,6 +4352,73 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "HistoryEntry": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "strategy": {
+            "type": "string",
+            "title": "Strategy"
+          },
+          "fields": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Fields"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "effect": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Effect"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "version",
+          "strategy",
+          "fields",
+          "note",
+          "created_by",
+          "created_at",
+          "effect"
+        ],
+        "title": "HistoryEntry"
       },
       "HypothesisView": {
         "properties": {
@@ -4290,7 +4725,7 @@
           "dedup_complete": {
             "type": "boolean",
             "title": "Dedup Complete",
-            "description": "Always true today: per-source deduplication strategies (plan \u00a742.3) arrive later, and until then an import matches Issues the same way every scan does."
+            "description": "True once the import has been matched to Issues by the project's deduplication settings (plan \u00a742.3) -- which happens inside the import itself, so this is true from the moment the import leaves queued and processing (applied, previewed, duplicate, reverted, cancelled or failed: nothing is pending)."
           },
           "created_at": {
             "type": "string",
@@ -4547,6 +4982,11 @@
             },
             "type": "array",
             "title": "Categories"
+          },
+          "recommended_dedup": {
+            "type": "string",
+            "title": "Recommended Dedup",
+            "description": "The deduplication strategy that suits this source (plan \u00a742.2); every source is matched by `fingerprint_v2` until a project chooses (GET /v2/projects/{id}/dedup)."
           }
         },
         "type": "object",
@@ -4554,7 +4994,8 @@
           "name",
           "label",
           "formats",
-          "categories"
+          "categories",
+          "recommended_dedup"
         ],
         "title": "ParserInfo"
       },
@@ -5558,6 +5999,88 @@
         "type": "object",
         "title": "SetPluginAllowedRequest"
       },
+      "SourceSetting": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "strategy": {
+            "type": "string",
+            "title": "Strategy"
+          },
+          "fields": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Fields"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version",
+            "description": "0 until someone chooses: the default applies."
+          },
+          "recommended": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recommended",
+            "description": "What suits this source, when we know it."
+          },
+          "issues_seen": {
+            "type": "integer",
+            "title": "Issues Seen",
+            "description": "Distinct Issues this source has reported (approximate)."
+          },
+          "changed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Changed At"
+          },
+          "changed_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Changed By"
+          },
+          "effect": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Effect"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "strategy",
+          "fields",
+          "version",
+          "recommended",
+          "issues_seen",
+          "changed_at",
+          "changed_by",
+          "effect"
+        ],
+        "title": "SourceSetting"
+      },
       "StartConversationRequest": {
         "properties": {
           "context_kind": {
@@ -5608,6 +6131,24 @@
         ],
         "title": "StartDastCampaignRequest",
         "description": "Start a DAST campaign (plan \u00a722.4, Week 49 task 3) against an already ownership-verified web\nAsset. \"passive\" (ZAP baseline only) runs unconditionally once verification passes; \"active\"\n(adds curated Nuclei) is rate-limited to one per asset per\n`core.dast.campaign.ACTIVE_SCAN_MIN_INTERVAL`."
+      },
+      "StrategyInfo": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "description"
+        ],
+        "title": "StrategyInfo"
       },
       "StrideRowView": {
         "properties": {

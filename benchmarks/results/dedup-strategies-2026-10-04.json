@@ -1,0 +1,361 @@
+{
+ "date": "2026-10-04",
+ "recommended": {
+  "sast": "fingerprint_v2",
+  "secrets": "fingerprint_v2",
+  "iac": "fingerprint_v2",
+  "sca": "package",
+  "container": "package",
+  "dast": "tool_id"
+ },
+ "rows": [
+  {
+   "parser": "nessus",
+   "label": "Nessus sample (XML)",
+   "findings": 7,
+   "issues_default": 7,
+   "strategies": {
+    "tool_id": {
+     "issues_after": 7,
+     "merged_away": 0,
+     "merge_groups": 0,
+     "split": 0,
+     "new_from_split": 0
+    },
+    "hash_fields(title,path)": {
+     "issues_after": 6,
+     "merged_away": 1,
+     "merge_groups": 1,
+     "split": 0,
+     "new_from_split": 0
+    },
+    "hash_fields(title)": {
+     "issues_after": 6,
+     "merged_away": 1,
+     "merge_groups": 1,
+     "split": 0,
+     "new_from_split": 0
+    }
+   }
+  },
+  {
+   "parser": "nessus",
+   "label": "Nessus Pro (CSV)",
+   "findings": 30,
+   "issues_default": 29,
+   "strategies": {
+    "tool_id": {
+     "issues_after": 29,
+     "merged_away": 0,
+     "merge_groups": 0,
+     "split": 0,
+     "new_from_split": 0
+    },
+    "hash_fields(title,path)": {
+     "issues_after": 25,
+     "merged_away": 4,
+     "merge_groups": 4,
+     "split": 0,
+     "new_from_split": 0
+    },
+    "hash_fields(title)": {
+     "issues_after": 25,
+     "merged_away": 4,
+     "merge_groups": 4,
+     "split": 0,
+     "new_from_split": 0
+    }
+   }
+  },
+  {
+   "parser": "zap",
+   "label": "ZAP, bodgeit scan",
+   "findings": 130,
+   "issues_default": 81,
+   "strategies": {
+    "tool_id": {
+     "issues_after": 81,
+     "merged_away": 0,
+     "merge_groups": 0,
+     "split": 0,
+     "new_from_split": 0
+    },
+    "hash_fields(title,path)": {
+     "issues_after": 15,
+     "merged_away": 66,
+     "merge_groups": 9,
+     "split": 0,
+     "new_from_split": 0
+    },
+    "hash_fields(title)": {
+     "issues_after": 15,
+     "merged_away": 66,
+     "merge_groups": 9,
+     "split": 0,
+     "new_from_split": 0
+    }
+   }
+  },
+  {
+   "parser": "zap",
+   "label": "ZAP, Juice Shop",
+   "findings": 86,
+   "issues_default": 71,
+   "strategies": {
+    "tool_id": {
+     "issues_after": 71,
+     "merged_away": 0,
+     "merge_groups": 0,
+     "split": 0,
+     "new_from_split": 0
+    },
+    "hash_fields(title,path)": {
+     "issues_after": 6,
+     "merged_away": 65,
+     "merge_groups": 6,
+     "split": 0,
+     "new_from_split": 0
+    },
+    "hash_fields(title)": {
+     "issues_after": 6,
+     "merged_away": 65,
+     "merge_groups": 6,
+     "split": 0,
+     "new_from_split": 0
+    }
+   }
+  },
+  {
+   "parser": "burp",
+   "label": "Burp",
+   "findings": 16,
+   "issues_default": 15,
+   "strategies": {
+    "tool_id": {
+     "issues_after": 15,
+     "merged_away": 0,
+     "merge_groups": 0,
+     "split": 0,
+     "new_from_split": 0
+    },
+    "hash_fields(title,path)": {
+     "issues_after": 7,
+     "merged_away": 8,
+     "merge_groups": 3,
+     "split": 0,
+     "new_from_split": 0
+    },
+    "hash_fields(title)": {
+     "issues_after": 7,
+     "merged_away": 8,
+     "merge_groups": 3,
+     "split": 0,
+     "new_from_split": 0
+    }
+   }
+  },
+  {
+   "parser": "openvas",
+   "label": "OpenVAS",
+   "findings": 44,
+   "issues_default": 44,
+   "strategies": {
+    "tool_id": {
+     "issues_after": 44,
+     "merged_away": 0,
+     "merge_groups": 0,
+     "split": 0,
+     "new_from_split": 0
+    },
+    "hash_fields(title,path)": {
+     "issues_after": 40,
+     "merged_away": 4,
+     "merge_groups": 4,
+     "split": 0,
+     "new_from_split": 0
+    },
+    "hash_fields(title)": {
+     "issues_after": 40,
+     "merged_away": 4,
+     "merge_groups": 4,
+     "split": 0,
+     "new_from_split": 0
+    }
+   }
+  },
+  {
+   "parser": "nuclei",
+   "label": "Nuclei",
+   "findings": 18,
+   "issues_default": 18,
+   "strategies": {
+    "tool_id": {
+     "issues_after": 18,
+     "merged_away": 0,
+     "merge_groups": 0,
+     "split": 0,
+     "new_from_split": 0
+    },
+    "hash_fields(title,path)": {
+     "issues_after": 7,
+     "merged_away": 11,
+     "merge_groups": 2,
+     "split": 0,
+     "new_from_split": 0
+    },
+    "hash_fields(title)": {
+     "issues_after": 7,
+     "merged_away": 11,
+     "merge_groups": 2,
+     "split": 0,
+     "new_from_split": 0
+    }
+   }
+  },
+  {
+   "parser": "trivy",
+   "label": "Trivy",
+   "findings": 5,
+   "issues_default": 5,
+   "strategies": {
+    "tool_id": {
+     "issues_after": 5,
+     "merged_away": 0,
+     "merge_groups": 0,
+     "split": 0,
+     "new_from_split": 0
+    },
+    "hash_fields(title,path)": {
+     "issues_after": 5,
+     "merged_away": 0,
+     "merge_groups": 0,
+     "split": 0,
+     "new_from_split": 0
+    },
+    "hash_fields(title)": {
+     "issues_after": 5,
+     "merged_away": 0,
+     "merge_groups": 0,
+     "split": 0,
+     "new_from_split": 0
+    }
+   }
+  },
+  {
+   "parser": "snyk",
+   "label": "Snyk",
+   "findings": 4,
+   "issues_default": 3,
+   "strategies": {
+    "tool_id": {
+     "issues_after": 2,
+     "merged_away": 1,
+     "merge_groups": 1,
+     "split": 0,
+     "new_from_split": 0
+    },
+    "hash_fields(title,path)": {
+     "issues_after": 4,
+     "merged_away": 0,
+     "merge_groups": 0,
+     "split": 1,
+     "new_from_split": 1
+    },
+    "hash_fields(title)": {
+     "issues_after": 3,
+     "merged_away": 0,
+     "merge_groups": 0,
+     "split": 0,
+     "new_from_split": 0
+    }
+   }
+  },
+  {
+   "parser": "grype",
+   "label": "Grype",
+   "findings": 327,
+   "issues_default": 327,
+   "strategies": {
+    "tool_id": {
+     "issues_after": 327,
+     "merged_away": 0,
+     "merge_groups": 0,
+     "split": 0,
+     "new_from_split": 0
+    },
+    "hash_fields(title,path)": {
+     "issues_after": 327,
+     "merged_away": 0,
+     "merge_groups": 0,
+     "split": 0,
+     "new_from_split": 0
+    },
+    "hash_fields(title)": {
+     "issues_after": 327,
+     "merged_away": 0,
+     "merge_groups": 0,
+     "split": 0,
+     "new_from_split": 0
+    }
+   }
+  },
+  {
+   "parser": "gitlab",
+   "label": "GitLab SAST",
+   "findings": 467,
+   "issues_default": 467,
+   "strategies": {
+    "tool_id": {
+     "issues_after": 109,
+     "merged_away": 358,
+     "merge_groups": 35,
+     "split": 0,
+     "new_from_split": 0
+    },
+    "hash_fields(title,path)": {
+     "issues_after": 205,
+     "merged_away": 262,
+     "merge_groups": 29,
+     "split": 0,
+     "new_from_split": 0
+    },
+    "hash_fields(title)": {
+     "issues_after": 179,
+     "merged_away": 288,
+     "merge_groups": 20,
+     "split": 0,
+     "new_from_split": 0
+    }
+   }
+  },
+  {
+   "parser": "sarif",
+   "label": "Semgrep SARIF (this project's golden)",
+   "findings": 3,
+   "issues_default": 3,
+   "strategies": {
+    "tool_id": {
+     "issues_after": 3,
+     "merged_away": 0,
+     "merge_groups": 0,
+     "split": 0,
+     "new_from_split": 0
+    },
+    "hash_fields(title,path)": {
+     "issues_after": 3,
+     "merged_away": 0,
+     "merge_groups": 0,
+     "split": 0,
+     "new_from_split": 0
+    },
+    "hash_fields(title)": {
+     "issues_after": 3,
+     "merged_away": 0,
+     "merge_groups": 0,
+     "split": 0,
+     "new_from_split": 0
+    }
+   }
+  }
+ ]
+}
