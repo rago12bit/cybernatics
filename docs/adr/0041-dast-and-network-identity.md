@@ -81,6 +81,10 @@ A DAST or network finding's **place is its identity**, and it is carried explici
 - Request and response bodies are not stored. A ZAP "XML plus requests and responses" report is read;
   the finding keeps the method, parameter, attack, evidence and the response's status line, not
   kilobytes of HTTP. Evidence attachments belong with the manual-findings work (Week 59, §43.2).
+- **The HTTP method is not part of a DAST finding's place.** `GET /v1/trees` and `POST /v1/trees`
+  with the same check are one Issue with two findings. `Location.route` is matched against code
+  handlers by path (`core.dast.correlate`), and adding the method to it would break that; for an API
+  where the method decides what the endpoint does this under-splits, and it is a known limitation.
 - **Closing is scoped to the Test, not to the hosts a report covers.** A Nessus or OpenVAS report
   that covers fewer hosts than the last one lists the missing hosts' Issues as closed. The preview
   shows the count before it is saved, and the docs say to read it; making closure host-aware needs

@@ -5,7 +5,9 @@ from __future__ import annotations
 
 from core.imports.parsers.base import IngestParser
 from core.imports.parsers.burp import BurpParser
+from core.imports.parsers.checkov import CheckovParser
 from core.imports.parsers.cyclonedx import CycloneDxParser
+from core.imports.parsers.gitlab import GitlabParser
 from core.imports.parsers.grype import GrypeParser
 from core.imports.parsers.nessus import NessusParser
 from core.imports.parsers.nuclei import NucleiParser
@@ -32,6 +34,8 @@ PARSERS: dict[str, IngestParser] = {
         GrypeParser(),
         TrivyParser(),
         SnykParser(),
+        GitlabParser(),
+        CheckovParser(),
     )
 }
 

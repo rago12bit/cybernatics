@@ -311,7 +311,9 @@ def test_no_strict_prefix_of_a_report_reads_as_a_complete_one(which: str, fracti
     raw = raw.rstrip()
     cut = int(len(raw) * fraction)
     r = run(parser, raw[:cut])
-    row_boundary = which.endswith("csv") and (raw[cut : cut + 1] in (b"\n", b"\r") or cut == 0)
+    row_boundary = which.endswith("csv") and (
+        raw[cut : cut + 1] in (b"\n", b"\r") or raw[cut - 1 : cut] == b"\n" or cut == 0
+    )
     safe = not r.complete or not r.can_close_missing
     assert safe or row_boundary or (cut == 0 and r.findings == []), (which, cut)
     if r.complete and row_boundary and which.endswith("csv"):

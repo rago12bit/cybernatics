@@ -225,8 +225,12 @@
   "commit": "8b12d80ae30904fed44f5a84ff71f28da14bebaf",
   "license": "BSD-3-Clause (see ../LICENSE)",
   "repository": "https://github.com/DefectDojo/django-DefectDojo",
-  "scans": "unittests/scans/snyk",
-  "tests": "unittests/tools/test_snyk_parser.py"
+  "scans": [
+   "unittests/scans/snyk"
+  ],
+  "tests": [
+   "unittests/tools/test_snyk_parser.py"
+  ]
  },
  "tool": "snyk"
 }

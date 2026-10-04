@@ -1,0 +1,101 @@
+{
+ "files": {
+  "checkov-report-0-vuln.json": {
+   "bytes": 329,
+   "expect": [
+    {
+     "count": 0,
+     "test": "test_parse_file_with_no_vuln_has_no_findings"
+    }
+   ],
+   "sha256": "1775f3653af162e203918f4d64311fa8d869ed8cfebc17e605cb670fa9eb0f13",
+   "vendored": true
+  },
+  "checkov-report-1-vuln.json": {
+   "bytes": 1028,
+   "expect": [
+    {
+     "count": 1,
+     "test": "test_parse_file_with_one_vuln_has_one_finding"
+    }
+   ],
+   "sha256": "29c361f391f8d01588658043c8855bca3243c147d06c80925e482ccd45543d64",
+   "vendored": true
+  },
+  "checkov-report-many-vuln.json": {
+   "bytes": 2388,
+   "expect": [],
+   "sha256": "7f79994de4aae18a559d7d6f9fe18a28677d42d07ac5e6603dbbbbc051f3fd26",
+   "vendored": true
+  },
+  "checkov-report-multiple-check_type.json": {
+   "bytes": 305960,
+   "expect": [
+    {
+     "count": 13,
+     "findings": {
+      "0": {
+       "component_name": "aws_db_instance.default",
+       "severity": "Medium"
+      },
+      "11": {
+       "component_name": "/aws/resources/Dockerfile.",
+       "severity": "Medium"
+      }
+     },
+     "test": "test_parse_file_with_multiple_check_type_has_multiple_check_type"
+    }
+   ],
+   "sha256": "db5a97cfa2e4646b89c867efd2afeba7802ab185f13f00a81bc4447d3e20e9cf",
+   "vendored": true
+  },
+  "checkov-report-severity.json": {
+   "bytes": 13238,
+   "expect": [
+    {
+     "count": 4,
+     "findings": {
+      "0": {
+       "severity": "Medium"
+      },
+      "1": {
+       "severity": "Medium"
+      },
+      "2": {
+       "severity": "Low"
+      },
+      "3": {
+       "severity": "High"
+      }
+     },
+     "test": "test_parse_file_with_specified_severity"
+    }
+   ],
+   "sha256": "d4d163bc411901ea0fe107e1c2691505805129a7d2ed3ab54151919e94a8e51b",
+   "vendored": true
+  },
+  "checkov2-report-0-vuln.json": {
+   "bytes": 136,
+   "expect": [
+    {
+     "count": 0,
+     "test": "test_parse_file_with_no_vuln_has_no_findings_v2"
+    }
+   ],
+   "sha256": "cd2891683dcb9088cdd5e95ff10c3e954a41e5d8c6e8c64b4715db6504d90ede",
+   "vendored": true
+  }
+ },
+ "source": {
+  "commit": "8b12d80ae30904fed44f5a84ff71f28da14bebaf",
+  "license": "BSD-3-Clause (see ../LICENSE)",
+  "repository": "https://github.com/DefectDojo/django-DefectDojo",
+  "scans": [
+   "unittests/scans/checkov"
+  ],
+  "tests": [
+   "unittests/tools/test_checkov_parser.py"
+  ]
+ },
+ "tool": "checkov"
+}

@@ -156,13 +156,19 @@ def test_a_deeply_nested_nuclei_record_is_refused() -> None:
 
 
 @pytest.mark.parametrize(
-    "tool", ["zap", "nuclei", "burp", "nessus", "openvas", "grype", "trivy", "snyk"]
+    "tool",
+    ["zap", "nuclei", "burp", "nessus", "openvas", "grype", "trivy", "snyk", "checkov", "gitlab"],
 )
 def test_every_vendored_sample_is_detected_as_its_own_tool_and_nothing_else(tool: str) -> None:
     for path in sorted((DD / tool).iterdir()):
         if path.name == "MANIFEST.json" or path.read_bytes().strip() in (b"", b"null"):
             continue  # nothing to recognise: such a file imports only when the parser is named
         ranked = detect(path.read_bytes()[:65536])
+        if path.name in (
+            "gitlab_dast--gitlab_dast_zero_vul.json",
+            "gitlab_dast--empty_with_error.json",
+        ):
+            continue  # {"vulnerabilities": []}: nothing names GitLab
         if path.name == "snykcode_issue_9270.json":  # Snyk Code writes SARIF, and is detected as it
             assert ranked[0][0].name == "sarif"
             continue

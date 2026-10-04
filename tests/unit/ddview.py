@@ -103,8 +103,29 @@ def group_each(findings: list[Finding], name: str = "") -> list[list[Finding]]:
     return [[f] for f in findings]
 
 
+def group_gitlab(findings: list[Finding], name: str = "") -> list[list[Finding]]:
+    """DefectDojo keys GitLab findings on GitLab's own `id` hash, which repeats for a vulnerability
+    reported twice at one place; here that is the same place, rule and title."""
+    return _fold(
+        findings,
+        lambda f: (
+            f.location.host,
+            f.location.route,
+            f.location.path,
+            f.location.start_line,
+            rule_of(f),
+            f.title,
+            f.package,
+            _severity(f),
+            f.description,
+        ),
+    )
+
+
 GROUPERS: dict[str, Callable[[list[Finding], str], list[list[Finding]]]] = {
     "grype": group_grype,
+    "gitlab": group_gitlab,
+    "checkov": group_each,
     "trivy": group_each,
     "snyk": group_each,
     "zap": group_zap,
@@ -128,6 +149,8 @@ LOCATIONS: dict[str, Callable[[list[Finding]], int]] = {
     "nessus": len,  # one per ReportItem or row
     "openvas": distinct_places,  # only identical places fold, so this is 1
     "grype": len,
+    "gitlab": len,
+    "checkov": len,
     "trivy": len,
     "snyk": len,
 }

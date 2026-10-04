@@ -6,7 +6,11 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 ## [Unreleased]
 
 ### Added
-- **Ported parsers, batch 2 (part): Grype, Trivy, Snyk.** `grype` and `trivy` read a report with the
+- **Ported parsers, batch 2: Grype, Trivy, Snyk, GitLab security reports, Checkov.** `gitlab` is
+  one parser for GitLab's SAST, dependency, container, secret-detection and DAST/API-fuzzing reports
+  (classified by where each record is, GitLab's own `id` not used as identity); `checkov` reads a
+  report with `CheckovAdapter.to_finding`, one framework or a list, and Checkov 2's counters-only
+  output (nothing scanned) closes nothing. `grype` and `trivy` read a report with the
   very function a native scan uses (`GrypeAdapter.to_finding`, `TrivyAdapter.result_findings`), so an
   uploaded report and a scan cannot disagree; `snyk` reads `snyk test --json` for Open Source and
   Container projects, one or many. A Trivy finding now carries the CVSS score of the source that set

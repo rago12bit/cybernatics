@@ -48,6 +48,18 @@ TOOLS: dict[str, dict[str, Any]] = {
         "helpers": {"sample_path": "trivy"},
     },
     "snyk": {"test": "test_snyk_parser.py", "dir": "snyk"},
+    "checkov": {"test": "test_checkov_parser.py", "dir": "checkov"},
+    # Five of DefectDojo's parsers are one here; `dirs` merges their sample directories (file names
+    # are prefixed with the directory, as they would collide otherwise).
+    "gitlab": {
+        "dirs": {
+            "gitlab_sast": "test_gitlab_sast_parser.py",
+            "gitlab_dep_scan": "test_gitlab_dep_scan_parser.py",
+            "gitlab_container_scan": "test_gitlab_container_scan_parser.py",
+            "gitlab_secret_detection_report": "test_gitlab_secret_detection_report_parser.py",
+            "gitlab_dast": "test_gitlab_dast_parser.py",
+        },
+    },
     "burp": {"test": "test_burp_parser.py", "dir": "burp"},
     "nessus": {"test": "test_tenable_parser.py", "dir": "tenable/nessus"},
     # DefectDojo has two OpenVAS parsers; Bulwark ports the current one ("v2"), so only its tests
@@ -212,43 +224,49 @@ def main() -> int:
 
     for tool in args.tools:
         cfg = TOOLS[tool]
-        scans = dd / "unittests" / "scans" / cfg["dir"]
-        expected = extract(
-            dd / "unittests" / "tools" / cfg["test"],
-            cfg["dir"],
-            cfg.get("helpers", {}),
-            cfg.get("classes"),
-            tuple(cfg.get("parse_methods", ())),
-        )
+        pairs = list(cfg["dirs"].items()) if "dirs" in cfg else [(cfg["dir"], cfg["test"])]
+        multi = len(pairs) > 1
         dest = OUT / tool
         shutil.rmtree(dest, ignore_errors=True)
         dest.mkdir(parents=True)
         files: dict[str, Any] = {}
-        for src in sorted(p for p in scans.iterdir() if p.is_file()):
-            data = src.read_bytes()
-            vendored = len(data) <= MAX_VENDORED
-            if vendored:
-                (dest / src.name).write_bytes(data)
-            files[src.name] = {
-                "sha256": hashlib.sha256(data).hexdigest(),
-                "bytes": len(data),
-                "vendored": vendored,
-                "expect": expected.get(src.name, []),
-            }
+        for directory, test in pairs:
+            scans = dd / "unittests" / "scans" / directory
+            expected = extract(
+                dd / "unittests" / "tools" / test,
+                directory,
+                cfg.get("helpers", {}),
+                cfg.get("classes"),
+                tuple(cfg.get("parse_methods", ())),
+            )
+            for src in sorted(p for p in scans.iterdir() if p.is_file()):
+                data = src.read_bytes()
+                vendored = len(data) <= MAX_VENDORED
+                name = f"{directory}--{src.name}" if multi else src.name
+                if vendored:
+                    (dest / name).write_bytes(data)
+                files[name] = {
+                    "sha256": hashlib.sha256(data).hexdigest(),
+                    "bytes": len(data),
+                    "vendored": vendored,
+                    "expect": expected.get(src.name, []),
+                }
         manifest = {
             "tool": tool,
             "source": {
                 "repository": "https://github.com/DefectDojo/django-DefectDojo",
                 "commit": commit,
                 "license": "BSD-3-Clause (see ../LICENSE)",
-                "scans": f"unittests/scans/{cfg['dir']}",
-                "tests": f"unittests/tools/{cfg['test']}",
+                "scans": [f"unittests/scans/{d}" for d, _ in pairs],
+                "tests": [f"unittests/tools/{t}" for _, t in pairs],
             },
             "files": files,
         }
         (dest / "MANIFEST.json").write_text(json.dumps(manifest, indent=1, sort_keys=True) + "\n")
         n_exp = sum(len(f["expect"]) for f in files.values())
-        print(f"{tool}: {len(files)} files, {n_exp} expectations read from {cfg['test']}")
+        print(
+            f"{tool}: {len(files)} files, {n_exp} expectations read from {len(pairs)} test file(s)"
+        )
     return 0
 
 

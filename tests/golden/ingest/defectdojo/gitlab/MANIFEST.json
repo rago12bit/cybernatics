@@ -1,0 +1,652 @@
+{
+ "files": {
+  "gitlab_container_scan--gl-container-scanning-report-0-vuln.json": {
+   "bytes": 428,
+   "expect": [
+    {
+     "count": 0,
+     "test": "test_gitlab_container_scan_parser_with_no_vuln_has_no_findings"
+    }
+   ],
+   "sha256": "fcfebed9928c323345ccc3b7162b2c5560a33fa4def44a1e01dd9747e3863ae2",
+   "vendored": true
+  },
+  "gitlab_container_scan--gl-container-scanning-report-1-vuln_v14.json": {
+   "bytes": 2645,
+   "expect": [
+    {
+     "count": 1,
+     "findings": {
+      "0": {
+       "component_name": "apt",
+       "component_version": "1.4.8",
+       "severity": "High",
+       "title": "CVE-2019-3462 in apt-1.4.8"
+      }
+     },
+     "test": "test_gitlab_container_scan_parser_with_one_vuln_has_one_findings_v14"
+    }
+   ],
+   "sha256": "b9c205b1d716025061892c01ebc0d2a99f4ec9d2150f2412e9c39d9999c0e043",
+   "vendored": true
+  },
+  "gitlab_container_scan--gl-container-scanning-report-1-vuln_v15.json": {
+   "bytes": 2452,
+   "expect": [
+    {
+     "count": 1,
+     "findings": {
+      "0": {
+       "component_name": "apt",
+       "component_version": "1.4.8",
+       "severity": "High",
+       "title": "CVE-2019-3462 in apt-1.4.8"
+      }
+     },
+     "test": "test_gitlab_container_scan_parser_with_one_vuln_has_one_findings_v15"
+    }
+   ],
+   "sha256": "4f73a56652e6f3398495f84e2ee407a8513a9428073e77fb3c4d6a0075d97756",
+   "vendored": true
+  },
+  "gitlab_container_scan--gl-container-scanning-report-5-vuln_v14.json": {
+   "bytes": 10459,
+   "expect": [
+    {
+     "count": 5,
+     "test": "test_gitlab_container_scan_parser_with_five_vuln_has_five_findings_v14"
+    }
+   ],
+   "sha256": "4886b9981b0fb7f9f00a0109e806d6d82b8da4edaf991d604476a301108f59fd",
+   "vendored": true
+  },
+  "gitlab_container_scan--gl-container-scanning-report-5-vuln_v15.json": {
+   "bytes": 9582,
+   "expect": [
+    {
+     "count": 5,
+     "test": "test_gitlab_container_scan_parser_with_five_vuln_has_five_findings_v15"
+    }
+   ],
+   "sha256": "e546f0b601499ea1d9713c6c011f5f91610cc75d13ab8f1907467888389bf206",
+   "vendored": true
+  },
+  "gitlab_container_scan--gl-container-scanning-report-multiple-cwe-fabricated_v15.json": {
+   "bytes": 2265,
+   "expect": [
+    {
+     "count": 1,
+     "findings": {
+      "0": {
+       "cwe": "CWE-79"
+      }
+     },
+     "test": "test_gitlab_container_scan_parser_with_multiple_cwe_v15"
+    }
+   ],
+   "sha256": "d0eb38761b868b9a836d773a85ccfd0b16646a2628089b3a33fdce93f0ec471f",
+   "vendored": true
+  },
+  "gitlab_container_scan--issue6639_v14.json": {
+   "bytes": 255402,
+   "expect": [
+    {
+     "count": 98,
+     "findings": {
+      "0": {
+       "component_name": "busybox",
+       "component_version": "1.34.1-r4",
+       "severity": "Critical",
+       "title": "busybox: remote attackers may execute arbitrary code if netstat is used"
+      },
+      "50": {
+       "component_name": "libretls",
+       "component_version": "3.3.4-r2",
+       "severity": "High",
+       "title": "openssl: Infinite loop in BN_mod_sqrt() reachable when parsing certificates"
+      }
+     },
+     "test": "test_gitlab_container_scan_parser_with_fless_data_v14"
+    }
+   ],
+   "sha256": "00f0f9ef3b7b63d843cce0cb2a8b5f29203302168a8dddca5bcd97e63ef90266",
+   "vendored": true
+  },
+  "gitlab_container_scan--issue6639_v15.json": {
+   "bytes": 236587,
+   "expect": [
+    {
+     "count": 98,
+     "findings": {
+      "0": {
+       "component_name": "busybox",
+       "component_version": "1.34.1-r4",
+       "severity": "Critical",
+       "title": "CVE-2022-28391 in busybox-1.34.1-r4"
+      },
+      "50": {
+       "component_name": "libretls",
+       "component_version": "3.3.4-r2",
+       "severity": "High",
+       "title": "CVE-2022-0778 in libretls-3.3.4-r2"
+      }
+     },
+     "test": "test_gitlab_container_scan_parser_with_fless_data_v15"
+    }
+   ],
+   "sha256": "54832da3e427135717d835ac0a974563435e5038658e84c3254347b4efc20065",
+   "vendored": true
+  },
+  "gitlab_dast--empty_with_error.json": {
+   "bytes": 542,
+   "expect": [],
+   "sha256": "71564df40911529747486bd52e5af0dc87ea617f8827a60a0097270f0f9fb90b",
+   "vendored": true
+  },
+  "gitlab_dast--gitlab_dast_many_vul_v14.json": {
+   "bytes": 51300,
+   "expect": [
+    {
+     "count": 10,
+     "findings": {
+      "1": {
+       "cwe": 16,
+       "severity": "Medium"
+      }
+     },
+     "test": "test_parse_file_with_multiple_vuln_has_multiple_findings_v14"
+    }
+   ],
+   "sha256": "dc241007b723fd4ba4333a1987c0ff1d5a4471258688475858a2ed76fabe94f2",
+   "vendored": true
+  },
+  "gitlab_dast--gitlab_dast_many_vul_v15.json": {
+   "bytes": 49040,
+   "expect": [
+    {
+     "count": 10,
+     "findings": {
+      "1": {
+       "cwe": 16,
+       "severity": "Medium"
+      }
+     },
+     "test": "test_parse_file_with_multiple_vuln_has_multiple_findings_v15"
+    }
+   ],
+   "sha256": "e5287d5823b1e16e7748990f2e6c6a0abd999636c10d5b279706a84ec9376c73",
+   "vendored": true
+  },
+  "gitlab_dast--gitlab_dast_multiple_cwe_fabricated_v15.json": {
+   "bytes": 1646,
+   "expect": [
+    {
+     "count": 1,
+     "findings": {
+      "0": {
+       "cwe": 359
+      }
+     },
+     "test": "test_parse_file_with_multiple_cwe_v15"
+    }
+   ],
+   "sha256": "1459655f40a56ede2e24cf55e4c65968d56fda4043df1e1e73a6c1f5ab641ea9",
+   "vendored": true
+  },
+  "gitlab_dast--gitlab_dast_one_vul_v14.json": {
+   "bytes": 3372,
+   "expect": [
+    {
+     "count": 1,
+     "findings": {
+      "0": {
+       "cwe": 359,
+       "severity": "High",
+       "title": "5ec00bbc-2e53-44cb-83e9-3d35365277e3"
+      }
+     },
+     "test": "test_parse_file_with_one_vuln_has_one_finding_v14"
+    }
+   ],
+   "sha256": "e456308e72993d5de75e3d5a9ad54c826ccbd99bc8ee899038b5944b3f063275",
+   "vendored": true
+  },
+  "gitlab_dast--gitlab_dast_one_vul_v15.json": {
+   "bytes": 3190,
+   "expect": [
+    {
+     "count": 1,
+     "findings": {
+      "0": {
+       "cwe": 359,
+       "severity": "High",
+       "title": "5ec00bbc-2e53-44cb-83e9-3d35365277e3"
+      }
+     },
+     "test": "test_parse_file_with_one_vuln_has_one_finding_v15"
+    }
+   ],
+   "sha256": "4fdd8df40facda200fd1e7340d0f35f1ba7107d0f7137202bb2db5f7ed26b32d",
+   "vendored": true
+  },
+  "gitlab_dast--gitlab_dast_zero_vul.json": {
+   "bytes": 96,
+   "expect": [
+    {
+     "count": 0,
+     "test": "test_parse_file_with_no_vuln_has_no_findings"
+    }
+   ],
+   "sha256": "17a518bcdf190000319d160b9905b368f31bff5747fda02f14e7f1bd557b55a8",
+   "vendored": true
+  },
+  "gitlab_dast--issue_12050.json": {
+   "bytes": 3372,
+   "expect": [
+    {
+     "count": 1,
+     "test": "test_parse_file_issue_12050"
+    }
+   ],
+   "sha256": "e456308e72993d5de75e3d5a9ad54c826ccbd99bc8ee899038b5944b3f063275",
+   "vendored": true
+  },
+  "gitlab_dep_scan--gl-dependency-scanning-report-0-vuln.json": {
+   "bytes": 595,
+   "expect": [
+    {
+     "count": 0,
+     "test": "test_parse_file_with_no_vuln_has_no_findings"
+    }
+   ],
+   "sha256": "ae8098f36dbc9e11b132e636dc043bae0234cc22a8cd3f578dbca03f2330f3cd",
+   "vendored": true
+  },
+  "gitlab_dep_scan--gl-dependency-scanning-report-1-vuln_v14.json": {
+   "bytes": 2070,
+   "expect": [
+    {
+     "count": 1,
+     "test": "test_parse_file_with_one_vuln_has_one_finding_v14"
+    }
+   ],
+   "sha256": "a6f5df01c00981733e3456ec3b09a063a5a42f37f94906ef2c921cc9d270e89a",
+   "vendored": true
+  },
+  "gitlab_dep_scan--gl-dependency-scanning-report-1-vuln_v15.json": {
+   "bytes": 1885,
+   "expect": [
+    {
+     "count": 1,
+     "test": "test_parse_file_with_one_vuln_has_one_finding_v15"
+    }
+   ],
+   "sha256": "bfc0b88e22a9f1b270a98e618de7a08fa41499f1e3c55d976a55342aef8ecf1c",
+   "vendored": true
+  },
+  "gitlab_dep_scan--gl-dependency-scanning-report-2-vuln-missing-component_v14.json": {
+   "bytes": 3817,
+   "expect": [
+    {
+     "count": 2,
+     "findings": {
+      "0": {
+       "component_name": null,
+       "component_version": null
+      },
+      "1": {
+       "component_name": "golang.org/x/crypto",
+       "component_version": "v0.0.0-20190308221718-c2843e01d9a2"
+      }
+     },
+     "test": "test_parse_file_with_two_vuln_has_one_missing_component__v14"
+    }
+   ],
+   "sha256": "b73a1233a19f2eebfd1d9648174228b2e71399de795639b9d02c727e7f9de78b",
+   "vendored": true
+  },
+  "gitlab_dep_scan--gl-dependency-scanning-report-2-vuln-missing-component_v15.json": {
+   "bytes": 3439,
+   "expect": [
+    {
+     "count": 2,
+     "findings": {
+      "0": {
+       "component_name": null,
+       "component_version": null
+      },
+      "1": {
+       "component_name": "golang.org/x/crypto",
+       "component_version": "v0.0.0-20190308221718-c2843e01d9a2"
+      }
+     },
+     "test": "test_parse_file_with_two_vuln_has_one_missing_component__v15"
+    }
+   ],
+   "sha256": "713e145b6532acfe7b7d8d071d9cefb1ba244dfd2ea8082dc0ab0ebd4821f1db",
+   "vendored": true
+  },
+  "gitlab_dep_scan--gl-dependency-scanning-report-many-vuln_v14.json": {
+   "bytes": 19765,
+   "expect": [],
+   "sha256": "026499763765f566170ded7292c4425ec5f37f8d20e5c43d6bff5bb88c8be6ab",
+   "vendored": true
+  },
+  "gitlab_dep_scan--gl-dependency-scanning-report-many-vuln_v15.json": {
+   "bytes": 18571,
+   "expect": [],
+   "sha256": "33a20d169b986331476c1acd05244d362b5c8ec9bdec4f47cac4fde4f1eb4f32",
+   "vendored": true
+  },
+  "gitlab_dep_scan--gl-dependency-scanning-report-multiple-cwe-fabricated_v15.json": {
+   "bytes": 2282,
+   "expect": [
+    {
+     "count": 1,
+     "findings": {
+      "0": {
+       "cwe": "776"
+      }
+     },
+     "test": "test_parse_file_with_multiple_cwe_v15"
+    }
+   ],
+   "sha256": "0e853735327f42b8d7a9945305edfce651be75e7dc94814e7874c0720aeed908",
+   "vendored": true
+  },
+  "gitlab_sast--gl-sast-report-0-vuln.json": {
+   "bytes": 70,
+   "expect": [
+    {
+     "count": 0,
+     "test": "test_parse_file_with_no_vuln_has_no_findings"
+    }
+   ],
+   "sha256": "eb5d399cfa02407dfc2c6e6d9cbf7b512bbfa8e8a398522b864c3b67a0486864",
+   "vendored": true
+  },
+  "gitlab_sast--gl-sast-report-1-vuln_v14.json": {
+   "bytes": 938,
+   "expect": [
+    {
+     "count": 1,
+     "findings": {
+      "0": {
+       "severity": "Critical",
+       "title": "Password in URL"
+      }
+     },
+     "test": "test_parse_file_with_one_vuln_has_one_finding_v14"
+    }
+   ],
+   "sha256": "0bbe62c99c7e514d7a045049885d6008f26e1655e240bfac3f46eb084b76f803",
+   "vendored": true
+  },
+  "gitlab_sast--gl-sast-report-1-vuln_v15.json": {
+   "bytes": 760,
+   "expect": [
+    {
+     "count": 1,
+     "findings": {
+      "0": {
+       "severity": "Critical",
+       "title": "Password in URL"
+      }
+     },
+     "test": "test_parse_file_with_one_vuln_has_one_finding_v15"
+    }
+   ],
+   "sha256": "e0ae835dc12fe7253966ab7bfd1d56e3f9dec889cbe54a541bdc651d4e88f1c1",
+   "vendored": true
+  },
+  "gitlab_sast--gl-sast-report-confidence_v14.json": {
+   "bytes": 9277,
+   "expect": [
+    {
+     "count": 8,
+     "test": "test_parse_file_with_various_confidences_v14"
+    }
+   ],
+   "sha256": "056470437ecb7f68b7a51204b99c43020c374652e205d50776730d2e7faebec3",
+   "vendored": true
+  },
+  "gitlab_sast--gl-sast-report-confidence_v15.json": {
+   "bytes": 7209,
+   "expect": [
+    {
+     "count": 8,
+     "test": "test_parse_file_with_various_confidences_v15"
+    }
+   ],
+   "sha256": "42b63478f595443459937a95c380a8232924ae9bb64004c7cef07e7a1739ca7f",
+   "vendored": true
+  },
+  "gitlab_sast--gl-sast-report-cwe_v14.json": {
+   "bytes": 4893,
+   "expect": [
+    {
+     "count": 3,
+     "findings": {
+      "0": {
+       "cwe": 79
+      },
+      "1": {
+       "cwe": 89
+      },
+      "2": {
+       "cwe": null
+      }
+     },
+     "test": "test_parse_file_with_various_cwes_v14"
+    }
+   ],
+   "sha256": "f9f64c4aef4bb4f47d140e3fb4b4e5814f2ef40e86b4e4fed4f8abd69cdd3aed",
+   "vendored": true
+  },
+  "gitlab_sast--gl-sast-report-cwe_v15.json": {
+   "bytes": 4138,
+   "expect": [
+    {
+     "count": 3,
+     "findings": {
+      "0": {
+       "cwe": 79
+      },
+      "1": {
+       "cwe": 89
+      },
+      "2": {
+       "cwe": null
+      }
+     },
+     "test": "test_parse_file_with_various_cwes_v15"
+    }
+   ],
+   "sha256": "2af2a2c304fe540c9dd283cd95eadd967d2453197ac7315b4e0a580336261dc9",
+   "vendored": true
+  },
+  "gitlab_sast--gl-sast-report-many-vuln_v14.json": {
+   "bytes": 452089,
+   "expect": [
+    {
+     "count": 219,
+     "findings": {
+      "0": {
+       "severity": "Critical",
+       "title": "Password in URL"
+      },
+      "1": {
+       "severity": "Critical",
+       "title": "Password in URL"
+      },
+      "2": {
+       "severity": "Critical",
+       "title": "PKCS8 key"
+      }
+     },
+     "test": "test_parse_file_with_multiple_vuln_has_multiple_findings_v14"
+    }
+   ],
+   "sha256": "8b63801da912220e27a358baf6f147ab674ddd0830a76365a3eb6635324aebe1",
+   "vendored": true
+  },
+  "gitlab_sast--gl-sast-report-many-vuln_v15.json": {
+   "bytes": 358567,
+   "expect": [
+    {
+     "count": 219,
+     "findings": {
+      "0": {
+       "severity": "Critical",
+       "title": "Password in URL"
+      },
+      "1": {
+       "severity": "Critical",
+       "title": "Password in URL"
+      },
+      "2": {
+       "severity": "Critical",
+       "title": "PKCS8 key"
+      }
+     },
+     "test": "test_parse_file_with_multiple_vuln_has_multiple_findings_v15"
+    }
+   ],
+   "sha256": "1e9a743f764b8f199d6a53779eb33265907f9d1aa52ba1db8e25f47b415e77d9",
+   "vendored": true
+  },
+  "gitlab_sast--gl-sast-report-multiple-cwe-fabricated_v15.json": {
+   "bytes": 2153,
+   "expect": [
+    {
+     "count": 1,
+     "findings": {
+      "0": {
+       "cwe": 79
+      }
+     },
+     "test": "test_parse_file_with_multiple_cwes_v15"
+    }
+   ],
+   "sha256": "af8424b810d1fb03e172139dee772c1b3295d260015c5ec27b3e455a727a6cae",
+   "vendored": true
+  },
+  "gitlab_sast--gl-sast-report_issue4344_v14.json": {
+   "bytes": 1103,
+   "expect": [
+    {
+     "count": 1,
+     "findings": {
+      "0": {
+       "title": "[None severity] Potential XSS vulnerability"
+      }
+     },
+     "test": "test_parse_file_issue4336_v14"
+    }
+   ],
+   "sha256": "3d746fc7f1ff52862974fa9693d4922ced503f7000ae15250c02836ddefea687",
+   "vendored": true
+  },
+  "gitlab_sast--gl-sast-report_issue4344_v15.json": {
+   "bytes": 928,
+   "expect": [
+    {
+     "count": 1,
+     "findings": {
+      "0": {
+       "title": "[None severity] Potential XSS vulnerability"
+      }
+     },
+     "test": "test_parse_file_issue4336_v15"
+    }
+   ],
+   "sha256": "33e4533dc6d750b5bbbf5fbdd585e32a012ce58ece89489d507a93da7a8563e6",
+   "vendored": true
+  },
+  "gitlab_secret_detection_report--gitlab_secret_detection_report_0_vuln.json": {
+   "bytes": 434,
+   "expect": [
+    {
+     "count": 0,
+     "test": "test_gitlab_secret_detection_report_parser_with_no_vuln_has_no_findings"
+    }
+   ],
+   "sha256": "0648db0b4715d2cf4ec9c4465fc0bcb383000e1f2a47c3e84ba5a4b9791b3e54",
+   "vendored": true
+  },
+  "gitlab_secret_detection_report--gitlab_secret_detection_report_1_vuln_v14.json": {
+   "bytes": 1352,
+   "expect": [
+    {
+     "count": 1,
+     "findings": {
+      "0": {
+       "severity": "Critical"
+      }
+     },
+     "test": "test_gitlab_secret_detection_report_parser_with_one_vuln_has_one_findings_v14"
+    }
+   ],
+   "sha256": "0968e38bf66c0ae2c3007694c6443dd262c533b437b2e5ef6e766f086a0e06c7",
+   "vendored": true
+  },
+  "gitlab_secret_detection_report--gitlab_secret_detection_report_1_vuln_v15.json": {
+   "bytes": 1121,
+   "expect": [
+    {
+     "count": 1,
+     "findings": {
+      "0": {
+       "severity": "Critical"
+      }
+     },
+     "test": "test_gitlab_secret_detection_report_parser_with_one_vuln_has_one_findings_v15"
+    }
+   ],
+   "sha256": "2f699703bdb70dd0e2aaac07fedfb859e33f7fbc924d29496cf66d3e244d0155",
+   "vendored": true
+  },
+  "gitlab_secret_detection_report--gitlab_secret_detection_report_3_vuln_v14.json": {
+   "bytes": 3368,
+   "expect": [
+    {
+     "count": 3,
+     "test": "test_gitlab_secret_detection_report_parser_with_many_vuln_has_many_findings_v14"
+    }
+   ],
+   "sha256": "6a84d4a0f545c76b22bd2b640501313d1ef9538702a349e78665eb0745e76a00",
+   "vendored": true
+  },
+  "gitlab_secret_detection_report--gitlab_secret_detection_report_3_vuln_v15.json": {
+   "bytes": 2651,
+   "expect": [
+    {
+     "count": 3,
+     "test": "test_gitlab_secret_detection_report_parser_with_many_vuln_has_many_findings_v15"
+    }
+   ],
+   "sha256": "9c10507a47ba1fb2e813dc6a3de3b2f0598bbfe6bb253a067a8a2297857b7c72",
+   "vendored": true
+  }
+ },
+ "source": {
+  "commit": "8b12d80ae30904fed44f5a84ff71f28da14bebaf",
+  "license": "BSD-3-Clause (see ../LICENSE)",
+  "repository": "https://github.com/DefectDojo/django-DefectDojo",
+  "scans": [
+   "unittests/scans/gitlab_sast",
+   "unittests/scans/gitlab_dep_scan",
+   "unittests/scans/gitlab_container_scan",
+   "unittests/scans/gitlab_secret_detection_report",
+   "unittests/scans/gitlab_dast"
+  ],
+  "tests": [
+   "unittests/tools/test_gitlab_sast_parser.py",
+   "unittests/tools/test_gitlab_dep_scan_parser.py",
+   "unittests/tools/test_gitlab_container_scan_parser.py",
+   "unittests/tools/test_gitlab_secret_detection_report_parser.py",
+   "unittests/tools/test_gitlab_dast_parser.py"
+  ]
+ },
+ "tool": "gitlab"
+}

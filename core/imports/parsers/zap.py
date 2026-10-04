@@ -57,7 +57,9 @@ class ZapParser(IngestParser):
         if text.startswith("{"):
             if re.search(r'"@programName"\s*:\s*"ZAP"', text):
                 return 0.99
-            if '"@generated"' in text and '"site"' in text:
+            # A GitLab DAST report opens with the same `@generated` header (it is ZAP's, merged),
+            # but has `vulnerabilities` where ZAP has `site`.
+            if '"@generated"' in text and '"site"' in text and '"vulnerabilities"' not in text:
                 return 0.7
             return 0.0
         return 0.0

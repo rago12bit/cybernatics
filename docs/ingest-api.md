@@ -35,6 +35,8 @@ until `status` is `applied`, `previewed` or `failed`.
 | `grype` | Grype JSON (`-o json`) | each match, read by the same function a Grype scan uses |
 | `trivy` | Trivy JSON: image, filesystem, repository, Kubernetes (both layouts), the old bare list | vulnerabilities, misconfigurations and secrets; licences are counted, not imported |
 | `snyk` | `snyk test --json` (Open Source and Container), one project or a list | each vulnerability, severity from its CVSS score |
+| `gitlab` | GitLab security reports: SAST, dependency, container, secret detection, DAST, API fuzzing | each record, classified by where it is (file, package, URL) |
+| `checkov` | Checkov JSON, one framework or a list | each failed check, read by the function a Checkov scan uses |
 
 The format is detected from the file; if detection is not confident (below 90%) the call is refused
 with the candidates and you pass `parser=` yourself. `GET /v2/parsers` lists what is available.
@@ -46,7 +48,7 @@ such a file imports no findings and **can never close anything**, even with `clo
 
 ### Ported parsers (DefectDojo)
 
-`zap`, `nuclei`, `burp`, `nessus`, `openvas`, `grype`, `trivy` and `snyk` are derived from [DefectDojo](https://github.com/DefectDojo/django-DefectDojo)'s
+`zap`, `nuclei`, `burp`, `nessus`, `openvas`, `grype`, `trivy`, `snyk`, `gitlab` and `checkov` are derived from [DefectDojo](https://github.com/DefectDojo/django-DefectDojo)'s
 parsers (BSD-3-Clause; the notice is in `THIRD_PARTY_LICENSES.md`) and are tested against DefectDojo's
 own sample reports and the results its tests expect. Three things differ on purpose:
 
@@ -69,6 +71,13 @@ Three more differences in the vulnerability scanners: **Trivy licence findings a
 **one vulnerability in one package at two paths is one Issue** (its Issue is package, version and
 vulnerability; each path keeps its own finding). A Trivy report is also shown the CVSS score of the
 source that decided its severity, not always NVD's.
+
+**GitLab:** one parser for GitLab's five report types. A record is classified by its location (a
+dependency is a package, a hostname a web target, a commit a secret, a file with lines code), because
+v15 reports leave `category` out; GitLab's own `id` is not an identity (it is recomputed); an
+Unknown or Undefined severity is Info and the title says so; coverage-fuzzing crashes, which have no
+place in code or on the web, are skipped and counted. **A DAST finding's place is host and route, not
+HTTP method**: `GET` and `DELETE` of one URL with the same check are one Issue (ADR-0041).
 
 **When a scanner report may close Issues.** A report is evidence of what was fixed only if the scan
 finished and reached something, so these close nothing (the import says so in its `warnings`):

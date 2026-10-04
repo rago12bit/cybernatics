@@ -17,11 +17,83 @@ import pytest
 from core.imports.parsers import get_parser, run_parser_on_bytes
 from tests.unit import ddview
 
-TOOLS = ["zap", "nuclei", "burp", "nessus", "openvas", "grype", "trivy", "snyk"]
+TOOLS = [
+    "zap", "nuclei", "burp", "nessus", "openvas", "grype", "trivy", "snyk", "checkov", "gitlab",
+]  # fmt: skip
 
 # (tool, file, test, finding index, field) -> why ours differs from what DefectDojo's test asserts.
 # Reviewed one by one; each is a deliberate decision, not a miss.
 DIFFERENCES: dict[tuple[str, str, str, str, str], str] = {
+    (
+        "gitlab",
+        "gitlab_dast--gitlab_dast_many_vul_v14.json",
+        "test_parse_file_with_multiple_vuln_has_multiple_findings_v14",
+        "count",
+        "findings",
+    ): (
+        "the same check on the same URL with a different HTTP method (`GET` and `DELETE` of "
+        "/v1/tree/10) is two DefectDojo findings and one Issue here: a DAST finding's place is host "
+        "and route, not method (ADR-0041)"
+    ),
+    (
+        "gitlab",
+        "gitlab_dast--gitlab_dast_many_vul_v15.json",
+        "test_parse_file_with_multiple_vuln_has_multiple_findings_v15",
+        "count",
+        "findings",
+    ): ("as above"),
+    (
+        "gitlab",
+        "gitlab_sast--gl-sast-report-many-vuln_v14.json",
+        "test_parse_file_with_multiple_vuln_has_multiple_findings_v14",
+        "count",
+        "findings",
+    ): (
+        "DefectDojo folds findings that share GitLab's own fingerprint (same file, same text, any "
+        "line) into one -- 219 of 467 here; Bulwark keeps each line as its own finding, as it does "
+        "for every SAST tool (an Issue is a place)"
+    ),
+    (
+        "gitlab",
+        "gitlab_sast--gl-sast-report-many-vuln_v15.json",
+        "test_parse_file_with_multiple_vuln_has_multiple_findings_v15",
+        "count",
+        "findings",
+    ): ("as above"),
+    (
+        "gitlab",
+        "gitlab_dast--gitlab_dast_one_vul_v14.json",
+        "test_parse_file_with_one_vuln_has_one_finding_v14",
+        "0",
+        "title",
+    ): (
+        "DefectDojo titles a GitLab DAST finding with its UUID; the title here is the check's name "
+        'from its first identifier ("PII Disclosure")'
+    ),
+    (
+        "gitlab",
+        "gitlab_dast--gitlab_dast_one_vul_v15.json",
+        "test_parse_file_with_one_vuln_has_one_finding_v15",
+        "0",
+        "title",
+    ): ("as above: the check's name, not the UUID"),
+    (
+        "gitlab",
+        "gitlab_sast--gl-sast-report_issue4344_v14.json",
+        "test_parse_file_issue4336_v14",
+        "0",
+        "title",
+    ): (
+        "a severity GitLab did not give is written `[Unknown severity]` here; DefectDojo writes the "
+        "Python `None` (`[None severity]`)"
+    ),
+    (
+        "gitlab",
+        "gitlab_sast--gl-sast-report_issue4344_v15.json",
+        "test_parse_file_issue4336_v15",
+        "0",
+        "title",
+    ): ("as above"),
     ("trivy", "license_scheme.json", "test_license_scheme", "count", "findings"): (
         "DefectDojo makes a finding of every licence Trivy reports (19 here); a licence is not a "
         "vulnerability, so Bulwark imports none and the import says how many it left out"
@@ -49,9 +121,14 @@ DIFFERENCES: dict[tuple[str, str, str, str, str], str] = {
 }
 
 
+# Valid reports with nothing in them that says which tool wrote them: they import only when the
+# parser is named (and tests/unit/test_ingest_dast.py skips them for detection).
+UNRECOGNISABLE: set[tuple[str, str]] = {("gitlab", "gitlab_dast--gitlab_dast_zero_vul.json")}
+
 # Files DefectDojo parses that this parser deliberately refuses, with why.
 EXPECTED_ERRORS: dict[tuple[str, str], str] = {
     ("snyk", "snykcode_issue_9270.json"): "Snyk Code writes SARIF; upload it with the sarif parser",
+    ("gitlab", "gitlab_dast--empty_with_error.json"): "a truncated file (it says so: `with_error`)",
 }
 
 
@@ -80,9 +157,10 @@ def test_matches_defectdojo(tool: str, name: str, info: dict[str, Any]) -> None:
     assert result.error is None, f"{name}: {result.error}"
     # An empty file and a bare `null` are not recognisable as anything; they import only when the
     # parser is named.
-    assert parser.sniff(data[:65536]) > 0 or data.strip() in (
-        b"",
-        b"null",
+    assert (
+        parser.sniff(data[:65536]) > 0
+        or data.strip() in (b"", b"null")
+        or (tool, name) in UNRECOGNISABLE
     ), "sniff() does not recognise its own sample"
 
     groups = ddview.GROUPERS[tool](result.findings, name)
@@ -101,6 +179,10 @@ def test_matches_defectdojo(tool: str, name: str, info: dict[str, Any]) -> None:
                 if field not in got:
                     continue  # a DefectDojo-only field; see ddview.SKIPPED_FIELDS
                 want = 0 if (field == "cwe" and want is None) else want
+                if field == "cwe" and isinstance(want, str):
+                    want = int(
+                        want.upper().removeprefix("CWE-")
+                    )  # DefectDojo's tests use all three
                 if field == "cvssv3_score" and isinstance(want, str):
                     want = float(want)  # DefectDojo keeps some scores as strings
                 reason = DIFFERENCES.get((tool, name, exp["test"], index, field))

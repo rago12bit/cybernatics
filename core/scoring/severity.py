@@ -69,6 +69,17 @@ MATRIX: dict[str, dict[str, Severity]] = {
     },
     # Snyk's four words; a CVSS score, when the issue has one, decides instead (see the parser).
     "snyk": {"LOW": S.LOW, "MEDIUM": S.MEDIUM, "HIGH": S.HIGH, "CRITICAL": S.CRITICAL},
+    # GitLab's six words; Unknown and Undefined are GitLab's own "not known" and are Info (the
+    # parser keeps what GitLab said in the finding's title).
+    "gitlab": {
+        "CRITICAL": S.CRITICAL,
+        "HIGH": S.HIGH,
+        "MEDIUM": S.MEDIUM,
+        "LOW": S.LOW,
+        "INFO": S.INFO,
+        "UNKNOWN": S.INFO,
+        "UNDEFINED": S.INFO,
+    },
     # Burp's own words (its "Information" is Info; it has no Critical).
     "burp": {
         "HIGH": S.HIGH,
