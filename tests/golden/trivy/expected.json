@@ -333,7 +333,7 @@
     },
     "scoring": {
       "confidence": 0.9,
-      "cvss_v3_1": 9.8,
+      "cvss_v3_1": 8.1,
       "epss_score": null,
       "in_cisa_kev": false,
       "native_severity": {
@@ -551,7 +551,7 @@
     },
     "scoring": {
       "confidence": 0.9,
-      "cvss_v3_1": 5.3,
+      "cvss_v3_1": 6.5,
       "epss_score": null,
       "in_cisa_kev": false,
       "native_severity": {
@@ -624,7 +624,7 @@
     },
     "scoring": {
       "confidence": 0.9,
-      "cvss_v3_1": 5.3,
+      "cvss_v3_1": 6.5,
       "epss_score": null,
       "in_cisa_kev": false,
       "native_severity": {
@@ -1353,7 +1353,7 @@
     },
     "scoring": {
       "confidence": 0.9,
-      "cvss_v3_1": 5.5,
+      "cvss_v3_1": 4.4,
       "epss_score": null,
       "in_cisa_kev": false,
       "native_severity": {

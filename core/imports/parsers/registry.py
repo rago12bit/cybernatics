@@ -6,12 +6,15 @@ from __future__ import annotations
 from core.imports.parsers.base import IngestParser
 from core.imports.parsers.burp import BurpParser
 from core.imports.parsers.cyclonedx import CycloneDxParser
+from core.imports.parsers.grype import GrypeParser
 from core.imports.parsers.nessus import NessusParser
 from core.imports.parsers.nuclei import NucleiParser
 from core.imports.parsers.openvas import OpenVasParser
 from core.imports.parsers.osv import OsvParser
 from core.imports.parsers.sarif import SarifParser
+from core.imports.parsers.snyk import SnykParser
 from core.imports.parsers.spdx import SpdxParser
+from core.imports.parsers.trivy import TrivyParser
 from core.imports.parsers.zap import ZapParser
 
 PARSERS: dict[str, IngestParser] = {
@@ -26,6 +29,9 @@ PARSERS: dict[str, IngestParser] = {
         BurpParser(),
         NessusParser(),
         OpenVasParser(),
+        GrypeParser(),
+        TrivyParser(),
+        SnykParser(),
     )
 }
 

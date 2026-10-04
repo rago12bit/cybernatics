@@ -46,6 +46,7 @@
      "count": 4,
      "findings": {
       "0": {
+       "component_name": "md5",
        "locations": 1
       }
      },

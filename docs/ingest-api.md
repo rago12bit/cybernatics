@@ -32,6 +32,9 @@ until `status` is `applied`, `previewed` or `failed`.
 | `burp` | Burp Suite XML issue export | each `<issue>` |
 | `nessus` | Nessus `.nessus` XML; Nessus Pro and Tenable.io CSV | each plugin on each host and port |
 | `openvas` | OpenVAS / Greenbone XML or CSV | each result (an NVT on a host and port) |
+| `grype` | Grype JSON (`-o json`) | each match, read by the same function a Grype scan uses |
+| `trivy` | Trivy JSON: image, filesystem, repository, Kubernetes (both layouts), the old bare list | vulnerabilities, misconfigurations and secrets; licences are counted, not imported |
+| `snyk` | `snyk test --json` (Open Source and Container), one project or a list | each vulnerability, severity from its CVSS score |
 
 The format is detected from the file; if detection is not confident (below 90%) the call is refused
 with the candidates and you pass `parser=` yourself. `GET /v2/parsers` lists what is available.
@@ -43,7 +46,7 @@ such a file imports no findings and **can never close anything**, even with `clo
 
 ### Ported parsers (DefectDojo)
 
-`zap`, `nuclei`, `burp`, `nessus` and `openvas` are derived from [DefectDojo](https://github.com/DefectDojo/django-DefectDojo)'s
+`zap`, `nuclei`, `burp`, `nessus`, `openvas`, `grype`, `trivy` and `snyk` are derived from [DefectDojo](https://github.com/DefectDojo/django-DefectDojo)'s
 parsers (BSD-3-Clause; the notice is in `THIRD_PARTY_LICENSES.md`) and are tested against DefectDojo's
 own sample reports and the results its tests expect. Three things differ on purpose:
 
@@ -60,6 +63,12 @@ own sample reports and the results its tests expect. Three things differ on purp
 
 Request and response bodies in a ZAP or Burp report are not stored; the finding keeps the method,
 parameter, attack, evidence and one line each of the request and response.
+
+Three more differences in the vulnerability scanners: **Trivy licence findings are not imported**
+(DefectDojo makes a finding of each); **Snyk Code is SARIF**, so upload it with `sarif`; and
+**one vulnerability in one package at two paths is one Issue** (its Issue is package, version and
+vulnerability; each path keeps its own finding). A Trivy report is also shown the CVSS score of the
+source that decided its severity, not always NVD's.
 
 **When a scanner report may close Issues.** A report is evidence of what was fixed only if the scan
 finished and reached something, so these close nothing (the import says so in its `warnings`):

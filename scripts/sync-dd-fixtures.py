@@ -33,12 +33,21 @@ from typing import Any
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "tests" / "golden" / "ingest" / "defectdojo"
 MAX_VENDORED = 3_000_000  # bytes (git stores them compressed); bigger samples stay out
-ATTRS = {"title", "severity", "vuln_id_from_tool", "cwe", "cvssv3_score"}
+ATTRS = {
+    "title", "severity", "vuln_id_from_tool", "cwe", "cvssv3_score", "component_name", "component_version",
+}  # fmt: skip
 
 # tool -> (DefectDojo test file, the scans directory it reads, helper functions that open a file in it)
 TOOLS: dict[str, dict[str, Any]] = {
     "zap": {"test": "test_zap_parser.py", "dir": "zap"},
     "nuclei": {"test": "test_nuclei_parser.py", "dir": "nuclei"},
+    "grype": {"test": "test_anchore_grype_parser.py", "dir": "anchore_grype"},
+    "trivy": {
+        "test": "test_trivy_parser.py",
+        "dir": "trivy",
+        "helpers": {"sample_path": "trivy"},
+    },
+    "snyk": {"test": "test_snyk_parser.py", "dir": "snyk"},
     "burp": {"test": "test_burp_parser.py", "dir": "burp"},
     "nessus": {"test": "test_tenable_parser.py", "dir": "tenable/nessus"},
     # DefectDojo has two OpenVAS parsers; Bulwark ports the current one ("v2"), so only its tests
@@ -76,17 +85,24 @@ class _Case(ast.NodeVisitor):
         self.per: dict[int, dict[str, Any]] = {}
         self.bound: dict[str, int | None] = {}
         self.parses = 0
+        self.results: set[str] = {"findings"}  # names that hold a parse result
 
     def _finding_index(self, node: ast.AST) -> int | None:
         """The index a `finding` expression refers to: `findings[3]`, or a name bound to one."""
         if isinstance(node, ast.Name):
             return self.bound.get(node.id)
         if isinstance(node, ast.Subscript) and isinstance(node.value, ast.Name):
-            return _index(node.slice) if node.value.id == "findings" else None
+            return _index(node.slice) if node.value.id in self.results else None
         return None
 
     def visit_Assign(self, node: ast.Assign) -> None:
         self.generic_visit(node)
+        if (
+            isinstance(node.value, ast.Call)
+            and isinstance(node.value.func, ast.Attribute)
+            and node.value.func.attr in self.parsers
+        ):
+            self.results |= {t.id for t in node.targets if isinstance(t, ast.Name)}
         if len(node.targets) == 1 and isinstance(node.targets[0], ast.Name):
             self.bound[node.targets[0].id] = self._finding_index(node.value)
 
@@ -123,7 +139,7 @@ class _Case(ast.NodeVisitor):
             return
         if isinstance(actual, ast.Call) and getattr(actual.func, "id", "") == "len" and actual.args:
             arg = actual.args[0]
-            if isinstance(arg, ast.Name) and arg.id == "findings":
+            if isinstance(arg, ast.Name) and arg.id in self.results:
                 self.count = value
                 return
             # len(self.get_unsaved_locations(finding)) -- how many places a finding applies to

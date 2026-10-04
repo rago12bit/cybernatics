@@ -1,0 +1,356 @@
+{
+ "files": {
+  "all_statuses.json": {
+   "bytes": 31482,
+   "expect": [
+    {
+     "count": 8,
+     "findings": {
+      "2": {
+       "cwe": 0
+      },
+      "3": {
+       "cwe": 190,
+       "title": "CVE-2018-1000876 binutils 2.31.1-16"
+      },
+      "4": {
+       "cwe": 476
+      }
+     },
+     "test": "test_all_statuses"
+    }
+   ],
+   "sha256": "db71231d4a98484dffbe664986b577d4ad5614f10fdf1516a890b035b07813a9",
+   "vendored": true
+  },
+  "cvss_severity_source.json": {
+   "bytes": 7144,
+   "expect": [
+    {
+     "count": 2,
+     "findings": {
+      "0": {
+       "cvssv3_score": 6.5,
+       "severity": "Medium"
+      },
+      "1": {
+       "cvssv3_score": 7.5,
+       "severity": "High"
+      }
+     },
+     "test": "test_cvss_severity_sources"
+    }
+   ],
+   "sha256": "5dd096482ddacddf7149357cad71877673d782b454a7d4b2dc7dcb322ddab9f0",
+   "vendored": true
+  },
+  "cvssv4_severity_source.json": {
+   "bytes": 12593,
+   "expect": [
+    {
+     "count": 3,
+     "findings": {
+      "0": {
+       "severity": "Medium"
+      }
+     },
+     "test": "test_cvssv4_severity_sources"
+    }
+   ],
+   "sha256": "c8b76ce32e13f8e26c2541974d775130b7c16cb70644fa6cdfff58da9d655de1",
+   "vendored": true
+  },
+  "image_multi_digest.json": {
+   "bytes": 1068,
+   "expect": [
+    {
+     "count": 1,
+     "test": "test_one_image_location_per_repo_digest"
+    }
+   ],
+   "sha256": "c5dca0f21d0177af720a632ffe91ea96fa89b6e9bac4a66275a7c84b68d86ecb",
+   "vendored": true
+  },
+  "issue_10991.json": {
+   "bytes": 161987,
+   "expect": [
+    {
+     "count": 37,
+     "test": "test_issue_10991"
+    }
+   ],
+   "sha256": "a854876bc1bb481f393e299d82eb87a9c920cb7cfa958183944dcb1b00473d76",
+   "vendored": true
+  },
+  "issue_14136.json": {
+   "bytes": 4320,
+   "expect": [
+    {
+     "count": 1,
+     "findings": {
+      "0": {
+       "severity": "Low"
+      }
+     },
+     "test": "test_misconfig_fields"
+    }
+   ],
+   "sha256": "19377437b30edd918f27f491562671d9a5e26fd7dd483b177ad8638258263e0d",
+   "vendored": true
+  },
+  "issue_9092.json": {
+   "bytes": 3179,
+   "expect": [
+    {
+     "count": 1,
+     "findings": {
+      "0": {
+       "severity": "High"
+      }
+     },
+     "test": "test_issue_9092"
+    }
+   ],
+   "sha256": "f3c95616a411f360feb629efe5ec26951a1ba451becd0172a868f79c2394f8fc",
+   "vendored": true
+  },
+  "issue_9170.json": {
+   "bytes": 161995,
+   "expect": [
+    {
+     "count": 37,
+     "findings": {
+      "0": {
+       "severity": "Low",
+       "title": "KSV116 - Runs with a root primary or supplementary GID"
+      }
+     },
+     "test": "test_issue_9170"
+    }
+   ],
+   "sha256": "050d9019230252c6f7241d2c8c337504319dae6ea09acd54e2f03e37db88e90e",
+   "vendored": true
+  },
+  "issue_9263.json": {
+   "bytes": 2820,
+   "expect": [
+    {
+     "count": 1,
+     "findings": {
+      "0": {
+       "severity": "High"
+      }
+     },
+     "test": "test_issue_9263"
+    }
+   ],
+   "sha256": "748564bc966bde80c4ccce5d4bde95de4f5280dde87966228e9fb4682849b920",
+   "vendored": true
+  },
+  "issue_9333.json": {
+   "bytes": 44434,
+   "expect": [
+    {
+     "count": 13,
+     "findings": {
+      "0": {
+       "severity": "Low"
+      }
+     },
+     "test": "test_issue_9333"
+    }
+   ],
+   "sha256": "b0a9bf1e15a599b5679c11b0f2ddbfdc64ddc80811fcf8be3ce09a07c29a30fe",
+   "vendored": true
+  },
+  "kubernetes.json": {
+   "bytes": 80212,
+   "expect": [
+    {
+     "count": 20,
+     "findings": {
+      "0": {
+       "component_name": "apt",
+       "component_version": "1.8.2.1",
+       "severity": "Medium",
+       "title": "CVE-2020-27350 apt 1.8.2.1"
+      },
+      "10": {
+       "component_name": null,
+       "component_version": null,
+       "severity": "Medium",
+       "title": "KSV001 - Process can elevate its own privileges"
+      },
+      "5": {
+       "component_name": "apt",
+       "component_version": "1.8.2.1",
+       "severity": "Medium",
+       "title": "CVE-2020-27350 apt 1.8.2.1"
+      }
+     },
+     "test": "test_kubernetes"
+    }
+   ],
+   "sha256": "6f6b1194ddf1e7e8d0ce749822c2f44ac1de4030cee31e507fee3fda71ebc60e",
+   "vendored": true
+  },
+  "kubernetes_fabricated_internal_duplicates.json": {
+   "bytes": 52387,
+   "expect": [],
+   "sha256": "2e26f41b533956d06e4ce93002446f5e923fb8ef034615d24df20f5dfc1a611c",
+   "vendored": true
+  },
+  "kubernetes_fabricated_internal_duplicates_subset.json": {
+   "bytes": 16397,
+   "expect": [],
+   "sha256": "a5146084f2e0eafb0b1888af98152dc83766ed77cda56119af590589096f1f51",
+   "vendored": true
+  },
+  "kubernetes_fabricated_subset.json": {
+   "bytes": 52388,
+   "expect": [],
+   "sha256": "40970e7ca81c5a38714dd9fe4c7bb439a12af4ecfa68b3915a2fac0b4b0d2fe1",
+   "vendored": true
+  },
+  "legacy_many_vulns.json": {
+   "bytes": 173794,
+   "expect": [
+    {
+     "count": 93,
+     "findings": {
+      "0": {
+       "component_name": "apt",
+       "component_version": "1.8.2.2",
+       "cwe": 347,
+       "severity": "Low"
+      }
+     },
+     "test": "test_legacy_many_vulns"
+    }
+   ],
+   "sha256": "8f35831da45a5cf489d9227f5e6528c31a10d686f112f01038b9549c0c555e24",
+   "vendored": true
+  },
+  "legacy_no_vuln.json": {
+   "bytes": 4,
+   "expect": [
+    {
+     "count": 0,
+     "test": "test_legacy_no_vuln"
+    }
+   ],
+   "sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+   "vendored": true
+  },
+  "legacy_trivy_mix.json": {
+   "bytes": 4409,
+   "expect": [],
+   "sha256": "27cb3251889f3242f8e5a5e363518886a15122f76ca8d60b18fd1cc6cf3e474a",
+   "vendored": true
+  },
+  "license_scheme.json": {
+   "bytes": 6166,
+   "expect": [
+    {
+     "count": 19,
+     "findings": {
+      "0": {
+       "severity": "High"
+      }
+     },
+     "test": "test_license_scheme"
+    }
+   ],
+   "sha256": "d21bb377114a18e41286f6fa9687a9d488245f88c997de92cfcd57366ffd981e",
+   "vendored": true
+  },
+  "misconfigurations_and_secrets.json": {
+   "bytes": 8256,
+   "expect": [
+    {
+     "count": 5,
+     "findings": {
+      "2": {
+       "severity": "High",
+       "title": "DS002 - Image user should not be 'root'"
+      },
+      "3": {
+       "severity": "Critical",
+       "title": "Secret detected in Dockerfile - GitHub Personal Access Token"
+      }
+     },
+     "test": "test_misconfigurations_and_secrets"
+    }
+   ],
+   "sha256": "f2d6e8624205c67d822464b1b3520a9a65f9d42701e4e5383640510e2b07f0c6",
+   "vendored": true
+  },
+  "scheme_2_many_vulns.json": {
+   "bytes": 15991,
+   "expect": [
+    {
+     "count": 5,
+     "findings": {
+      "0": {
+       "component_name": "freetype",
+       "component_version": "2.9.1-r2",
+       "cwe": 787,
+       "severity": "Medium",
+       "title": "CVE-2020-15999 freetype 2.9.1-r2"
+      },
+      "1": {
+       "component_name": "krb5-libs",
+       "component_version": "1.15.5-r0",
+       "cwe": 674,
+       "severity": "High",
+       "title": "CVE-2020-28196 krb5-libs 1.15.5-r0"
+      }
+     },
+     "test": "test_scheme_2_many_vulns"
+    }
+   ],
+   "sha256": "2f4d1f9b8f53c338da9d8e395244dcbf2bcbae1863a159e2a3b3e7060c2c5cad",
+   "vendored": true
+  },
+  "scheme_2_no_vuln.json": {
+   "bytes": 385,
+   "expect": [
+    {
+     "count": 0,
+     "test": "test_scheme_2_no_vuln"
+    }
+   ],
+   "sha256": "52249f55543f7c1e8cd2fed00bd38468a028f0cccbec5614c3dc06d029ff7dc4",
+   "vendored": true
+  },
+  "severity_prio.json": {
+   "bytes": 7145,
+   "expect": [
+    {
+     "count": 2,
+     "findings": {
+      "0": {
+       "cvssv3_score": 6.5,
+       "severity": "Low"
+      },
+      "1": {
+       "cvssv3_score": 7.5,
+       "severity": "Critical"
+      }
+     },
+     "test": "test_severity_prio"
+    }
+   ],
+   "sha256": "b11e95438a0332959f91cb63f9163c29319904497a621ea65affcf7498ebf79f",
+   "vendored": true
+  }
+ },
+ "source": {
+  "commit": "8b12d80ae30904fed44f5a84ff71f28da14bebaf",
+  "license": "BSD-3-Clause (see ../LICENSE)",
+  "repository": "https://github.com/DefectDojo/django-DefectDojo",
+  "scans": "unittests/scans/trivy",
+  "tests": "unittests/tools/test_trivy_parser.py"
+ },
+ "tool": "trivy"
+}

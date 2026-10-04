@@ -60,9 +60,12 @@ Bulwark is not affiliated with or endorsed by DefectDojo, Inc.
 | Bulwark file | Derived from | Parser |
 |---|---|---|
 | `core/imports/parsers/burp.py`, `core/dast/mapping.py` | `dojo/tools/burp/parser.py` | burp |
+| `core/imports/parsers/grype.py` | `dojo/tools/anchore_grype/parser.py` | grype |
 | `core/imports/parsers/nessus.py`, `core/dast/mapping.py` | `dojo/tools/tenable/` | nessus |
 | `core/imports/parsers/nuclei.py`, `core/dast/mapping.py` | `dojo/tools/nuclei/parser.py` | nuclei |
 | `core/imports/parsers/openvas.py`, `core/dast/mapping.py` | `dojo/tools/openvas/parser_v2/` | openvas |
+| `core/imports/parsers/snyk.py` | `dojo/tools/snyk/parser.py` | snyk |
+| `core/imports/parsers/trivy.py` | `dojo/tools/trivy/parser.py` | trivy |
 | `core/imports/parsers/zap.py`, `core/dast/mapping.py` | `dojo/tools/zap/parser.py` | zap |
 
 > Copyright (c) 2015-2023 DefectDojo, Inc. All rights reserved.

@@ -17,11 +17,26 @@ import pytest
 from core.imports.parsers import get_parser, run_parser_on_bytes
 from tests.unit import ddview
 
-TOOLS = ["zap", "nuclei", "burp", "nessus", "openvas"]
+TOOLS = ["zap", "nuclei", "burp", "nessus", "openvas", "grype", "trivy", "snyk"]
 
 # (tool, file, test, finding index, field) -> why ours differs from what DefectDojo's test asserts.
 # Reviewed one by one; each is a deliberate decision, not a miss.
 DIFFERENCES: dict[tuple[str, str, str, str, str], str] = {
+    ("trivy", "license_scheme.json", "test_license_scheme", "count", "findings"): (
+        "DefectDojo makes a finding of every licence Trivy reports (19 here); a licence is not a "
+        "vulnerability, so Bulwark imports none and the import says how many it left out"
+    ),
+    (
+        "grype",
+        "same_cve_different_paths.json",
+        "test_detailed_mode_separates_same_cve_different_paths",
+        "count",
+        "findings",
+    ): (
+        "DefectDojo's non-default mode keeps one vulnerability in one package at two paths as two "
+        "findings; Bulwark's Issue is package, version and vulnerability, so they are one Issue "
+        "(each path still has its own finding and location)"
+    ),
     ("nessus", "nessus_new.csv", "test_parse_nessus_new", "0", "title"): (
         "DefectDojo titles every finding in a Tenable.io export with the ASSET's name (its "
         "title lookup falls through to `asset.name` because the export has no `Name` column); the "
@@ -31,6 +46,12 @@ DIFFERENCES: dict[tuple[str, str, str, str, str], str] = {
         "this CSV has a CVSS score and no vector, so the version is unknown; DefectDojo records "
         "the score as v3 anyway, Bulwark leaves cvss_v3_1 empty rather than guess"
     ),
+}
+
+
+# Files DefectDojo parses that this parser deliberately refuses, with why.
+EXPECTED_ERRORS: dict[tuple[str, str], str] = {
+    ("snyk", "snykcode_issue_9270.json"): "Snyk Code writes SARIF; upload it with the sarif parser",
 }
 
 
@@ -53,19 +74,32 @@ def test_matches_defectdojo(tool: str, name: str, info: dict[str, Any]) -> None:
 
     parser = get_parser(tool)
     result = run_parser_on_bytes(parser, data)
+    if (tool, name) in EXPECTED_ERRORS:
+        assert result.error, f"{name}: expected a refusal ({EXPECTED_ERRORS[(tool, name)]})"
+        return
     assert result.error is None, f"{name}: {result.error}"
-    assert (
-        parser.sniff(data[:65536]) > 0 or len(data) == 0
+    # An empty file and a bare `null` are not recognisable as anything; they import only when the
+    # parser is named.
+    assert parser.sniff(data[:65536]) > 0 or data.strip() in (
+        b"",
+        b"null",
     ), "sniff() does not recognise its own sample"
 
     groups = ddview.GROUPERS[tool](result.findings, name)
     for exp in info["expect"]:
         where = f"{tool}/{name}::{exp['test']}"
         if "count" in exp:
-            assert len(groups) == exp["count"], f"{where}: findings"
+            reason = DIFFERENCES.get((tool, name, exp["test"], "count", "findings"))
+            if reason:
+                assert len(groups) != exp["count"], f"{where}: no longer differs"
+                continue  # the per-finding expectations index DefectDojo's list, not ours
+            else:
+                assert len(groups) == exp["count"], f"{where}: findings"
         for index, fields in exp.get("findings", {}).items():
             got = ddview.view(tool, groups[int(index)])
             for field, want in fields.items():
+                if field not in got:
+                    continue  # a DefectDojo-only field; see ddview.SKIPPED_FIELDS
                 want = 0 if (field == "cwe" and want is None) else want
                 if field == "cvssv3_score" and isinstance(want, str):
                     want = float(want)  # DefectDojo keeps some scores as strings

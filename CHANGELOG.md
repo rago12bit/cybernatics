@@ -6,6 +6,12 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 ## [Unreleased]
 
 ### Added
+- **Ported parsers, batch 2 (part): Grype, Trivy, Snyk.** `grype` and `trivy` read a report with the
+  very function a native scan uses (`GrypeAdapter.to_finding`, `TrivyAdapter.result_findings`), so an
+  uploaded report and a scan cannot disagree; `snyk` reads `snyk test --json` for Open Source and
+  Container projects, one or many. A Trivy finding now carries the CVSS score of the source that set
+  its severity (NVD's 9.8 no longer sits beside a GitHub-decided HIGH), and Trivy secrets are read when
+  present.
 - **Ported parsers, batch 1 (Week 57, ADR-0041): ZAP, Nuclei, Burp, Nessus, OpenVAS.** `zap` reads
   ZAP's XML (including the requests-and-responses variant) and JSON reports; `nuclei` reads JSONL and
   the JSON array; `burp` the XML issue export (the one parser that admits Burp's internal DOCTYPE, and

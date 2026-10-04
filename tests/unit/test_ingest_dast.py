@@ -155,12 +155,17 @@ def test_a_deeply_nested_nuclei_record_is_refused() -> None:
 # --- detection ------------------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("tool", ["zap", "nuclei", "burp", "nessus", "openvas"])
+@pytest.mark.parametrize(
+    "tool", ["zap", "nuclei", "burp", "nessus", "openvas", "grype", "trivy", "snyk"]
+)
 def test_every_vendored_sample_is_detected_as_its_own_tool_and_nothing_else(tool: str) -> None:
     for path in sorted((DD / tool).iterdir()):
-        if path.name == "MANIFEST.json" or path.stat().st_size == 0:
-            continue
+        if path.name == "MANIFEST.json" or path.read_bytes().strip() in (b"", b"null"):
+            continue  # nothing to recognise: such a file imports only when the parser is named
         ranked = detect(path.read_bytes()[:65536])
+        if path.name == "snykcode_issue_9270.json":  # Snyk Code writes SARIF, and is detected as it
+            assert ranked[0][0].name == "sarif"
+            continue
         assert ranked and ranked[0][0].name == tool, path.name
         assert ranked[0][1] >= CONFIDENT, path.name
         assert len(ranked) == 1, f"{path.name} also looks like {[p.name for p, _ in ranked[1:]]}"
@@ -170,7 +175,16 @@ def test_other_formats_are_not_mistaken_for_zap_or_nuclei() -> None:
     for path in [Path("tests/golden/semgrep/raw.json"), Path("tests/golden/osv-scanner/raw.json"),
                  *Path("tests/golden/ingest").glob("cyclonedx-*"), Path("tests/golden/ingest/spdx.json")]:  # fmt: skip
         names = {p.name for p, _ in detect(path.read_bytes()[:65536])}
-        assert not names & {"zap", "nuclei", "burp", "nessus", "openvas"}, path
+        assert not names & {
+            "zap",
+            "nuclei",
+            "burp",
+            "nessus",
+            "openvas",
+            "grype",
+            "trivy",
+            "snyk",
+        }, path
 
 
 # --- hostile input --------------------------------------------------------------------------------

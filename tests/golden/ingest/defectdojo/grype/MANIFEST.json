@@ -1,0 +1,216 @@
+{
+ "files": {
+  "anchore_grype_epss_problem.json": {
+   "bytes": 15426,
+   "expect": [],
+   "sha256": "3688d9557b602ad242d0b6513ef293962eec4d9ea3170ee64b5e0b96f85e7a94",
+   "vendored": true
+  },
+  "check_all_fields.json": {
+   "bytes": 52211,
+   "expect": [
+    {
+     "count": 5,
+     "findings": {
+      "0": {
+       "component_name": "libgssapi-krb5-2",
+       "component_version": "1.17-3+deb10u3",
+       "cvssv3_score": null,
+       "severity": "Info",
+       "title": "CVE-2004-0971 in libgssapi-krb5-2:1.17-3+deb10u3",
+       "vuln_id_from_tool": "CVE-2004-0971"
+      },
+      "1": {
+       "component_name": "redis",
+       "component_version": "4.0.2",
+       "severity": "High",
+       "title": "CVE-2021-32626 in redis:4.0.2",
+       "vuln_id_from_tool": "CVE-2021-32626"
+      },
+      "2": {
+       "component_name": "libc-bin",
+       "component_version": "2.28-10",
+       "severity": "Critical",
+       "title": "CVE-2021-33574 in libc-bin:2.28-10",
+       "vuln_id_from_tool": "CVE-2021-33574"
+      },
+      "3": {
+       "component_name": "libc6",
+       "component_version": "2.28-10",
+       "severity": "Critical",
+       "title": "CVE-2021-33574 in libc6:2.28-10",
+       "vuln_id_from_tool": "CVE-2021-33574"
+      },
+      "4": {
+       "component_name": "Django",
+       "component_version": "3.2.9",
+       "severity": "High",
+       "title": "GHSA-v6rh-hp5x-86rv in Django:3.2.9",
+       "vuln_id_from_tool": "GHSA-v6rh-hp5x-86rv"
+      }
+     },
+     "test": "test_check_all_fields"
+    }
+   ],
+   "sha256": "e1a781a1d71d2617e8e9c8a11b930c96be77a06d04c49d9be63d133018998707",
+   "vendored": true
+  },
+  "check_all_fields_different_ids_fabricated.json": {
+   "bytes": 4544,
+   "expect": [],
+   "sha256": "5ffc19ddecabedde40a7b45a710690bcfbb33e3375734c4df901ef8b6df41ebd",
+   "vendored": true
+  },
+  "check_all_fields_no_ids_fabricated.json": {
+   "bytes": 3246,
+   "expect": [],
+   "sha256": "99c5ba250d74019de94a0f2642667642af074c6bc2cdfc5db4a3b7791672852c",
+   "vendored": true
+  },
+  "check_all_fields_with_ids_fabricated.json": {
+   "bytes": 4522,
+   "expect": [],
+   "sha256": "bd8e5a001a672d3e4a162c66a21d8fade829c863a48f155ad614f554b47d2ac7",
+   "vendored": true
+  },
+  "check_kev_date.json": {
+   "bytes": 5458,
+   "expect": [
+    {
+     "count": 2,
+     "test": "test_grype_kev_date_parsing"
+    }
+   ],
+   "sha256": "c27ddd2214a173fcb66e45814a494f40d43a347c9ae3fab0ca4fa1946debb49a",
+   "vendored": true
+  },
+  "fix_available.json": {
+   "bytes": 30543,
+   "expect": [
+    {
+     "count": 1,
+     "test": "test_grype_fix_available"
+    }
+   ],
+   "sha256": "77e4ae2903dd9024de567e6b3da1cc2a083d81d2aaf2dfd0008573a49c95c6a3",
+   "vendored": true
+  },
+  "fix_not_available.json": {
+   "bytes": 30523,
+   "expect": [
+    {
+     "count": 1,
+     "test": "test_grype_fix_not_available"
+    }
+   ],
+   "sha256": "9247841192a998cb7eb3ddec84da763981869fff4af98912af3d8fe44421aa6f",
+   "vendored": true
+  },
+  "issue_9618.json": {
+   "bytes": 212212,
+   "expect": [
+    {
+     "count": 35,
+     "test": "test_grype_issue_9618"
+    }
+   ],
+   "sha256": "66909a67e9b99ff40a47d41832e373cd5bab94eb97b69e7221a061a4157f9c13",
+   "vendored": true
+  },
+  "issue_9942.json": {
+   "bytes": 30523,
+   "expect": [
+    {
+     "count": 1,
+     "test": "test_grype_issue_9942"
+    }
+   ],
+   "sha256": "9247841192a998cb7eb3ddec84da763981869fff4af98912af3d8fe44421aa6f",
+   "vendored": true
+  },
+  "many_vulns.json": {
+   "bytes": 3804852,
+   "expect": [
+    {
+     "count": 1509,
+     "test": "test_parser_has_many_findings"
+    }
+   ],
+   "sha256": "8a6e03904c4e0342cb2ced015c809f173c0d6745609a1cff2574f77be84c0f4a",
+   "vendored": false
+  },
+  "many_vulns2.json": {
+   "bytes": 3311232,
+   "expect": [
+    {
+     "count": 1567,
+     "test": "test_grype_parser_with_one_critical_vuln_has_one_findings"
+    }
+   ],
+   "sha256": "f849c5d7a257c342832ad28e241978241110a4f48c968a7cb53ab597458a398a",
+   "vendored": false
+  },
+  "many_vulns3.json": {
+   "bytes": 821557,
+   "expect": [
+    {
+     "count": 327,
+     "test": "test_grype_parser_with_many_vulns3"
+    }
+   ],
+   "sha256": "5055f54811d5c4a14baa8064b155d65bf2f85bab82b7b5ca94400f02dac3aae4",
+   "vendored": true
+  },
+  "many_vulns4.json": {
+   "bytes": 21443,
+   "expect": [
+    {
+     "count": 9,
+     "test": "test_grype_parser_with_new_matcher_list"
+    }
+   ],
+   "sha256": "ea9de4e59d22a4701dba48699c9422eb477f55eaad2d5015c978ccb10c16c5ff",
+   "vendored": true
+  },
+  "many_vulns_with_epss_values.json": {
+   "bytes": 70680,
+   "expect": [],
+   "sha256": "b03b4787f2b9104166825205faf3cc3a0d932d7c4e1a449682c6d58accd76d95",
+   "vendored": true
+  },
+  "no_vuln.json": {
+   "bytes": 3442,
+   "expect": [
+    {
+     "count": 0,
+     "test": "test_parser_has_no_findings"
+    }
+   ],
+   "sha256": "41ffbfd97c4c16899d1d5f6eb2ad928a392e06166448ba10a63fad33869ef257",
+   "vendored": true
+  },
+  "same_cve_different_paths.json": {
+   "bytes": 4539,
+   "expect": [
+    {
+     "count": 1,
+     "test": "test_default_mode_deduplicates_same_cve_different_paths"
+    },
+    {
+     "count": 2,
+     "test": "test_detailed_mode_separates_same_cve_different_paths"
+    }
+   ],
+   "sha256": "fb3ac7e71532c253f58a90758b6baf42587919028693c36bd892aa68c0af58cc",
+   "vendored": true
+  }
+ },
+ "source": {
+  "commit": "8b12d80ae30904fed44f5a84ff71f28da14bebaf",
+  "license": "BSD-3-Clause (see ../LICENSE)",
+  "repository": "https://github.com/DefectDojo/django-DefectDojo",
+  "scans": "unittests/scans/anchore_grype",
+  "tests": "unittests/tools/test_anchore_grype_parser.py"
+ },
+ "tool": "grype"
+}

@@ -1,0 +1,232 @@
+{
+ "files": {
+  "all-projects_many_vulns.json": {
+   "bytes": 26725,
+   "expect": [
+    {
+     "count": 4,
+     "test": "test_snykParser_allprojects_has_many_findings"
+    }
+   ],
+   "sha256": "bd507f9b0006d627937250288346b71f0fe7ad69aa166ec1d4a401453ed7369f",
+   "vendored": true
+  },
+  "all-projects_no_vulns.json": {
+   "bytes": 2246,
+   "expect": [
+    {
+     "count": 0,
+     "test": "test_snykParser_allprojects_has_no_finding"
+    }
+   ],
+   "sha256": "14e0994fa762abac4319f05866df4e278e21e5311007aaf00679772e905abf9e",
+   "vendored": true
+  },
+  "all-projects_one_vuln.json": {
+   "bytes": 8035,
+   "expect": [
+    {
+     "count": 1,
+     "test": "test_snykParser_allprojects_has_one_finding"
+    }
+   ],
+   "sha256": "13027d86aef11ccbf885a5f9b5a54042c809c6281640f32b3ae3ff3715f78402",
+   "vendored": true
+  },
+  "all_containers_target_output.json": {
+   "bytes": 274577,
+   "expect": [
+    {
+     "count": 40,
+     "findings": {
+      "0": {
+       "severity": "Critical"
+      }
+     },
+     "test": "test_snykParser_target_file"
+    }
+   ],
+   "sha256": "01f4eaa36f4274245d01b714a16cc855f4689ab0f3dff3a73d2dc357aff54e11",
+   "vendored": true
+  },
+  "all_projects_issue4277.json": {
+   "bytes": 677505,
+   "expect": [
+    {
+     "count": 82,
+     "findings": {
+      "0": {
+       "component_name": "Microsoft.AspNetCore",
+       "component_version": "2.2.0",
+       "cwe": 200,
+       "severity": "High",
+       "vuln_id_from_tool": "SNYK-DOTNET-MICROSOFTASPNETCORE-174184"
+      },
+      "40": {
+       "component_name": "lodash",
+       "component_version": "4.17.11",
+       "cwe": 78,
+       "severity": "High",
+       "vuln_id_from_tool": "SNYK-JS-LODASH-1040724"
+      },
+      "81": {
+       "component_name": "yargs-parser",
+       "component_version": "5.0.0",
+       "cwe": 400,
+       "severity": "Medium",
+       "vuln_id_from_tool": "SNYK-JS-YARGSPARSER-560381"
+      }
+     },
+     "test": "test_snykParser_allprojects_issue4277"
+    }
+   ],
+   "sha256": "9e153345a3ba3a4ec7711a49b2d12e8bec6ce82a7ad67d0b36eaa8e423ffb30e",
+   "vendored": true
+  },
+  "single_project_None_cvss.json": {
+   "bytes": 6693,
+   "expect": [
+    {
+     "count": 1,
+     "findings": {
+      "0": {
+       "severity": "Low",
+       "vuln_id_from_tool": "SNYK-SLES153-PERMISSIONS-2648113"
+      }
+     },
+     "test": "test_snykParser_cvssscore_none"
+    }
+   ],
+   "sha256": "8a97bc1a88617c5046c55786c33d4b7350574292e2986f6c7350ac33518ea714",
+   "vendored": true
+  },
+  "single_project_many_vulns.json": {
+   "bytes": 260402,
+   "expect": [
+    {
+     "count": 41,
+     "test": "test_snykParser_single_has_many_findings"
+    }
+   ],
+   "sha256": "0c2f0c799224e825550aba2765d965f7ab7d35d7d2d4ce217f45deef4153bc83",
+   "vendored": true
+  },
+  "single_project_no_vulns.json": {
+   "bytes": 662,
+   "expect": [
+    {
+     "count": 0,
+     "test": "test_snykParser_single_has_no_finding"
+    }
+   ],
+   "sha256": "e8b073ce33ebae813529d0aacb08c1c7ca42a9ba12a64d0878ac312be62df52a",
+   "vendored": true
+  },
+  "single_project_null_identifiers.json": {
+   "bytes": 1172,
+   "expect": [
+    {
+     "count": 2,
+     "test": "test_snykParser_null_identifiers"
+    }
+   ],
+   "sha256": "7e2873582c45b39a6a06bdde23800024b5fc96db34471f06ece13b2a66296804",
+   "vendored": true
+  },
+  "single_project_one_vuln.json": {
+   "bytes": 6282,
+   "expect": [
+    {
+     "count": 1,
+     "test": "test_snykParser_single_has_one_finding"
+    },
+    {
+     "findings": {
+      "0": {
+       "cwe": 611,
+       "severity": "Medium",
+       "title": "com.test:myframework@1.0.0-SNAPSHOT: XML External Entity (XXE) Injection",
+       "vuln_id_from_tool": "SNYK-JAVA-ORGAPACHESANTUARIO-460281"
+      }
+     },
+     "test": "test_snykParser_finding_has_fields"
+    }
+   ],
+   "sha256": "b99b3a6ff147902025072c97cd9b19618cd7a2cd945ae42c5875c5aa46008c0c",
+   "vendored": true
+  },
+  "single_project_one_vuln_with_ampersands.json": {
+   "bytes": 14972,
+   "expect": [
+    {
+     "count": 1,
+     "test": "test_snykParser_file_path_with_ampersand_is_preserved"
+    }
+   ],
+   "sha256": "b66d0febc084c94711a751a40a33d14f55b54f8ee3025014cdf4cd61463f8396",
+   "vendored": true
+  },
+  "single_project_upgrade_libs.json": {
+   "bytes": 1844815,
+   "expect": [
+    {
+     "count": 254,
+     "findings": {
+      "227": {
+       "severity": "High"
+      }
+     },
+     "test": "test_snykParser_update_libs_tag"
+    }
+   ],
+   "sha256": "198688499cfff78bf5c9eaf817983abaa40958328c5c75435cf7d3307d29757c",
+   "vendored": true
+  },
+  "snykcode_issue_9270.json": {
+   "bytes": 475580,
+   "expect": [
+    {
+     "count": 39,
+     "test": "test_snykcode_issue_9270"
+    }
+   ],
+   "sha256": "ec8ee7298c5d4dd79ff8f73df9ba6574b9a25e6d3461f2c13be68c57c5ae126b",
+   "vendored": true
+  },
+  "snykcontainer_issue_9270.json": {
+   "bytes": 206215,
+   "expect": [
+    {
+     "count": 25,
+     "test": "test_snykcontainer_issue_9270"
+    }
+   ],
+   "sha256": "4e107a3dfd095bb6e01e6d07b714d004f9166078321e64f2cdd43111f0905f8f",
+   "vendored": true
+  },
+  "snykcontainer_issue_epss.json": {
+   "bytes": 73080,
+   "expect": [
+    {
+     "count": 1,
+     "findings": {
+      "0": {
+       "title": "docker-image|sarim04/juiceshop@latest: CVE-2023-4039"
+      }
+     },
+     "test": "test_snykcode_issue_9270_epss"
+    }
+   ],
+   "sha256": "7a6a2459590508fa43f62036fb3a92e173aec388dd922a6092b2a0f5fa1244b3",
+   "vendored": true
+  }
+ },
+ "source": {
+  "commit": "8b12d80ae30904fed44f5a84ff71f28da14bebaf",
+  "license": "BSD-3-Clause (see ../LICENSE)",
+  "repository": "https://github.com/DefectDojo/django-DefectDojo",
+  "scans": "unittests/scans/snyk",
+  "tests": "unittests/tools/test_snyk_parser.py"
+ },
+ "tool": "snyk"
+}

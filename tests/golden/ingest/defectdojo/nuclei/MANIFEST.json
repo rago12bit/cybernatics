@@ -134,11 +134,13 @@
      "count": 2,
      "findings": {
       "0": {
+       "component_name": "x-content-type-options",
        "severity": "Info",
        "title": "HTTP Missing Security Headers",
        "vuln_id_from_tool": "http-missing-security-headers"
       },
       "1": {
+       "component_name": "asp.net-favicon",
        "severity": "Info",
        "title": "favicon-detection",
        "vuln_id_from_tool": "favicon-detect"

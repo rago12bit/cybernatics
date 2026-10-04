@@ -71,34 +71,76 @@ class TrivyAdapter(ToolAdapter):
             log.warning("trivy: could not parse output: %s", exc)
             return []
         findings: list[Finding] = []
-        seen_misconfigs: set[tuple[str, str, int, int, str]] = set()
+        seen: set[tuple[str, str, int, int, str]] = set()
         for res in results:
             try:
-                target = str(res["Target"])
-                rtype = str(res.get("Type", ""))
-                for v in res.get("Vulnerabilities") or []:
-                    if (f := self._vuln(v, target, rtype)) is not None:
-                        findings.append(f)
-                for m in res.get("Misconfigurations") or []:
-                    # Trivy reports some misconfigs twice (same rule, resource and lines; only
-                    # cosmetic fields differ). Collapse them here, deliberately and visibly.
-                    cause = m.get("CauseMetadata") or {}
-                    key = (
-                        str(m.get("ID")),
-                        target,
-                        int(cause.get("StartLine") or 0),
-                        int(cause.get("EndLine") or 0),
-                        str(cause.get("Resource", "")),
-                    )
-                    if key in seen_misconfigs:
-                        log.debug("trivy: collapsed duplicate misconfiguration %s", key)
-                        continue
-                    seen_misconfigs.add(key)
-                    if (f := self._misconfig(m, target, rtype)) is not None:
-                        findings.append(f)
+                findings.extend(self.result_findings(res, seen))
             except (KeyError, TypeError, AttributeError) as exc:
                 log.warning("trivy: skipping malformed result block: %s", exc)
         return findings
+
+    def result_findings(
+        self, res: dict[str, Any], seen_misconfigs: set[tuple[str, str, int, int, str]]
+    ) -> list[Finding]:
+        """The findings in one entry of Trivy's `Results`. Native scans and uploaded reports both
+        come through here, so one report is read one way. `seen_misconfigs` carries across the
+        entries of one report: Trivy reports some misconfigurations twice (same rule, resource and
+        lines; only cosmetic fields differ), and they are collapsed here, deliberately and visibly.
+        Raises KeyError/TypeError/AttributeError for a malformed block; callers decide what that
+        costs."""
+        findings: list[Finding] = []
+        target = str(res["Target"])
+        rtype = str(res.get("Type", ""))
+        for v in res.get("Vulnerabilities") or []:
+            if (f := self._vuln(v, target, rtype)) is not None:
+                findings.append(f)
+        for m in res.get("Misconfigurations") or []:
+            cause = m.get("CauseMetadata") or {}
+            key = (
+                str(m.get("ID")),
+                target,
+                int(cause.get("StartLine") or 0),
+                int(cause.get("EndLine") or 0),
+                str(cause.get("Resource", "")),
+            )
+            if key in seen_misconfigs:
+                log.debug("trivy: collapsed duplicate misconfiguration %s", key)
+                continue
+            seen_misconfigs.add(key)
+            if (f := self._misconfig(m, target, rtype)) is not None:
+                findings.append(f)
+        for sec in res.get("Secrets") or []:  # only present when secret scanning was switched on
+            if (f := self._secret(sec, target)) is not None:
+                findings.append(f)
+        return findings
+
+    def _secret(self, sec: dict[str, Any], target: str) -> Finding | None:
+        try:
+            rule = str(sec["RuleID"])
+            native = str(sec.get("Severity", "UNKNOWN")).upper()
+            start = max(int(sec.get("StartLine") or 1), 1)
+            end = max(int(sec.get("EndLine") or start), start)
+            lines = (sec.get("Code") or {}).get("Lines") or []
+            snippet = "\n".join(str(ln.get("Content", "")) for ln in lines)
+            return Finding(
+                id=f"trivy:{rule}:{target}:{start}",
+                title=str(sec.get("Title") or rule),
+                description=str(sec.get("Match") or sec.get("Title") or rule),
+                location=Location(target, start, end, snippet, Location.hash_snippet(snippet)),
+                taxonomy=Taxonomy(Category.SECRETS),
+                scoring=Scoring(
+                    native_severity={"trivy": native},
+                    normalized_severity=normalize("trivy", native),
+                    confidence=0.8,
+                ),
+                evidence=Evidence(reported_by=["trivy"], rule_ids={"trivy": [rule]}),
+                remediation=Remediation(
+                    summary="Revoke the credential and remove it from history."
+                ),
+            )
+        except (KeyError, TypeError, ValueError) as exc:
+            log.warning("trivy: skipping malformed secret: %s", exc)
+            return None
 
     def _vuln(self, v: dict[str, Any], target: str, rtype: str) -> Finding | None:
         try:
@@ -123,7 +165,7 @@ class TrivyAdapter(ToolAdapter):
                 scoring=Scoring(
                     native_severity={"trivy": native},
                     normalized_severity=normalize("trivy", native),
-                    cvss_v3_1=_best_cvss(v.get("CVSS") or {}),
+                    cvss_v3_1=_best_cvss(v.get("CVSS") or {}, v.get("SeveritySource")),
                     confidence=0.9,
                 ),
                 evidence=Evidence(reported_by=["trivy"], rule_ids={"trivy": [vid]}),
@@ -173,8 +215,13 @@ class TrivyAdapter(ToolAdapter):
             return None
 
 
-def _best_cvss(cvss: dict[str, Any]) -> float | None:
-    """CVSS v3 score, preferring NVD, else the highest any source reports."""
+def _best_cvss(cvss: dict[str, Any], severity_source: object = None) -> float | None:
+    """CVSS v3 score: from the source that decided the severity when it has one (a HIGH decided by
+    GitHub's advisory should not be shown with NVD's 9.8), else NVD's, else the highest any source
+    reports."""
+    decided = (cvss.get(str(severity_source)) or {}).get("V3Score") if severity_source else None
+    if decided is not None:
+        return float(decided)
     nvd = (cvss.get("nvd") or {}).get("V3Score")
     if nvd is not None:
         return float(nvd)

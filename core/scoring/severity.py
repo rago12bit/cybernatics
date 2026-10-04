@@ -67,6 +67,8 @@ MATRIX: dict[str, dict[str, Severity]] = {
         "CRITICAL": S.CRITICAL,
         "UNKNOWN": S.INFO,
     },
+    # Snyk's four words; a CVSS score, when the issue has one, decides instead (see the parser).
+    "snyk": {"LOW": S.LOW, "MEDIUM": S.MEDIUM, "HIGH": S.HIGH, "CRITICAL": S.CRITICAL},
     # Burp's own words (its "Information" is Info; it has no Critical).
     "burp": {
         "HIGH": S.HIGH,

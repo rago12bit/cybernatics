@@ -22,6 +22,7 @@ Tool severity vocabularies are not comparable. This table is a **judgment call**
 | sarif | — | ERROR | WARNING | INFO | — |
 | zap | — | HIGH | MEDIUM | LOW | INFORMATIONAL |
 | nuclei | CRITICAL | HIGH | MEDIUM | LOW | INFO, UNKNOWN |
+| snyk | CRITICAL | HIGH | MEDIUM | LOW | — |
 | burp | — | HIGH | MEDIUM | LOW | INFORMATION, INFO |
 | nessus | CRITICAL | HIGH | MEDIUM | LOW | NONE, INFO, INFORMATIONAL |
 | openvas | CRITICAL | HIGH | MEDIUM | LOW | LOG, INFO, DEBUG, FALSE POSITIVE |

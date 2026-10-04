@@ -89,7 +89,24 @@ def group_openvas(findings: list[Finding], name: str = "") -> list[list[Finding]
     )
 
 
+def group_grype(findings: list[Finding], name: str = "") -> list[list[Finding]]:
+    """DefectDojo folds Grype matches on vulnerability, package and version (its default mode; path
+    only matters under a setting)."""
+    return _fold(
+        findings,
+        lambda f: ((rule_of(f), f.package.name, f.package.version) if f.package else f.id),
+    )
+
+
+def group_each(findings: list[Finding], name: str = "") -> list[list[Finding]]:
+    """The Trivy and Snyk parsers fold nothing: one DefectDojo finding per entry."""
+    return [[f] for f in findings]
+
+
 GROUPERS: dict[str, Callable[[list[Finding], str], list[list[Finding]]]] = {
+    "grype": group_grype,
+    "trivy": group_each,
+    "snyk": group_each,
     "zap": group_zap,
     "nuclei": group_nuclei,
     "burp": group_burp,
@@ -110,15 +127,55 @@ LOCATIONS: dict[str, Callable[[list[Finding]], int]] = {
     "burp": len,  # one per folded issue
     "nessus": len,  # one per ReportItem or row
     "openvas": distinct_places,  # only identical places fold, so this is 1
+    "grype": len,
+    "trivy": len,
+    "snyk": len,
 }
+
+
+SKIPPED_FIELDS = "component_name/component_version outside SCA (see view)"
+
+
+def dd_title(tool: str, f: Finding) -> str:
+    """DefectDojo's title for an SCA finding, rebuilt from the fields ours carries (ours reads
+    `<package> <version>: <title>`, which says what is affected before what is wrong). The ZAP-style
+    tools' titles are the same on both sides."""
+    if not f.package and tool != "trivy":
+        return f.title
+    if tool == "grype":
+        return f"{rule_of(f)} in {f.package.name}:{f.package.version}"
+    if tool == "trivy" and f.taxonomy.category.value == "secrets":
+        return f"Secret detected in {f.location.path} - {f.title}"
+    if tool == "trivy" and not f.package:
+        return f"{rule_of(f)} - {f.title}"  # DefectDojo prefixes a misconfiguration with its rule
+    if tool == "trivy" and f.title.startswith(f"{f.package.name} {f.package.version}: "):
+        return f"{rule_of(f)} {f.package.name} {f.package.version}"
+    if tool == "snyk":
+        # DefectDojo prefixes the root project (the first element of Snyk's `from` chain); it is
+        # the first element of the "Vulnerable path" line in our description.
+        path = next(
+            (ln for ln in f.description.splitlines() if ln.startswith("Vulnerable path: ")), ""
+        )
+        root = path.removeprefix("Vulnerable path: ").split(" > ")[0]
+        return f"{root}: {f.title.removeprefix(f'{f.package.name} {f.package.version}: ')}"
+    return f.title
 
 
 def view(tool: str, group: list[Finding]) -> dict[str, Any]:
     """One DefectDojo-shaped finding, from the group of ours it corresponds to."""
     first = group[0]
+    sca = first.package is not None
     cwe = first.taxonomy.cwe[0] if first.taxonomy.cwe else None
     return {
-        "title": first.title,
+        "title": dd_title(tool, first),
+        # DefectDojo's component_* are an SCA package; for a web or network finding they hold
+        # something else (a Nuclei matcher, a CPE product) that has no field here, so they are not
+        # compared -- see SKIPPED_FIELDS.
+        **(
+            {"component_name": first.package.name, "component_version": first.package.version}
+            if sca and first.package
+            else {}
+        ),
         "severity": first.scoring.normalized_severity.value.title(),
         "vuln_id_from_tool": rule_of(first).split(":")[0],
         # DefectDojo stores "no CWE" as 0 (and its tests assert either 0 or None): both mean none.
