@@ -15,6 +15,7 @@ from typing import Any
 from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
+from core.dedup.settings import rekey_for_asset
 from core.imports.reimport import ReimportPlan, plan_reimport
 from core.models.finding import Finding
 from core.persistence import repo
@@ -143,6 +144,7 @@ def preview_import(
 ) -> ImportPreview:
     """Nothing is written. (A session that autoflushes is not touched either: this only reads.)"""
     test, engagement = _load(s, org_id, test_id)
+    rekey_for_asset(s, engagement.asset_id, findings)
     plan, _ = _decide(
         s,
         org_id=org_id,
@@ -197,6 +199,9 @@ def apply_import(
             s.rollback()  # release the lock; nothing was written
             return ImportResult(latest, created=False)
 
+        rekey_for_asset(
+            s, engagement.asset_id, findings
+        )  # before the plan, and before they are stored
         plan, existing_rows = _decide(
             s,
             org_id=org_id,

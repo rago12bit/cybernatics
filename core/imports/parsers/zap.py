@@ -45,6 +45,7 @@ class ZapParser(IngestParser):
     label = "OWASP ZAP report"
     formats = frozenset({"xml", "json"})
     categories = frozenset({"dast"})
+    default_dedup = "tool_id"
     ported_from = "dojo/tools/zap/parser.py"
     ported_into = ("core/dast/mapping.py",)
 

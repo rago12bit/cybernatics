@@ -34,6 +34,7 @@ class TrivyParser(IngestParser):
     label = "Trivy JSON report"
     formats = frozenset({"json"})
     categories = frozenset({"sca", "iac", "container", "secrets"})
+    default_dedup = "package"
     ported_from = "dojo/tools/trivy/parser.py"
 
     def sniff(self, head: bytes) -> float:

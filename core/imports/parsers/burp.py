@@ -145,6 +145,7 @@ class BurpParser(IngestParser):
     label = "Burp Suite XML report"
     formats = frozenset({"xml"})
     categories = frozenset({"dast"})
+    default_dedup = "tool_id"
     ported_from = "dojo/tools/burp/parser.py"
     ported_into = ("core/dast/mapping.py",)
 

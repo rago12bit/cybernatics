@@ -77,8 +77,13 @@ class MatchKeys:
 
 
 def match_keys(f: Finding) -> MatchKeys:
+    # A key a project chose for its source (`core.dedup`, ADR-0042) is the whole identity: the
+    # location-independent fallback would match findings the person told Bulwark are different.
+    chosen = f.fingerprint.startswith("dd1:")
     return MatchKeys(
-        category=f.taxonomy.category.value, primary=f.fingerprint, fallback=fallback_key(f)
+        category=f.taxonomy.category.value,
+        primary=f.fingerprint,
+        fallback=None if chosen else fallback_key(f),
     )
 
 

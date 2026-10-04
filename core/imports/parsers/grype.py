@@ -30,6 +30,7 @@ class GrypeParser(IngestParser):
     label = "Grype JSON report"
     formats = frozenset({"json"})
     categories = frozenset({"sca", "container"})
+    default_dedup = "package"
     ported_from = "dojo/tools/anchore_grype/parser.py"
 
     def sniff(self, head: bytes) -> float:

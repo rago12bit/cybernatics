@@ -119,6 +119,7 @@ class SnykParser(IngestParser):
     label = "Snyk JSON report"
     formats = frozenset({"json"})
     categories = frozenset({"sca", "container"})
+    default_dedup = "package"
     ported_from = "dojo/tools/snyk/parser.py"
 
     def sniff(self, head: bytes) -> float:

@@ -50,6 +50,7 @@ class NucleiParser(IngestParser):
     label = "Nuclei results"
     formats = frozenset({"jsonl", "json"})
     categories = frozenset({"dast"})
+    default_dedup = "tool_id"
     ported_from = "dojo/tools/nuclei/parser.py"
     ported_into = ("core/dast/mapping.py",)
 

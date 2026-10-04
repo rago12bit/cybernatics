@@ -155,6 +155,7 @@ class OpenVasParser(IngestParser):
     label = "OpenVAS / Greenbone report"
     formats = frozenset({"xml", "csv"})
     categories = frozenset({"dast", "network"})
+    default_dedup = "tool_id"
     ported_from = "dojo/tools/openvas/parser_v2/"
     ported_into = ("core/dast/mapping.py",)
 

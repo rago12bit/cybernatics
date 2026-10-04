@@ -845,6 +845,34 @@ class ImportRecord(Base):
     )
 
 
+class DedupSetting(Base):
+    """How one source's findings are matched into Issues for one project (plan §42.3, ADR-0042).
+
+    Settings are versioned and never edited: a change adds a row with the next `version`, so the
+    history of who changed what, when, and with what effect is the table itself. The setting in
+    force for a (project, source) is the row with the highest version; with none, the source uses
+    `fingerprint_v2`, which is what every Issue was matched by before settings existed."""
+
+    __tablename__ = "dedup_settings"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(
+        ForeignKey("organizations.id"), default=DEFAULT_ORG_ID, index=True
+    )
+    asset_id: Mapped[str] = mapped_column(ForeignKey("assets.id", ondelete="CASCADE"), index=True)
+    source: Mapped[str] = mapped_column(String(60))  # a tool or parser name: "nessus", "zap"
+    strategy: Mapped[str] = mapped_column(String(24))
+    fields: Mapped[list[str]] = mapped_column(JsonType, default=list)  # for hash_fields
+    version: Mapped[int] = mapped_column(Integer)
+    note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_by: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+    # What applying it did to the project's existing Issues: {"merged": n, "split": n, ...}.
+    effect: Mapped[dict[str, Any]] = mapped_column(JsonType, default=dict)
+
+    __table_args__ = (UniqueConstraint("asset_id", "source", "version", name="uq_dedup_settings"),)
+
+
 class OutboxEvent(Base):
     """A domain event waiting to be announced (plan §41.1): "write each event to an outbox table in
     the same transaction as the change that caused it, and publish from there. A crash between

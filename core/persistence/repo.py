@@ -17,6 +17,7 @@ from sqlalchemy.sql.elements import ColumnElement
 import core.audit as audit
 from core.assets import asset_key
 from core.dast import ownership
+from core.dedup.settings import rekey_for_asset
 from core.embeddings.chunk import CodeChunk
 from core.imports.reimport import ReimportPlan, plan_reimport
 from core.issues import (
@@ -1430,6 +1431,7 @@ def sync_issues_for_scan(s: Session, scan_id: str, findings: list[Finding]) -> S
     assert scan is not None
     if scan.asset_id is None:
         return SyncResult()
+    rekey_for_asset(s, scan.asset_id, findings)  # a source the project deduplicates by its own key
     existing_rows, existing = _existing_issues(s, scan.asset_id)
     plan = plan_reimport(
         findings,

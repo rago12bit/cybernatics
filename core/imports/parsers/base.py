@@ -109,6 +109,10 @@ class IngestParser(ABC):
     # Set when this parser is derived from another project's (the DefectDojo parsers, BSD-3-Clause):
     # the upstream file path, e.g. "dojo/tools/zap/parser.py". scripts/gen-licenses.py turns every
     # such parser into a THIRD_PARTY_LICENSES.md entry, so a ported file cannot ship without one.
+    # The deduplication strategy suited to this source (plan §42.2's `default_dedup`): what the
+    # settings screen recommends. It is only a recommendation: every source is matched by
+    # `fingerprint_v2` until a project chooses otherwise through a previewed change (ADR-0042).
+    default_dedup: str = "fingerprint_v2"
     ported_from: str = ""
     ported_into: tuple[str, ...] = ()  # other Bulwark files the port lives in (a shared mapper)
 

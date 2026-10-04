@@ -6,6 +6,14 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 ## [Unreleased]
 
 ### Added
+- **Deduplication strategies per source (Week 58, ADR-0042), part 1: the engine.** A project can
+  choose, per source, what makes two findings one Issue: `fingerprint_v2` (the existing fingerprint,
+  and the default, so nothing changes until someone chooses), `tool_id` (the scanner's rule id and
+  where), `hash_fields` (chosen fields), `tool_id_or_hash` and `package`. Settings are versioned by
+  insertion (migration 0029, tenant-isolated) and applied to imports and native scans before findings
+  are matched to Issues; a chosen key also switches off the path-free fallback match, so it means
+  exactly what was chosen. Changing a setting for existing Issues (the previewed dry run) is the
+  next part.
 - **Ported parsers, batch 2: Grype, Trivy, Snyk, GitLab security reports, Checkov.** `gitlab` is
   one parser for GitLab's SAST, dependency, container, secret-detection and DAST/API-fuzzing reports
   (classified by where each record is, GitLab's own `id` not used as identity); `checkov` reads a

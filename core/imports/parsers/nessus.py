@@ -190,6 +190,7 @@ class NessusParser(IngestParser):
     label = "Nessus / Tenable report"
     formats = frozenset({"xml", "csv"})
     categories = frozenset({"dast", "network"})
+    default_dedup = "tool_id"
     ported_from = "dojo/tools/tenable/"
     ported_into = ("core/dast/mapping.py",)
 
