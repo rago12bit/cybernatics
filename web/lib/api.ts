@@ -1,4 +1,4 @@
-import type { AnalyzeResult, MappingPreview, MappingSpec, SavedMapping, CvssScore, CweEntry,
+import type { ConnectorInput, ConnectorKind, ConnectorView, AnalyzeResult, MappingPreview, MappingSpec, SavedMapping, CvssScore, CweEntry,
   EvidenceFile, ManualFindingInput, ManualFindingView, ManualRecorded, ProjectRoutes, DedupApplied, DedupChangeRequest, DedupHistoryEntry, DedupOverview, DedupPreview,
   ImportCreated, ImportView, ParserInfo, ProjectTest, RevertView,
   AssetSummary, AssetVerification, AttackPath, BulkTriageResult,
@@ -468,6 +468,25 @@ export async function evidenceDownloadUrl(attachmentId: string): Promise<string>
   );
   return url.startsWith("http") ? url : `${API_URL}${url}`;
 }
+
+// --- Connectors (Week 60, plan §42.5, §55.7, ADR-0045) ---------------------------------------------
+export const listConnectorKinds = () => request<ConnectorKind[]>("/v2/connector-kinds");
+export const listConnectors = () => request<ConnectorView[]>("/v2/connectors");
+export const getConnector = (id: string) => request<ConnectorView>(`/v2/connectors/${encodeURIComponent(id)}`);
+export const createConnector = (body: ConnectorInput) =>
+  request<ConnectorView>("/v2/connectors", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+export const updateConnector = (id: string, body: Partial<{ enabled: boolean; interval_minutes: number; close_on_empty: boolean; credential: string; name: string }>) =>
+  request<ConnectorView>(`/v2/connectors/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+export const runConnector = (id: string) =>
+  request<ConnectorView>(`/v2/connectors/${encodeURIComponent(id)}/run`, { method: "POST" });
 
 export const listMappings = () => request<SavedMapping[]>("/v2/mappings");
 export const getMapping = (id: string) => request<SavedMapping>(`/v2/mappings/${encodeURIComponent(id)}`);

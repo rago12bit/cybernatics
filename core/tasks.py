@@ -40,6 +40,8 @@ celery_app.conf.beat_schedule = {
     # Retention is measured in days; hourly is far more often than needed but cheap, and keeps a
     # scan's data from lingering long past its org's own retention window (plan §22.2).
     "crypto-shred": {"task": "bulwark.crypto_shred", "schedule": 3600.0},
+    # Connectors (Week 60, plan §42.5): each has its own interval; this only finds the due ones.
+    "connectors": {"task": "bulwark.connectors_due", "schedule": 300.0},
 }
 
 
@@ -152,6 +154,52 @@ def run_import_task(self: Any, import_id: str, org_id: str) -> str:
     with sessions() as s:
         record = process_import(s, import_id, org_id, Settings.from_env())
         return record.status if record is not None else "missing"
+
+
+@celery_app.task(name="bulwark.connectors_due", ignore_result=True)  # type: ignore[untyped-decorator]
+def connectors_due_task() -> int:
+    """Queue every enabled connector whose next run is due, one organization at a time (the
+    `organizations` table carries no RLS; each org's connectors are read with its scope set)."""
+    from sqlalchemy import select
+
+    from core.connectors import service
+    from core.persistence.db import get_session_factory
+    from core.persistence.models import Organization
+    from core.tenancy import set_session_org
+
+    queued = 0
+    with get_session_factory()() as s:
+        org_ids = list(s.scalars(select(Organization.id)))
+    for org_id in org_ids:
+        with get_session_factory()() as s:
+            set_session_org(s, org_id)
+            for c in service.due(s, org_id):
+                run_connector_task.delay(c.id, org_id)
+                queued += 1
+    return queued
+
+
+@celery_app.task(name="bulwark.run_connector", bind=True, acks_late=True, ignore_result=True)  # type: ignore[untyped-decorator]
+def run_connector_task(self: Any, connector_id: str, org_id: str) -> str:
+    """One connector pull or push (plan §42.5). A redelivered task for a connector that is no longer
+    due (it already ran) does nothing."""
+    from datetime import datetime, timezone
+
+    from core.config import Settings
+    from core.connectors import service
+    from core.persistence.db import get_session_factory
+    from core.tenancy import scoped_sessions
+
+    with scoped_sessions(get_session_factory(), org_id)() as s:
+        c = service.get(s, connector_id, org_id)
+        if c is None or not c.enabled:
+            return "missing"
+        due = c.next_run_at
+        if due is not None and (
+            due if due.tzinfo else due.replace(tzinfo=timezone.utc)
+        ) > datetime.now(timezone.utc):
+            return "not-due"
+        return service.run(s, c, Settings.from_env()).run.outcome
 
 
 @celery_app.task(name="bulwark.update_feeds", ignore_result=True)  # type: ignore[untyped-decorator]

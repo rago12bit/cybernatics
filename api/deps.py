@@ -47,6 +47,9 @@ class AppState:
     llm_copilot: LLMClient | None = None  # None: the copilot is off (plan §21.5)
     llm_attack_path: LLMClient | None = None  # None: attack-path narratives are off (plan §21.6)
     llm_mapper: LLMClient | None = None  # None: mapping drafts match field names (plan §42.4)
+    # (connector_id, org_id) -> runs a connector on the worker (Week 60, plan §42.5). None: "Run
+    # now" runs it in the request -- tests and worker-less local development.
+    enqueue_connector: Callable[[str, str], None] | None = None
 
 
 def state(request: Request) -> AppState:

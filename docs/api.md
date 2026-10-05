@@ -470,6 +470,46 @@ Download Attachment
 - `attachment_id` (path, required)
 - `token` (query, required)
 
+## `GET /v2/connector-kinds`
+
+Kinds
+
+
+## `GET /v2/connectors`
+
+List Connectors
+
+- `project_id` (query)
+
+## `POST /v2/connectors`
+
+Create Connector
+
+
+## `GET /v2/connectors/{connector_id}`
+
+Get Connector
+
+- `connector_id` (path, required)
+
+## `PATCH /v2/connectors/{connector_id}`
+
+Update Connector
+
+- `connector_id` (path, required)
+
+## `DELETE /v2/connectors/{connector_id}`
+
+Delete Connector
+
+- `connector_id` (path, required)
+
+## `POST /v2/connectors/{connector_id}/run`
+
+Run Connector
+
+- `connector_id` (path, required)
+
 ## Live progress (WebSocket)
 
 `GET /scans/{scan_id}/ws` (not part of OpenAPI).

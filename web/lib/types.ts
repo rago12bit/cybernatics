@@ -745,3 +745,60 @@ export type ManualFindingView = {
 };
 export type ManualRecorded = { manual: ManualFindingView; issue_id: string; import_id: string; created: boolean };
 export type FieldError = { field: string; message: string };
+
+// --- Connectors (Week 60, plan §42.5, §55.7, ADR-0045) ---------------------------------------------
+export type ConnectorKind = {
+  name: string;
+  label: string;
+  direction: "pull" | "push";
+  needs_credential: boolean;
+  fields: string[];
+  permissions: string;
+};
+export type ConnectorRunView = {
+  id: string;
+  started_at: string;
+  finished_at: string | null;
+  outcome: "ok" | "empty" | "failed";
+  items: number;
+  requests: number;
+  import_id: string | null;
+  counts: Record<string, unknown>;
+  warnings: string[];
+  error: string | null;
+};
+export type ConnectorStatus = "never_run" | "ok" | "empty" | "failing" | "disabled";
+export type ConnectorView = {
+  id: string;
+  project_id: string;
+  project: string;
+  kind: string;
+  kind_label: string;
+  direction: "pull" | "push";
+  name: string;
+  config: Record<string, unknown>;
+  enabled: boolean;
+  interval_minutes: number;
+  close_on_empty: boolean;
+  credential_store: "none" | "openbao" | "database";
+  test_id: string | null;
+  status: ConnectorStatus;
+  warning: string | null;
+  last_run_at: string | null;
+  last_success_at: string | null;
+  next_run_at: string | null;
+  last_items: number | null;
+  max_items_seen: number;
+  consecutive_failures: number;
+  last_error: string | null;
+  runs: ConnectorRunView[];
+};
+export type ConnectorInput = {
+  project_id: string;
+  kind: string;
+  name: string;
+  config: Record<string, unknown>;
+  credential?: string;
+  interval_minutes: number;
+  close_on_empty: boolean;
+};

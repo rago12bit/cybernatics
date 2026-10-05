@@ -988,6 +988,75 @@ class EvidenceAttachment(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 
 
+class Connector(Base):
+    """A scheduled pull from (or push to) another system (plan §42.5, ADR-0045): GitHub code
+    scanning or Dependabot, a GitLab vulnerability report, or a DefectDojo product. Pulls land in
+    `test_id` through the ingest path; health is kept here, because the failure that matters most
+    is the quiet one -- a connection that authenticates and fetches nothing.
+
+    `config` holds no secret. A credential lives in OpenBao's KV store when it is configured
+    (`credential_store="openbao"`); otherwise in `credential`, unencrypted, and the API says so.
+    The GitHub kinds store none: they mint a short-lived token from the GitHub App on each pull."""
+
+    __tablename__ = "connectors"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(
+        ForeignKey("organizations.id"), default=DEFAULT_ORG_ID, index=True
+    )
+    asset_id: Mapped[str] = mapped_column(ForeignKey("assets.id", ondelete="CASCADE"), index=True)
+    kind: Mapped[str] = mapped_column(String(32))
+    name: Mapped[str] = mapped_column(String(200))
+    config: Mapped[dict[str, Any]] = mapped_column(JsonType, default=dict)
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    interval_minutes: Mapped[int] = mapped_column(Integer, default=360)
+    # An empty pull after a non-empty one closes nothing unless this is set: "everything was fixed
+    # at once" and "the token lost access" look the same from here (ADR-0045).
+    close_on_empty: Mapped[bool] = mapped_column(Boolean, default=False)
+    credential_store: Mapped[str] = mapped_column(
+        String(16), default="none"
+    )  # none|openbao|database
+    credential: Mapped[str | None] = mapped_column(Text, nullable=True)
+    test_id: Mapped[str | None] = mapped_column(
+        ForeignKey("engagement_tests.id", ondelete="SET NULL"), nullable=True
+    )
+    state: Mapped[dict[str, Any]] = mapped_column(JsonType, default=dict)  # e.g. DefectDojo test id
+    # never_run | ok | empty | failing | disabled
+    status: Mapped[str] = mapped_column(String(16), default="never_run", index=True)
+    last_run_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_success_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    next_run_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    last_items: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    max_items_seen: Mapped[int] = mapped_column(Integer, default=0)
+    consecutive_failures: Mapped[int] = mapped_column(Integer, default=0)
+    created_by: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
+class ConnectorRun(Base):
+    """One pull or push, and what came of it -- the history behind a connector's health."""
+
+    __tablename__ = "connector_runs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(
+        ForeignKey("organizations.id"), default=DEFAULT_ORG_ID, index=True
+    )
+    connector_id: Mapped[str] = mapped_column(
+        ForeignKey("connectors.id", ondelete="CASCADE"), index=True
+    )
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    outcome: Mapped[str] = mapped_column(String(16))  # ok | empty | failed
+    items: Mapped[int] = mapped_column(Integer, default=0)
+    requests: Mapped[int] = mapped_column(Integer, default=0)
+    import_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    counts: Mapped[dict[str, Any]] = mapped_column(JsonType, default=dict)
+    warnings: Mapped[list[Any]] = mapped_column(JsonType, default=list)
+    error: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
 class OutboxEvent(Base):
     """A domain event waiting to be announced (plan §41.1): "write each event to an outbox table in
     the same transaction as the change that caused it, and publish from there. A crash between

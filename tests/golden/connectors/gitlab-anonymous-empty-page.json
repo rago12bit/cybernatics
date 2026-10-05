@@ -1,0 +1,20 @@
+{
+ "_recorded": "2026-10-05, anonymous POST https://gitlab.com/api/graphql with core.connectors.gitlab.QUERY, fullPath gitlab-org/gitlab",
+ "response": {
+  "data": {
+   "project": {
+    "id": "gid://gitlab/Project/278964",
+    "vulnerabilities": {
+     "pageInfo": {
+      "hasNextPage": true,
+      "endCursor": "eyJzZXZlcml0eSI6ImNyaXRpY2FsIiwidnVsbmVyYWJpbGl0eV9pZCI6IjM5NzA4Njk2NSJ9"
+     },
+     "nodes": []
+    }
+   }
+  },
+  "extensions": {
+   "disabled_filters": []
+  }
+ }
+}

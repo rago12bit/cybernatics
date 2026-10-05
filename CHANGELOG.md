@@ -6,6 +6,15 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 ## [Unreleased]
 
 ### Added
+- **Connectors (Week 60, ADR-0045).** Scheduled pulls from GitHub code scanning and Dependabot (through
+  the GitHub App, no stored credential), GitLab vulnerability reports (GraphQL, checked against
+  gitlab.com's schema) and DefectDojo, each applied through the ingest path into the connector's own
+  Test so a fixed or dismissed alert closes here; and an export of a project's open Issues to
+  DefectDojo as SARIF (`import-scan`, then `reimport-scan` into the same Test). A partial pull is never
+  applied, and an empty pull after a non-empty one closes nothing unless `close_on_empty` is set. Health
+  per connector -- `ok`, `empty` ("connected but fetched nothing"), `failing`, with backoff -- on a new
+  **Connectors** screen, with run history. Credentials go to OpenBao when configured and are never
+  returned; base URLs pass an SSRF guard on every request. Migration 0032; Celery beat schedules them.
 - **Manual findings (Week 59, ADR-0044).** A pen tester or reviewer records what no scanner found:
   title, a searchable CWE, severity from a CVSS 4.0 calculator (scored by the `cvss` library behind
   `POST /v2/cvss/v4`, checked against FIRST's calculator; the vector is kept beside the score), a

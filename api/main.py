@@ -34,6 +34,7 @@ from fastapi.websockets import WebSocketDisconnect
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from api.connectors import register_connector_routes
 from api.dedup import register_dedup_routes
 from api.deps import (
     AppState,
@@ -2070,6 +2071,7 @@ def create_app(app_state: AppState) -> FastAPI:
     register_dedup_routes(app)
     register_mapping_routes(app)
     register_manual_routes(app)
+    register_connector_routes(app)
     return app
 
 
@@ -2102,7 +2104,12 @@ def build_default_app() -> FastAPI:
     from core.llm.gateway import Task, make_gateway_client
     from core.persistence.db import get_session_factory
     from core.persistence.storage import S3Store
-    from core.tasks import run_dast_campaign_task, run_import_task, run_scan_task
+    from core.tasks import (
+        run_connector_task,
+        run_dast_campaign_task,
+        run_import_task,
+        run_scan_task,
+    )
 
     settings = Settings.from_env()
     if settings.s3_endpoint or settings.s3_access_key:
@@ -2125,6 +2132,7 @@ def build_default_app() -> FastAPI:
             llm_copilot=make_gateway_client(Task.COPILOT),
             llm_attack_path=make_gateway_client(Task.ATTACK_PATH),
             llm_mapper=make_gateway_client(Task.MAPPER),
+            enqueue_connector=lambda cid, org_id: run_connector_task.delay(cid, org_id),
             limiter=UsageLimiter.from_env(),
         )
     )

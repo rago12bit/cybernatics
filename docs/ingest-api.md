@@ -127,6 +127,36 @@ never the file; any path it names that the sample does not have is dropped, and 
 person saves the mapping; imports never involve a model. When an upload is not recognised, saved
 mappings that fit it are listed among the `detected` candidates, but one is only used when named.
 
+## Connectors: pulling from other systems on a schedule
+
+A connector pulls a source's open findings on a schedule and imports them into its own Test, exactly
+like an upload: new, unchanged, reopened, closed ([ADR-0045](adr/0045-connectors.md)). The
+**Connectors** screen shows each one's health.
+
+| Kind | Pulls | Needs |
+|---|---|---|
+| `github_code_scanning` | open code scanning alerts | the GitHub App installed on the repo, *Code scanning alerts: read* |
+| `github_dependabot` | open Dependabot alerts | the GitHub App, *Dependabot alerts: read* |
+| `gitlab` | detected and confirmed vulnerabilities (GraphQL) | a `read_api` token, Developer role, GitLab Ultimate |
+| `defectdojo_import` | a product's active, non-duplicate findings | a DefectDojo API v2 key that can read the product |
+| `defectdojo_export` | *pushes* the project's open Issues as SARIF | a key that can import scans into the engagement |
+
+```bash
+curl -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" $BULWARK/v2/connectors \
+  -d '{"project_id": "'$PROJECT_ID'", "kind": "gitlab", "name": "GitLab payments",
+       "config": {"base_url": "https://gitlab.com", "project": "acme/payments"},
+       "credential": "glpat-...", "interval_minutes": 360}'
+```
+
+`GET /v2/connectors` lists them with `status` (`never_run`, `ok`, `empty`, `failing`, `disabled`) and a
+`warning`; `POST /v2/connectors/{id}/run` runs one now; `PATCH` turns one off, changes its interval or
+rotates its credential. The credential is never returned; `credential_store` says whether it is in
+OpenBao or, without OpenBao, unencrypted in the database.
+
+Two pulls are never applied: one that did not complete (a page failed), and one that comes back empty
+after earlier pulls returned items -- that usually means the credential lost access, so nothing is
+closed and the connector shows "fetched nothing". Set `close_on_empty` if an empty pull should close.
+
 ## Matching: how findings become Issues, per source
 
 Every source is matched into Issues by its fingerprint until a project chooses otherwise. A choice
