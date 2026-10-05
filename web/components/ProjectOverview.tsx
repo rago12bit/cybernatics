@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { TagsEditor } from "@/components/TagsEditor";
 import { useEffect, useState } from "react";
 import { ApiError, getAssetOverview } from "@/lib/api";
 import { CopilotPanel } from "@/components/CopilotPanel";
@@ -89,7 +90,8 @@ export function ProjectOverview({ assetId }: { assetId: string }) {
         <Link href={`/app/projects/${assetId}/findings/new`}>record a finding</Link> <span aria-hidden="true">·</span>{" "}
         <Link href={`/app/projects/${assetId}/matching`}>matching</Link> <span aria-hidden="true">·</span>{" "}
         <Link href={`/app/projects/${assetId}/sla`}>SLA</Link> <span aria-hidden="true">·</span>{" "}
-        <Link href={`/app/projects/${assetId}/priority`}>priority</Link>
+        <Link href={`/app/projects/${assetId}/priority`}>priority</Link> <span aria-hidden="true">·</span>{" "}
+        <Link href={`/app/projects/${assetId}/engagements`}>engagements</Link>
       </div>
 
       <div className="ds-ov-verdict">
@@ -155,6 +157,8 @@ export function ProjectOverview({ assetId }: { assetId: string }) {
               ))}
             </ul>
           </div>
+
+          <TagsEditor kind="project" id={assetId} />
         </aside>
       </div>
 

@@ -64,6 +64,8 @@ export interface IssueRef {
   sla?: IssueSla;
   /** What the issues table ranks by (plan §44.3, Week 63). Null for an Issue not ranked yet. */
   priority?: IssuePriority | null;
+  /** The retest workflow (plan §43.3, Week 64). */
+  retest_status?: RetestStatus | null;
 }
 
 export type PriorityBand = "P1" | "P2" | "P3" | "P4";
@@ -987,3 +989,210 @@ export type ConnectorInput = {
   interval_minutes: number;
   close_on_empty: boolean;
 };
+
+// --- Engagements, retests, notes and tags (Week 64, plan §43.1, §43.3, §49) -----------------------
+
+export type EngagementStatus = "planned" | "in_progress" | "reporting" | "closed";
+
+export interface ChecklistSummary {
+  id: string;
+  name: string;
+  total: number;
+  /** Passed, failed or not applicable. */
+  done: number;
+  pass: number;
+  fail: number;
+  not_applicable: number;
+  in_progress: number;
+  attribution: string;
+}
+
+export interface Engagement {
+  id: string;
+  project_id: string;
+  project: string;
+  name: string;
+  engagement_type: string;
+  status: EngagementStatus;
+  scope_targets: string[];
+  scope_routes: string[];
+  out_of_scope: string | null;
+  lead: string | null;
+  testers: string[];
+  starts_at: string | null;
+  ends_at: string | null;
+  checklist: ChecklistSummary | null;
+  closed_at: string | null;
+  report_generated_at: string | null;
+  created_by: string | null;
+  created_at: string;
+  names: Record<string, string>;
+}
+
+export interface EngagementFinding {
+  issue_id: string;
+  title: string;
+  severity: string;
+  path: string;
+  state: string;
+  triage_status: string;
+  retest_status: RetestStatus | null;
+  retest_requested_by: string | null;
+  priority_band: string | null;
+  test: string;
+  manual_finding_id: string | null;
+  /** Other sources reporting the same Issue: a scanner, or another engagement's Test. */
+  also_found_by: string[];
+  first_seen_at: string;
+  fixed_at: string | null;
+}
+
+export interface EngagementTestRow {
+  id: string;
+  name: string;
+  parser: string | null;
+  findings: number;
+  uploads: number;
+  last_upload_at: string | null;
+}
+
+export interface EngagementDetail extends Engagement {
+  findings: EngagementFinding[];
+  tests: EngagementTestRow[];
+}
+
+export interface EngagementInput {
+  name?: string;
+  engagement_type?: string;
+  status?: EngagementStatus;
+  scope_targets?: string[];
+  scope_routes?: string[];
+  out_of_scope?: string | null;
+  lead?: string | null;
+  testers?: string[];
+  starts_at?: string | null;
+  ends_at?: string | null;
+  checklist?: string | null;
+}
+
+export type ChecklistResult = "in_progress" | "pass" | "fail" | "not_applicable";
+
+export interface ChecklistItem {
+  id: string;
+  group: string;
+  title: string;
+  level: number | null;
+  cwe: string | null;
+  reference: string | null;
+  status: ChecklistResult | null;
+  note: string | null;
+  updated_by: string | null;
+  updated_at: string | null;
+}
+
+export interface ChecklistCatalogue {
+  id: string;
+  name: string;
+  items: number;
+  source: string;
+  attribution: string;
+}
+
+export type RetestStatus = "requested" | "passed" | "failed";
+export type RetestAction = "request" | "confirm_fixed" | "reproduced" | "cancel";
+
+export interface RetestRun {
+  id: string;
+  kind: "rule" | "dast";
+  tool: string;
+  rule: string;
+  location: string;
+  /** failed: the check itself could not run. */
+  status: "queued" | "running" | "done" | "failed";
+  result: "still_present" | "gone" | null;
+  detail: string | null;
+  requested_by: string | null;
+  created_at: string;
+  finished_at: string | null;
+}
+
+export interface Retest {
+  issue_id: string;
+  state: string;
+  status: RetestStatus | null;
+  requested_at: string | null;
+  requested_by: string | null;
+  note: string | null;
+  decided_at: string | null;
+  decided_by: string | null;
+  targeted: {
+    available: boolean;
+    kind: "rule" | "dast" | null;
+    tool: string | null;
+    rule: string | null;
+    location: string | null;
+    reason: string | null;
+  };
+  runs: RetestRun[];
+  names: Record<string, string>;
+}
+
+export interface Person {
+  actor: string;
+  name: string;
+  handle: string;
+}
+
+export interface NoteFile {
+  id: string;
+  file_name: string;
+  sniffed_type: string;
+  active_content: boolean;
+  size_bytes: number;
+  encrypted: boolean;
+}
+
+export interface Note {
+  id: string;
+  issue_id: string;
+  parent_id: string | null;
+  /** Plain text, as written; shown as text, never as HTML. Empty once deleted. */
+  body: string;
+  author: string;
+  mentions: string[];
+  created_at: string;
+  edited_at: string | null;
+  deleted: boolean;
+  files: NoteFile[];
+}
+
+export interface NotesView {
+  notes: Note[];
+  names: Record<string, string>;
+  you: string;
+}
+
+export interface Mention {
+  note: Note;
+  issue_title: string;
+  project_id: string;
+}
+
+export interface InheritedTag {
+  name: string;
+  from: "portfolio" | "project";
+  source: string;
+}
+
+export interface TagsView {
+  own: string[];
+  inherited: InheritedTag[];
+  portfolio?: { id: string; name: string } | null;
+}
+
+export interface Portfolio {
+  id: string;
+  name: string;
+  description: string | null;
+  tags: string[];
+}

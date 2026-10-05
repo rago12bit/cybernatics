@@ -163,6 +163,9 @@ services:
       # UI's actual origin isn't in the allow-list, which the sign-in screen reports as "Cannot reach
       # the Bulwark API" (a CORS rejection looks like a network failure to fetch()).
       BULWARK_CORS_ORIGINS: ${BULWARK_CORS_ORIGINS:-http://localhost:3010}
+      # Evidence and note files download from this separate, cookieless origin only (threat T24),
+      # e.g. http://attachments.localhost:8000. Empty: they download from the API's own host.
+      BULWARK_ATTACHMENTS_ORIGIN: ${BULWARK_ATTACHMENTS_ORIGIN:-}
     ports: ["127.0.0.1:8000:8000"]
     volumes: ["${BULWARK_WORKDIR}:${BULWARK_WORKDIR}", "./certs:/certs:ro"]
     depends_on:

@@ -58,3 +58,23 @@ bulwark secrets migrate-env
 
 This reports which secrets it moved and which were left alone (not set in the environment). It is
 the only thing that writes to OpenBao's secret store; nothing does this automatically.
+
+## Attachments and their origin
+
+Evidence on manual findings, proof on risk acceptances and files on notes share one store: the
+bytes are sniffed (the uploader's claimed type is kept only for display), encrypted with a fresh
+data key wrapped by the organization's OpenBao key, and never rendered in the app. They download
+only through a link signed for one file and one organization, valid for five minutes, served as
+`application/octet-stream` with `Content-Disposition: attachment`, `nosniff` and a sandboxing CSP.
+
+Set `BULWARK_ATTACHMENTS_ORIGIN` to a separate host routed to the API (Helm:
+`api.attachmentsOrigin`) so that a captured HTML or SVG file, if someone opens it anyway, lands on
+a host with no cookies, no token and no API behind it (threat T24, [ADR-0048](adr/0048-engagements-retests-collaboration.md)):
+
+- that host serves signed downloads and nothing else (every other path answers 404), and never sets
+  a cookie;
+- the API's own host then refuses those downloads.
+
+For local use, `http://attachments.localhost:8000` works without DNS: browsers resolve any
+`*.localhost` name to this machine. Without the setting, files download from the API's own host,
+which sets no cookies either.

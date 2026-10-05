@@ -1,4 +1,4 @@
-import type { PriorityBand, PriorityContext, PriorityOverview, PriorityPreview, RiskAcceptance, RiskAcceptanceInput, RiskAcceptancePolicy, SlaBand, SlaBasis, SlaOverview, ConnectorInput, ConnectorKind, ConnectorView, AnalyzeResult, MappingPreview, MappingSpec, SavedMapping, CvssScore, CweEntry,
+import type { ChecklistCatalogue, ChecklistItem, ChecklistResult, ChecklistSummary, Engagement, EngagementDetail, EngagementInput, Mention, NoteFile, NotesView, Person, Portfolio, Retest, RetestAction, TagsView, PriorityBand, PriorityContext, PriorityOverview, PriorityPreview, RiskAcceptance, RiskAcceptanceInput, RiskAcceptancePolicy, SlaBand, SlaBasis, SlaOverview, ConnectorInput, ConnectorKind, ConnectorView, AnalyzeResult, MappingPreview, MappingSpec, SavedMapping, CvssScore, CweEntry,
   EvidenceFile, ManualFindingInput, ManualFindingView, ManualRecorded, ProjectRoutes, DedupApplied, DedupChangeRequest, DedupHistoryEntry, DedupOverview, DedupPreview,
   ImportCreated, ImportView, ParserInfo, ProjectTest, RevertView,
   AssetSummary, AssetVerification, AttackPath, BulkTriageResult,
@@ -168,6 +168,8 @@ export interface IssuesQuery {
   sla?: OpenSlaState[];
   /** Priority bands to filter to (plan §44.3). Optional: views saved before Week 63 have none. */
   priority?: PriorityBand[];
+  /** Tags, set on the issue, its project or its portfolio (plan §49). */
+  tag?: string[];
   sort: "severity" | "path" | "risk";
 }
 
@@ -180,6 +182,7 @@ function issuesQueryString(q: IssuesQuery, limit?: number, offset?: number): str
   q.triage.forEach((t) => p.append("triage", t));
   (q.sla ?? []).forEach((s) => p.append("sla", s));
   (q.priority ?? []).forEach((b) => p.append("priority", b));
+  (q.tag ?? []).forEach((t) => p.append("tag", t));
   p.set("sort", q.sort);
   if (limit != null) p.set("limit", String(limit));
   if (offset != null) p.set("offset", String(offset));
@@ -459,6 +462,8 @@ export type ImportOptions = {
   test?: string;
   engagementType?: "import" | "assessment";
   engagementName?: string;
+  /** An existing engagement to import into (Week 64): overrides `engagementType`. */
+  engagement?: string;
   closeMissing: boolean;
   scope: "test" | "engagement";
   /** Count what would change and save nothing; the file is kept until confirmed or cancelled. */
@@ -473,7 +478,8 @@ export function startImport(assetId: string, file: File, o: ImportOptions) {
   form.set("scope", o.scope);
   if (o.parser) form.set("parser", o.parser);
   if (o.test) form.set("test", o.test);
-  if (o.engagementType) form.set("engagement_type", o.engagementType);
+  if (o.engagement) form.set("engagement", o.engagement);
+  else if (o.engagementType) form.set("engagement_type", o.engagementType);
   if (o.engagementName) form.set("engagement_name", o.engagementName);
   form.set("file", file); // last, so the server sees the options before the (large) body
   return request<ImportCreated>("/v2/ingest", { method: "POST", body: form });
@@ -588,3 +594,80 @@ export const applyDedup = (assetId: string, body: DedupChangeRequest & { digest:
   });
 export const listProjectTests = (assetId: string) =>
   request<ProjectTest[]>(`/v2/projects/${encodeURIComponent(assetId)}/tests`);
+
+// --- Engagements, retests, notes and tags (Week 64, plan §43.1, §43.3, §49) -----------------------
+
+const json = (method: string, body: unknown) => ({
+  method,
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(body),
+});
+const enc = encodeURIComponent;
+
+export const listChecklists = () => request<ChecklistCatalogue[]>("/v2/checklists");
+export const listEngagements = (assetId: string) =>
+  request<Engagement[]>(`/v2/projects/${enc(assetId)}/engagements`);
+export const createEngagement = (assetId: string, body: EngagementInput) =>
+  request<Engagement>(`/v2/projects/${enc(assetId)}/engagements`, json("POST", body));
+export const getEngagement = (id: string) => request<EngagementDetail>(`/v2/engagements/${enc(id)}`);
+export const updateEngagement = (id: string, body: EngagementInput) =>
+  request<Engagement>(`/v2/engagements/${enc(id)}`, json("PATCH", body));
+export const getChecklist = (id: string) =>
+  request<{ summary: ChecklistSummary; items: ChecklistItem[] }>(`/v2/engagements/${enc(id)}/checklist`);
+export const setChecklistItem = (id: string, item: string, status: ChecklistResult | null, note?: string) =>
+  request<ChecklistSummary>(`/v2/engagements/${enc(id)}/checklist/${enc(item)}`, json("PUT", { status, note: note || null }));
+export const closeEngagement = (id: string, summary?: string) =>
+  request<Engagement>(`/v2/engagements/${enc(id)}/close`, json("POST", { summary: summary || null }));
+
+/** The report is a download that needs the token, so it is fetched and handed to the browser as a
+ * file -- never rendered in the app. */
+export async function downloadReport(id: string, format: "md" | "html"): Promise<void> {
+  const token = getToken();
+  const res = await fetch(`${API_URL}/v2/engagements/${enc(id)}/report?format=${format}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) throw new ApiError(res.status, res.status === 404 ? "No report yet." : "Could not download the report.");
+  const name = /filename="([^"]+)"/.exec(res.headers.get("content-disposition") ?? "")?.[1] ?? `report.${format}`;
+  const url = URL.createObjectURL(new Blob([await res.blob()], { type: "application/octet-stream" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+export const getRetest = (issueId: string) => request<Retest>(`/v2/issues/${enc(issueId)}/retest`);
+export const retestStep = (issueId: string, action: RetestAction, note?: string) =>
+  request<Retest>(`/v2/issues/${enc(issueId)}/retest`, json("POST", { action, note: note || null }));
+export const runTargetedRetest = (issueId: string) =>
+  request<Retest>(`/v2/issues/${enc(issueId)}/retest/run`, { method: "POST" });
+
+export const listPeople = () => request<Person[]>("/v2/people");
+export const listNotes = (issueId: string) => request<NotesView>(`/v2/issues/${enc(issueId)}/notes`);
+export const addNote = (issueId: string, body: string, parentId?: string) =>
+  request<NotesView>(`/v2/issues/${enc(issueId)}/notes`, json("POST", { body, parent_id: parentId ?? null }));
+export const editNote = (noteId: string, body: string) =>
+  request<NotesView>(`/v2/notes/${enc(noteId)}`, json("PATCH", { body }));
+export const deleteNote = (noteId: string) => request<NotesView>(`/v2/notes/${enc(noteId)}`, { method: "DELETE" });
+export function attachToNote(noteId: string, file: File) {
+  const form = new FormData();
+  form.set("file", file);
+  return request<NoteFile>(`/v2/notes/${enc(noteId)}/attachments`, { method: "POST", body: form });
+}
+export const noteFileLink = (attachmentId: string) =>
+  request<{ url: string; expires_at: string }>(`/v2/note-attachments/${enc(attachmentId)}/link`, { method: "POST" });
+export const listMentions = () =>
+  request<{ mentions: Mention[]; names: Record<string, string> }>("/v2/mentions");
+
+export const getIssueTags = (issueId: string) => request<TagsView>(`/v2/issues/${enc(issueId)}/tags`);
+export const setIssueTags = (issueId: string, tags: string[]) =>
+  request<TagsView>(`/v2/issues/${enc(issueId)}/tags`, json("PUT", { tags }));
+export const getProjectTags = (assetId: string) => request<TagsView>(`/v2/projects/${enc(assetId)}/tags`);
+export const setProjectTags = (assetId: string, tags: string[]) =>
+  request<TagsView>(`/v2/projects/${enc(assetId)}/tags`, json("PUT", { tags }));
+export const setProjectPortfolio = (assetId: string, portfolioId: string | null) =>
+  request<TagsView>(`/v2/projects/${enc(assetId)}/portfolio`, json("PUT", { portfolio_id: portfolioId }));
+export const listPortfolios = () => request<Portfolio[]>("/v2/portfolios");
+export const createPortfolio = (name: string) => request<Portfolio>("/v2/portfolios", json("POST", { name }));
+export const setPortfolioTags = (id: string, tags: string[]) =>
+  request<Portfolio>(`/v2/portfolios/${enc(id)}/tags`, json("PUT", { tags }));

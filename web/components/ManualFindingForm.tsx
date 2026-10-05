@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import {
-  ApiError, listRoutes, recordManualFinding, scoreCvss4, searchCwe, uploadEvidence,
+  ApiError, getEngagement, listRoutes, recordManualFinding, scoreCvss4, searchCwe, uploadEvidence,
 } from "@/lib/api";
 import type {
   CvssScore, CweEntry, EvidenceFile, FieldError, ManualFindingInput, ManualRecorded, ProjectRoute, Severity,
@@ -84,7 +84,11 @@ const errorOf = (e: unknown): FieldError | string => {
   return "Could not record the finding.";
 };
 
-export function ManualFindingForm({ assetId }: { assetId: string }) {
+export function ManualFindingForm({ assetId, engagementId }: { assetId: string; engagementId?: string }) {
+  const [engagementName, setEngagementName] = useState<string | null>(null);
+  useEffect(() => {
+    if (engagementId) getEngagement(engagementId).then((e) => setEngagementName(e.name), () => setEngagementName(null));
+  }, [engagementId]);
   const id = useId();
   const [title, setTitle] = useState("");
   const [cwe, setCwe] = useState("");
@@ -182,6 +186,7 @@ export function ManualFindingForm({ assetId }: { assetId: string }) {
       line: kind === "file" && line ? Number(line) : null,
       steps, impact, recommendation,
       references: references.split("\n").map((r) => r.trim()).filter(Boolean),
+      ...(engagementId ? { engagement_id: engagementId } : {}),
     };
     setSaving(true);
     try {
@@ -231,6 +236,7 @@ export function ManualFindingForm({ assetId }: { assetId: string }) {
         )}
         <div className="ds-mf-actions">
           <Link className="ds-mf-link" href={`/app/projects/${assetId}/issues/${done.recorded.issue_id}`}>Open the issue</Link>
+          {engagementId && <Link className="ds-mf-link" href={`/app/engagements/${engagementId}`}>Back to the engagement</Link>}
           <Button onClick={() => window.location.reload()}>Record another</Button>
         </div>
       </div>
@@ -247,6 +253,11 @@ export function ManualFindingForm({ assetId }: { assetId: string }) {
   return (
     <form className="ds-mf" onSubmit={submit} noValidate>
       <h1 className="ds-mf-title">Record a finding</h1>
+      {engagementId && (
+        <p className="ds-mf-intro">
+          Into the engagement <Link href={`/app/engagements/${engagementId}`}>{engagementName ?? "…"}</Link>, as part of its Manual review test.
+        </p>
+      )}
       <p className="ds-mf-intro">
         Something a scanner did not find. It becomes an issue like any other — with severity, triage and
         tickets — and you can undo it from the project’s imports.

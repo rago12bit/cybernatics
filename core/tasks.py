@@ -236,6 +236,19 @@ def recompute_priority_task(self: Any, policy_id: str, org_id: str) -> str:
         return row.status if row is not None else "missing"
 
 
+@celery_app.task(name="bulwark.run_targeted_retest", bind=True, acks_late=True, ignore_result=True)  # type: ignore[untyped-decorator]
+def run_targeted_retest_task(self: Any, run_id: str, org_id: str) -> str:
+    """One targeted retest (plan §43.3): one rule or DAST template, one location. A redelivered
+    task for a run that is no longer queued does nothing."""
+    from core.persistence.db import get_session_factory
+    from core.retest import targeted
+    from core.tenancy import scoped_sessions
+
+    with scoped_sessions(get_session_factory(), org_id)() as s:
+        r = targeted.run(s, run_id)
+        return r.status if r is not None else "missing"
+
+
 @celery_app.task(name="bulwark.run_connector", bind=True, acks_late=True, ignore_result=True)  # type: ignore[untyped-decorator]
 def run_connector_task(self: Any, connector_id: str, org_id: str) -> str:
     """One connector pull or push (plan §42.5). A redelivered task for a connector that is no longer

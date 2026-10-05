@@ -63,6 +63,9 @@ api:
   # per-org token. Change this from the default before exposing the API past a single trusted network.
   apiToken: dev-bulwark-api-token
   corsOrigins: "http://localhost:3010"
+  # A separate, cookieless origin that alone serves evidence and note files (threat T24), routed to
+  # the API service, e.g. "https://files.bulwark.example". Empty: files download from the API host.
+  attachmentsOrigin: ""
   llm:
     enabled: false
     apiKey: ""

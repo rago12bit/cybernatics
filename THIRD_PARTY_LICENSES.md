@@ -49,6 +49,8 @@ optional separate container.
 | CycloneDX 1.6 JSON schema | Apache-2.0 | test fixture (tests/fixtures/cyclonedx) |
 | SARIF 2.1.0 JSON schema | OASIS | test fixture (tests/fixtures) |
 | DefectDojo sample reports and expected results | BSD-3-Clause (tests/golden/ingest/defectdojo/LICENSE) | golden fixtures for the ported parsers, with the commit they came from in each MANIFEST.json |
+| OWASP Web Security Testing Guide 4.2 checklist (© OWASP Foundation) | CC BY-SA 4.0 | test ids, names and links in core/engagements/checklists/wstg-4.2.json, from OWASP/wstg tag v4.2; share-alike applies to that file; credited on every checklist screen and report |
+| OWASP Application Security Verification Standard 4.0.3 (© OWASP Foundation) | CC BY-SA 4.0 | requirement ids, text, levels and CWE in core/engagements/checklists/asvs-4.0.3.json, from OWASP/ASVS tag v4.0.3; share-alike applies to that file; credited as above |
 
 ## Code ported from other projects
 

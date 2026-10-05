@@ -1,5 +1,7 @@
 .ds-issue {
   display: grid;
+  /* one column no wider than the page: a grid's implicit column grows to its widest unbroken line */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--ds-space-3);
   font-family: var(--ds-font-sans);
   color: var(--ds-ink);
@@ -26,6 +28,7 @@
 .ds-issue-topline-title {
   font-weight: 600;
   font-size: var(--ds-text-3);
+  min-width: 0; /* a flex item: without this the ellipsis never applies and a long title widens the page */
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -55,13 +58,13 @@
 
 .ds-issue-grid {
   display: grid;
-  grid-template-columns: 1.7fr 1fr;
+  grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); /* never wider than the page */
   gap: var(--ds-space-4);
   align-items: start;
 }
 @media (max-width: 900px) {
   .ds-issue-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 

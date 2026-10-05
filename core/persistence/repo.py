@@ -184,6 +184,7 @@ def create_engagement(
     engagement = Engagement(
         org_id=org_id, asset_id=asset_id, portfolio_id=portfolio_id, name=name,
         engagement_type=engagement_type, target_end_at=target_end_at,
+        status="in_progress",  # the assessment lifecycle (Week 64, `core.engagements`)
     )  # fmt: skip
     s.add(engagement)
     s.commit()
@@ -860,7 +861,11 @@ def list_asset_issues(
     if categories:
         conds.append(FindingRow.category.in_([x.lower() for x in categories]))
 
-    issue_ids_q = select(IssueRow.id).where(IssueRow.asset_id == asset_id)
+    # An Issue a tester or a targeted retest confirmed fixed (Week 64) can still have an occurrence
+    # in the latest scan; it leaves the table until a scan reports it again.
+    issue_ids_q = select(IssueRow.id).where(
+        IssueRow.asset_id == asset_id, IssueRow.state != "fixed"
+    )
     if triage:
         issue_ids_q = issue_ids_q.where(IssueRow.triage_status.in_(triage))
     else:
@@ -919,6 +924,7 @@ def list_asset_issues(
                     issue_row.confirmed_at_runtime_at if issue_row else None
                 ),
                 "priority": _priority_view(issue_row),
+                "retest_status": issue_row.retest_status if issue_row else None,
             }
             if r.issue_id
             else None
@@ -986,6 +992,7 @@ def get_issue_finding(s: Session, issue_id: str, latest_scan_id: str) -> dict[st
         "assistant_verdict_at": issue_row.assistant_verdict_at if issue_row else None,
         "confirmed_at_runtime_at": issue_row.confirmed_at_runtime_at if issue_row else None,
         "priority": _priority_view(issue_row),
+        "retest_status": issue_row.retest_status if issue_row else None,
     }
     return d
 
@@ -1122,6 +1129,17 @@ def issue_history(s: Session, issue_id: str) -> list[dict[str, Any]]:
     )
     for e in entries:
         events.append({"at": e.timestamp, "label": _audit_action_label(e.action)})
+    # A retest decided by a scan, an upload or a targeted retest (Week 64) is that run's outcome,
+    # not a person's decision, so it is an outbox event rather than an audit entry.
+    for ev in s.scalars(
+        select(OutboxEvent).where(
+            OutboxEvent.event_type.in_(("issue.retest_passed", "issue.retest_failed")),
+            OutboxEvent.payload["issue_id"].as_string() == issue_id,
+        )
+    ):
+        if ev.payload.get("detail"):
+            word = "passed" if ev.event_type.endswith("passed") else "failed"
+            events.append({"at": ev.created_at, "label": f"Retest {word}: {ev.payload['detail']}"})
     events.sort(key=lambda ev: ev["at"])
     return events
 
@@ -1139,6 +1157,15 @@ def _audit_action_label(action: str) -> str:
         "risk_acceptance.expired": "Risk acceptance expired",
         "risk_acceptance.reinstated": "Risk acceptance reinstated",
         "risk_acceptance.proof_added": "Proof added to the risk acceptance",
+        "issue.retest.requested": "Marked ready for retest",
+        "issue.retest.passed": "Retest passed: confirmed fixed",
+        "issue.retest.failed": "Retest failed: reproduced",
+        "issue.retest.cancelled": "Retest request cancelled",
+        "issue.retest.targeted": "Targeted retest started",
+        "issue.note.added": "Note added",
+        "issue.note.edited": "Note edited",
+        "issue.note.deleted": "Note deleted",
+        "tags.changed": "Tags changed",
     }.get(action, action)
 
 
@@ -1381,6 +1408,11 @@ def _issue_prior(row: IssueRow) -> dict[str, Any]:
         "category": row.category,
         "fingerprint": row.fingerprint,
         "fallback_fingerprint": row.fallback_fingerprint,
+        # An upload can decide a requested retest (Week 64); undoing it undoes that too.
+        "retest_status": row.retest_status,
+        "retest_note": row.retest_note,
+        "retest_decided_at": row.retest_decided_at.isoformat() if row.retest_decided_at else None,
+        "retest_decided_by": row.retest_decided_by,
     }
 
 
@@ -1392,6 +1424,7 @@ def apply_reimport_plan(
     plan: ReimportPlan,
     existing_rows: list[IssueRow],
     record_changes: bool = False,
+    retest_source: str | None = None,
 ) -> list[dict[str, Any]]:
     """Write a decided `ReimportPlan` to the `issues` table. The one writer for both a native scan
     and an import (ADR-0040): the *decision* is `plan_reimport`, shared; so is this. Stages only --
@@ -1448,6 +1481,14 @@ def apply_reimport_plan(
         row = by_id[issue_id]
         remember(row)
         row.state, row.fixed_at = "fixed", now
+
+    if retest_source is not None:  # the next scan is the retest (plan §43.3)
+        from core.retest.service import on_ingest
+
+        on_ingest(
+            s, by_id, still=[*plan.unchanged_issue_ids, *plan.reopened_issue_ids],
+            closed=list(plan.closed_issue_ids), source=retest_source,
+        )  # fmt: skip
 
     out = list(changes.values())
     for change in out:
@@ -1511,8 +1552,9 @@ def sync_issues_for_scan(s: Session, scan_id: str, findings: list[Finding]) -> S
         new_issue_id=_new_issue_id,
     )
     apply_reimport_plan(
-        s, asset_id=scan.asset_id, findings=findings, plan=plan, existing_rows=existing_rows
-    )
+        s, asset_id=scan.asset_id, findings=findings, plan=plan, existing_rows=existing_rows,
+        retest_source=f"the scan of {_now():%d %b %Y}",
+    )  # fmt: skip
     stage_issue_events(
         s, org_id=scan.org_id, asset_id=scan.asset_id, scan_id=scan_id, plan=plan, source="scan"
     )

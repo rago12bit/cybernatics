@@ -53,6 +53,9 @@ class AppState:
     # (priority_policy_id, org_id) -> re-ranks a project's Issues on the worker (Week 63, plan
     # §44.3). None: the API does it after responding, in its own process.
     enqueue_priority: Callable[[str, str], None] | None = None
+    # (retest_run_id, org_id) -> runs a targeted retest on the worker (Week 64, plan §43.3). None:
+    # the API does it after responding, in its own process.
+    enqueue_retest: Callable[[str, str], None] | None = None
 
 
 def state(request: Request) -> AppState:

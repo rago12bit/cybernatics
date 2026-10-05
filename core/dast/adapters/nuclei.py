@@ -42,8 +42,14 @@ class NucleiError(Exception):
 
 
 def run_nuclei(
-    target_url: str, *, timeout_s: int = 300, proxy: ProxyConfig | None = None
+    target_url: str,
+    *,
+    timeout_s: int = 300,
+    proxy: ProxyConfig | None = None,
+    template_ids: tuple[str, ...] = (),
 ) -> list[Finding]:
+    """`template_ids`: only these templates (a targeted retest, plan §43.3). The excluded tags and
+    allowed protocol types still apply, so naming a template cannot bring in an excluded one."""
     argv = ["docker", "run", "--rm"]
     if proxy is not None:
         # host.docker.internal needs this explicit mapping on Linux too (Docker Engine >= 20.10);
@@ -60,6 +66,8 @@ def run_nuclei(
     ]  # fmt: skip
     if proxy is not None:
         argv += ["-proxy", f"http://{proxy.host}:{proxy.port}"]
+    if template_ids:
+        argv += ["-id", ",".join(template_ids)]
     try:
         proc = subprocess.run(argv, capture_output=True, timeout=timeout_s, check=False)
     except subprocess.TimeoutExpired as exc:

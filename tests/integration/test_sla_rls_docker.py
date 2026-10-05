@@ -42,6 +42,10 @@ def two_orgs(sessions: sessionmaker[Session]) -> Iterator[tuple[str, str]]:  # n
                 "risk_acceptances",
                 "sla_policies",
                 "priority_policies",
+                "engagement_checklist_items",
+                "retest_runs",
+                "issue_notes",
+                "tags",
                 "outbox_events",
             ):  # audit entries are append-only
                 s.execute(text(f"DELETE FROM {table} WHERE org_id = :o"), {"o": org})

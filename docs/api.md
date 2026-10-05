@@ -75,6 +75,7 @@ List Issues
 - `triage` (query)
 - `sla` (query)
 - `priority` (query)
+- `tag` (query)
 - `sort` (query)
 - `limit` (query)
 - `offset` (query)
@@ -541,6 +542,171 @@ Put Priority
 Preview Priority
 
 - `project_id` (path, required)
+
+## `GET /v2/checklists`
+
+List Checklists
+
+
+## `GET /v2/projects/{project_id}/engagements`
+
+List Engagements
+
+- `project_id` (path, required)
+
+## `POST /v2/projects/{project_id}/engagements`
+
+Create Engagement
+
+- `project_id` (path, required)
+
+## `GET /v2/engagements/{engagement_id}`
+
+Get Engagement
+
+- `engagement_id` (path, required)
+
+## `PATCH /v2/engagements/{engagement_id}`
+
+Patch Engagement
+
+- `engagement_id` (path, required)
+
+## `GET /v2/engagements/{engagement_id}/checklist`
+
+Get Checklist
+
+- `engagement_id` (path, required)
+
+## `PUT /v2/engagements/{engagement_id}/checklist/{item_id}`
+
+Put Checklist Item
+
+- `engagement_id` (path, required)
+- `item_id` (path, required)
+
+## `POST /v2/engagements/{engagement_id}/close`
+
+Close Engagement
+
+- `engagement_id` (path, required)
+
+## `GET /v2/engagements/{engagement_id}/report`
+
+Get Report
+
+- `engagement_id` (path, required)
+- `format` (query)
+
+## `GET /v2/issues/{issue_id}/retest`
+
+Get Retest
+
+- `issue_id` (path, required)
+
+## `POST /v2/issues/{issue_id}/retest`
+
+Step
+
+- `issue_id` (path, required)
+
+## `POST /v2/issues/{issue_id}/retest/run`
+
+Run Targeted
+
+- `issue_id` (path, required)
+
+## `GET /v2/people`
+
+List People
+
+
+## `GET /v2/issues/{issue_id}/notes`
+
+List Notes
+
+- `issue_id` (path, required)
+
+## `POST /v2/issues/{issue_id}/notes`
+
+Add Note
+
+- `issue_id` (path, required)
+
+## `PATCH /v2/notes/{note_id}`
+
+Edit Note
+
+- `note_id` (path, required)
+
+## `DELETE /v2/notes/{note_id}`
+
+Delete Note
+
+- `note_id` (path, required)
+
+## `POST /v2/notes/{note_id}/attachments`
+
+Add Note File
+
+- `note_id` (path, required)
+
+## `POST /v2/note-attachments/{attachment_id}/link`
+
+Note File Link
+
+- `attachment_id` (path, required)
+
+## `GET /v2/mentions`
+
+My Mentions
+
+
+## `GET /v2/issues/{issue_id}/tags`
+
+Issue Tags
+
+- `issue_id` (path, required)
+
+## `PUT /v2/issues/{issue_id}/tags`
+
+Set Issue Tags
+
+- `issue_id` (path, required)
+
+## `GET /v2/projects/{project_id}/tags`
+
+Project Tags
+
+- `project_id` (path, required)
+
+## `PUT /v2/projects/{project_id}/tags`
+
+Set Project Tags
+
+- `project_id` (path, required)
+
+## `PUT /v2/projects/{project_id}/portfolio`
+
+Assign Portfolio
+
+- `project_id` (path, required)
+
+## `GET /v2/portfolios`
+
+List Portfolios
+
+
+## `POST /v2/portfolios`
+
+Create Portfolio
+
+
+## `PUT /v2/portfolios/{portfolio_id}/tags`
+
+Set Portfolio Tags
+
+- `portfolio_id` (path, required)
 
 ## `GET /v2/risk-acceptance-policy`
 

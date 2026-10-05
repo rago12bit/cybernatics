@@ -35,6 +35,7 @@ from sqlalchemy import and_, select
 from sqlalchemy.orm import Session
 
 from api.acceptance import register_acceptance_routes
+from api.collab import register_collab_routes
 from api.connectors import register_connector_routes
 from api.dedup import register_dedup_routes
 from api.deps import (
@@ -48,10 +49,12 @@ from api.deps import (
     state,
     token_ok,
 )
+from api.engagements import register_engagement_routes
 from api.ingest import register_ingest_routes
 from api.manual import register_manual_routes
 from api.mappings import register_mapping_routes
 from api.priority import register_priority_routes
+from api.retest import register_retest_routes
 from api.schemas import (
     AssetSummary,
     AssetVerificationView,
@@ -108,6 +111,8 @@ from api.schemas import (
     VerifiedFixView,
 )
 from api.sla import register_sla_routes
+from core.collab.tags import TagError
+from core.collab.tags import issue_clause as tag_clause
 from core.config import Settings
 from core.dast import campaign as campaign_rules
 from core.dast import ownership
@@ -299,6 +304,16 @@ def _dispatch(st: AppState, s: Session, scan: Scan) -> None:
         raise HTTPException(503, "scan queue unavailable; the scan was not started") from exc
 
 
+_DOWNLOAD_PATH = re.compile(r"^/v2/attachments/[0-9a-f-]{36}/download$")
+
+
+def _host_of(origin: str) -> str:
+    """'https://files.example.com' -> 'files.example.com' (with the port, when there is one)."""
+    from urllib.parse import urlsplit
+
+    return urlsplit(origin).netloc.lower() if origin else ""
+
+
 def create_app(app_state: AppState) -> FastAPI:
     if len(app_state.settings.api_token) < MIN_TOKEN_LEN:
         raise RuntimeError(
@@ -320,6 +335,26 @@ def create_app(app_state: AppState) -> FastAPI:
         allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
         allow_headers=["Authorization", "Content-Type"],
     )
+
+    attachments_host = _host_of(app_state.settings.attachments_origin)
+
+    @app.middleware("http")
+    async def attachments_origin(request: Request, call_next: Any) -> Response:
+        """The attachments origin serves signed downloads and nothing else, and when one is set, the
+        API's own host serves no downloads (plan §52, threat T24): a file that runs script, opened
+        anyway, lands on a host with no cookies, no token and no API behind it."""
+        if not attachments_host:
+            return await call_next(request)  # type: ignore[no-any-return]
+        on_files_host = (request.headers.get("host") or "").lower() == attachments_host
+        is_download = request.method in ("GET", "HEAD") and bool(
+            _DOWNLOAD_PATH.match(request.url.path)
+        )
+        if on_files_host != is_download and request.url.path != "/healthz":
+            return Response(status_code=404, headers={"Cache-Control": "no-store"})
+        response: Response = await call_next(request)
+        if on_files_host:
+            del response.headers["set-cookie"]
+        return response
 
     def _startup() -> None:
         configure_logging()  # JSON lines with scan_id; BULWARK_LOG_FORMAT=text for humans
@@ -582,12 +617,25 @@ def create_app(app_state: AppState) -> FastAPI:
                 latest_scan_id=None, latest_scan_finished_at=None,
             )  # fmt: skip
 
-        page = repo.query_findings(s, latest.id, sort="risk", limit=fix_first_limit)
+        # An Issue a retest confirmed fixed since this scan (Week 64) leaves the queue, as it leaves
+        # the issues table: the scan's own rows still list it until the next scan.
+        retested_fixed = set(
+            s.scalars(
+                select(FindingRow.issue_id)
+                .join(IssueRow, IssueRow.id == FindingRow.issue_id)
+                .where(FindingRow.scan_id == latest.id, IssueRow.state == "fixed")
+            )
+        )
+        page = repo.query_findings(
+            s, latest.id, sort="risk", limit=fix_first_limit + len(retested_fixed)
+        )
         # Calm by default (§29.2): a critical/high finding only counts toward the "at real risk"
         # verdict while it's reachable (or reachability is unknown) -- a finding whose own scoring
         # says it isn't reachable doesn't inflate the headline, even though it still appears further
         # down the fix-first list with its "not reachable" tag.
-        fix_first = page.items
+        fix_first = [
+            f for f in page.items if not (f.get("issue") and f["issue"]["id"] in retested_fixed)
+        ][:fix_first_limit]
         verdict_count = sum(
             1
             for f in fix_first
@@ -613,7 +661,7 @@ def create_app(app_state: AppState) -> FastAPI:
             asset=summary,
             verdict_count=verdict_count,
             fix_first=fix_first,
-            more_at_lower_risk=max(total_open - len(fix_first), 0),
+            more_at_lower_risk=max(total_open - len(retested_fixed) - len(fix_first), 0),
             since_previous_scan=since,
             trend=trend,
             scanned=scanned,
@@ -797,6 +845,11 @@ def create_app(app_state: AppState) -> FastAPI:
             default=None,
             description="Filter to these priority bands: P1, P2, P3, P4 (plan §44.3).",
         ),
+        tag: list[str] | None = Query(
+            default=None,
+            description="Filter to Issues with any of these tags, set on the Issue, its project or "
+            "its portfolio (plan §49).",
+        ),
         sort: str = Query(default="risk", pattern="^(severity|path|risk)$"),
         limit: int = Query(default=100, ge=1, le=500),
         offset: int = Query(default=0, ge=0),
@@ -824,6 +877,12 @@ def create_app(app_state: AppState) -> FastAPI:
         if priority:
             by_band = IssueRow.priority_band.in_([p.upper() for p in priority])
             issue_filter = by_band if issue_filter is None else and_(issue_filter, by_band)
+        if tag:
+            try:
+                by_tag = tag_clause(tag)
+            except TagError as exc:
+                raise HTTPException(422, str(exc)) from exc
+            issue_filter = by_tag if issue_filter is None else and_(issue_filter, by_tag)
         page = repo.list_asset_issues(
             s, asset.id, latest.id, severities=severity, categories=category, triage=triage,
             issue_filter=issue_filter, sort=sort, limit=limit, offset=offset,
@@ -2118,6 +2177,9 @@ def create_app(app_state: AppState) -> FastAPI:
     register_connector_routes(app)
     register_sla_routes(app)
     register_priority_routes(app)
+    register_engagement_routes(app)
+    register_retest_routes(app)
+    register_collab_routes(app)
     register_acceptance_routes(app)
     return app
 
@@ -2157,6 +2219,7 @@ def build_default_app() -> FastAPI:
         run_dast_campaign_task,
         run_import_task,
         run_scan_task,
+        run_targeted_retest_task,
     )
 
     settings = Settings.from_env()
@@ -2182,6 +2245,7 @@ def build_default_app() -> FastAPI:
             llm_mapper=make_gateway_client(Task.MAPPER),
             enqueue_connector=lambda cid, org_id: run_connector_task.delay(cid, org_id),
             enqueue_priority=lambda pid, org_id: recompute_priority_task.delay(pid, org_id),
+            enqueue_retest=lambda rid, org_id: run_targeted_retest_task.delay(rid, org_id),
             limiter=UsageLimiter.from_env(),
         )
     )

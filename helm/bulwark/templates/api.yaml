@@ -44,6 +44,8 @@ spec:
                 secretKeyRef: { name: {{ include "bulwark.fullname" . }}-secrets, key: bulwark-api-token }
             - name: BULWARK_CORS_ORIGINS
               value: {{ .Values.api.corsOrigins | quote }}
+            - name: BULWARK_ATTACHMENTS_ORIGIN
+              value: {{ .Values.api.attachmentsOrigin | default "" | quote }}
             - name: BULWARK_LLM_ENABLED
               value: {{ .Values.api.llm.enabled | ternary "1" "0" | quote }}
             - name: BULWARK_LLM_MODEL

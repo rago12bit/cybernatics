@@ -50,6 +50,7 @@ include = ["core*", "cli*", "api*"]
 
 [tool.setuptools.package-data]
 "core.taxonomy" = ["*.json"]
+"core.engagements" = ["checklists/*.json"]
 "core.rag" = ["corpus/*.jsonl", "corpus/*.json", "corpus/*.md"]
 "core.llm" = ["prompts/*/*.md"]
 

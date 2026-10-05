@@ -5,8 +5,15 @@ import { TokenGate } from "@/components/TokenGate";
 
 export const metadata: Metadata = { title: "Record a finding · Bulwark" };
 
-export default async function Page({ params }: { params: Promise<{ id: string }> }) {
+export default async function Page({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ engagement?: string | string[] }>;
+}) {
   const { id } = await params;
+  const { engagement } = await searchParams;
   return (
     <TokenGate>
       <AppShell
@@ -16,7 +23,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           { label: "Record a finding" },
         ]}
       >
-        <ManualFindingForm assetId={id} />
+        <ManualFindingForm assetId={id} engagementId={typeof engagement === "string" ? engagement : undefined} />
       </AppShell>
     </TokenGate>
   );

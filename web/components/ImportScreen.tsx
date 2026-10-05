@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  ApiError, cancelImport, confirmImport, getDedup, getImport, listAssets, listMappings, listParsers,
-  listProjectTests, revertImport, startImport,
+  ApiError, cancelImport, confirmImport, getDedup, getEngagement, getImport, listAssets, listMappings,
+  listParsers, listProjectTests, revertImport, startImport,
 } from "@/lib/api";
 import type {
   DedupSource, FormatCandidates, ImportCounts, ImportView, ParserInfo, ProjectTest, SavedMapping,
@@ -47,7 +47,20 @@ const STRATEGY_WORDS = {
 
 const doneLine = (c: ImportCounts) => `${c.new} new, ${c.reopened} reopened, ${c.closed} closed`;
 
-export function ImportScreen({ assetId, pollMs = 800 }: { assetId: string; pollMs?: number }) {
+export function ImportScreen({
+  assetId,
+  engagementId,
+  pollMs = 800,
+}: {
+  assetId: string;
+  /** Import into this engagement (Week 64), instead of choosing one. */
+  engagementId?: string;
+  pollMs?: number;
+}) {
+  const [engagementName, setEngagementName] = useState<string | null>(null);
+  useEffect(() => {
+    if (engagementId) getEngagement(engagementId).then((e) => setEngagementName(e.name), () => setEngagementName(null));
+  }, [engagementId]);
   const [phase, setPhase] = useState<Phase>("pick");
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -124,6 +137,7 @@ export function ImportScreen({ assetId, pollMs = 800 }: { assetId: string; pollM
         test: o.into.test.trim() || undefined,
         engagementType: o.into.engagement,
         engagementName: o.into.engagementName.trim() || undefined,
+        engagement: engagementId,
         closeMissing: o.missing !== "no",
         scope: o.missing === "engagement" ? "engagement" : "test",
         preview: true,
@@ -232,7 +246,7 @@ export function ImportScreen({ assetId, pollMs = 800 }: { assetId: string; pollM
   const standing = into.engagement === "import";
   const where = [
     projectLabel,
-    standing ? "Imports" : into.engagementName.trim() || "New assessment",
+    engagementId ? engagementName ?? "…" : standing ? "Imports" : into.engagementName.trim() || "New assessment",
     into.test.trim() || (view ? labelOf(view.parser) : "…"),
   ].join(" / ");
 
@@ -382,6 +396,7 @@ export function ImportScreen({ assetId, pollMs = 800 }: { assetId: string; pollM
             <IntoEditor
               value={into}
               tests={tests}
+              fixedEngagement={engagementId ? engagementName ?? "this engagement" : undefined}
               onApply={(v) => {
                 setEditInto(false);
                 reanalyze({ into: v });
@@ -506,10 +521,13 @@ export function ImportScreen({ assetId, pollMs = 800 }: { assetId: string; pollM
 function IntoEditor({
   value,
   tests,
+  fixedEngagement,
   onApply,
 }: {
   value: Into;
   tests: ProjectTest[];
+  /** Importing into a named engagement: only the Test can be chosen. */
+  fixedEngagement?: string;
   onApply: (v: Into) => void;
 }) {
   const [draft, setDraft] = useState(value);
@@ -529,6 +547,9 @@ function IntoEditor({
           <option key={t.id} value={t.name} />
         ))}
       </datalist>
+      {fixedEngagement ? (
+        <p className="small muted">Engagement: {fixedEngagement}</p>
+      ) : (
       <fieldset className="ds-import-missing">
         <legend className="ds-import-label">Engagement</legend>
         <label>
@@ -550,7 +571,8 @@ function IntoEditor({
           A new assessment (a pen test, an audit)
         </label>
       </fieldset>
-      {draft.engagement === "assessment" && (
+      )}
+      {!fixedEngagement && draft.engagement === "assessment" && (
         <>
           <label className="ds-import-label" htmlFor="import-engagement-name">Assessment name</label>
           <input
@@ -565,7 +587,7 @@ function IntoEditor({
       <div className="ds-import-actions">
         <Button
           variant="primary"
-          disabled={draft.engagement === "assessment" && !draft.engagementName.trim()}
+          disabled={!fixedEngagement && draft.engagement === "assessment" && !draft.engagementName.trim()}
           onClick={() => onApply(draft)}
         >
           Update preview

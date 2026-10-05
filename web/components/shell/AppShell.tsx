@@ -69,6 +69,7 @@ export function AppShell({ crumbs, children }: { crumbs: Crumb[]; children: Reac
           <div className="ds-shell-spacer" />
           <ProjectSwitcher assets={assets} onNavigate={(id) => router.push(`/app/projects/${id}`)} />
           <Link href="/app/risk-acceptances" className="ds-shell-settings-link">Approvals</Link>
+          <Link href="/app/mentions" className="ds-shell-settings-link">Mentions</Link>
           <Link href="/app/connectors" className="ds-shell-settings-link">Connectors</Link>
           <Link href="/app/costs" className="ds-shell-settings-link">Costs</Link>
           <Link href="/app/settings" className="ds-shell-settings-link">Settings</Link>

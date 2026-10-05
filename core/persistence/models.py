@@ -163,6 +163,11 @@ class Asset(Base):
     # `repo.register_web_asset` enforces same-org at write time instead, so this never silently
     # points at another organization's project even without a DB-level constraint.
     linked_source_asset_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    # The business unit the project belongs to (Week 64, plan §49): its tags are inherited by the
+    # project and its Issues. Optional; a project need not be in a portfolio.
+    portfolio_id: Mapped[str | None] = mapped_column(
+        ForeignKey("portfolios.id", ondelete="SET NULL"), nullable=True, index=True
+    )
 
     issues: Mapped[list[IssueRow]] = relationship(
         back_populates="asset", cascade="all, delete-orphan"
@@ -240,7 +245,51 @@ class Engagement(Base):
     target_end_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
     created_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
 
+    # An assessment (Week 64, plan §43.1): scope, people, a checklist, and the report written on
+    # closing. Its `status` is planned | in_progress | reporting | closed; the standing "ci" and
+    # "import" engagements keep active | completed. People are names (or API token names) until
+    # user accounts exist (Week 75).
+    scope_targets: Mapped[list[str]] = mapped_column(JsonType, default=list)  # hosts, URLs, repos
+    scope_routes: Mapped[list[str]] = mapped_column(
+        JsonType, default=list
+    )  # "/v2/", "POST /orders"
+    out_of_scope: Mapped[str | None] = mapped_column(Text, nullable=True)
+    lead: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    testers: Mapped[list[str]] = mapped_column(JsonType, default=list)
+    checklist: Mapped[str | None] = mapped_column(String(32), nullable=True)  # "wstg-4.2", ...
+    closed_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
+    # The report written on closing: a snapshot of what it says, rendered to Markdown or HTML on
+    # download (`core.engagements.report`), so a later change to an Issue never rewrites it.
+    report: Mapped[dict[str, Any] | None] = mapped_column(JsonType, nullable=True)
+    report_generated_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
+    created_by: Mapped[str | None] = mapped_column(String(200), nullable=True)
+
     asset: Mapped[Asset] = relationship()
+
+
+class EngagementChecklistItem(Base):
+    """One checklist entry's result in an assessment (plan §43.1): only entries someone touched have
+    a row; the rest are "not started". `item_id` is the catalogue's own id ("WSTG-INFO-02",
+    "V2.1.1"), from `core/engagements/checklists/`."""
+
+    __tablename__ = "engagement_checklist_items"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(
+        ForeignKey("organizations.id"), default=DEFAULT_ORG_ID, index=True
+    )
+    engagement_id: Mapped[str] = mapped_column(
+        ForeignKey("engagements.id", ondelete="CASCADE"), index=True
+    )
+    item_id: Mapped[str] = mapped_column(String(40))
+    status: Mapped[str] = mapped_column(String(16))  # pass | fail | not_applicable | in_progress
+    note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    updated_by: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+
+    __table_args__ = (
+        UniqueConstraint("engagement_id", "item_id", name="uq_engagement_checklist_item"),
+    )
 
 
 class IssueRow(Base):
@@ -316,6 +365,17 @@ class IssueRow(Base):
     priority_band: Mapped[str | None] = mapped_column(String(4), nullable=True, index=True)
     priority_factors: Mapped[list[dict[str, Any]] | None] = mapped_column(JsonType, nullable=True)
     priority_version: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+    # Retest (Week 64, plan §43.3): a developer marks the Issue ready for retest ("requested"); a
+    # tester confirms it fixed ("passed", and the Issue is fixed) or reproduces it ("failed", back
+    # to open with a note). For a scanner's Issue the next scan, or a targeted retest of the one
+    # rule, decides instead (`core.retest`).
+    retest_status: Mapped[str | None] = mapped_column(String(16), nullable=True, index=True)
+    retest_requested_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
+    retest_requested_by: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    retest_note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    retest_decided_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
+    retest_decided_by: Mapped[str | None] = mapped_column(String(200), nullable=True)
 
     asset: Mapped[Asset] = relationship(back_populates="issues")
 
@@ -1109,6 +1169,10 @@ class EvidenceAttachment(Base):
     risk_acceptance_id: Mapped[str | None] = mapped_column(
         ForeignKey("risk_acceptances.id", ondelete="CASCADE"), index=True, nullable=True
     )
+    # ...and so do files on an Issue note (Week 64, plan §49).
+    note_id: Mapped[str | None] = mapped_column(
+        ForeignKey("issue_notes.id", ondelete="CASCADE"), index=True, nullable=True
+    )
     file_name: Mapped[str] = mapped_column(String(255))
     declared_type: Mapped[str | None] = mapped_column(String(120), nullable=True)
     sniffed_type: Mapped[str] = mapped_column(String(60))
@@ -1120,6 +1184,75 @@ class EvidenceAttachment(Base):
     wrapped_dek: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_by: Mapped[str | None] = mapped_column(String(200), nullable=True)
     created_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+
+
+class RetestRun(Base):
+    """A targeted retest (plan §43.3): one tool re-run for one rule against one location, on a
+    fresh checkout of the project -- or one DAST template against one URL of a verified target. It
+    never touches the scan history; its result decides the Issue's retest."""
+
+    __tablename__ = "retest_runs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(
+        ForeignKey("organizations.id"), default=DEFAULT_ORG_ID, index=True
+    )
+    issue_id: Mapped[str] = mapped_column(ForeignKey("issues.id", ondelete="CASCADE"), index=True)
+    kind: Mapped[str] = mapped_column(String(8))  # rule | dast
+    tool: Mapped[str] = mapped_column(String(64))
+    rule: Mapped[str] = mapped_column(String(300))
+    location: Mapped[str] = mapped_column(Text)  # a file path, or a URL
+    source_ref: Mapped[str] = mapped_column(Text)  # what was checked out or requested
+    status: Mapped[str] = mapped_column(String(16), default="queued")  # queued|running|done|failed
+    result: Mapped[str | None] = mapped_column(String(16), nullable=True)  # still_present|gone
+    detail: Mapped[str | None] = mapped_column(Text, nullable=True)
+    requested_by: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+    started_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
+    finished_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
+
+
+class IssueNote(Base):
+    """A note on an Issue (plan §49): threaded one level deep (`parent_id`), with @mentions
+    resolved to the organization's API token names at writing time. The body is plain text; the
+    web app never renders it as HTML. Deleting keeps the row (its replies stay readable) and blanks
+    the body."""
+
+    __tablename__ = "issue_notes"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(
+        ForeignKey("organizations.id"), default=DEFAULT_ORG_ID, index=True
+    )
+    issue_id: Mapped[str] = mapped_column(ForeignKey("issues.id", ondelete="CASCADE"), index=True)
+    parent_id: Mapped[str | None] = mapped_column(
+        ForeignKey("issue_notes.id", ondelete="CASCADE"), nullable=True, index=True
+    )
+    body: Mapped[str] = mapped_column(Text)
+    author: Mapped[str] = mapped_column(String(200))
+    mentions: Mapped[list[str]] = mapped_column(JsonType, default=list)  # actors ("token:<id>")
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+    edited_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
+    deleted_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
+
+
+class Tag(Base):
+    """A tag on a portfolio, a project or an Issue (plan §49). Tags inherit downward: an Issue's
+    tags are its own plus its project's plus the project's portfolio's (`core.collab.tags`)."""
+
+    __tablename__ = "tags"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(
+        ForeignKey("organizations.id"), default=DEFAULT_ORG_ID, index=True
+    )
+    target_type: Mapped[str] = mapped_column(String(16))  # portfolio | project | issue
+    target_id: Mapped[str] = mapped_column(String(36), index=True)
+    name: Mapped[str] = mapped_column(String(50))
+    created_by: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+
+    __table_args__ = (UniqueConstraint("target_type", "target_id", "name", name="uq_tags"),)
 
 
 class Connector(Base):

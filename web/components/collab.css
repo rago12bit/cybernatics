@@ -1,0 +1,215 @@
+/* Retest, notes and tags on an issue (plan §43.3, §49, Week 64). */
+.ds-rt {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.ds-rt-status {
+  margin: 0;
+}
+.ds-rt-requested {
+  font-weight: 600;
+}
+.ds-rt-failed {
+  color: var(--ds-sev-high);
+}
+.ds-rt-note {
+  margin: 0;
+  padding: 0.4rem 0.6rem;
+  border-left: 3px solid var(--ds-rule);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.ds-rt-label {
+  display: block;
+  margin: 0.25rem 0 0;
+  font-size: var(--ds-text-1);
+  color: var(--ds-muted);
+  text-transform: none;
+  letter-spacing: normal;
+  font-family: inherit;
+}
+.ds-rt-input {
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+  padding: 0.35rem 0.5rem;
+}
+.ds-rt-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.25rem 0;
+}
+.ds-rt-meta {
+  color: var(--ds-muted);
+  font-size: 0.85rem;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.ds-rt-error {
+  color: var(--ds-sev-critical);
+  margin: 0;
+}
+.ds-rt-targeted {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  margin-top: 0.4rem;
+}
+.ds-notes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.ds-note-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.ds-note {
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--ds-rule);
+}
+.ds-note-reply {
+  margin-left: 1.5rem;
+  padding-left: 0.75rem;
+  border-left: 2px solid var(--ds-rule);
+}
+.ds-note-head {
+  margin: 0 0 0.25rem;
+  font-size: 0.9rem;
+}
+.ds-note-head time {
+  color: var(--ds-muted);
+}
+.ds-note-body {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.ds-note-mention {
+  color: var(--ds-brand);
+  font-weight: 600;
+}
+.ds-note-files {
+  margin: 0.35rem 0 0;
+  padding-left: 1.1rem;
+}
+.ds-note-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+}
+.ds-note-link {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--ds-brand);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.875rem;
+  text-decoration: underline;
+}
+.ds-note-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  position: relative;
+}
+.ds-note-people {
+  list-style: none;
+  margin: 0;
+  padding: 0.25rem;
+  border: 1px solid var(--ds-rule);
+  border-radius: var(--ds-radius-panel);
+  background: var(--ds-raised);
+  max-width: 20rem;
+}
+.ds-note-people button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: 0;
+  padding: 0.3rem 0.5rem;
+  font: inherit;
+  color: var(--ds-ink);
+  cursor: pointer;
+}
+.ds-note-people button:hover,
+.ds-note-people button:focus-visible {
+  background: color-mix(in srgb, var(--ds-brand) 10%, transparent);
+}
+.ds-tags-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.ds-tags {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  padding: 0;
+  margin: 0;
+}
+.ds-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.1rem 0.5rem;
+  border: 1px solid var(--ds-rule);
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-family: var(--ds-font-mono);
+}
+.ds-tag button {
+  background: none;
+  border: 0;
+  padding: 0 0.1rem;
+  cursor: pointer;
+  color: var(--ds-muted);
+  font: inherit;
+}
+.ds-tag-inherited {
+  color: var(--ds-muted);
+  border-style: dashed;
+}
+.ds-tag-add {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+.ds-tag-add input,
+.ds-tags-portfolio select {
+  font: inherit;
+  padding: 0.25rem 0.4rem;
+  min-width: 0;
+  max-width: 14rem;
+}
+.ds-tag-add input {
+  flex: 1 1 8rem; /* in a row: grow sideways (in the portfolio column this would set the height) */
+}
+.ds-tags-portfolio {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: 0.4rem;
+}
+.ds-mentions {
+  max-width: 52rem;
+}
+/* A rule id or URL can be long and unbroken: wrap it rather than widen the sidebar. */
+.ds-rt,
+.ds-tags-panel,
+.ds-notes {
+  min-width: 0;
+}
+.ds-rt code,
+.ds-note-files button {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}

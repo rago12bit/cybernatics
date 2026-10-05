@@ -32,6 +32,22 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   saved policy, priority is the v2 score unchanged. Migration 0035.
 - **SLA deadlines by priority band** (§44.1's alternative basis): an SLA policy can key on P1-P4
   instead of severity.
+- **Pen-test engagements (Week 64, plan §43.1, §55.2, ADR-0048).** An assessment has a scope
+  (targets, routes, what is out of scope), a lead and testers, dates, a lifecycle (planned, in
+  progress, reporting, closed) and an optional OWASP checklist (WSTG 4.2, or ASVS 4.0.3 at L1, L2 or
+  L3; CC BY-SA 4.0, credited). Its screen lists every finding its uploads reported, with what else
+  reports it ("Also found by …") and where its retest stands, its tests, "Add a finding" and "Import
+  results" into it, and "Close and write the report": a Markdown or HTML report frozen at closing.
+  Migration 0036.
+- **Retests (Week 64, plan §43.3).** Mark an issue ready for retest; a tester confirms it fixed (the
+  issue is fixed) or reproduces it (a note is required; it stays open). For a scanner's issue the
+  next scan or upload decides, and undoing that upload undoes it. A **targeted retest** re-runs only
+  the one rule against the one file on a fresh checkout -- or the one DAST template against the one
+  URL of a verified target -- without touching the scan history.
+- **Notes, mentions and tags (Week 64, plan §49).** Threaded notes on issues, as plain text, with
+  @mentions of named API tokens (a Mentions page lists yours) and files on notes. Tags on
+  portfolios, projects and issues inherit downward; the issues table filters by tag (`?tag=`). A
+  project can be put in a portfolio.
 
 ### Changed
 - **Triage can no longer accept a risk alone** (HTTP 409): use a risk acceptance request. Issues
@@ -39,6 +55,11 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   marked as never approved by a second person. "Not a risk" and "reopen" are unchanged.
 
 ### Fixed
+- **Files could be served from the API's own host even with a separate attachments origin
+  configured** (threat T24). With `BULWARK_ATTACHMENTS_ORIGIN` set (now in Compose and Helm), that
+  host serves only signed downloads and the API host refuses them.
+- **A long issue title widened the issue page past the window**, so it scrolled sideways (titles from
+  Opengrep are full sentences). It now truncates as designed.
 - **A promoted hypothesis had no risk score stored**, so it sorted last in the issues table. It now
   stores the score it was given and gets a priority.
 - **Saving from the web app failed for every PUT, PATCH and DELETE** when the web app and API are on

@@ -16,6 +16,9 @@ import { getIssueNavList } from "@/lib/issue-nav";
 import { VerifiedFixPanel } from "@/components/VerifiedFixPanel";
 import { TriageAssistantPanel } from "@/components/TriageAssistantPanel";
 import { ManualFindingPanel } from "@/components/ManualFindingPanel";
+import { NotesPanel } from "@/components/NotesPanel";
+import { RetestPanel } from "@/components/RetestPanel";
+import { TagsEditor } from "@/components/TagsEditor";
 import { CopilotPanel } from "@/components/CopilotPanel";
 import { SLA_MARK, slaSentence } from "@/lib/sla";
 import { RiskAcceptanceRequest } from "@/components/RiskAcceptanceRequest";
@@ -214,6 +217,8 @@ export function IssueDetail({ assetId, issueId }: { assetId: string; issueId: st
               <VerifiedFixPanel assetId={assetId} issueId={issueId} />
             </div>
           )}
+
+          <NotesPanel issueId={issueId} />
         </div>
 
         <aside className="ds-issue-sidebar">
@@ -249,6 +254,8 @@ export function IssueDetail({ assetId, issueId }: { assetId: string; issueId: st
             <Button variant="primary" onClick={() => setTriageOpen("not_a_risk")} disabled={triageStatus !== "open"}>Mark as not a risk</Button>
             <Button onClick={() => setTriageOpen("accepted")} disabled={triageStatus !== "open" || !!live}>Request risk acceptance…</Button>
           </div>
+          <RetestPanel issueId={issueId} onChange={reload} />
+          <TagsEditor kind="issue" id={issueId} />
           <div>
             <div className="ds-issue-label">History</div>
             <ul className="ds-issue-history">

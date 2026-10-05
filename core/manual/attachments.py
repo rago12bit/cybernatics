@@ -28,7 +28,7 @@ from dataclasses import dataclass
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from core.persistence.models import EvidenceAttachment, ManualFinding, RiskAcceptance
+from core.persistence.models import EvidenceAttachment, IssueNote, ManualFinding, RiskAcceptance
 from core.secrets.envelope import decrypt, encrypt
 from core.secrets.openbao import OpenBaoClient
 
@@ -104,6 +104,7 @@ def store(
     *,
     manual: ManualFinding | None = None,
     acceptance: RiskAcceptance | None = None,
+    note: IssueNote | None = None,
     data: bytes,
     file_name: str | None,
     declared_type: str | None,
@@ -115,13 +116,18 @@ def store(
         raise AttachmentError("the file is empty")
     if len(data) > MAX_BYTES:
         raise AttachmentError("an attachment is at most 10 MB")
-    owner = manual if manual is not None else acceptance
-    if owner is None or (manual is not None and acceptance is not None):
-        raise ValueError("an attachment belongs to exactly one manual finding or risk acceptance")
+    owners = [o for o in (manual, acceptance, note) if o is not None]
+    if len(owners) != 1:
+        raise ValueError("an attachment belongs to one manual finding, risk acceptance or note")
+    owner = owners[0]
     column = (
         EvidenceAttachment.manual_finding_id
         if manual is not None
-        else EvidenceAttachment.risk_acceptance_id
+        else (
+            EvidenceAttachment.risk_acceptance_id
+            if acceptance is not None
+            else EvidenceAttachment.note_id
+        )
     )
     count = s.scalar(select(func.count()).select_from(EvidenceAttachment).where(column == owner.id))
     if (count or 0) >= MAX_PER_FINDING:
@@ -131,6 +137,7 @@ def store(
         org_id=owner.org_id,
         manual_finding_id=manual.id if manual is not None else None,
         risk_acceptance_id=acceptance.id if acceptance is not None else None,
+        note_id=note.id if note is not None else None,
         file_name=safe_name(file_name),
         declared_type=(declared_type or "")[:120] or None,
         sniffed_type=sniffed.content_type,

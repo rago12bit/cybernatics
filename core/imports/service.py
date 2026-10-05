@@ -234,6 +234,7 @@ def apply_import(
             plan=plan,
             existing_rows=existing_rows,
             record_changes=True,
+            retest_source=f"the upload into {test.name}",
         )
         # Issues first: a finding's issue_id is a foreign key, and one transaction has no commit
         # between the two to order them (SQLite never notices; Postgres does).
@@ -347,6 +348,10 @@ def revert_latest_import(s: Session, *, org_id: str, test_id: str) -> RevertResu
             row.category = prior["category"]
             row.fingerprint = prior["fingerprint"]
             row.fallback_fingerprint = prior["fallback_fingerprint"]
+            if "retest_status" in prior:  # records from before Week 64 carry no retest state
+                row.retest_status, row.retest_note = prior["retest_status"], prior["retest_note"]
+                row.retest_decided_at = _dt(prior["retest_decided_at"])
+                row.retest_decided_by = prior["retest_decided_by"]
             restored += 1
 
         if scan_id is not None:
