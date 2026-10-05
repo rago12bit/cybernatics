@@ -414,6 +414,62 @@ Get One
 
 - `mapping_id` (path, required)
 
+## `POST /v2/cvss/v4`
+
+Score Cvss
+
+
+## `GET /v2/cwe`
+
+Search Cwe
+
+- `q` (query)
+- `limit` (query)
+
+## `GET /v2/projects/{project_id}/routes`
+
+List Routes
+
+- `project_id` (path, required)
+
+## `POST /v2/projects/{project_id}/manual-findings`
+
+Record Manual
+
+- `project_id` (path, required)
+
+## `GET /v2/projects/{project_id}/manual-findings`
+
+List Manual
+
+- `project_id` (path, required)
+- `issue_id` (query)
+
+## `GET /v2/manual-findings/{manual_id}`
+
+Get Manual
+
+- `manual_id` (path, required)
+
+## `POST /v2/manual-findings/{manual_id}/attachments`
+
+Add Attachment
+
+- `manual_id` (path, required)
+
+## `POST /v2/attachments/{attachment_id}/link`
+
+Attachment Link
+
+- `attachment_id` (path, required)
+
+## `GET /v2/attachments/{attachment_id}/download`
+
+Download Attachment
+
+- `attachment_id` (path, required)
+- `token` (query, required)
+
 ## Live progress (WebSocket)
 
 `GET /scans/{scan_id}/ws` (not part of OpenAPI).

@@ -1,4 +1,5 @@
-import type { AnalyzeResult, MappingPreview, MappingSpec, SavedMapping, DedupApplied, DedupChangeRequest, DedupHistoryEntry, DedupOverview, DedupPreview,
+import type { AnalyzeResult, MappingPreview, MappingSpec, SavedMapping, CvssScore, CweEntry,
+  EvidenceFile, ManualFindingInput, ManualFindingView, ManualRecorded, ProjectRoutes, DedupApplied, DedupChangeRequest, DedupHistoryEntry, DedupOverview, DedupPreview,
   ImportCreated, ImportView, ParserInfo, ProjectTest, RevertView,
   AssetSummary, AssetVerification, AttackPath, BulkTriageResult,
   StrideRow, ThreatModel, RetentionSettings, Citation, CopilotConversation, CopilotMessage, CostSummary, DependenciesView, Finding, FindingsPage, FindingsQuery, GenerateHypothesesResult, Guidance, GuidanceApi, Hypothesis, IssueHistoryEvent, ProjectOverview, Remediation, ScanComparison, ScanCost, ScanSummary, ScanView, TriageAssistantView, TriageStatus, VerifiedFixStarted, VerifiedFixView } from "./types";
@@ -430,6 +431,44 @@ export const saveMapping = (body: { name: string; spec: MappingSpec; proposed_by
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
+// --- Manual findings (Week 59, plan §43.2, ADR-0044) ----------------------------------------------
+export const scoreCvss4 = (vector: string, signal?: AbortSignal) =>
+  request<CvssScore>("/v2/cvss/v4", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ vector }),
+    signal,
+  });
+export const searchCwe = (q: string) => request<CweEntry[]>(`/v2/cwe?q=${encodeURIComponent(q)}&limit=15`);
+export const listRoutes = (assetId: string) =>
+  request<ProjectRoutes>(`/v2/projects/${encodeURIComponent(assetId)}/routes`);
+export const recordManualFinding = (assetId: string, body: ManualFindingInput) =>
+  request<ManualRecorded>(`/v2/projects/${encodeURIComponent(assetId)}/manual-findings`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+export const listManualFindings = (assetId: string, issueId?: string) =>
+  request<ManualFindingView[]>(
+    `/v2/projects/${encodeURIComponent(assetId)}/manual-findings${issueId ? `?issue_id=${encodeURIComponent(issueId)}` : ""}`,
+  );
+export function uploadEvidence(manualId: string, file: File) {
+  const form = new FormData();
+  form.set("file", file);
+  return request<EvidenceFile>(`/v2/manual-findings/${encodeURIComponent(manualId)}/attachments`, {
+    method: "POST",
+    body: form,
+  });
+}
+/** A short-lived link; following it downloads the file (it is never shown in the page). */
+export async function evidenceDownloadUrl(attachmentId: string): Promise<string> {
+  const { url } = await request<{ url: string; expires_at: string }>(
+    `/v2/attachments/${encodeURIComponent(attachmentId)}/link`,
+    { method: "POST" },
+  );
+  return url.startsWith("http") ? url : `${API_URL}${url}`;
+}
+
 export const listMappings = () => request<SavedMapping[]>("/v2/mappings");
 export const getMapping = (id: string) => request<SavedMapping>(`/v2/mappings/${encodeURIComponent(id)}`);
 

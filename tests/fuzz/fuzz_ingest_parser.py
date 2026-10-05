@@ -19,11 +19,10 @@ in CI (.github/workflows/fuzz.yml) or in a Linux container. A crash libFuzzer wr
 
 from __future__ import annotations
 
+import io
 import sys
 
 import atheris
-
-import io
 
 with atheris.instrument_imports():
     from core.imports.parsers import PARSERS, get_parser, run_parser_on_bytes

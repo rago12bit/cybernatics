@@ -205,3 +205,35 @@
   width: 100%;
   background: color-mix(in srgb, var(--ds-sev-medium) 15%, transparent);
 }
+
+/* Recorded by hand (Week 59, plan §43.2) */
+.ds-manual-h {
+  font-size: 0.95rem;
+  margin: var(--ds-space-3, 0.75rem) 0 0.25rem;
+}
+
+.ds-manual-text {
+  white-space: pre-wrap;
+  margin: 0;
+}
+
+.ds-manual-vector {
+  word-break: break-all;
+}
+
+.ds-manual-files li {
+  margin: 0.3rem 0;
+}
+
+.ds-manual-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.ds-manual-error {
+  color: var(--ds-sev-critical, #b00020);
+}

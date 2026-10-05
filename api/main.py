@@ -47,6 +47,7 @@ from api.deps import (
     token_ok,
 )
 from api.ingest import register_ingest_routes
+from api.manual import register_manual_routes
 from api.mappings import register_mapping_routes
 from api.schemas import (
     AssetSummary,
@@ -828,7 +829,12 @@ def create_app(app_state: AppState) -> FastAPI:
         latest = repo.latest_scan_for_asset(s, asset.id, org_id=org)
         finding = repo.get_issue_finding(s, issue_id, latest.id) if latest else None
         if finding is None:
-            raise HTTPException(404, "issue not found in the latest scan")
+            # Not in the latest scan: an issue only an import or a person reported (or one a scan
+            # no longer sees) is shown as it was last reported, rather than as "not found".
+            elsewhere = repo.latest_occurrence_scan_id(s, issue_id)
+            finding = repo.get_issue_finding(s, issue_id, elsewhere) if elsewhere else None
+        if finding is None:
+            raise HTTPException(404, "issue not found")
         return finding
 
     @app.post(
@@ -2063,6 +2069,7 @@ def create_app(app_state: AppState) -> FastAPI:
     register_ingest_routes(app)
     register_dedup_routes(app)
     register_mapping_routes(app)
+    register_manual_routes(app)
     return app
 
 

@@ -925,6 +925,19 @@ def get_issue(s: Session, issue_id: str, *, org_id: str | None = None) -> IssueR
     return s.scalars(q).one_or_none()
 
 
+def latest_occurrence_scan_id(s: Session, issue_id: str) -> str | None:
+    """The scan (a native scan or an import) holding this issue's most recent occurrence. An issue
+    only an import or a manual finding reported (ADR-0040, ADR-0044) has no occurrence in the
+    asset's latest native scan, but is an Issue all the same and must be openable."""
+    return s.scalar(
+        select(FindingRow.scan_id)
+        .join(Scan, Scan.id == FindingRow.scan_id)
+        .where(FindingRow.issue_id == issue_id)
+        .order_by(Scan.created_at.desc())
+        .limit(1)
+    )
+
+
 def get_issue_finding(s: Session, issue_id: str, latest_scan_id: str) -> dict[str, Any] | None:
     """The full canonical Finding for one issue's detail screen (plan §28.3) -- its occurrence in
     the asset's latest scan, the same source `list_asset_issues` reads, just for one issue instead
@@ -1133,6 +1146,17 @@ def set_route_map(s: Session, scan_id: str, route_map: list[dict[str, Any]]) -> 
     scan = s.get(Scan, scan_id)
     assert scan is not None
     scan.route_map = route_map
+    s.commit()
+
+
+def set_entrypoints(s: Session, scan_id: str, entrypoints: list[dict[str, Any]] | None) -> None:
+    """Every HTTP entrypoint code intelligence found in this scan (Week 59, plan §43.2's route
+    picker). `None` (the analysis did not run) is left as null, unlike an empty list."""
+    if entrypoints is None:
+        return
+    scan = s.get(Scan, scan_id)
+    assert scan is not None
+    scan.entrypoints = entrypoints
     s.commit()
 
 

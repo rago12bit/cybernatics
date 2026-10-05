@@ -52,6 +52,10 @@ class Settings:
     # True is the default and the only safe production setting; False parses in the worker's own
     # process and exists for tests and for local development without Docker.
     ingest_sandbox: bool = True
+    # Where evidence-attachment download links point (Week 59, plan §43.2, threat T24): ideally an
+    # origin of its own with no cookies, so a file that slips past "always download" still cannot
+    # reach the app's origin. Empty: the API's own origin (which uses bearer tokens, not cookies).
+    attachments_origin: str = ""
 
     @property
     def ingest_dir(self) -> Path:
@@ -102,6 +106,7 @@ class Settings:
             in ("1", "true", "yes"),
             ingest_sandbox=os.environ.get("BULWARK_INGEST_SANDBOX", "1").strip().lower()
             not in ("0", "false", "no"),
+            attachments_origin=os.environ.get("BULWARK_ATTACHMENTS_ORIGIN", "").strip().rstrip("/"),
         )
 
 

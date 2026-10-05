@@ -360,6 +360,12 @@ class Scan(Base):
     # static finding "confirmed at runtime." Empty list (not null) for an ordinary scan that found
     # no Python route decorators at all -- null only for a scan from before this column existed.
     route_map: Mapped[list[dict[str, Any]] | None] = mapped_column(JsonType, nullable=True)
+    # Every HTTP entrypoint code intelligence found (Week 59, plan §20.2 / §43.2), any framework it
+    # knows, with the verb: `[{"method": "POST", "route": "/orders", "path": "app/api.py",
+    # "line": 41, "symbol": "create_order", "framework": "fastapi"}]`. What the manual finding
+    # form's route picker offers. Null for a scan from before migration 0031, or one whose code
+    # analysis did not run.
+    entrypoints: Mapped[list[dict[str, Any]] | None] = mapped_column(JsonType, nullable=True)
     # Model gateway token budget (plan §21.1, ADR-0026): total tokens every AI remediation call tied
     # to this scan has actually used. A running counter updated in place, unlike sbom_summary's
     # write-once snapshot -- `core.llm.budget.check()` compares it against a per-scan cap before
@@ -903,6 +909,83 @@ class IngestMapping(Base):
     __table_args__ = (
         UniqueConstraint("org_id", "name", "version", name="uq_ingest_mappings_version"),
     )
+
+
+class ManualFinding(Base):
+    """A finding a person recorded (plan §43.2, ADR-0044): what a pen tester or code reviewer found
+    that no scanner did. It enters through the same ingest path as everything else (source
+    `manual`, ADR-0040) and becomes an ordinary Issue; this row keeps what the canonical Finding
+    has no place for -- the CVSS 4.0 vector next to its score, the steps, impact and recommendation
+    as written, where it was found, and the automated finding it turned out to match, if any."""
+
+    __tablename__ = "manual_findings"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(
+        ForeignKey("organizations.id"), default=DEFAULT_ORG_ID, index=True
+    )
+    asset_id: Mapped[str] = mapped_column(ForeignKey("assets.id", ondelete="CASCADE"), index=True)
+    test_id: Mapped[str] = mapped_column(
+        ForeignKey("engagement_tests.id", ondelete="CASCADE"), index=True
+    )
+    # CASCADE: undoing the import that created the Issue (the most recent one into the Test can be
+    # reverted, ADR-0040) takes the manual record with it, rather than leaving one pointing nowhere.
+    issue_id: Mapped[str] = mapped_column(ForeignKey("issues.id", ondelete="CASCADE"), index=True)
+    import_id: Mapped[str | None] = mapped_column(
+        ForeignKey("import_records.id", ondelete="SET NULL"), nullable=True
+    )
+    title: Mapped[str] = mapped_column(String(300))
+    cwe: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    severity: Mapped[str] = mapped_column(String(16))
+    cvss_vector: Mapped[str | None] = mapped_column(String(300), nullable=True)  # CVSS:4.0/...
+    cvss_score: Mapped[float | None] = mapped_column(Float, nullable=True)
+    location_kind: Mapped[str] = mapped_column(String(8))  # route | file
+    method: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    route: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    host: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    path: Mapped[str | None] = mapped_column(Text, nullable=True)
+    line: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    steps: Mapped[str] = mapped_column(Text, default="")
+    impact: Mapped[str] = mapped_column(Text, default="")
+    recommendation: Mapped[str] = mapped_column(Text, default="")
+    references: Mapped[list[str]] = mapped_column(JsonType, default=list)
+    # An automated Issue on the same handler with a related CWE (`core.dast.correlate`), whose taint
+    # path this finding carries as evidence. No FK: it is a pointer to another source's Issue that
+    # must not cascade this record away if that Issue is merged or purged.
+    related_issue_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    related_source: Mapped[str | None] = mapped_column(String(60), nullable=True)
+    created_by: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
+class EvidenceAttachment(Base):
+    """A screenshot or HTTP capture attached to a manual finding (plan §43.2, threat T24). Stored
+    in the database -- so the same row-level security as everything else applies to it -- and
+    envelope-encrypted with a fresh data key when OpenBao is configured (`encrypted`,
+    `wrapped_dek`). Never rendered inline: served only as a download through a short-lived signed
+    link, with the type the bytes actually are (`sniffed_type`) recorded beside the type the
+    uploader claimed."""
+
+    __tablename__ = "evidence_attachments"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(
+        ForeignKey("organizations.id"), default=DEFAULT_ORG_ID, index=True
+    )
+    manual_finding_id: Mapped[str] = mapped_column(
+        ForeignKey("manual_findings.id", ondelete="CASCADE"), index=True
+    )
+    file_name: Mapped[str] = mapped_column(String(255))
+    declared_type: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    sniffed_type: Mapped[str] = mapped_column(String(60))
+    active_content: Mapped[bool] = mapped_column(Boolean, default=False)  # HTML, SVG, XML
+    size_bytes: Mapped[int] = mapped_column(Integer)
+    sha256: Mapped[str] = mapped_column(String(64))
+    data: Mapped[bytes] = mapped_column(LargeBinary)
+    encrypted: Mapped[bool] = mapped_column(Boolean, default=False)
+    wrapped_dek: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_by: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 
 
 class OutboxEvent(Base):

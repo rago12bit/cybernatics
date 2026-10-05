@@ -681,3 +681,67 @@ export type SavedMapping = {
   created_by: string | null;
   versions: { id: string; version: number; created_at: string; created_by: string | null }[];
 };
+
+// --- Manual findings (Week 59, plan §43.2, ADR-0044) ----------------------------------------------
+export type CvssScore = { vector: string; score: number; rating: string; severity: Severity };
+export type CweEntry = { id: string; name: string };
+export type ProjectRoute = { method: string; route: string; path: string; line: number; symbol: string; framework: string };
+export type ProjectRoutes = { scan_id: string | null; routes: ProjectRoute[] };
+export type ManualFindingInput = {
+  title: string;
+  cwe?: string | null;
+  cvss_vector?: string | null;
+  severity?: Severity | null;
+  location_kind: "route" | "file";
+  method?: string | null;
+  route?: string | null;
+  host?: string | null;
+  path?: string | null;
+  line?: number | null;
+  steps: string;
+  impact: string;
+  recommendation: string;
+  references: string[];
+  engagement_id?: string | null;
+};
+export type EvidenceFile = {
+  id: string;
+  file_name: string;
+  declared_type: string | null;
+  sniffed_type: string;
+  active_content: boolean;
+  size_bytes: number;
+  sha256: string;
+  encrypted: boolean;
+  created_at: string;
+};
+export type ManualFindingView = {
+  id: string;
+  issue_id: string;
+  import_id: string | null;
+  asset_id: string;
+  test_id: string;
+  title: string;
+  cwe: string | null;
+  cwe_name: string | null;
+  severity: Severity;
+  cvss_vector: string | null;
+  cvss_score: number | null;
+  location_kind: "route" | "file";
+  method: string | null;
+  route: string | null;
+  host: string | null;
+  path: string | null;
+  line: number | null;
+  steps: string;
+  impact: string;
+  recommendation: string;
+  references: string[];
+  related_issue_id: string | null;
+  related_source: string | null;
+  created_by: string | null;
+  created_at: string;
+  attachments: EvidenceFile[];
+};
+export type ManualRecorded = { manual: ManualFindingView; issue_id: string; import_id: string; created: boolean };
+export type FieldError = { field: string; message: string };

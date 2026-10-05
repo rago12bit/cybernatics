@@ -31,6 +31,7 @@ dependencies = [
     "cryptography>=42",
     "httpx>=0.27",
     "dnspython>=2.6",
+    "cvss>=3.6",  # CVSS 4.0 scoring for manual findings (LGPL-3.0, used as an unmodified library)
 ]
 
 [project.scripts]
@@ -98,6 +99,7 @@ module = [
     "celery.*", "kombu.*", "boto3.*", "botocore.*", "reportlab.*", "anthropic.*",
     "presidio_analyzer.*", "presidio_anonymizer.*", "dns.*",
     "ijson.*", "re2", "defusedxml.*",  # untrusted-report parsing (core.imports.parsers)
+    "cvss", "cvss.*",  # CVSS 4.0 scoring (core.manual.cvss4)
 ]  # fmt: skip
 ignore_missing_imports = true
 

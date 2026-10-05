@@ -3387,6 +3387,487 @@
           }
         }
       }
+    },
+    "/v2/cvss/v4": {
+      "post": {
+        "tags": [
+          "manual findings"
+        ],
+        "summary": "Score Cvss",
+        "operationId": "score_cvss_v2_cvss_v4_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CvssIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CvssOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v2/cwe": {
+      "get": {
+        "tags": [
+          "manual findings"
+        ],
+        "summary": "Search Cwe",
+        "operationId": "search_cwe_v2_cwe_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100,
+              "default": "",
+              "title": "Q"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CweOut"
+                  },
+                  "title": "Response Search Cwe V2 Cwe Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/projects/{project_id}/routes": {
+      "get": {
+        "tags": [
+          "manual findings"
+        ],
+        "summary": "List Routes",
+        "operationId": "list_routes_v2_projects__project_id__routes_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoutesOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/projects/{project_id}/manual-findings": {
+      "post": {
+        "tags": [
+          "manual findings"
+        ],
+        "summary": "Record Manual",
+        "operationId": "record_manual_v2_projects__project_id__manual_findings_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ManualIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordedOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "manual findings"
+        ],
+        "summary": "List Manual",
+        "operationId": "list_manual_v2_projects__project_id__manual_findings_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "issue_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Issue Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ManualOut"
+                  },
+                  "title": "Response List Manual V2 Projects  Project Id  Manual Findings Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/manual-findings/{manual_id}": {
+      "get": {
+        "tags": [
+          "manual findings"
+        ],
+        "summary": "Get Manual",
+        "operationId": "get_manual_v2_manual_findings__manual_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "manual_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Manual Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManualOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/manual-findings/{manual_id}/attachments": {
+      "post": {
+        "tags": [
+          "manual findings"
+        ],
+        "summary": "Add Attachment",
+        "operationId": "add_attachment_v2_manual_findings__manual_id__attachments_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "manual_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Manual Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_add_attachment_v2_manual_findings__manual_id__attachments_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttachmentOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/attachments/{attachment_id}/link": {
+      "post": {
+        "tags": [
+          "manual findings"
+        ],
+        "summary": "Attachment Link",
+        "operationId": "attachment_link_v2_attachments__attachment_id__link_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "attachment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Attachment Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/attachments/{attachment_id}/download": {
+      "get": {
+        "tags": [
+          "manual findings"
+        ],
+        "summary": "Download Attachment",
+        "operationId": "download_attachment_v2_attachments__attachment_id__download_get",
+        "parameters": [
+          {
+            "name": "attachment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Attachment Id"
+            }
+          },
+          {
+            "name": "token",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 400,
+              "title": "Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -3733,6 +4214,69 @@
         ],
         "title": "AssetVerificationView"
       },
+      "AttachmentOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "file_name": {
+            "type": "string",
+            "title": "File Name"
+          },
+          "declared_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Declared Type"
+          },
+          "sniffed_type": {
+            "type": "string",
+            "title": "Sniffed Type",
+            "description": "What the bytes are, whatever they were called."
+          },
+          "active_content": {
+            "type": "boolean",
+            "title": "Active Content",
+            "description": "HTML, SVG, XML or PDF: could run script if rendered."
+          },
+          "size_bytes": {
+            "type": "integer",
+            "title": "Size Bytes"
+          },
+          "sha256": {
+            "type": "string",
+            "title": "Sha256"
+          },
+          "encrypted": {
+            "type": "boolean",
+            "title": "Encrypted"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "file_name",
+          "declared_type",
+          "sniffed_type",
+          "active_content",
+          "size_bytes",
+          "sha256",
+          "encrypted",
+          "created_at"
+        ],
+        "title": "AttachmentOut"
+      },
       "AttackPathEdgeView": {
         "properties": {
           "kind": {
@@ -3884,6 +4428,20 @@
         ],
         "title": "AttackPathView",
         "description": "One ranked attack path (plan \u00a721.6, \u00a728.5). `narrative` is `None` when no model is routed\nfor Task.ATTACK_PATH -- unlike the copilot, this never 409s for that: the graph itself (nodes,\nedges, ranking, cheapest_link) is always real and useful without a model, only the prose\ndescription is best-effort on top of it."
+      },
+      "Body_add_attachment_v2_manual_findings__manual_id__attachments_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_add_attachment_v2_manual_findings__manual_id__attachments_post"
       },
       "Body_analyze_sample_v2_mappings_analyze_post": {
         "properties": {
@@ -4454,6 +5012,70 @@
           "scans"
         ],
         "title": "CostSummaryView"
+      },
+      "CvssIn": {
+        "properties": {
+          "vector": {
+            "type": "string",
+            "maxLength": 300,
+            "title": "Vector"
+          }
+        },
+        "type": "object",
+        "required": [
+          "vector"
+        ],
+        "title": "CvssIn"
+      },
+      "CvssOut": {
+        "properties": {
+          "vector": {
+            "type": "string",
+            "title": "Vector",
+            "description": "Normalized: metrics in the specification's order."
+          },
+          "score": {
+            "type": "number",
+            "title": "Score"
+          },
+          "rating": {
+            "type": "string",
+            "title": "Rating",
+            "description": "FIRST's rating: None, Low, Medium, High, Critical."
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity",
+            "description": "Bulwark's severity; a 0.0 score is INFO."
+          }
+        },
+        "type": "object",
+        "required": [
+          "vector",
+          "score",
+          "rating",
+          "severity"
+        ],
+        "title": "CvssOut"
+      },
+      "CweOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Empty for a valid CWE the bundled catalogue does not describe."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "CweOut"
       },
       "DedupOverview": {
         "properties": {
@@ -5325,6 +5947,425 @@
         ],
         "title": "IssueView"
       },
+      "LinkOut": {
+        "properties": {
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Expires At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "url",
+          "expires_at"
+        ],
+        "title": "LinkOut"
+      },
+      "ManualIn": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 1000,
+            "title": "Title"
+          },
+          "cwe": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cwe"
+          },
+          "cvss_vector": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 300
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cvss Vector"
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Severity",
+            "description": "Only when there is no CVSS vector."
+          },
+          "location_kind": {
+            "type": "string",
+            "title": "Location Kind",
+            "description": "'route' or 'file'.",
+            "default": "route"
+          },
+          "method": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 10
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Method"
+          },
+          "route": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Route"
+          },
+          "host": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 300
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Host"
+          },
+          "path": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Path"
+          },
+          "line": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Line"
+          },
+          "steps": {
+            "type": "string",
+            "maxLength": 40000,
+            "title": "Steps",
+            "default": ""
+          },
+          "impact": {
+            "type": "string",
+            "maxLength": 40000,
+            "title": "Impact",
+            "default": ""
+          },
+          "recommendation": {
+            "type": "string",
+            "maxLength": 40000,
+            "title": "Recommendation",
+            "default": ""
+          },
+          "references": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "References"
+          },
+          "engagement_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Engagement Id"
+          },
+          "test_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Test Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title"
+        ],
+        "title": "ManualIn"
+      },
+      "ManualOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "issue_id": {
+            "type": "string",
+            "title": "Issue Id"
+          },
+          "import_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Import Id"
+          },
+          "asset_id": {
+            "type": "string",
+            "title": "Asset Id"
+          },
+          "test_id": {
+            "type": "string",
+            "title": "Test Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "cwe": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cwe"
+          },
+          "cwe_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cwe Name"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity"
+          },
+          "cvss_vector": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cvss Vector"
+          },
+          "cvss_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cvss Score"
+          },
+          "location_kind": {
+            "type": "string",
+            "title": "Location Kind"
+          },
+          "method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Method"
+          },
+          "route": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Route"
+          },
+          "host": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Host"
+          },
+          "path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Path"
+          },
+          "line": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Line"
+          },
+          "steps": {
+            "type": "string",
+            "title": "Steps"
+          },
+          "impact": {
+            "type": "string",
+            "title": "Impact"
+          },
+          "recommendation": {
+            "type": "string",
+            "title": "Recommendation"
+          },
+          "references": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "References"
+          },
+          "related_issue_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Related Issue Id",
+            "description": "An automated Issue on the same handler with a related CWE, whose taint path this finding carries."
+          },
+          "related_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Related Source"
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "attachments": {
+            "items": {
+              "$ref": "#/components/schemas/AttachmentOut"
+            },
+            "type": "array",
+            "title": "Attachments",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "issue_id",
+          "import_id",
+          "asset_id",
+          "test_id",
+          "title",
+          "cwe",
+          "cwe_name",
+          "severity",
+          "cvss_vector",
+          "cvss_score",
+          "location_kind",
+          "method",
+          "route",
+          "host",
+          "path",
+          "line",
+          "steps",
+          "impact",
+          "recommendation",
+          "references",
+          "related_issue_id",
+          "related_source",
+          "created_by",
+          "created_at"
+        ],
+        "title": "ManualOut"
+      },
       "MappingIn": {
         "properties": {
           "name": {
@@ -5938,6 +6979,34 @@
         ],
         "title": "ProposalView"
       },
+      "RecordedOut": {
+        "properties": {
+          "manual": {
+            "$ref": "#/components/schemas/ManualOut"
+          },
+          "issue_id": {
+            "type": "string",
+            "title": "Issue Id"
+          },
+          "import_id": {
+            "type": "string",
+            "title": "Import Id"
+          },
+          "created": {
+            "type": "boolean",
+            "title": "Created",
+            "description": "False when the same finding was already recorded."
+          }
+        },
+        "type": "object",
+        "required": [
+          "manual",
+          "issue_id",
+          "import_id",
+          "created"
+        ],
+        "title": "RecordedOut"
+      },
       "RegisterWebAssetRequest": {
         "properties": {
           "domain": {
@@ -6157,6 +7226,73 @@
           "skipped"
         ],
         "title": "RevertView"
+      },
+      "RouteOut": {
+        "properties": {
+          "method": {
+            "type": "string",
+            "title": "Method"
+          },
+          "route": {
+            "type": "string",
+            "title": "Route"
+          },
+          "path": {
+            "type": "string",
+            "title": "Path"
+          },
+          "line": {
+            "type": "integer",
+            "title": "Line"
+          },
+          "symbol": {
+            "type": "string",
+            "title": "Symbol"
+          },
+          "framework": {
+            "type": "string",
+            "title": "Framework"
+          }
+        },
+        "type": "object",
+        "required": [
+          "method",
+          "route",
+          "path",
+          "line",
+          "symbol",
+          "framework"
+        ],
+        "title": "RouteOut"
+      },
+      "RoutesOut": {
+        "properties": {
+          "scan_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scan Id",
+            "description": "The scan the routes come from; null when none has any."
+          },
+          "routes": {
+            "items": {
+              "$ref": "#/components/schemas/RouteOut"
+            },
+            "type": "array",
+            "title": "Routes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "scan_id",
+          "routes"
+        ],
+        "title": "RoutesOut"
       },
       "SaveIntegrationSettingsRequest": {
         "properties": {

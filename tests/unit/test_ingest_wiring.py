@@ -22,7 +22,12 @@ def test_the_fuzz_matrix_covers_every_registered_parser() -> None:
     block = text[text.index("fuzz-ingest:") :]
     match = re.search(r"parser:\s*\[([^\]]*)\]", block)
     assert match, "fuzz-ingest has no parser matrix"
-    assert sorted(p.strip() for p in match.group(1).split(",")) == sorted(PARSERS)
+    # Every built-in parser, plus the universal mapper's fixed fuzz mappings and the sample analysis
+    # (Week 59, tests/fuzz/mappings.py).
+    from tests.fuzz.mappings import FUZZ_MAPPINGS
+
+    expected = sorted({*PARSERS, *FUZZ_MAPPINGS, "analyze"})
+    assert sorted(p.strip() for p in match.group(1).split(",")) == expected
 
 
 def test_the_sandbox_image_copies_every_module_a_parser_imports() -> None:

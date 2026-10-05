@@ -84,6 +84,22 @@ def _extract_route_map(workspace: Path) -> list[dict[str, Any]]:
         return []
 
 
+def _entrypoints(taint: Any) -> list[dict[str, Any]] | None:
+    """The code graph's HTTP entrypoints, any framework, with their verbs and handler locations
+    (Week 59, plan §43.2's route picker). Best-effort: `None` when code analysis did not run."""
+    graph = getattr(taint, "graph", None)
+    if graph is None:
+        return None
+    out = []
+    for e in graph.entrypoints:
+        sym = graph.symbols.get(e.symbol_id)
+        if sym is None or not e.path:
+            continue
+        out.append({"method": e.method, "route": e.path, "path": sym.path, "line": sym.start_line,
+                    "symbol": sym.qualified_name, "framework": e.framework})  # fmt: skip
+    return sorted(out, key=lambda r: (r["route"], r["method"], r["path"], r["line"]))
+
+
 def _process_sbom(raw: bytes) -> tuple[list[Finding], dict[str, Any] | None]:
     """Reshapes `syft`'s raw CycloneDX document into typosquat Findings (folded into the same
     correlate/finalize pipeline every other tool's Findings go through) and a JSON summary for the
@@ -320,6 +336,7 @@ def _run_scan_job(
             repo.add_findings(s, scan_id, findings, updates)
             repo.set_sbom_summary(s, scan_id, sbom_summary)
             repo.set_route_map(s, scan_id, route_map)
+            repo.set_entrypoints(s, scan_id, _entrypoints(taint))
             repo.finish_scan(s, scan_id, status)
             counts = repo.severity_counts(s, scan_id)
             # Integrations (Week 51 task 2, plan §23): only for a real, full scan of the asset's

@@ -6,6 +6,18 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 ## [Unreleased]
 
 ### Added
+- **Manual findings (Week 59, ADR-0044).** A pen tester or reviewer records what no scanner found:
+  title, a searchable CWE, severity from a CVSS 4.0 calculator (scored by the `cvss` library behind
+  `POST /v2/cvss/v4`, checked against FIRST's calculator; the vector is kept beside the score), a
+  route picked from code intelligence or a file, steps, impact, recommendation and evidence. It
+  enters through the ingest path (source `manual`) and becomes an ordinary, revertible Issue. A
+  picked route places it at its handler and, when a static finding there has a related CWE, links
+  the two and carries that finding's taint path. Every scan now stores its HTTP entrypoints for the
+  picker (migration 0031). Evidence is type-sniffed, encrypted at rest with OpenBao, and only ever
+  downloaded through a five-minute signed link with `Content-Disposition: attachment`, `nosniff` and
+  a sandboxing CSP. New: the **Record a finding** screen, and a "Recorded by hand" panel on the
+  issue page.
+
 - **The universal mapper (Week 59, ADR-0043).** A JSON, CSV or XML report with no parser can be
   imported through a saved **mapping**: where each field lives, in a deliberately small path language
   (`$.a["b"][*]`, `child/@attr`, a column name). A mapping is a deterministic parser that runs in the
@@ -64,6 +76,8 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   Verification record: [docs/v2-week54-verification.md](docs/v2-week54-verification.md).
 
 ### Fixed
+- The issue page answered "issue not found in the latest scan" for any Issue only an import (or now
+  a person) reported; it shows the Issue's most recent occurrence instead.
 - **DAST findings were merged and collapsed (found importing a real ZAP report; also affected native
   DAST campaigns).** Two different alerts sharing a CWE were merged into one finding (which survived
   depended on input order); the fingerprint ignored the route, so one alert on fifty URLs was one

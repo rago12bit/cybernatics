@@ -15,6 +15,7 @@ import { useMode } from "@/design-system/mode";
 import { getIssueNavList } from "@/lib/issue-nav";
 import { VerifiedFixPanel } from "@/components/VerifiedFixPanel";
 import { TriageAssistantPanel } from "@/components/TriageAssistantPanel";
+import { ManualFindingPanel } from "@/components/ManualFindingPanel";
 import { CopilotPanel } from "@/components/CopilotPanel";
 import "./issue-detail.css";
 
@@ -178,6 +179,8 @@ export function IssueDetail({ assetId, issueId }: { assetId: string; issueId: st
             </button>
             {explanationOpen && <p className="ds-issue-explain-text">{aiExplanation ?? finding.description}</p>}
           </div>
+
+          <ManualFindingPanel assetId={assetId} issueId={issueId} />
 
           {triageStatus === "open" && (
             <div className="ds-issue-section">
