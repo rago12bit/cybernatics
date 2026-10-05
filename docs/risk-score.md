@@ -32,6 +32,29 @@ Impact sets the ceiling; exploit evidence decides where between 50% and 100% of 
 curve is used instead of a linear one. A finding can list several CVE ids; the highest EPSS and any KEV
 hit count.
 
+## Priority: the score as a policy per project (Week 63)
+
+The issues table ranks by each Issue's **priority** ([ADR-0047](adr/0047-priority-engine.md)). With
+no saved policy it is exactly the score above. On a project's **Priority** page you can weight each
+factor (`multiplier ** weight`: 1 as designed, 0 off, 2 doubles its pull) and describe the project:
+
+| Factor | Effect at weight 1 |
+|---|---|
+| Severity, EPSS, tool agreement, not reachable, triage assistant | as above |
+| Known exploited (KEV) | a floor of 90 × weight (80 × weight if not reachable) |
+| Taint path confirmed | × 1.1 |
+| Confirmed at runtime (DAST) | × 1.25 |
+| Path context: test, example, docs or vendored code | × 0.6 |
+| Internal only | × 0.8 |
+| Data sensitivity: confidential / internal / public | × 0.9 / 0.8 / 0.65 |
+| Business criticality: high / medium / low | × 0.9 / 0.8 / 0.65 |
+
+Context left unset is the worst case (internet-facing, restricted data, critical), so describing a
+project can only lower its scores. Bands: **P1** 80 and up, **P2** 60, **P3** 30, **P4** below. An SLA
+can set deadlines by band instead of severity. Saving shows the top 50 before and after first, then
+re-ranks every Issue in the background; the page refuses another change until that finishes. Every
+Issue's "Why it's ranked here" lists each factor with its weight and the multiplier it applied.
+
 ## Behaviour you can rely on
 
 - **Feeds missing or stale never fail a scan.** Scores fall back to "unknown exploit data" and the factor

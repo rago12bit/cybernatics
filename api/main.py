@@ -31,7 +31,7 @@ from fastapi import (
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from fastapi.websockets import WebSocketDisconnect
-from sqlalchemy import select
+from sqlalchemy import and_, select
 from sqlalchemy.orm import Session
 
 from api.acceptance import register_acceptance_routes
@@ -51,6 +51,7 @@ from api.deps import (
 from api.ingest import register_ingest_routes
 from api.manual import register_manual_routes
 from api.mappings import register_mapping_routes
+from api.priority import register_priority_routes
 from api.schemas import (
     AssetSummary,
     AssetVerificationView,
@@ -123,9 +124,10 @@ from core.llm.service import static_suggestion
 from core.models import finding_from_dict
 from core.observability import bind_scan, configure_logging, cost, setup_tracing
 from core.persistence import repo
-from core.persistence.models import FindingRow, Scan
+from core.persistence.models import FindingRow, IssueRow, Scan
 from core.plugins.registry import discover_plugins
 from core.plugins.signing import PluginSignatureError, verify_plugin_image
+from core.priority.engine import BAND_NAMES as PRIORITY_BANDS
 from core.rag.retrieve import context_for
 from core.rag.store import KnowledgeBase
 from core.risk import is_stale, read_meta
@@ -791,6 +793,10 @@ def create_app(app_state: AppState) -> FastAPI:
             description="Filter to these SLA states: on_track, due_soon, breached (plan §44.1). "
             "Nothing matches when the project has no SLA policy.",
         ),
+        priority: list[str] | None = Query(
+            default=None,
+            description="Filter to these priority bands: P1, P2, P3, P4 (plan §44.3).",
+        ),
         sort: str = Query(default="risk", pattern="^(severity|path|risk)$"),
         limit: int = Query(default=100, ge=1, le=500),
         offset: int = Query(default=0, ge=0),
@@ -808,10 +814,16 @@ def create_app(app_state: AppState) -> FastAPI:
         bad = sorted(set(sla or []) - set(sla_policy.OPEN_SLA))
         if bad:
             raise HTTPException(422, f"unknown SLA state: {', '.join(bad)}")
+        bad = sorted({p.upper() for p in priority or []} - set(PRIORITY_BANDS))
+        if bad:
+            raise HTTPException(422, f"unknown priority band: {', '.join(bad)}")
         now = datetime.now(timezone.utc)
         issue_filter = (
             sla_service.clause(sla_service.policy_for(s, asset.id), sla, now) if sla else None
         )
+        if priority:
+            by_band = IssueRow.priority_band.in_([p.upper() for p in priority])
+            issue_filter = by_band if issue_filter is None else and_(issue_filter, by_band)
         page = repo.list_asset_issues(
             s, asset.id, latest.id, severities=severity, categories=category, triage=triage,
             issue_filter=issue_filter, sort=sort, limit=limit, offset=offset,
@@ -2105,6 +2117,7 @@ def create_app(app_state: AppState) -> FastAPI:
     register_manual_routes(app)
     register_connector_routes(app)
     register_sla_routes(app)
+    register_priority_routes(app)
     register_acceptance_routes(app)
     return app
 
@@ -2139,6 +2152,7 @@ def build_default_app() -> FastAPI:
     from core.persistence.db import get_session_factory
     from core.persistence.storage import S3Store
     from core.tasks import (
+        recompute_priority_task,
         run_connector_task,
         run_dast_campaign_task,
         run_import_task,
@@ -2167,6 +2181,7 @@ def build_default_app() -> FastAPI:
             llm_attack_path=make_gateway_client(Task.ATTACK_PATH),
             llm_mapper=make_gateway_client(Task.MAPPER),
             enqueue_connector=lambda cid, org_id: run_connector_task.delay(cid, org_id),
+            enqueue_priority=lambda pid, org_id: recompute_priority_task.delay(pid, org_id),
             limiter=UsageLimiter.from_env(),
         )
     )

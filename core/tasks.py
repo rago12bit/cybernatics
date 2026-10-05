@@ -223,6 +223,19 @@ def expire_risk_acceptances_task() -> int:
     return ended
 
 
+@celery_app.task(name="bulwark.recompute_priority", bind=True, acks_late=True, ignore_result=True)  # type: ignore[untyped-decorator]
+def recompute_priority_task(self: Any, policy_id: str, org_id: str) -> str:
+    """Re-rank every Issue of a project under its newly saved priority policy (plan §44.3). A
+    redelivered job for a policy already done does nothing."""
+    from core.persistence.db import get_session_factory
+    from core.priority import service
+    from core.tenancy import scoped_sessions
+
+    with scoped_sessions(get_session_factory(), org_id)() as s:
+        row = service.recompute(s, policy_id)
+        return row.status if row is not None else "missing"
+
+
 @celery_app.task(name="bulwark.run_connector", bind=True, acks_late=True, ignore_result=True)  # type: ignore[untyped-decorator]
 def run_connector_task(self: Any, connector_id: str, org_id: str) -> str:
     """One connector pull or push (plan §42.5). A redelivered task for a connector that is no longer

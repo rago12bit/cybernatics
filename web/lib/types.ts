@@ -62,6 +62,93 @@ export interface IssueRef {
   confirmed_at_runtime_at?: string | null;
   /** The Issue's SLA under its project's policy (plan §44.1, Week 61). */
   sla?: IssueSla;
+  /** What the issues table ranks by (plan §44.3, Week 63). Null for an Issue not ranked yet. */
+  priority?: IssuePriority | null;
+}
+
+export type PriorityBand = "P1" | "P2" | "P3" | "P4";
+
+/** One factor behind a priority: with no saved policy only `text` is set (the v2 reasons). */
+export interface PriorityFactor {
+  factor?: string;
+  label?: string;
+  weight?: number;
+  /** The multiplier applied after the weight; for known exploitation, the floor. */
+  effect?: number;
+  text: string;
+}
+
+export interface IssuePriority {
+  score: number | null;
+  band: PriorityBand | null;
+  /** The project's priority policy version; 0: no policy, the v2 risk score. */
+  version: number;
+  factors: PriorityFactor[];
+}
+
+export interface PriorityRecompute {
+  status: "pending" | "running" | "done" | "failed" | "superseded";
+  total: number;
+  processed: number;
+  /** Issues whose band moved. */
+  changed: number;
+  started_at: string | null;
+  finished_at: string | null;
+  error: string | null;
+}
+
+export interface PriorityContext {
+  internet_facing: boolean | null;
+  data_sensitivity: string | null;
+  criticality: string | null;
+}
+
+export interface PriorityOverview {
+  version: number;
+  weights: Record<string, number>;
+  context: PriorityContext;
+  starter: Record<string, number>;
+  max_weight: number;
+  factors: { key: string; label: string; description: string }[];
+  bands: Record<PriorityBand, number>;
+  sensitivity_levels: string[];
+  criticality_levels: string[];
+  locked: boolean;
+  recompute: PriorityRecompute | null;
+  history: {
+    version: number;
+    weights: Record<string, number>;
+    context: PriorityContext;
+    note: string | null;
+    changed_at: string;
+    changed_by: string | null;
+    recompute: PriorityRecompute;
+  }[];
+}
+
+export interface PriorityRank {
+  rank: number | null;
+  score: number | null;
+  band: PriorityBand | null;
+}
+
+export interface PriorityPreviewRow {
+  issue_id: string;
+  title: string;
+  severity: string;
+  path: string;
+  before: PriorityRank | null;
+  after: PriorityRank | null;
+}
+
+export interface PriorityPreview {
+  open_issues: number;
+  current_version: number;
+  moved: number;
+  top: PriorityPreviewRow[];
+  dropped: PriorityPreviewRow[];
+  bands_before: Record<PriorityBand, number>;
+  bands_after: Record<PriorityBand, number>;
 }
 
 export type SlaState = "on_track" | "due_soon" | "breached" | "met" | "missed" | "exempt" | "none";
@@ -82,19 +169,24 @@ export interface SlaBand {
 export interface SlaPolicyVersion {
   version: number;
   enabled: boolean;
+  basis?: SlaBasis;
   bands: Record<string, SlaBand>;
   note: string | null;
   changed_at: string;
   changed_by: string | null;
 }
 
+export type SlaBasis = "severity" | "priority";
+
 export interface SlaOverview {
   enabled: boolean;
-  basis: string;
+  basis: SlaBasis;
   /** 0 until someone saves a policy; the starter values are shown. */
   version: number;
   bands: Record<string, SlaBand>;
   starter: Record<string, SlaBand>;
+  /** Starter values for deadlines by priority band (Week 63). */
+  starter_by_priority?: Record<string, SlaBand>;
   counts: Record<"on_track" | "due_soon" | "breached" | "exempt" | "met" | "missed", number>;
   history: SlaPolicyVersion[];
 }

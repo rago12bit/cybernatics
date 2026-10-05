@@ -870,21 +870,27 @@ def list_asset_issues(
     conds.append(FindingRow.issue_id.in_(issue_ids_q))
 
     total = s.scalar(select(func.count()).select_from(FindingRow).where(*conds)) or 0
+    # Priority (Week 63, plan §44.3) is the Issue's; v2's score on the occurrence breaks ties
+    # (scores capped at 100) and covers an Issue not ranked yet.
+    v2 = func.coalesce(FindingRow.risk_score, -1)
+    priority = func.coalesce(IssueRow.priority_score, FindingRow.risk_score, -1)
     order: list[Any]
     if sort == "path":
         order = [FindingRow.path, FindingRow.start_line]
     elif sort == "risk":
-        order = [case((FindingRow.risk_score.is_(None), -1), else_=FindingRow.risk_score).desc()]
+        order = [priority.desc(), v2.desc()]
     else:
         order = [
             FindingRow.severity_rank.desc(),
-            case((FindingRow.risk_score.is_(None), -1), else_=FindingRow.risk_score).desc(),
+            priority.desc(),
+            v2.desc(),
             FindingRow.path,
             FindingRow.start_line,
         ]
     rows = list(
         s.scalars(
             select(FindingRow)
+            .join(IssueRow, IssueRow.id == FindingRow.issue_id)
             .where(*conds)
             .order_by(*order, FindingRow.pk)
             .limit(limit)
@@ -912,12 +918,19 @@ def list_asset_issues(
                 "confirmed_at_runtime_at": (
                     issue_row.confirmed_at_runtime_at if issue_row else None
                 ),
+                "priority": _priority_view(issue_row),
             }
             if r.issue_id
             else None
         )
         items.append(d)
     return FindingPage(total, items)
+
+
+def _priority_view(issue: IssueRow | None) -> dict[str, Any] | None:
+    from core.priority.service import view
+
+    return view(issue)
 
 
 def get_issue(s: Session, issue_id: str, *, org_id: str | None = None) -> IssueRow | None:
@@ -972,6 +985,7 @@ def get_issue_finding(s: Session, issue_id: str, latest_scan_id: str) -> dict[st
         "assistant_verdict_model": issue_row.assistant_verdict_model if issue_row else None,
         "assistant_verdict_at": issue_row.assistant_verdict_at if issue_row else None,
         "confirmed_at_runtime_at": issue_row.confirmed_at_runtime_at if issue_row else None,
+        "priority": _priority_view(issue_row),
     }
     return d
 
@@ -997,6 +1011,9 @@ def set_assistant_verdict(
     row.assistant_verdict_lines = lines
     row.assistant_verdict_model = model
     row.assistant_verdict_at = _now()
+    from core.priority.service import rescore
+
+    rescore(s, row)  # the verdict is a priority factor
     s.commit()
     s.refresh(row)
     return row
@@ -1235,6 +1252,9 @@ def mark_issue_confirmed_at_runtime(s: Session, issue_id: str, *, scan_id: str) 
     if issue.confirmed_at_runtime_at is None:
         issue.confirmed_at_runtime_at = _now()
     issue.confirmed_by_scan_id = scan_id
+    from core.priority.service import rescore
+
+    rescore(s, issue)  # runtime confirmation is a priority factor
     s.commit()
 
 
@@ -1519,6 +1539,7 @@ def add_findings(
     commit: bool = True,
 ) -> None:
     seen: set[str] = set()
+    ranked: list[tuple[str, dict[str, Any]]] = []  # (issue id, stored finding), for priority
     updates_by_position: list[IssueUpdate | None] = (
         list(issue_updates) if issue_updates else [None] * len(findings)
     )
@@ -1549,6 +1570,14 @@ def add_findings(
                 issue_state=upd.state if upd else None,
             )
         )
+        if upd and upd.issue_id:
+            ranked.append((upd.issue_id, d))
+    if ranked:
+        from core.priority.service import refresh_ingested
+
+        scan = s.get(Scan, scan_id)
+        if scan is not None and scan.asset_id is not None:
+            refresh_ingested(s, scan.asset_id, ranked)
     if commit:
         s.commit()
 
@@ -1926,9 +1955,12 @@ def promote_hypothesis(s: Session, hypothesis_id: str, *, actor: str) -> IssueRo
             scan_id=latest.id, finding_id=finding_id, fingerprint=fingerprint, category="sast",
             severity="MEDIUM", severity_rank=SEVERITY_RANK["MEDIUM"], path=hyp.file,
             start_line=hyp.line, tools=["hypotheses-lane"], data=finding.to_dict(),
-            issue_id=issue.id, issue_state="new",
+            issue_id=issue.id, issue_state="new", risk_score=finding.scoring.risk_score,
         )  # fmt: skip
     )
+    from core.priority.service import refresh_ingested
+
+    refresh_ingested(s, hyp.asset_id, [(issue.id, finding.to_dict())])
     hyp.status, hyp.promoted_issue_id, hyp.updated_at = "promoted", issue.id, _now()
     append_audit_entry(
         s, actor=actor, action="hypothesis.promote", target=hypothesis_id,

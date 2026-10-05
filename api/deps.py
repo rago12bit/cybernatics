@@ -50,6 +50,9 @@ class AppState:
     # (connector_id, org_id) -> runs a connector on the worker (Week 60, plan §42.5). None: "Run
     # now" runs it in the request -- tests and worker-less local development.
     enqueue_connector: Callable[[str, str], None] | None = None
+    # (priority_policy_id, org_id) -> re-ranks a project's Issues on the worker (Week 63, plan
+    # §44.3). None: the API does it after responding, in its own process.
+    enqueue_priority: Callable[[str, str], None] | None = None
 
 
 def state(request: Request) -> AppState:

@@ -4,24 +4,30 @@ import Link from "next/link";
 import { useCallback, useEffect, useId, useState } from "react";
 import { ApiError, getSla, saveSla } from "@/lib/api";
 import { SLA_MARK, SLA_WORD } from "@/lib/sla";
-import type { SlaBand, SlaOverview } from "@/lib/types";
+import type { SlaBand, SlaBasis, SlaOverview } from "@/lib/types";
 import { Button } from "@/design-system/primitives/Button";
 import "./sla-screen.css";
 
-/** A project's SLA policy (plan §44.1, Week 61): how many days each severity has to be fixed from
- * first detection, and when it counts as due soon. Starter values are offered, not imposed -- the
- * project has no SLA until someone turns it on and saves. Every save is a new version. */
+/** A project's SLA policy (plan §44.1, Week 61): how many days each severity -- or, since Week 63,
+ * each priority band -- has to be fixed from first detection, and when it counts as due soon.
+ * Starter values are offered, not imposed -- the project has no SLA until someone turns it on and
+ * saves. Every save is a new version. */
 
-const BANDS = ["CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO"] as const;
+const BANDS_BY: Record<SlaBasis, readonly string[]> = {
+  severity: ["CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO"],
+  priority: ["P1", "P2", "P3", "P4"],
+};
 type Draft = Record<string, { days: string; warn: string }>;
 type FieldError = { field: string; message: string };
 
-const toDraft = (bands: Record<string, SlaBand>): Draft =>
-  Object.fromEntries(BANDS.map((b) => [b, { days: bands[b]?.days?.toString() ?? "", warn: bands[b]?.days ? String(bands[b]?.warn ?? 0) : "" }]));
+const bandName = (b: string) => (b.startsWith("P") ? b : b.charAt(0) + b.slice(1).toLowerCase());
 
-function toBands(d: Draft): Record<string, SlaBand> {
+const toDraft = (bands: Record<string, SlaBand>, basis: SlaBasis): Draft =>
+  Object.fromEntries(BANDS_BY[basis].map((b) => [b, { days: bands[b]?.days?.toString() ?? "", warn: bands[b]?.days ? String(bands[b]?.warn ?? 0) : "" }]));
+
+function toBands(d: Draft, basis: SlaBasis): Record<string, SlaBand> {
   return Object.fromEntries(
-    BANDS.map((b) => {
+    BANDS_BY[basis].map((b) => {
       const days = d[b]?.days.trim() ?? "";
       const warn = d[b]?.warn.trim() ?? "";
       return [b, { days: days === "" ? null : Number(days), warn: warn === "" ? 0 : Number(warn) }];
@@ -44,6 +50,7 @@ export function SlaScreen({ assetId }: { assetId: string }) {
   const [data, setData] = useState<SlaOverview | null>(null);
   const [draft, setDraft] = useState<Draft>({});
   const [enabled, setEnabled] = useState(false);
+  const [basis, setBasis] = useState<SlaBasis>("severity");
   const [note, setNote] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [fieldError, setFieldError] = useState<FieldError | null>(null);
@@ -52,7 +59,8 @@ export function SlaScreen({ assetId }: { assetId: string }) {
 
   const show = useCallback((o: SlaOverview) => {
     setData(o);
-    setDraft(toDraft(o.bands));
+    setBasis(o.basis);
+    setDraft(toDraft(o.bands, o.basis));
     setEnabled(o.enabled || o.version === 0);
   }, []);
   const load = useCallback(() => {
@@ -67,7 +75,7 @@ export function SlaScreen({ assetId }: { assetId: string }) {
     setSaved(null);
     setSaving(true);
     try {
-      const o = await saveSla(assetId, { enabled, bands: toBands(draft), note: note.trim() || undefined });
+      const o = await saveSla(assetId, { enabled, basis, bands: toBands(draft, basis), note: note.trim() || undefined });
       show(o);
       setNote("");
       setSaved(`Saved as version ${o.version}.`);
@@ -90,6 +98,13 @@ export function SlaScreen({ assetId }: { assetId: string }) {
     "aria-invalid": fieldError?.field === f || undefined,
     "aria-describedby": fieldError?.field === f ? `${fid(f)}-err` : undefined,
   });
+  const starterFor = (b: SlaBasis) => (b === "priority" ? data.starter_by_priority ?? {} : data.starter);
+  function switchBasis(b: SlaBasis) {
+    if (!data) return;
+    setBasis(b);
+    setDraft(toDraft(b === data.basis && data.version > 0 ? data.bands : starterFor(b), b));
+  }
+  const BANDS = BANDS_BY[basis];
   const set = (band: string, key: "days" | "warn", value: string) =>
     setDraft((d) => ({ ...d, [band]: { ...(d[band] ?? { days: "", warn: "" }), [key]: value } }));
 
@@ -126,15 +141,27 @@ export function SlaScreen({ assetId }: { assetId: string }) {
         <label className="ds-sla-toggle">
           <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} /> Enforce an SLA for this project
         </label>
+        <fieldset className="ds-sla-basis">
+          <legend>Deadlines by</legend>
+          <label><input type="radio" name={`${id}-basis`} checked={basis === "severity"} onChange={() => switchBasis("severity")} /> Severity</label>
+          <label><input type="radio" name={`${id}-basis`} checked={basis === "priority"} onChange={() => switchBasis("priority")} /> Priority band</label>
+          {basis === "priority" && (
+            <p className="ds-sla-help">
+              P1 to P4 come from the project&apos;s <Link href={`/app/projects/${assetId}/priority`}>priority weights</Link>, so changing the
+              weights or the business context moves deadlines too.
+            </p>
+          )}
+          {errorFor("basis")}
+        </fieldset>
         <table className="ds-sla-bands">
-          <caption>Deadlines by severity</caption>
+          <caption>Deadlines by {basis === "priority" ? "priority band" : "severity"}</caption>
           <thead>
-            <tr><th scope="col">Severity</th><th scope="col">Fix within (days)</th><th scope="col">Due soon in the last (days)</th></tr>
+            <tr><th scope="col">{basis === "priority" ? "Band" : "Severity"}</th><th scope="col">Fix within (days)</th><th scope="col">Due soon in the last (days)</th></tr>
           </thead>
           <tbody>
             {BANDS.map((b) => (
               <tr key={b}>
-                <th scope="row">{b.charAt(0) + b.slice(1).toLowerCase()}</th>
+                <th scope="row">{bandName(b)}</th>
                 <td>
                   <input id={fid(`bands.${b}.days`)} inputMode="numeric" aria-label={`${b.toLowerCase()}: fix within, days`}
                     value={draft[b]?.days ?? ""} placeholder="no deadline" onChange={(e) => set(b, "days", e.target.value)} {...aria(`bands.${b}.days`)} />
@@ -156,7 +183,7 @@ export function SlaScreen({ assetId }: { assetId: string }) {
         </div>
         <div className="ds-sla-actions">
           <Button variant="primary" type="submit" disabled={saving}>{saving ? "Saving…" : "Save policy"}</Button>
-          <Button type="button" onClick={() => setDraft(toDraft(data.starter))}>Use starter values</Button>
+          <Button type="button" onClick={() => setDraft(toDraft(starterFor(basis), basis))}>Use starter values</Button>
           {saved && <span role="status">{saved}</span>}
         </div>
       </form>
@@ -171,7 +198,7 @@ export function SlaScreen({ assetId }: { assetId: string }) {
                 <td>{h.version}</td>
                 <td>{new Date(h.changed_at).toLocaleString()}</td>
                 <td>{h.changed_by ?? "—"}</td>
-                <td>{h.enabled ? BANDS.filter((b) => h.bands[b]?.days).map((b) => `${b.charAt(0)}${b.slice(1).toLowerCase()} ${h.bands[b]?.days}d`).join(", ") : "Off"}</td>
+                <td>{h.enabled ? BANDS_BY[h.basis ?? "severity"].filter((b) => h.bands[b]?.days).map((b) => `${bandName(b)} ${h.bands[b]?.days}d`).join(", ") : "Off"}</td>
                 <td>{h.note ?? ""}</td>
               </tr>
             ))}

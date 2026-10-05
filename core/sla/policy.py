@@ -13,8 +13,9 @@ States:
   decision lapses.
 - `none` -- no policy, the policy is off, or the band has no deadline (by default, Info).
 
-Priority bands (§44.1's alternative basis) arrive with the priority engine (Week 63); until then
-the basis is severity.
+The basis is the severity, or the priority band (P1-P4) the priority engine gives each Issue (Week
+63, plan §44.3). By priority, re-weighting a project moves its deadlines, as changing a severity
+does.
 """
 
 from __future__ import annotations
@@ -24,7 +25,8 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 BANDS = ("CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO")
-BASES = ("severity",)
+PRIORITY_BANDS = ("P1", "P2", "P3", "P4")
+BASES = ("severity", "priority")
 OPEN_STATES = ("new", "open", "reintroduced")
 OPEN_SLA = ("on_track", "due_soon", "breached")
 MAX_DAYS = 3650
@@ -37,6 +39,16 @@ STARTER: dict[str, dict[str, int | None]] = {
     "LOW": {"days": 180, "warn": 30},
     "INFO": {"days": None, "warn": None},
 }
+STARTER_BY_PRIORITY: dict[str, dict[str, int | None]] = {
+    "P1": {"days": 7, "warn": 2},
+    "P2": {"days": 30, "warn": 7},
+    "P3": {"days": 90, "warn": 14},
+    "P4": {"days": 180, "warn": 30},
+}
+
+
+def band_names(basis: str) -> tuple[str, ...]:
+    return PRIORITY_BANDS if basis == "priority" else BANDS
 
 
 class PolicyError(ValueError):
@@ -57,8 +69,8 @@ class Policy:
     basis: str = "severity"
     bands: dict[str, Band] = field(default_factory=dict)
 
-    def band(self, severity: str) -> Band | None:
-        b = self.bands.get(severity.upper())
+    def band(self, key: str | None) -> Band | None:
+        b = self.bands.get(key.upper()) if key else None
         return b if self.enabled and b is not None and b.days is not None else None
 
     def to_dict(self) -> dict[str, Any]:
@@ -69,15 +81,18 @@ class Policy:
         }
 
 
-def parse_bands(raw: Any) -> dict[str, Band]:
-    """Validated bands; every severity present, so a stored policy says what it means for each."""
+def parse_bands(raw: Any, basis: str = "severity") -> dict[str, Band]:
+    """Validated bands; every band of the basis present, so a stored policy says what it means for
+    each."""
+    what = "priority band" if basis == "priority" else "severity"
+    names = band_names(basis)
     if not isinstance(raw, dict):
-        raise PolicyError("bands", "bands maps each severity to {days, warn}")
-    unknown = sorted(set(map(str, raw)) - set(BANDS) - {b.lower() for b in BANDS})
+        raise PolicyError("bands", f"bands maps each {what} to {{days, warn}}")
+    unknown = sorted(set(map(str, raw)) - set(names) - {b.lower() for b in names})
     if unknown:
-        raise PolicyError("bands", f"unknown severity: {', '.join(unknown)}")
+        raise PolicyError("bands", f"unknown {what}: {', '.join(unknown)}")
     out: dict[str, Band] = {}
-    for name in BANDS:
+    for name in names:
         entry = raw.get(name, raw.get(name.lower()))
         entry = entry if isinstance(entry, dict) else {}
         days, warn = entry.get("days"), entry.get("warn")
@@ -85,20 +100,24 @@ def parse_bands(raw: Any) -> dict[str, Band]:
             out[name] = Band(None, 0)
             continue
         if isinstance(days, bool) or not isinstance(days, int) or not 1 <= days <= MAX_DAYS:
-            raise PolicyError(f"bands.{name}.days", f"{name.title()}: days is 1 to {MAX_DAYS}")
+            raise PolicyError(f"bands.{name}.days", f"{_title(name)}: days is 1 to {MAX_DAYS}")
         if warn in (None, ""):
             warn = 0
         if isinstance(warn, bool) or not isinstance(warn, int) or not 0 <= warn < days:
             raise PolicyError(
                 f"bands.{name}.warn",
-                f"{name.title()}: the warning is 0 to {days - 1} days before the deadline",
+                f"{_title(name)}: the warning is 0 to {days - 1} days before the deadline",
             )
         out[name] = Band(days, warn)
     return out
 
 
+def _title(name: str) -> str:
+    return name if name in PRIORITY_BANDS else name.title()
+
+
 def from_row(enabled: bool, basis: str, bands: dict[str, Any]) -> Policy:
-    return Policy(enabled, basis, parse_bands(bands))
+    return Policy(enabled, basis, parse_bands(bands, basis))
 
 
 STARTER_POLICY = Policy(False, "severity", parse_bands(STARTER))
@@ -128,6 +147,7 @@ def evaluate(
     policy: Policy,
     *,
     severity: str,
+    priority_band: str | None = None,
     state: str,
     first_seen_at: datetime,
     sla_started_at: datetime | None,
@@ -136,7 +156,7 @@ def evaluate(
     triage_expires_at: datetime | None,
     now: datetime,
 ) -> Status:
-    band = policy.band(severity)
+    band = policy.band(priority_band if policy.basis == "priority" else severity)
     if band is None or band.days is None:
         return Status("none")
     started = _utc(sla_started_at or first_seen_at)

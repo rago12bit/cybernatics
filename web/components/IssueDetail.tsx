@@ -178,7 +178,12 @@ export function IssueDetail({ assetId, issueId }: { assetId: string; issueId: st
 
       <div className="ds-issue-grid">
         <div className="ds-issue-main-col">
-          <WhyRankedPanel factors={finding.scoring.risk_factors ?? []} riskScore={finding.scoring.risk_score} />
+          <WhyRankedPanel
+            factors={finding.scoring.risk_factors ?? []}
+            riskScore={finding.issue?.priority?.score ?? finding.scoring.risk_score}
+            band={finding.issue?.priority?.band}
+            weighted={finding.issue?.priority?.version ? finding.issue.priority.factors : undefined}
+          />
 
           <div className="ds-issue-section">
             <div className="ds-issue-label">{steps.length > 1 ? "How the input gets there" : "Location"}</div>

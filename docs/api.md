@@ -74,6 +74,7 @@ List Issues
 - `category` (query)
 - `triage` (query)
 - `sla` (query)
+- `priority` (query)
 - `sort` (query)
 - `limit` (query)
 - `offset` (query)
@@ -520,6 +521,24 @@ Get Sla
 ## `PUT /v2/projects/{project_id}/sla`
 
 Put Sla
+
+- `project_id` (path, required)
+
+## `GET /v2/projects/{project_id}/priority`
+
+Get Priority
+
+- `project_id` (path, required)
+
+## `PUT /v2/projects/{project_id}/priority`
+
+Put Priority
+
+- `project_id` (path, required)
+
+## `POST /v2/projects/{project_id}/priority/preview`
+
+Preview Priority
 
 - `project_id` (path, required)
 

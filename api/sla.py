@@ -1,7 +1,8 @@
 """The SLA policy API (Week 61, plan §44.1).
 
     GET /v2/projects/{id}/sla   the policy in force (or the starter values, off), its history, and
-                                how many Issues are in each SLA state
+                                how many Issues are in each SLA state. A policy's bands are by
+                                severity or by priority band (P1-P4, Week 63)
     PUT /v2/projects/{id}/sla   save a new version of the policy (audit-logged)
 
 Reading is `scans:read`; changing a policy is `scans:write`, the same permission as triaging the
@@ -22,7 +23,7 @@ from sqlalchemy.orm import Session
 from api.deps import AuthContext, current_org, db, require_auth, require_scope
 from core.persistence import repo
 from core.sla import service
-from core.sla.policy import BANDS, STARTER, PolicyError
+from core.sla.policy import BANDS, PRIORITY_BANDS, STARTER, STARTER_BY_PRIORITY, PolicyError
 
 _UUID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
 
@@ -35,6 +36,7 @@ class BandOut(BaseModel):
 class PolicyVersion(BaseModel):
     version: int
     enabled: bool
+    basis: str
     bands: dict[str, BandOut]
     note: str | None
     changed_at: datetime
@@ -43,12 +45,13 @@ class PolicyVersion(BaseModel):
 
 class SlaOverview(BaseModel):
     enabled: bool
-    basis: str
+    basis: str = Field(description="severity, or priority (the P1-P4 band of each Issue).")
     version: int = Field(
         description="0 until someone saves a policy; the starter values are shown."
     )
     bands: dict[str, BandOut]
     starter: dict[str, BandOut]
+    starter_by_priority: dict[str, BandOut]
     counts: dict[str, int] = Field(description="Issues by SLA state, under the policy in force.")
     history: list[PolicyVersion]
 
@@ -80,10 +83,12 @@ def _overview(s: Session, asset_id: str) -> SlaOverview:
         version=row.version if row else 0,
         bands=_bands(policy.to_dict()["bands"]),
         starter=_bands({k: STARTER[k] for k in BANDS}),
+        starter_by_priority=_bands({k: STARTER_BY_PRIORITY[k] for k in PRIORITY_BANDS}),
         counts=service.summary(s, asset_id),
         history=[
             PolicyVersion(
-                version=h.version, enabled=h.enabled, bands=_bands(h.bands), note=h.note,
+                version=h.version, enabled=h.enabled, basis=h.basis, bands=_bands(h.bands),
+                note=h.note,
                 changed_at=h.created_at, changed_by=h.created_by,
             )  # fmt: skip
             for h in service.history(s, asset_id)

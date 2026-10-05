@@ -317,7 +317,8 @@ def test_cors_preflight_allows_every_method_a_route_uses(env) -> None:  # type: 
     # Found in Week 61: preflight allowed only GET and POST, so every PUT, PATCH and DELETE the web
     # app makes from its own origin (settings, threat model, SLA, connectors) was refused.
     client = env[0]
-    used = {m for r in client.app.routes for m in getattr(r, "methods", set())} - {"HEAD", "OPTIONS"}
+    methods = {m for r in client.app.routes for m in getattr(r, "methods", set())}
+    used = methods - {"HEAD", "OPTIONS"}
     assert {"PUT", "PATCH", "DELETE"} <= used
     for method in sorted(used):
         r = client.options("/scans", headers={"Origin": "http://localhost:3000",

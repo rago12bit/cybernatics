@@ -21,6 +21,7 @@ from sqlalchemy.orm import Session
 from core.persistence import repo
 from core.persistence.models import Asset, IssueRow, SlaPolicy
 from core.sla.policy import (
+    BASES,
     OPEN_SLA,
     OPEN_STATES,
     STARTER_POLICY,
@@ -81,11 +82,12 @@ def save(
 ) -> SlaPolicy:
     """A new version of the project's policy, audit-logged. Saving does not announce anything by
     itself; the next sweep does, once per Issue that the new policy puts due soon or breached."""
-    if basis != "severity":
-        raise PolicyError("basis", "the basis is severity (priority bands come with Week 63)")
-    parsed = parse_bands(bands)
+    if basis not in BASES:
+        raise PolicyError("basis", "the basis is severity or priority")
+    parsed = parse_bands(bands, basis)
     if enabled and not any(b.days for b in parsed.values()):
-        raise PolicyError("bands", "an SLA needs a deadline for at least one severity")
+        what = "priority band" if basis == "priority" else "severity"
+        raise PolicyError("bands", f"an SLA needs a deadline for at least one {what}")
     prev = current(s, asset_id)
     row = SlaPolicy(
         org_id=org_id,
@@ -104,7 +106,13 @@ def save(
         actor=actor,
         action="sla.policy.changed",
         target=f"asset:{asset_id}",
-        payload={"org_id": org_id, "version": row.version, "enabled": enabled, "bands": row.bands},
+        payload={
+            "org_id": org_id,
+            "version": row.version,
+            "enabled": enabled,
+            "basis": basis,
+            "bands": row.bands,
+        },
     )
     return row
 
@@ -116,6 +124,7 @@ def status_of(policy: Policy, issue: IssueRow, now: datetime | None = None) -> S
     return evaluate(
         policy,
         severity=issue.severity,
+        priority_band=issue.priority_band,
         state=issue.state,
         first_seen_at=issue.first_seen_at,
         sla_started_at=issue.sla_started_at,
@@ -144,6 +153,7 @@ def clause(policy: Policy, states: list[str], now: datetime) -> ColumnElement[bo
     if not policy.enabled or not wanted:
         return false()
     start = func.coalesce(IssueRow.sla_started_at, IssueRow.first_seen_at)
+    key = IssueRow.priority_band if policy.basis == "priority" else IssueRow.severity
     per_band = []
     for name, band in policy.bands.items():
         if band.days is None:
@@ -157,7 +167,7 @@ def clause(policy: Policy, states: list[str], now: datetime) -> ColumnElement[bo
             parts.append(and_(start > due_by, start <= warn_by))
         if "on_track" in wanted:
             parts.append(start > warn_by)
-        per_band.append(and_(IssueRow.severity == name, or_(*parts)))
+        per_band.append(and_(key == name, or_(*parts)))
     if not per_band:
         return false()
     return and_(IssueRow.state.in_(OPEN_STATES), _active(now), or_(*per_band))

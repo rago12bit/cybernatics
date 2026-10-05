@@ -21,6 +21,17 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   extend (a new request needing its own approval); the expiry job reopens the Issues and can restart
   their SLA. Every step is in the audit log and the Issue's history. New: the request form, the
   **Approvals** queue, a page per acceptance. Migration 0034.
+- **Priority engine v3 (Week 63, plan §44.3, §55.7, ADR-0047).** The risk score becomes a policy per
+  project: a weight per factor (severity, EPSS, KEV, reachability, taint and runtime confirmation,
+  tool agreement, path context, the triage assistant, business context) and the project's business
+  context (internet-facing, data sensitivity, criticality; unset is the worst case, so it can only
+  lower scores). The **Priority** page shows how the top 50 would reorder, and which Issues leave
+  it, before saving. Saving re-ranks every Issue in the background, and another change is refused
+  (409) until that finishes. Each Issue carries its priority score, band (P1-P4) and every factor
+  with its weight. The issues table sorts by priority and filters by band (`?priority=P1`). With no
+  saved policy, priority is the v2 score unchanged. Migration 0035.
+- **SLA deadlines by priority band** (§44.1's alternative basis): an SLA policy can key on P1-P4
+  instead of severity.
 
 ### Changed
 - **Triage can no longer accept a risk alone** (HTTP 409): use a risk acceptance request. Issues
@@ -28,6 +39,8 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   marked as never approved by a second person. "Not a risk" and "reopen" are unchanged.
 
 ### Fixed
+- **A promoted hypothesis had no risk score stored**, so it sorted last in the issues table. It now
+  stores the score it was given and gets a priority.
 - **Saving from the web app failed for every PUT, PATCH and DELETE** when the web app and API are on
   different origins (the default): CORS allowed only GET and POST. That broke saving the threat
   model, retention, plugin allowlist and integration settings, and turning off or deleting a

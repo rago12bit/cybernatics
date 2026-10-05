@@ -88,7 +88,7 @@
 .ds-issues-headrow,
 .ds-issue-row {
   display: grid;
-  grid-template-columns: 2rem 1.75rem 1fr auto auto auto;
+  grid-template-columns: 2rem 3.5rem 3.75rem 1fr auto auto auto; /* select, severity, priority, issue, status, SLA, rule */
   align-items: center;
   gap: 0.75rem;
   padding: 0 0.75rem;
@@ -179,4 +179,33 @@
 }
 .ds-issue-sla-due_soon {
   color: var(--ds-sev-medium, #a16207);
+}
+
+/* Priority (plan §44.3, Week 63). Calm by default (plan §25 principle 2): only P1 gets colour. */
+.ds-issue-prio {
+  font-family: var(--ds-font-mono);
+  font-size: 0.8rem;
+  white-space: nowrap;
+  color: var(--ds-muted);
+}
+.ds-issue-prio-score {
+  font-variant-numeric: tabular-nums;
+}
+.ds-issue-prio-P1 {
+  color: var(--ds-sev-critical);
+  font-weight: 600;
+}
+.ds-issue-prio-P2 {
+  color: var(--ds-ink);
+}
+@media (max-width: 40rem) {
+  .ds-issues-headrow,
+  .ds-issue-row {
+    grid-template-columns: 2rem 1.75rem 3.25rem 1fr auto auto auto;
+    gap: 0.5rem;
+  }
+  /* the icon column is too narrow for its word on a phone; the header stays for screen readers */
+  .ds-issues-headcell.col-severity {
+    font-size: 0;
+  }
 }

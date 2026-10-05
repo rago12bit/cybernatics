@@ -1,4 +1,4 @@
-import type { RiskAcceptance, RiskAcceptanceInput, RiskAcceptancePolicy, SlaBand, SlaOverview, ConnectorInput, ConnectorKind, ConnectorView, AnalyzeResult, MappingPreview, MappingSpec, SavedMapping, CvssScore, CweEntry,
+import type { PriorityBand, PriorityContext, PriorityOverview, PriorityPreview, RiskAcceptance, RiskAcceptanceInput, RiskAcceptancePolicy, SlaBand, SlaBasis, SlaOverview, ConnectorInput, ConnectorKind, ConnectorView, AnalyzeResult, MappingPreview, MappingSpec, SavedMapping, CvssScore, CweEntry,
   EvidenceFile, ManualFindingInput, ManualFindingView, ManualRecorded, ProjectRoutes, DedupApplied, DedupChangeRequest, DedupHistoryEntry, DedupOverview, DedupPreview,
   ImportCreated, ImportView, ParserInfo, ProjectTest, RevertView,
   AssetSummary, AssetVerification, AttackPath, BulkTriageResult,
@@ -166,6 +166,8 @@ export interface IssuesQuery {
   triage: TriageStatus[];
   /** SLA states to filter to (plan §44.1). Optional: views saved before Week 61 have none. */
   sla?: OpenSlaState[];
+  /** Priority bands to filter to (plan §44.3). Optional: views saved before Week 63 have none. */
+  priority?: PriorityBand[];
   sort: "severity" | "path" | "risk";
 }
 
@@ -177,6 +179,7 @@ function issuesQueryString(q: IssuesQuery, limit?: number, offset?: number): str
   if (q.category) p.append("category", q.category);
   q.triage.forEach((t) => p.append("triage", t));
   (q.sla ?? []).forEach((s) => p.append("sla", s));
+  (q.priority ?? []).forEach((b) => p.append("priority", b));
   p.set("sort", q.sort);
   if (limit != null) p.set("limit", String(limit));
   if (offset != null) p.set("offset", String(offset));
@@ -189,8 +192,29 @@ export const listIssues = (assetId: string, q: IssuesQuery, limit = 200, offset 
 export const getSla = (assetId: string) =>
   request<SlaOverview>(`/v2/projects/${encodeURIComponent(assetId)}/sla`);
 
-export const saveSla = (assetId: string, body: { enabled: boolean; bands: Record<string, SlaBand>; note?: string }) =>
+export const saveSla = (assetId: string, body: { enabled: boolean; basis?: SlaBasis; bands: Record<string, SlaBand>; note?: string }) =>
   request<SlaOverview>(`/v2/projects/${encodeURIComponent(assetId)}/sla`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+/** Priority weights (plan §44.3, Week 63). */
+export const getPriority = (assetId: string) =>
+  request<PriorityOverview>(`/v2/projects/${encodeURIComponent(assetId)}/priority`);
+
+export type PriorityInput = { weights: Record<string, number>; context: PriorityContext; note?: string };
+
+export const previewPriority = (assetId: string, body: PriorityInput) =>
+  request<PriorityPreview>(`/v2/projects/${encodeURIComponent(assetId)}/priority/preview`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+/** Accepted, not finished: the API re-ranks every issue in the background (poll getPriority). */
+export const savePriority = (assetId: string, body: PriorityInput) =>
+  request<PriorityOverview>(`/v2/projects/${encodeURIComponent(assetId)}/priority`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),

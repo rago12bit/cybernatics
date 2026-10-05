@@ -597,6 +597,27 @@
             "description": "Filter to these SLA states: on_track, due_soon, breached (plan \u00a744.1). Nothing matches when the project has no SLA policy."
           },
           {
+            "name": "priority",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter to these priority bands: P1, P2, P3, P4 (plan \u00a744.3).",
+              "title": "Priority"
+            },
+            "description": "Filter to these priority bands: P1, P2, P3, P4 (plan \u00a744.3)."
+          },
+          {
             "name": "sort",
             "in": "query",
             "required": false,
@@ -4282,7 +4303,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PolicyIn"
+                "$ref": "#/components/schemas/api__sla__PolicyIn"
               }
             }
           }
@@ -4294,6 +4315,166 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SlaOverview"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/projects/{project_id}/priority": {
+      "get": {
+        "tags": [
+          "priority"
+        ],
+        "summary": "Get Priority",
+        "operationId": "get_priority_v2_projects__project_id__priority_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PriorityOverview"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "priority"
+        ],
+        "summary": "Put Priority",
+        "description": "Accepted, not finished: every Issue is re-ranked in the background, and the policy stays\nlocked until that is done. Poll the GET for progress.",
+        "operationId": "put_priority_v2_projects__project_id__priority_put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/api__priority__PolicyIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PriorityOverview"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/projects/{project_id}/priority/preview": {
+      "post": {
+        "tags": [
+          "priority"
+        ],
+        "summary": "Preview Priority",
+        "operationId": "preview_priority_v2_projects__project_id__priority_preview_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/api__priority__PolicyIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreviewOut"
                 }
               }
             }
@@ -6586,6 +6767,45 @@
         "type": "object",
         "title": "ConnectorPatch"
       },
+      "ContextOut": {
+        "properties": {
+          "internet_facing": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Internet Facing"
+          },
+          "data_sensitivity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data Sensitivity"
+          },
+          "criticality": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Criticality"
+          }
+        },
+        "type": "object",
+        "title": "ContextOut"
+      },
       "ConversationView": {
         "properties": {
           "id": {
@@ -6915,6 +7135,29 @@
         },
         "type": "object",
         "title": "ExtendIn"
+      },
+      "FactorOut": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "description"
+        ],
+        "title": "FactorOut"
       },
       "FeedsStatus": {
         "properties": {
@@ -8506,45 +8749,6 @@
         "title": "PluginView",
         "description": "One discovered third-party scanner-adapter plugin (Week 51 task 1, plan \u00a723). `allowed`\nreflects the calling organization's own allowlist row right now -- it is not re-verified against\nSigstore here (that only happens when a scan actually requests this tool); a plugin can show\n`allowed=True` and still fail at scan time if its image's signature has since gone bad."
       },
-      "PolicyIn": {
-        "properties": {
-          "enabled": {
-            "type": "boolean",
-            "title": "Enabled"
-          },
-          "bands": {
-            "additionalProperties": {
-              "additionalProperties": true,
-              "type": "object"
-            },
-            "type": "object",
-            "title": "Bands"
-          },
-          "basis": {
-            "type": "string",
-            "title": "Basis",
-            "default": "severity"
-          },
-          "note": {
-            "anyOf": [
-              {
-                "type": "string",
-                "maxLength": 500
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Note"
-          }
-        },
-        "type": "object",
-        "required": [
-          "enabled",
-          "bands"
-        ],
-        "title": "PolicyIn"
-      },
       "PolicyOut": {
         "properties": {
           "max_days": {
@@ -8576,62 +8780,6 @@
           "can_approve"
         ],
         "title": "PolicyOut"
-      },
-      "PolicyVersion": {
-        "properties": {
-          "version": {
-            "type": "integer",
-            "title": "Version"
-          },
-          "enabled": {
-            "type": "boolean",
-            "title": "Enabled"
-          },
-          "bands": {
-            "additionalProperties": {
-              "$ref": "#/components/schemas/BandOut"
-            },
-            "type": "object",
-            "title": "Bands"
-          },
-          "note": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Note"
-          },
-          "changed_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Changed At"
-          },
-          "changed_by": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Changed By"
-          }
-        },
-        "type": "object",
-        "required": [
-          "version",
-          "enabled",
-          "bands",
-          "note",
-          "changed_at",
-          "changed_by"
-        ],
-        "title": "PolicyVersion"
       },
       "PostMessageRequest": {
         "properties": {
@@ -8716,6 +8864,63 @@
         ],
         "title": "PreviewIssue"
       },
+      "PreviewOut": {
+        "properties": {
+          "open_issues": {
+            "type": "integer",
+            "title": "Open Issues"
+          },
+          "current_version": {
+            "type": "integer",
+            "title": "Current Version"
+          },
+          "moved": {
+            "type": "integer",
+            "title": "Moved",
+            "description": "How many of the new top 50 change rank (or are new to it)."
+          },
+          "top": {
+            "items": {
+              "$ref": "#/components/schemas/PreviewRow"
+            },
+            "type": "array",
+            "title": "Top"
+          },
+          "dropped": {
+            "items": {
+              "$ref": "#/components/schemas/PreviewRow"
+            },
+            "type": "array",
+            "title": "Dropped",
+            "description": "In the top 50 now, not under these weights."
+          },
+          "bands_before": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Bands Before"
+          },
+          "bands_after": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Bands After"
+          }
+        },
+        "type": "object",
+        "required": [
+          "open_issues",
+          "current_version",
+          "moved",
+          "top",
+          "dropped",
+          "bands_before",
+          "bands_after"
+        ],
+        "title": "PreviewOut"
+      },
       "PreviewResult": {
         "properties": {
           "total": {
@@ -8765,6 +8970,154 @@
           "error"
         ],
         "title": "PreviewResult"
+      },
+      "PreviewRow": {
+        "properties": {
+          "issue_id": {
+            "type": "string",
+            "title": "Issue Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity"
+          },
+          "path": {
+            "type": "string",
+            "title": "Path"
+          },
+          "before": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Rank"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "after": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Rank"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "issue_id",
+          "title",
+          "severity",
+          "path",
+          "before",
+          "after"
+        ],
+        "title": "PreviewRow"
+      },
+      "PriorityOverview": {
+        "properties": {
+          "version": {
+            "type": "integer",
+            "title": "Version",
+            "description": "0 until someone saves a policy: priority is the v2 score."
+          },
+          "weights": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Weights",
+            "description": "In force; with no policy, v2's equivalents."
+          },
+          "context": {
+            "$ref": "#/components/schemas/ContextOut"
+          },
+          "starter": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Starter"
+          },
+          "max_weight": {
+            "type": "number",
+            "title": "Max Weight"
+          },
+          "factors": {
+            "items": {
+              "$ref": "#/components/schemas/FactorOut"
+            },
+            "type": "array",
+            "title": "Factors"
+          },
+          "bands": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Bands",
+            "description": "Each band's lowest score."
+          },
+          "sensitivity_levels": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Sensitivity Levels"
+          },
+          "criticality_levels": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Criticality Levels"
+          },
+          "locked": {
+            "type": "boolean",
+            "title": "Locked",
+            "description": "True while a recomputation runs; saving is refused."
+          },
+          "recompute": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Recompute"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "history": {
+            "items": {
+              "$ref": "#/components/schemas/api__priority__PolicyVersion"
+            },
+            "type": "array",
+            "title": "History"
+          }
+        },
+        "type": "object",
+        "required": [
+          "version",
+          "weights",
+          "context",
+          "starter",
+          "max_weight",
+          "factors",
+          "bands",
+          "sensitivity_levels",
+          "criticality_levels",
+          "locked",
+          "recompute",
+          "history"
+        ],
+        "title": "PriorityOverview"
       },
       "ProjectOverview": {
         "properties": {
@@ -8988,6 +9341,118 @@
           "notes"
         ],
         "title": "ProposalView"
+      },
+      "Rank": {
+        "properties": {
+          "rank": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rank"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          },
+          "band": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Band"
+          }
+        },
+        "type": "object",
+        "required": [
+          "rank",
+          "score",
+          "band"
+        ],
+        "title": "Rank"
+      },
+      "Recompute": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "pending, running, done, failed, or superseded."
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "processed": {
+            "type": "integer",
+            "title": "Processed"
+          },
+          "changed": {
+            "type": "integer",
+            "title": "Changed",
+            "description": "Issues whose priority band moved."
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "total",
+          "processed",
+          "changed",
+          "started_at",
+          "finished_at",
+          "error"
+        ],
+        "title": "Recompute"
       },
       "RecordedOut": {
         "properties": {
@@ -10035,7 +10500,8 @@
           },
           "basis": {
             "type": "string",
-            "title": "Basis"
+            "title": "Basis",
+            "description": "severity, or priority (the P1-P4 band of each Issue)."
           },
           "version": {
             "type": "integer",
@@ -10056,6 +10522,13 @@
             "type": "object",
             "title": "Starter"
           },
+          "starter_by_priority": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/BandOut"
+            },
+            "type": "object",
+            "title": "Starter By Priority"
+          },
           "counts": {
             "additionalProperties": {
               "type": "integer"
@@ -10066,7 +10539,7 @@
           },
           "history": {
             "items": {
-              "$ref": "#/components/schemas/PolicyVersion"
+              "$ref": "#/components/schemas/api__sla__PolicyVersion"
             },
             "type": "array",
             "title": "History"
@@ -10079,6 +10552,7 @@
           "version",
           "bands",
           "starter",
+          "starter_by_priority",
           "counts",
           "history"
         ],
@@ -10740,6 +11214,203 @@
           "updated_at"
         ],
         "title": "VerifiedFixView"
+      },
+      "api__priority__PolicyIn": {
+        "properties": {
+          "weights": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Weights"
+          },
+          "context": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Context"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "weights"
+        ],
+        "title": "PolicyIn"
+      },
+      "api__priority__PolicyVersion": {
+        "properties": {
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "weights": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Weights"
+          },
+          "context": {
+            "$ref": "#/components/schemas/ContextOut"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "changed_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Changed At"
+          },
+          "changed_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Changed By"
+          },
+          "recompute": {
+            "$ref": "#/components/schemas/Recompute"
+          }
+        },
+        "type": "object",
+        "required": [
+          "version",
+          "weights",
+          "context",
+          "note",
+          "changed_at",
+          "changed_by",
+          "recompute"
+        ],
+        "title": "PolicyVersion"
+      },
+      "api__sla__PolicyIn": {
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled"
+          },
+          "bands": {
+            "additionalProperties": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "object",
+            "title": "Bands"
+          },
+          "basis": {
+            "type": "string",
+            "title": "Basis",
+            "default": "severity"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "enabled",
+          "bands"
+        ],
+        "title": "PolicyIn"
+      },
+      "api__sla__PolicyVersion": {
+        "properties": {
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled"
+          },
+          "basis": {
+            "type": "string",
+            "title": "Basis"
+          },
+          "bands": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/BandOut"
+            },
+            "type": "object",
+            "title": "Bands"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "changed_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Changed At"
+          },
+          "changed_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Changed By"
+          }
+        },
+        "type": "object",
+        "required": [
+          "version",
+          "enabled",
+          "basis",
+          "bands",
+          "note",
+          "changed_at",
+          "changed_by"
+        ],
+        "title": "PolicyVersion"
       }
     },
     "securitySchemes": {

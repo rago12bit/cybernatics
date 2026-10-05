@@ -308,6 +308,15 @@ class IssueRow(Base):
     sla_notified: Mapped[str | None] = mapped_column(String(16), nullable=True)
     sla_notified_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
 
+    # Priority (Week 63, plan §44.3): the score the issues table ranks by, its band (P1-P4, which
+    # an SLA can key on), and why -- each factor with its weight. Written at ingest and by a
+    # recomputation (`core.priority.service`). `priority_version` is the project's priority policy
+    # version that computed it; 0 means no policy, so the score is the v2 risk score unchanged.
+    priority_score: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
+    priority_band: Mapped[str | None] = mapped_column(String(4), nullable=True, index=True)
+    priority_factors: Mapped[list[dict[str, Any]] | None] = mapped_column(JsonType, nullable=True)
+    priority_version: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
     asset: Mapped[Asset] = relationship(back_populates="issues")
 
     __table_args__ = (
@@ -907,6 +916,39 @@ class SlaPolicy(Base):
     created_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
 
     __table_args__ = (UniqueConstraint("asset_id", "version", name="uq_sla_policies"),)
+
+
+class PriorityPolicy(Base):
+    """How a project ranks its Issues (plan §44.3, Week 63): a weight per factor and the project's
+    business context. Versioned like SLA policies -- a change adds a row, never edits one -- and
+    each version records its own recomputation, which is also the lock: while the newest version's
+    recomputation is pending or running, no new version can be saved (`core.priority.service`).
+    The unique (asset, version) pair is what stops two saves racing past that check."""
+
+    __tablename__ = "priority_policies"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(
+        ForeignKey("organizations.id"), default=DEFAULT_ORG_ID, index=True
+    )
+    asset_id: Mapped[str] = mapped_column(ForeignKey("assets.id", ondelete="CASCADE"), index=True)
+    version: Mapped[int] = mapped_column(Integer)
+    weights: Mapped[dict[str, Any]] = mapped_column(JsonType, default=dict)
+    context: Mapped[dict[str, Any]] = mapped_column(JsonType, default=dict)
+    note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_by: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+    # pending -> running -> done | failed | superseded
+    status: Mapped[str] = mapped_column(String(16), default="pending")
+    total: Mapped[int] = mapped_column(Integer, default=0)
+    processed: Mapped[int] = mapped_column(Integer, default=0)
+    changed: Mapped[int] = mapped_column(Integer, default=0)  # Issues whose band moved
+    started_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
+    heartbeat_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
+    finished_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
+    error: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    __table_args__ = (UniqueConstraint("asset_id", "version", name="uq_priority_policies"),)
 
 
 class RiskAcceptance(Base):

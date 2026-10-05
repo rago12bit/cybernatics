@@ -51,6 +51,29 @@
 .ds-sla-bands input[aria-invalid="true"] {
   outline: 2px solid var(--ds-sev-critical, #b42318);
 }
+.ds-sla-basis {
+  border: 0;
+  padding: 0;
+  margin: var(--ds-space-3, 0.75rem) 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  align-items: center;
+}
+.ds-sla-basis legend {
+  font-weight: 600;
+  padding: 0;
+  margin-bottom: 0.25rem;
+}
+.ds-sla-basis label {
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+}
+.ds-sla-basis .ds-sla-help {
+  flex-basis: 100%;
+  margin: 0;
+}
 .ds-sla-toggle {
   display: flex;
   gap: 0.5rem;

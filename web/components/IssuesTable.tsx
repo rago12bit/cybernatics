@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ApiError, bulkTriageIssues, listIssues, type IssuesQuery, type OpenSlaState } from "@/lib/api";
 import { SLA_MARK, SLA_WORD, slaDetail, slaSentence } from "@/lib/sla";
-import type { Finding, Severity, TriageStatus } from "@/lib/types";
+import type { Finding, PriorityBand, Severity, TriageStatus } from "@/lib/types";
 import { SEVERITIES } from "@/lib/types";
 import { SeverityIcon } from "@/design-system/severity";
 import { Button } from "@/design-system/primitives/Button";
@@ -21,7 +21,7 @@ const ROW_HEIGHT_COMFORTABLE = 56;
 const ROW_HEIGHT_COMPACT = 40;
 
 function defaultQuery(): IssuesQuery {
-  return { severity: [], category: "", triage: [], sla: [], sort: "risk" };
+  return { severity: [], category: "", triage: [], sla: [], priority: [], sort: "risk" };
 }
 
 const columnHelper = createColumnHelper<Finding>();
@@ -81,6 +81,20 @@ export function IssuesTable({ assetId }: { assetId: string }) {
         id: "severity",
         header: "Severity",
         cell: (ctx) => <SeverityIcon severity={ctx.getValue().toLowerCase() as "critical" | "high" | "medium" | "low" | "info"} />,
+      }),
+      columnHelper.display({
+        id: "priority",
+        header: "Priority",
+        cell: (ctx) => {
+          const p = ctx.row.original.issue?.priority;
+          if (!p || p.score == null || !p.band) return null;
+          const why = p.factors.map((f) => f.text).join(" · ");
+          return (
+            <span className={`ds-issue-prio ds-issue-prio-${p.band}`} title={why || undefined}>
+              {p.band} <span className="ds-issue-prio-score">{p.score}</span>
+            </span>
+          );
+        },
       }),
       columnHelper.accessor("title", {
         header: "Issue",
@@ -143,6 +157,12 @@ export function IssuesTable({ assetId }: { assetId: string }) {
   function toggleTriage(t: TriageStatus) {
     setQ((cur) => ({ ...cur, triage: cur.triage.includes(t) ? cur.triage.filter((x) => x !== t) : [...cur.triage, t] }));
   }
+  function togglePriority(b: PriorityBand) {
+    setQ((cur) => {
+      const now = cur.priority ?? [];
+      return { ...cur, priority: now.includes(b) ? now.filter((x) => x !== b) : [...now, b] };
+    });
+  }
   function toggleSla(s: OpenSlaState) {
     setQ((cur) => {
       const now = cur.sla ?? [];
@@ -201,6 +221,13 @@ export function IssuesTable({ assetId }: { assetId: string }) {
             </button>
           ))}
         </div>
+        <div className="ds-issues-chips" role="group" aria-label="Priority">
+          {(["P1", "P2", "P3", "P4"] as PriorityBand[]).map((b) => (
+            <button key={b} type="button" aria-pressed={(q.priority ?? []).includes(b)} className={(q.priority ?? []).includes(b) ? "ds-chip active" : "ds-chip"} onClick={() => togglePriority(b)}>
+              {b}
+            </button>
+          ))}
+        </div>
         <div className="ds-issues-chips" role="group" aria-label="SLA">
           {(["breached", "due_soon", "on_track"] as OpenSlaState[]).map((s) => (
             <button key={s} type="button" aria-pressed={(q.sla ?? []).includes(s)} className={(q.sla ?? []).includes(s) ? "ds-chip active" : "ds-chip"} onClick={() => toggleSla(s)}>
@@ -209,7 +236,7 @@ export function IssuesTable({ assetId }: { assetId: string }) {
           ))}
         </div>
         <select value={q.sort} onChange={(e) => setQ((cur) => ({ ...cur, sort: e.target.value as IssuesQuery["sort"] }))} aria-label="Sort">
-          <option value="risk">Sort: risk</option>
+          <option value="risk">Sort: priority</option>
           <option value="severity">Sort: severity</option>
           <option value="path">Sort: file path</option>
         </select>
