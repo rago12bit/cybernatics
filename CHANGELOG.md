@@ -5,6 +5,15 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 
 ## [Unreleased]
 
+### Fixed
+- **Times read from SQLite were shown in the wrong zone.** SQLite drops the time zone, so timestamps
+  came back without one, the API sent them without an offset, and browsers read UTC as local time:
+  in IST a run from seconds earlier showed as "6 hours ago", on every screen. Every timestamp column
+  now uses one UTC-aware type (`core/persistence/utc_type.py`) that stores UTC and reads UTC on any
+  database, so the API always sends an offset. PostgreSQL deployments were not affected (their DDL is
+  unchanged, no migration), except that times now always come back in UTC rather than the database
+  session's zone. Local development, the end-to-end server and SQLite self-hosting are fixed.
+
 ## [2.2.0] - 2026-10-05
 
 Milestone M13 (plan Phase 14, Weeks 57-60): more formats, your own formats, findings by hand, and

@@ -181,7 +181,7 @@ def test_a_merge_never_hides_an_open_issue_behind_a_triage_decision(
         asset_id, t = setup(s, "SAST")
         three_lines(s, t["SAST"])
         a, b, c = sorted(issues(s, asset_id), key=lambda i: (i.first_seen_at, i.id))
-        a.first_seen_at = datetime(2020, 1, 1)  # the survivor
+        a.first_seen_at = datetime(2020, 1, 1, tzinfo=timezone.utc)  # the survivor
         a.triage_status, a.triage_reason = "not_a_risk", "test code"
         s.commit()
         p = preview_change(s, org_id=ORG, asset_id=asset_id, source=SRC, strategy="tool_id")
@@ -229,7 +229,7 @@ def test_tickets_and_fix_runs_of_a_merged_away_issue_move_to_the_survivor(
         asset_id, t = setup(s, "SAST")
         three_lines(s, t["SAST"])
         a, b, c = sorted(issues(s, asset_id), key=lambda i: (i.first_seen_at, i.id))
-        a.first_seen_at = datetime(2020, 1, 1)
+        a.first_seen_at = datetime(2020, 1, 1, tzinfo=timezone.utc)
         for issue, provider, ext in (
             (a, "github", "o/r#1"),
             (b, "github", "o/r#2"),
