@@ -1,4 +1,4 @@
-import type { DedupApplied, DedupChangeRequest, DedupHistoryEntry, DedupOverview, DedupPreview,
+import type { AnalyzeResult, MappingPreview, MappingSpec, SavedMapping, DedupApplied, DedupChangeRequest, DedupHistoryEntry, DedupOverview, DedupPreview,
   ImportCreated, ImportView, ParserInfo, ProjectTest, RevertView,
   AssetSummary, AssetVerification, AttackPath, BulkTriageResult,
   StrideRow, ThreatModel, RetentionSettings, Citation, CopilotConversation, CopilotMessage, CostSummary, DependenciesView, Finding, FindingsPage, FindingsQuery, GenerateHypothesesResult, Guidance, GuidanceApi, Hypothesis, IssueHistoryEvent, ProjectOverview, Remediation, ScanComparison, ScanCost, ScanSummary, ScanView, TriageAssistantView, TriageStatus, VerifiedFixStarted, VerifiedFixView } from "./types";
@@ -409,6 +409,29 @@ export const cancelImport = (id: string) =>
 export const revertImport = (id: string) =>
   request<RevertView>(`/v2/imports/${encodeURIComponent(id)}/revert`, { method: "POST" });
 export const listParsers = () => request<ParserInfo[]>("/v2/parsers");
+
+// --- The universal mapper (Week 59, plan §42.4, ADR-0043) -----------------------------------------
+export function analyzeSample(file: File, o: { useModel: boolean; source?: string }) {
+  const form = new FormData();
+  form.set("use_model", String(o.useModel));
+  if (o.source) form.set("source", o.source);
+  form.set("file", file);
+  return request<AnalyzeResult>("/v2/mappings/analyze", { method: "POST", body: form });
+}
+export function previewMapping(file: File, spec: MappingSpec, signal?: AbortSignal) {
+  const form = new FormData();
+  form.set("spec", JSON.stringify(spec));
+  form.set("file", file);
+  return request<MappingPreview>("/v2/mappings/preview", { method: "POST", body: form, signal });
+}
+export const saveMapping = (body: { name: string; spec: MappingSpec; proposed_by?: string | null; sample_digest?: string }) =>
+  request<SavedMapping>("/v2/mappings", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+export const listMappings = () => request<SavedMapping[]>("/v2/mappings");
+export const getMapping = (id: string) => request<SavedMapping>(`/v2/mappings/${encodeURIComponent(id)}`);
 
 // --- Matching: deduplication per source (Week 58, plan §42.3, ADR-0042) ---------------------------
 const dedupBase = (assetId: string) => `/v2/projects/${encodeURIComponent(assetId)}/dedup`;

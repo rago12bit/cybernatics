@@ -6,6 +6,17 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 ## [Unreleased]
 
 ### Added
+- **The universal mapper (Week 59, ADR-0043).** A JSON, CSV or XML report with no parser can be
+  imported through a saved **mapping**: where each field lives, in a deliberately small path language
+  (`$.a["b"][*]`, `child/@attr`, a column name). A mapping is a deterministic parser that runs in the
+  parser sandbox and is imported with `parser=universal:<id>`, with every reimport guarantee a built-in
+  parser has. `POST /v2/mappings/analyze` describes a sample (inside the sandbox) and drafts a mapping
+  -- by the model when one is configured, checked against the sample so no invented path survives, or
+  by field-name matching -- `POST /v2/mappings/preview` shows the issues it would produce, and
+  `POST /v2/mappings` saves it, versioned (migration 0030, tenant-isolated, audit-logged). The model
+  never sees the file and never runs during an import. Saved mappings are suggested when an upload
+  is not recognised, never picked. Three fixed mappings and the sample analysis join the fuzz matrix;
+  the mapping prompt has its own evaluation set (`core/llm/prompts/mapper/`).
 - **Deduplication strategies per source, with a dry run (Week 58, ADR-0042).** A project can choose,
   per source, what makes two findings one Issue: `fingerprint_v2` (the existing fingerprint, and the
   default, so nothing changes until someone chooses), `tool_id`, `hash_fields`, `tool_id_or_hash`

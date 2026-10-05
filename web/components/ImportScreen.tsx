@@ -3,11 +3,11 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  ApiError, cancelImport, confirmImport, getDedup, getImport, listAssets, listParsers, listProjectTests,
-  revertImport, startImport,
+  ApiError, cancelImport, confirmImport, getDedup, getImport, listAssets, listMappings, listParsers,
+  listProjectTests, revertImport, startImport,
 } from "@/lib/api";
 import type {
-  DedupSource, FormatCandidates, ImportCounts, ImportView, ParserInfo, ProjectTest,
+  DedupSource, FormatCandidates, ImportCounts, ImportView, ParserInfo, ProjectTest, SavedMapping,
 } from "@/lib/types";
 import { Button } from "@/design-system/primitives/Button";
 import "./import-screen.css";
@@ -67,6 +67,7 @@ export function ImportScreen({ assetId, pollMs = 800 }: { assetId: string; pollM
   const [tests, setTests] = useState<ProjectTest[]>([]);
   const [projectLabel, setProjectLabel] = useState<string>(assetId);
   const [matching, setMatching] = useState<DedupSource[]>([]);
+  const [mappings, setMappings] = useState<SavedMapping[]>([]);
 
   const run = useRef(0); // each analysis gets a number; a stale one's results are dropped
   const mounted = useRef(true);
@@ -79,6 +80,7 @@ export function ImportScreen({ assetId, pollMs = 800 }: { assetId: string; pollM
 
   useEffect(() => {
     listParsers().then(setParsers, () => setParsers([]));
+    listMappings().then(setMappings, () => setMappings([]));
     listProjectTests(assetId).then(setTests, () => setTests([]));
     getDedup(assetId).then((d) => setMatching(d.sources.filter((s) => s.version > 0)), () => setMatching([]));
     listAssets().then(
@@ -88,8 +90,12 @@ export function ImportScreen({ assetId, pollMs = 800 }: { assetId: string; pollM
   }, [assetId]);
 
   const labelOf = useCallback(
-    (name: string) => parsers.find((p) => p.name === name)?.label ?? name,
-    [parsers],
+    (name: string) =>
+      parsers.find((p) => p.name === name)?.label ??
+      mappings.find((m) => m.parser === name)?.name ??
+      candidates?.detected.find((d) => d.parser === name)?.label ??
+      name,
+    [parsers, mappings, candidates],
   );
 
   async function waitFor(id: string, done: (v: ImportView) => boolean, mine: number): Promise<ImportView | null> {
@@ -287,10 +293,23 @@ export function ImportScreen({ assetId, pollMs = 800 }: { assetId: string; pollM
             onChange={(e) => setParserChoice(e.target.value)}
           >
             <option value="">Choose a format…</option>
-            {candidates.available.map((name) => (
-              <option key={name} value={name}>{labelOf(name)}</option>
-            ))}
+            <optgroup label="Built-in">
+              {candidates.available.map((name) => (
+                <option key={name} value={name}>{labelOf(name)}</option>
+              ))}
+            </optgroup>
+            {mappings.length > 0 && (
+              <optgroup label="Your mappings">
+                {mappings.map((m) => (
+                  <option key={m.parser} value={m.parser}>{m.name} (v{m.version})</option>
+                ))}
+              </optgroup>
+            )}
           </select>
+          <p className="ds-import-hint">
+            None of these? <Link href={`/app/projects/${assetId}/map`}>Map this format</Link> once,
+            then import it like any other.
+          </p>
           <div className="ds-import-actions">
             <Button onClick={reset}>Choose a different file</Button>
             <Button
@@ -330,6 +349,9 @@ export function ImportScreen({ assetId, pollMs = 800 }: { assetId: string; pollM
                     >
                       {parsers.map((p) => (
                         <option key={p.name} value={p.name}>{p.label}</option>
+                      ))}
+                      {mappings.map((m) => (
+                        <option key={m.parser} value={m.parser}>{m.name} (your mapping)</option>
                       ))}
                     </select>
                   </span>

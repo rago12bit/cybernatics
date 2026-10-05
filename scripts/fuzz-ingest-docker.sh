@@ -12,7 +12,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 PYTHON="$([ -x .venv/bin/python ] && echo .venv/bin/python || echo python3)"
-PARSERS="${1:-$(PYTHONPATH=. "$PYTHON" -c 'from core.imports.parsers import PARSERS; print(" ".join(sorted(PARSERS)))')}"
+PARSERS="${1:-$(PYTHONPATH=. "$PYTHON" -c 'from core.imports.parsers import PARSERS; from tests.fuzz.mappings import FUZZ_MAPPINGS; print(" ".join(sorted({*PARSERS, *FUZZ_MAPPINGS, "analyze"})))')}"
 SECONDS_PER="${2:-60}"
 WORK="${WORK:-/tmp/bulwark-fuzz}"
 IMAGE=bulwark-fuzz-local
@@ -37,6 +37,10 @@ for d in tests/golden/ingest/defectdojo/*/; do
   files=(); for f in "$d"*; do [[ "$(basename "$f")" == MANIFEST.json ]] || files+=("$f"); done
   seed "$name" "${files[@]}"
 done
+seed universal-json tests/fuzz/seeds/universal.json
+seed universal-csv tests/fuzz/seeds/universal.csv
+seed universal-xml tests/fuzz/seeds/universal.xml
+seed analyze tests/fuzz/seeds/universal.json tests/fuzz/seeds/universal.csv tests/fuzz/seeds/universal.xml
 chmod -R 777 "$WORK"
 
 status=0

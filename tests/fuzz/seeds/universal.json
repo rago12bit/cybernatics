@@ -1,0 +1,5 @@
+{"tool": "acme", "issues": [
+ {"name": "SQL injection", "risk": "P1", "id": "AC-1", "at": {"file": "app/db.py", "line": 42},
+  "cwe": ["CWE-89"], "cve": "CVE-2024-1234", "refs": ["https://acme.test/1"], "long text": "<p>x</p>"},
+ {"name": "Weak hash", "risk": "low", "id": "AC-2", "at": {"file": "a.py", "line": "7"}, "cwe": [327]}
+]}

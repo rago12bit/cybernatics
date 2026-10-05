@@ -23,20 +23,41 @@ import sys
 
 import atheris
 
+import io
+
 with atheris.instrument_imports():
     from core.imports.parsers import PARSERS, get_parser, run_parser_on_bytes
+    from core.imports.parsers.analyze import analyze
+    from core.imports.parsers.universal import MappingSpec, UniversalParser
+
+from tests.fuzz.mappings import FUZZ_MAPPINGS
+
+# Besides every built-in parser: saved mappings (the universal mapper, plan §42.4) through fixed
+# specs, and the sample analysis that describes an upload for writing one.
+TARGETS = sorted({*PARSERS, *FUZZ_MAPPINGS, "analyze"})
+
+
+def _parser(name: str):  # type: ignore[no-untyped-def]
+    if name in FUZZ_MAPPINGS:
+        return UniversalParser(MappingSpec.from_dict(FUZZ_MAPPINGS[name]), "universal:fuzz")
+    return get_parser(name)
 
 
 def _target(data: bytes) -> None:
-    result = run_parser_on_bytes(get_parser(_target.parser_name), data)  # type: ignore[attr-defined]
+    name = _target.parser_name  # type: ignore[attr-defined]
+    if name == "analyze":
+        described = analyze(io.BytesIO(data))
+        assert isinstance(described["candidates"], list), "analysis has no candidate list"
+        return
+    result = run_parser_on_bytes(_parser(name), data)
     # The invariant the importer relies on: a result is complete or it says why not.
     assert result.complete or result.error, "parse neither completed nor reported an error"
 
 
 def main(argv: list[str]) -> None:
-    if len(argv) < 3 or argv[1] not in PARSERS:
+    if len(argv) < 3 or argv[1] not in TARGETS:
         print(f"usage: {argv[0]} <parser-name> <corpus-dir> [libFuzzer args...]", file=sys.stderr)
-        print(f"known parsers: {', '.join(sorted(PARSERS))}", file=sys.stderr)
+        print(f"known parsers: {', '.join(TARGETS)}", file=sys.stderr)
         raise SystemExit(2)
     _target.parser_name = argv[1]  # type: ignore[attr-defined]
     atheris.Setup([argv[0], *argv[2:]], _target)

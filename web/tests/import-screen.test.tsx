@@ -42,6 +42,7 @@ function api(opts: {
   ingest?: (form: FormData) => Response | undefined;
   tests?: unknown[];
   dedup?: unknown;
+  mappings?: unknown[];
 } = {}) {
   const calls: Call[] = [];
   let polls = 0;
@@ -52,6 +53,7 @@ function api(opts: {
     const form = init?.body instanceof FormData ? init.body : undefined;
     calls.push({ method, path, form });
     if (path === "/v2/parsers") return json(PARSERS);
+    if (path === "/v2/mappings") return opts.mappings ? json(opts.mappings) : json({}, 404);
     if (path === `/v2/projects/${ASSET}/tests`) return json(opts.tests ?? []);
     if (path === "/assets") return json([{ id: ASSET, label: "payments-api" }]);
     if (path === `/v2/projects/${ASSET}/dedup`) return opts.dedup ? json(opts.dedup) : json({}, 404);
@@ -267,6 +269,35 @@ describe("ImportScreen", () => {
     await flush(80);
     expect(calls.filter((c) => c.path === "/v2/ingest").at(-1)!.form!.get("parser")).toBe("cyclonedx");
     expect(host.querySelector(".ds-import-counts")).not.toBeNull();
+  });
+
+  it("offers saved mappings as formats, names a suggested one, and links to mapping a new format", async () => {
+    const MAPPED = "universal:44444444-4444-4444-8444-444444444444";
+    const { calls } = api({
+      mappings: [{ id: "44444444-4444-4444-8444-444444444444", parser: MAPPED, name: "Acme scanner",
+        version: 2, source: "acme", format: "json", spec: {}, proposed_by: null,
+        created_at: "2026-10-05T00:00:00Z", created_by: null, versions: [] }],
+      ingest: (form) =>
+        form.get("parser")
+          ? undefined
+          : json({ detail: { message: "not confident", available: ["cyclonedx", "sarif"],
+              detected: [{ parser: MAPPED, label: "Acme scanner", confidence: 0.95 }] } }, 422),
+    });
+    const host = await mount();
+    await pickFile(host, "acme.json");
+    expect(host.textContent).toContain("Closest match: Acme scanner (95%)");
+    const options = Array.from(host.querySelectorAll("#import-format optgroup[label='Your mappings'] option"));
+    expect(options.map((o) => [o.getAttribute("value"), o.textContent])).toEqual([[MAPPED, "Acme scanner (v2)"]]);
+    const link = Array.from(host.querySelectorAll("a")).find((a) => a.textContent === "Map this format")!;
+    expect(link.getAttribute("href")).toBe(`/app/projects/${ASSET}/map`);
+    const select = host.querySelector("#import-format") as HTMLSelectElement;
+    await act(async () => {
+      select.value = MAPPED;
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    await act(async () => button(host, "Use this format").click());
+    await flush(80);
+    expect(calls.filter((c) => c.path === "/v2/ingest").at(-1)!.form!.get("parser")).toBe(MAPPED);
   });
 
   it("a file that cannot be read shows why, offers another file, and shows no counts", async () => {

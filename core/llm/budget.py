@@ -85,3 +85,25 @@ def record(s: Session, scan: Scan, tokens: int) -> None:
     else:
         row.tokens += tokens
     s.commit()
+
+
+def check_org(s: Session, org_id: str, cfg: BudgetConfig | None = None) -> None:
+    """`check` for a model call that belongs to no scan (drafting an import mapping, plan §42.4):
+    only the organization's monthly cap applies."""
+    cfg = cfg or BudgetConfig.from_env()
+    used = org_usage(s, org_id)
+    if used >= cfg.per_org_month:
+        raise BudgetExceeded("this organization this month", used, cfg.per_org_month)
+
+
+def record_org(s: Session, org_id: str, tokens: int) -> None:
+    """`record` for a call that belongs to no scan: the organization's counter only."""
+    if tokens <= 0:
+        return
+    period = current_period()
+    row = s.get(LlmUsage, (org_id, period))
+    if row is None:
+        s.add(LlmUsage(org_id=org_id, period=period, tokens=tokens))
+    else:
+        row.tokens += tokens
+    s.commit()

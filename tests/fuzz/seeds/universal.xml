@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<report><issues>
+<issue sev="high"><name>Open redirect</name><where url="https://shop.example/go?u=x"/><cwe>601</cwe><refs><ref>https://a.test/1</ref></refs></issue>
+<issue sev="low"><name>Missing CSP</name><where url="https://shop.example/"/></issue>
+</issues></report>

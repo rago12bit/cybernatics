@@ -388,6 +388,32 @@ Dedup Apply
 
 - `project_id` (path, required)
 
+## `POST /v2/mappings/analyze`
+
+Analyze Sample
+
+
+## `POST /v2/mappings/preview`
+
+Preview Mapping
+
+
+## `GET /v2/mappings`
+
+List All
+
+
+## `POST /v2/mappings`
+
+Save Mapping
+
+
+## `GET /v2/mappings/{mapping_id}`
+
+Get One
+
+- `mapping_id` (path, required)
+
 ## Live progress (WebSocket)
 
 `GET /scans/{scan_id}/ws` (not part of OpenAPI).

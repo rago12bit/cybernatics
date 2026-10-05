@@ -3174,10 +3174,310 @@
           }
         }
       }
+    },
+    "/v2/mappings/analyze": {
+      "post": {
+        "tags": [
+          "mappings"
+        ],
+        "summary": "Analyze Sample",
+        "operationId": "analyze_sample_v2_mappings_analyze_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_analyze_sample_v2_mappings_analyze_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalyzeResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v2/mappings/preview": {
+      "post": {
+        "tags": [
+          "mappings"
+        ],
+        "summary": "Preview Mapping",
+        "operationId": "preview_mapping_v2_mappings_preview_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_preview_mapping_v2_mappings_preview_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreviewResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v2/mappings": {
+      "get": {
+        "tags": [
+          "mappings"
+        ],
+        "summary": "List All",
+        "operationId": "list_all_v2_mappings_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MappingView"
+                  },
+                  "type": "array",
+                  "title": "Response List All V2 Mappings Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "mappings"
+        ],
+        "summary": "Save Mapping",
+        "operationId": "save_mapping_v2_mappings_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MappingIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MappingView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v2/mappings/{mapping_id}": {
+      "get": {
+        "tags": [
+          "mappings"
+        ],
+        "summary": "Get One",
+        "operationId": "get_one_v2_mappings__mapping_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "mapping_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Mapping Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MappingView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "Analysis": {
+        "properties": {
+          "format": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Format"
+          },
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/Candidate"
+            },
+            "type": "array",
+            "title": "Candidates"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "format",
+          "candidates",
+          "error"
+        ],
+        "title": "Analysis"
+      },
+      "AnalyzeResult": {
+        "properties": {
+          "analysis": {
+            "$ref": "#/components/schemas/Analysis"
+          },
+          "proposal": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProposalView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sample_digest": {
+            "type": "string",
+            "title": "Sample Digest"
+          },
+          "suggested_source": {
+            "type": "string",
+            "title": "Suggested Source"
+          },
+          "model_available": {
+            "type": "boolean",
+            "title": "Model Available"
+          },
+          "fields": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Fields",
+            "description": "Every field a mapping can fill."
+          }
+        },
+        "type": "object",
+        "required": [
+          "analysis",
+          "proposal",
+          "sample_digest",
+          "suggested_source",
+          "model_available",
+          "fields"
+        ],
+        "title": "AnalyzeResult"
+      },
       "AppliedView": {
         "properties": {
           "source": {
@@ -3585,6 +3885,39 @@
         "title": "AttackPathView",
         "description": "One ranked attack path (plan \u00a721.6, \u00a728.5). `narrative` is `None` when no model is routed\nfor Task.ATTACK_PATH -- unlike the copilot, this never 409s for that: the graph itself (nodes,\nedges, ranking, cheapest_link) is always real and useful without a model, only the prose\ndescription is best-effort on top of it."
       },
+      "Body_analyze_sample_v2_mappings_analyze_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "description": "A sample of the report, at most 2 MB."
+          },
+          "use_model": {
+            "type": "boolean",
+            "title": "Use Model",
+            "description": "Ask the model for the draft when one is set up.",
+            "default": true
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source",
+            "description": "The tool's name, if you know it."
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_analyze_sample_v2_mappings_analyze_post"
+      },
       "Body_ingest_v2_ingest_post": {
         "properties": {
           "file": {
@@ -3669,7 +4002,7 @@
               }
             ],
             "title": "Parser",
-            "description": "Skip detection; see GET /v2/parsers."
+            "description": "Skip detection; see GET /v2/parsers, or `universal:<id>` for a saved mapping (GET /v2/mappings)."
           },
           "source": {
             "type": "string",
@@ -3706,6 +4039,27 @@
           "file"
         ],
         "title": "Body_ingest_v2_ingest_post"
+      },
+      "Body_preview_mapping_v2_mappings_preview_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "description": "The sample, at most 2 MB."
+          },
+          "spec": {
+            "type": "string",
+            "title": "Spec",
+            "description": "The mapping, as JSON."
+          }
+        },
+        "type": "object",
+        "required": [
+          "file",
+          "spec"
+        ],
+        "title": "Body_preview_mapping_v2_mappings_preview_post"
       },
       "Body_upload_scan_scans_upload_post": {
         "properties": {
@@ -3812,6 +4166,40 @@
           "failed"
         ],
         "title": "BulkTriageResult"
+      },
+      "Candidate": {
+        "properties": {
+          "records": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Records",
+            "description": "Where the records are; null for a CSV file."
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "fields": {
+            "items": {
+              "$ref": "#/components/schemas/FieldInfo"
+            },
+            "type": "array",
+            "title": "Fields"
+          }
+        },
+        "type": "object",
+        "required": [
+          "records",
+          "count",
+          "fields"
+        ],
+        "title": "Candidate"
       },
       "ChangeRequest": {
         "properties": {
@@ -4215,6 +4603,32 @@
         "type": "object",
         "title": "FeedsStatus",
         "description": "State of the exploit-likelihood feeds behind risk scores. Empty until the first download."
+      },
+      "FieldInfo": {
+        "properties": {
+          "path": {
+            "type": "string",
+            "title": "Path"
+          },
+          "examples": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Examples"
+          },
+          "filled": {
+            "type": "integer",
+            "title": "Filled"
+          }
+        },
+        "type": "object",
+        "required": [
+          "path",
+          "examples",
+          "filled"
+        ],
+        "title": "FieldInfo"
       },
       "FindingsPage": {
         "properties": {
@@ -4911,6 +5325,170 @@
         ],
         "title": "IssueView"
       },
+      "MappingIn": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "spec": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Spec"
+          },
+          "proposed_by": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Proposed By"
+          },
+          "sample_digest": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 64
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sample Digest"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "spec"
+        ],
+        "title": "MappingIn"
+      },
+      "MappingVersion": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "version",
+          "created_at",
+          "created_by"
+        ],
+        "title": "MappingVersion"
+      },
+      "MappingView": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "parser": {
+            "type": "string",
+            "title": "Parser",
+            "description": "What to pass as `parser` to POST /v2/ingest."
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "format": {
+            "type": "string",
+            "title": "Format"
+          },
+          "spec": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Spec"
+          },
+          "proposed_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Proposed By"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By"
+          },
+          "versions": {
+            "items": {
+              "$ref": "#/components/schemas/MappingVersion"
+            },
+            "type": "array",
+            "title": "Versions",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "parser",
+          "name",
+          "version",
+          "source",
+          "format",
+          "spec",
+          "proposed_by",
+          "created_at",
+          "created_by"
+        ],
+        "title": "MappingView"
+      },
       "MessageView": {
         "properties": {
           "id": {
@@ -5057,6 +5635,124 @@
           "question"
         ],
         "title": "PostMessageRequest"
+      },
+      "PreviewIssue": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity"
+          },
+          "native_severity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Native Severity"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "location": {
+            "type": "string",
+            "title": "Location"
+          },
+          "cwe": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Cwe"
+          },
+          "cve": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Cve"
+          },
+          "rule": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rule"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "severity",
+          "native_severity",
+          "category",
+          "location",
+          "cwe",
+          "cve",
+          "rule"
+        ],
+        "title": "PreviewIssue"
+      },
+      "PreviewResult": {
+        "properties": {
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "issues": {
+            "items": {
+              "$ref": "#/components/schemas/PreviewIssue"
+            },
+            "type": "array",
+            "title": "Issues",
+            "description": "The first 50."
+          },
+          "by_severity": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "By Severity"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total",
+          "issues",
+          "by_severity",
+          "warnings",
+          "error"
+        ],
+        "title": "PreviewResult"
       },
       "ProjectOverview": {
         "properties": {
@@ -5212,6 +5908,35 @@
           "issue_id"
         ],
         "title": "PromoteHypothesisResult"
+      },
+      "ProposalView": {
+        "properties": {
+          "spec": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Spec",
+            "description": "A draft: review every field before saving."
+          },
+          "proposed_by": {
+            "type": "string",
+            "title": "Proposed By",
+            "description": "'heuristic' (name matching) or 'model:<name>'."
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "spec",
+          "proposed_by",
+          "notes"
+        ],
+        "title": "ProposalView"
       },
       "RegisterWebAssetRequest": {
         "properties": {

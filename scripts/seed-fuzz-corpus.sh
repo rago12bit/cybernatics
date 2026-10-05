@@ -33,4 +33,9 @@ for d in tests/golden/ingest/defectdojo/*/; do
   files=(); for f in "$d"*; do [[ "$(basename "$f")" == MANIFEST.json ]] || files+=("$f"); done
   seed "$(basename "$d")" "${files[@]}"
 done
+# The universal mapper's fixed fuzz mappings and the sample analysis (Week 59, tests/fuzz/mappings.py).
+seed universal-json tests/fuzz/seeds/universal.json
+seed universal-csv tests/fuzz/seeds/universal.csv
+seed universal-xml tests/fuzz/seeds/universal.xml
+seed analyze tests/fuzz/seeds/universal.json tests/fuzz/seeds/universal.csv tests/fuzz/seeds/universal.xml
 echo "Seeded tests/fuzz_corpus/<adapter>/ and tests/fuzz_corpus/ingest-<parser>/ from real files."

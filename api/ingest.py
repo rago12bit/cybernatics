@@ -35,8 +35,8 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from api.deps import AppState, AuthContext, current_org, db, require_auth, require_scope, state
-from core.imports import service
-from core.imports.parsers import CONFIDENT, PARSERS, detect, get_parser
+from core.imports import mapper, service
+from core.imports.parsers import CONFIDENT, PARSERS, detect
 from core.imports.service import SCOPES
 from core.persistence import repo
 from core.persistence.models import ImportRecord
@@ -240,19 +240,40 @@ async def _store_upload(
     return dest, digest.hexdigest(), size, head
 
 
-def _choose_parser(requested: str | None, head: bytes) -> tuple[str, float | None]:
+def _choose_parser(
+    s: Session, org: str, requested: str | None, head: bytes
+) -> tuple[str, str, float | None]:
+    """`(parser name, label, confidence)`. A saved mapping (`universal:<id>`, ADR-0043) is only
+    ever used when named: it is suggested when nothing built-in recognises the file, never picked.
+    """
     if requested:
+        if mapper.is_mapped(requested):
+            row = mapper.get_mapping(s, requested[len(mapper.PREFIX) :], org)
+            if row is None:
+                raise HTTPException(422, f"unknown mapping {requested!r}")
+            return requested, row.name, None
         if requested not in PARSERS:
             raise HTTPException(422, f"unknown parser {requested!r}; available: {sorted(PARSERS)}")
-        return requested, None
+        return requested, PARSERS[requested].label or requested, None
     found = detect(head)
     if found and found[0][1] >= CONFIDENT:
-        return found[0][0].name, found[0][1]
+        return found[0][0].name, found[0][0].label or found[0][0].name, found[0][1]
+    detected = [{"parser": p.name, "label": p.label or p.name, "confidence": round(c, 2)}
+                for p, c in found]  # fmt: skip
+    for row in mapper.list_mappings(s, org):
+        try:
+            confidence = mapper.parser_for(row).sniff(head)
+        except ValueError:
+            continue  # a mapping saved under rules that have since tightened: never suggested
+        if confidence >= 0.5:
+            detected.append({"parser": mapper.parser_name(row.id), "label": row.name,
+                             "confidence": confidence})  # fmt: skip
+    detected.sort(key=lambda d: -float(d["confidence"]))  # type: ignore[arg-type]
     raise HTTPException(
         422,
         detail={
             "message": "could not identify the file's format with confidence; pass `parser`",
-            "detected": [{"parser": p.name, "confidence": round(c, 2)} for p, c in found],
+            "detected": detected,
             "available": sorted(PARSERS),
         },
     )
@@ -324,7 +345,11 @@ def register_ingest_routes(app: FastAPI) -> None:
         engagement_name: str | None = Form(None, description="Name for a new assessment."),
         test: str | None = Form(None, description="Test name; defaults to the parser's name."),
         test_id: str | None = Form(None, description="An existing Test; overrides the above."),
-        parser: str | None = Form(None, description="Skip detection; see GET /v2/parsers."),
+        parser: str | None = Form(
+            None,
+            description="Skip detection; see GET /v2/parsers, or `universal:<id>` for a saved "
+            "mapping (GET /v2/mappings).",
+        ),
         source: str = Form("upload"),
         close_missing: bool = Form(True, description="Close Issues this file no longer lists."),
         scope: str = Form("test", description="'test' (default) or 'engagement'."),
@@ -352,13 +377,12 @@ def register_ingest_routes(app: FastAPI) -> None:
         try:
             if size == 0:
                 raise HTTPException(422, "the file is empty")
-            parser_name, confidence = _choose_parser(parser, head)
+            parser_name, label, confidence = _choose_parser(s, org, parser, head)
             test_id_resolved = _resolve_test(
                 s, org,
                 test_id=test_id, project=project, engagement=engagement,
                 engagement_type=engagement_type, engagement_name=engagement_name,
-                test_name=test, default_test_name=get_parser(parser_name).label or parser_name,
-                parser=parser_name,
+                test_name=test, default_test_name=label, parser=parser_name,
             )  # fmt: skip
             latest = repo.latest_applied_import(s, test_id_resolved, org)
             if not preview and latest is not None and latest.file_digest == digest:

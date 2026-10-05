@@ -773,7 +773,8 @@ class EngagementTest(Base):
         ForeignKey("engagements.id", ondelete="CASCADE"), index=True
     )
     name: Mapped[str] = mapped_column(String(200))
-    parser: Mapped[str | None] = mapped_column(String(40), nullable=True)  # "sarif", "nessus", ...
+    # "sarif", "nessus", ... or "universal:<mapping id>" for a saved mapping (migration 0030).
+    parser: Mapped[str | None] = mapped_column(String(64), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 
     engagement: Mapped[Engagement] = relationship()
@@ -809,7 +810,7 @@ class ImportRecord(Base):
     scan_id: Mapped[str | None] = mapped_column(
         ForeignKey("scans.id", ondelete="SET NULL"), nullable=True, unique=True
     )
-    parser: Mapped[str] = mapped_column(String(40))
+    parser: Mapped[str] = mapped_column(String(64))  # a parser name, or "universal:<mapping id>"
     file_name: Mapped[str | None] = mapped_column(String(300), nullable=True)
     file_digest: Mapped[str] = mapped_column(String(64))  # sha256 hex of the uploaded bytes
     size_bytes: Mapped[int] = mapped_column(Integer, default=0)
@@ -871,6 +872,37 @@ class DedupSetting(Base):
     effect: Mapped[dict[str, Any]] = mapped_column(JsonType, default=dict)
 
     __table_args__ = (UniqueConstraint("asset_id", "source", "version", name="uq_dedup_settings"),)
+
+
+class IngestMapping(Base):
+    """A saved universal-mapper mapping (plan §42.4, ADR-0043): where each field of an unsupported
+    report format lives. Imported with parser `universal:<id>`.
+
+    Versioned by insertion, like `DedupSetting`: editing a mapping adds a row with the same `name`
+    and the next `version`, and never changes an earlier one. An import names the exact row it was
+    parsed with, so what read a past import can always be shown, even after the mapping changed."""
+
+    __tablename__ = "ingest_mappings"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(
+        ForeignKey("organizations.id"), default=DEFAULT_ORG_ID, index=True
+    )
+    name: Mapped[str] = mapped_column(String(200))
+    version: Mapped[int] = mapped_column(Integer)
+    source: Mapped[str] = mapped_column(String(40))  # the tool name findings are reported by
+    format: Mapped[str] = mapped_column(String(8))  # json | csv | xml
+    spec: Mapped[dict[str, Any]] = mapped_column(JsonType)  # MappingSpec.to_dict()
+    # Who wrote the first draft: "heuristic", "model:<name>", or null for a person from scratch.
+    # Recorded, not trusted: a person confirmed every field before this row existed.
+    proposed_by: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    sample_digest: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    created_by: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+    __table_args__ = (
+        UniqueConstraint("org_id", "name", "version", name="uq_ingest_mappings_version"),
+    )
 
 
 class OutboxEvent(Base):

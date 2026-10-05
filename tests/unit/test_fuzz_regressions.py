@@ -21,7 +21,9 @@ from pathlib import Path
 import pytest
 
 from core.imports.parsers import PARSERS, get_parser, run_parser_on_bytes
+from core.imports.parsers.universal import MappingSpec, UniversalParser
 from core.scan import ADAPTERS
+from tests.fuzz.mappings import FUZZ_MAPPINGS
 
 REGRESSIONS_DIR = Path(__file__).parent.parent / "fuzz_regressions"
 
@@ -55,7 +57,9 @@ def _ingest_regression_cases() -> list[tuple[str, Path]]:
     return [
         (d.name.removeprefix("ingest-"), crash_file)
         for d in sorted(REGRESSIONS_DIR.iterdir())
-        if d.is_dir() and d.name.startswith("ingest-") and d.name.removeprefix("ingest-") in PARSERS
+        if d.is_dir()
+        and d.name.startswith("ingest-")
+        and d.name.removeprefix("ingest-") in {*PARSERS, *FUZZ_MAPPINGS}
         for crash_file in sorted(d.iterdir())
         if crash_file.is_file()
     ]
@@ -69,5 +73,21 @@ def _ingest_regression_cases() -> list[tuple[str, Path]]:
 def test_a_previously_crashing_report_no_longer_crashes_its_parser(
     parser_name: str, crash_file: Path
 ) -> None:
-    result = run_parser_on_bytes(get_parser(parser_name), crash_file.read_bytes())  # must not raise
+    parser = (
+        UniversalParser(MappingSpec.from_dict(FUZZ_MAPPINGS[parser_name]), "universal:fuzz")
+        if parser_name in FUZZ_MAPPINGS
+        else get_parser(parser_name)
+    )
+    result = run_parser_on_bytes(parser, crash_file.read_bytes())  # must not raise
     assert result.complete or result.error
+
+
+def test_the_fuzzed_mappings_are_valid_and_their_seeds_parse() -> None:
+    """A fuzz target whose mapping is invalid fuzzes nothing; one whose seed finds no records
+    explores far less. Both would look like a clean run."""
+    from tests.fuzz.mappings import SEEDS
+
+    for name, spec in FUZZ_MAPPINGS.items():
+        parser = UniversalParser(MappingSpec.from_dict(spec), "universal:fuzz")
+        result = run_parser_on_bytes(parser, Path(SEEDS[name]).read_bytes())
+        assert result.complete and len(result.findings) == 2, (name, result.error)

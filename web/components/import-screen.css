@@ -171,3 +171,8 @@
   font-size: 1.15rem;
   font-weight: 600;
 }
+
+.ds-import-hint {
+  margin: var(--ds-space-2, 0.5rem) 0;
+  color: var(--ds-muted, #666);
+}

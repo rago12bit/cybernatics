@@ -1,0 +1,57 @@
+=====BEGIN UNTRUSTED DATA [fixture] kind=description=====
+{
+ "format": "csv",
+ "candidates": [
+  {
+   "records": null,
+   "count": 2,
+   "fields": [
+    {
+     "path": "Package",
+     "examples": [
+      "lodash",
+      "requests"
+     ]
+    },
+    {
+     "path": "Installed",
+     "examples": [
+      "4.17.20",
+      "2.19.0"
+     ]
+    },
+    {
+     "path": "Ecosystem",
+     "examples": [
+      "npm",
+      "pypi"
+     ]
+    },
+    {
+     "path": "Advisory",
+     "examples": [
+      "CVE-2021-23337",
+      "CVE-2018-18074"
+     ]
+    },
+    {
+     "path": "Level",
+     "examples": [
+      "high",
+      "moderate"
+     ]
+    },
+    {
+     "path": "Summary",
+     "examples": [
+      "Command injection in template",
+      "Credentials leak on redirect"
+     ]
+    }
+   ]
+  }
+ ]
+}
+=====END UNTRUSTED DATA [fixture]=====
+
+Draft a mapping for the report described in the data block above. Reply with the single JSON object described in the system message, and nothing else.

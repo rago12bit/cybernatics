@@ -94,6 +94,39 @@ its own Test.
 Burp reports start with an internal `<!DOCTYPE issues [<!ELEMENT ...>]>`; the `burp` parser admits
 that and nothing more (an entity declaration or an external DTD is still refused).
 
+## Formats without a parser: the universal mapper
+
+For a JSON, CSV or XML report nothing above reads, write a **mapping**: where each field lives in the
+file. A saved mapping is a parser -- deterministic, run in the same sandbox, and imported with
+`parser=universal:<id>` ([ADR-0043](adr/0043-universal-mapper.md)).
+
+| | |
+|---|---|
+| `POST /v2/mappings/analyze` | a sample (at most 2 MB): where its records are, each field's path with examples, and a **draft** mapping |
+| `POST /v2/mappings/preview` | a sample and a mapping: the issues it would produce, by severity; saves nothing |
+| `POST /v2/mappings` | save it (`name`, `spec`); saving the same name again adds a version |
+| `GET /v2/mappings`, `GET /v2/mappings/{id}` | saved mappings (latest version), one version with its history |
+
+```json
+{"format": "json", "source": "acme-scanner", "records": "$.results[*]", "category": "sast",
+ "fields": {"title": "$.name", "severity": "$.risk", "path": "$.location.file",
+            "line": "$.location.line", "rule": "$.check_id", "cwe": "$.cwe"},
+ "severity_map": {"p1": "CRITICAL", "p2": "HIGH"}}
+```
+
+Paths are small on purpose: `$`, `.key`, `["key"]`, `[0]`, `[*]` for JSON; `child/sub`, `@attr`
+and `.` for XML (namespaces ignored); a column name for CSV. Fields: `title` (required), `severity`,
+`description`, `path`, `line`, `rule` (the tool's id for the check), `cwe`, `cve`, `url` (a web
+finding: `category: dast`), `package`, `version`, `ecosystem` (a dependency: `category: sca`),
+`recommendation`, `references`. A severity that is neither in `severity_map` nor a common word nor a
+0-10 score imports as Info, and the import says how many.
+
+The **draft** comes from the model when one is configured (`BULWARK_LLM_ROUTE_MAPPER`, the gateway's
+usual routing and privacy mode), otherwise from field names. The model sees the sample's description,
+never the file; any path it names that the sample does not have is dropped, and the draft says so. A
+person saves the mapping; imports never involve a model. When an upload is not recognised, saved
+mappings that fit it are listed among the `detected` candidates, but one is only used when named.
+
 ## Matching: how findings become Issues, per source
 
 Every source is matched into Issues by its fingerprint until a project chooses otherwise. A choice

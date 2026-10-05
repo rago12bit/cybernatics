@@ -33,6 +33,7 @@ class Task(str, Enum):
     HYPOTHESES = "hypotheses"  # core.hypotheses.service.assess_candidate (plan §21.4)
     COPILOT = "copilot"  # core.copilot.service.ask (plan §21.5)
     ATTACK_PATH = "attack_path"  # core.attackpath.narrative (plan §21.6)
+    MAPPER = "mapper"  # core.imports.mapper.propose_with_model (plan §42.4, §50)
 
 
 class Backend(str, Enum):

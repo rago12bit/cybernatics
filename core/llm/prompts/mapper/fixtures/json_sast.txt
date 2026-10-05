@@ -1,0 +1,64 @@
+=====BEGIN UNTRUSTED DATA [fixture] kind=description=====
+{
+ "format": "json",
+ "candidates": [
+  {
+   "records": "$.issues[*]",
+   "count": 2,
+   "fields": [
+    {
+     "path": "$[\"Issue Name\"]",
+     "examples": [
+      "SQL injection",
+      "Weak hash"
+     ]
+    },
+    {
+     "path": "$.Risk",
+     "examples": [
+      "P1",
+      "P3"
+     ]
+    },
+    {
+     "path": "$.PluginID",
+     "examples": [
+      "AC-100",
+      "AC-210"
+     ]
+    },
+    {
+     "path": "$.Location.File",
+     "examples": [
+      "app/db.py",
+      "app/auth.py"
+     ]
+    },
+    {
+     "path": "$.Location.Line",
+     "examples": [
+      "42",
+      "7"
+     ]
+    },
+    {
+     "path": "$.CWE",
+     "examples": [
+      "CWE-89",
+      "CWE-328"
+     ]
+    },
+    {
+     "path": "$.Solution",
+     "examples": [
+      "Use bound parameters.",
+      "Use a password hash."
+     ]
+    }
+   ]
+  }
+ ]
+}
+=====END UNTRUSTED DATA [fixture]=====
+
+Draft a mapping for the report described in the data block above. Reply with the single JSON object described in the system message, and nothing else.

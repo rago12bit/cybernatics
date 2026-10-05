@@ -615,6 +615,69 @@ export type RevertView = { import_id: string; status: ImportStatus; restored: nu
 /** What the API sends back (422) when a file's format could not be identified with confidence. */
 export type FormatCandidates = {
   message: string;
-  detected: { parser: string; confidence: number }[];
+  /** A saved mapping (`universal:<id>`) can appear here, with its name as `label`; never picked. */
+  detected: { parser: string; confidence: number; label?: string }[];
   available: string[];
+};
+
+// --- The universal mapper (Week 59, plan §42.4, ADR-0043) -----------------------------------------
+export type MappingFormat = "json" | "csv" | "xml";
+export type MappingField =
+  | "title" | "severity" | "description" | "path" | "line" | "rule" | "cwe" | "cve" | "url"
+  | "package" | "version" | "ecosystem" | "recommendation" | "references";
+export type MappingCategory = "sast" | "sca" | "secrets" | "iac" | "container" | "dast";
+export type MappingSpec = {
+  format: MappingFormat;
+  source: string;
+  records: string | null;
+  category: MappingCategory;
+  fields: Partial<Record<MappingField, string>>;
+  severity_map: Record<string, string>;
+  default_ecosystem?: string;
+};
+export type SampleField = { path: string; examples: string[]; filled: number };
+export type SampleCandidate = { records: string | null; count: number; fields: SampleField[] };
+export type SampleAnalysis = {
+  format: MappingFormat | null;
+  candidates: SampleCandidate[];
+  error: string | null;
+};
+export type MappingDraft = { spec: MappingSpec; proposed_by: string; notes: string[] };
+export type AnalyzeResult = {
+  analysis: SampleAnalysis;
+  proposal: MappingDraft | null;
+  sample_digest: string;
+  suggested_source: string;
+  model_available: boolean;
+  fields: MappingField[];
+};
+export type PreviewIssue = {
+  title: string;
+  severity: Severity;
+  native_severity: string | null;
+  category: string;
+  location: string;
+  cwe: string[];
+  cve: string[];
+  rule: string | null;
+};
+export type MappingPreview = {
+  total: number;
+  issues: PreviewIssue[];
+  by_severity: Partial<Record<Severity, number>>;
+  warnings: string[];
+  error: string | null;
+};
+export type SavedMapping = {
+  id: string;
+  parser: string;
+  name: string;
+  version: number;
+  source: string;
+  format: MappingFormat;
+  spec: MappingSpec;
+  proposed_by: string | null;
+  created_at: string;
+  created_by: string | null;
+  versions: { id: string; version: number; created_at: string; created_by: string | null }[];
 };

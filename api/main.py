@@ -47,6 +47,7 @@ from api.deps import (
     token_ok,
 )
 from api.ingest import register_ingest_routes
+from api.mappings import register_mapping_routes
 from api.schemas import (
     AssetSummary,
     AssetVerificationView,
@@ -2061,6 +2062,7 @@ def create_app(app_state: AppState) -> FastAPI:
 
     register_ingest_routes(app)
     register_dedup_routes(app)
+    register_mapping_routes(app)
     return app
 
 
@@ -2115,6 +2117,7 @@ def build_default_app() -> FastAPI:
             llm_hypotheses=make_gateway_client(Task.HYPOTHESES),
             llm_copilot=make_gateway_client(Task.COPILOT),
             llm_attack_path=make_gateway_client(Task.ATTACK_PATH),
+            llm_mapper=make_gateway_client(Task.MAPPER),
             limiter=UsageLimiter.from_env(),
         )
     )

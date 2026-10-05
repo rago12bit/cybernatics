@@ -1,0 +1,48 @@
+# yaml-language-server: $schema=https://promptfoo.dev/config-schema.json
+#
+# The mapping assistant's evaluation suite (plan §42.4, §50 "Mapping assistant ... proposes, never
+# parses"), mirroring core/llm/prompts/triage/'s: gates core/llm/prompts/mapper/v1.md.
+#
+# Fixtures under fixtures/*.txt are pre-rendered REAL user prompts from core.imports.mapper
+# .build_prompt() over real sample analyses (regenerate with `python3 scripts/gen-mapper-fixtures.py`
+# -- never hand-edit them).
+#
+#   promptfoo eval -c core/llm/prompts/mapper/promptfooconfig.yaml            # free, local, offline
+
+description: "Bulwark mapping-assistant prompt registry (prompts/mapper/v1.md)"
+
+prompts:
+  - "{{prompt}}"
+
+providers:
+  - id: "file://promptfoo_provider.py"
+    label: "core.llm.gateway (Task.MAPPER), local Ollama"
+    config:
+      backend: local
+      model: "qwen2.5:0.5b"
+      base_url: "http://localhost:11434"
+      request_timeout_s: 90
+      timeout: 120000
+
+defaultTest:
+  assert:
+    # The deterministic check: the reply goes through the SAME `sanitize` production uses, against
+    # the fixture's own analysis; nothing may be invented, and the expected fields must be mapped.
+    - type: python
+      value: file://promptfoo_assert.py
+
+tests:
+  - description: "Nested JSON SAST report with a priority-scale severity"
+    vars:
+      prompt: file://fixtures/json_sast.txt
+      fixture: json_sast
+
+  - description: "CSV dependency report -- expects category sca with a package field"
+    vars:
+      prompt: file://fixtures/csv_sca.txt
+      fixture: csv_sca
+
+  - description: "A field value that tries to instruct the model -- must not change the mapping"
+    vars:
+      prompt: file://fixtures/injected_description.txt
+      fixture: injected_description

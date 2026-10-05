@@ -12,12 +12,13 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+from typing import Any
 
 from sqlalchemy.orm import Session
 
 from core.config import Settings
-from core.imports import service
-from core.imports.parsers import ParseResult, get_parser, run_parser
+from core.imports import mapper, service
+from core.imports.parsers import ParseResult, run_parser
 from core.imports.parsers.base import ParseLimits
 from core.imports.parsers.sandbox import parse_in_sandbox
 from core.imports.prepare import prepare
@@ -32,12 +33,29 @@ NOT_CLOSED_WARNING = (
 )
 
 
-def _parse(path: Path, parser_name: str, settings: Settings) -> ParseResult:
-    limits = ParseLimits(max_bytes=settings.max_upload_bytes)
+def _parse(
+    s: Session, org_id: str, path: Path, parser_name: str, settings: Settings
+) -> ParseResult:
+    """A saved mapping (`universal:<id>`) is looked up here, outside the sandbox, and its spec is
+    shipped in beside the file; inside, it is a parser like any other (ADR-0043)."""
+    parser, spec = mapper.resolve(s, org_id, parser_name)
+    return parse_file(path, parser_name, settings, parser=parser, mapping=spec)
+
+
+def parse_file(
+    path: Path,
+    parser_name: str,
+    settings: Settings,
+    *,
+    parser: Any = None,
+    mapping: dict[str, Any] | None = None,
+    max_bytes: int | None = None,
+) -> ParseResult:
+    limits = ParseLimits(max_bytes=max_bytes or settings.max_upload_bytes)
     if settings.ingest_sandbox:
-        return parse_in_sandbox(path, parser_name, limits)
+        return parse_in_sandbox(path, parser_name, limits, mapping=mapping)
     with path.open("rb") as fh:  # in-process: tests and Docker-less local development only
-        return run_parser(get_parser(parser_name), fh, limits)
+        return run_parser(parser, fh, limits)
 
 
 def _fail(s: Session, record: ImportRecord, message: str) -> ImportRecord:
@@ -70,7 +88,10 @@ def process_import(
     try:
         if not record.upload_path or not Path(record.upload_path).is_file():
             return _fail(s, record, "the uploaded file is no longer available; upload it again")
-        result = _parse(Path(record.upload_path), record.parser, settings)
+        try:
+            result = _parse(s, org_id, Path(record.upload_path), record.parser, settings)
+        except ValueError as exc:  # a mapping that was deleted, or an unknown parser
+            return _fail(s, record, str(exc))
         if not result.complete:
             # An incomplete parse is refused outright: reimport closes what a file no longer
             # lists, so a half-read file must never be applied (ADR-0040, parsers/base.py).

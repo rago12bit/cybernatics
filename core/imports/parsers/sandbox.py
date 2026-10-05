@@ -15,6 +15,7 @@ import logging
 import shutil
 import tempfile
 from pathlib import Path
+from typing import Any
 
 from core.adapters.base import RepoContext, ToolAdapter, ToolSpec
 from core.config import scratch_dir
@@ -26,6 +27,7 @@ from core.sandbox.runtime import SandboxRuntime
 log = logging.getLogger(__name__)
 
 INPUT_NAME = "report"  # what the uploaded file is called inside the container; never user-chosen
+MAPPING_NAME = "mapping.json"  # a saved mapping (universal mapper), beside the report
 
 
 class IngestParseAdapter(ToolAdapter):
@@ -41,20 +43,34 @@ class IngestParseAdapter(ToolAdapter):
         cpus=1.0,
     )
 
-    def __init__(self, parser_name: str, limits: ParseLimits) -> None:
+    def __init__(
+        self,
+        parser_name: str,
+        limits: ParseLimits,
+        *,
+        with_mapping: bool = False,
+        analyze: bool = False,
+    ) -> None:
         self._parser_name = parser_name
         self._limits = limits
+        self._with_mapping = with_mapping
+        self._analyze = analyze
 
     def build_command(
         self, target: Path, output: Path, ctx: RepoContext | None = None
     ) -> list[str]:
-        return [
+        command = [
             "--parser", self._parser_name,
             "--input", str(target / INPUT_NAME),
             "--output", str(output),
             "--max-bytes", str(self._limits.max_bytes),
             "--max-seconds", str(self._limits.max_seconds),
         ]  # fmt: skip
+        if self._with_mapping:
+            command += ["--mapping", str(target / MAPPING_NAME)]
+        if self._analyze:
+            command.append("--analyze")
+        return command
 
     def parse(self, raw: bytes) -> list[Finding]:
         return _decode(raw, self._parser_name).findings
@@ -98,18 +114,12 @@ def _failure(run: RunResult, spec: ToolSpec) -> str:
     return f"the parser sandbox did not finish ({run.status}, exit {run.exit_code}); try again"
 
 
-def parse_in_sandbox(
+def _run(
+    adapter: IngestParseAdapter,
     path: Path,
-    parser_name: str,
-    limits: ParseLimits | None = None,
-    *,
-    runtime: SandboxRuntime | None = None,
-) -> ParseResult:
-    """Parse `path` with `parser_name` in a container. A container that fails, times out or is
-    killed produces an *error* result, never an empty successful one: an empty parse would look like
-    "the report lists nothing" and close everything it used to list."""
-    limits = limits or ParseLimits()
-    adapter = IngestParseAdapter(parser_name, limits)
+    mapping: dict[str, Any] | None,
+    runtime: SandboxRuntime | None,
+) -> RunResult:
     # The shared scratch directory, not the process's own /tmp: in the worker container the Docker
     # daemon is on the host, so the bind-mount source must be a path that exists on both (the same
     # reason `core.runner.run_tool` uses it for its own output directory).
@@ -117,10 +127,48 @@ def parse_in_sandbox(
         shutil.copyfile(path, Path(tmp) / INPUT_NAME)
         Path(tmp).chmod(0o755)
         (Path(tmp) / INPUT_NAME).chmod(0o644)  # the container runs as a different, non-root uid
-        run: RunResult = run_tool(adapter, Path(tmp), runtime=runtime)
+        if mapping is not None:
+            (Path(tmp) / MAPPING_NAME).write_text(json.dumps(mapping))
+            (Path(tmp) / MAPPING_NAME).chmod(0o644)
+        return run_tool(adapter, Path(tmp), runtime=runtime)
+
+
+def parse_in_sandbox(
+    path: Path,
+    parser_name: str,
+    limits: ParseLimits | None = None,
+    *,
+    mapping: dict[str, Any] | None = None,
+    runtime: SandboxRuntime | None = None,
+) -> ParseResult:
+    """Parse `path` with `parser_name` in a container (a saved mapping's spec goes in `mapping`). A
+    container that fails, times out or is killed produces an *error* result, never an empty
+    successful one: an empty parse would look like "the report lists nothing" and close everything
+    it used to list."""
+    limits = limits or ParseLimits()
+    adapter = IngestParseAdapter(parser_name, limits, with_mapping=mapping is not None)
+    run = _run(adapter, path, mapping, runtime)
     # The worker exits 0 whenever it finished, even on a bad file (the verdict is in its output). A
     # non-zero exit with output means it was killed part-way through writing it.
     if run.status != "ok" or run.exit_code not in (0, None):
         log.warning("ingest sandbox: %s (%s)", run.status, run.stderr.strip()[-300:])
         return ParseResult(parser_name, [], [], _failure(run, adapter.spec))
     return _decode(run.raw, parser_name)
+
+
+def analyze_in_sandbox(
+    path: Path, limits: ParseLimits, *, runtime: SandboxRuntime | None = None
+) -> dict[str, Any]:
+    """Describe a sample's shape (`analyze.py`) in a container. Same contract as parsing: a
+    container that did not finish is an `error`, never an empty description."""
+    adapter = IngestParseAdapter("analyze", limits, analyze=True)
+    run = _run(adapter, path, None, runtime)
+    if run.status != "ok" or run.exit_code not in (0, None):
+        return {"format": None, "candidates": [], "error": _failure(run, adapter.spec)}
+    try:
+        doc = json.loads(run.raw)
+        if not isinstance(doc, dict) or not isinstance(doc.get("candidates"), list):
+            raise ValueError("not an analysis")
+        return doc
+    except ValueError as exc:
+        return {"format": None, "candidates": [], "error": f"unreadable analysis ({exc})"}
