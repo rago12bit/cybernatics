@@ -2,11 +2,14 @@
 in), and export to one through its import API as SARIF (a migration path out, and proof of
 interoperability)").
 
-**In.** `GET /api/v2/findings/?product=<id>&active=true&duplicate=false`, following DefectDojo's
-own `next` links (on the same host only). Each finding keeps DefectDojo's id as its rule id, so a
-finding is the same Issue on every pull, and DefectDojo's own deduplication decides what is one
-finding. Only active, non-duplicate findings are pulled: one closed or marked false positive in
-DefectDojo leaves the list, and reimport closes it here.
+**In.** `GET /api/v2/findings/?test__engagement__product=<id>&active=true&duplicate=false`,
+following DefectDojo's own `next` links (on the same host only). DefectDojo silently ignores a
+filter it does not know -- `?product=<id>`, the obvious spelling, returns every product's findings
+(found against DefectDojo 3.3.300) -- so the filter is not trusted on its own: each finding comes
+with its `related_fields`, and one from another product refuses the whole pull. Each finding keeps
+DefectDojo's id as its rule id, so a finding is the same Issue on every pull, and DefectDojo's own
+deduplication decides what is one finding. Only active, non-duplicate findings are pulled: one
+closed or marked false positive in DefectDojo leaves the list, and reimport closes it here.
 
 **Out.** The project's open Issues as SARIF (the exporter every scan report uses), posted to
 `/api/v2/import-scan/` the first time and `/api/v2/reimport-scan/` into the same Test after that,
@@ -53,6 +56,7 @@ _SEVERITY = {
 }
 _URL = re.compile(r"https?://[^\s<>\"')\]]+")
 _CVE = re.compile(r"^CVE-\d{4}-\d{4,}$", re.IGNORECASE)
+_CWE = re.compile(r"^(?:CWE-)?0*(\d{1,6})$", re.IGNORECASE)
 
 
 def _headers(token: str) -> dict[str, str]:
@@ -72,7 +76,13 @@ def dd_finding(d: dict[str, Any]) -> Finding | None:
     word = str(d.get("severity") or "").strip().lower()
     severity = _SEVERITY.get(word, Severity.INFO)
     cwe_n = d.get("cwe")
-    cwes = (f"CWE-{int(cwe_n)}",) if isinstance(cwe_n, int) and cwe_n > 0 else ()
+    found = [f"CWE-{cwe_n}"] if isinstance(cwe_n, int) and cwe_n > 0 else []
+    # Newer DefectDojo also lists every CWE as `cwes: [{"cwe": "CWE-614"}]`.
+    for c in d.get("cwes") or []:
+        m = _CWE.match(str(c.get("cwe") or "")) if isinstance(c, dict) else None
+        if m:
+            found.append(f"CWE-{int(m.group(1))}")
+    cwes = tuple(dict.fromkeys(found))
     ids = [
         str(v.get("vulnerability_id"))
         for v in d.get("vulnerability_ids") or []
@@ -95,8 +105,12 @@ def dd_finding(d: dict[str, Any]) -> Finding | None:
         confidence=0.7,
     )
     evidence = Evidence(reported_by=[SOURCE], rule_ids={SOURCE: [rule]})
-    remediation = Remediation(summary=clip(plain_text(d.get("mitigation")), 4000), references=refs)
     component = str(d.get("component_name") or "")
+    fix = str(d.get("fix_version") or "")
+    summary = plain_text(d.get("mitigation")) or (
+        f"Upgrade {component} to {fix} or later." if component and fix else ""
+    )
+    remediation = Remediation(summary=clip(summary, 4000), references=refs)
     path = str(d.get("file_path") or "")
     if component and (cves or not path):
         version = str(d.get("component_version") or "")
@@ -141,9 +155,14 @@ def dd_finding(d: dict[str, Any]) -> Finding | None:
 
 def fetch(transport: Transport, base_url: str, token: str, product_id: int) -> Fetched:
     base = base_url.rstrip("/")
+    # The product first: a wrong id is "not found", not "connected but fetched nothing".
+    expect_ok(
+        transport("GET", f"{base}/api/v2/products/{product_id}/", _headers(token), None),
+        f"DefectDojo product {product_id}",
+    )
     url: str | None = (
-        f"{base}/api/v2/findings/?product={product_id}&active=true&duplicate=false"
-        f"&limit={PER_PAGE}&offset=0"
+        f"{base}/api/v2/findings/?test__engagement__product={product_id}&active=true"
+        f"&duplicate=false&related_fields=true&limit={PER_PAGE}&offset=0"
     )
     out = Fetched([], 0)
     skipped = 0
@@ -161,12 +180,17 @@ def fetch(transport: Transport, base_url: str, token: str, product_id: int) -> F
                 " set the base URL to the address DefectDojo itself reports"
             )
         page = expect_ok(transport("GET", url, _headers(token), None), "DefectDojo")
-        out.requests = n
+        out.requests = n + 1  # and the product
         if not isinstance(page, dict) or not isinstance(page.get("results"), list):
             raise ConnectorError("DefectDojo: the response is not a findings list")
         for d in page["results"]:
             if not isinstance(d, dict):
                 continue
+            if _product_of(d) != product_id:
+                raise ConnectorError(
+                    f"DefectDojo returned finding {d.get('id')} from outside product"
+                    f" {product_id} (its filter was not applied); nothing was imported"
+                )
             out.items += 1
             f = dd_finding(d)
             if f is None:
@@ -178,6 +202,13 @@ def fetch(transport: Transport, base_url: str, token: str, product_id: int) -> F
     if skipped:
         out.warnings.append(f"{skipped} finding(s) had no id or title and were skipped")
     return out
+
+
+def _product_of(d: dict[str, Any]) -> int | None:
+    test = (d.get("related_fields") or {}).get("test") or {}
+    product = (test.get("engagement") or {}).get("product") or {}
+    pid = product.get("id")
+    return pid if isinstance(pid, int) else None
 
 
 # --- export ---------------------------------------------------------------------------------------
@@ -218,6 +249,7 @@ def push(
     engagement_id: int | None,
     product_name: str | None,
     engagement_name: str | None,
+    product_type_name: str = "Bulwark",
 ) -> int:
     """Import (first time) or reimport (into `test_id`) a SARIF file. Returns DefectDojo's Test id,
     which the next push reimports into."""
@@ -238,7 +270,11 @@ def push(
     elif product_name and engagement_name:
         endpoint = "import-scan"
         fields.update(
-            product_name=product_name, engagement_name=engagement_name, auto_create_context="true"
+            product_name=product_name,
+            engagement_name=engagement_name,
+            # DefectDojo will not create a product without a type to put it in (HTTP 400).
+            product_type_name=product_type_name,
+            auto_create_context="true",
         )
     else:
         raise ConnectorError(

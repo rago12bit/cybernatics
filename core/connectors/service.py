@@ -173,6 +173,7 @@ def validate_config(
         elif c.get("product_name") and c.get("engagement_name"):
             out["product_name"] = str(c["product_name"])[:200]
             out["engagement_name"] = str(c["engagement_name"])[:200]
+            out["product_type_name"] = str(c.get("product_type_name") or "Bulwark")[:200]
         else:
             raise ConnectorConfigError(
                 "engagement_id", "give an engagement id, or a product and engagement name to create"
@@ -481,6 +482,7 @@ def run(
                 engagement_id=c.config.get("engagement_id"),
                 product_name=c.config.get("product_name"),
                 engagement_name=c.config.get("engagement_name"),
+                product_type_name=c.config.get("product_type_name", "Bulwark"),
             )
             c.state = {**c.state, "defectdojo_test_id": test}
             record.items, record.requests, record.outcome = len(exported), 1, "ok"

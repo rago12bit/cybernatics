@@ -46,9 +46,15 @@ deleting a connector is audit-logged and needs `ingest:write`.
 addresses -- checked on save and again on every request, with redirects not followed. A private
 instance needs `BULWARK_CONNECTOR_ALLOW_PRIVATE=1`, an explicit operator decision.
 
+**DefectDojo in** reads `findings/?test__engagement__product=<id>&active=true&duplicate=false`. The
+filter is not trusted: DefectDojo silently ignores one it does not know (`?product=<id>` returned
+every product's findings on a real 3.3.300), so each finding comes with its `related_fields` and one
+from another product refuses the whole pull.
+
 **DefectDojo out** posts the project's open Issues as SARIF (the report exporter) to `import-scan`,
 then `reimport-scan` into the same DefectDojo Test with `close_old_findings`. Issues that came *from*
-DefectDojo are excluded, so a pair of connectors cannot echo each other's findings.
+DefectDojo are excluded, so a pair of connectors cannot echo each other's findings. Creating the
+product needs a product type (`product_type_name`, default "Bulwark"); DefectDojo refuses otherwise.
 
 **Scheduling.** Celery beat checks every five minutes, one organization at a time (scoped sessions,
 as every cross-org job does); each due connector is its own task. "Run now" uses the same task.
@@ -61,5 +67,7 @@ as every cross-org job does); each due connector is its own task. "Run now" uses
 - A DefectDojo dynamic finding has its URLs in separate Endpoint objects that are not fetched; it is
   imported without a route.
 - What was verified live, and what was not, is in the Weeks 59-60 verification record: the GitLab
-  query against gitlab.com, and the DefectDojo round trip against a real instance (if run there);
-  the GitHub endpoints only against GitHub's documented response shapes, since no App is registered.
+  query against gitlab.com; the DefectDojo round trip against a real DefectDojo 3.3.300, in, out and
+  back (`tests/integration/test_defectdojo_live.py`), which found the product filter and product type
+  bugs above; the GitHub endpoints only against GitHub's documented response shapes, since no App is
+  registered.

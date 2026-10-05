@@ -139,6 +139,28 @@ describe("ConnectorsScreen", () => {
       config: { base_url: "https://gitlab.com", project: "acme/web" } });
   });
 
+  it("exports to a DefectDojo product created if needed, with the product type it needs", async () => {
+    const calls = api([]);
+    const host = await mount();
+    await act(async () => button(host, "Add a connector").click());
+    await flush();
+    await setValue(field(host, "Project"), P);
+    await setValue(field(host, "Connect to"), "defectdojo_export");
+    const create = Array.from(host.querySelectorAll("label")).find((l) => l.textContent?.includes("created if needed"))!;
+    await act(async () => (create.querySelector("input") as HTMLInputElement).click());
+    await setValue(field(host, "Base URL") as HTMLInputElement, "https://dojo.example.com");
+    await setValue(field(host, "DefectDojo product") as HTMLInputElement, "acme-web");
+    await setValue(field(host, "DefectDojo engagement") as HTMLInputElement, "From Bulwark");
+    expect((field(host, "Product type, for a new product") as HTMLInputElement).placeholder).toBe("Bulwark");
+    await setValue(field(host, "Product type, for a new product") as HTMLInputElement, "Web apps");
+    await setValue(field(host, "Credential") as HTMLInputElement, "dd-key");
+    await act(async () => button(host, "Add connector").click());
+    await flush();
+    const post = calls.find((c) => c.method === "POST" && c.path === "/v2/connectors")!;
+    expect(post.body).toMatchObject({ kind: "defectdojo_export", config: { base_url: "https://dojo.example.com",
+      product_name: "acme-web", engagement_name: "From Bulwark", product_type_name: "Web apps" } });
+  });
+
   it("shows a server field error next to the field", async () => {
     api([], { create: () => json({ detail: { field: "base_url", message: "only https:// URLs are allowed" } }, 422) });
     const host = await mount();

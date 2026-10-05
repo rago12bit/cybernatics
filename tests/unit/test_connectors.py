@@ -317,8 +317,9 @@ def test_the_gitlab_query_only_uses_fields_gitlabs_schema_has() -> None:
 # --- DefectDojo -----------------------------------------------------------------------------------
 
 DD = "https://dojo.example.com"
-DD_P1 = f"{DD}/api/v2/findings/?product=7&active=true&duplicate=false&limit=100&offset=0"
-DD_P2 = f"{DD}/api/v2/findings/?product=7&active=true&duplicate=false&limit=100&offset=100"
+DD_Q = "test__engagement__product=7&active=true&duplicate=false&related_fields=true"
+DD_P1 = f"{DD}/api/v2/findings/?{DD_Q}&limit=100&offset=0"
+DD_P2 = f"{DD}/api/v2/findings/?{DD_Q}&limit=100&offset=100"
 
 
 def dd(i: int, **over: Any) -> dict[str, Any]:
@@ -326,18 +327,23 @@ def dd(i: int, **over: Any) -> dict[str, Any]:
             "mitigation": "Fix", "impact": "Bad", "references": "See https://example.com/a and more",
             "cwe": 89, "vulnerability_ids": [], "file_path": "app/x.py", "line": 7,
             "component_name": None, "component_version": None, "static_finding": True,
-            "dynamic_finding": False, "cvssv3_score": None, **over}  # fmt: skip
+            "dynamic_finding": False, "cvssv3_score": None,
+            "related_fields": {"test": {"engagement": {"product": {"id": 7}}}}, **over}  # fmt: skip
+
+
+DD_PRODUCT = ("GET", f"{DD}/api/v2/products/7/")
 
 
 def test_defectdojo_pull_follows_next_and_maps_kinds() -> None:
     fake = Fake({
+        DD_PRODUCT: ok({"id": 7, "name": "web"}),
         ("GET", DD_P1): ok({"count": 3, "next": DD_P2, "results": [dd(1), dd(2, component_name="log4j-core",
             component_version="2.14.1", vulnerability_ids=[{"vulnerability_id": "CVE-2021-44228"}])]}),
         ("GET", DD_P2): ok({"count": 3, "next": None, "results": [dd(3, file_path=None, static_finding=False,
             dynamic_finding=True, severity="Informational")]}),
     })  # fmt: skip
     got = defectdojo.fetch(fake, DD, "key", 7)
-    assert (got.items, got.requests) == (3, 2)
+    assert (got.items, got.requests) == (3, 3)  # the product, then two pages
     code, pkg, web = got.findings
     assert code.evidence.rule_ids == {"defectdojo": ["dd-1"]} and code.taxonomy.cwe == ("CWE-89",)
     assert code.remediation.references == ["https://example.com/a"] and code.description.startswith(
@@ -353,13 +359,95 @@ def test_defectdojo_pull_follows_next_and_maps_kinds() -> None:
 def test_defectdojo_next_on_another_host_is_refused() -> None:
     fake = Fake(
         {
+            DD_PRODUCT: ok({"id": 7}),
             ("GET", DD_P1): ok(
                 {"next": "http://internal:8080/api/v2/findings/?offset=100", "results": [dd(1)]}
-            )
+            ),
         }
     )
     with pytest.raises(ConnectorError, match="another host"):
         defectdojo.fetch(fake, DD, "key", 7)
+
+
+def test_defectdojo_findings_from_another_product_refuse_the_pull() -> None:
+    # Real DefectDojo 3.3.300 ignores a filter it does not know (`?product=7` returned every
+    # product's findings); a finding from outside the product means the filter did not hold.
+    other = dd(2, related_fields={"test": {"engagement": {"product": {"id": 8}}}})
+    fake = Fake(
+        {DD_PRODUCT: ok({"id": 7}), ("GET", DD_P1): ok({"next": None, "results": [dd(1), other]})}
+    )
+    with pytest.raises(ConnectorError, match="outside product 7"):
+        defectdojo.fetch(fake, DD, "key", 7)
+    missing = dd(3, related_fields=None)
+    fake = Fake(
+        {DD_PRODUCT: ok({"id": 7}), ("GET", DD_P1): ok({"next": None, "results": [missing]})}
+    )
+    with pytest.raises(ConnectorError, match="outside product 7"):
+        defectdojo.fetch(fake, DD, "key", 7)
+
+
+def test_a_real_defectdojo_page_maps_each_kind() -> None:
+    # Recorded from DefectDojo 3.3.300 on 2026-10-05: its own parsers' findings from a Bandit, an
+    # Anchore Grype and a ZAP report (tests/integration/test_defectdojo_live.py made them).
+    page = json.loads((GOLDEN / "defectdojo-3.3.300-findings-page.json").read_text())
+    product = page["results"][0]["related_fields"]["test"]["engagement"]["product"]["id"]
+    url = (f"{DD}/api/v2/findings/?test__engagement__product={product}&active=true&duplicate=false"
+           "&related_fields=true&limit=100&offset=0")  # fmt: skip
+    fake = Fake(
+        {("GET", f"{DD}/api/v2/products/{product}/"): ok({"id": product}), ("GET", url): ok(page)}
+    )
+    code, pkg, web = defectdojo.fetch(fake, DD, "key", product).findings
+    assert code.taxonomy.category is Category.SAST
+    assert (code.location.path, code.location.start_line) == ("/target/src/users.py", 6)
+    assert code.scoring.native_severity == {"defectdojo": "MEDIUM"}
+    assert pkg.taxonomy.category is Category.SCA and pkg.taxonomy.cve == ("CVE-2004-0971",)
+    assert pkg.package is not None and (pkg.package.name, pkg.package.version) == (
+        "libgssapi-krb5-2",
+        "1.17-3+deb10u3",
+    )
+    assert web.taxonomy.category is Category.DAST and web.taxonomy.cwe == ("CWE-614",)
+    assert web.remediation.summary.startswith("Whenever a cookie contains sensitive information")
+
+
+def test_a_defectdojo_fix_version_becomes_the_remediation() -> None:
+    f = defectdojo.dd_finding(dd(1, component_name="lodash", component_version="4.17.20",
+                                 fix_version="4.17.21", mitigation=None,
+                                 vulnerability_ids=[{"vulnerability_id": "CVE-2021-23337"}]))  # fmt: skip
+    assert f is not None and f.remediation.summary == "Upgrade lodash to 4.17.21 or later."
+
+
+def test_a_defectdojo_product_that_does_not_exist_is_not_found() -> None:
+    with pytest.raises(ConnectorError, match="product 7: not found"):
+        defectdojo.fetch(Fake({}), DD, "key", 7)
+
+
+def test_defectdojo_push_creating_a_product_names_its_type_and_a_refusal_says_why() -> None:
+    # DefectDojo 3.3.300 answers an import-scan that would create a product without a type with a
+    # 400 and this body; the reason reaches the connector's health, not just "HTTP 400".
+    refused = ['Product "acme-web" does not exist and no product_type_name provided to create the'
+               " new product in"]  # fmt: skip
+    fake = Fake(
+        {("POST", f"{DD}/api/v2/import-scan/"): [Response(400, {}, refused), ok({"test": 9})]}
+    )
+    with pytest.raises(ConnectorError, match="HTTP 400 -- .*no product_type_name provided"):
+        defectdojo.push(fake, DD, "key", b"{}", test_id=None, engagement_id=None,
+                        product_name="acme-web", engagement_name="From Bulwark")  # fmt: skip
+    assert b'name="product_type_name"\r\n\r\nBulwark' in (fake.calls[0][3] or b"")
+    assert defectdojo.push(fake, DD, "key", b"{}", test_id=None, engagement_id=None,
+                           product_name="acme-web", engagement_name="From Bulwark",
+                           product_type_name="Web apps") == 9  # fmt: skip
+    assert b'name="product_type_name"\r\n\r\nWeb apps' in (fake.calls[1][3] or b"")
+
+
+def test_an_export_config_keeps_the_product_type_with_a_default(env: Env) -> None:
+    with env.sessions() as s:
+        named = service.validate_config(s, DEFAULT_ORG_ID, "defectdojo_export", {
+            "base_url": "http://localhost:8080", "product_name": "p", "engagement_name": "e",
+            "product_type_name": "Web apps"}, private_ok=True)  # fmt: skip
+        default = service.validate_config(s, DEFAULT_ORG_ID, "defectdojo_export", {
+            "base_url": "http://localhost:8080", "product_name": "p", "engagement_name": "e"},
+            private_ok=True)  # fmt: skip
+    assert (named["product_type_name"], default["product_type_name"]) == ("Web apps", "Bulwark")
 
 
 def test_defectdojo_push_imports_then_reimports_into_the_same_test() -> None:
@@ -620,8 +708,10 @@ def test_defectdojo_export_sends_open_issues_but_not_those_that_came_from_defect
 ) -> None:
     monkeypatch.setenv("BULWARK_CONNECTOR_ALLOW_PRIVATE", "1")
     assert env.import_and_get(SARIF)["status"] == "applied"  # 3 open Issues from Semgrep
-    pulls = Fake({("GET", "http://localhost:8080/api/v2/findings/?product=7&active=true&duplicate=false"
-                          "&limit=100&offset=0"): ok({"next": None, "results": [dd(1)]}),
+    pulls = Fake({("GET", "http://localhost:8080/api/v2/products/7/"): ok({"id": 7}),
+                  ("GET", "http://localhost:8080/api/v2/findings/?test__engagement__product=7&active=true"
+                          "&duplicate=false&related_fields=true&limit=100&offset=0"):
+                      ok({"next": None, "results": [dd(1)]}),
                   ("POST", "http://localhost:8080/api/v2/import-scan/"): ok({"test": 5}),
                   ("POST", "http://localhost:8080/api/v2/reimport-scan/"): ok({"test": 5})})  # fmt: skip
     use(monkeypatch, pulls)
@@ -635,13 +725,13 @@ def test_defectdojo_export_sends_open_issues_but_not_those_that_came_from_defect
         "exported": 3,
         "defectdojo_test_id": 5,
     }
-    sarif_body = pulls.calls[1][3] or b""
+    sarif_body = pulls.calls[2][3] or b""  # after the product and the findings page
     start = sarif_body.index(b'{"$schema"')
     doc = json.loads(sarif_body[start : sarif_body.index(b"\r\n--", start)])
     sources = {r["properties"]["reported_by"][0] for r in doc["runs"][0]["results"]}
     assert len(doc["runs"][0]["results"]) == 3 and "defectdojo" not in sources
     run(env, exp["id"])
-    assert pulls.calls[2][1].endswith("/reimport-scan/")  # the same DefectDojo Test after that
+    assert pulls.calls[3][1].endswith("/reimport-scan/")  # the same DefectDojo Test after that
 
 
 def test_kinds_say_what_each_needs() -> None:

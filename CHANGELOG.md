@@ -5,6 +5,12 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-10-05
+
+Milestone M13 (plan Phase 14, Weeks 57-60): more formats, your own formats, findings by hand, and
+connectors -- with a recorded round trip through a real DefectDojo
+([docs/v2-week59-60-verification.md](docs/v2-week59-60-verification.md)).
+
 ### Added
 - **Connectors (Week 60, ADR-0045).** Scheduled pulls from GitHub code scanning and Dependabot (through
   the GitHub App, no stored credential), GitLab vulnerability reports (GraphQL, checked against
@@ -69,6 +75,38 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   a pinned commit). They share one reading of an alert with the native DAST campaigns
   (`core/dast/mapping.py`), run in the parser sandbox and are in the nightly fuzz matrix. An empty
   Nuclei file closes nothing.
+
+### Fixed
+- **The DefectDojo import connector pulled every product's findings, not the one configured.**
+  Found in the M13 round trip against a real DefectDojo (3.3.300): its findings API silently ignores
+  a filter it does not know, and `?product=<id>` is not one of its filters, so a connector for one
+  product imported the findings of every product its key could read (and would have closed them
+  here as they changed there). It now filters by `test__engagement__product`, checks the product
+  exists first (a wrong id is "not found", not "fetched nothing"), and asks for each finding's
+  `related_fields`: a finding from another product refuses the whole pull, so an ignored filter can
+  never widen what is imported again.
+- **The DefectDojo export could not create its product.** DefectDojo refuses to auto-create a product
+  without a product type (HTTP 400); the export now sends one (`product_type_name`, default
+  "Bulwark", settable on the Connectors screen), and a connector's error now carries the reason a
+  server gave for a 4xx instead of a bare "HTTP 400".
+- DefectDojo findings now also read the newer `cwes` list (where a ZAP finding's CWE is) and turn a
+  `fix_version` into the remediation.
+- The issue page answered "issue not found in the latest scan" for any Issue only an import (or now
+  a person) reported; it shows the Issue's most recent occurrence instead.
+- **DAST findings were merged and collapsed (found importing a real ZAP report; also affected native
+  DAST campaigns).** Two different alerts sharing a CWE were merged into one finding (which survived
+  depended on input order); the fingerprint ignored the route, so one alert on fifty URLs was one
+  Issue; and the location-independent fallback key matched every URL to the first Issue made for the
+  alert -- 130 findings of one real report became 15 Issues. A finding's host and route are now its
+  identity (new `Location.host`), DAST findings are never merged, and correlation no longer compares
+  every DAST finding to every other (it was quadratic). **One-time effect:** DAST Issues recorded
+  before this release have route-free fingerprints, so the next DAST campaign closes them as fixed and
+  reports the same defects as new, per place; triage marks on the old Issues do not carry over.
+  Details in [ADR-0041](docs/adr/0041-dast-and-network-identity.md).
+
+## [2.1.0] - 2026-10-04
+
+### Added
 - **Import anything standard, and reimport it correctly (Weeks 54-56, plan Phase 13, ADR-0040).**
   `POST /v2/ingest` takes a SARIF, CycloneDX (JSON or XML), OSV-Scanner or SPDX report and compares it
   with that Test's previous upload: **new, unchanged, reopened, closed** (plus `detached`: no longer
@@ -85,18 +123,6 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   Verification record: [docs/v2-week54-verification.md](docs/v2-week54-verification.md).
 
 ### Fixed
-- The issue page answered "issue not found in the latest scan" for any Issue only an import (or now
-  a person) reported; it shows the Issue's most recent occurrence instead.
-- **DAST findings were merged and collapsed (found importing a real ZAP report; also affected native
-  DAST campaigns).** Two different alerts sharing a CWE were merged into one finding (which survived
-  depended on input order); the fingerprint ignored the route, so one alert on fifty URLs was one
-  Issue; and the location-independent fallback key matched every URL to the first Issue made for the
-  alert -- 130 findings of one real report became 15 Issues. A finding's host and route are now its
-  identity (new `Location.host`), DAST findings are never merged, and correlation no longer compares
-  every DAST finding to every other (it was quadratic). **One-time effect:** DAST Issues recorded
-  before this release have route-free fingerprints, so the next DAST campaign closes them as fixed and
-  reports the same defects as new, per place; triage marks on the old Issues do not carry over.
-  Details in [ADR-0041](docs/adr/0041-dast-and-network-identity.md).
 - **Cross-tenant leak: a database session could run as another organization after a commit.**
   Row-Level Security reads `app.current_org` from the *connection*, but a session returns its
   connection to the pool on every commit and takes whichever is free next; the org was set once per

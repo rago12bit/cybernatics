@@ -30,6 +30,9 @@ const FIELD_LABEL: Record<string, string> = {
   project: "Project path (group/name)",
   product_id: "DefectDojo product ID",
   engagement_id: "DefectDojo engagement ID",
+  product_name: "DefectDojo product",
+  engagement_name: "DefectDojo engagement",
+  product_type_name: "Product type, for a new product",
 };
 const INTERVALS: [number, string][] = [[60, "Every hour"], [360, "Every 6 hours"], [1440, "Every day"]];
 
@@ -212,7 +215,7 @@ function AddConnector({ onDone }: { onDone: (created: boolean) => void }) {
   const fields = useMemo(() => {
     if (!spec) return [];
     if (spec.name !== "defectdojo_export") return spec.fields;
-    return exportTarget === "engagement" ? ["base_url", "engagement_id"] : ["base_url", "product_name", "engagement_name"];
+    return exportTarget === "engagement" ? ["base_url", "engagement_id"] : ["base_url", "product_name", "engagement_name", "product_type_name"];
   }, [spec, exportTarget]);
 
   async function submit(e: React.FormEvent) {
@@ -279,7 +282,7 @@ function AddConnector({ onDone }: { onDone: (created: boolean) => void }) {
         <div key={f} className="ds-conn-field">
           <label htmlFor={fid(f)}>{FIELD_LABEL[f] ?? f.replace(/_/g, " ")}</label>
           <input id={fid(f)} value={config[f] ?? ""} onChange={(e) => setConfig((c) => ({ ...c, [f]: e.target.value }))}
-            spellCheck={false} {...aria(f)} placeholder={f === "base_url" ? "https://…" : undefined} />
+            spellCheck={false} {...aria(f)} placeholder={f === "base_url" ? "https://…" : f === "product_type_name" ? "Bulwark" : undefined} />
           {errFor(f)}
         </div>
       ))}

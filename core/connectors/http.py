@@ -135,8 +135,20 @@ def expect_ok(resp: Response, what: str) -> Any:
             status=resp.status,
         )
     if not 200 <= resp.status < 300:
-        raise ConnectorError(f"{what}: HTTP {resp.status}", status=resp.status)
+        reason = _reason(resp.body) if 400 <= resp.status < 500 else ""
+        raise ConnectorError(
+            f"{what}: HTTP {resp.status}" + (f" -- {reason}" if reason else ""), status=resp.status
+        )
     return resp.body
+
+
+def _reason(body: Any) -> str:
+    """What a refused request's body says (DefectDojo: `["Product ... does not exist ..."]` or
+    `{"field": ["..."]}`), as one short line of text."""
+    if isinstance(body, (dict, list)):
+        body = json.dumps(body, ensure_ascii=False)
+    text = " ".join(str(body or "").split())
+    return text[:300] + ("..." if len(text) > 300 else "")
 
 
 def next_link(headers: dict[str, str]) -> str | None:

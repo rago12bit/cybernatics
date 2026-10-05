@@ -1,14 +1,14 @@
 # Weeks 59-60 verification -- Universal mapper, manual findings, connectors (plan Phase 14, §42.4-§43.2)
 
-Honest record of what was built, run and measured, done as three commits. Decisions:
+Honest record of what was built, run and measured, done as four commits. Decisions:
 [ADR-0043](adr/0043-universal-mapper.md) (a saved mapping is a deterministic, sandboxed parser),
 [ADR-0044](adr/0044-manual-findings.md) (manual findings are an ingest source; evidence is encrypted
 and only downloaded), [ADR-0045](adr/0045-connectors.md) (connectors pull through the ingest path and
 never close on a pull they cannot trust).
 
-**M13 is not closed.** Its definition includes "a round trip with a real DefectDojo instance is
-recorded"; that has not been run (it needs DefectDojo's images pulled, deferred to the next run), so
-`v2.2.0` is not tagged.
+**M13 is closed and `v2.2.0` is tagged** (2026-10-05). The round trip with a real DefectDojo, the
+one item open after the first three commits, was run in a fourth -- and found two bugs that every
+recorded-shape test had passed (below).
 
 ## What was built
 
@@ -17,8 +17,66 @@ recorded"; that has not been run (it needs DefectDojo's images pulled, deferred 
 | 59.1 | Universal mapper | `MappingSpec` + a small path language; `UniversalParser` streams in the parser sandbox; sample analysis in the sandbox; drafts by the model (checked against the sample) or by name matching; versioned, tenant-isolated mappings (migration 0030); the **Map a format** screen; saved mappings offered on the import screen |
 | 59.2 | Manual findings | CVSS 4.0 (`cvss` library); CWE picker; routes from code intelligence (`scans.entrypoints`, migration 0031); correlation to automation's taint path; evidence sniffed, encrypted with OpenBao, downloaded only through a signed link; the **Record a finding** form and a panel on the issue page |
 | 60 | Connectors | GitHub code scanning and Dependabot (GitHub App), GitLab (GraphQL), DefectDojo in and out; SSRF-guarded client; health, backoff, run history (migration 0032); Celery beat; the **Connectors** screen |
+| M13 | DefectDojo round trip | Run against DefectDojo 3.3.300; two connector bugs fixed; `tests/integration/test_defectdojo_live.py`; a recorded page of real findings as a unit-test fixture |
 
-## Bugs found and fixed along the way
+## The DefectDojo round trip (M13)
+
+DefectDojo **3.3.300** (the latest release, 2026-09-28), from its own `docker-compose.yml` with the
+images pinned to that tag, on `localhost:8180`; an API v2 key minted for its admin user inside the
+container. `tests/integration/test_defectdojo_live.py` runs Bulwark's real API, connector service and
+HTTP client (with its SSRF guard, private hosts allowed) against it; it makes fresh products each run.
+
+| Direction | What happened |
+|---|---|
+| **In** | DefectDojo's own parsers imported a Bandit, an Anchore Grype and a ZAP report (DefectDojo's sample files) into a product: 13 active findings. The import connector pulled all 13 in 6 requests (the product, then five pages of 3 -- the test's page size; Bulwark asks for 100 -- by DefectDojo's own `next` links) and made 13 Issues -- code, package and web findings each read as such: file and line, package and CVE, severity. Pulled again: the same pull, not applied twice. A finding closed in DefectDojo (`active: false`) was closed in Bulwark on the next pull. |
+| **Out** | A project's 3 open Issues (a real Semgrep SARIF) were exported: DefectDojo created the product, engagement and a "Bulwark Scan (SARIF)" Test, with the 3 findings on the same files and lines. Bulwark then closed one; the next export reimported into the same Test and DefectDojo closed it there: 2 active. |
+| **Back** | That product pulled into a second project: 2 Issues on the files, lines and severities they left from, and none of them exported again (no echo). |
+| **Screen** | The Connectors screen against the same instance: the export and import connectors Healthy (2 sent, 12 pulled, "12 new, 0 reopened, 0 closed"), and a connector for a product that does not exist Failing with "DefectDojo product 424242: not found (HTTP 404)". A wrong key: "the credential was refused (HTTP 403)". |
+
+### Bugs the round trip found (every recorded-shape test had passed)
+
+1. **The import connector pulled every product's findings.** DefectDojo's findings API ignores a
+   filter it does not know, and `?product=<id>` -- what the connector sent, and what the documented
+   example shapes could not reveal -- is not one: each of three products returned all 39 findings of
+   the instance. A connector for one product would have imported every product its key can read. The
+   filter is now `test__engagement__product`; the product is fetched first (a wrong id is a 404, not
+   "fetched nothing"); and every finding is asked for with its `related_fields`, so one from another
+   product refuses the whole pull. Checked live: with the old filter put back on the wire, the guard
+   refuses ("finding 1 from outside product 7 ... nothing was imported").
+2. **The export could not create its product**: HTTP 400, "Product ... does not exist and no
+   product_type_name provided". It now sends a product type (default "Bulwark", settable on the
+   screen), and a 4xx's reason now reaches the connector's health instead of a bare "HTTP 400".
+
+Also from the real data: newer DefectDojo lists CWEs in `cwes` (`[{"cwe": "CWE-614"}]`, where ZAP's
+is; the old `cwe` field was 0), now read; and `fix_version` becomes the remediation. One real page --
+a Bandit, a Grype and a ZAP finding as DefectDojo 3.3.300 returns them -- is now a unit-test fixture
+(`tests/golden/connectors/defectdojo-3.3.300-findings-page.json`), so CI checks the real shape.
+
+After the fixes: 2,438 unit tests pass (4 skipped, coverage 92%), 274 web tests, the three live
+round-trip tests; `ruff`, `black`, `mypy` (272 files) and `tsc` clean. Versions are 2.2.0 in
+`pyproject.toml` and `web/package.json` (both had stayed at 2.0.0 through `v2.1.0`; the changelog's
+2.1.0 section is now separated out too).
+
+### Found, not fixed here
+
+- On SQLite (the scratch and end-to-end servers) timestamps lose their time zone, so the screen read
+  a run from seconds earlier as "6 hours ago" in IST. Postgres keeps the zone; this affects every
+  screen on SQLite, not connectors, and is queued as its own task.
+
+## M13, item by item
+
+- **"At least 15 formats."** The plan's own list (§42.2, "Order of work") counts "generic JSON and
+  CSV through the universal mapper" as one item, beside SARIF, CycloneDX, SPDX, OSV and the ported
+  tool formats. Built: SARIF, CycloneDX (JSON and XML), SPDX, OSV, ZAP, Burp, Nuclei, Nessus,
+  OpenVAS, Grype, Trivy, Snyk, GitLab security reports, Checkov (14 parsers), and generic JSON, CSV
+  and XML through saved mappings: **15 by the plan's count.** (Without the mapper it is 14.)
+- **"3 connectors."** Five kinds are built (GitHub code scanning, GitHub Dependabot, GitLab,
+  DefectDojo in, DefectDojo out). Only DefectDojo has run against a live instance with data; see
+  below for what that leaves unproven about the others.
+- **"Deduplication can be changed per source with a dry run"** -- Week 58 (ADR-0042).
+- **"A round trip with a real DefectDojo instance is recorded"** -- above.
+
+## Bugs found and fixed along the way (Weeks 59-60)
 
 1. **Correlation dropped a copied taint path.** `correlate()` rebuilds each finding without its
    `taint_path` (scans attach theirs later, in `finalize`), so the path a manual finding inherited from
@@ -70,11 +128,10 @@ recorded"; that has not been run (it needs DefectDojo's images pulled, deferred 
 
 ## What this does NOT prove (read before relying on it)
 
-- **No round trip with a real DefectDojo.** Import from and export to DefectDojo are tested against its
-  documented API v2 shapes only: `/findings/` paging, `import-scan`, `reimport-scan` with
-  `close_old_findings`. Field names DefectDojo has changed between versions (`cve` and
-  `vulnerability_ids`) are both read, but neither direction has met a live instance. **This is the
-  open item for M13** (queued as the next task).
+- **One DefectDojo version.** The round trip ran against 3.3.300 only. Older versions name the same
+  things differently (`cve` and `vulnerability_ids` are both read); a version without
+  `related_fields` would now be refused rather than trusted. DefectDojo's Endpoints (a web
+  finding's URLs) are still not fetched, so a DAST finding from DefectDojo has no route.
 - **No GitHub App is registered here**, so the GitHub connectors were never run against GitHub. They are
   tested against response shapes taken from GitHub's documented examples. Dependabot does not report
   the installed version, so a Dependabot Issue uses the vulnerable range and will not merge with an

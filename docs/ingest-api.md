@@ -139,7 +139,7 @@ like an upload: new, unchanged, reopened, closed ([ADR-0045](adr/0045-connectors
 | `github_dependabot` | open Dependabot alerts | the GitHub App, *Dependabot alerts: read* |
 | `gitlab` | detected and confirmed vulnerabilities (GraphQL) | a `read_api` token, Developer role, GitLab Ultimate |
 | `defectdojo_import` | a product's active, non-duplicate findings | a DefectDojo API v2 key that can read the product |
-| `defectdojo_export` | *pushes* the project's open Issues as SARIF | a key that can import scans into the engagement |
+| `defectdojo_export` | *pushes* the project's open Issues as SARIF, to `engagement_id` or to `product_name` + `engagement_name` (created, with `product_type_name`, default "Bulwark") | a key that can import scans into the engagement |
 
 ```bash
 curl -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" $BULWARK/v2/connectors \
