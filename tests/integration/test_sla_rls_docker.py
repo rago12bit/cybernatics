@@ -37,7 +37,12 @@ def two_orgs(sessions: sessionmaker[Session]) -> Iterator[tuple[str, str]]:  # n
     with sessions() as s:
         for org in (a, b):
             set_session_org(s, org)
-            for table in ("sla_policies", "outbox_events"):  # audit entries are append-only
+            for table in (
+                "risk_acceptance_issues",
+                "risk_acceptances",
+                "sla_policies",
+                "outbox_events",
+            ):  # audit entries are append-only
                 s.execute(text(f"DELETE FROM {table} WHERE org_id = :o"), {"o": org})
             s.execute(text("DELETE FROM findings WHERE scan_id IN "
                            "(SELECT id FROM scans WHERE org_id = :o)"), {"o": org})  # fmt: skip

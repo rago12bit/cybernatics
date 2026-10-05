@@ -4310,10 +4310,925 @@
           }
         }
       }
+    },
+    "/v2/risk-acceptance-policy": {
+      "get": {
+        "tags": [
+          "risk acceptance"
+        ],
+        "summary": "Policy",
+        "operationId": "policy_v2_risk_acceptance_policy_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PolicyOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v2/projects/{project_id}/risk-acceptances": {
+      "post": {
+        "tags": [
+          "risk acceptance"
+        ],
+        "summary": "Request Acceptance",
+        "operationId": "request_acceptance_v2_projects__project_id__risk_acceptances_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptanceOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "risk acceptance"
+        ],
+        "summary": "Project Acceptances",
+        "operationId": "project_acceptances_v2_projects__project_id__risk_acceptances_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "issue_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Issue Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AcceptanceOut"
+                  },
+                  "title": "Response Project Acceptances V2 Projects  Project Id  Risk Acceptances Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/risk-acceptances": {
+      "get": {
+        "tags": [
+          "risk acceptance"
+        ],
+        "summary": "All Acceptances",
+        "operationId": "all_acceptances_v2_risk_acceptances_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "State"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AcceptanceOut"
+                  },
+                  "title": "Response All Acceptances V2 Risk Acceptances Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/risk-acceptances/{acceptance_id}": {
+      "get": {
+        "tags": [
+          "risk acceptance"
+        ],
+        "summary": "One",
+        "operationId": "one_v2_risk_acceptances__acceptance_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "acceptance_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Acceptance Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptanceOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/risk-acceptances/{acceptance_id}/approve": {
+      "post": {
+        "tags": [
+          "risk acceptance"
+        ],
+        "summary": "Risk Acceptance Approve",
+        "operationId": "risk_acceptance_approve_v2_risk_acceptances__acceptance_id__approve_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "acceptance_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Acceptance Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/NoteIn"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptanceOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/risk-acceptances/{acceptance_id}/reject": {
+      "post": {
+        "tags": [
+          "risk acceptance"
+        ],
+        "summary": "Risk Acceptance Reject",
+        "operationId": "risk_acceptance_reject_v2_risk_acceptances__acceptance_id__reject_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "acceptance_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Acceptance Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/NoteIn"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptanceOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/risk-acceptances/{acceptance_id}/withdraw": {
+      "post": {
+        "tags": [
+          "risk acceptance"
+        ],
+        "summary": "Risk Acceptance Withdraw",
+        "operationId": "risk_acceptance_withdraw_v2_risk_acceptances__acceptance_id__withdraw_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "acceptance_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Acceptance Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/NoteIn"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptanceOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/risk-acceptances/{acceptance_id}/expire": {
+      "post": {
+        "tags": [
+          "risk acceptance"
+        ],
+        "summary": "Risk Acceptance Expire",
+        "operationId": "risk_acceptance_expire_v2_risk_acceptances__acceptance_id__expire_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "acceptance_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Acceptance Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/NoteIn"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptanceOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/risk-acceptances/{acceptance_id}/reinstate": {
+      "post": {
+        "tags": [
+          "risk acceptance"
+        ],
+        "summary": "Risk Acceptance Reinstate",
+        "operationId": "risk_acceptance_reinstate_v2_risk_acceptances__acceptance_id__reinstate_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "acceptance_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Acceptance Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/NoteIn"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptanceOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/risk-acceptances/{acceptance_id}/extend": {
+      "post": {
+        "tags": [
+          "risk acceptance"
+        ],
+        "summary": "Extend",
+        "operationId": "extend_v2_risk_acceptances__acceptance_id__extend_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "acceptance_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Acceptance Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExtendIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptanceOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/risk-acceptances/{acceptance_id}/attachments": {
+      "post": {
+        "tags": [
+          "risk acceptance"
+        ],
+        "summary": "Add Proof",
+        "operationId": "add_proof_v2_risk_acceptances__acceptance_id__attachments_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "acceptance_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Acceptance Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_add_proof_v2_risk_acceptances__acceptance_id__attachments_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProofFile"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "AcceptanceOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "project_id": {
+            "type": "string",
+            "title": "Project Id"
+          },
+          "project": {
+            "type": "string",
+            "title": "Project"
+          },
+          "decision": {
+            "type": "string",
+            "title": "Decision"
+          },
+          "justification": {
+            "type": "string",
+            "title": "Justification"
+          },
+          "controls": {
+            "type": "string",
+            "title": "Controls"
+          },
+          "proof_links": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Proof Links"
+          },
+          "proof_files": {
+            "items": {
+              "$ref": "#/components/schemas/ProofFile"
+            },
+            "type": "array",
+            "title": "Proof Files",
+            "default": []
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Expires At"
+          },
+          "days": {
+            "type": "integer",
+            "title": "Days",
+            "description": "Whole days from the request to the expiry."
+          },
+          "restart_sla": {
+            "type": "boolean",
+            "title": "Restart Sla"
+          },
+          "state": {
+            "type": "string",
+            "title": "State"
+          },
+          "requested_by": {
+            "type": "string",
+            "title": "Requested By"
+          },
+          "requested_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Requested At"
+          },
+          "approver": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approver"
+          },
+          "decided_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decided By"
+          },
+          "decided_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decided At"
+          },
+          "decision_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decision Note"
+          },
+          "ended_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ended At"
+          },
+          "ended_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ended By"
+          },
+          "ended_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ended Reason"
+          },
+          "extends_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extends Id"
+          },
+          "legacy": {
+            "type": "boolean",
+            "title": "Legacy"
+          },
+          "issue_count": {
+            "type": "integer",
+            "title": "Issue Count"
+          },
+          "issues": {
+            "items": {
+              "$ref": "#/components/schemas/IssueBrief"
+            },
+            "type": "array",
+            "title": "Issues",
+            "default": []
+          },
+          "trail": {
+            "items": {
+              "$ref": "#/components/schemas/TrailEntry"
+            },
+            "type": "array",
+            "title": "Trail",
+            "default": []
+          },
+          "can_decide": {
+            "type": "boolean",
+            "title": "Can Decide",
+            "description": "Whether the caller may approve or reject it."
+          },
+          "names": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Names",
+            "description": "Each actor's token name, to show people, not prefixes."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "project_id",
+          "project",
+          "decision",
+          "justification",
+          "controls",
+          "proof_links",
+          "expires_at",
+          "days",
+          "restart_sla",
+          "state",
+          "requested_by",
+          "requested_at",
+          "approver",
+          "decided_by",
+          "decided_at",
+          "decision_note",
+          "ended_at",
+          "ended_by",
+          "ended_reason",
+          "extends_id",
+          "legacy",
+          "issue_count",
+          "can_decide"
+        ],
+        "title": "AcceptanceOut"
+      },
       "Analysis": {
         "properties": {
           "format": {
@@ -4474,6 +5389,24 @@
           "digest"
         ],
         "title": "ApplyRequest"
+      },
+      "Approver": {
+        "properties": {
+          "actor": {
+            "type": "string",
+            "title": "Actor"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "actor",
+          "name"
+        ],
+        "title": "Approver"
       },
       "AssetSummary": {
         "properties": {
@@ -4911,6 +5844,20 @@
           "file"
         ],
         "title": "Body_add_attachment_v2_manual_findings__manual_id__attachments_post"
+      },
+      "Body_add_proof_v2_risk_acceptances__acceptance_id__attachments_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_add_proof_v2_risk_acceptances__acceptance_id__attachments_post"
       },
       "Body_analyze_sample_v2_mappings_analyze_post": {
         "properties": {
@@ -5939,6 +6886,36 @@
         "title": "DependenciesView",
         "description": "Plan \u00a720.5's Dependencies screen: one project's latest SBOM (`Scan.sbom_summary`), or an\nempty view when no scan has opted into `syft` yet -- never a 404, matching\n`/assets/{id}/issues`'s own \"empty, not missing\" shape."
       },
+      "ExtendIn": {
+        "properties": {
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          },
+          "justification": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 4000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Justification"
+          }
+        },
+        "type": "object",
+        "title": "ExtendIn"
+      },
       "FeedsStatus": {
         "properties": {
           "fetched_at": {
@@ -6649,6 +7626,44 @@
         ],
         "title": "IntegrationSettingsView",
         "description": "Never echoes a secret value back (Week 51 task 2, plan \u00a723) -- a webhook URL, a GitHub PAT,\nand a Jira API token are each themselves a bearer credential. `*_configured` says whether one is\nset; the non-secret fields (which repo/project an issue gets filed into) are shown in full since\nthey're just config, not something that grants access on their own."
+      },
+      "IssueBrief": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity"
+          },
+          "path": {
+            "type": "string",
+            "title": "Path"
+          },
+          "state": {
+            "type": "string",
+            "title": "State"
+          },
+          "triage_status": {
+            "type": "string",
+            "title": "Triage Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "severity",
+          "path",
+          "state",
+          "triage_status"
+        ],
+        "title": "IssueBrief"
       },
       "IssueHistoryEvent": {
         "properties": {
@@ -7389,6 +8404,24 @@
         ],
         "title": "MessageView"
       },
+      "NoteIn": {
+        "properties": {
+          "note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "title": "NoteIn"
+      },
       "ParserInfo": {
         "properties": {
           "name": {
@@ -7511,6 +8544,38 @@
           "bands"
         ],
         "title": "PolicyIn"
+      },
+      "PolicyOut": {
+        "properties": {
+          "max_days": {
+            "type": "integer",
+            "title": "Max Days"
+          },
+          "you": {
+            "type": "string",
+            "title": "You"
+          },
+          "approvers": {
+            "items": {
+              "$ref": "#/components/schemas/Approver"
+            },
+            "type": "array",
+            "title": "Approvers"
+          },
+          "can_approve": {
+            "type": "boolean",
+            "title": "Can Approve",
+            "description": "False with the shared token: it could be anyone."
+          }
+        },
+        "type": "object",
+        "required": [
+          "max_days",
+          "you",
+          "approvers",
+          "can_approve"
+        ],
+        "title": "PolicyOut"
       },
       "PolicyVersion": {
         "properties": {
@@ -7856,6 +8921,45 @@
         ],
         "title": "PromoteHypothesisResult"
       },
+      "ProofFile": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "file_name": {
+            "type": "string",
+            "title": "File Name"
+          },
+          "content_type": {
+            "type": "string",
+            "title": "Content Type"
+          },
+          "active_content": {
+            "type": "boolean",
+            "title": "Active Content"
+          },
+          "size_bytes": {
+            "type": "integer",
+            "title": "Size Bytes"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "file_name",
+          "content_type",
+          "active_content",
+          "size_bytes",
+          "created_at"
+        ],
+        "title": "ProofFile"
+      },
       "ProposalView": {
         "properties": {
           "spec": {
@@ -8079,6 +9183,78 @@
         ],
         "title": "RemediationView",
         "description": "Guidance for one finding. `source` says whether a model wrote it."
+      },
+      "RequestIn": {
+        "properties": {
+          "issue_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 500,
+            "minItems": 1,
+            "title": "Issue Ids"
+          },
+          "decision": {
+            "type": "string",
+            "title": "Decision"
+          },
+          "justification": {
+            "type": "string",
+            "maxLength": 4000,
+            "title": "Justification",
+            "default": ""
+          },
+          "controls": {
+            "type": "string",
+            "maxLength": 4000,
+            "title": "Controls",
+            "default": ""
+          },
+          "proof_links": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 20,
+            "title": "Proof Links"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          },
+          "restart_sla": {
+            "type": "boolean",
+            "title": "Restart Sla",
+            "default": false
+          },
+          "approver": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approver"
+          }
+        },
+        "type": "object",
+        "required": [
+          "issue_ids",
+          "decision"
+        ],
+        "title": "RequestIn"
       },
       "RetentionSettingsView": {
         "properties": {
@@ -9238,6 +10414,30 @@
           "status"
         ],
         "title": "ToolStatus"
+      },
+      "TrailEntry": {
+        "properties": {
+          "at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "At"
+          },
+          "actor": {
+            "type": "string",
+            "title": "Actor"
+          },
+          "action": {
+            "type": "string",
+            "title": "Action"
+          }
+        },
+        "type": "object",
+        "required": [
+          "at",
+          "actor",
+          "action"
+        ],
+        "title": "TrailEntry"
       },
       "TrendPoint": {
         "properties": {

@@ -133,29 +133,29 @@ def test_not_a_risk_requires_a_reason_and_removes_it_from_the_active_queue(env) 
     assert [h["label"] for h in history] == ["First seen", "Marked as not a risk"]
 
 
-def test_accept_risk_requires_an_expiry_and_reappears_after_it(env) -> None:  # type: ignore[no-untyped-def]
+def test_accepting_needs_approval_and_an_accepted_issue_reappears_after_expiry(env) -> None:  # type: ignore[no-untyped-def]
     client, sessions, _ = env
     asset_id, issue_id = _seed(sessions)
 
-    bad = client.post(
-        f"/assets/{asset_id}/issues/{issue_id}/triage", headers=AUTH, json={"action": "accepted"}
-    )
-    assert bad.status_code == 422
-
+    # Week 62 (plan §44.2): one person can no longer accept a risk through triage; it takes a
+    # risk acceptance that someone else approves (tests/unit/test_risk_acceptance.py).
     future = (datetime.now(timezone.utc) + timedelta(days=30)).isoformat()
-    ok = client.post(
+    refused = client.post(
         f"/assets/{asset_id}/issues/{issue_id}/triage",
         headers=AUTH,
-        json={
-            "action": "accepted",
-            "expires_at": future,
-            "reason": "compensating control in place",
-        },
+        json={"action": "accepted", "expires_at": future, "reason": "compensating control"},
     )
-    assert ok.status_code == 200 and ok.json()["triage_status"] == "accepted"
+    assert refused.status_code == 409 and "approval" in refused.json()["detail"]
+
+    # What an approved acceptance writes on the Issue still takes it out of the queue...
+    with sessions() as s:
+        repo.triage_issue(
+            s, issue_id, org_id=DEFAULT_ORG_ID, action="accepted",
+            expires_at=datetime.now(timezone.utc) + timedelta(days=30), actor="token:approver",
+        )  # fmt: skip
     assert client.get(f"/assets/{asset_id}/issues", headers=AUTH).json()["total"] == 1
 
-    # Expired acceptance: reappears in the active queue automatically (plan §28.3).
+    # ...and once its expiry passes it reappears in the active queue automatically (plan §28.3).
     with sessions() as s:
         row = repo.get_issue(s, issue_id)
         assert row is not None

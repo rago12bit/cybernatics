@@ -11,6 +11,7 @@ import { SEVERITIES } from "@/lib/types";
 import { SeverityIcon } from "@/design-system/severity";
 import { Button } from "@/design-system/primitives/Button";
 import { Dialog } from "@/design-system/primitives/Dialog";
+import { RiskAcceptanceRequest } from "@/components/RiskAcceptanceRequest";
 import { useMode } from "@/design-system/mode";
 import { useSavedViews, type SavedView } from "@/lib/saved-views";
 import { setIssueNavList } from "@/lib/issue-nav";
@@ -43,6 +44,7 @@ export function IssuesTable({ assetId }: { assetId: string }) {
   const [triageOpen, setTriageOpen] = useState<"not_a_risk" | "accepted" | null>(null);
   const [reason, setReason] = useState("");
   const [expiresAt, setExpiresAt] = useState("");
+  const [notice, setNotice] = useState<string | null>(null);
   const parentRef = useRef<HTMLDivElement>(null);
 
   const reload = useCallback(() => {
@@ -230,12 +232,13 @@ export function IssuesTable({ assetId }: { assetId: string }) {
         <div className="ds-bulkbar" role="toolbar" aria-label="Bulk triage">
           <span>{selected.size} selected</span>
           <Button variant="primary" onClick={() => setTriageOpen("not_a_risk")}>Mark not a risk</Button>
-          <Button onClick={() => setTriageOpen("accepted")}>Accept risk</Button>
+          <Button onClick={() => setTriageOpen("accepted")}>Request risk acceptance</Button>
           <Button onClick={() => runTriage("reopen")} disabled={busy}>Reopen</Button>
           <Button onClick={() => setSelected(new Set())}>Clear</Button>
         </div>
       )}
 
+      {notice && <p className="ds-issues-notice" role="status">{notice}</p>}
       {error && <p className="ds-issues-error" role="alert">{error}</p>}
       {!error && page && page.total === 0 && <p className="ds-issues-empty">Nothing here. Try a different filter, or check the triaged-away issues above.</p>}
 
@@ -310,16 +313,15 @@ export function IssuesTable({ assetId }: { assetId: string }) {
       <Dialog
         open={triageOpen === "accepted"}
         onOpenChange={(o) => !o && setTriageOpen(null)}
-        title="Accept this risk"
-        description="An expiry date is required — it reappears automatically once it passes. Written to the audit log."
+        title={`Request risk acceptance for ${selectedIssueIds.length} issue${selectedIssueIds.length === 1 ? "" : "s"}`}
+        description="Someone other than you approves it; until then the issues stay open. Every step is in the audit log."
       >
-        <label htmlFor="bulk-triage-expires" className="ds-palette-label">Expires</label>
-        <input id="bulk-triage-expires" type="date" value={expiresAt} onChange={(e) => setExpiresAt(e.target.value)} className="ds-palette-input" />
-        <label htmlFor="bulk-triage-note" className="ds-palette-label" style={{ marginTop: "0.5rem" }}>Note (optional)</label>
-        <textarea id="bulk-triage-note" value={reason} onChange={(e) => setReason(e.target.value)} rows={2} placeholder="Optional note" className="ds-palette-input" style={{ width: "100%", resize: "vertical" }} />
-        <div style={{ marginTop: "1rem" }}>
-          <Button variant="primary" disabled={!expiresAt || busy} onClick={() => runTriage("accepted")}>Confirm</Button>
-        </div>
+        <RiskAcceptanceRequest
+          assetId={assetId}
+          issueIds={selectedIssueIds}
+          onCancel={() => setTriageOpen(null)}
+          onDone={() => { setTriageOpen(null); setSelected(new Set()); setNotice("Request sent. The issues stay open until someone else approves."); reload(); }}
+        />
       </Dialog>
     </div>
   );

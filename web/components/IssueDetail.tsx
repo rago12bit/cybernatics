@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ApiError, getIssue, getIssueHistory, liveGuidance, triageIssue } from "@/lib/api";
-import type { Finding, IssueHistoryEvent } from "@/lib/types";
+import { ApiError, getIssue, getIssueHistory, listIssueRiskAcceptances, liveGuidance, triageIssue } from "@/lib/api";
+import type { Finding, IssueHistoryEvent, RiskAcceptance } from "@/lib/types";
 import { SeverityBadge } from "@/design-system/severity";
 import { WhyRankedPanel } from "@/design-system/why-ranked";
 import { TaintStepper, type TaintStep } from "@/design-system/taint-stepper";
@@ -18,6 +18,7 @@ import { TriageAssistantPanel } from "@/components/TriageAssistantPanel";
 import { ManualFindingPanel } from "@/components/ManualFindingPanel";
 import { CopilotPanel } from "@/components/CopilotPanel";
 import { SLA_MARK, slaSentence } from "@/lib/sla";
+import { RiskAcceptanceRequest } from "@/components/RiskAcceptanceRequest";
 import "./issue-detail.css";
 
 const isTyping = (t: EventTarget | null) => t instanceof HTMLElement && /^(INPUT|SELECT|TEXTAREA)$/.test(t.tagName);
@@ -35,12 +36,15 @@ export function IssueDetail({ assetId, issueId }: { assetId: string; issueId: st
   const [reason, setReason] = useState("");
   const [expiresAt, setExpiresAt] = useState("");
   const [busy, setBusy] = useState(false);
+  const [acceptances, setAcceptances] = useState<RiskAcceptance[]>([]);
+  const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => setExplanationOpen(mode === "novice"), [mode]);
 
   function reload() {
     getIssue(assetId, issueId).then(setFinding, (e) => setError(e instanceof ApiError ? e.message : "Failed to load this issue"));
     getIssueHistory(assetId, issueId).then(setHistory, () => setHistory([]));
+    listIssueRiskAcceptances(assetId, issueId).then((r) => setAcceptances(Array.isArray(r) ? r : []), () => setAcceptances([]));
   }
   useEffect(reload, [assetId, issueId]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -133,6 +137,7 @@ export function IssueDetail({ assetId, issueId }: { assetId: string; issueId: st
   const activeStepData = steps[Math.min(activeStep, steps.length - 1)];
   const activeSnippet = taintPath.length > 0 ? taintPath[Math.min(activeStep, steps.length - 1)]?.snippet : finding.location.snippet;
   const triageStatus = finding.issue?.triage_status ?? "open";
+  const live = acceptances.find((a) => a.state === "requested" || a.state === "approved");
 
   return (
     <div className="ds-issue">
@@ -147,7 +152,17 @@ export function IssueDetail({ assetId, issueId }: { assetId: string; issueId: st
         </label>
       </div>
 
-      {triageStatus !== "open" && (
+      {live && (
+        <div className="ds-issue-triage-banner" role="status">
+          {live.state === "requested"
+            ? `Risk acceptance requested by ${live.names?.[live.requested_by] ?? live.requested_by}; waiting for ${live.approver ? (live.names?.[live.approver] ?? live.approver) : "someone else"} to approve. The issue stays open meanwhile.`
+            : `Risk acceptance (${live.decision}) approved by ${live.decided_by ? (live.names?.[live.decided_by] ?? live.decided_by) : "—"}, until ${new Date(live.expires_at).toLocaleDateString()}. To end it early, open it and expire it.`}
+          {" "}<Link href={`/app/risk-acceptances/${live.id}`}>View it</Link>
+        </div>
+      )}
+      {notice && <p className="ds-issue-meta" role="status">{notice}</p>}
+
+      {triageStatus !== "open" && !(live && live.state === "approved") && (
         <div className="ds-issue-triage-banner">
           {triageStatus === "not_a_risk" ? "Marked as not a risk" : "Risk accepted"}
           {finding.issue?.triage_reason && <>: {finding.issue.triage_reason}</>}
@@ -227,7 +242,7 @@ export function IssueDetail({ assetId, issueId }: { assetId: string; issueId: st
           )}
           <div className="ds-issue-actions">
             <Button variant="primary" onClick={() => setTriageOpen("not_a_risk")} disabled={triageStatus !== "open"}>Mark as not a risk</Button>
-            <Button onClick={() => setTriageOpen("accepted")} disabled={triageStatus !== "open"}>Accept risk until…</Button>
+            <Button onClick={() => setTriageOpen("accepted")} disabled={triageStatus !== "open" || !!live}>Request risk acceptance…</Button>
           </div>
           <div>
             <div className="ds-issue-label">History</div>
@@ -248,14 +263,13 @@ export function IssueDetail({ assetId, issueId }: { assetId: string; issueId: st
         </div>
       </Dialog>
 
-      <Dialog open={triageOpen === "accepted"} onOpenChange={(o) => !o && setTriageOpen(null)} title="Accept this risk" description="An expiry date is required — it reappears automatically once it passes. Written to the audit log.">
-        <label htmlFor="triage-expires" className="ds-issue-label">Expires</label>
-        <input id="triage-expires" type="date" value={expiresAt} onChange={(e) => setExpiresAt(e.target.value)} className="ds-issue-input" />
-        <label htmlFor="triage-note" className="ds-issue-label" style={{ marginTop: "0.5rem" }}>Note (optional)</label>
-        <textarea id="triage-note" value={reason} onChange={(e) => setReason(e.target.value)} rows={2} placeholder="Optional note" className="ds-issue-input" />
-        <div style={{ marginTop: "1rem" }}>
-          <Button variant="primary" disabled={!expiresAt || busy} onClick={() => runTriage("accepted")}>Confirm</Button>
-        </div>
+      <Dialog open={triageOpen === "accepted"} onOpenChange={(o) => !o && setTriageOpen(null)} title="Request risk acceptance" description="Someone other than you approves it; until then the issue stays open. Every step is in the audit log.">
+        <RiskAcceptanceRequest
+          assetId={assetId}
+          issueIds={finding.issue ? [finding.issue.id] : [issueId]}
+          onCancel={() => setTriageOpen(null)}
+          onDone={() => { setTriageOpen(null); setNotice("Request sent. The issue stays open until someone else approves."); reload(); }}
+        />
       </Dialog>
 
       <CopilotPanel assetId={assetId} context={{ context_kind: "issue", context_id: issueId }} />

@@ -909,6 +909,65 @@ class SlaPolicy(Base):
     __table_args__ = (UniqueConstraint("asset_id", "version", name="uq_sla_policies"),)
 
 
+class RiskAcceptance(Base):
+    """A decision to live with one or more Issues for a while (plan §44.2, Week 62, ADR-0046).
+
+    Requested by one person and approved by another -- enforced on the server: the approver's
+    actor must differ from the requester's, and must be a personal API token, not the shared
+    deployment token. Until approved, the Issues stay open. Approval writes the existing triage
+    fields on each Issue (`accepted` until `expires_at`), so the active queue, the SLA pause and the
+    policy gate's 90-day rule all read it unchanged. Every state change is in the audit log.
+
+    States: requested -> approved | rejected | withdrawn; approved -> expired (on its date, or
+    "expire now") | extended (an approved extension replaced it); expired early -> approved again
+    ("reinstate", within the approved dates only)."""
+
+    __tablename__ = "risk_acceptances"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(
+        ForeignKey("organizations.id"), default=DEFAULT_ORG_ID, index=True
+    )
+    asset_id: Mapped[str] = mapped_column(ForeignKey("assets.id", ondelete="CASCADE"), index=True)
+    decision: Mapped[str] = mapped_column(String(16))  # accept | mitigate | transfer | avoid
+    justification: Mapped[str] = mapped_column(Text)
+    controls: Mapped[str] = mapped_column(Text)
+    proof_links: Mapped[list[str]] = mapped_column(JsonType, default=list)
+    expires_at: Mapped[datetime] = mapped_column(UtcDateTime())
+    restart_sla: Mapped[bool] = mapped_column(Boolean, default=False)
+    state: Mapped[str] = mapped_column(String(16), index=True)
+    requested_by: Mapped[str] = mapped_column(String(200))
+    requested_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+    approver: Mapped[str | None] = mapped_column(String(200), nullable=True)  # who was asked
+    decided_by: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    decided_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
+    decision_note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    ended_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
+    ended_by: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    ended_reason: Mapped[str | None] = mapped_column(String(24), nullable=True)
+    extends_id: Mapped[str | None] = mapped_column(
+        ForeignKey("risk_acceptances.id", ondelete="SET NULL"), nullable=True
+    )
+    # Made from an Issue someone accepted alone, before four-eyes approval existed (migration 0034).
+    legacy: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
+class RiskAcceptanceIssue(Base):
+    """Which Issues one risk acceptance covers."""
+
+    __tablename__ = "risk_acceptance_issues"
+
+    acceptance_id: Mapped[str] = mapped_column(
+        ForeignKey("risk_acceptances.id", ondelete="CASCADE"), primary_key=True
+    )
+    issue_id: Mapped[str] = mapped_column(
+        ForeignKey("issues.id", ondelete="CASCADE"), primary_key=True, index=True
+    )
+    org_id: Mapped[str] = mapped_column(
+        ForeignKey("organizations.id"), default=DEFAULT_ORG_ID, index=True
+    )
+
+
 class IngestMapping(Base):
     """A saved universal-mapper mapping (plan §42.4, ADR-0043): where each field of an unsupported
     report format lives. Imported with parser `universal:<id>`.
@@ -1001,8 +1060,12 @@ class EvidenceAttachment(Base):
     org_id: Mapped[str] = mapped_column(
         ForeignKey("organizations.id"), default=DEFAULT_ORG_ID, index=True
     )
-    manual_finding_id: Mapped[str] = mapped_column(
-        ForeignKey("manual_findings.id", ondelete="CASCADE"), index=True
+    manual_finding_id: Mapped[str | None] = mapped_column(
+        ForeignKey("manual_findings.id", ondelete="CASCADE"), index=True, nullable=True
+    )
+    # Proof for a risk acceptance (Week 62) uses the same storage: exactly one owner is set.
+    risk_acceptance_id: Mapped[str | None] = mapped_column(
+        ForeignKey("risk_acceptances.id", ondelete="CASCADE"), index=True, nullable=True
     )
     file_name: Mapped[str] = mapped_column(String(255))
     declared_type: Mapped[str | None] = mapped_column(String(120), nullable=True)

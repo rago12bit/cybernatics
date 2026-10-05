@@ -56,6 +56,7 @@ from core.persistence.models import (
     OutboxEvent,
     PluginAllowlistRow,
     Portfolio,
+    RiskAcceptanceIssue,
     Scan,
     ScanDataKeyRow,
     ThreatModelRow,
@@ -1088,8 +1089,19 @@ def issue_history(s: Session, issue_id: str) -> list[dict[str, Any]]:
         events.append({"at": issue.first_seen_at, "label": "First seen"})
         if issue.fixed_at is not None:
             events.append({"at": issue.fixed_at, "label": "Fixed"})
+    # Its own triage entries, and every risk acceptance that covers it (Week 62).
+    acceptances = [
+        f"risk_acceptance:{a}"
+        for a in s.scalars(
+            select(RiskAcceptanceIssue.acceptance_id).where(
+                RiskAcceptanceIssue.issue_id == issue_id
+            )
+        )
+    ]
     entries = s.scalars(
-        select(AuditEntry).where(AuditEntry.target == issue_id).order_by(AuditEntry.seq)
+        select(AuditEntry)
+        .where(AuditEntry.target.in_([issue_id, *acceptances]))
+        .order_by(AuditEntry.seq)
     )
     for e in entries:
         events.append({"at": e.timestamp, "label": _audit_action_label(e.action)})
@@ -1102,6 +1114,14 @@ def _audit_action_label(action: str) -> str:
         "issue.triage.not_a_risk": "Marked as not a risk",
         "issue.triage.accepted": "Risk accepted",
         "issue.triage.reopen": "Reopened",
+        "risk_acceptance.requested": "Risk acceptance requested",
+        "risk_acceptance.approved": "Risk acceptance approved",
+        "risk_acceptance.rejected": "Risk acceptance rejected",
+        "risk_acceptance.withdrawn": "Risk acceptance withdrawn",
+        "risk_acceptance.lapsed": "Risk acceptance request lapsed",
+        "risk_acceptance.expired": "Risk acceptance expired",
+        "risk_acceptance.reinstated": "Risk acceptance reinstated",
+        "risk_acceptance.proof_added": "Proof added to the risk acceptance",
     }.get(action, action)
 
 

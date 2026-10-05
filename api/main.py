@@ -34,6 +34,7 @@ from fastapi.websockets import WebSocketDisconnect
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from api.acceptance import register_acceptance_routes
 from api.connectors import register_connector_routes
 from api.dedup import register_dedup_routes
 from api.deps import (
@@ -134,6 +135,13 @@ from core.sla import service as sla_service
 from core.tenancy import DEFAULT_ORG_ID, set_session_org
 
 log = logging.getLogger(__name__)
+
+# Week 62 (plan §44.2): accepting a risk needs a second person. Triage still marks "not a risk"
+# and reopens; acceptance goes through a request that someone else approves.
+ACCEPT_NEEDS_APPROVAL = (
+    "accepting a risk needs someone else's approval: request a risk acceptance "
+    "(POST /v2/projects/{project_id}/risk-acceptances)"
+)
 _SCAN_IN_PATH = re.compile(r"^/scans/([0-9a-f-]{36})(?:/|$)")
 _UUID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
 _ARCHIVE_EXT = (".zip", ".tar", ".tar.gz", ".tgz")
@@ -876,6 +884,8 @@ def create_app(app_state: AppState) -> FastAPI:
         readability/routing convenience (matches the frontend's URLs); the org check that actually
         matters is `_get_asset` below, before the issue lookup even runs."""
         _get_asset(s, asset_id, org)
+        if body.action == "accepted":
+            raise HTTPException(409, ACCEPT_NEEDS_APPROVAL)
         try:
             row = repo.triage_issue(
                 s, issue_id, org_id=org, action=body.action, reason=body.reason,
@@ -903,6 +913,8 @@ def create_app(app_state: AppState) -> FastAPI:
         (not found in this org, or a bad request for that action) doesn't abort the rest -- each
         success still gets its own audit entry, exactly as if triaged one at a time."""
         _get_asset(s, asset_id, org)
+        if body.action == "accepted":
+            raise HTTPException(409, ACCEPT_NEEDS_APPROVAL)
         updated: list[str] = []
         failed: list[dict[str, str]] = []
         for issue_id in body.issue_ids:
@@ -2093,6 +2105,7 @@ def create_app(app_state: AppState) -> FastAPI:
     register_manual_routes(app)
     register_connector_routes(app)
     register_sla_routes(app)
+    register_acceptance_routes(app)
     return app
 
 

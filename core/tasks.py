@@ -44,6 +44,8 @@ celery_app.conf.beat_schedule = {
     "connectors": {"task": "bulwark.connectors_due", "schedule": 300.0},
     # SLA (Week 61, plan §44.1): announce Issues that crossed into "due soon" or "breached".
     "sla": {"task": "bulwark.sla_sweep", "schedule": 300.0},
+    # Risk acceptance (Week 62, plan §44.2): end the ones whose date has come.
+    "risk-acceptance-expiry": {"task": "bulwark.expire_risk_acceptances", "schedule": 300.0},
 }
 
 
@@ -199,6 +201,26 @@ def sla_sweep_task() -> int:
             set_session_org(s, org_id)
             announced += service.sweep(s, org_id).announced
     return announced
+
+
+@celery_app.task(name="bulwark.expire_risk_acceptances", ignore_result=True)  # type: ignore[untyped-decorator]
+def expire_risk_acceptances_task() -> int:
+    """End each organization's due risk acceptances, with its scope set (plan §44.2)."""
+    from sqlalchemy import select
+
+    from core.acceptance import service
+    from core.persistence.db import get_session_factory
+    from core.persistence.models import Organization
+    from core.tenancy import set_session_org
+
+    ended = 0
+    with get_session_factory()() as s:
+        org_ids = list(s.scalars(select(Organization.id)))
+    for org_id in org_ids:
+        with get_session_factory()() as s:
+            set_session_org(s, org_id)
+            ended += len(service.expire_due(s, org_id).expired)
+    return ended
 
 
 @celery_app.task(name="bulwark.run_connector", bind=True, acks_late=True, ignore_result=True)  # type: ignore[untyped-decorator]

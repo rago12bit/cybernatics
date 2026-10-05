@@ -56,6 +56,8 @@ class Settings:
     # origin of its own with no cookies, so a file that slips past "always download" still cannot
     # reach the app's origin. Empty: the API's own origin (which uses bearer tokens, not cookies).
     attachments_origin: str = ""
+    # The longest a risk acceptance may run (plan §44.2; the policy gate's rule is 90 days too).
+    risk_acceptance_max_days: int = 90
 
     @property
     def ingest_dir(self) -> Path:
@@ -107,6 +109,7 @@ class Settings:
             ingest_sandbox=os.environ.get("BULWARK_INGEST_SANDBOX", "1").strip().lower()
             not in ("0", "false", "no"),
             attachments_origin=os.environ.get("BULWARK_ATTACHMENTS_ORIGIN", "").strip().rstrip("/"),
+            risk_acceptance_max_days=_days(os.environ.get("BULWARK_RISK_ACCEPTANCE_MAX_DAYS")),
         )
 
 
@@ -119,3 +122,12 @@ def scratch_dir() -> Path:
     d = Settings.from_env().workdir / "tmp"
     d.mkdir(parents=True, exist_ok=True)
     return d
+
+
+def _days(raw: str | None, default: int = 90) -> int:
+    """1 to 365 days; anything else is the default (a typo must not lift the cap)."""
+    try:
+        n = int((raw or "").strip())
+    except ValueError:
+        return default
+    return n if 1 <= n <= 365 else default

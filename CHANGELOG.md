@@ -5,7 +5,33 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 
 ## [Unreleased]
 
+### Added
+- **SLA engine (Week 61, plan §44.1, ADR-0046).** A versioned SLA policy per project: days to fix
+  each severity from first detection, and a "due soon" window (off until saved; starter values
+  offered). The clock is first detection, which reimport never resets. Every issue response carries
+  its SLA (on track, due soon, breached; met or missed once fixed; paused while triaged away), the
+  issues table filters by it, and a sweep every five minutes announces each crossing once -- an
+  outbox event and one message per project to Slack, Discord and the outbound webhook. New: the
+  **SLA** page per project, an SLA column and filter, the deadline on the issue page. Migration 0033.
+- **Risk acceptance with four-eyes approval (Week 62, plan §44.2, §55.3, ADR-0046).** Accept,
+  mitigate, transfer or avoid one or more Issues with a justification, compensating controls, proof
+  (links and encrypted files) and an expiry capped at 90 days
+  (`BULWARK_RISK_ACCEPTANCE_MAX_DAYS`). The Issues stay open until someone else approves: the server
+  refuses the requester and the shared token. Expire now, reinstate (within the approved dates),
+  extend (a new request needing its own approval); the expiry job reopens the Issues and can restart
+  their SLA. Every step is in the audit log and the Issue's history. New: the request form, the
+  **Approvals** queue, a page per acceptance. Migration 0034.
+
+### Changed
+- **Triage can no longer accept a risk alone** (HTTP 409): use a risk acceptance request. Issues
+  accepted that way before are migrated into *legacy* acceptances, with every expiry date kept and
+  marked as never approved by a second person. "Not a risk" and "reopen" are unchanged.
+
 ### Fixed
+- **Saving from the web app failed for every PUT, PATCH and DELETE** when the web app and API are on
+  different origins (the default): CORS allowed only GET and POST. That broke saving the threat
+  model, retention, plugin allowlist and integration settings, and turning off or deleting a
+  connector. Every method a route uses is now allowed.
 - **Times read from SQLite were shown in the wrong zone.** SQLite drops the time zone, so timestamps
   came back without one, the API sent them without an offset, and browsers read UTC as local time:
   in IST a run from seconds earlier showed as "6 hours ago", on every screen. Every timestamp column

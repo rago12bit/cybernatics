@@ -99,6 +99,62 @@ export interface SlaOverview {
   history: SlaPolicyVersion[];
 }
 
+export type RiskDecision = "accept" | "mitigate" | "transfer" | "avoid";
+export type RiskAcceptanceState = "requested" | "approved" | "rejected" | "withdrawn" | "expired" | "extended";
+
+/** A risk acceptance (plan §44.2, Week 62): requested by one person, approved by another. */
+export interface RiskAcceptance {
+  id: string;
+  project_id: string;
+  project: string;
+  decision: RiskDecision;
+  justification: string;
+  controls: string;
+  proof_links: string[];
+  proof_files: { id: string; file_name: string; content_type: string; active_content: boolean; size_bytes: number; created_at: string }[];
+  expires_at: string;
+  days: number;
+  restart_sla: boolean;
+  state: RiskAcceptanceState;
+  requested_by: string;
+  requested_at: string;
+  approver: string | null;
+  decided_by: string | null;
+  decided_at: string | null;
+  decision_note: string | null;
+  ended_at: string | null;
+  ended_by: string | null;
+  ended_reason: string | null;
+  extends_id: string | null;
+  legacy: boolean;
+  issue_count: number;
+  issues: { id: string; title: string; severity: string; path: string; state: string; triage_status: string }[];
+  trail: { at: string; actor: string; action: string }[];
+  /** Whether the caller may approve or reject it (the server decides). */
+  can_decide: boolean;
+  /** Each actor's token name ("token:abc123" -> "Bob"), so people are shown, not prefixes. */
+  names?: Record<string, string>;
+}
+
+export interface RiskAcceptancePolicy {
+  max_days: number;
+  you: string;
+  approvers: { actor: string; name: string }[];
+  /** False with the shared token: it could be anyone. */
+  can_approve: boolean;
+}
+
+export interface RiskAcceptanceInput {
+  issue_ids: string[];
+  decision: RiskDecision;
+  justification: string;
+  controls: string;
+  proof_links: string[];
+  expires_at: string;
+  restart_sla: boolean;
+  approver?: string;
+}
+
 export interface IssueHistoryEvent {
   at: string;
   label: string;

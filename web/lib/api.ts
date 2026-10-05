@@ -1,4 +1,4 @@
-import type { SlaBand, SlaOverview, ConnectorInput, ConnectorKind, ConnectorView, AnalyzeResult, MappingPreview, MappingSpec, SavedMapping, CvssScore, CweEntry,
+import type { RiskAcceptance, RiskAcceptanceInput, RiskAcceptancePolicy, SlaBand, SlaOverview, ConnectorInput, ConnectorKind, ConnectorView, AnalyzeResult, MappingPreview, MappingSpec, SavedMapping, CvssScore, CweEntry,
   EvidenceFile, ManualFindingInput, ManualFindingView, ManualRecorded, ProjectRoutes, DedupApplied, DedupChangeRequest, DedupHistoryEntry, DedupOverview, DedupPreview,
   ImportCreated, ImportView, ParserInfo, ProjectTest, RevertView,
   AssetSummary, AssetVerification, AttackPath, BulkTriageResult,
@@ -195,6 +195,43 @@ export const saveSla = (assetId: string, body: { enabled: boolean; bands: Record
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
+
+const jsonPost = (body: unknown) => ({
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(body),
+});
+
+export const getRiskAcceptancePolicy = () => request<RiskAcceptancePolicy>("/v2/risk-acceptance-policy");
+
+export const requestRiskAcceptance = (assetId: string, body: RiskAcceptanceInput) =>
+  request<RiskAcceptance>(`/v2/projects/${encodeURIComponent(assetId)}/risk-acceptances`, jsonPost(body));
+
+export const listRiskAcceptances = (states?: string[]) => {
+  const p = new URLSearchParams();
+  (states ?? []).forEach((s) => p.append("state", s));
+  const q = p.toString();
+  return request<RiskAcceptance[]>(`/v2/risk-acceptances${q ? `?${q}` : ""}`);
+};
+
+export const listIssueRiskAcceptances = (assetId: string, issueId: string) =>
+  request<RiskAcceptance[]>(`/v2/projects/${encodeURIComponent(assetId)}/risk-acceptances?issue_id=${encodeURIComponent(issueId)}`);
+
+export const getRiskAcceptance = (id: string) => request<RiskAcceptance>(`/v2/risk-acceptances/${encodeURIComponent(id)}`);
+
+export type RiskAcceptanceAction = "approve" | "reject" | "withdraw" | "expire" | "reinstate";
+
+export const actOnRiskAcceptance = (id: string, action: RiskAcceptanceAction, note?: string) =>
+  request<RiskAcceptance>(`/v2/risk-acceptances/${encodeURIComponent(id)}/${action}`, jsonPost(note ? { note } : {}));
+
+export const extendRiskAcceptance = (id: string, expires_at: string, justification?: string) =>
+  request<RiskAcceptance>(`/v2/risk-acceptances/${encodeURIComponent(id)}/extend`, jsonPost({ expires_at, justification }));
+
+export const addRiskAcceptanceProof = (id: string, file: File) => {
+  const form = new FormData();
+  form.append("file", file);
+  return request<{ id: string; file_name: string }>(`/v2/risk-acceptances/${encodeURIComponent(id)}/attachments`, { method: "POST", body: form });
+};
 
 export const getIssue = (assetId: string, issueId: string) =>
   request<Finding>(`/assets/${encodeURIComponent(assetId)}/issues/${encodeURIComponent(issueId)}`);

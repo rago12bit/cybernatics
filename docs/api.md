@@ -523,6 +523,78 @@ Put Sla
 
 - `project_id` (path, required)
 
+## `GET /v2/risk-acceptance-policy`
+
+Policy
+
+
+## `POST /v2/projects/{project_id}/risk-acceptances`
+
+Request Acceptance
+
+- `project_id` (path, required)
+
+## `GET /v2/projects/{project_id}/risk-acceptances`
+
+Project Acceptances
+
+- `project_id` (path, required)
+- `issue_id` (query)
+
+## `GET /v2/risk-acceptances`
+
+All Acceptances
+
+- `state` (query)
+
+## `GET /v2/risk-acceptances/{acceptance_id}`
+
+One
+
+- `acceptance_id` (path, required)
+
+## `POST /v2/risk-acceptances/{acceptance_id}/approve`
+
+Risk Acceptance Approve
+
+- `acceptance_id` (path, required)
+
+## `POST /v2/risk-acceptances/{acceptance_id}/reject`
+
+Risk Acceptance Reject
+
+- `acceptance_id` (path, required)
+
+## `POST /v2/risk-acceptances/{acceptance_id}/withdraw`
+
+Risk Acceptance Withdraw
+
+- `acceptance_id` (path, required)
+
+## `POST /v2/risk-acceptances/{acceptance_id}/expire`
+
+Risk Acceptance Expire
+
+- `acceptance_id` (path, required)
+
+## `POST /v2/risk-acceptances/{acceptance_id}/reinstate`
+
+Risk Acceptance Reinstate
+
+- `acceptance_id` (path, required)
+
+## `POST /v2/risk-acceptances/{acceptance_id}/extend`
+
+Extend
+
+- `acceptance_id` (path, required)
+
+## `POST /v2/risk-acceptances/{acceptance_id}/attachments`
+
+Add Proof
+
+- `acceptance_id` (path, required)
+
 ## Live progress (WebSocket)
 
 `GET /scans/{scan_id}/ws` (not part of OpenAPI).

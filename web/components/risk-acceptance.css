@@ -1,0 +1,151 @@
+.ds-ra-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-3, 0.75rem);
+}
+.ds-ra-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+.ds-ra-row > label,
+.ds-ra-row > legend {
+  font-weight: 600;
+}
+.ds-ra-row textarea,
+.ds-ra-row input[type="url"],
+.ds-ra-row input[type="date"],
+.ds-ra-row select,
+.ds-ra-detail textarea,
+.ds-ra-detail input[type="date"] {
+  font: inherit;
+  padding: 0.35rem 0.5rem;
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+}
+.ds-ra-row input[type="date"] {
+  width: auto;
+}
+.ds-ra-options,
+.ds-ra-inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: center;
+}
+.ds-ra-inline input[type="url"] {
+  flex: 1 1 14rem;
+  width: auto;
+}
+.ds-ra-choice {
+  display: inline-flex;
+  gap: 0.4rem;
+  align-items: center;
+  font-weight: normal;
+}
+.ds-ra-check {
+  align-self: flex-start;
+  text-transform: none;
+  letter-spacing: normal;
+}
+.ds-ra-hint,
+.ds-ra-note,
+.ds-ra-meta {
+  color: var(--ds-muted, #5b6776);
+}
+.ds-ra-proof {
+  margin: 0;
+  padding-left: 1.2rem;
+  overflow-wrap: anywhere;
+}
+.ds-ra-link {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--ds-brand, #0a58ca);
+  text-decoration: underline;
+  cursor: pointer;
+  font: inherit;
+}
+.ds-ra-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+.ds-ra-field-error {
+  color: var(--ds-sev-critical, #b42318);
+  margin: 0;
+}
+.ds-ra-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* The approvals screen and one acceptance. */
+.ds-ra-page {
+  max-width: 60rem;
+}
+.ds-ra-verdict {
+  font-size: 1.15rem;
+}
+.ds-ra-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--ds-space-4, 1rem);
+}
+.ds-ra-item {
+  border-bottom: 1px solid var(--ds-rule, #ccc);
+  padding: var(--ds-space-3, 0.75rem) 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.ds-ra-item-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: baseline;
+}
+.ds-ra-state {
+  font-weight: 600;
+  white-space: nowrap;
+}
+.ds-ra-state-requested {
+  color: var(--ds-sev-medium, #a16207);
+}
+.ds-ra-detail dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.4rem 1rem;
+  margin: var(--ds-space-3, 0.75rem) 0;
+}
+.ds-ra-detail dt {
+  font-weight: 600;
+}
+.ds-ra-detail dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.ds-ra-decide {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: var(--ds-space-3, 0.75rem) 0;
+  padding: var(--ds-space-3, 0.75rem);
+  border: 1px solid var(--ds-rule, #ccc);
+}
+@media (max-width: 40rem) {
+  .ds-ra-detail dl {
+    grid-template-columns: 1fr;
+  }
+}
