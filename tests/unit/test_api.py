@@ -313,6 +313,20 @@ def test_cors_allows_only_configured_origins(env) -> None:  # type: ignore[no-un
     assert "access-control-allow-origin" not in bad.headers
 
 
+def test_cors_preflight_allows_every_method_a_route_uses(env) -> None:  # type: ignore[no-untyped-def]
+    # Found in Week 61: preflight allowed only GET and POST, so every PUT, PATCH and DELETE the web
+    # app makes from its own origin (settings, threat model, SLA, connectors) was refused.
+    client = env[0]
+    used = {m for r in client.app.routes for m in getattr(r, "methods", set())} - {"HEAD", "OPTIONS"}
+    assert {"PUT", "PATCH", "DELETE"} <= used
+    for method in sorted(used):
+        r = client.options("/scans", headers={"Origin": "http://localhost:3000",
+                           "Access-Control-Request-Method": method,
+                           "Access-Control-Request-Headers": "authorization,content-type"})  # fmt: skip
+        assert r.status_code == 200, method
+        assert method in r.headers["access-control-allow-methods"]
+
+
 def test_risk_feeds_status_requires_auth_and_reflects_the_cache(env) -> None:  # type: ignore[no-untyped-def]
     import json
 

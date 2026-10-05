@@ -300,6 +300,14 @@ class IssueRow(Base):
     confirmed_at_runtime_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
     confirmed_by_scan_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
 
+    # SLA (Week 61, plan §44.1): the clock runs from first detection -- `first_seen_at`, which
+    # reimport never resets -- unless something restarted it (a risk acceptance that expired with
+    # "restart the SLA", Week 62), in which case from `sla_started_at`. `sla_notified` is the last
+    # SLA state announced ("due_soon" or "breached"), so each crossing is announced exactly once.
+    sla_started_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
+    sla_notified: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    sla_notified_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
+
     asset: Mapped[Asset] = relationship(back_populates="issues")
 
     __table_args__ = (
@@ -872,6 +880,33 @@ class DedupSetting(Base):
     effect: Mapped[dict[str, Any]] = mapped_column(JsonType, default=dict)
 
     __table_args__ = (UniqueConstraint("asset_id", "source", "version", name="uq_dedup_settings"),)
+
+
+class SlaPolicy(Base):
+    """How long a project has to fix an Issue, per severity band (plan §44.1, Week 61).
+
+    Versioned like dedup settings: a change adds a row with the next `version`, never edits one, so
+    the table is its own history. The policy in force is the highest version; with none, the
+    project has no SLA (the starter values are offered, not imposed). `bands` maps a severity to
+    `{"days": n, "warn": n}` -- fix within `days` of first detection, "due soon" in the last `warn`
+    days; a band without days has no deadline."""
+
+    __tablename__ = "sla_policies"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(
+        ForeignKey("organizations.id"), default=DEFAULT_ORG_ID, index=True
+    )
+    asset_id: Mapped[str] = mapped_column(ForeignKey("assets.id", ondelete="CASCADE"), index=True)
+    version: Mapped[int] = mapped_column(Integer)
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    basis: Mapped[str] = mapped_column(String(16), default="severity")
+    bands: Mapped[dict[str, Any]] = mapped_column(JsonType, default=dict)
+    note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_by: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+
+    __table_args__ = (UniqueConstraint("asset_id", "version", name="uq_sla_policies"),)
 
 
 class IngestMapping(Base):

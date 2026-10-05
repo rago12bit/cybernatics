@@ -237,3 +237,11 @@
 .ds-manual-error {
   color: var(--ds-sev-critical, #b00020);
 }
+
+.ds-issue-sla-line.ds-issue-sla-breached {
+  color: var(--ds-sev-critical, #b42318);
+  font-weight: 600;
+}
+.ds-issue-sla-line.ds-issue-sla-due_soon {
+  color: var(--ds-sev-medium, #a16207);
+}

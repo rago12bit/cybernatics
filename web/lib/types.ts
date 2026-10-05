@@ -60,6 +60,43 @@ export interface IssueRef {
   /** Set once a DAST campaign's own finding matched this Issue on the same route+CWE (plan §22.4,
    * Week 49 task 4) -- a static finding a real HTTP request actually reached. */
   confirmed_at_runtime_at?: string | null;
+  /** The Issue's SLA under its project's policy (plan §44.1, Week 61). */
+  sla?: IssueSla;
+}
+
+export type SlaState = "on_track" | "due_soon" | "breached" | "met" | "missed" | "exempt" | "none";
+
+export interface IssueSla {
+  state: SlaState;
+  due_at: string | null;
+  started_at: string | null;
+  /** The band's window, in days from first detection. */
+  days: number | null;
+}
+
+export interface SlaBand {
+  days: number | null;
+  warn: number;
+}
+
+export interface SlaPolicyVersion {
+  version: number;
+  enabled: boolean;
+  bands: Record<string, SlaBand>;
+  note: string | null;
+  changed_at: string;
+  changed_by: string | null;
+}
+
+export interface SlaOverview {
+  enabled: boolean;
+  basis: string;
+  /** 0 until someone saves a policy; the starter values are shown. */
+  version: number;
+  bands: Record<string, SlaBand>;
+  starter: Record<string, SlaBand>;
+  counts: Record<"on_track" | "due_soon" | "breached" | "exempt" | "met" | "missed", number>;
+  history: SlaPolicyVersion[];
 }
 
 export interface IssueHistoryEvent {

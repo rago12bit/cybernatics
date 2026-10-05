@@ -17,6 +17,7 @@ import { VerifiedFixPanel } from "@/components/VerifiedFixPanel";
 import { TriageAssistantPanel } from "@/components/TriageAssistantPanel";
 import { ManualFindingPanel } from "@/components/ManualFindingPanel";
 import { CopilotPanel } from "@/components/CopilotPanel";
+import { SLA_MARK, slaSentence } from "@/lib/sla";
 import "./issue-detail.css";
 
 const isTyping = (t: EventTarget | null) => t instanceof HTMLElement && /^(INPUT|SELECT|TEXTAREA)$/.test(t.tagName);
@@ -202,6 +203,15 @@ export function IssueDetail({ assetId, issueId }: { assetId: string; issueId: st
             {finding.issue?.first_seen_at && (
               <p className="ds-issue-meta">
                 First seen <time dateTime={finding.issue.first_seen_at}>{new Date(finding.issue.first_seen_at).toLocaleDateString()}</time>
+              </p>
+            )}
+            {finding.issue?.sla && finding.issue.sla.state !== "none" && (
+              <p className={`ds-issue-meta ds-issue-sla-line ds-issue-sla-${finding.issue.sla.state}`}>
+                <span aria-hidden="true">{SLA_MARK[finding.issue.sla.state]} </span>
+                SLA: {slaSentence(finding.issue.sla)}
+                {finding.issue.sla.due_at && finding.issue.sla.state !== "met" && finding.issue.sla.state !== "missed" && (
+                  <> (due <time dateTime={finding.issue.sla.due_at}>{new Date(finding.issue.sla.due_at).toLocaleDateString()}</time>)</>
+                )}
               </p>
             )}
           </div>

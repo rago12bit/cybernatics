@@ -4,7 +4,8 @@ import { createColumnHelper, flexRender, getCoreRowModel, useReactTable } from "
 import { useVirtualizer } from "@tanstack/react-virtual";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ApiError, bulkTriageIssues, listIssues, type IssuesQuery } from "@/lib/api";
+import { ApiError, bulkTriageIssues, listIssues, type IssuesQuery, type OpenSlaState } from "@/lib/api";
+import { SLA_MARK, SLA_WORD, slaDetail, slaSentence } from "@/lib/sla";
 import type { Finding, Severity, TriageStatus } from "@/lib/types";
 import { SEVERITIES } from "@/lib/types";
 import { SeverityIcon } from "@/design-system/severity";
@@ -19,7 +20,7 @@ const ROW_HEIGHT_COMFORTABLE = 56;
 const ROW_HEIGHT_COMPACT = 40;
 
 function defaultQuery(): IssuesQuery {
-  return { severity: [], category: "", triage: [], sort: "risk" };
+  return { severity: [], category: "", triage: [], sla: [], sort: "risk" };
 }
 
 const columnHelper = createColumnHelper<Finding>();
@@ -100,6 +101,21 @@ export function IssuesTable({ assetId }: { assetId: string }) {
         },
       }),
       columnHelper.display({
+        id: "sla",
+        header: "SLA",
+        cell: (ctx) => {
+          const sla = ctx.row.original.issue?.sla;
+          if (!sla || sla.state === "none") return null;
+          return (
+            <span className={`ds-issue-sla ds-issue-sla-${sla.state}`} title={slaSentence(sla)}>
+              <span aria-hidden="true">{SLA_MARK[sla.state]} </span>
+              {SLA_WORD[sla.state]}
+              {slaDetail(sla) && <span className="ds-issue-sla-detail"> · {slaDetail(sla)}</span>}
+            </span>
+          );
+        },
+      }),
+      columnHelper.display({
         id: "rule",
         header: "Rule",
         cell: (ctx) => (mode === "expert" ? <code className="ds-issue-rule">{Object.values(ctx.row.original.evidence.rule_ids)[0]?.[0] ?? ""}</code> : null),
@@ -124,6 +140,12 @@ export function IssuesTable({ assetId }: { assetId: string }) {
   }
   function toggleTriage(t: TriageStatus) {
     setQ((cur) => ({ ...cur, triage: cur.triage.includes(t) ? cur.triage.filter((x) => x !== t) : [...cur.triage, t] }));
+  }
+  function toggleSla(s: OpenSlaState) {
+    setQ((cur) => {
+      const now = cur.sla ?? [];
+      return { ...cur, sla: now.includes(s) ? now.filter((x) => x !== s) : [...now, s] };
+    });
   }
   function toggleRow(id: string) {
     setSelected((cur) => {
@@ -174,6 +196,13 @@ export function IssuesTable({ assetId }: { assetId: string }) {
           {(["not_a_risk", "accepted"] as TriageStatus[]).map((t) => (
             <button key={t} type="button" className={q.triage.includes(t) ? "ds-chip active" : "ds-chip"} onClick={() => toggleTriage(t)}>
               {t === "not_a_risk" ? "Not a risk" : "Accepted"}
+            </button>
+          ))}
+        </div>
+        <div className="ds-issues-chips" role="group" aria-label="SLA">
+          {(["breached", "due_soon", "on_track"] as OpenSlaState[]).map((s) => (
+            <button key={s} type="button" aria-pressed={(q.sla ?? []).includes(s)} className={(q.sla ?? []).includes(s) ? "ds-chip active" : "ds-chip"} onClick={() => toggleSla(s)}>
+              <span aria-hidden="true">{SLA_MARK[s]}</span> {SLA_WORD[s]}
             </button>
           ))}
         </div>

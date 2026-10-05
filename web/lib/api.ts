@@ -1,4 +1,4 @@
-import type { ConnectorInput, ConnectorKind, ConnectorView, AnalyzeResult, MappingPreview, MappingSpec, SavedMapping, CvssScore, CweEntry,
+import type { SlaBand, SlaOverview, ConnectorInput, ConnectorKind, ConnectorView, AnalyzeResult, MappingPreview, MappingSpec, SavedMapping, CvssScore, CweEntry,
   EvidenceFile, ManualFindingInput, ManualFindingView, ManualRecorded, ProjectRoutes, DedupApplied, DedupChangeRequest, DedupHistoryEntry, DedupOverview, DedupPreview,
   ImportCreated, ImportView, ParserInfo, ProjectTest, RevertView,
   AssetSummary, AssetVerification, AttackPath, BulkTriageResult,
@@ -164,14 +164,19 @@ export interface IssuesQuery {
   severity: string[];
   category: string;
   triage: TriageStatus[];
+  /** SLA states to filter to (plan §44.1). Optional: views saved before Week 61 have none. */
+  sla?: OpenSlaState[];
   sort: "severity" | "path" | "risk";
 }
+
+export type OpenSlaState = "on_track" | "due_soon" | "breached";
 
 function issuesQueryString(q: IssuesQuery, limit?: number, offset?: number): string {
   const p = new URLSearchParams();
   q.severity.forEach((s) => p.append("severity", s));
   if (q.category) p.append("category", q.category);
   q.triage.forEach((t) => p.append("triage", t));
+  (q.sla ?? []).forEach((s) => p.append("sla", s));
   p.set("sort", q.sort);
   if (limit != null) p.set("limit", String(limit));
   if (offset != null) p.set("offset", String(offset));
@@ -180,6 +185,16 @@ function issuesQueryString(q: IssuesQuery, limit?: number, offset?: number): str
 
 export const listIssues = (assetId: string, q: IssuesQuery, limit = 200, offset = 0) =>
   request<FindingsPage>(`/assets/${encodeURIComponent(assetId)}/issues?${issuesQueryString(q, limit, offset)}`);
+
+export const getSla = (assetId: string) =>
+  request<SlaOverview>(`/v2/projects/${encodeURIComponent(assetId)}/sla`);
+
+export const saveSla = (assetId: string, body: { enabled: boolean; bands: Record<string, SlaBand>; note?: string }) =>
+  request<SlaOverview>(`/v2/projects/${encodeURIComponent(assetId)}/sla`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
 
 export const getIssue = (assetId: string, issueId: string) =>
   request<Finding>(`/assets/${encodeURIComponent(assetId)}/issues/${encodeURIComponent(issueId)}`);

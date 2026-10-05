@@ -576,6 +576,27 @@
             "description": "Filter TO these triage statuses (e.g. accepted, not_a_risk). Omitted: the active queue -- untouched issues, plus any accepted issue past its expiry."
           },
           {
+            "name": "sla",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter to these SLA states: on_track, due_soon, breached (plan \u00a744.1). Nothing matches when the project has no SLA policy.",
+              "title": "Sla"
+            },
+            "description": "Filter to these SLA states: on_track, due_soon, breached (plan \u00a744.1). Nothing matches when the project has no SLA policy."
+          },
+          {
             "name": "sort",
             "in": "query",
             "required": false,
@@ -4187,6 +4208,108 @@
           }
         }
       }
+    },
+    "/v2/projects/{project_id}/sla": {
+      "get": {
+        "tags": [
+          "sla"
+        ],
+        "summary": "Get Sla",
+        "operationId": "get_sla_v2_projects__project_id__sla_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SlaOverview"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "sla"
+        ],
+        "summary": "Put Sla",
+        "operationId": "put_sla_v2_projects__project_id__sla_put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PolicyIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SlaOverview"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -4747,6 +4870,33 @@
         ],
         "title": "AttackPathView",
         "description": "One ranked attack path (plan \u00a721.6, \u00a728.5). `narrative` is `None` when no model is routed\nfor Task.ATTACK_PATH -- unlike the copilot, this never 409s for that: the graph itself (nodes,\nedges, ranking, cheapest_link) is always real and useful without a model, only the prose\ndescription is best-effort on top of it."
+      },
+      "BandOut": {
+        "properties": {
+          "days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days",
+            "description": "Days from first detection to fix; null: no deadline."
+          },
+          "warn": {
+            "type": "integer",
+            "title": "Warn",
+            "description": "'Due soon' in the last this-many days."
+          }
+        },
+        "type": "object",
+        "required": [
+          "days",
+          "warn"
+        ],
+        "title": "BandOut"
       },
       "Body_add_attachment_v2_manual_findings__manual_id__attachments_post": {
         "properties": {
@@ -7323,6 +7473,101 @@
         "title": "PluginView",
         "description": "One discovered third-party scanner-adapter plugin (Week 51 task 1, plan \u00a723). `allowed`\nreflects the calling organization's own allowlist row right now -- it is not re-verified against\nSigstore here (that only happens when a scan actually requests this tool); a plugin can show\n`allowed=True` and still fail at scan time if its image's signature has since gone bad."
       },
+      "PolicyIn": {
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled"
+          },
+          "bands": {
+            "additionalProperties": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "object",
+            "title": "Bands"
+          },
+          "basis": {
+            "type": "string",
+            "title": "Basis",
+            "default": "severity"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "enabled",
+          "bands"
+        ],
+        "title": "PolicyIn"
+      },
+      "PolicyVersion": {
+        "properties": {
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled"
+          },
+          "bands": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/BandOut"
+            },
+            "type": "object",
+            "title": "Bands"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "changed_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Changed At"
+          },
+          "changed_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Changed By"
+          }
+        },
+        "type": "object",
+        "required": [
+          "version",
+          "enabled",
+          "bands",
+          "note",
+          "changed_at",
+          "changed_by"
+        ],
+        "title": "PolicyVersion"
+      },
       "PostMessageRequest": {
         "properties": {
           "question": {
@@ -8605,6 +8850,63 @@
         },
         "type": "object",
         "title": "SetPluginAllowedRequest"
+      },
+      "SlaOverview": {
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled"
+          },
+          "basis": {
+            "type": "string",
+            "title": "Basis"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version",
+            "description": "0 until someone saves a policy; the starter values are shown."
+          },
+          "bands": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/BandOut"
+            },
+            "type": "object",
+            "title": "Bands"
+          },
+          "starter": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/BandOut"
+            },
+            "type": "object",
+            "title": "Starter"
+          },
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Counts",
+            "description": "Issues by SLA state, under the policy in force."
+          },
+          "history": {
+            "items": {
+              "$ref": "#/components/schemas/PolicyVersion"
+            },
+            "type": "array",
+            "title": "History"
+          }
+        },
+        "type": "object",
+        "required": [
+          "enabled",
+          "basis",
+          "version",
+          "bands",
+          "starter",
+          "counts",
+          "history"
+        ],
+        "title": "SlaOverview"
       },
       "SourceSetting": {
         "properties": {

@@ -105,6 +105,7 @@ from api.schemas import (
     VerifiedFixStarted,
     VerifiedFixView,
 )
+from api.sla import register_sla_routes
 from core.config import Settings
 from core.dast import campaign as campaign_rules
 from core.dast import ownership
@@ -128,6 +129,8 @@ from core.rag.retrieve import context_for
 from core.rag.store import KnowledgeBase
 from core.risk import is_stale, read_meta
 from core.scan import ADAPTERS, DEFAULT_TOOLS, HOSTED_DEFAULT_TOOLS
+from core.sla import policy as sla_policy
+from core.sla import service as sla_service
 from core.tenancy import DEFAULT_ORG_ID, set_session_org
 
 log = logging.getLogger(__name__)
@@ -301,7 +304,10 @@ def create_app(app_state: AppState) -> FastAPI:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=list(app_state.settings.cors_origins),
-        allow_methods=["GET", "POST"],
+        # Every method a route uses: the web app saves with PUT, PATCH and DELETE too (settings,
+        # threat model, SLA, connectors). With GET and POST only, a browser on another origin --
+        # the default, web and API on different ports -- had every such save refused at preflight.
+        allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
         allow_headers=["Authorization", "Content-Type"],
     )
 
@@ -772,6 +778,11 @@ def create_app(app_state: AppState) -> FastAPI:
             description="Filter TO these triage statuses (e.g. accepted, not_a_risk). Omitted: "
             "the active queue -- untouched issues, plus any accepted issue past its expiry.",
         ),
+        sla: list[str] | None = Query(
+            default=None,
+            description="Filter to these SLA states: on_track, due_soon, breached (plan §44.1). "
+            "Nothing matches when the project has no SLA policy.",
+        ),
         sort: str = Query(default="risk", pattern="^(severity|path|risk)$"),
         limit: int = Query(default=100, ge=1, le=500),
         offset: int = Query(default=0, ge=0),
@@ -786,10 +797,18 @@ def create_app(app_state: AppState) -> FastAPI:
         latest = repo.latest_scan_for_asset(s, asset.id, org_id=org)
         if latest is None:
             return FindingsPage(total=0, limit=limit, offset=offset, items=[])
+        bad = sorted(set(sla or []) - set(sla_policy.OPEN_SLA))
+        if bad:
+            raise HTTPException(422, f"unknown SLA state: {', '.join(bad)}")
+        now = datetime.now(timezone.utc)
+        issue_filter = (
+            sla_service.clause(sla_service.policy_for(s, asset.id), sla, now) if sla else None
+        )
         page = repo.list_asset_issues(
             s, asset.id, latest.id, severities=severity, categories=category, triage=triage,
-            sort=sort, limit=limit, offset=offset,
+            issue_filter=issue_filter, sort=sort, limit=limit, offset=offset,
         )  # fmt: skip
+        sla_service.annotate(s, asset.id, page.items, now)
         return FindingsPage(total=page.total, limit=limit, offset=offset, items=page.items)
 
     @app.get(
@@ -836,6 +855,7 @@ def create_app(app_state: AppState) -> FastAPI:
             finding = repo.get_issue_finding(s, issue_id, elsewhere) if elsewhere else None
         if finding is None:
             raise HTTPException(404, "issue not found")
+        sla_service.annotate(s, asset.id, [finding])
         return finding
 
     @app.post(
@@ -2072,6 +2092,7 @@ def create_app(app_state: AppState) -> FastAPI:
     register_mapping_routes(app)
     register_manual_routes(app)
     register_connector_routes(app)
+    register_sla_routes(app)
     return app
 
 

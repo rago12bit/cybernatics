@@ -88,7 +88,7 @@
 .ds-issues-headrow,
 .ds-issue-row {
   display: grid;
-  grid-template-columns: 2rem 1.75rem 1fr auto auto;
+  grid-template-columns: 2rem 1.75rem 1fr auto auto auto;
   align-items: center;
   gap: 0.75rem;
   padding: 0 0.75rem;
@@ -163,4 +163,20 @@
   color: var(--ds-muted);
   font-weight: 500;
   margin-bottom: 0.4rem;
+}
+
+/* SLA (plan §44.1): a word and a mark, never colour alone. */
+.ds-issue-sla {
+  white-space: nowrap;
+  font-size: 0.85em;
+}
+.ds-issue-sla-detail {
+  color: var(--ds-muted, #5b6776);
+}
+.ds-issue-sla-breached {
+  color: var(--ds-sev-critical, #b42318);
+  font-weight: 600;
+}
+.ds-issue-sla-due_soon {
+  color: var(--ds-sev-medium, #a16207);
 }

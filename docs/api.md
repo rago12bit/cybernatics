@@ -73,6 +73,7 @@ List Issues
 - `severity` (query)
 - `category` (query)
 - `triage` (query)
+- `sla` (query)
 - `sort` (query)
 - `limit` (query)
 - `offset` (query)
@@ -509,6 +510,18 @@ Delete Connector
 Run Connector
 
 - `connector_id` (path, required)
+
+## `GET /v2/projects/{project_id}/sla`
+
+Get Sla
+
+- `project_id` (path, required)
+
+## `PUT /v2/projects/{project_id}/sla`
+
+Put Sla
+
+- `project_id` (path, required)
 
 ## Live progress (WebSocket)
 

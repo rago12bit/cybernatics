@@ -843,11 +843,13 @@ def list_asset_issues(
     severities: list[str] | None = None,
     categories: list[str] | None = None,
     triage: list[str] | None = None,
+    issue_filter: ColumnElement[bool] | None = None,
     sort: str = "risk",
     limit: int = 100,
     offset: int = 0,
 ) -> FindingPage:
     """Findings from the asset's latest scan, each annotated with its Issue's triage state.
+    `issue_filter` narrows by any condition on the Issue (the SLA filter, `core.sla.service`).
     `triage=None` (the default) is the active triage queue: untouched issues, plus any accepted
     issue whose expiry has passed. Pass an explicit list (e.g. `["accepted", "not_a_risk"]`) to see
     triaged-away issues instead."""
@@ -862,6 +864,8 @@ def list_asset_issues(
         issue_ids_q = issue_ids_q.where(IssueRow.triage_status.in_(triage))
     else:
         issue_ids_q = issue_ids_q.where(_active_triage_clause(_now()))
+    if issue_filter is not None:
+        issue_ids_q = issue_ids_q.where(issue_filter)
     conds.append(FindingRow.issue_id.in_(issue_ids_q))
 
     total = s.scalar(select(func.count()).select_from(FindingRow).where(*conds)) or 0

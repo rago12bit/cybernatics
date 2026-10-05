@@ -42,6 +42,8 @@ celery_app.conf.beat_schedule = {
     "crypto-shred": {"task": "bulwark.crypto_shred", "schedule": 3600.0},
     # Connectors (Week 60, plan §42.5): each has its own interval; this only finds the due ones.
     "connectors": {"task": "bulwark.connectors_due", "schedule": 300.0},
+    # SLA (Week 61, plan §44.1): announce Issues that crossed into "due soon" or "breached".
+    "sla": {"task": "bulwark.sla_sweep", "schedule": 300.0},
 }
 
 
@@ -177,6 +179,26 @@ def connectors_due_task() -> int:
                 run_connector_task.delay(c.id, org_id)
                 queued += 1
     return queued
+
+
+@celery_app.task(name="bulwark.sla_sweep", ignore_result=True)  # type: ignore[untyped-decorator]
+def sla_sweep_task() -> int:
+    """Each organization's SLA crossings, announced once each (plan §44.1), with its scope set."""
+    from sqlalchemy import select
+
+    from core.persistence.db import get_session_factory
+    from core.persistence.models import Organization
+    from core.sla import service
+    from core.tenancy import set_session_org
+
+    announced = 0
+    with get_session_factory()() as s:
+        org_ids = list(s.scalars(select(Organization.id)))
+    for org_id in org_ids:
+        with get_session_factory()() as s:
+            set_session_org(s, org_id)
+            announced += service.sweep(s, org_id).announced
+    return announced
 
 
 @celery_app.task(name="bulwark.run_connector", bind=True, acks_late=True, ignore_result=True)  # type: ignore[untyped-decorator]
