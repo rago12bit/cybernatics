@@ -5,6 +5,12 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 
 ## [Unreleased]
 
+## [2.3.0] - 2026-10-06
+
+Milestone M14 (plan Phase 15, Weeks 61-64): governance -- SLAs, risk acceptance with four-eyes
+approval, priority v3, and a pen test run end to end inside the platform, every decision in the
+audit log ([docs/v2-week64-verification.md](docs/v2-week64-verification.md)).
+
 ### Added
 - **SLA engine (Week 61, plan §44.1, ADR-0046).** A versioned SLA policy per project: days to fix
   each severity from first detection, and a "due soon" window (off until saved; starter values
