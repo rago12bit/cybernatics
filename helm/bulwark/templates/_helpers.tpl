@@ -56,4 +56,20 @@ wait-for-postgres initContainer uses.
   value: "json"
 - name: BULWARK_WORKDIR
   value: "/workdir"
+{{- /* Email for notifications (Week 66, plan §49): no host, no email. */}}
+- name: BULWARK_SMTP_HOST
+  value: {{ .Values.smtp.host | default "" | quote }}
+- name: BULWARK_SMTP_PORT
+  value: {{ .Values.smtp.port | default 587 | quote }}
+- name: BULWARK_SMTP_FROM
+  value: {{ .Values.smtp.from | default "bulwark@localhost" | quote }}
+- name: BULWARK_SMTP_USERNAME
+  value: {{ .Values.smtp.username | default "" | quote }}
+- name: BULWARK_SMTP_PASSWORD
+  valueFrom:
+    secretKeyRef: { name: {{ include "bulwark.fullname" . }}-secrets, key: smtp-password }
+- name: BULWARK_SMTP_TLS
+  value: {{ .Values.smtp.tls | default "starttls" | quote }}
+- name: BULWARK_PUBLIC_URL
+  value: {{ .Values.smtp.publicUrl | default "" | quote }}
 {{- end -}}

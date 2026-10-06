@@ -1,4 +1,4 @@
-import type { IssueOwner, Rule, RuleDryRun, RuleInput, RuleRun, RulesCatalogue, ChecklistCatalogue, ChecklistItem, ChecklistResult, ChecklistSummary, Engagement, EngagementDetail, EngagementInput, Mention, NoteFile, NotesView, Person, Portfolio, Retest, RetestAction, TagsView, PriorityBand, PriorityContext, PriorityOverview, PriorityPreview, RiskAcceptance, RiskAcceptanceInput, RiskAcceptancePolicy, SlaBand, SlaBasis, SlaOverview, ConnectorInput, ConnectorKind, ConnectorView, AnalyzeResult, MappingPreview, MappingSpec, SavedMapping, CvssScore, CweEntry,
+import type { Inbox, IssueGroupSummary, IssueTicket, NotificationPrefsView, RuleTemplate, TicketConfigInput, TicketConfigView, Watchers, IssueOwner, Rule, RuleDryRun, RuleInput, RuleRun, RulesCatalogue, ChecklistCatalogue, ChecklistItem, ChecklistResult, ChecklistSummary, Engagement, EngagementDetail, EngagementInput, Mention, NoteFile, NotesView, Person, Portfolio, Retest, RetestAction, TagsView, PriorityBand, PriorityContext, PriorityOverview, PriorityPreview, RiskAcceptance, RiskAcceptanceInput, RiskAcceptancePolicy, SlaBand, SlaBasis, SlaOverview, ConnectorInput, ConnectorKind, ConnectorView, AnalyzeResult, MappingPreview, MappingSpec, SavedMapping, CvssScore, CweEntry,
   EvidenceFile, ManualFindingInput, ManualFindingView, ManualRecorded, ProjectRoutes, DedupApplied, DedupChangeRequest, DedupHistoryEntry, DedupOverview, DedupPreview,
   ImportCreated, ImportView, ParserInfo, ProjectTest, RevertView,
   AssetSummary, AssetVerification, AttackPath, BulkTriageResult,
@@ -699,3 +699,28 @@ export const setIssueAssignee = (issueId: string, to: string | null) =>
   request<IssueOwner>(`/v2/issues/${enc(issueId)}/assignee`, json("PUT", { to }));
 export const setIssuePriority = (issueId: string, band: string | null) =>
   request<IssueOwner>(`/v2/issues/${enc(issueId)}/priority`, json("PUT", { band }));
+
+export const listRuleTemplates = () => request<RuleTemplate[]>("/v2/rules/templates");
+
+export const getInbox = (unread = false) => request<Inbox>(`/v2/notifications${unread ? "?unread=true" : ""}`);
+export const markNotificationsRead = (ids?: string[]) =>
+  request<{ marked: number; unread: number }>("/v2/notifications/read", json("POST", ids ? { ids } : {}));
+export const getMyNotificationPrefs = () => request<NotificationPrefsView>("/v2/notification-prefs");
+export const saveMyNotificationPrefs = (body: { modes: Record<string, Record<string, string>>; digest_hour: number; email: string | null }) =>
+  request<NotificationPrefsView>("/v2/notification-prefs", json("PUT", body));
+export const getTeamNotificationPrefs = () => request<NotificationPrefsView>("/v2/notification-prefs/team");
+export const saveTeamNotificationPrefs = (body: { modes: Record<string, Record<string, string>>; digest_hour: number }) =>
+  request<NotificationPrefsView>("/v2/notification-prefs/team", json("PUT", body));
+export const getWatchers = (issueId: string) => request<Watchers>(`/v2/issues/${enc(issueId)}/watchers`);
+export const watchIssue = (issueId: string) => request<Watchers>(`/v2/issues/${enc(issueId)}/watch`, { method: "PUT" });
+export const unwatchIssue = (issueId: string) => request<Watchers>(`/v2/issues/${enc(issueId)}/watch`, { method: "DELETE" });
+
+export const getTicketConfig = (assetId: string) => request<TicketConfigView>(`/v2/projects/${enc(assetId)}/tickets`);
+export const saveTicketConfig = (assetId: string, body: TicketConfigInput) =>
+  request<TicketConfigView>(`/v2/projects/${enc(assetId)}/tickets`, json("PUT", body));
+export const listIssueGroups = (assetId: string) => request<IssueGroupSummary[]>(`/v2/projects/${enc(assetId)}/groups`);
+export const getIssueTicket = (issueId: string) => request<IssueTicket>(`/v2/issues/${enc(issueId)}/ticket`);
+export const fileIssueTicket = (issueId: string) => request<IssueTicket>(`/v2/issues/${enc(issueId)}/ticket`, { method: "POST" });
+export const syncIssueTicket = (issueId: string) => request<IssueTicket>(`/v2/issues/${enc(issueId)}/ticket/sync`, { method: "POST" });
+export const setIssueGroup = (issueId: string, body: { group_id?: string | null; name?: string | null }) =>
+  request<IssueTicket>(`/v2/issues/${enc(issueId)}/group`, json("PUT", body));

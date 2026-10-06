@@ -65,7 +65,12 @@ export function RetestPanel({ issueId, onChange }: { issueId: string; onChange?:
   }
 
   if (!r) return null;
-  const who = (a: string | null) => (a ? r.names[a] ?? a : "someone");
+  const who = (a: string | null) => {
+    if (!a) return "someone";
+    if (a.startsWith("ticket:")) return `its ticket, ${a.slice(7)}`;
+    if (a.startsWith("rule:")) return r.names[a] ?? "a rule";
+    return r.names[a] ?? a;
+  };
   const open = r.state !== "fixed";
   const latest = r.runs[0];
 

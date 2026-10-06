@@ -785,6 +785,11 @@ Add Proof
 Rules Catalogue
 
 
+## `GET /v2/rules/templates`
+
+Rules Templates
+
+
 ## `GET /v2/rules`
 
 List Rules
@@ -872,6 +877,109 @@ Set Owner
 ## `PUT /v2/issues/{issue_id}/priority`
 
 Set Priority
+
+- `issue_id` (path, required)
+
+## `GET /v2/notifications`
+
+Inbox
+
+- `unread` (query)
+
+## `POST /v2/notifications/read`
+
+Mark Read
+
+
+## `GET /v2/notification-prefs`
+
+My Prefs
+
+
+## `PUT /v2/notification-prefs`
+
+Save My Prefs
+
+
+## `GET /v2/notification-prefs/team`
+
+Team Prefs
+
+
+## `PUT /v2/notification-prefs/team`
+
+Save Team Prefs
+
+
+## `GET /v2/issues/{issue_id}/watchers`
+
+Get Watchers
+
+- `issue_id` (path, required)
+
+## `PUT /v2/issues/{issue_id}/watch`
+
+Watch
+
+- `issue_id` (path, required)
+
+## `DELETE /v2/issues/{issue_id}/watch`
+
+Unwatch
+
+- `issue_id` (path, required)
+
+## `GET /v2/projects/{project_id}/tickets`
+
+Get Config
+
+- `project_id` (path, required)
+
+## `PUT /v2/projects/{project_id}/tickets`
+
+Save Config
+
+- `project_id` (path, required)
+
+## `GET /v2/projects/{project_id}/groups`
+
+List Groups
+
+- `project_id` (path, required)
+
+## `POST /v2/projects/{project_id}/groups`
+
+Make Group
+
+- `project_id` (path, required)
+
+## `GET /v2/groups/{group_id}`
+
+Get Group
+
+- `group_id` (path, required)
+
+## `PUT /v2/issues/{issue_id}/group`
+
+Set Issue Group
+
+- `issue_id` (path, required)
+
+## `GET /v2/issues/{issue_id}/ticket`
+
+Get Ticket
+
+- `issue_id` (path, required)
+
+## `POST /v2/issues/{issue_id}/ticket`
+
+File Ticket
+
+- `issue_id` (path, required)
+
+## `POST /v2/issues/{issue_id}/ticket/sync`
+
+Sync Ticket
 
 - `issue_id` (path, required)
 

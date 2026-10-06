@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { listAssets } from "@/lib/api";
+import { getInbox, listAssets } from "@/lib/api";
 import type { AssetSummary } from "@/lib/types";
 import { DropdownMenuChildren } from "@/design-system/primitives/DropdownMenu";
 import { Dialog as DsDialog } from "@/design-system/primitives/Dialog";
@@ -68,6 +68,7 @@ export function AppShell({ crumbs, children }: { crumbs: Crumb[]; children: Reac
           </nav>
           <div className="ds-shell-spacer" />
           <ProjectSwitcher assets={assets} onNavigate={(id) => router.push(`/app/projects/${id}`)} />
+          <InboxLink />
           <Link href="/app/risk-acceptances" className="ds-shell-settings-link">Approvals</Link>
           <Link href="/app/mentions" className="ds-shell-settings-link">Mentions</Link>
           <Link href="/app/automation" className="ds-shell-settings-link">Automation</Link>
@@ -94,6 +95,22 @@ export function AppShell({ crumbs, children }: { crumbs: Crumb[]; children: Reac
       </div>
     </TooltipProvider>
     </ModeProvider>
+  );
+}
+
+/** The inbox, with how many are unread (plan §49). Refreshes when the inbox page marks some read. */
+function InboxLink() {
+  const [unread, setUnread] = useState(0);
+  useEffect(() => {
+    const load = () => getInbox(true).then((i) => setUnread(typeof i?.unread === "number" ? i.unread : 0), () => setUnread(0));
+    load();
+    window.addEventListener("bulwark:inbox", load);
+    return () => window.removeEventListener("bulwark:inbox", load);
+  }, []);
+  return (
+    <Link href="/app/inbox" className="ds-shell-settings-link" aria-label={unread ? `Inbox, ${unread} unread` : "Inbox"}>
+      Inbox{unread > 0 && <span className="ds-shell-count" aria-hidden="true">{unread > 99 ? "99+" : unread}</span>}
+    </Link>
   );
 }
 

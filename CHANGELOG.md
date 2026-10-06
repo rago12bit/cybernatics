@@ -19,7 +19,26 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   hand or by a rule. API: `/v2/rules`, `/v2/rule-runs`, `/v2/issues/{id}/assignee` and `/priority`.
   Migration 0037. OPA 1.21.0 ships in the app image, checksum-verified.
 
+- **Rules editor, notifications and two-way tickets (Week 66, plan §49, §55.7, ADR-0050).** A rule
+  editor with trigger, condition and action builders, a Rego view of the module OPA runs, "Test this
+  rule" on the unsaved draft, and a gallery of nine templates; rules can also put Issues in a group,
+  file or update their ticket, and notify named people. Notifications: watchers (taking part makes
+  you one), an in-app inbox with an unread count, email through the operator's SMTP server
+  (`BULWARK_SMTP_*`), and for each kind of event and channel off, at once or a daily digest -- for
+  each person, and for the team channels (Slack, Discord, Microsoft Teams, the outbound webhook).
+  Tickets in Jira or GitHub Issues per project, both ways: Bulwark owns the summary and severity
+  label, the ticket owns the status (mapped per project to nothing or "ready for retest"; Bulwark
+  never marks an Issue fixed because a ticket closed) unless the project gives the status to Bulwark,
+  which then closes and reopens it. Issue groups map to one ticket. Webhooks and a ten-minute poll.
+  API: `/v2/rules/templates`, `/v2/notifications`, `/v2/notification-prefs`, `/v2/issues/{id}/watch`,
+  `/v2/projects/{id}/tickets`, `/v2/projects/{id}/groups`, `/v2/issues/{id}/ticket` and `/group`.
+  Migration 0038. A native scan's completion event now carries its counts, like an import's.
+
 ### Security
+- Notification titles are one line wherever they go, and email headers are stripped of line breaks,
+  so an issue title cannot add an email header or fake a line in a digest. Teams cards escape
+  Markdown.
+- Jira's address now passes the SSRF guard when saved and before every sync call.
 - Rule notifications escape Slack markup and disable Discord mentions, so an issue title cannot ping
   a channel or post a disguised link.
 

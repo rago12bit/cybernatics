@@ -385,6 +385,10 @@ class IssueRow(Base):
     assigned_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
     priority_override: Mapped[str | None] = mapped_column(String(4), nullable=True)
     priority_override_by: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    # Week 66 (plan §41.2, §49): Issues one ticket tracks together.
+    group_id: Mapped[str | None] = mapped_column(
+        ForeignKey("issue_groups.id", ondelete="SET NULL"), nullable=True, index=True
+    )
 
     asset: Mapped[Asset] = relationship(back_populates="issues")
 
@@ -803,6 +807,7 @@ class IntegrationSettingsRow(Base):
     jira_email: Mapped[str | None] = mapped_column(String(320), nullable=True)
     jira_api_token: Mapped[str | None] = mapped_column(Text, nullable=True)
     jira_project_key: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    teams_webhook_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     jira_webhook_secret: Mapped[str | None] = mapped_column(Text, nullable=True)
     updated_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
 
@@ -829,6 +834,16 @@ class ExternalIssueLinkRow(Base):
     external_id: Mapped[str] = mapped_column(String(300))  # "owner/repo#5" | "PROJ-123"
     external_url: Mapped[str] = mapped_column(Text)
     external_status: Mapped[str] = mapped_column(String(16), default="open")  # sync metadata only
+    # Week 66 (plan §49): the group the ticket was filed for (every member has a link to the same
+    # ticket), what the ticket last said, and a digest of the fields Bulwark last pushed, so a sync
+    # writes only when something it owns changed.
+    group_id: Mapped[str | None] = mapped_column(
+        ForeignKey("issue_groups.id", ondelete="SET NULL"), nullable=True
+    )
+    raw_status: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    external_assignee: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    synced_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
+    pushed_digest: Mapped[str | None] = mapped_column(String(64), nullable=True)
     created_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
     updated_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
 
@@ -1416,3 +1431,107 @@ class RuleRun(Base):
     decided_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
 
     __table_args__ = (Index("ix_rule_runs_cause", "rule_id", "cause"),)
+
+
+class IssueGroup(Base):
+    """Issues one ticket tracks together (plan §41.2, §49: "issue groups map to one ticket"), within
+    one project."""
+
+    __tablename__ = "issue_groups"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"), index=True)
+    asset_id: Mapped[str] = mapped_column(ForeignKey("assets.id", ondelete="CASCADE"), index=True)
+    name: Mapped[str] = mapped_column(String(120))
+    created_by: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+
+    __table_args__ = (UniqueConstraint("asset_id", "name", name="uq_issue_groups_asset_name"),)
+
+
+class TicketConfig(Base):
+    """Where a project's tickets go (plan §49): Jira (`target` is the project key) or GitHub Issues
+    (`target` is owner/repo), with the organization's stored credentials. `status_source` says which
+    side owns the status -- "ticket" (the default: the ticket's status maps onto Bulwark through
+    `status_map`, and Bulwark only comments) or "platform" (Bulwark closes and reopens the ticket,
+    and ignores what the ticket says). Severity, title and description always come from Bulwark."""
+
+    __tablename__ = "ticket_configs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"), index=True)
+    asset_id: Mapped[str] = mapped_column(ForeignKey("assets.id", ondelete="CASCADE"), unique=True)
+    provider: Mapped[str] = mapped_column(String(16))  # jira | github
+    target: Mapped[str] = mapped_column(String(200))
+    issue_type: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    status_source: Mapped[str] = mapped_column(String(16), default="ticket")
+    status_map: Mapped[dict[str, str]] = mapped_column(JsonType, default=dict)
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    updated_by: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+
+
+class Notification(Base):
+    """One thing worth telling one person (plan §49), or the team channels (`recipient` "team").
+    `in_app` is whether it shows in the inbox; `email_state` is null (no email), "pending" (in the
+    next digest), "sent", or "skipped" (no address or no mail server)."""
+
+    __tablename__ = "notifications"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"), index=True)
+    recipient: Mapped[str] = mapped_column(String(200))
+    kind: Mapped[str] = mapped_column(String(32))
+    event_type: Mapped[str] = mapped_column(String(64))
+    event_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    title: Mapped[str] = mapped_column(Text)
+    body: Mapped[str | None] = mapped_column(Text, nullable=True)
+    link: Mapped[str | None] = mapped_column(Text, nullable=True)
+    issue_id: Mapped[str | None] = mapped_column(
+        ForeignKey("issues.id", ondelete="CASCADE"), nullable=True
+    )
+    actor: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    in_app: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+    read_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
+    email_state: Mapped[str | None] = mapped_column(String(16), nullable=True, index=True)
+    emailed_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("recipient", "event_id", "kind", name="uq_notifications_event"),
+        Index("ix_notifications_recipient", "org_id", "recipient"),
+    )
+
+
+class IssueWatcher(Base):
+    """Who follows an Issue (plan §49): its assignee, people who wrote notes on it or were
+    mentioned in one, whoever asked for its retest, and anyone who chose to."""
+
+    __tablename__ = "issue_watchers"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"), index=True)
+    issue_id: Mapped[str] = mapped_column(ForeignKey("issues.id", ondelete="CASCADE"), index=True)
+    actor: Mapped[str] = mapped_column(String(200))
+    reason: Mapped[str] = mapped_column(String(24))
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+
+    __table_args__ = (UniqueConstraint("issue_id", "actor", name="uq_issue_watchers"),)
+
+
+class NotificationPrefs(Base):
+    """One person's notification settings (or, with `owner` "team", the organization's team
+    channels'): for each kind of event, each channel's mode -- off, instant or digest."""
+
+    __tablename__ = "notification_prefs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"), index=True)
+    owner: Mapped[str] = mapped_column(String(200))
+    email: Mapped[str | None] = mapped_column(String(320), nullable=True)
+    digest_hour: Mapped[int] = mapped_column(Integer, default=8)
+    prefs: Mapped[dict[str, dict[str, str]]] = mapped_column(JsonType, default=dict)
+    last_digest_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+
+    __table_args__ = (UniqueConstraint("org_id", "owner", name="uq_notification_prefs_owner"),)

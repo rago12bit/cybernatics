@@ -38,6 +38,16 @@ x-app-env: &app-env
   # Unset in production env files; a real deployment points these at a real, unsealed OpenBao.
   BULWARK_OPENBAO_ADDR: http://openbao:8200
   BULWARK_OPENBAO_TOKEN: ${BULWARK_OPENBAO_TOKEN:?run scripts/init-env.sh}
+  # Email for notifications (Week 66, plan §49), all optional: no host means no email, and the
+  # notification settings say so. The worker sends; the API only reports whether email is on.
+  # BULWARK_PUBLIC_URL makes the links in emails absolute.
+  BULWARK_SMTP_HOST: ${BULWARK_SMTP_HOST:-}
+  BULWARK_SMTP_PORT: ${BULWARK_SMTP_PORT:-587}
+  BULWARK_SMTP_FROM: ${BULWARK_SMTP_FROM:-bulwark@localhost}
+  BULWARK_SMTP_USERNAME: ${BULWARK_SMTP_USERNAME:-}
+  BULWARK_SMTP_PASSWORD: ${BULWARK_SMTP_PASSWORD:-}
+  BULWARK_SMTP_TLS: ${BULWARK_SMTP_TLS:-starttls}
+  BULWARK_PUBLIC_URL: ${BULWARK_PUBLIC_URL:-}
 
 x-app: &app
   build: { context: ., dockerfile: docker/app/Dockerfile }

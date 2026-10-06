@@ -91,7 +91,8 @@ export function ProjectOverview({ assetId }: { assetId: string }) {
         <Link href={`/app/projects/${assetId}/matching`}>matching</Link> <span aria-hidden="true">·</span>{" "}
         <Link href={`/app/projects/${assetId}/sla`}>SLA</Link> <span aria-hidden="true">·</span>{" "}
         <Link href={`/app/projects/${assetId}/priority`}>priority</Link> <span aria-hidden="true">·</span>{" "}
-        <Link href={`/app/projects/${assetId}/engagements`}>engagements</Link>
+        <Link href={`/app/projects/${assetId}/engagements`}>engagements</Link> <span aria-hidden="true">·</span>{" "}
+        <Link href={`/app/projects/${assetId}/tickets`}>tickets</Link>
       </div>
 
       <div className="ds-ov-verdict">

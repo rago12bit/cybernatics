@@ -18,6 +18,7 @@ import { TriageAssistantPanel } from "@/components/TriageAssistantPanel";
 import { ManualFindingPanel } from "@/components/ManualFindingPanel";
 import { NotesPanel } from "@/components/NotesPanel";
 import { OwnerPanel } from "@/components/OwnerPanel";
+import { TicketPanel, WatchButton } from "@/components/TicketPanel";
 import { RetestPanel } from "@/components/RetestPanel";
 import { TagsEditor } from "@/components/TagsEditor";
 import { CopilotPanel } from "@/components/CopilotPanel";
@@ -45,6 +46,8 @@ export function IssueDetail({ assetId, issueId }: { assetId: string; issueId: st
 
   useEffect(() => setExplanationOpen(mode === "novice"), [mode]);
 
+  // A ticket sync can change the retest (Week 66): the panels that show it start over.
+  const [panelsKey, setPanelsKey] = useState(0);
   function reload() {
     getIssue(assetId, issueId).then(setFinding, (e) => setError(e instanceof ApiError ? e.message : "Failed to load this issue"));
     getIssueHistory(assetId, issueId).then(setHistory, () => setHistory([]));
@@ -255,8 +258,10 @@ export function IssueDetail({ assetId, issueId }: { assetId: string; issueId: st
             <Button variant="primary" onClick={() => setTriageOpen("not_a_risk")} disabled={triageStatus !== "open"}>Mark as not a risk</Button>
             <Button onClick={() => setTriageOpen("accepted")} disabled={triageStatus !== "open" || !!live}>Request risk acceptance…</Button>
           </div>
+          <WatchButton issueId={issueId} />
           <OwnerPanel issueId={issueId} onChange={reload} />
-          <RetestPanel issueId={issueId} onChange={reload} />
+          <RetestPanel key={`retest-${panelsKey}`} issueId={issueId} onChange={reload} />
+          <TicketPanel issueId={issueId} assetId={assetId} onChange={() => { setPanelsKey((k) => k + 1); reload(); }} />
           <TagsEditor kind="issue" id={issueId} />
           <div>
             <div className="ds-issue-label">History</div>

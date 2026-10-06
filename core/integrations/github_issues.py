@@ -102,3 +102,65 @@ def add_comment(
     )  # fmt: skip
     if status != 201:
         raise GithubIssueError(f"could not comment on {repo}#{issue_number} (HTTP {status})")
+
+
+# --- Week 66 (plan §49): two-way sync -------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class IssueState:
+    state: str  # "open" | "closed"
+    state_reason: str | None  # "completed" | "not_planned" | "reopened" | None
+    assignee: str | None  # login
+    labels: tuple[str, ...]
+
+    @property
+    def status(self) -> str:
+        """One name for the status mapping: "open", "closed", or "closed (not planned)"."""
+        if self.state == "closed" and self.state_reason == "not_planned":
+            return "closed (not planned)"
+        return self.state
+
+
+def get_issue(
+    repo: str,
+    issue_number: int,
+    token: str,
+    *,
+    api_url: str = "https://api.github.com",
+    transport: Transport = http_transport,
+) -> IssueState:
+    if not _REPO.match(repo):
+        raise GithubIssueError(f"invalid repository name: {repo!r}")
+    status, data = transport(
+        "GET", f"{api_url.rstrip('/')}/repos/{repo}/issues/{issue_number}", _headers(token), None
+    )
+    if status != 200 or not isinstance(data, dict):
+        raise GithubIssueError(f"could not read {repo}#{issue_number} (HTTP {status})")
+    assignee = data.get("assignee") or {}
+    return IssueState(
+        state=str(data.get("state") or "open"),
+        state_reason=data.get("state_reason"),
+        assignee=str(assignee["login"]) if assignee.get("login") else None,
+        labels=tuple(
+            str(lb.get("name")) for lb in data.get("labels") or [] if isinstance(lb, dict)
+        ),
+    )
+
+
+def update_issue(
+    repo: str,
+    issue_number: int,
+    token: str,
+    *,
+    title: str,
+    labels: list[str],
+    api_url: str = "https://api.github.com",
+    transport: Transport = http_transport,
+) -> None:
+    status, _ = transport(
+        "PATCH", f"{api_url.rstrip('/')}/repos/{repo}/issues/{issue_number}", _headers(token),
+        json.dumps({"title": title[:256], "labels": labels}).encode(),
+    )  # fmt: skip
+    if status != 200:
+        raise GithubIssueError(f"could not update {repo}#{issue_number} (HTTP {status})")

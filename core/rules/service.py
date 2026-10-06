@@ -142,13 +142,39 @@ def _action(s: Session, org_id: str, subject: str, i: int, raw: Any) -> dict[str
         if len(tags) > 10:
             raise RuleError(f"{field}.tags", "At most 10 tags.")
         return {"type": kind, "tags": tags}
+    if kind == "group":
+        name = " ".join(str(raw.get("name") or "").split())
+        if not name or len(name) > 120:
+            raise RuleError(f"{field}.name", "A group name, at most 120 characters.")
+        return {"type": kind, "name": name}
+    if kind == "ticket":
+        return {"type": kind}
     if kind == "request_retest":
         return {"type": kind, "note": _text(raw.get("note"), f"{field}.note", 500)}
     if kind == "request_fix":
         cap = _int(raw.get("max_per_day"), f"{field}.max_per_day", 1, MAX_FIX_PER_DAY,
                    default=DEFAULT_FIX_PER_DAY)  # fmt: skip
         return {"type": kind, "max_per_day": cap}
-    return {"type": kind, "message": _text(raw.get("message"), f"{field}.message", 500)}
+    people = raw.get("people") or []
+    if isinstance(people, str):
+        people = [p for p in people.replace(",", " ").split() if p]
+    if not isinstance(people, list) or len(people) > 20:
+        raise RuleError(f"{field}.people", "At most 20 people.")
+    handles = []
+    for h in people:
+        handle = str(h).strip().lstrip("@").lower()
+        try:
+            resolve(s, org_id, handle)
+        except AssignError as exc:
+            raise RuleError(f"{field}.people", str(exc)) from exc
+        handles.append(handle)
+    out: dict[str, Any] = {
+        "type": kind,
+        "message": _text(raw.get("message"), f"{field}.message", 500),
+    }
+    if handles:
+        out["people"] = list(dict.fromkeys(handles))
+    return out
 
 
 def validate(s: Session, org_id: str, raw: dict[str, Any]) -> Definition:

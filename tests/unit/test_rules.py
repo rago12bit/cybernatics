@@ -509,7 +509,8 @@ def test_the_migration_left_old_events_dispatched_and_catalogue_lists_everything
     assert {t["key"] for t in cat["triggers"]} >= {"issue.created", "project.quiet", "schedule",
                                                      "sla.breached", "risk_acceptance.expiring"}  # fmt: skip
     assert {a["key"] for a in cat["actions"]} == {"assign", "set_priority", "tag", "request_retest",
-                                                   "request_fix", "notify"}  # fmt: skip
+                                                   "request_fix", "notify", "group",
+                                                   "ticket"}  # fmt: skip
     assert cat["limits"]["max_depth"] == 3
 
 
@@ -523,3 +524,37 @@ def test_another_org_cannot_see_or_decide_runs(env: Env, priya: dict[str, str]) 
     assert env.client.get("/v2/rule-runs", headers=OTHER).json() == []
     with env.sessions() as s:
         assert dispatch(s, OTHER_ORG) == 0
+
+
+def test_every_template_compiles_and_saves_once_filled_in(env: Env, priya: dict[str, str]) -> None:
+    gallery = env.client.get("/v2/rules/templates", headers=AUTH).json()
+    assert len(gallery) >= 8 and len({t["key"] for t in gallery}) == len(gallery)
+    for t in gallery:
+        draft = dict(t["draft"])
+        for need in t["needs"]:
+            _, i, field = need.split(".")
+            draft["actions"][int(i)][field] = "@priyan" if field == "to" else ["priyan"]
+        r = env.client.post("/v2/rules/test", json=draft, headers=AUTH)
+        assert r.status_code == 200, (t["key"], r.text)
+        created = env.client.post("/v2/rules", json=draft, headers=AUTH)
+        assert created.status_code == 201, (t["key"], created.text)
+        assert created.json()["template"] == t["key"]
+
+
+def test_a_completed_scan_says_what_it_changed(env: Env, priya: dict[str, str]) -> None:
+    sent: list[str] = []
+    import core.rules.notify as notify_mod
+
+    real = notify_mod.send_rule_message
+    notify_mod.send_rule_message = lambda s, org, text: (sent.append(text), ["Slack"])[1]  # type: ignore[assignment]
+    try:
+        rule(env, name="New things", trigger="scan.completed",
+             condition="input.scan.counts.new >= 2", actions=[{"type": "notify"}])  # fmt: skip
+        scan(env, [finding(1, Severity.HIGH)])
+        run_outbox(env)
+        assert sent == []  # one new: below the condition
+        scan(env, [finding(i, Severity.HIGH) for i in (1, 2, 3)])
+        run_outbox(env)
+        assert len(sent) == 1 and "a scan of a/b completed: 2 new" in sent[0]
+    finally:
+        notify_mod.send_rule_message = real  # type: ignore[assignment]

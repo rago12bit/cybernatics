@@ -225,3 +225,20 @@
   padding: 0.3rem 0.4rem;
   max-width: 100%;
 }
+
+/* Watching, tickets and groups (plan §49, Week 66). */
+.ds-watch {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+.ds-tk {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.ds-tk-line {
+  margin: 0;
+  overflow-wrap: anywhere;
+}

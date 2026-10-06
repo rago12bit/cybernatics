@@ -22,6 +22,7 @@ from core.integrations.jira import JiraError
 from core.integrations.webhooks import deliver_signed
 from core.issues import SyncResult
 from core.models import Finding
+from core.notify import team
 from core.persistence import repo
 from core.persistence.models import IntegrationSettingsRow
 
@@ -44,7 +45,14 @@ def notify_scan_result(
         fixed_count=sync.fixed_count,
     )  # fmt: skip
 
-    if settings.slack_webhook_url:
+    # Week 66: the team chooses instant, the daily digest, or nothing for scan summaries; the
+    # ticket sync below runs either way.
+    text = slack.scan_summary_payload(asset_label=asset_label, scan_id=scan_id, **counts)["text"]
+    now = team.gate(s, org_id, "scan", text)
+    if now:
+        team.send_teams(s, org_id, text.replace("*", ""))
+
+    if now and settings.slack_webhook_url:
         try:
             slack.send(settings.slack_webhook_url, slack.scan_summary_payload(
                 asset_label=asset_label, scan_id=scan_id, **counts
@@ -52,7 +60,7 @@ def notify_scan_result(
         except Exception:  # noqa: BLE001 - a dying notification must not fail the scan
             log.warning("slack notification failed for scan %s", scan_id, exc_info=True)
 
-    if settings.discord_webhook_url:
+    if now and settings.discord_webhook_url:
         try:
             discord.send(settings.discord_webhook_url, discord.scan_summary_payload(
                 asset_label=asset_label, scan_id=scan_id, **counts
@@ -60,7 +68,7 @@ def notify_scan_result(
         except Exception:  # noqa: BLE001
             log.warning("discord notification failed for scan %s", scan_id, exc_info=True)
 
-    if settings.outbound_webhook_url and settings.outbound_webhook_secret:
+    if now and settings.outbound_webhook_url and settings.outbound_webhook_secret:
         try:
             deliver_signed(
                 settings.outbound_webhook_url,
@@ -69,6 +77,15 @@ def notify_scan_result(
             )
         except Exception:  # noqa: BLE001
             log.warning("outbound webhook failed for scan %s", scan_id, exc_info=True)
+
+    # Week 66: a project with its own ticket settings is synced by `core.tickets`, not filed
+    # issue by issue here.
+    scan_row = repo.get_scan(s, scan_id)
+    if scan_row is not None and scan_row.asset_id is not None:
+        from core.tickets.config import get as ticket_config
+
+        if ticket_config(s, scan_row.asset_id) is not None:
+            return
 
     if settings.github_token and settings.github_issues_repo:
         try:

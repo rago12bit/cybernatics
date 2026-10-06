@@ -144,7 +144,7 @@ describe("automation screen", () => {
       { action: "assign", subject: I, outcome: "failed", detail: "Nobody in this organization is @x." },
       { action: "tag", subject: I, outcome: "skipped", detail: "already" },
     ] }))).toBe("0 changes, 1 failed (Nobody in this organization is @x.), 1 skipped (already).");
-    expect(automationVerdict([], [])).toBe("No rules yet.");
+    expect(automationVerdict([], [])).toBe("No rules yet: nothing runs on its own.");
   });
 });
 

@@ -97,6 +97,12 @@ def add(
     s.add(note)
     s.flush()
     _announce(s, note, who, issue)
+    # Week 66: the Issue's watchers hear about every note (plan §49).
+    repo.add_outbox_event(
+        s, org_id=note.org_id, event_type="issue.note_added",
+        payload={"note_id": note.id, "issue_id": issue.id, "asset_id": issue.asset_id,
+                 "by": author, "mentioned": who},
+    )  # fmt: skip
     repo.append_audit_entry(  # commits
         s, actor=author, action="issue.note.added", target=issue.id,
         payload={"note_id": note.id, "mentions": who},

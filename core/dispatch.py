@@ -25,14 +25,17 @@ from typing import Any
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from core.notify.service import on_events as notify_on_events
 from core.persistence import repo
 from core.rules.engine import Event, on_events
+from core.tickets.sync import on_events as tickets_on_events
 
 log = logging.getLogger(__name__)
 BATCH = 500
 
 Subscriber = Callable[[Session, str, Sequence[Event]], Any]
-SUBSCRIBERS: list[Subscriber] = [on_events]
+# Rules first, then tickets and notifications; what a rule does is announced in the next batch.
+SUBSCRIBERS: list[Subscriber] = [on_events, tickets_on_events, notify_on_events]
 
 
 def _lock_key(org_id: str) -> int:

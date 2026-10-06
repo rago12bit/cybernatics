@@ -19,6 +19,7 @@ from __future__ import annotations
 import base64
 import json
 from dataclasses import dataclass
+from typing import Any
 
 from core.ci.github import Transport, http_transport
 
@@ -52,6 +53,7 @@ def create_ticket(
     description: str,
     *,
     issue_type: str = "Bug",
+    labels: list[str] | None = None,
     transport: Transport = http_transport,
 ) -> CreatedTicket:
     base = base_url.rstrip("/")
@@ -60,14 +62,17 @@ def create_ticket(
             "project": {"key": project_key},
             "summary": summary[:255],
             "description": {
-                "type": "doc", "version": 1,
+                "type": "doc",
+                "version": 1,
                 "content": [
                     {"type": "paragraph", "content": [{"type": "text", "text": description}]}
                 ],
-            },  # fmt: skip
+            },
             "issuetype": {"name": issue_type},
         }
     }
+    if labels:
+        payload["fields"]["labels"] = labels
     status, data = transport(
         "POST", f"{base}/rest/api/3/issue", _headers(email, api_token), json.dumps(payload).encode()
     )  # fmt: skip
@@ -99,3 +104,95 @@ def add_comment(
     )  # fmt: skip
     if status != 201:
         raise JiraError(f"could not comment on {issue_key} (HTTP {status})")
+
+
+# --- Week 66 (plan §49): two-way sync -------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class TicketState:
+    status: str  # the workflow's own status name, e.g. "In Review"
+    category: str  # Jira's fixed statusCategory key: "new" | "indeterminate" | "done"
+    assignee: str | None  # display name
+
+
+def _ok(status: int, expected: tuple[int, ...], what: str) -> None:
+    if status not in expected:
+        raise JiraError(f"could not {what} (HTTP {status})")
+
+
+def get_ticket(
+    base_url: str, email: str, api_token: str, key: str, *, transport: Transport = http_transport
+) -> TicketState:
+    base = base_url.rstrip("/")
+    status, data = transport(
+        "GET", f"{base}/rest/api/3/issue/{key}?fields=status,assignee", _headers(email, api_token),
+        None,
+    )  # fmt: skip
+    _ok(status, (200,), f"read {key}")
+    fields = (data or {}).get("fields") or {} if isinstance(data, dict) else {}
+    st = fields.get("status") or {}
+    assignee = fields.get("assignee") or {}
+    return TicketState(
+        status=str(st.get("name") or ""),
+        category=str((st.get("statusCategory") or {}).get("key") or ""),
+        assignee=str(assignee["displayName"]) if assignee.get("displayName") else None,
+    )
+
+
+def update_ticket(
+    base_url: str,
+    email: str,
+    api_token: str,
+    key: str,
+    *,
+    summary: str,
+    add_labels: list[str],
+    remove_labels: list[str],
+    transport: Transport = http_transport,
+) -> None:
+    """Only the fields Bulwark owns: the summary, and its own labels added or removed one by one
+    (Jira's `update` verbs), so labels someone added by hand stay."""
+    base = base_url.rstrip("/")
+    ops = [{"add": x} for x in add_labels] + [{"remove": x} for x in remove_labels]
+    body: dict[str, Any] = {"fields": {"summary": summary[:255]}}
+    if ops:
+        body["update"] = {"labels": ops}
+    status, _ = transport(
+        "PUT",
+        f"{base}/rest/api/3/issue/{key}",
+        _headers(email, api_token),
+        json.dumps(body).encode(),
+    )
+    _ok(status, (200, 204), f"update {key}")
+
+
+def transition_to(
+    base_url: str,
+    email: str,
+    api_token: str,
+    key: str,
+    category: str,
+    *,
+    transport: Transport = http_transport,
+) -> bool:
+    """Move the ticket to the first available status in `category` ("done" to close, "new" or
+    "indeterminate" to reopen). Workflows name their statuses as they like, but every status has
+    one of Jira's three categories, so this needs no per-project transition ids. False when the
+    workflow offers no such transition from where the ticket is."""
+    base = base_url.rstrip("/")
+    status, data = transport(
+        "GET", f"{base}/rest/api/3/issue/{key}/transitions", _headers(email, api_token), None
+    )
+    _ok(status, (200,), f"list transitions of {key}")
+    wanted = (category,) if category == "done" else ("new", "indeterminate")
+    for t in (data or {}).get("transitions", []) if isinstance(data, dict) else []:
+        to = t.get("to") or {}
+        if (to.get("statusCategory") or {}).get("key") in wanted:
+            status, _ = transport(
+                "POST", f"{base}/rest/api/3/issue/{key}/transitions", _headers(email, api_token),
+                json.dumps({"transition": {"id": str(t.get("id"))}}).encode(),
+            )  # fmt: skip
+            _ok(status, (204,), f"transition {key}")
+            return True
+    return False

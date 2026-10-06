@@ -514,12 +514,16 @@ def message(event: str, ra: RiskAcceptance, project: str, count: int) -> str:
 
 def notify_integrations(s: Session, org_id: str, event: str, ra: RiskAcceptance) -> None:
     from core.integrations import discord, slack
+    from core.notify import team
 
     settings = repo.get_integration_settings(s, org_id)
     if settings is None:
         return
     asset = s.get(Asset, ra.asset_id)
     text = message(event, ra, asset.label if asset else ra.asset_id, len(issue_ids_of(s, ra.id)))
+    if not team.gate(s, org_id, "risk_acceptance", text):  # Week 66: digest, or off
+        return
+    team.send_teams(s, org_id, text.replace("*", ""))
     if settings.slack_webhook_url:
         try:
             slack.send(settings.slack_webhook_url, {"text": text})

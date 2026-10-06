@@ -78,3 +78,16 @@ a host with no cookies, no token and no API behind it (threat T24, [ADR-0048](ad
 For local use, `http://attachments.localhost:8000` works without DNS: browsers resolve any
 `*.localhost` name to this machine. Without the setting, files download from the API's own host,
 which sets no cookies either.
+
+## Email addresses and notifications
+
+Since Week 66 (ADR-0050) Bulwark stores one piece of personal contact data: the email address a
+person gives in their notification settings, in `notification_prefs` under the same forced RLS as
+every per-organization table. Only that person sets or clears it; the audit log records that it
+changed, never the address. Notifications themselves (`notifications`) hold the one-line title and
+a short excerpt of what happened -- a note's first 600 characters, for example -- and are kept with
+the organization's other data.
+
+Mail goes only to the operator's own SMTP server (`BULWARK_SMTP_*`), as plain text. Nothing is
+emailed when no server is configured, and items waiting for a digest are then marked skipped rather
+than kept.

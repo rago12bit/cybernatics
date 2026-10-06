@@ -1,6 +1,7 @@
 """Rules API (Week 65, plan §45): automation an Admin configures without writing code.
 
     GET    /v2/rules/catalogue                triggers, actions, the fields a condition can read
+    GET    /v2/rules/templates                the gallery (Week 66): whole drafts to start from
     GET    /v2/rules?project_id=              the organization's rules (and a project's own)
     POST   /v2/rules                          create          GET/PUT/DELETE /v2/rules/{id}
     PUT    /v2/rules/{id}/enabled             turn on or off
@@ -174,7 +175,9 @@ def _sentence(rule: AutomationRule, project: str | None) -> list[str]:
             "assign": f"@{a.get('to')}", "set_priority": a.get("band"),
             "tag": ", ".join(a.get("tags") or []), "request_retest": "",
             "request_fix": f"(at most {a.get('max_per_day')} a day)",
-            "notify": "Slack, Discord and the outbound webhook",
+            "notify": "the team channels"
+            + (f" and @{', @'.join(a['people'])}" if a.get("people") else ""),
+            "group": f"“{a.get('name')}”", "ticket": "",
         }.get(a["type"], "")  # fmt: skip
         lines.append(f"THEN {label.lower()} {detail}".rstrip())
     return lines
@@ -287,6 +290,14 @@ def register_rules_routes(app: FastAPI) -> None:
              dependencies=[Depends(require_scope("scans:read"))])  # fmt: skip
     def rules_catalogue() -> dict[str, Any]:
         return catalogue()
+
+    @app.get("/v2/rules/templates", tags=["rules"],
+             dependencies=[Depends(require_scope("scans:read"))])  # fmt: skip
+    def rules_templates() -> list[dict[str, Any]]:
+        """The gallery: whole drafts the editor opens, with what each still needs from you."""
+        from core.rules.templates import gallery
+
+        return gallery()
 
     @app.get("/v2/rules", response_model=list[RuleOut], tags=["rules"],
              dependencies=[Depends(require_scope("scans:read"))])  # fmt: skip

@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import {
-  ApiError, confirmRuleRun, deleteRule, dismissRuleRun, listRuleRuns, listRules, setRuleEnabled, testRule,
+  ApiError, confirmRuleRun, deleteRule, dismissRuleRun, listRuleRuns, listRuleTemplates, listRules, setRuleEnabled, testRule,
 } from "@/lib/api";
-import type { Rule, RuleDryRun, RuleRun } from "@/lib/types";
+import type { Rule, RuleDryRun, RuleRun, RuleTemplate } from "@/lib/types";
 import { Button } from "@/design-system/primitives/Button";
 import "./automation.css";
 
@@ -40,7 +40,7 @@ export function outcomeSummary(run: RuleRun): string {
 export function automationVerdict(rules: Rule[], held: RuleRun[]): string {
   if (held.length) return `${held.length} run${held.length === 1 ? " is" : "s are"} waiting for an Admin to confirm.`;
   const on = rules.filter((r) => r.enabled).length;
-  if (!rules.length) return "No rules yet.";
+  if (!rules.length) return "No rules yet: nothing runs on its own.";
   return `${on} of ${rules.length} rule${rules.length === 1 ? "" : "s"} on. Nothing is waiting.`;
 }
 
@@ -115,7 +115,7 @@ function RuleCard({ rule, onChanged }: { rule: Rule; onChanged: () => void }) {
   return (
     <li className={`ds-au-rule${rule.enabled ? "" : " ds-au-off"}`}>
       <div className="ds-au-rule-head">
-        <span className="ds-au-rule-name">{rule.name}</span>
+        <Link href={`/app/automation/${rule.id}`} className="ds-au-rule-name">{rule.name}</Link>
         <span className="ds-au-state">{rule.enabled ? "On" : "Off"}</span>
         <span className="ds-au-meta">{rule.project_name ?? "Every project"} · v{rule.version}</span>
       </div>
@@ -158,6 +158,11 @@ export function AutomationScreen() {
   const [held, setHeld] = useState<RuleRun[]>([]);
   const [recent, setRecent] = useState<RuleRun[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [templates, setTemplates] = useState<RuleTemplate[]>([]);
+
+  useEffect(() => {
+    listRuleTemplates().then((t) => setTemplates(Array.isArray(t) ? t : []), () => setTemplates([]));
+  }, []);
 
   const load = useCallback(() => {
     Promise.all([listRules(), listRuleRuns({ status: "held" }), listRuleRuns({ limit: 30 })]).then(
@@ -177,6 +182,7 @@ export function AutomationScreen() {
     <div className="ds-au">
       <div className="ds-au-top">
         <h1>Automation</h1>
+        <Link href="/app/automation/new" className="ds-au-new">New rule</Link>
       </div>
       <p className="ds-au-verdict">{automationVerdict(rules, held)}</p>
 
@@ -190,11 +196,25 @@ export function AutomationScreen() {
       <section aria-labelledby="au-rules">
         <h2 id="au-rules">Rules</h2>
         {rules.length === 0 ? (
-          <p>No rules yet. An Admin writes them through the API (<code>POST /v2/rules</code>).</p>
+          <p>Start from a template below, or write one with “New rule”.</p>
         ) : (
           <ul className="ds-au-list">{rules.map((r) => <RuleCard key={r.id} rule={r} onChanged={load} />)}</ul>
         )}
       </section>
+
+      {templates.length > 0 && (
+        <section aria-labelledby="au-gallery">
+          <h2 id="au-gallery">Start from a template</h2>
+          <ul className="ds-au-gallery">
+            {templates.map((t) => (
+              <li key={t.key}>
+                <Link href={`/app/automation/new?template=${encodeURIComponent(t.key)}`}>{t.name}</Link>
+                <span className="ds-au-meta">{t.description}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section aria-labelledby="au-history">
         <h2 id="au-history">Run history</h2>

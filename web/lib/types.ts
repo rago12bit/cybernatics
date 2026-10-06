@@ -1211,7 +1211,9 @@ export type RuleAction =
   | { type: "tag"; tags: string[] }
   | { type: "request_retest"; note?: string | null }
   | { type: "request_fix"; max_per_day?: number }
-  | { type: "notify"; message?: string | null };
+  | { type: "notify"; message?: string | null; people?: string[] }
+  | { type: "group"; name: string }
+  | { type: "ticket" };
 
 export type RuleInput = {
   name: string;
@@ -1305,3 +1307,78 @@ export type IssueOwner = {
   computed_band: string | null;
   names: Record<string, string>;
 };
+
+export type RuleTemplate = { key: string; name: string; description: string; needs: string[]; draft: RuleInput };
+
+// --- Notifications, tickets and groups (Week 66, plan §49) --------------------------------------
+
+export type NotificationItem = {
+  id: string;
+  kind: string;
+  title: string;
+  body: string | null;
+  link: string | null;
+  issue_id: string | null;
+  actor: string | null;
+  created_at: string;
+  read: boolean;
+  email: string | null;
+};
+
+export type Inbox = { notifications: NotificationItem[]; unread: number; you: string; person: boolean; names: Record<string, string> };
+
+export type NotificationPrefsView = {
+  owner: string;
+  email: string | null;
+  digest_hour: number;
+  kinds: { key: string; label: string; modes: Record<string, string> }[];
+  channels: Record<string, string[]>;
+  email_available: boolean;
+  person?: boolean;
+};
+
+export type Watchers = { watchers: { actor: string; reason: string }[]; watching: boolean; names: Record<string, string> };
+
+export type TicketLink = {
+  provider: "jira" | "github";
+  id: string;
+  url: string;
+  status: string | null;
+  closed: boolean;
+  assignee: string | null;
+  synced_at: string | null;
+  group_id: string | null;
+};
+
+export type IssueTicket = {
+  ticket: TicketLink | null;
+  group: { id: string; name: string; count: number } | null;
+  configured: boolean;
+  provider: "jira" | "github" | null;
+  status_source: "ticket" | "platform" | null;
+};
+
+export type TicketConfigView = {
+  configured: boolean;
+  provider: "jira" | "github" | null;
+  target: string | null;
+  issue_type: string | null;
+  status_source: "ticket" | "platform";
+  status_map: Record<string, string>;
+  effective_map: Record<string, string>;
+  enabled: boolean;
+  updated_by: string | null;
+  updated_at: string | null;
+  credentials: { jira: boolean; github: boolean };
+};
+
+export type TicketConfigInput = {
+  provider: "jira" | "github";
+  target: string;
+  issue_type?: string | null;
+  status_source: "ticket" | "platform";
+  status_map: Record<string, string>;
+  enabled: boolean;
+};
+
+export type IssueGroupSummary = { id: string; name: string; project_id: string; count: number; created_at: string };

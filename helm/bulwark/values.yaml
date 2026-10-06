@@ -138,3 +138,14 @@ keda:
   listLength: 5
   pollingInterval: 5
   cooldownPeriod: 30
+
+# Email for notifications (Week 66, plan §49). Empty host: no email; the inbox still works.
+# publicUrl makes links in emails absolute, e.g. "https://bulwark.example".
+smtp:
+  host: ""
+  port: 587
+  from: bulwark@localhost
+  username: ""
+  password: ""
+  tls: starttls  # starttls | ssl | none
+  publicUrl: ""

@@ -1140,6 +1140,8 @@ def issue_history(s: Session, issue_id: str) -> list[dict[str, Any]]:
         label = _audit_action_label(e.action)
         if e.actor.startswith("rule:"):
             label += f" by the rule “{rule_names.get(e.actor.split(':', 1)[1], 'deleted')}”"
+        elif e.actor.startswith("ticket:"):
+            label += f" by its ticket, {e.actor.split(':', 1)[1]}"
         events.append({"at": e.timestamp, "label": label})
     # A retest decided by a scan, an upload or a targeted retest (Week 64) is that run's outcome,
     # not a person's decision, so it is an outbox event rather than an audit entry.
@@ -1183,6 +1185,9 @@ def _audit_action_label(action: str) -> str:
         "issue.priority.set": "Priority set",
         "issue.priority.cleared": "Priority back to the computed band",
         "issue.fix.requested": "Verified fix requested",
+        "issue.ticket.filed": "Ticket filed",
+        "issue.group.joined": "Added to a group",
+        "issue.group.left": "Removed from its group",
     }.get(action, action)
 
 
@@ -1204,12 +1209,24 @@ def finish_scan(s: Session, scan_id: str, status: str, error: str | None = None)
     scan = s.get(Scan, scan_id)
     assert scan is not None
     scan.status, scan.finished_at, scan.error = status, _now(), error
+    # What the scan changed, as an import's event already says (Week 66: rules read
+    # `input.scan.counts`): its Issue events were written when its findings were synced.
+    counts = {"new": 0, "reopened": 0, "closed": 0}
+    for (kind,) in s.execute(
+        select(OutboxEvent.event_type).where(
+            OutboxEvent.org_id == scan.org_id,
+            OutboxEvent.event_type.in_(("issue.created", "issue.reopened", "issue.closed")),
+            OutboxEvent.payload["scan_id"].as_string() == scan_id,
+        )
+    ):
+        counts[{"issue.created": "new", "issue.reopened": "reopened"}.get(kind, "closed")] += 1
     add_outbox_event(
         s,
         org_id=scan.org_id,
         event_type="scan.completed",
-        payload={"scan_id": scan_id, "asset_id": scan.asset_id, "status": status, "source": "scan"},
-    )
+        payload={"scan_id": scan_id, "asset_id": scan.asset_id, "status": status,
+                 "source": "scan", "counts": counts},
+    )  # fmt: skip
     s.commit()
 
 
@@ -2296,7 +2313,7 @@ def list_plugin_allowlist(s: Session, org_id: str) -> list[PluginAllowlistRow]:
 _INTEGRATION_FIELDS = (
     "slack_webhook_url", "discord_webhook_url", "outbound_webhook_url", "outbound_webhook_secret",
     "github_token", "github_issues_repo", "github_webhook_secret", "jira_base_url", "jira_email",
-    "jira_api_token", "jira_project_key", "jira_webhook_secret",
+    "jira_api_token", "jira_project_key", "jira_webhook_secret", "teams_webhook_url",
 )  # fmt: skip
 
 

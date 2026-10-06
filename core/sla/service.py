@@ -321,11 +321,15 @@ def notify_integrations(s: Session, org_id: str, project: str, crossings: list[C
     others (the same rule as scan notifications, `core.integrations.dispatch`)."""
     from core.integrations import discord, slack
     from core.integrations.webhooks import deliver_signed
+    from core.notify import team
 
     settings = repo.get_integration_settings(s, org_id)
     if settings is None:
         return
     text = message(project, crossings)
+    if not team.gate(s, org_id, "sla", text):  # Week 66: the team's choice -- digest, or off
+        return
+    team.send_teams(s, org_id, text.replace("*", ""))
     if settings.slack_webhook_url:
         try:
             slack.send(settings.slack_webhook_url, {"text": text})

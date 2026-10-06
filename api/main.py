@@ -53,6 +53,7 @@ from api.engagements import register_engagement_routes
 from api.ingest import register_ingest_routes
 from api.manual import register_manual_routes
 from api.mappings import register_mapping_routes
+from api.notify import register_notify_routes
 from api.priority import register_priority_routes
 from api.retest import register_retest_routes
 from api.rules import register_rules_routes
@@ -112,6 +113,7 @@ from api.schemas import (
     VerifiedFixView,
 )
 from api.sla import register_sla_routes
+from api.tickets import register_ticket_routes
 from core.collab.tags import TagError
 from core.collab.tags import issue_clause as tag_clause
 from core.config import Settings
@@ -1559,7 +1561,7 @@ def create_app(app_state: AppState) -> FastAPI:
         row = row or SimpleNamespace(
             slack_webhook_url=None, discord_webhook_url=None, outbound_webhook_url=None,
             outbound_webhook_secret=None, github_token=None, github_issues_repo=None,
-            jira_base_url=None, jira_project_key=None,
+            jira_base_url=None, jira_project_key=None, teams_webhook_url=None,
         )  # fmt: skip
         outbound_ok = bool(row.outbound_webhook_url and row.outbound_webhook_secret)
         github_ok = bool(row.github_token and row.github_issues_repo)
@@ -1574,6 +1576,7 @@ def create_app(app_state: AppState) -> FastAPI:
             jira_configured=jira_ok,
             jira_base_url=row.jira_base_url,
             jira_project_key=row.jira_project_key,
+            teams_configured=bool(row.teams_webhook_url),
         )
 
     @app.get(
@@ -1604,6 +1607,9 @@ def create_app(app_state: AppState) -> FastAPI:
             ("slack_webhook_url", body.slack_webhook_url),
             ("discord_webhook_url", body.discord_webhook_url),
             ("outbound_webhook_url", body.outbound_webhook_url),
+            ("teams_webhook_url", body.teams_webhook_url),
+            # Week 66: ticket sync calls Jira on a schedule, so its address gets the same guard.
+            ("jira_base_url", body.jira_base_url),
         ):
             if value:
                 try:
@@ -1640,7 +1646,7 @@ def create_app(app_state: AppState) -> FastAPI:
             except json.JSONDecodeError as exc:
                 raise HTTPException(422, "invalid JSON") from exc
             action = payload.get("action")
-            if action not in ("closed", "reopened"):
+            if action not in ("closed", "reopened", "assigned", "unassigned"):
                 return {"status": "ignored"}
             issue = payload.get("issue") or {}
             repo_full_name = (payload.get("repository") or {}).get("full_name")
@@ -1653,8 +1659,19 @@ def create_app(app_state: AppState) -> FastAPI:
             if link is None:
                 return {"status": "ignored"}
             # Sync metadata only -- see ExternalIssueLinkRow's own docstring for why this never
-            # touches IssueRow.state.
-            repo.set_external_link_status(s, link.id, "closed" if action == "closed" else "open")
+            # touches IssueRow.state. Week 66: the project's status map decides what a change
+            # means (at most "ready for retest"), through `core.tickets.sync`.
+            from core.integrations.github_issues import IssueState
+            from core.tickets.sync import Remote, apply_remote
+
+            gh = IssueState(
+                state=str(issue.get("state") or ("closed" if action == "closed" else "open")),
+                state_reason=issue.get("state_reason"),
+                assignee=(issue.get("assignee") or {}).get("login"), labels=(),
+            )  # fmt: skip
+            repo.set_external_link_status(s, link.id, "closed" if gh.state == "closed" else "open")
+            apply_remote(s, org_id, "github", link.external_id,
+                         Remote(gh.status, gh.state == "closed", None, gh.assignee))  # fmt: skip
         return {"status": "ok"}
 
     @app.post("/integrations/jira/webhook/{org_id}/{secret}", include_in_schema=False)
@@ -1694,6 +1711,13 @@ def create_app(app_state: AppState) -> FastAPI:
             ) or {}
             new_status = "closed" if status_category.get("key") == "done" else "open"
             repo.set_external_link_status(s, link.id, new_status)
+            from core.tickets.sync import Remote, apply_remote
+
+            fields = issue.get("fields") or {}
+            apply_remote(s, org_id, "jira", key, Remote(
+                str((fields.get("status") or {}).get("name") or ""), new_status == "closed",
+                status_category.get("key"), (fields.get("assignee") or {}).get("displayName"),
+            ))  # fmt: skip
         return {"status": "ok"}
 
     @app.get(
@@ -2128,6 +2152,8 @@ def create_app(app_state: AppState) -> FastAPI:
     register_collab_routes(app)
     register_acceptance_routes(app)
     register_rules_routes(app)
+    register_notify_routes(app)
+    register_ticket_routes(app)
     return app
 
 

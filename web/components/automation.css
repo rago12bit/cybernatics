@@ -169,3 +169,181 @@
     padding: 0.1rem 0;
   }
 }
+
+/* The rule editor (Week 66, plan §55.7). */
+.ds-ed-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.ds-ed-row > label,
+.ds-ed-sub {
+  font-weight: 600;
+}
+.ds-ed input:not([type="checkbox"]),
+.ds-ed select,
+.ds-ed textarea {
+  font: inherit;
+  padding: 0.35rem 0.5rem;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+}
+.ds-ed-block {
+  border: 1px solid var(--ds-rule);
+  border-radius: var(--ds-radius-panel, 8px);
+  padding: 0.6rem 0.9rem 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-width: 0;
+}
+.ds-ed-block legend {
+  padding: 0 0.3rem;
+}
+.ds-ed-inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+.ds-ed-inline input[type="number"] {
+  width: 6rem;
+}
+.ds-ed-tabs {
+  display: flex;
+  gap: 0.3rem;
+}
+.ds-ed-tabs [aria-pressed="true"] {
+  outline: 2px solid var(--ds-brand);
+}
+.ds-ed-conds,
+.ds-ed-actions {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+.ds-ed-cond,
+.ds-ed-action {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+}
+.ds-ed-action > p {
+  flex-basis: 100%;
+}
+.ds-ed-cond input,
+.ds-ed-action input {
+  flex: 1 1 10rem;
+  width: auto;
+}
+.ds-ed-cond select,
+.ds-ed-action select,
+.ds-ed-inline select {
+  width: auto;
+  flex: 0 1 auto;
+}
+.ds-ed-rego textarea {
+  width: 100%;
+  font-family: var(--ds-font-mono);
+  font-size: 0.85rem;
+}
+.ds-ed-rego-frame,
+.ds-ed-module,
+.ds-ed-pre {
+  font-family: var(--ds-font-mono);
+  font-size: 0.8rem;
+  color: var(--ds-muted);
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.ds-ed-module {
+  color: inherit;
+  padding: 0.5rem;
+  border: 1px solid var(--ds-rule);
+}
+.ds-ed-check {
+  display: inline-flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+.ds-au-gallery {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+  gap: 0.6rem;
+}
+.ds-au-gallery li {
+  border: 1px solid var(--ds-rule);
+  border-radius: var(--ds-radius-panel, 8px);
+  padding: 0.6rem 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+/* The inbox (Week 66, plan §49). */
+.ds-in-item {
+  border-bottom: 1px solid var(--ds-rule);
+  padding: 0.4rem 0 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+.ds-in-unread .ds-in-head {
+  font-weight: 600;
+}
+.ds-in-head,
+.ds-in-body {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.ds-in-body {
+  white-space: pre-wrap;
+}
+.ds-in-dot {
+  color: var(--ds-brand);
+  font-size: 0.85rem;
+}
+.ds-in-link {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Notification settings (Week 66). */
+.ds-np-table th[scope="row"] {
+  font: inherit;
+  font-weight: normal;
+  text-transform: none;
+  letter-spacing: normal;
+  color: inherit;
+  background: none;
+}
+.ds-np-caption {
+  text-align: left;
+  color: var(--ds-muted);
+  padding-bottom: 0.3rem;
+}
+.ds-np-table select {
+  font: inherit;
+  max-width: 100%;
+}
+.ds-np .ds-ed-row input,
+.ds-np .ds-ed-row select {
+  font: inherit;
+  padding: 0.35rem 0.5rem;
+  max-width: 24rem;
+}

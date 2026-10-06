@@ -76,8 +76,15 @@ ACTIONS: dict[str, Action] = {
         Action("request_fix", "Request a verified fix", ("issue",), ("max_per_day",),
                help="Starts the verified-fix agent. Counts against the AI budget, and at most "
                     "max_per_day (default 3) per rule per day."),
-        Action("notify", "Notify", ("issue", "project"), ("message",),
-               help="Posts to the organization's Slack, Discord and outbound webhook."),
+        Action("group", "Put in a group", ("issue",), ("name",),
+               help="The project's group of that name, made if it does not exist. One ticket "
+                    "tracks a group."),
+        Action("ticket", "File or update its ticket", ("issue",), (),
+               help="Where the project's ticket settings say: Jira or GitHub Issues. An issue in "
+                    "a group goes on the group's ticket."),
+        Action("notify", "Notify", ("issue", "project"), ("message", "people"),
+               help="Posts to the team channels (Slack, Discord, Teams, the webhook) as the team "
+                    "chose; people named get it in their inbox and by email as they chose."),
     )
 }  # fmt: skip
 

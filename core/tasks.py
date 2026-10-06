@@ -50,6 +50,9 @@ celery_app.conf.beat_schedule = {
     # triggers no event carries (a quiet project, a schedule).
     "outbox": {"task": "bulwark.dispatch_outbox", "schedule": 10.0},
     "rules-sweep": {"task": "bulwark.rules_sweep", "schedule": 300.0},
+    # Week 66 (plan §49): the daily digest at each person's hour, and ticket sync both ways.
+    "notification-digest": {"task": "bulwark.notification_digest", "schedule": 600.0},
+    "tickets-sync": {"task": "bulwark.tickets_sync", "schedule": 600.0},
 }
 
 
@@ -251,6 +254,37 @@ def dispatch_outbox_task() -> int:
             set_session_org(s, org_id)
             total += drain(s, org_id)
     return total
+
+
+@celery_app.task(name="bulwark.notification_digest", ignore_result=True)  # type: ignore[untyped-decorator]
+def notification_digest_task() -> int:
+    """Each organization's digests whose hour has come (plan §49)."""
+    from core.notify.service import run_digests
+    from core.persistence.db import get_session_factory
+    from core.tenancy import set_session_org
+
+    sent = 0
+    for org_id in _org_ids():
+        with get_session_factory()() as s:
+            set_session_org(s, org_id)
+            r = run_digests(s, org_id)
+            sent += r.emails + r.team_messages
+    return sent
+
+
+@celery_app.task(name="bulwark.tickets_sync", ignore_result=True)  # type: ignore[untyped-decorator]
+def tickets_sync_task() -> int:
+    """Linked tickets not synced for ten minutes, both ways (plan §49)."""
+    from core.persistence.db import get_session_factory
+    from core.tenancy import set_session_org
+    from core.tickets.sync import sync_due
+
+    n = 0
+    for org_id in _org_ids():
+        with get_session_factory()() as s:
+            set_session_org(s, org_id)
+            n += sync_due(s, org_id)
+    return n
 
 
 @celery_app.task(name="bulwark.rules_sweep", ignore_result=True)  # type: ignore[untyped-decorator]

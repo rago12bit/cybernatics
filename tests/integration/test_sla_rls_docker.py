@@ -38,6 +38,10 @@ def two_orgs(sessions: sessionmaker[Session]) -> Iterator[tuple[str, str]]:  # n
         for org in (a, b):
             set_session_org(s, org)
             for table in (
+                "notifications",
+                "issue_watchers",
+                "notification_prefs",
+                "ticket_configs",
                 "rule_runs",
                 "automation_rules",
                 "risk_acceptance_issues",
@@ -53,11 +57,16 @@ def two_orgs(sessions: sessionmaker[Session]) -> Iterator[tuple[str, str]]:  # n
                 s.execute(text(f"DELETE FROM {table} WHERE org_id = :o"), {"o": org})
             s.execute(text("DELETE FROM findings WHERE scan_id IN "
                            "(SELECT id FROM scans WHERE org_id = :o)"), {"o": org})  # fmt: skip
+            s.execute(text("DELETE FROM external_issue_links WHERE org_id = :o"), {"o": org})
+            s.execute(text("UPDATE issues SET group_id = NULL WHERE asset_id IN "
+                           "(SELECT id FROM assets WHERE org_id = :o)"), {"o": org})  # fmt: skip
+            s.execute(text("DELETE FROM issue_groups WHERE org_id = :o"), {"o": org})
             s.execute(text("DELETE FROM issues WHERE asset_id IN "
                            "(SELECT id FROM assets WHERE org_id = :o)"), {"o": org})  # fmt: skip
             s.execute(text("DELETE FROM scans WHERE org_id = :o"), {"o": org})
             s.execute(text("DELETE FROM engagements WHERE org_id = :o"), {"o": org})
             s.execute(text("DELETE FROM assets WHERE org_id = :o"), {"o": org})
+            s.execute(text("DELETE FROM api_tokens WHERE org_id = :o"), {"o": org})
         s.execute(text("DELETE FROM organizations WHERE id IN (:a, :b)"), {"a": a, "b": b})
         s.commit()
 

@@ -96,6 +96,20 @@ def apply_to_issue(ctx: Context, spec: dict[str, Any], issue: IssueRow) -> dict[
             return _result(kind, issue.id, "changed")
         if kind == "request_fix":
             return _request_fix(ctx, spec, issue)
+        if kind == "group":
+            from core.tickets.groups import get_or_create, set_group
+
+            group = get_or_create(ctx.s, ctx.org_id, issue.asset_id, spec["name"], actor=ctx.actor)
+            changed = set_group(ctx.s, ctx.org_id, issue, group, actor=ctx.actor)
+            return _result(kind, issue.id, "changed" if changed else "unchanged", spec["name"])
+        if kind == "ticket":
+            from core.tickets.sync import TicketError, file
+
+            try:
+                links = file(ctx.s, ctx.org_id, issue, actor=ctx.actor)
+            except TicketError as exc:
+                return _result(kind, issue.id, "skipped", str(exc))
+            return _result(kind, issue.id, "changed", links[0].external_id if links else "")
     except AssignError as exc:
         ctx.s.rollback()
         return _result(kind, issue.id, "failed", str(exc))
@@ -165,11 +179,31 @@ def notify(
     if len(subjects) > 10:
         lines.append(f"…and {len(subjects) - 10} more")
     subject = ",".join(sid for sid, _ in subjects[:50])
+    told = 0
+    if spec.get("people"):
+        from core.collab.assign import AssignError, resolve
+        from core.notify.service import notify_people
+
+        actors = []
+        for handle in spec["people"]:
+            try:
+                actors.append(resolve(ctx.s, ctx.org_id, handle).actor)
+            except AssignError:
+                continue
+        first = subjects[0][0] if subjects else None
+        issue = ctx.s.get(IssueRow, first) if first else None
+        link = f"/app/projects/{issue.asset_id}/issues/{issue.id}" if issue else "/app/automation"
+        told = notify_people(ctx.s, ctx.org_id, actors, lines[0][:300], "\n".join(lines[1:]),
+                             link, actor=ctx.actor)  # fmt: skip
     try:
         sent = send_rule_message(ctx.s, ctx.org_id, "\n".join(lines))
     except Exception as exc:  # noqa: BLE001
         log.warning("rule %s notify failed", ctx.rule.id, exc_info=True)
         return _result("notify", subject, "failed", f"{type(exc).__name__}: {exc}")
+    if told:
+        sent = [*sent, f"{told} {'person' if told == 1 else 'people'}"]
     if not sent:
-        return _result("notify", subject, "skipped", "no Slack, Discord or webhook is configured")
+        return _result(
+            "notify", subject, "skipped", "no team channel is configured and nobody is named"
+        )
     return _result("notify", subject, "changed", f"sent to {', '.join(sent)}")

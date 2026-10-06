@@ -475,6 +475,7 @@ class IntegrationSettingsView(BaseModel):
     jira_configured: bool
     jira_base_url: str | None
     jira_project_key: str | None
+    teams_configured: bool = False
 
 
 class SaveIntegrationSettingsRequest(BaseModel):
@@ -495,6 +496,7 @@ class SaveIntegrationSettingsRequest(BaseModel):
     jira_api_token: str | None = None
     jira_project_key: str | None = None
     jira_webhook_secret: str | None = None
+    teams_webhook_url: str | None = None
 
 
 class GenerateHypothesesResult(BaseModel):
