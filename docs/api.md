@@ -1168,6 +1168,50 @@ Get Metric
 - `to` (query)
 - `group` (query)
 
+## `GET /v2/me`
+
+Me
+
+
+## `PUT /v2/me/role`
+
+Choose Role
+
+
+## `GET /v2/dashboards`
+
+List Dashboards
+
+
+## `POST /v2/dashboards`
+
+Create Dashboard
+
+
+## `GET /v2/dashboards/{dashboard_id}`
+
+Get Dashboard
+
+- `dashboard_id` (path, required)
+
+## `PUT /v2/dashboards/{dashboard_id}`
+
+Save Dashboard
+
+- `dashboard_id` (path, required)
+
+## `DELETE /v2/dashboards/{dashboard_id}`
+
+Delete Dashboard
+
+- `dashboard_id` (path, required)
+
+## `POST /v2/dashboards/{dashboard_id}/copy`
+
+Copy Dashboard
+
+- `dashboard_id` (path, required)
+
 ## Live progress (WebSocket)
 
 `GET /scans/{scan_id}/ws` (not part of OpenAPI).

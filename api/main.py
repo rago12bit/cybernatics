@@ -41,6 +41,7 @@ from api.collab import register_collab_routes
 from api.compliance import register_compliance_routes
 from api.components import register_component_routes
 from api.connectors import register_connector_routes
+from api.dashboards import register_dashboard_routes
 from api.dedup import register_dedup_routes
 from api.deps import (
     AppState,
@@ -2173,6 +2174,7 @@ def create_app(app_state: AppState) -> FastAPI:
     register_vex_routes(app)
     register_compliance_routes(app)
     register_metric_routes(app)
+    register_dashboard_routes(app)
     return app
 
 

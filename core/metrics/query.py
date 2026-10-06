@@ -20,6 +20,7 @@ from typing import Any
 from sqlalchemy import Select, and_, case, func, or_, select
 from sqlalchemy.orm import Session
 
+from core.collab.people import names
 from core.metrics.definitions import BY_ID
 from core.persistence.models import (
     AdvisoryImpact,
@@ -274,6 +275,13 @@ def backlog_age(s: Session, org_id: str, f: Filters, sc: Scope, now: datetime) -
     }
 
 
+def _name_assignees(s: Session, org_id: str, rows: list[dict[str, Any]]) -> None:
+    """A person's name beside their actor id ("token:<prefix>"), for showing."""
+    known = names(s, org_id, {r["assignee"] for r in rows if r.get("assignee")})
+    for r in rows:
+        r["assignee_name"] = known.get(r["assignee"], r["assignee"]) if r.get("assignee") else None
+
+
 def past_sla(s: Session, org_id: str, f: Filters, sc: Scope, now: datetime) -> dict[str, Any]:
     conds = [*_where(MetricOpenIssue, org_id, sc, per_issue=True), MetricOpenIssue.due_at < now]
     total = s.scalar(select(func.count()).select_from(MetricOpenIssue).where(*conds)) or 0
@@ -301,6 +309,7 @@ def past_sla(s: Session, org_id: str, f: Filters, sc: Scope, now: datetime) -> d
                 "assignee": assignee,
             }
         )
+    _name_assignees(s, org_id, rows)
     return {
         "value": total,
         "counts": {"past_sla": total},
@@ -732,6 +741,16 @@ def issues(
         conds = _where(MetricOpenIssue, org_id, sc, per_issue=True)
         if kind == "past_sla":
             conds.append(MetricOpenIssue.due_at < now)
+            if f.start or f.end:
+                # SLA adherence's "still open past the deadline": deadlines in the period, before
+                # today (due today and not fixed is not late yet).
+                start, end = period(f, today=now.date())
+                first = datetime.combine(start, time.min, tzinfo=timezone.utc)
+                today = datetime.combine(now.date(), time.min, tzinfo=timezone.utc)
+                hi = min(
+                    datetime.combine(end + timedelta(days=1), time.min, tzinfo=timezone.utc), today
+                )
+                conds += [MetricOpenIssue.due_at >= first, MetricOpenIssue.due_at < hi]
         if band:
             conds.append(MetricOpenIssue.band == band)
         if portfolio:
@@ -803,4 +822,5 @@ def issues(
             }
         )
     rows.sort(key=lambda r: r["id"])
+    _name_assignees(s, org_id, rows)
     return {"rows": rows, "next": rows[-1]["id"] if more and rows else None}

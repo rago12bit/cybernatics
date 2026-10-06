@@ -326,3 +326,40 @@ def test_nothing_of_another_org_and_the_definitions(env: Env) -> None:
     with env.sessions() as s:  # a project removed: its rows go with it
         n = s.scalar(select(func.count()).select_from(MetricOpenIssue))
         assert n and s.get(Asset, env.asset_id) is not None
+
+
+def _listed(env: Env, **params: Any) -> list[str]:
+    ids: list[str] = []
+    after = None
+    while True:
+        q = {**params, "limit": 200, **({"after": after} if after else {})}
+        r = env.client.get("/v2/metrics/issues", params=q, headers=AUTH)
+        assert r.status_code == 200, r.text
+        ids += [row["id"] for row in r.json()["rows"]]
+        after = r.json()["next"]
+        if not after:
+            return ids
+
+
+def test_every_number_lists_exactly_the_issues_it_counts(env: Env) -> None:
+    """Principle 11: a number opens the Issues behind it -- the same Issues, as many as it says."""
+    _history(env, n=150, seed=71)
+    for group in ("band", "project"):
+        for row in metric(env, "open_issues", group=group)["rows"]:
+            d = row["drill"]
+            key = {"band": "band", "project": "in_project"}[group]
+            assert len(_listed(env, kind="open", **{key: d[group]})) == row["count"], row
+    for row in metric(env, "backlog_age")["rows"]:
+        assert len(_listed(env, kind="open", older_than=row["drill"]["older_than"])) == row["count"]
+    for row in metric(env, "mttr")["rows"]:
+        assert len(_listed(env, kind="fixed", band=row["drill"]["band"])) == row["fixed"], row
+    nvf = metric(env, "new_vs_fixed")
+    assert len(_listed(env, kind="opened")) == nvf["counts"]["new"]
+    assert len(_listed(env, kind="fixed")) == nvf["counts"]["fixed"]
+    past = metric(env, "past_sla")
+    assert len(_listed(env, kind="past_sla")) == past["value"]
+    sla = metric(env, "sla_adherence")
+    start, end = sla["period"]
+    late = _listed(env, kind="past_sla", **{"from": start, "to": end})
+    assert len(late) == sla["counts"]["open_past_deadline"] > 0
+    assert len(late) < past["value"]  # only deadlines in the period, not every overdue Issue

@@ -1962,3 +1962,37 @@ class MetricDirty(Base):
     )
     scope: Mapped[str] = mapped_column(String(40), primary_key=True)
     marked_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+
+
+class Dashboard(Base):
+    """A saved dashboard (plan §48.2, §55.4): a grid of metric widgets, each with its own filters.
+    Its owner edits it; sharing it with a role lists it for everyone who picked that role, to view
+    or copy. `version` goes up on every save, so two people editing at once cannot overwrite each
+    other unseen."""
+
+    __tablename__ = "dashboards"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"), index=True)
+    name: Mapped[str] = mapped_column(String(80))
+    owner: Mapped[str] = mapped_column(String(200))
+    shared_with: Mapped[list[str]] = mapped_column(JsonType, default=list)
+    widgets: Mapped[list[dict[str, Any]]] = mapped_column(JsonType, default=list)
+    version: Mapped[int] = mapped_column(Integer, default=1)
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+    updated_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+    updated_by: Mapped[str] = mapped_column(String(200))
+
+    __table_args__ = (Index("ix_dashboards_org_owner", "org_id", "owner"),)
+
+
+class PersonRole(Base):
+    """Which home a person lands on -- lead, engineer or tester -- picked by the person, until user
+    accounts carry roles (plan Week 75)."""
+
+    __tablename__ = "person_roles"
+
+    org_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"), primary_key=True)
+    person: Mapped[str] = mapped_column(String(200), primary_key=True)
+    role: Mapped[str] = mapped_column(String(16))
+    updated_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)

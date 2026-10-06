@@ -3,6 +3,7 @@ import type { VexJustification, AsvsBenchmark, ComplianceFramework, EvidencePack
   ImportCreated, ImportView, ParserInfo, ProjectTest, RevertView,
   AssetSummary, AssetVerification, AttackPath, BulkTriageResult,
   StrideRow, ThreatModel, RetentionSettings, Citation, CopilotConversation, CopilotMessage, CostSummary, DependenciesView, Finding, FindingsPage, FindingsQuery, GenerateHypothesesResult, Guidance, GuidanceApi, Hypothesis, IssueHistoryEvent, ProjectOverview, Remediation, ScanComparison, ScanCost, ScanSummary, ScanView, TriageAssistantView, TriageStatus, VerifiedFixStarted, VerifiedFixView } from "./types";
+import type { Dashboard, DashboardList, Me, MetricIssue, MetricResult, Role, Widget } from "./dashboard";
 import { findingsQueryString } from "./format";
 
 export const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/$/, "");
@@ -809,3 +810,21 @@ export const createEvidencePack = (body: { start: string; end: string; framework
 export const listEvidencePacks = () => request<EvidencePack[]>("/v2/evidence-packs");
 export const downloadEvidencePack = (id: string) =>
   download(`/v2/evidence-packs/${enc(id)}/bundle`, "evidence-pack.zip", "Could not download the evidence pack.");
+
+/** Metrics and dashboards (plan §48.1, §48.2, §55.4). */
+export const getMetric = (metric: string, params: URLSearchParams, signal?: AbortSignal) =>
+  request<MetricResult>(`/v2/metrics/${enc(metric)}?${params.toString()}`, { signal });
+export const getMetricIssues = (params: URLSearchParams) =>
+  request<{ rows: MetricIssue[]; next: string | null }>(`/v2/metrics/issues?${params.toString()}`);
+export const getMe = () => request<Me>("/v2/me");
+export const setMyRole = (role: Role) => request<Me>("/v2/me/role", json("PUT", { role }));
+export const listDashboards = () => request<DashboardList>("/v2/dashboards");
+export const getDashboard = (id: string) => request<Dashboard>(`/v2/dashboards/${enc(id)}`);
+export const createDashboard = (body: { name: string; shared_with?: Role[]; widgets: Widget[] }) =>
+  request<Dashboard>("/v2/dashboards", json("POST", body));
+export const saveDashboard = (id: string, body: { version: number; name?: string; shared_with?: Role[]; widgets?: Widget[] }) =>
+  request<Dashboard>(`/v2/dashboards/${enc(id)}`, json("PUT", body));
+export const deleteDashboard = (id: string) => request<void>(`/v2/dashboards/${enc(id)}`, { method: "DELETE" });
+export const copyDashboard = (id: string) => request<Dashboard>(`/v2/dashboards/${enc(id)}/copy`, { method: "POST" });
+export const listMetrics = () =>
+  request<{ id: string; name: string; definition: string; unit: string; period: boolean }[]>("/v2/metrics");

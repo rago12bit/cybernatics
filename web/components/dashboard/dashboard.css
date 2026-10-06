@@ -1,0 +1,425 @@
+/* Dashboards (plan §55.4). Tokens only; react-grid-layout positions the cells itself. */
+.dash {
+  --dash-series-0: var(--ds-brand, #1f6f78);
+  --dash-series-1: var(--ds-sev-low, #3b6ea8);
+  max-width: 80rem;
+}
+.dash-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--ds-space-2, 1rem);
+  margin-bottom: var(--ds-space-2, 1rem);
+}
+.dash-name {
+  margin: 0.25rem 0 0;
+}
+.dash-name:focus {
+  outline: none;
+}
+.dash-name:focus-visible {
+  outline: 2px solid var(--ds-brand);
+  outline-offset: 2px;
+}
+.dash-meta {
+  margin: 0.25rem 0 0;
+}
+.dash-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+.dash-label {
+  font-weight: 600;
+  font-size: var(--ds-text-2, 0.875rem);
+}
+.dash-muted {
+  color: var(--ds-muted);
+}
+.dash-small {
+  font-size: var(--ds-text-1, 0.75rem);
+}
+.dash-error {
+  color: var(--ds-sev-critical);
+  margin: 0.5rem 0;
+}
+.dash-notice {
+  margin: 0 0 var(--ds-space-2, 1rem);
+}
+.dash-empty {
+  padding: var(--ds-space-3, 1.5rem);
+  border: 1px dashed var(--ds-rule);
+  border-radius: var(--ds-radius-panel, 6px);
+  color: var(--ds-muted);
+}
+
+/* Edit bar */
+.dash-editbar {
+  border: 1px solid var(--ds-rule);
+  border-radius: var(--ds-radius-panel, 6px);
+  background: var(--ds-raised);
+  padding: var(--ds-space-2, 1rem);
+  margin-bottom: var(--ds-space-2, 1rem);
+}
+.dash-edit-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ds-space-2, 1rem);
+  align-items: flex-end;
+}
+.dash-edit-fields input[type="text"],
+.dash-edit-fields input:not([type]) {
+  display: block;
+  min-width: min(20rem, 100%);
+  margin-top: 0.25rem;
+}
+.dash-share {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.dash-share legend {
+  float: left;
+  margin-right: 0.5rem;
+}
+
+/* Grid */
+.dash-grid-host {
+  min-height: 4rem;
+}
+.dash-cell {
+  display: flex;
+}
+.dash-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-2, 1rem);
+}
+.dash-frame {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+.dash-grid.editing .dash-frame {
+  outline: 1px dashed var(--ds-rule);
+  outline-offset: 2px;
+}
+.dash-handle {
+  align-self: flex-start;
+  font: inherit;
+  font-size: var(--ds-text-1, 0.75rem);
+  padding: 0.15rem 0.5rem;
+  margin-bottom: 0.25rem;
+  border: 1px solid var(--ds-rule);
+  border-radius: var(--ds-radius-input, 2px);
+  background: var(--ds-surface);
+  color: var(--ds-ink);
+  cursor: grab;
+}
+.dash-handle:focus-visible {
+  outline: 3px solid var(--ds-brand);
+  outline-offset: 2px;
+}
+.dash-cell:has(.dash-handle:focus-visible) .dash-widget {
+  border-color: var(--ds-brand);
+  box-shadow: 0 0 0 2px var(--ds-brand);
+}
+.react-grid-item.react-grid-placeholder {
+  background: var(--ds-brand);
+  opacity: 0.15;
+  border-radius: var(--ds-radius-panel, 6px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .react-grid-layout,
+  .react-grid-item {
+    transition: none !important;
+  }
+}
+
+/* A widget */
+.dash-widget {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--ds-raised);
+  border: 1px solid var(--ds-rule);
+  border-radius: var(--ds-radius-panel, 6px);
+  padding: 0.75rem 1rem;
+  overflow: hidden;
+}
+.dash-widget-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+.dash-widget-title {
+  margin: 0;
+  font-size: var(--ds-text-3, 1rem);
+}
+.dash-title-button {
+  font: inherit;
+  font-weight: 600;
+  color: var(--ds-ink);
+  background: none;
+  border: 0;
+  padding: 0;
+  text-align: left;
+  cursor: help;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+}
+.dash-title-button:focus-visible {
+  outline: 2px solid var(--ds-brand);
+  outline-offset: 2px;
+}
+.dash-widget-tools {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+.dash-widget-tools .ds-button {
+  font-size: var(--ds-text-1, 0.75rem);
+  padding: 0.2rem 0.5rem;
+}
+.dash-filters {
+  margin: 0.25rem 0 0;
+  font-size: var(--ds-text-1, 0.75rem);
+  color: var(--ds-muted);
+}
+.dash-widget-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  margin-top: 0.5rem;
+}
+.dash-headline {
+  font-size: var(--ds-text-4, 1.25rem);
+  margin: 0 0 0.35rem;
+}
+.dash-detail {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 0.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  font-size: var(--ds-text-2, 0.875rem);
+}
+
+/* Bars: one link per bar */
+.dash-bars {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.dash-bar {
+  display: grid;
+  grid-template-columns: minmax(4rem, 9rem) 1fr auto;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.2rem 0;
+  color: var(--ds-ink);
+  text-decoration: none;
+  font-size: var(--ds-text-2, 0.875rem);
+}
+a.dash-bar:hover .dash-bar-label,
+a.dash-bar:focus-visible .dash-bar-label {
+  text-decoration: underline;
+}
+.dash-bar-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dash-bar-track {
+  height: 0.65rem;
+  background: var(--ds-surface);
+  border-radius: 2px;
+}
+.dash-bar-fill {
+  display: block;
+  height: 100%;
+  background: var(--dash-series-0);
+  border-radius: 2px;
+}
+.dash-bar-value {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Lines and columns */
+.dash-chart-block + .dash-chart-block {
+  margin-top: 0.75rem;
+}
+.dash-chart-label {
+  margin: 0 0 0.25rem;
+  font-size: var(--ds-text-1, 0.75rem);
+  color: var(--ds-muted);
+}
+.dash-figure {
+  margin: 0;
+}
+.dash-chart {
+  display: block;
+  width: 100%;
+  height: 5.5rem;
+}
+.dash-axis {
+  stroke: var(--ds-rule);
+  stroke-width: 1;
+}
+.dash-line {
+  fill: none;
+  stroke: var(--dash-series-0);
+  stroke-width: 2;
+}
+.dash-dot {
+  fill: var(--dash-series-0);
+}
+rect.dash-series-0,
+.dash-swatch.dash-series-0 {
+  fill: var(--dash-series-0);
+  background: var(--dash-series-0);
+}
+rect.dash-series-1,
+.dash-swatch.dash-series-1 {
+  fill: var(--dash-series-1);
+  background: var(--dash-series-1);
+}
+.dash-legend {
+  display: flex;
+  gap: 1rem;
+  font-size: var(--ds-text-1, 0.75rem);
+  color: var(--ds-muted);
+  margin-top: 0.25rem;
+}
+.dash-swatch {
+  display: inline-block;
+  width: 0.7rem;
+  height: 0.7rem;
+  vertical-align: -1px;
+  border-radius: 2px;
+}
+
+/* Tables */
+.dash-table-wrap {
+  overflow-x: auto;
+}
+.dash-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: var(--ds-text-2, 0.875rem);
+  margin-bottom: 0.75rem;
+}
+.dash-table caption {
+  text-align: left;
+  font-size: var(--ds-text-1, 0.75rem);
+  color: var(--ds-muted);
+  padding-bottom: 0.25rem;
+}
+.dash-table th,
+.dash-table td {
+  text-align: left;
+  padding: 0.25rem 0.5rem 0.25rem 0;
+  border-bottom: 1px solid var(--ds-rule);
+  vertical-align: top;
+}
+.dash-table tbody th {
+  font: inherit;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--ds-ink);
+  background: none;
+}
+.dash-table thead th {
+  background: none;
+}
+.dash-widget-tools .ds-button[aria-pressed="true"] {
+  background: var(--ds-brand);
+  border-color: var(--ds-brand);
+  color: var(--ds-raised);
+}
+.dash-table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Dialogs */
+.dash-catalogue {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 60vh;
+  overflow: auto;
+}
+.dash-catalogue li {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--ds-rule);
+}
+.dash-catalogue p {
+  margin: 0.25rem 0 0;
+}
+.dash-filter-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.dash-filter-form fieldset {
+  border: 1px solid var(--ds-rule);
+  border-radius: var(--ds-radius-input, 2px);
+  padding: 0.5rem 0.75rem;
+}
+.dash-checks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.dash-checks-scroll {
+  max-height: 12rem;
+  overflow: auto;
+}
+
+@media (max-width: 719px) {
+  .dash-top .dash-row {
+    width: 100%;
+  }
+  .dash-bar {
+    grid-template-columns: minmax(3rem, 6rem) 1fr auto;
+  }
+}
+
+/* The site's global label, eyebrow and header colours are for its dark surfaces; on these
+   theme-following panels, use the theme's own. */
+.dash .eyebrow,
+.dash label,
+.dash legend,
+.dash-table thead th {
+  color: var(--ds-muted);
+}
+.dash-filter-form label,
+.dash-share label {
+  color: var(--ds-ink);
+}
+.dash-checks label,
+.dash-share label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  font: inherit;
+  letter-spacing: normal;
+  text-transform: none;
+}
+.dash-filter-form > label {
+  margin: 0.5rem 0 0;
+}
