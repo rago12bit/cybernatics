@@ -76,3 +76,20 @@ scanning the same thing (208 of the 209 unmatched findings were on package versi
 nothing for). With `--include-dev-deps`, **291 of 292** matched. The change is kept in the Trivy
 adapter and pinned by a regression test; the original run is preserved as
 `results/dedup-2026-09-25-v1-trivy-default-scope.json` for the record.
+
+## Dashboard metrics at one million Occurrences (plan §48.1, §60, Weeks 70–71)
+
+`scripts/bench-metrics.py` seeds 200 projects × 1,250 Issues × 4 scans (250,000 Issues and
+1,000,000 Occurrences) in Postgres. It times every metric 20 times as `bulwark_worker` under forced
+RLS, with no filter and with a portfolio, a project, a project tag and an Issue tag, plus the Issues
+behind a number. Budget: 300 ms at p95 for every widget.
+
+| | Result (Apple M5, Postgres 16.15 in Docker) |
+|---|---|
+| Slowest metric, p95 | **99 ms** (backlog age, Issue tag) |
+| Slowest request, p95 | **124 ms** (Issues fixed in the period, from the live `issues` table) |
+| Refresh, all 200 projects | 13.3 s |
+| Refresh, one project | 0.05 s |
+
+Full numbers: [`metrics/one-million-occurrences.json`](metrics/one-million-occurrences.json).
+What they mean, and what the first run caught: [ADR-0054](../docs/adr/0054-metrics-layer.md).

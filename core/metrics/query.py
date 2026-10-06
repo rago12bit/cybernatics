@@ -606,31 +606,34 @@ def advisory_impact(
     start, end = period(f, default_days=30, today=now.date())
     lo = datetime.combine(start, time.min, tzinfo=timezone.utc)
     hi = datetime.combine(end + timedelta(days=1), time.min, tzinfo=timezone.utc)
-    states = {
-        st.vuln_key: st
-        for st in s.scalars(
-            select(AdvisoryState).where(
-                AdvisoryState.org_id == org_id,
-                AdvisoryState.first_seen_at >= lo,
-                AdvisoryState.first_seen_at < hi,
-            )
+    # One join, so Postgres hashes the period's vulnerabilities instead of testing each impact
+    # against a list of keys.
+    q = (
+        select(
+            AdvisoryImpact.vuln_key,
+            func.count(func.distinct(AdvisoryImpact.asset_id)),
+            AdvisoryState.state,
+            AdvisoryState.first_seen_at,
         )
-    }
-    keys = sorted(states)
-    projects: dict[str, int] = {}
-    for k in range(0, len(keys), 500):
-        q = (
-            select(AdvisoryImpact.vuln_key, func.count(func.distinct(AdvisoryImpact.asset_id)))
-            .where(
-                AdvisoryImpact.org_id == org_id,
-                AdvisoryImpact.resolved_at.is_(None),
-                AdvisoryImpact.vuln_key.in_(keys[k : k + 500]),
-            )
-            .group_by(AdvisoryImpact.vuln_key)
+        .join(
+            AdvisoryState,
+            and_(
+                AdvisoryState.org_id == AdvisoryImpact.org_id,
+                AdvisoryState.vuln_key == AdvisoryImpact.vuln_key,
+            ),
         )
-        if sc.assets is not None:
-            q = q.where(AdvisoryImpact.asset_id.in_(sorted(sc.assets)))
-        projects.update({v: int(n) for v, n in s.execute(q)})
+        .where(
+            AdvisoryImpact.org_id == org_id,
+            AdvisoryImpact.resolved_at.is_(None),
+            AdvisoryState.first_seen_at >= lo,
+            AdvisoryState.first_seen_at < hi,
+        )
+        .group_by(AdvisoryImpact.vuln_key, AdvisoryState.state, AdvisoryState.first_seen_at)
+    )
+    if sc.assets is not None:
+        q = q.where(AdvisoryImpact.asset_id.in_(sorted(sc.assets)))
+    found = {v: (int(n), st, seen) for v, n, st, seen in s.execute(q)}
+    projects = {v: n for v, (n, _, _) in found.items()}
     kev = set(s.scalars(select(KevEntry.cve).where(KevEntry.cve.in_(list(projects)))))
     rows: list[dict[str, Any]] = sorted(
         (
@@ -638,8 +641,8 @@ def advisory_impact(
                 "vuln_key": v,
                 "projects": n,
                 "kev": v in kev,
-                "state": states[v].state,
-                "first_seen_at": _utc(states[v].first_seen_at),
+                "state": found[v][1],
+                "first_seen_at": _utc(found[v][2]),
             }
             for v, n in projects.items()
         ),
@@ -747,11 +750,16 @@ def issues(
         lo = datetime.combine(start, time.min, tzinfo=timezone.utc)
         hi = datetime.combine(end + timedelta(days=1), time.min, tzinfo=timezone.utc)
         col = IssueRow.first_seen_at if kind == "opened" else IssueRow.fixed_at
-        conds = [Asset.org_id == org_id, col >= lo, col < hi]
+        # The org's projects as a list, not a join: Postgres cannot estimate a join on assets
+        # under RLS and walks every Issue of the org (ADR-0054).
+        projects = (
+            sorted(sc.assets)
+            if sc.assets is not None
+            else list(s.scalars(select(Asset.id).where(Asset.org_id == org_id)))
+        )
+        conds = [IssueRow.asset_id.in_(projects), col >= lo, col < hi]
         if kind == "fixed":
             conds.append(IssueRow.state == "fixed")
-        if sc.assets is not None:
-            conds.append(IssueRow.asset_id.in_(sorted(sc.assets)))
         if band:
             conds.append(
                 func.coalesce(IssueRow.priority_override, IssueRow.priority_band, "none") == band
@@ -760,33 +768,38 @@ def issues(
             conds.append(IssueRow.asset_id == project)
         if after:
             conds.append(IssueRow.id > after)
-        q = (
-            select(IssueRow.id)
-            .join(Asset, Asset.id == IssueRow.asset_id)
-            .where(*conds)
-            .order_by(IssueRow.id)
-        )
+        q = select(IssueRow.id).where(*conds).order_by(IssueRow.id)
     ids = list(s.scalars(q.limit(limit + 1)))
     more = len(ids) > limit
     ids = ids[:limit]
     rows = []
-    for i, label in s.execute(
-        select(IssueRow, Asset.label)
-        .join(Asset, Asset.id == IssueRow.asset_id)
-        .where(IssueRow.id.in_(ids))  # noqa: E501
-    ):
+    cols = (IssueRow.id, IssueRow.asset_id, IssueRow.title, IssueRow.severity,
+            IssueRow.priority_override, IssueRow.priority_band, IssueRow.state,
+            IssueRow.first_seen_at, IssueRow.fixed_at, IssueRow.assignee)  # fmt: skip
+    found = list(s.execute(select(*cols).where(IssueRow.id.in_(ids))))
+    labels: dict[str, str] = {
+        aid: label
+        for aid, label in s.execute(
+            select(Asset.id, Asset.label).where(
+                Asset.org_id == org_id, Asset.id.in_(sorted({r[1] for r in found}))
+            )
+        )
+    }
+    for iid, aid, title, sev, override, band_, state, seen, fixed, who in found:
+        if aid not in labels:
+            continue  # not this org's (RLS already hides it on Postgres)
         rows.append(
             {
-                "id": i.id,
-                "project_id": i.asset_id,
-                "project": label,
-                "title": i.title,
-                "severity": i.severity,
-                "band": i.priority_override or i.priority_band,
-                "state": i.state,
-                "first_seen_at": _utc(i.first_seen_at),
-                "fixed_at": _utc(i.fixed_at),
-                "assignee": i.assignee,
+                "id": iid,
+                "project_id": aid,
+                "project": labels[aid],
+                "title": title,
+                "severity": sev,
+                "band": override or band_,
+                "state": state,
+                "first_seen_at": _utc(seen),
+                "fixed_at": _utc(fixed),
+                "assignee": who,
             }
         )
     rows.sort(key=lambda r: r["id"])
