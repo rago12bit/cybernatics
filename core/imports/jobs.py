@@ -135,6 +135,7 @@ def process_import(
             created_by=record.created_by,
             warnings=warnings,
             record=record,
+            components=result.components,
         )
         upload.unlink(missing_ok=True)  # applied or noticed as a duplicate: the file is done with
         return applied.record

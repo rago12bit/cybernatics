@@ -1,0 +1,186 @@
+/* The component inventory (plan §46.1). */
+.ds-comp {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+}
+.ds-comp h1,
+.ds-comp h2 {
+  margin: 0;
+}
+.ds-comp-meta {
+  margin: 0;
+  color: var(--ds-muted);
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+}
+.ds-comp-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+.ds-comp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+  flex: 1 1 12rem;
+}
+.ds-comp-lib {
+  flex: 3 1 20rem;
+}
+.ds-comp-field input {
+  width: 100%;
+  font-family: var(--ds-font-mono);
+}
+.ds-comp-error {
+  margin: 0;
+  color: var(--ds-sev-critical);
+}
+.ds-comp-warn {
+  margin: 0;
+  padding: 0.4rem 0.6rem;
+  border-left: 3px solid var(--ds-sev-medium);
+  background: var(--ds-raised);
+}
+.ds-comp-suggest,
+.ds-comp-top,
+.ds-comp-versions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.ds-comp-suggest,
+.ds-comp-top {
+  border: 1px solid var(--ds-rule);
+  border-radius: var(--ds-radius-panel);
+}
+.ds-comp-suggest li + li,
+.ds-comp-top li + li {
+  border-top: 1px solid var(--ds-rule);
+}
+.ds-comp-suggest button,
+.ds-comp-top button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.45rem 0.6rem;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+.ds-comp-suggest button:hover,
+.ds-comp-top button:hover,
+.ds-comp-suggest button:focus-visible,
+.ds-comp-top button:focus-visible {
+  background: var(--ds-raised);
+}
+.ds-comp-name {
+  font-family: var(--ds-font-mono);
+  font-weight: 600;
+}
+.ds-comp-answer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.ds-comp-verdict {
+  font-size: var(--ds-text-3, 1.1rem);
+  overflow-wrap: anywhere;
+}
+.ds-comp-versions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.ds-comp-v {
+  padding: 0.15rem 0.5rem;
+  border: 1px solid var(--ds-rule);
+  border-radius: 999px;
+  font-size: 0.85rem;
+}
+.ds-comp-v-true {
+  border-color: var(--ds-sev-high);
+}
+.ds-comp-v-null {
+  border-style: dashed;
+}
+.ds-comp-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.ds-comp-table caption {
+  text-align: left;
+  padding-bottom: 0.25rem;
+}
+.ds-comp-table th,
+.ds-comp-table td {
+  text-align: left;
+  vertical-align: top;
+  padding: 0.4rem 0.5rem;
+  border-bottom: 1px solid var(--ds-rule);
+  overflow-wrap: break-word; /* only a word too long for the column breaks */
+}
+.ds-comp-nowrap {
+  white-space: nowrap;
+}
+.ds-comp-table tbody th {
+  background: none;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: normal;
+  color: inherit;
+  font-size: inherit;
+}
+.ds-comp-reach-true {
+  font-weight: 600;
+}
+.ds-comp-paths {
+  font-family: var(--ds-font-mono);
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
+.ds-comp-reach .ds-comp-meta {
+  display: block;
+  font-size: 0.8rem;
+}
+.ds-comp-paths .ds-comp-meta {
+  font-family: var(--ds-font-sans);
+}
+@media (max-width: 640px) {
+  .ds-comp-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+  .ds-comp-table tr,
+  .ds-comp-table th,
+  .ds-comp-table td {
+    display: block;
+  }
+  .ds-comp-table tr {
+    padding: 0.4rem 0;
+    border-bottom: 1px solid var(--ds-rule);
+  }
+  .ds-comp-table th,
+  .ds-comp-table td {
+    border: 0;
+    padding: 0.1rem 0;
+  }
+  .ds-comp-nowrap {
+    white-space: normal;
+  }
+  .ds-comp-table td::before {
+    content: attr(data-label) ": ";
+    color: var(--ds-muted);
+  }
+}

@@ -992,6 +992,22 @@ Get Calendar
 - `project_id` (query)
 - `kinds` (query)
 
+## `GET /v2/components`
+
+Search Components
+
+- `purl` (query, required)
+- `version` (query)
+- `project_id` (query)
+
+## `GET /v2/libraries`
+
+List Libraries
+
+- `q` (query)
+- `ecosystem` (query)
+- `limit` (query)
+
 ## Live progress (WebSocket)
 
 `GET /scans/{scan_id}/ws` (not part of OpenAPI).

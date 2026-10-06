@@ -11,6 +11,7 @@
 
 .ds-shell-top {
   display: flex;
+  flex-wrap: wrap; /* the links wrap onto a second row rather than widen the page */
   align-items: center;
   gap: var(--ds-space-2);
   padding: var(--ds-space-1) var(--ds-space-3);

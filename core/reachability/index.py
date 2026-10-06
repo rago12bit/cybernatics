@@ -22,7 +22,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from core.models import Finding
+from core.models import Finding, Package
 from core.reachability.imports import FileImports, js_imports, python_imports
 from core.reachability.manifests import norm_py, read_manifest
 
@@ -88,9 +88,11 @@ class ReachabilityIndex:
     truncated: bool = False
 
     def assess(self, f: Finding) -> Reachability | None:
-        pkg = f.package
-        if pkg is None:
-            return None
+        return None if f.package is None else self.assess_package(f.package)
+
+    def assess_package(self, pkg: Package) -> Reachability:
+        """The same answer for a package with no finding: what the component inventory records
+        for every package in the SBOM."""
         eco = pkg.ecosystem
         if eco not in ("pypi", "npm"):
             return Reachability(None, f"Reachability is not analysed for {eco or 'this'} packages")

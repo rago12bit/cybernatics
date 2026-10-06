@@ -19,7 +19,7 @@ from typing import Any
 
 from core.adapters.base import RepoContext, ToolAdapter, ToolSpec
 from core.config import scratch_dir
-from core.imports.parsers.base import ParseLimits, ParseResult
+from core.imports.parsers.base import MAX_COMPONENTS, ParseLimits, ParseResult
 from core.models import Finding, finding_from_dict
 from core.runner import RunResult, run_tool
 from core.sandbox.runtime import SandboxRuntime
@@ -76,6 +76,25 @@ class IngestParseAdapter(ToolAdapter):
         return _decode(raw, self._parser_name).findings
 
 
+def _components(raw: Any) -> tuple[dict[str, str], ...]:
+    """The SBOM's packages as the container reported them, re-checked: the container is untrusted,
+    so only well-formed entries within the limits are kept."""
+    if not isinstance(raw, list):
+        return ()
+    out = []
+    for c in raw[:MAX_COMPONENTS]:
+        if not isinstance(c, dict) or not str(c.get("purl", "")).startswith("pkg:"):
+            continue
+        out.append(
+            {
+                "purl": str(c["purl"])[:2000],
+                "version": str(c.get("version") or "")[:200],
+                "path": str(c.get("path") or "")[:500],
+            }
+        )
+    return tuple(out)
+
+
 def _decode(raw: bytes, parser_name: str) -> ParseResult:
     """The container's JSON -> a ParseResult. Never raises: the container is untrusted too, so a
     malformed result is reported as an error rather than trusted or crashed on."""
@@ -91,6 +110,7 @@ def _decode(raw: bytes, parser_name: str) -> ParseResult:
             None if error is None else str(error),
             # A container that does not say, or says something odd, is not trusted to allow closing.
             doc.get("can_close_missing") is True,
+            () if error else _components(doc.get("components")),
         )
     except (ValueError, KeyError, TypeError, AttributeError) as exc:
         return ParseResult(

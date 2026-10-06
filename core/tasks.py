@@ -53,6 +53,8 @@ celery_app.conf.beat_schedule = {
     # Week 66 (plan §49): the daily digest at each person's hour, and ticket sync both ways.
     "notification-digest": {"task": "bulwark.notification_digest", "schedule": 600.0},
     "tickets-sync": {"task": "bulwark.tickets_sync", "schedule": 600.0},
+    # Week 67 (plan §46.1): SBOMs from before the component inventory, a few projects an hour.
+    "inventory-backfill": {"task": "bulwark.inventory_backfill", "schedule": 3600.0},
 }
 
 
@@ -301,6 +303,23 @@ def rules_sweep_task() -> int:
             out = sweep(s, org_id)
             fired += out.applied + out.held
     return fired
+
+
+@celery_app.task(name="bulwark.inventory_backfill", ignore_result=True)  # type: ignore[untyped-decorator]
+def inventory_backfill_task() -> int:
+    """Projects whose SBOMs predate the component inventory (plan §46.1), a few at a time; and
+    each library's usage counts, recounted."""
+    from core.inventory import backfill, recount_org
+    from core.persistence.db import get_session_factory
+    from core.tenancy import set_session_org
+
+    n = 0
+    for org_id in _org_ids():
+        with get_session_factory()() as s:
+            set_session_org(s, org_id)
+            n += backfill(s, org_id)
+            recount_org(s, org_id)
+    return n
 
 
 @celery_app.task(name="bulwark.recompute_priority", bind=True, acks_late=True, ignore_result=True)  # type: ignore[untyped-decorator]

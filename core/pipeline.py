@@ -13,12 +13,13 @@ from contextlib import ExitStack
 from pathlib import Path
 from typing import Any
 
+from core import inventory
 from core.adapters import ToolAdapter
 from core.correlation import correlate
 from core.dast.routes import extract_routes_from_workspace
 from core.ingest import IngestError
 from core.integrations.dispatch import notify_scan_result
-from core.models import Category, Finding
+from core.models import Category, Finding, Package
 from core.observability import bind_scan, in_context, mark_error, set_attributes, span
 from core.observability import metrics as obs
 from core.persistence import repo
@@ -27,7 +28,7 @@ from core.persistence.storage import ObjectStore
 from core.plugins.registry import PluginError, resolve_adapters
 from core.plugins.signing import PluginSignatureError
 from core.postprocess import finalize
-from core.reachability import analyze_or_none
+from core.reachability import ReachabilityIndex, analyze_or_none
 from core.risk import ensure_fresh
 from core.sbom.syft import SbomError, summarize
 from core.scan import ADAPTERS, ToolOutcome, detect_context, execute_tool
@@ -100,7 +101,9 @@ def _entrypoints(taint: Any) -> list[dict[str, Any]] | None:
     return sorted(out, key=lambda r: (r["route"], r["method"], r["path"], r["line"]))
 
 
-def _process_sbom(raw: bytes) -> tuple[list[Finding], dict[str, Any] | None]:
+def _process_sbom(
+    raw: bytes, reach: ReachabilityIndex | None = None
+) -> tuple[list[Finding], dict[str, Any] | None]:
     """Reshapes `syft`'s raw CycloneDX document into typosquat Findings (folded into the same
     correlate/finalize pipeline every other tool's Findings go through) and a JSON summary for the
     Dependencies screen (plan §20.5). Best-effort throughout: a corrupt SBOM, or Scorecard/deps.dev
@@ -128,6 +131,11 @@ def _process_sbom(raw: bytes) -> tuple[list[Finding], dict[str, Any] | None]:
         else:
             relation = "unknown"
         result = scorecard.get(p.purl)
+        used = (
+            reach.assess_package(Package(p.name, p.version, p.ecosystem))
+            if reach is not None
+            else None
+        )
         packages.append(
             {
                 "name": p.name,
@@ -138,6 +146,10 @@ def _process_sbom(raw: bytes) -> tuple[list[Finding], dict[str, Any] | None]:
                 "path": p.path,
                 "relation": relation,
                 "depends_on": list(sbom.graph.get(p.purl, ())),
+                # Whether the application's own code imports it (plan §46.1's "reachable"):
+                # null when that cannot be told, never a guessed "no".
+                "reachable": used.reachable if used is not None else None,
+                "reachable_reason": used.reason if used is not None else "",
                 "scorecard": (
                     {"score": result.score, "checks": result.checks, "date": result.date}
                     if result is not None
@@ -212,6 +224,7 @@ def _run_scan_job(
         source_label = scan.source_label
         ref = scan.ref
         asset_id = scan.asset_id
+        scan_org = scan.org_id
         github = (scan.github_repo, scan.github_pr_number, scan.github_installation_id)
         # Resolved once, up front, inside the same org-scoped session this scan's own org already
         # uses: a plugin tool not (or no longer) allowlisted, or whose image fails Sigstore
@@ -286,7 +299,7 @@ def _run_scan_job(
             # unreachable Scorecard/deps.dev must not fail the whole scan.
             if "syft" in raws:
                 with span("sbom"):
-                    sbom_findings, sbom_summary = _process_sbom(raws["syft"])
+                    sbom_findings, sbom_summary = _process_sbom(raws["syft"], reach)
     except IngestError as exc:
         log.warning("ingestion failed: %s", exc)
         return fail(str(exc))
@@ -335,6 +348,16 @@ def _run_scan_job(
                     updates = repo.classify_findings_for_pr(s, scan_id, findings)
             repo.add_findings(s, scan_id, findings, updates)
             repo.set_sbom_summary(s, scan_id, sbom_summary)
+            if status == "completed" and ref is None and asset_id and sbom_summary:
+                # The component inventory (plan §46.1): this project's SBOM is now this one.
+                try:
+                    inventory.record(
+                        s, org_id=scan_org, asset_id=asset_id, scan_id=scan_id,
+                        source=inventory.SCAN_SOURCE, packages=sbom_summary["packages"],
+                    )  # fmt: skip
+                except Exception:  # noqa: BLE001 - the inventory must not fail the scan
+                    log.exception("inventory: could not record the SBOM of scan %s", scan_id)
+                    s.rollback()
             repo.set_route_map(s, scan_id, route_map)
             repo.set_entrypoints(s, scan_id, _entrypoints(taint))
             repo.finish_scan(s, scan_id, status)

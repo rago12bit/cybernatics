@@ -8332,6 +8332,169 @@
           }
         }
       }
+    },
+    "/v2/components": {
+      "get": {
+        "tags": [
+          "components"
+        ],
+        "summary": "Search Components",
+        "operationId": "search_components_v2_components_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "purl",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 2000,
+              "title": "Purl"
+            }
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 500
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Version"
+            }
+          },
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComponentSearchOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/libraries": {
+      "get": {
+        "tags": [
+          "components"
+        ],
+        "summary": "List Libraries",
+        "operationId": "list_libraries_v2_libraries_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 300,
+              "default": "",
+              "title": "Q"
+            }
+          },
+          {
+            "name": "ecosystem",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 32
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ecosystem"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LibrarySummary"
+                  },
+                  "title": "Response List Libraries V2 Libraries Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -9838,6 +10001,75 @@
           "path"
         ],
         "title": "ComparedIssue"
+      },
+      "ComponentSearchOut": {
+        "properties": {
+          "library": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LibraryOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "constraint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Constraint"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/SummaryOut"
+          },
+          "versions": {
+            "items": {
+              "$ref": "#/components/schemas/VersionOut"
+            },
+            "type": "array",
+            "title": "Versions"
+          },
+          "uses": {
+            "items": {
+              "$ref": "#/components/schemas/UseOut"
+            },
+            "type": "array",
+            "title": "Uses"
+          },
+          "uncomparable": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Uncomparable"
+          },
+          "truncated": {
+            "type": "boolean",
+            "title": "Truncated"
+          },
+          "elapsed_ms": {
+            "type": "number",
+            "title": "Elapsed Ms"
+          }
+        },
+        "type": "object",
+        "required": [
+          "library",
+          "constraint",
+          "summary",
+          "versions",
+          "uses",
+          "uncomparable",
+          "truncated",
+          "elapsed_ms"
+        ],
+        "title": "ComponentSearchOut"
       },
       "ConnectorIn": {
         "properties": {
@@ -12540,6 +12772,72 @@
           "permissions"
         ],
         "title": "KindOut"
+      },
+      "LibraryOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "ecosystem": {
+            "type": "string",
+            "title": "Ecosystem"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "purl": {
+            "type": "string",
+            "title": "Purl"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "ecosystem",
+          "name",
+          "purl"
+        ],
+        "title": "LibraryOut"
+      },
+      "LibrarySummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "ecosystem": {
+            "type": "string",
+            "title": "Ecosystem"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "purl": {
+            "type": "string",
+            "title": "Purl"
+          },
+          "projects": {
+            "type": "integer",
+            "title": "Projects"
+          },
+          "versions": {
+            "type": "integer",
+            "title": "Versions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "ecosystem",
+          "name",
+          "purl",
+          "projects",
+          "versions"
+        ],
+        "title": "LibrarySummary"
       },
       "LinkOut": {
         "properties": {
@@ -16273,6 +16571,49 @@
         ],
         "title": "SuggestionRequest"
       },
+      "SummaryOut": {
+        "properties": {
+          "projects": {
+            "type": "integer",
+            "title": "Projects"
+          },
+          "portfolios": {
+            "type": "integer",
+            "title": "Portfolios"
+          },
+          "internet_facing": {
+            "type": "integer",
+            "title": "Internet Facing"
+          },
+          "exposure_unset": {
+            "type": "integer",
+            "title": "Exposure Unset"
+          },
+          "imported_by_app": {
+            "type": "integer",
+            "title": "Imported By App"
+          },
+          "direct": {
+            "type": "integer",
+            "title": "Direct"
+          },
+          "versions": {
+            "type": "integer",
+            "title": "Versions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "projects",
+          "portfolios",
+          "internet_facing",
+          "exposure_unset",
+          "imported_by_app",
+          "direct",
+          "versions"
+        ],
+        "title": "SummaryOut"
+      },
       "TagsIn": {
         "properties": {
           "tags": {
@@ -16867,6 +17208,92 @@
         ],
         "title": "TriageRequest"
       },
+      "UseOut": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "title": "Project Id"
+          },
+          "project": {
+            "type": "string",
+            "title": "Project"
+          },
+          "portfolio": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Portfolio"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "relation": {
+            "type": "string",
+            "title": "Relation"
+          },
+          "paths": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Paths"
+          },
+          "reachable": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reachable"
+          },
+          "reachable_reason": {
+            "type": "string",
+            "title": "Reachable Reason"
+          },
+          "exposure": {
+            "type": "string",
+            "title": "Exposure"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "scan_id": {
+            "type": "string",
+            "title": "Scan Id"
+          },
+          "seen_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Seen At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "project_id",
+          "project",
+          "portfolio",
+          "version",
+          "relation",
+          "paths",
+          "reachable",
+          "reachable_reason",
+          "exposure",
+          "source",
+          "scan_id",
+          "seen_at"
+        ],
+        "title": "UseOut"
+      },
       "ValidationError": {
         "properties": {
           "loc": {
@@ -17049,6 +17476,36 @@
           "updated_at"
         ],
         "title": "VerifiedFixView"
+      },
+      "VersionOut": {
+        "properties": {
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "projects": {
+            "type": "integer",
+            "title": "Projects"
+          },
+          "matches": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Matches"
+          }
+        },
+        "type": "object",
+        "required": [
+          "version",
+          "projects",
+          "matches"
+        ],
+        "title": "VersionOut"
       },
       "WatchersOut": {
         "properties": {

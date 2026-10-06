@@ -8,6 +8,7 @@ Issue changes, the ImportRecord and the outbox events all commit together or not
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any
@@ -15,6 +16,7 @@ from typing import Any
 from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
+from core import inventory
 from core.dedup.settings import rekey_for_asset
 from core.imports.reimport import ReimportPlan, plan_reimport
 from core.models.finding import Finding
@@ -172,6 +174,7 @@ def apply_import(
     created_by: str | None = None,
     warnings: list[str] | None = None,
     record: ImportRecord | None = None,
+    components: Sequence[Mapping[str, Any]] = (),
 ) -> ImportResult:
     """Apply an import. The same file (same digest) as the Test's latest import is a no-op that
     returns that import's original result -- "idempotent" (plan §42.1) -- decided under a lock on
@@ -273,6 +276,11 @@ def apply_import(
         record.warnings = list(warnings or [])
         record.changes = changes
 
+        if components:  # an SBOM: its packages are this Test's part of the project's inventory
+            inventory.record(
+                s, org_id=org_id, asset_id=engagement.asset_id, scan_id=scan.id,
+                source=inventory.import_source(test.id), packages=components, commit=False,
+            )  # fmt: skip
         repo.stage_issue_events(
             s,
             org_id=org_id,
@@ -358,6 +366,7 @@ def revert_latest_import(s: Session, *, org_id: str, test_id: str) -> RevertResu
             s.flush()  # issue changes first, so the findings' issue_id FKs resolve cleanly
             s.execute(delete(FindingRow).where(FindingRow.scan_id == scan_id))
             record.scan_id = None
+            inventory.forget_scan(s, scan_id)  # the Test's previous SBOM is current again
             s.flush()
             s.execute(delete(Scan).where(Scan.id == scan_id))
         record.status = "reverted"

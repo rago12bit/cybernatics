@@ -31,6 +31,7 @@ from core.models.finding import Finding
 log = logging.getLogger(__name__)
 
 MAX_WARNINGS_KEPT = 50
+MAX_COMPONENTS = 200_000  # the inventory's own per-SBOM limit (core/inventory/store.py)
 
 
 class ParseAborted(Exception):
@@ -59,6 +60,10 @@ class ParseContext:
     # importer then ignores `close_missing` (a request to close is not a licence to).
     can_close_missing: bool = True
     findings_seen: int = 0
+    # The packages an SBOM lists (CycloneDX, SPDX), for the component inventory (plan §46.1):
+    # `{"purl", "version", "path"}` each. Not findings, and they never close anything.
+    components: list[dict[str, str]] = field(default_factory=list)
+    dropped_components: int = 0
     unknown_severities: Counter[str] = field(default_factory=Counter)
     _started: float = field(default_factory=time.monotonic, repr=False)
     _dropped_warnings: int = field(default=0, repr=False)
@@ -68,6 +73,14 @@ class ParseContext:
             self.warnings.append(message)
         else:
             self._dropped_warnings += 1
+
+    def component(self, purl: str, version: str = "", path: str = "") -> None:
+        if not purl.startswith("pkg:"):
+            return
+        if len(self.components) >= MAX_COMPONENTS:
+            self.dropped_components += 1
+            return
+        self.components.append({"purl": purl[:2000], "version": version[:200], "path": path[:500]})
 
     def unknown_severity(self, label: str) -> None:
         """A severity this format does not define: imported as Info, and said so at the end."""
@@ -94,6 +107,7 @@ class ParseResult:
     warnings: list[str]
     error: str | None
     can_close_missing: bool = True
+    components: tuple[dict[str, str], ...] = ()
 
     @property
     def complete(self) -> bool:
@@ -147,6 +161,11 @@ class IngestParser(ABC):
                 f"{n} finding(s) use the severity {label!r}, which is not a known severity; "
                 "imported as Info"
             )
+        if ctx.dropped_components:
+            ctx.warn(
+                f"{ctx.dropped_components} packages past the first {MAX_COMPONENTS} were not added "
+                "to the component inventory"
+            )
         if ctx.error:
             log.warning("%s: %s", self.name, ctx.error)
 
@@ -157,7 +176,14 @@ def run_parser(
     """Run a parser to completion and collect everything it reports."""
     ctx = ParseContext(limits=limits or ParseLimits())
     findings = list(parser.parse(stream, ctx))
-    return ParseResult(parser.name, findings, ctx.all_warnings(), ctx.error, ctx.can_close_missing)
+    return ParseResult(
+        parser.name,
+        findings,
+        ctx.all_warnings(),
+        ctx.error,
+        ctx.can_close_missing,
+        tuple(ctx.components),
+    )
 
 
 def run_parser_on_bytes(

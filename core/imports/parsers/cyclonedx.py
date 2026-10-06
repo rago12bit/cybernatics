@@ -260,6 +260,7 @@ class CycloneDxParser(IngestParser):
             elif tag == "component" and isinstance(value, dict):
                 for comp in _flatten(value):
                     n_components += 1
+                    _inventory(ctx, comp)
                     if comp.get("bom-ref"):
                         components[str(comp["bom-ref"])] = comp
         if not has_section and n_components == 0:
@@ -300,6 +301,7 @@ class CycloneDxParser(IngestParser):
                 else:
                     n_components += 1
                     comp = next(_flatten(_xml_component(el)))
+                    _inventory(ctx, comp)
                     if comp.get("bom-ref"):
                         components[str(comp["bom-ref"])] = comp
                     el.clear()
@@ -323,6 +325,13 @@ class CycloneDxParser(IngestParser):
                 "has no findings to import and cannot close any (a package list does not say the "
                 "packages are free of vulnerabilities)"
             )
+
+
+def _inventory(ctx: ParseContext, comp: dict[str, Any]) -> None:
+    """Every component, for the component inventory (plan §46.1) -- not a finding."""
+    ctx.component(
+        str(comp.get("purl") or ""), str(comp.get("version") or ""), str(comp.get("path") or "")
+    )
 
 
 def _local(tag: str) -> str:

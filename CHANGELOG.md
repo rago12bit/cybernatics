@@ -36,6 +36,15 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 - **Calendar (plan §49).** Engagements, SLA due dates and expiring risk acceptances for a month, by
   project and kind, from data Bulwark already has: `GET /v2/calendar` and a Calendar page (a month
   view, and a day-by-day list on phones).
+- **Component inventory (Week 67, plan §46.1, ADR-0051).** Every package of every SBOM -- a full
+  scan's Syft SBOM, and every imported CycloneDX or SPDX file -- stored by library and version per
+  project, one row per library per organization, the latest SBOM of each source marked current.
+  "Where do we use this?": `GET /v2/components?purl=&version=<2.17.1` and `GET /v2/libraries`, and
+  a Components page with suggestions as you type. Versions are compared in each ecosystem's own order
+  (PyPI, npm, Go, Maven; Maven's checked against Maven 3.9.16 itself, npm's against npm's `semver`),
+  and a version that cannot be compared is said, not guessed. Each component records whether the
+  application's code imports it. Under 30 ms at the 95th percentile across 1,000 projects and 1.5
+  million current components. Migration 0039; an hourly task fills in projects scanned before.
 
 ### Security
 - Notification titles are one line wherever they go, and email headers are stripped of line breaks,

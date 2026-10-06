@@ -37,6 +37,7 @@ from sqlalchemy.orm import Session
 from api.acceptance import register_acceptance_routes
 from api.calendar import register_calendar_routes
 from api.collab import register_collab_routes
+from api.components import register_component_routes
 from api.connectors import register_connector_routes
 from api.dedup import register_dedup_routes
 from api.deps import (
@@ -2156,6 +2157,7 @@ def create_app(app_state: AppState) -> FastAPI:
     register_notify_routes(app)
     register_ticket_routes(app)
     register_calendar_routes(app)
+    register_component_routes(app)
     return app
 
 

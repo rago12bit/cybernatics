@@ -1399,3 +1399,39 @@ export type CalendarEntry = {
   state: string | null;
 };
 export type CalendarView = { start: string; end: string; entries: CalendarEntry[]; counts: Record<CalendarKind, number>; truncated: string[] };
+
+/** The component inventory (plan §46.1). */
+export type LibraryRef = { id: string; ecosystem: string; name: string; purl: string };
+export type LibrarySummary = LibraryRef & { projects: number; versions: number };
+export type ComponentUse = {
+  project_id: string;
+  project: string;
+  portfolio: string | null;
+  version: string;
+  relation: "direct" | "transitive" | "root" | "unknown";
+  paths: string[];
+  reachable: boolean | null;
+  reachable_reason: string;
+  exposure: "internet" | "internal" | "unset";
+  source: string;
+  scan_id: string;
+  seen_at: string;
+};
+export type ComponentSearch = {
+  library: LibraryRef | null;
+  constraint: string | null;
+  summary: {
+    projects: number;
+    portfolios: number;
+    internet_facing: number;
+    exposure_unset: number;
+    imported_by_app: number;
+    direct: number;
+    versions: number;
+  };
+  versions: { version: string; projects: number; matches: boolean | null }[];
+  uses: ComponentUse[];
+  uncomparable: string[];
+  truncated: boolean;
+  elapsed_ms: number;
+};

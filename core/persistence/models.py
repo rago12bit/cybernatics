@@ -1535,3 +1535,68 @@ class NotificationPrefs(Base):
     updated_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
 
     __table_args__ = (UniqueConstraint("org_id", "owner", name="uq_notification_prefs_owner"),)
+
+
+class Library(Base):
+    """One library, once per organization (plan §46.1-46.2: "global deduplication by library"):
+    log4j-core is one row however many projects and versions use it. `key` is the ecosystem and the
+    name as that ecosystem compares names (PyPI's normalized form, npm in lower case), so
+    `Flask` and `flask` are one library; `name` is as the SBOM wrote it, Maven's as group:artifact.
+    """
+
+    __tablename__ = "libraries"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"), index=True)
+    ecosystem: Mapped[str] = mapped_column(String(32))
+    name: Mapped[str] = mapped_column(String(300))
+    key: Mapped[str] = mapped_column(String(340))
+    purl: Mapped[str] = mapped_column(String(400))  # without a version
+    first_seen_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+    last_seen_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+    # How many projects and versions use it now: kept up to date as SBOMs are recorded and
+    # recounted hourly, so listing libraries never aggregates every component. The search itself
+    # always counts from the components.
+    project_count: Mapped[int] = mapped_column(Integer, default=0)
+    version_count: Mapped[int] = mapped_column(Integer, default=0)
+
+    __table_args__ = (
+        UniqueConstraint("org_id", "key", name="uq_libraries_org_key"),
+        Index("ix_libraries_org_projects", "org_id", "project_count"),
+    )
+
+
+class ComponentRow(Base):
+    """One library at one version in one project's SBOM from one scan or import (plan §46.1).
+    `source` says which SBOM it came from -- "scan" for Bulwark's own scans, "test:<id>" for files
+    imported into a Test -- and `current` marks the rows of each source's latest SBOM, which is
+    what "where do we use this?" searches. Older rows stay with their scan, as history."""
+
+    __tablename__ = "components"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"), index=True)
+    library_id: Mapped[str] = mapped_column(ForeignKey("libraries.id", ondelete="CASCADE"))
+    asset_id: Mapped[str] = mapped_column(ForeignKey("assets.id", ondelete="CASCADE"))
+    scan_id: Mapped[str] = mapped_column(ForeignKey("scans.id", ondelete="CASCADE"), index=True)
+    source: Mapped[str] = mapped_column(String(80))
+    current: Mapped[bool] = mapped_column(Boolean, default=True)
+    version: Mapped[str] = mapped_column(String(200))
+    purl: Mapped[str] = mapped_column(Text)
+    relation: Mapped[str] = mapped_column(
+        String(16), default="unknown"
+    )  # direct | transitive | root
+    paths: Mapped[list[str]] = mapped_column(JsonType, default=list)  # manifests it was found in
+    license: Mapped[str] = mapped_column(String(200), default="")
+    # Whether the project's own code imports it (core.reachability): True, False, or None for
+    # "cannot tell" -- never a guessed "not used". Only Bulwark's own scans can say.
+    reachable: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    reachable_reason: Mapped[str] = mapped_column(String(300), default="")
+    seen_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+
+    __table_args__ = (
+        UniqueConstraint("scan_id", "library_id", "version", name="uq_components_scan_lib_version"),
+        Index("ix_components_library_current", "library_id", "current"),
+        Index("ix_components_asset_source", "asset_id", "source", "current"),
+    )
+

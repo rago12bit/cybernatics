@@ -77,6 +77,7 @@ def main(argv: list[str] | None = None) -> int:
             "error": ctx.error,
             "can_close_missing": ctx.can_close_missing,
             "warnings": ctx.all_warnings(),
+            "components": ctx.components,
         }
         out.write("]," + json.dumps(verdict)[1:])
     return 0

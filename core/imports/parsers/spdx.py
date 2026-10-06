@@ -4,8 +4,8 @@ SPDX is an inventory format: it lists packages, files and relationships, and say
 vulnerabilities. So an SPDX file yields **no findings and cannot close any** -- importing one must
 never read as "these packages are clean." It is still recognised and validated, and the import says
 what it found, so that picking the wrong format or uploading the wrong file is visible rather than
-a silent empty import. Turning the package list into a searchable inventory is the component
-inventory work (plan Week 67); until then this is deliberately all it does.
+a silent empty import. Each package with a purl (an `externalRefs` entry of type `purl`) goes to the
+component inventory (plan §46.1), where "where do we use this?" finds it.
 
 Only SPDX 2.x JSON is read. Tag-value, RDF/XML, YAML and SPDX 3.0 JSON-LD are not.
 """
@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Iterator
-from typing import BinaryIO
+from typing import Any, BinaryIO
 
 from core.imports.parsers.base import IngestParser, ParseAborted, ParseContext
 from core.imports.parsers.safe import json_events, stream_objects
@@ -38,13 +38,14 @@ class SpdxParser(IngestParser):
         packages = 0
         for tag, value in stream_objects(
             json_events(stream, ctx),
-            lambda p: "version" if p == "spdxVersion" else None,
-            frozenset({"packages.item"}),
+            lambda p: {"spdxVersion": "version", "packages.item": "package"}.get(p),
         ):
             if tag == "version":
                 version = str(value)
-            elif tag == "marker:packages.item":
+            elif tag == "package":
                 packages += 1
+                if isinstance(value, dict):
+                    _inventory(ctx, value)
         if not version.startswith("SPDX-"):
             raise ParseAborted("no spdxVersion found; not an SPDX document")
         ctx.can_close_missing = False
@@ -55,3 +56,11 @@ class SpdxParser(IngestParser):
         )
         return
         yield  # pragma: no cover - makes this a generator that yields nothing
+
+
+def _inventory(ctx: ParseContext, package: dict[str, Any]) -> None:
+    for ref in package.get("externalRefs") or []:
+        if isinstance(ref, dict) and str(ref.get("referenceType", "")).lower() == "purl":
+            locator, version = ref.get("referenceLocator"), package.get("versionInfo")
+            ctx.component(str(locator or ""), str(version or ""))
+            return
