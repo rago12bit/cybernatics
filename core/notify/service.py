@@ -228,6 +228,38 @@ def _project(s: Session, issue: IssueRow) -> str:
     return asset.label if asset else "its project"
 
 
+def _advisory_messages(c: _Ctx, p: dict[str, Any]) -> list[Message]:
+    """A vulnerability affects the organization for the first time (plan §46.2): the team channels
+    hear it, and so does each affected project's owner."""
+    from core.advisories.view import header
+    from core.persistence.models import Advisory as AdvisoryRecord
+    from core.rules.notify import send_rule_message
+
+    vk = str(p.get("vuln_key", ""))[:100]
+    records = list(c.s.scalars(select(AdvisoryRecord).where(AdvisoryRecord.vuln_key == vk)))
+    if not vk or not records:
+        return []
+    h = header(c.s, vk, records)
+    n = int(p.get("projects") or 0)
+    kev = " Known exploited (CISA KEV)." if h["kev"] else ""
+    title = f"{vk} ({h['severity'].title()}) affects {n} project{'s' if n != 1 else ''}"
+    body = f"{h['summary'][:300]}.{kev}"
+    link = f"/app/advisories/{vk}"
+    base = mail_base_url()
+    try:
+        send_rule_message(
+            c.s, c.org_id, f"New advisory: {title}. {body} {base}{link}", kind="advisory"
+        )
+    except Exception:  # noqa: BLE001 - the team channels failing must not stop the owners' notes
+        log.warning("advisory team notification failed", exc_info=True)
+    owners = [str(o) for o in p.get("owners") or []]
+    return (
+        [Message("advisory", owners, f"New advisory: {title}", body, link, None, None)]
+        if owners
+        else []
+    )
+
+
 def _link(issue: IssueRow) -> str:
     return f"/app/projects/{issue.asset_id}/issues/{issue.id}"
 
@@ -399,6 +431,8 @@ def _messages(c: _Ctx, etype: str, p: dict[str, Any]) -> list[Message]:  # noqa:
                 None,
             )
         ]
+    if etype == "advisory.matched":
+        return _advisory_messages(c, p)
     if etype == "issue.ticket_status" and issue:
         return [
             Message(

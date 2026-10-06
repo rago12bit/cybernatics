@@ -56,6 +56,10 @@ the projects, their business units, how many are internet-facing (the project's 
 libraries (`GET /v2/libraries`, the search box) reads each library's project and version counts,
 kept as SBOMs are recorded and recounted hourly, so it never aggregates every component.
 
+Amended in Week 68 ([ADR-0052](0052-advisory-engine.md)): a PyPI version that is not PEP 440 is no
+longer "could not be compared" but ordered as setuptools' legacy versions, before every PEP 440
+version, as osv-scanner orders it.
+
 ## Consequences
 
 - Speed, measured (`scripts/bench-components.py`): 1,000 projects, each with two SBOMs of 1,500

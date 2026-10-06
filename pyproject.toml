@@ -32,6 +32,7 @@ dependencies = [
     "httpx>=0.27",
     "dnspython>=2.6",
     "cvss>=3.6",  # CVSS 4.0 scoring for manual findings (LGPL-3.0, used as an unmodified library)
+    "packaging>=24",  # PEP 440 version order (core/versions.py); already installed transitively
 ]
 
 [project.scripts]

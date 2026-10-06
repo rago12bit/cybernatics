@@ -203,7 +203,8 @@ def seed(env: Env) -> dict[str, str]:
                 packages=[{"purl": f"{LOG4J}@{version}", "relation": "transitive",
                            "path": "pom.xml", "reachable": imported},
                           {"purl": "pkg:npm/lodash@4.17.21"},
-                          {"purl": f"pkg:pypi/requests@{'latest' if label == 'legacy' else '2.31.0'}"}],
+                          {"purl": "pkg:pypi/requests@2.31.0"},
+                          {"purl": "pkg:cargo/serde@1.0.0"}],
             )  # fmt: skip
             if facing is not None:
                 s.add(
@@ -231,7 +232,12 @@ def test_where_do_we_use_this(env: Env) -> None:
         "imported_by_app": 1, "direct": 0, "versions": 2,
     }  # fmt: skip
     versions = {v["version"]: v for v in body["versions"]}
-    assert versions["2.14.1"] == {"version": "2.14.1", "projects": 2, "matches": True}
+    assert versions["2.14.1"] == {
+        "version": "2.14.1",
+        "projects": 2,
+        "matches": True,
+        "advisories": [],
+    }
     assert versions["2.17.1"]["matches"] is False
     assert versions["2.17.2"]["matches"] is False and body["uncomparable"] == []
     pay = next(u for u in body["uses"] if u["project"] == "payments-api")
@@ -241,12 +247,12 @@ def test_where_do_we_use_this(env: Env) -> None:
     assert exact.json()["summary"]["projects"] == 2 and exact.json()["constraint"] == "=2.14.1"
     everything = env.client.get("/v2/components", params={"purl": LOG4J}, headers=AUTH).json()
     assert everything["summary"]["projects"] == 5 and everything["uncomparable"] == []
-    # "latest" is not a PEP 440 version: it is said, not counted in or out.
-    requests = env.client.get(
-        "/v2/components", params={"purl": "pkg:pypi/requests", "version": "<2.32.0"}, headers=AUTH
+    # Cargo versions are not compared yet: that is said, not counted in or out.
+    serde = env.client.get(
+        "/v2/components", params={"purl": "pkg:cargo/serde", "version": "<2"}, headers=AUTH
     ).json()
-    assert requests["summary"]["projects"] == 4 and requests["uncomparable"] == ["latest"]
-    assert {v["version"]: v["matches"] for v in requests["versions"]} == {"2.31.0": True, "latest": None}  # fmt: skip
+    assert serde["summary"]["projects"] == 0 and serde["uncomparable"] == ["1.0.0"]
+    assert {v["version"]: v["matches"] for v in serde["versions"]} == {"1.0.0": None}
     one = env.client.get(
         "/v2/components", params={"purl": LOG4J, "project_id": projects["billing"]}, headers=AUTH
     ).json()
@@ -275,7 +281,8 @@ def test_libraries_once_each_most_used_first(env: Env) -> None:
     seed(env)
     rows = env.client.get("/v2/libraries", headers=AUTH).json()
     assert [(r["name"], r["projects"], r["versions"]) for r in rows] == [
-        ("lodash", 5, 1), ("org.apache.logging.log4j:log4j-core", 5, 4), ("requests", 5, 2)
+        ("lodash", 5, 1), ("org.apache.logging.log4j:log4j-core", 5, 4), ("requests", 5, 1),
+        ("serde", 5, 1)
     ]  # fmt: skip
     found = env.client.get("/v2/libraries", params={"q": "LOG4J"}, headers=AUTH).json()
     assert [r["name"] for r in found] == ["org.apache.logging.log4j:log4j-core"]

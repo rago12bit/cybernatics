@@ -138,6 +138,10 @@ def process_import(
             components=result.components,
         )
         upload.unlink(missing_ok=True)  # applied or noticed as a duplicate: the file is done with
+        if applied.inventory_changed:  # an SBOM: check its libraries against the advisories
+            from core.advisories.impact import match_after_record
+
+            match_after_record(s, org_id, applied.inventory_changed, [applied.asset_id or ""])
         return applied.record
     except service.ImportRequestError as exc:
         return _fail(s, record, str(exc))

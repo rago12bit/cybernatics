@@ -25,9 +25,9 @@ def slack_escape(text: str) -> str:
     return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
-def send_rule_message(s: Session, org_id: str, text: str) -> list[str]:
+def send_rule_message(s: Session, org_id: str, text: str, kind: str = "rules") -> list[str]:
     """Returns the channels it went to ("the daily digest" when the team chose that); raises only
-    if every configured channel failed."""
+    if every configured channel failed. `kind` is the team notification kind it is gated by."""
     from core.integrations import discord, slack
     from core.integrations.webhooks import deliver_signed
     from core.notify import team
@@ -36,8 +36,8 @@ def send_rule_message(s: Session, org_id: str, text: str) -> list[str]:
     if settings is None:
         return []
     text = text[:MAX_TEXT]
-    if not team.gate(s, org_id, "rules", text):
-        return ["the daily digest"] if team.mode(s, org_id, "rules") == "digest" else []
+    if not team.gate(s, org_id, kind, text):
+        return ["the daily digest"] if team.mode(s, org_id, kind) == "digest" else []
     sent: list[str] = []
     errors: list[str] = []
     if settings.teams_webhook_url:

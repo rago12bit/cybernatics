@@ -42,6 +42,10 @@ def test_the_cases_that_differ_between_ecosystems() -> None:
     # PEP 440
     assert compare("pypi", "1.0rc1", "1.0") < 0 and compare("pypi", "1.0.post1", "1.0") > 0
     assert compare("pypi", "1.0", "1.0.0") == 0 and compare("pypi", "2!0.1", "99") > 0
+    # Not PEP 440: setuptools' legacy order, before every PEP 440 version (as osv-scanner does)
+    assert compare("pypi", "0.8.3ubuntu7.5", "0.0.1") < 0
+    assert compare("pypi", "0.8.3ubuntu7.5", "0.9.3.5ubuntu3") < 0
+    assert compare("pypi", "1.6.0-NA", "1.5.1") < 0 and compare("pypi", "latest", "0") < 0
     # semver: build metadata never orders; Go's v and +incompatible
     assert compare("npm", "1.0.0+a", "1.0.0+b") == 0
     assert compare("go", "v1.2.3", "1.2.3") == 0
@@ -61,8 +65,8 @@ def test_semver_is_read_as_leniently_as_osv_scanner_reads_it() -> None:
 
 @pytest.mark.parametrize(
     ("ecosystem", "version"),
-    [("pypi", "not a version"), ("pypi", "latest"), ("cargo", "1.0.0"), ("maven", ""),
-     ("npm", ""), ("go", "x" * 300)],
+    [("cargo", "1.0.0"), ("nuget", "1.0.0"), ("pypi", ""), ("maven", ""), ("npm", ""),
+     ("go", "x" * 300)],
 )  # fmt: skip
 def test_what_cannot_be_compared_says_so(ecosystem: str, version: str) -> None:
     with pytest.raises(VersionError):
@@ -81,4 +85,4 @@ def test_constraints() -> None:
         with pytest.raises(VersionError):
             parse_constraint(bad)
     with pytest.raises(VersionError):
-        parse_constraint("<2").check("pypi", "latest")  # not PEP 440: no guessed answer
+        parse_constraint("<2").check("cargo", "1.0.0")  # not an ecosystem compared: no guess

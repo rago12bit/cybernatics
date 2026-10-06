@@ -41,6 +41,7 @@ class VersionOut(BaseModel):
     version: str
     projects: int
     matches: bool | None  # None: the ecosystem cannot read this version, so it was not compared
+    advisories: list[str] = []  # vulnerabilities affecting this version in the org's projects now
 
 
 class UseOut(BaseModel):

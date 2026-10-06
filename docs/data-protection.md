@@ -79,6 +79,15 @@ For local use, `http://attachments.localhost:8000` works without DNS: browsers r
 `*.localhost` name to this machine. Without the setting, files download from the API's own host,
 which sets no cookies either.
 
+## Advisories and project owners
+
+Since Week 68 (ADR-0052) a project may name an owner: a reference to one of the organization's
+people (`assets.owner`, the same `token:<prefix>` an Issue's assignee is), shown on advisory impact
+views and audit-logged when it changes. The advisory data itself (OSV, CISA KEV, NVD) is public and
+shared by every organization; what it means for one organization (`advisory_impacts`,
+`advisory_states`) is under forced RLS. Fetching advisories sends nothing about an organization's
+packages anywhere: matching happens inside Bulwark.
+
 ## Email addresses and notifications
 
 Since Week 66 (ADR-0050) Bulwark stores one piece of personal contact data: the email address a

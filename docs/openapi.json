@@ -7283,7 +7283,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OwnerOut"
+                  "$ref": "#/components/schemas/api__rules__OwnerOut"
                 }
               }
             }
@@ -7338,7 +7338,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OwnerOut"
+                  "$ref": "#/components/schemas/api__rules__OwnerOut"
                 }
               }
             }
@@ -7395,7 +7395,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OwnerOut"
+                  "$ref": "#/components/schemas/api__rules__OwnerOut"
                 }
               }
             }
@@ -8495,6 +8495,329 @@
           }
         }
       }
+    },
+    "/v2/advisories": {
+      "get": {
+        "tags": [
+          "advisories"
+        ],
+        "summary": "List Advisories",
+        "operationId": "list_advisories_v2_advisories_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "State"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 200,
+              "default": "",
+              "title": "Q"
+            }
+          },
+          {
+            "name": "kev",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Kev"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AdvisoryRow"
+                  },
+                  "title": "Response List Advisories V2 Advisories Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/advisories/{vuln_key}": {
+      "get": {
+        "tags": [
+          "advisories"
+        ],
+        "summary": "Get Impact",
+        "operationId": "get_impact_v2_advisories__vuln_key__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "vuln_key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Vuln Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImpactOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/advisories/{vuln_key}/issues": {
+      "post": {
+        "tags": [
+          "advisories"
+        ],
+        "summary": "Create Issues",
+        "operationId": "create_issues_v2_advisories__vuln_key__issues_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "vuln_key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Vuln Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/advisory-feeds": {
+      "get": {
+        "tags": [
+          "advisories"
+        ],
+        "summary": "Feeds",
+        "operationId": "feeds_v2_advisory_feeds_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedsOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v2/projects/{project_id}/owner": {
+      "put": {
+        "tags": [
+          "advisories"
+        ],
+        "summary": "Set Owner",
+        "operationId": "set_owner_v2_projects__project_id__owner_put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OwnerIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/api__advisories__OwnerOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "advisories"
+        ],
+        "summary": "Get Owner",
+        "operationId": "get_owner_v2_projects__project_id__owner_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/api__advisories__OwnerOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -8723,6 +9046,111 @@
           "can_decide"
         ],
         "title": "AcceptanceOut"
+      },
+      "AdvisoryRow": {
+        "properties": {
+          "vuln_key": {
+            "type": "string",
+            "title": "Vuln Key"
+          },
+          "ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Ids"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity"
+          },
+          "cvss": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cvss"
+          },
+          "kev": {
+            "type": "boolean",
+            "title": "Kev"
+          },
+          "malicious": {
+            "type": "boolean",
+            "title": "Malicious"
+          },
+          "published": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published"
+          },
+          "first_seen_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "First Seen At"
+          },
+          "state": {
+            "type": "string",
+            "title": "State"
+          },
+          "projects": {
+            "type": "integer",
+            "title": "Projects"
+          },
+          "libraries": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Libraries"
+          },
+          "imported_by_app": {
+            "type": "integer",
+            "title": "Imported By App"
+          },
+          "internet_facing": {
+            "type": "integer",
+            "title": "Internet Facing"
+          },
+          "uncertain": {
+            "type": "integer",
+            "title": "Uncertain"
+          }
+        },
+        "type": "object",
+        "required": [
+          "vuln_key",
+          "ids",
+          "summary",
+          "severity",
+          "cvss",
+          "kev",
+          "malicious",
+          "published",
+          "first_seen_at",
+          "state",
+          "projects",
+          "libraries",
+          "imported_by_app",
+          "internet_facing",
+          "uncertain"
+        ],
+        "title": "AdvisoryRow"
       },
       "Analysis": {
         "properties": {
@@ -10555,6 +10983,69 @@
         ],
         "title": "CostSummaryView"
       },
+      "CreateIn": {
+        "properties": {
+          "project_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array",
+                "maxItems": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Project Ids"
+          }
+        },
+        "type": "object",
+        "title": "CreateIn"
+      },
+      "CreateOut": {
+        "properties": {
+          "projects": {
+            "type": "integer",
+            "title": "Projects"
+          },
+          "issues": {
+            "type": "integer",
+            "title": "Issues"
+          },
+          "tickets": {
+            "type": "integer",
+            "title": "Tickets"
+          },
+          "ticket_errors": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Ticket Errors"
+          },
+          "issue_ids": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Issue Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "projects",
+          "issues",
+          "tickets",
+          "ticket_errors",
+          "issue_ids"
+        ],
+        "title": "CreateOut"
+      },
       "CvssIn": {
         "properties": {
           "vector": {
@@ -11415,6 +11906,88 @@
         ],
         "title": "FactorOut"
       },
+      "FeedOut": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "last_run_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Run At"
+          },
+          "last_success_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Success At"
+          },
+          "records": {
+            "type": "integer",
+            "title": "Records"
+          },
+          "last_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "last_run_at",
+          "last_success_at",
+          "records",
+          "last_error"
+        ],
+        "title": "FeedOut"
+      },
+      "FeedsOut": {
+        "properties": {
+          "feeds": {
+            "items": {
+              "$ref": "#/components/schemas/FeedOut"
+            },
+            "type": "array",
+            "title": "Feeds"
+          },
+          "advisories": {
+            "type": "integer",
+            "title": "Advisories"
+          },
+          "kev_entries": {
+            "type": "integer",
+            "title": "Kev Entries"
+          }
+        },
+        "type": "object",
+        "required": [
+          "feeds",
+          "advisories",
+          "kev_entries"
+        ],
+        "title": "FeedsOut"
+      },
       "FeedsStatus": {
         "properties": {
           "fetched_at": {
@@ -12051,6 +12624,197 @@
         "title": "HypothesisView",
         "description": "One Hypotheses-lane candidate (plan \u00a721.4) -- off by default, its own tab, excluded from the\nrisk score and policy gates until a person promotes it. `promoted_issue_id` is set only once\n`status` is \"promoted\"."
       },
+      "ImpactCounts": {
+        "properties": {
+          "projects": {
+            "type": "integer",
+            "title": "Projects"
+          },
+          "portfolios": {
+            "type": "integer",
+            "title": "Portfolios"
+          },
+          "imported_by_app": {
+            "type": "integer",
+            "title": "Imported By App"
+          },
+          "internet_facing": {
+            "type": "integer",
+            "title": "Internet Facing"
+          },
+          "uncertain": {
+            "type": "integer",
+            "title": "Uncertain"
+          },
+          "with_fix": {
+            "type": "integer",
+            "title": "With Fix"
+          },
+          "with_issues": {
+            "type": "integer",
+            "title": "With Issues"
+          }
+        },
+        "type": "object",
+        "required": [
+          "projects",
+          "portfolios",
+          "imported_by_app",
+          "internet_facing",
+          "uncertain",
+          "with_fix",
+          "with_issues"
+        ],
+        "title": "ImpactCounts"
+      },
+      "ImpactOut": {
+        "properties": {
+          "vuln_key": {
+            "type": "string",
+            "title": "Vuln Key"
+          },
+          "ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Ids"
+          },
+          "aliases": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Aliases"
+          },
+          "cves": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Cves"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "details": {
+            "type": "string",
+            "title": "Details"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity"
+          },
+          "cvss": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cvss"
+          },
+          "cvss_vector": {
+            "type": "string",
+            "title": "Cvss Vector"
+          },
+          "malicious": {
+            "type": "boolean",
+            "title": "Malicious"
+          },
+          "kev": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Kev"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "published": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published"
+          },
+          "modified": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Modified"
+          },
+          "references": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "References"
+          },
+          "withdrawn": {
+            "type": "boolean",
+            "title": "Withdrawn"
+          },
+          "state": {
+            "type": "string",
+            "title": "State"
+          },
+          "first_seen_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "First Seen At"
+          },
+          "uses": {
+            "items": {
+              "$ref": "#/components/schemas/Use"
+            },
+            "type": "array",
+            "title": "Uses"
+          },
+          "no_longer_affected": {
+            "items": {
+              "$ref": "#/components/schemas/Use"
+            },
+            "type": "array",
+            "title": "No Longer Affected"
+          },
+          "summary_counts": {
+            "$ref": "#/components/schemas/ImpactCounts"
+          }
+        },
+        "type": "object",
+        "required": [
+          "vuln_key",
+          "ids",
+          "aliases",
+          "cves",
+          "summary",
+          "details",
+          "severity",
+          "cvss",
+          "cvss_vector",
+          "malicious",
+          "kev",
+          "published",
+          "modified",
+          "references",
+          "withdrawn",
+          "state",
+          "first_seen_at",
+          "uses",
+          "no_longer_affected",
+          "summary_counts"
+        ],
+        "title": "ImpactOut"
+      },
       "ImportCounts": {
         "properties": {
           "new": {
@@ -12543,6 +13307,24 @@
         ],
         "title": "IssueHistoryEvent"
       },
+      "IssueRef": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "state": {
+            "type": "string",
+            "title": "State"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "state"
+        ],
+        "title": "IssueRef"
+      },
       "IssueView": {
         "properties": {
           "id": {
@@ -12731,6 +13513,39 @@
           "updated_at"
         ],
         "title": "ItemOut"
+      },
+      "Kev": {
+        "properties": {
+          "cve": {
+            "type": "string",
+            "title": "Cve"
+          },
+          "date_added": {
+            "type": "string",
+            "title": "Date Added"
+          },
+          "due_date": {
+            "type": "string",
+            "title": "Due Date"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "ransomware": {
+            "type": "string",
+            "title": "Ransomware"
+          }
+        },
+        "type": "object",
+        "required": [
+          "cve",
+          "date_added",
+          "due_date",
+          "name",
+          "ransomware"
+        ],
+        "title": "Kev"
       },
       "KindOut": {
         "properties": {
@@ -13810,106 +14625,23 @@
         ],
         "title": "OfferOut"
       },
-      "OwnerOut": {
+      "OwnerIn": {
         "properties": {
-          "assignee": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Assignee"
-          },
-          "assignee_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Assignee Name"
-          },
-          "assignee_handle": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Assignee Handle"
-          },
-          "assigned_at": {
+          "owner": {
             "anyOf": [
               {
                 "type": "string",
-                "format": "date-time"
+                "maxLength": 100
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Assigned At"
-          },
-          "priority_override": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Priority Override"
-          },
-          "priority_override_by": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Priority Override By"
-          },
-          "computed_band": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Computed Band"
-          },
-          "names": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object",
-            "title": "Names"
+            "title": "Owner"
           }
         },
         "type": "object",
-        "required": [
-          "assignee",
-          "assignee_name",
-          "assignee_handle",
-          "assigned_at",
-          "priority_override",
-          "priority_override_by",
-          "computed_band",
-          "names"
-        ],
-        "title": "OwnerOut"
+        "title": "OwnerIn"
       },
       "ParserInfo": {
         "properties": {
@@ -17208,6 +17940,147 @@
         ],
         "title": "TriageRequest"
       },
+      "Use": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "title": "Project Id"
+          },
+          "project": {
+            "type": "string",
+            "title": "Project"
+          },
+          "portfolio": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Portfolio"
+          },
+          "library": {
+            "type": "string",
+            "title": "Library"
+          },
+          "ecosystem": {
+            "type": "string",
+            "title": "Ecosystem"
+          },
+          "purl": {
+            "type": "string",
+            "title": "Purl"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "fixed_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fixed Version"
+          },
+          "certain": {
+            "type": "boolean",
+            "title": "Certain"
+          },
+          "resolved_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved At"
+          },
+          "first_seen_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "First Seen At"
+          },
+          "relation": {
+            "type": "string",
+            "title": "Relation"
+          },
+          "paths": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Paths"
+          },
+          "reachable": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reachable"
+          },
+          "reachable_reason": {
+            "type": "string",
+            "title": "Reachable Reason"
+          },
+          "exposure": {
+            "type": "string",
+            "title": "Exposure"
+          },
+          "owner": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owner"
+          },
+          "issues": {
+            "items": {
+              "$ref": "#/components/schemas/IssueRef"
+            },
+            "type": "array",
+            "title": "Issues"
+          }
+        },
+        "type": "object",
+        "required": [
+          "project_id",
+          "project",
+          "portfolio",
+          "library",
+          "ecosystem",
+          "purl",
+          "version",
+          "fixed_version",
+          "certain",
+          "resolved_at",
+          "first_seen_at",
+          "relation",
+          "paths",
+          "reachable",
+          "reachable_reason",
+          "exposure",
+          "owner",
+          "issues"
+        ],
+        "title": "Use"
+      },
       "UseOut": {
         "properties": {
           "project_id": {
@@ -17497,6 +18370,14 @@
               }
             ],
             "title": "Matches"
+          },
+          "advisories": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Advisories",
+            "default": []
           }
         },
         "type": "object",
@@ -17556,6 +18437,43 @@
         },
         "type": "object",
         "title": "NoteIn"
+      },
+      "api__advisories__OwnerOut": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "title": "Project Id"
+          },
+          "owner": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owner"
+          },
+          "owner_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owner Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "project_id",
+          "owner",
+          "owner_name"
+        ],
+        "title": "OwnerOut"
       },
       "api__collab__NoteIn": {
         "properties": {
@@ -17858,6 +18776,107 @@
           "finished_at"
         ],
         "title": "RunOut"
+      },
+      "api__rules__OwnerOut": {
+        "properties": {
+          "assignee": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assignee"
+          },
+          "assignee_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assignee Name"
+          },
+          "assignee_handle": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assignee Handle"
+          },
+          "assigned_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assigned At"
+          },
+          "priority_override": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Priority Override"
+          },
+          "priority_override_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Priority Override By"
+          },
+          "computed_band": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Computed Band"
+          },
+          "names": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Names"
+          }
+        },
+        "type": "object",
+        "required": [
+          "assignee",
+          "assignee_name",
+          "assignee_handle",
+          "assigned_at",
+          "priority_override",
+          "priority_override_by",
+          "computed_band",
+          "names"
+        ],
+        "title": "OwnerOut"
       },
       "api__rules__RunOut": {
         "properties": {

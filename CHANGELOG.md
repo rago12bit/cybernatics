@@ -45,6 +45,21 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   and a version that cannot be compared is said, not guessed. Each component records whether the
   application's code imports it. Under 30 ms at the 95th percentile across 1,000 projects and 1.5
   million current components. Migration 0039; an hourly task fills in projects scanned before.
+- **Advisory engine (Week 68, plan §46.2, §55.5, ADR-0052).** OSV's data for PyPI, npm, Go and Maven
+  (GitHub's advisories, the PyPI and Go databases, malicious-package reports), CISA KEV and recent
+  NVD CVEs, fetched every six hours (the full dump once, then only what changed). Matched against
+  the component inventory the way osv-scanner matches -- checked against osv-scanner 2.6.0 on the
+  same data and SBOMs: 21,619 of 21,721 package versions agree, and in every one of the 102
+  differences Bulwark follows the ecosystem's own rules and reports more, never less
+  (`docs/evaluation-advisory-matching.md`). Impacts are kept per vulnerability, version and project
+  and follow every SBOM. An Advisories page (the newest first, known-exploited and most severe
+  first), an impact view per vulnerability (version, fix, whether the code imports it, owner,
+  exposure), and Issues in one click: grouped per vulnerability, assigned to the project's owner,
+  filed where the project has ticket settings, deduplicated with osv-scanner's, and closed when an
+  SBOM no longer has an affected version. A new vulnerability tells the team channels and the
+  owners once. Projects have an owner. Component search shows each version's advisories. API:
+  `/v2/advisories`, `/v2/advisories/{key}`, `/v2/advisories/{key}/issues`, `/v2/advisory-feeds`,
+  `/v2/projects/{id}/owner`. Migration 0040.
 
 ### Security
 - Notification titles are one line wherever they go, and email headers are stripped of line breaks,

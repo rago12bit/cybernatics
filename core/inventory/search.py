@@ -149,6 +149,18 @@ def search(
         result.versions.append({"version": version, "projects": n, "matches": match})
         if match:
             wanted.append(version)
+    # The vulnerabilities each version has in the organization's projects now (Week 68).
+    from core.persistence.models import AdvisoryImpact
+
+    vulns: dict[str, set[str]] = {}
+    for version, vk in s.execute(
+        select(AdvisoryImpact.version, AdvisoryImpact.vuln_key).where(
+            AdvisoryImpact.library_id == lib.id, AdvisoryImpact.resolved_at.is_(None)
+        )
+    ):
+        vulns.setdefault(version, set()).add(vk)
+    for v in result.versions:
+        v["advisories"] = sorted(vulns.get(v["version"], ()))
     result.versions.sort(key=lambda v: (-v["projects"], v["version"]))
     result.uncomparable.sort()
     if not wanted:

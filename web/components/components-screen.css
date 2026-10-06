@@ -184,3 +184,6 @@
     color: var(--ds-muted);
   }
 }
+.ds-comp-advs a {
+  color: var(--ds-sev-critical);
+}

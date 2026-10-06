@@ -163,6 +163,9 @@ class Asset(Base):
     # `repo.register_web_asset` enforces same-org at write time instead, so this never silently
     # points at another organization's project even without a DB-level constraint.
     linked_source_asset_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    # Who to ask about this project (plan §55.5's "Owner"): a person ("token:<prefix>"), set by
+    # @handle like an Issue's assignee. Issues created from an advisory are assigned to them.
+    owner: Mapped[str | None] = mapped_column(String(200), nullable=True)
     # The business unit the project belongs to (Week 64, plan §49): its tags are inherited by the
     # project and its Issues. Optional; a project need not be in a portfolio.
     portfolio_id: Mapped[str | None] = mapped_column(
@@ -1600,3 +1603,131 @@ class ComponentRow(Base):
         Index("ix_components_asset_source", "asset_id", "source", "current"),
     )
 
+
+class Advisory(Base):
+    """One OSV record (plan §46.2): a GitHub advisory, a PyPI or Go database entry, or a malicious
+    package report, from OSV's per-ecosystem data. Public data, shared by every organization, so it
+    has no `org_id` and no RLS; what an advisory means for one organization is in
+    `advisory_impacts`. `vuln_key` ties together the records of one vulnerability (its lowest CVE
+    alias, else its lowest id or alias): what Bulwark shows as one advisory."""
+
+    __tablename__ = "advisories"
+
+    id: Mapped[str] = mapped_column(String(100), primary_key=True)
+    vuln_key: Mapped[str] = mapped_column(String(100), index=True)
+    modified: Mapped[datetime] = mapped_column(UtcDateTime())
+    published: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
+    withdrawn: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
+    aliases: Mapped[list[str]] = mapped_column(JsonType, default=list)
+    summary: Mapped[str] = mapped_column(String(500), default="")
+    details: Mapped[str] = mapped_column(Text, default="")
+    cvss: Mapped[float | None] = mapped_column(Float, nullable=True)
+    cvss_vector: Mapped[str] = mapped_column(String(200), default="")
+    db_severity: Mapped[str] = mapped_column(String(16), default="")
+    cwe: Mapped[list[str]] = mapped_column(JsonType, default=list)
+    references: Mapped[list[str]] = mapped_column(JsonType, default=list)
+    source: Mapped[str] = mapped_column(String(32))  # the OSV dump it came from: PyPI, npm, ...
+    fetched_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+
+
+class AdvisoryPackage(Base):
+    """A package an advisory affects, with OSV's ranges and versions (`core.advisories.osv`).
+    `lib_key` is `core.inventory.identity.library_key`, so it joins `libraries.key`."""
+
+    __tablename__ = "advisory_packages"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    advisory_id: Mapped[str] = mapped_column(
+        ForeignKey("advisories.id", ondelete="CASCADE"), index=True
+    )
+    ecosystem: Mapped[str] = mapped_column(String(32))
+    name: Mapped[str] = mapped_column(String(300))
+    lib_key: Mapped[str] = mapped_column(String(340), index=True)
+    data: Mapped[dict[str, Any]] = mapped_column(JsonType, default=dict)  # ranges, versions
+
+
+class KevEntry(Base):
+    """CISA's Known Exploited Vulnerabilities catalog, one row per CVE: public, shared."""
+
+    __tablename__ = "kev_entries"
+
+    cve: Mapped[str] = mapped_column(String(32), primary_key=True)
+    date_added: Mapped[str] = mapped_column(String(10), default="")
+    due_date: Mapped[str] = mapped_column(String(10), default="")
+    name: Mapped[str] = mapped_column(String(300), default="")
+    ransomware: Mapped[str] = mapped_column(String(16), default="")
+
+
+class CveRecord(Base):
+    """A CVE as NVD describes it, for advisories that carry no CVSS of their own: public, shared."""
+
+    __tablename__ = "cve_records"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    published: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
+    last_modified: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
+    cvss: Mapped[float | None] = mapped_column(Float, nullable=True)
+    cvss_vector: Mapped[str] = mapped_column(String(200), default="")
+    description: Mapped[str] = mapped_column(Text, default="")
+    fetched_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+
+
+class FeedState(Base):
+    """Where each advisory source stands (`osv:PyPI`, `kev`, `nvd`): when it last ran and
+    succeeded, where it got to, and the last error -- what the Advisories screen reports."""
+
+    __tablename__ = "advisory_feeds"
+
+    source: Mapped[str] = mapped_column(String(32), primary_key=True)
+    last_run_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
+    last_success_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
+    cursor: Mapped[str] = mapped_column(String(200), default="")
+    records: Mapped[int] = mapped_column(Integer, default=0)
+    last_error: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+class AdvisoryImpact(Base):
+    """One vulnerability (`vuln_key`) at one library version in one project's current SBOM (plan
+    §46.2, §55.5). `certain` is False when a version or range could not be compared -- "may be
+    affected", never dropped. `resolved_at` is set once the project no longer has an affected
+    version (or the advisory was withdrawn); a later match opens it again."""
+
+    __tablename__ = "advisory_impacts"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"), index=True)
+    vuln_key: Mapped[str] = mapped_column(String(100))
+    advisory_ids: Mapped[list[str]] = mapped_column(JsonType, default=list)
+    library_id: Mapped[str] = mapped_column(ForeignKey("libraries.id", ondelete="CASCADE"))
+    asset_id: Mapped[str] = mapped_column(ForeignKey("assets.id", ondelete="CASCADE"), index=True)
+    version: Mapped[str] = mapped_column(String(200))
+    fixed_version: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    certain: Mapped[bool] = mapped_column(Boolean, default=True)
+    first_seen_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+    last_seen_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+    resolved_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint(
+            "asset_id", "library_id", "version", "vuln_key", name="uq_advisory_impacts_use"
+        ),
+        Index("ix_advisory_impacts_org_vuln", "org_id", "vuln_key"),
+        Index("ix_advisory_impacts_library", "library_id"),
+    )
+
+
+class AdvisoryState(Base):
+    """What an organization has done about one vulnerability: `new` until someone acts, `issues`
+    once Issues were created for it (they are then kept in step with the inventory)."""
+
+    __tablename__ = "advisory_states"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"), index=True)
+    vuln_key: Mapped[str] = mapped_column(String(100))
+    state: Mapped[str] = mapped_column(String(16), default="new")
+    first_seen_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+    updated_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+    updated_by: Mapped[str | None] = mapped_column(String(200), nullable=True)
+
+    __table_args__ = (UniqueConstraint("org_id", "vuln_key", name="uq_advisory_states_vuln"),)

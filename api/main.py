@@ -35,6 +35,7 @@ from sqlalchemy import and_, func, select
 from sqlalchemy.orm import Session
 
 from api.acceptance import register_acceptance_routes
+from api.advisories import register_advisory_routes
 from api.calendar import register_calendar_routes
 from api.collab import register_collab_routes
 from api.components import register_component_routes
@@ -2158,6 +2159,7 @@ def create_app(app_state: AppState) -> FastAPI:
     register_ticket_routes(app)
     register_calendar_routes(app)
     register_component_routes(app)
+    register_advisory_routes(app)
     return app
 
 

@@ -16,6 +16,7 @@ PERSON_KINDS: dict[str, str] = {
     "risk_acceptance": "A risk acceptance waits for you, or yours is decided or expiring",
     "ticket": "A linked ticket changes status on an issue you watch",
     "rules": "A rule names you, or waits for an Admin to confirm",
+    "advisory": "A new advisory affects a project you own",
 }
 PERSON_CHANNELS: dict[str, tuple[str, ...]] = {
     "in_app": ("off", "instant"),
@@ -28,6 +29,7 @@ TEAM_KINDS: dict[str, str] = {
     "sla": "Issues cross into due soon or breached",
     "risk_acceptance": "A risk acceptance is requested, decided or expires",
     "rules": "A rule's notify action",
+    "advisory": "A new advisory affects your projects",
 }
 TEAM_CHANNEL = "team"  # Slack, Discord, Teams and the webhook together
 TEAM_MODES = ("off", "instant", "digest")

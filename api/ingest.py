@@ -493,6 +493,10 @@ def register_ingest_routes(app: FastAPI) -> None:
             out = service.revert_latest_import(s, org_id=org, test_id=record.test_id)
         except service.ImportRequestError as exc:
             raise HTTPException(409, str(exc)) from exc
+        if out.inventory_changed:
+            from core.advisories.impact import match_after_record
+
+            match_after_record(s, org, out.inventory_changed, [out.asset_id or ""])
         return RevertView(
             import_id=record.id, status=out.record.status,
             restored=out.restored, deleted=out.deleted, skipped=out.skipped,

@@ -172,6 +172,15 @@ export function ComponentsScreen({ initialPurl = "", initialVersion = "" }: { in
                   <code>{v.version || "(no version)"}</code> {plural(v.projects, "project")}
                   {v.matches === false && <span className="ds-comp-meta"> · outside {r.constraint}</span>}
                   {v.matches === null && <span className="ds-comp-meta"> · not comparable</span>}
+                  {v.advisories && v.advisories.length > 0 && (
+                    <span className="ds-comp-advs">
+                      {" · "}
+                      {v.advisories.slice(0, 3).map((k, i) => (
+                        <span key={k}>{i > 0 && ", "}<Link href={`/app/advisories/${encodeURIComponent(k)}`}>{k}</Link></span>
+                      ))}
+                      {v.advisories.length > 3 && ` +${v.advisories.length - 3}`}
+                    </span>
+                  )}
                 </li>
               ))}
             </ul>

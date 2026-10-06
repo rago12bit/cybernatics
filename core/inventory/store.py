@@ -41,6 +41,9 @@ class Recorded:
     components: int
     new_libraries: int
     skipped: int  # entries that were not a usable purl, or past MAX_COMPONENTS
+    # Libraries whose current use changed (in this SBOM now, or not any more): what advisory
+    # matching re-checks (`core.advisories.impact.match_after_record`).
+    changed: frozenset[str] = frozenset()
 
 
 def import_source(test_id: str) -> str:
@@ -168,18 +171,23 @@ def record(
     ]  # fmt: skip
     for chunk in _chunks(values):
         s.execute(insert(ComponentRow), chunk)
-    refresh_current(s, asset_id, source)
+    changed = refresh_current(s, asset_id, source)
     if skipped:
         log.info("inventory: %d SBOM entries skipped for scan %s", skipped, scan_id)
     if commit:
         s.commit()
-    return Recorded(components=len(values), new_libraries=new, skipped=skipped)
+        if changed:  # check what changed against the advisories, in its own transaction
+            from core.advisories.impact import match_after_record
+
+            match_after_record(s, org_id, changed, [asset_id])
+    return Recorded(
+        components=len(values), new_libraries=new, skipped=skipped, changed=frozenset(changed)
+    )
 
 
-def refresh_current(s: Session, asset_id: str, source: str) -> str | None:
+def refresh_current(s: Session, asset_id: str, source: str) -> set[str]:
     """Mark the latest SBOM of (project, source) as current and every other as history, and
-    recount the libraries whose use changed. Returns the scan now current, or None when the source
-    has no SBOM left (its import was reverted)."""
+    recount the libraries whose use changed. Returns those libraries."""
     latest = s.scalar(
         select(Scan.id)
         .where(
@@ -200,7 +208,7 @@ def refresh_current(s: Session, asset_id: str, source: str) -> str | None:
     if latest is not None:
         s.execute(update(ComponentRow).where(promote).values(current=True))
     recount(s, changed)
-    return latest
+    return changed
 
 
 def recount(s: Session, library_ids: Iterable[str]) -> None:
@@ -233,17 +241,27 @@ def recount_org(s: Session, org_id: str) -> int:
     return len(ids)
 
 
-def forget_scan(s: Session, scan_id: str) -> None:
+def forget_scan(s: Session, scan_id: str) -> set[str]:
     """Before a scan is deleted (an import reverted): drop its rows and let the previous SBOM of
-    the same source become current again."""
+    the same source become current again. Returns the libraries whose current use changed."""
     pairs = s.execute(
         select(ComponentRow.asset_id, ComponentRow.source)
         .where(ComponentRow.scan_id == scan_id)
         .distinct()
     ).all()
+    gone = set(
+        s.scalars(
+            select(ComponentRow.library_id).where(
+                ComponentRow.scan_id == scan_id, ComponentRow.current.is_(True)
+            )
+        )
+    )
     s.execute(delete(ComponentRow).where(ComponentRow.scan_id == scan_id))
+    changed = set(gone)
     for asset_id, source in pairs:
-        refresh_current(s, asset_id, source)
+        changed |= refresh_current(s, asset_id, source)
+    recount(s, gone)
+    return changed
 
 
 def backfill(s: Session, org_id: str, *, limit: int = 25, budget_seconds: float = 60.0) -> int:

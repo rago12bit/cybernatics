@@ -1,0 +1,217 @@
+/* The advisory engine (plan §46.2, §55.5). */
+.ds-adv {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+}
+.ds-adv h1,
+.ds-adv h2 {
+  margin: 0;
+}
+.ds-adv-meta {
+  margin: 0;
+  color: var(--ds-muted);
+  font-size: 0.85rem;
+  overflow-wrap: break-word;
+}
+.ds-adv-error {
+  margin: 0;
+  color: var(--ds-sev-critical);
+}
+.ds-adv-filters,
+.ds-adv-tabs,
+.ds-adv-row-top,
+.ds-adv-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+.ds-adv-tabs {
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+.ds-adv-tabs label,
+.ds-adv-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin: 0;
+}
+.ds-adv-tab-on {
+  font-weight: 600;
+}
+.ds-adv-q {
+  width: auto;
+  flex: 1 1 12rem;
+  max-width: 24rem;
+}
+.ds-adv-list,
+.ds-adv-plain {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.ds-adv-list > li {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--ds-rule);
+  border-radius: var(--ds-radius-panel);
+  margin-bottom: 0.5rem;
+}
+.ds-adv-kevrow {
+  border-left: 4px solid var(--ds-sev-critical) !important;
+}
+.ds-adv-key,
+.ds-adv-title {
+  font-family: var(--ds-font-mono);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.ds-adv-title {
+  font-size: var(--ds-text-4, 1.5rem);
+}
+.ds-adv-when {
+  margin-left: auto;
+}
+.ds-adv-summary,
+.ds-adv-lede {
+  margin: 0.25rem 0;
+  overflow-wrap: break-word;
+}
+.ds-adv-lede {
+  font-size: var(--ds-text-3, 1.1rem);
+}
+.ds-adv-sev,
+.ds-adv-kev,
+.ds-adv-done {
+  font-size: 0.75rem;
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  border: 1px solid var(--ds-rule);
+  white-space: nowrap;
+}
+.ds-adv-sev-critical,
+.ds-adv-kev {
+  border-color: var(--ds-sev-critical);
+  color: var(--ds-sev-critical);
+}
+.ds-adv-sev-high {
+  border-color: var(--ds-sev-high);
+  color: var(--ds-sev-high);
+}
+.ds-adv-sev-medium {
+  border-color: var(--ds-sev-medium);
+}
+.ds-adv-box {
+  border: 1px solid var(--ds-rule);
+  border-radius: var(--ds-radius-panel);
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  min-width: 0;
+}
+.ds-adv-verdict {
+  font-size: var(--ds-text-3, 1.1rem);
+}
+.ds-adv-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.ds-adv-table caption {
+  text-align: left;
+  padding-bottom: 0.25rem;
+}
+.ds-adv-table th,
+.ds-adv-table td {
+  text-align: left;
+  vertical-align: top;
+  padding: 0.4rem 0.5rem;
+  border-bottom: 1px solid var(--ds-rule);
+  overflow-wrap: break-word;
+}
+.ds-adv-table tbody th {
+  background: none;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: normal;
+  color: inherit;
+  font-size: inherit;
+}
+.ds-adv-nowrap {
+  white-space: nowrap;
+}
+.ds-adv-yes {
+  font-weight: 700;
+}
+.ds-adv-fix {
+  margin: 0;
+  font-weight: 600;
+}
+.ds-adv-more,
+.ds-adv-done-msg {
+  margin: 0;
+}
+.ds-adv-details {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 20rem;
+  overflow: auto;
+}
+.ds-adv-plain a {
+  overflow-wrap: anywhere;
+}
+.ds-adv-owner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.ds-adv-owner select {
+  width: 100%;
+}
+.ds-adv-owner label {
+  text-transform: none;
+  letter-spacing: normal;
+  font-family: inherit;
+}
+@media (max-width: 640px) {
+  .ds-adv-when {
+    margin-left: 0;
+  }
+  .ds-adv-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+  .ds-adv-table tr,
+  .ds-adv-table th,
+  .ds-adv-table td {
+    display: block;
+  }
+  .ds-adv-table tr {
+    padding: 0.4rem 0;
+    border-bottom: 1px solid var(--ds-rule);
+  }
+  .ds-adv-table th,
+  .ds-adv-table td {
+    border: 0;
+    padding: 0.1rem 0;
+  }
+  .ds-adv-nowrap {
+    white-space: normal;
+  }
+  .ds-adv-table td::before {
+    content: attr(data-label) ": ";
+    color: var(--ds-muted);
+  }
+}
+.ds-adv-kev {
+  white-space: normal; /* "Known exploited (CISA KEV since ..., due ...)" must wrap on a phone */
+  max-width: 100%;
+}

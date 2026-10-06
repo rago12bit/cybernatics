@@ -203,7 +203,7 @@ export function IssueDetail({ assetId, issueId }: { assetId: string; issueId: st
 
           <div className="ds-issue-section">
             <button type="button" className="ds-issue-explain-toggle" onClick={() => setExplanationOpen((v) => !v)} aria-expanded={explanationOpen}>
-              What this means {mode === "novice" && <span className="ds-ai-tag">AI</span>} {explanationOpen ? "▾" : "▸"}
+              What this means {mode === "novice" && aiExplanation && <span className="ds-ai-tag">AI</span>} {explanationOpen ? "▾" : "▸"}
             </button>
             {explanationOpen && <p className="ds-issue-explain-text">{aiExplanation ?? finding.description}</p>}
           </div>

@@ -1429,9 +1429,80 @@ export type ComponentSearch = {
     direct: number;
     versions: number;
   };
-  versions: { version: string; projects: number; matches: boolean | null }[];
+  versions: { version: string; projects: number; matches: boolean | null; advisories?: string[] }[];
   uses: ComponentUse[];
   uncomparable: string[];
   truncated: boolean;
   elapsed_ms: number;
 };
+
+/** The advisory engine (plan §46.2, §55.5). */
+export type AdvisorySummary = {
+  vuln_key: string;
+  ids: string[];
+  summary: string;
+  severity: string;
+  cvss: number | null;
+  kev: boolean;
+  malicious: boolean;
+  published: string | null;
+  first_seen_at: string;
+  state: "new" | "issues";
+  projects: number;
+  libraries: string[];
+  imported_by_app: number;
+  internet_facing: number;
+  uncertain: number;
+};
+export type AdvisoryUse = {
+  project_id: string;
+  project: string;
+  portfolio: string | null;
+  library: string;
+  ecosystem: string;
+  purl: string;
+  version: string;
+  fixed_version: string | null;
+  certain: boolean;
+  resolved_at: string | null;
+  first_seen_at: string;
+  relation: string;
+  paths: string[];
+  reachable: boolean | null;
+  reachable_reason: string;
+  exposure: "internet" | "internal" | "unset";
+  owner: string | null;
+  issues: { id: string; state: string }[];
+};
+export type AdvisoryImpact = {
+  vuln_key: string;
+  ids: string[];
+  aliases: string[];
+  cves: string[];
+  summary: string;
+  details: string;
+  severity: string;
+  cvss: number | null;
+  cvss_vector: string;
+  malicious: boolean;
+  kev: { cve: string; date_added: string; due_date: string; name: string; ransomware: string } | null;
+  published: string | null;
+  modified: string;
+  references: string[];
+  withdrawn: boolean;
+  state: "new" | "issues";
+  first_seen_at: string;
+  uses: AdvisoryUse[];
+  no_longer_affected: AdvisoryUse[];
+  summary_counts: {
+    projects: number; portfolios: number; imported_by_app: number; internet_facing: number;
+    uncertain: number; with_fix: number; with_issues: number;
+  };
+};
+export type AdvisoryIssuesCreated = { projects: number; issues: number; tickets: number; ticket_errors: string[]; issue_ids: Record<string, string[]> };
+export type AdvisoryFeeds = {
+  feeds: { source: string; last_run_at: string | null; last_success_at: string | null; records: number; last_error: string | null }[];
+  advisories: number;
+  kev_entries: number;
+};
+export type ProjectOwner = { project_id: string; owner: string | null; owner_name: string | null };

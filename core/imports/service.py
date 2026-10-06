@@ -71,6 +71,10 @@ class ImportPreview:
 class ImportResult:
     record: ImportRecord
     created: bool  # False: the same file was already the Test's latest import (idempotent no-op)
+    # Libraries whose current use an imported SBOM changed: what the caller matches against
+    # advisories once this has committed (`core.advisories.impact.match_after_record`).
+    inventory_changed: frozenset[str] = frozenset()
+    asset_id: str | None = None  # the project whose inventory changed
 
 
 @dataclass(frozen=True)
@@ -79,6 +83,8 @@ class RevertResult:
     restored: int  # Issues put back as they were before the import
     deleted: int  # Issues the import created that nothing else references
     skipped: int  # Issues something else changed since, left alone rather than clobbered
+    inventory_changed: frozenset[str] = frozenset()
+    asset_id: str | None = None  # the project whose inventory changed
 
 
 def _load(s: Session, org_id: str, test_id: str) -> tuple[EngagementTest, Engagement]:
@@ -276,11 +282,12 @@ def apply_import(
         record.warnings = list(warnings or [])
         record.changes = changes
 
+        changed: frozenset[str] = frozenset()
         if components:  # an SBOM: its packages are this Test's part of the project's inventory
-            inventory.record(
+            changed = inventory.record(
                 s, org_id=org_id, asset_id=engagement.asset_id, scan_id=scan.id,
                 source=inventory.import_source(test.id), packages=components, commit=False,
-            )  # fmt: skip
+            ).changed  # fmt: skip
         repo.stage_issue_events(
             s,
             org_id=org_id,
@@ -304,7 +311,9 @@ def apply_import(
             },
         )
         s.commit()
-        return ImportResult(record, created=True)
+        return ImportResult(
+            record, created=True, inventory_changed=changed, asset_id=engagement.asset_id
+        )
     except Exception:
         s.rollback()
         raise
@@ -319,7 +328,7 @@ def revert_latest_import(s: Session, *, org_id: str, test_id: str) -> RevertResu
     another import has changed it since, that later change is the truth and is left alone (counted
     as `skipped`) -- an undo must never overwrite something newer than what it undoes."""
     try:
-        _load(s, org_id, test_id)
+        _test, engagement = _load(s, org_id, test_id)
         s.scalars(
             select(EngagementTest).where(EngagementTest.id == test_id).with_for_update()
         ).one()
@@ -329,6 +338,7 @@ def revert_latest_import(s: Session, *, org_id: str, test_id: str) -> RevertResu
         scan_id = record.scan_id
 
         restored = deleted = skipped = 0
+        changed: frozenset[str] = frozenset()
         for change in record.changes:
             row = s.get(IssueRow, change["issue_id"])
             if row is None:
@@ -366,7 +376,7 @@ def revert_latest_import(s: Session, *, org_id: str, test_id: str) -> RevertResu
             s.flush()  # issue changes first, so the findings' issue_id FKs resolve cleanly
             s.execute(delete(FindingRow).where(FindingRow.scan_id == scan_id))
             record.scan_id = None
-            inventory.forget_scan(s, scan_id)  # the Test's previous SBOM is current again
+            changed = frozenset(inventory.forget_scan(s, scan_id))  # the previous SBOM is current
             s.flush()
             s.execute(delete(Scan).where(Scan.id == scan_id))
         record.status = "reverted"
@@ -378,7 +388,10 @@ def revert_latest_import(s: Session, *, org_id: str, test_id: str) -> RevertResu
             payload={"import_id": record.id, "test_id": test_id, "counts": _counts(record)},
         )
         s.commit()
-        return RevertResult(record, restored=restored, deleted=deleted, skipped=skipped)
+        return RevertResult(
+            record, restored=restored, deleted=deleted, skipped=skipped,
+            inventory_changed=changed, asset_id=engagement.asset_id,
+        )  # fmt: skip
     except Exception:
         s.rollback()
         raise

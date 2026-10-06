@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ProjectOwner } from "@/components/ProjectOwner";
 import { TagsEditor } from "@/components/TagsEditor";
 import { useEffect, useState } from "react";
 import { ApiError, getAssetOverview } from "@/lib/api";
@@ -159,6 +160,7 @@ export function ProjectOverview({ assetId }: { assetId: string }) {
             </ul>
           </div>
 
+          <ProjectOwner assetId={assetId} />
           <TagsEditor kind="project" id={assetId} />
         </aside>
       </div>

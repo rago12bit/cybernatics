@@ -1,4 +1,4 @@
-import type { CalendarKind, CalendarView, ComponentSearch, LibrarySummary, Inbox, IssueGroupSummary, IssueTicket, NotificationPrefsView, RuleTemplate, TicketConfigInput, TicketConfigView, Watchers, IssueOwner, Rule, RuleDryRun, RuleInput, RuleRun, RulesCatalogue, ChecklistCatalogue, ChecklistItem, ChecklistResult, ChecklistSummary, Engagement, EngagementDetail, EngagementInput, Mention, NoteFile, NotesView, Person, Portfolio, Retest, RetestAction, TagsView, PriorityBand, PriorityContext, PriorityOverview, PriorityPreview, RiskAcceptance, RiskAcceptanceInput, RiskAcceptancePolicy, SlaBand, SlaBasis, SlaOverview, ConnectorInput, ConnectorKind, ConnectorView, AnalyzeResult, MappingPreview, MappingSpec, SavedMapping, CvssScore, CweEntry,
+import type { AdvisoryFeeds, AdvisoryImpact, AdvisoryIssuesCreated, AdvisorySummary, ProjectOwner, CalendarKind, CalendarView, ComponentSearch, LibrarySummary, Inbox, IssueGroupSummary, IssueTicket, NotificationPrefsView, RuleTemplate, TicketConfigInput, TicketConfigView, Watchers, IssueOwner, Rule, RuleDryRun, RuleInput, RuleRun, RulesCatalogue, ChecklistCatalogue, ChecklistItem, ChecklistResult, ChecklistSummary, Engagement, EngagementDetail, EngagementInput, Mention, NoteFile, NotesView, Person, Portfolio, Retest, RetestAction, TagsView, PriorityBand, PriorityContext, PriorityOverview, PriorityPreview, RiskAcceptance, RiskAcceptanceInput, RiskAcceptancePolicy, SlaBand, SlaBasis, SlaOverview, ConnectorInput, ConnectorKind, ConnectorView, AnalyzeResult, MappingPreview, MappingSpec, SavedMapping, CvssScore, CweEntry,
   EvidenceFile, ManualFindingInput, ManualFindingView, ManualRecorded, ProjectRoutes, DedupApplied, DedupChangeRequest, DedupHistoryEntry, DedupOverview, DedupPreview,
   ImportCreated, ImportView, ParserInfo, ProjectTest, RevertView,
   AssetSummary, AssetVerification, AttackPath, BulkTriageResult,
@@ -724,6 +724,31 @@ export const fileIssueTicket = (issueId: string) => request<IssueTicket>(`/v2/is
 export const syncIssueTicket = (issueId: string) => request<IssueTicket>(`/v2/issues/${enc(issueId)}/ticket/sync`, { method: "POST" });
 export const setIssueGroup = (issueId: string, body: { group_id?: string | null; name?: string | null }) =>
   request<IssueTicket>(`/v2/issues/${enc(issueId)}/group`, json("PUT", body));
+
+/** The advisory engine (plan §46.2, §55.5). */
+export const listAdvisories = (q: { state?: string; q?: string; kev?: boolean } = {}) => {
+  const p = new URLSearchParams();
+  if (q.state) p.set("state", q.state);
+  if (q.q) p.set("q", q.q);
+  if (q.kev) p.set("kev", "true");
+  const s = p.toString();
+  return request<AdvisorySummary[]>(`/v2/advisories${s ? `?${s}` : ""}`);
+};
+export const getAdvisory = (key: string) => request<AdvisoryImpact>(`/v2/advisories/${encodeURIComponent(key)}`);
+export const createAdvisoryIssues = (key: string, projectIds?: string[]) =>
+  request<AdvisoryIssuesCreated>(`/v2/advisories/${encodeURIComponent(key)}/issues`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(projectIds ? { project_ids: projectIds } : {}),
+  });
+export const getAdvisoryFeeds = () => request<AdvisoryFeeds>("/v2/advisory-feeds");
+export const getProjectOwner = (id: string) => request<ProjectOwner>(`/v2/projects/${encodeURIComponent(id)}/owner`);
+export const setProjectOwner = (id: string, owner: string | null) =>
+  request<ProjectOwner>(`/v2/projects/${encodeURIComponent(id)}/owner`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ owner }),
+  });
 
 /** The component inventory (plan §46.1): "where do we use this?" */
 export const searchComponents = (purl: string, q: { version?: string; projectId?: string } = {}) => {

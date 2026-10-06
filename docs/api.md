@@ -1008,6 +1008,44 @@ List Libraries
 - `ecosystem` (query)
 - `limit` (query)
 
+## `GET /v2/advisories`
+
+List Advisories
+
+- `state` (query)
+- `q` (query)
+- `kev` (query)
+- `limit` (query)
+
+## `GET /v2/advisories/{vuln_key}`
+
+Get Impact
+
+- `vuln_key` (path, required)
+
+## `POST /v2/advisories/{vuln_key}/issues`
+
+Create Issues
+
+- `vuln_key` (path, required)
+
+## `GET /v2/advisory-feeds`
+
+Feeds
+
+
+## `PUT /v2/projects/{project_id}/owner`
+
+Set Owner
+
+- `project_id` (path, required)
+
+## `GET /v2/projects/{project_id}/owner`
+
+Get Owner
+
+- `project_id` (path, required)
+
 ## Live progress (WebSocket)
 
 `GET /scans/{scan_id}/ws` (not part of OpenAPI).

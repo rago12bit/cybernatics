@@ -55,6 +55,8 @@ celery_app.conf.beat_schedule = {
     "tickets-sync": {"task": "bulwark.tickets_sync", "schedule": 600.0},
     # Week 67 (plan §46.1): SBOMs from before the component inventory, a few projects an hour.
     "inventory-backfill": {"task": "bulwark.inventory_backfill", "schedule": 3600.0},
+    # Week 68 (plan §46.2): OSV, KEV and NVD, then what changed matched for every organization.
+    "advisories": {"task": "bulwark.update_advisories", "schedule": 6 * 3600.0},
 }
 
 
@@ -320,6 +322,27 @@ def inventory_backfill_task() -> int:
             n += backfill(s, org_id)
             recount_org(s, org_id)
     return n
+
+
+@celery_app.task(name="bulwark.update_advisories", ignore_result=True)  # type: ignore[untyped-decorator]
+def update_advisories_task() -> dict[str, str]:
+    """Fetch the advisory sources, then match each organization against what changed (all of it
+    when much changed, as on the first run). Failures are recorded per source, never raised."""
+    from core.advisories import feeds, impact, issues
+    from core.persistence.db import get_session_factory
+    from core.tenancy import set_session_org
+
+    with get_session_factory()() as s:
+        result = feeds.update_all(s)
+    full = len(result.vuln_keys) > impact.FULL_MATCH_OVER
+    for org_id in _org_ids():
+        if not result.vuln_keys:
+            break
+        with get_session_factory()() as s:
+            set_session_org(s, org_id)
+            matched = impact.match(s, org_id, vuln_keys=None if full else result.vuln_keys)
+            issues.sync_changed(s, org_id, matched.changed_assets)
+    return result.errors
 
 
 @celery_app.task(name="bulwark.recompute_priority", bind=True, acks_late=True, ignore_result=True)  # type: ignore[untyped-decorator]

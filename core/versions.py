@@ -7,11 +7,11 @@ plain numbers: PEP 440 puts `1.0rc1` before `1.0` and `1.0.post1` after it; semv
 component search (`?version=<2.17.1`) and the advisory engine's range matching both order versions
 with `key()` here, so the two can never disagree with each other.
 
-Supported: PyPI (PEP 440, through `packaging`), npm and Go (semver 2.0.0, read as leniently as
-osv-scanner reads it -- see `_semver`) and Maven (the algorithm of Maven's own `ComparableVersion`).
-Anything else -- another ecosystem, or a PyPI version that is not PEP 440 -- raises `VersionError`,
-and callers report it as "could not be compared" rather than guessing an order: a guessed order is
-how a vulnerable version gets reported as safe.
+Supported: PyPI (PEP 440 through `packaging`, and versions that are not PEP 440 in setuptools'
+legacy order before all of them, as osv-scanner does), npm and Go (semver 2.0.0, read as leniently
+as osv-scanner reads it -- see `_semver`) and Maven (the algorithm of Maven's own
+`ComparableVersion`). Another ecosystem, or an empty or absurdly long version, raises
+`VersionError`, and callers report it as "could not be compared" rather than guessing an order.
 """
 
 from __future__ import annotations
@@ -82,6 +82,32 @@ def _semver(v: str) -> tuple[Any, ...]:
         return (tuple(nums), 1, ())  # a release sorts after every prerelease of the same version
     ids = tuple(_Pre(int(p), p) if p.isdigit() else _Pre(None, p) for p in pre.split("."))
     return (tuple(nums), 0, ids)
+
+
+# ---------------------------------------------------------------- PyPI before PEP 440
+
+_LEGACY_PART = re.compile(r"(\d+|[a-z]+|\.|-)")
+_LEGACY_MAP = {"pre": "c", "preview": "c", "-": "final-", "rc": "c", "dev": "@"}
+
+
+def _legacy(v: str) -> tuple[str, ...]:
+    """setuptools' LegacyVersion order (removed from `packaging` in 22.0, still what osv-scanner
+    applies to a PyPI version that is not PEP 440, such as Debian's `0.8.3ubuntu7.5`): every such
+    version sorts before every PEP 440 version, and among themselves by these parts."""
+    parts: list[str] = []
+    for raw in _LEGACY_PART.split(v.lower()):
+        part = _LEGACY_MAP.get(raw, raw)
+        if not part or part == ".":
+            continue
+        part = part.zfill(8) if part[:1].isdigit() else "*" + part
+        if part.startswith("*"):
+            if part < "*final":
+                while parts and parts[-1] == "*final-":
+                    parts.pop()
+            while parts and parts[-1] == "00000000":
+                parts.pop()
+        parts.append(part)
+    return (*parts, "*final")
 
 
 # ---------------------------------------------------------------- Maven ComparableVersion
@@ -239,9 +265,12 @@ def key(ecosystem: str, version: str) -> Any:
         raise VersionError("no version" if not version else "version is too long")
     if ecosystem == "pypi":
         try:
-            return Version(version)
-        except InvalidVersion as exc:
-            raise VersionError(f"{version!r} is not a PEP 440 version") from exc
+            return (1, Version(version))
+        except InvalidVersion:
+            return (
+                0,
+                _legacy(version),
+            )  # before every PEP 440 version, as pip and osv-scanner put it
     if ecosystem in ("npm", "go"):
         return _semver(version)
     if ecosystem == "maven":

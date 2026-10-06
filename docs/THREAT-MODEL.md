@@ -141,6 +141,16 @@ cache atomically; a bad file leaves the previous one in place; a missing feed de
 rather than failing scans. **Open:** the files are trusted on TLS alone; there is no signature to verify. A
 compromised feed could distort ranking, not execute code.
 
+Since Week 68 (ADR-0052) the advisory engine also fetches OSV's per-ecosystem data, CISA KEV and NVD's
+CVE API, on the worker, from three fixed HTTPS hosts only (any other URL is refused), certificates
+verified against certifi's bundle. Sizes are capped (1 GiB per dump, 2 MiB per record), records are
+parsed as data, a KEV file with fewer than 100 entries never replaces the catalog, and an
+advisory's reference links are kept only if they are `http(s)` addresses; its text is shown as
+text, never rendered. **Open:** as above, a compromised source could add or hide advisories (false
+alarms or missed ones); it cannot run code. Fetching sends nothing about an organization: the
+requests are plain GETs of public files, unlike osv-scanner's online mode, which posts package
+lists to api.osv.dev.
+
 ### T14: reachability analysis parses untrusted source outside the sandbox
 
 Unlike the scanners, `core/reachability` runs in the API/worker process. It never executes scanned code:
