@@ -983,6 +983,15 @@ Sync Ticket
 
 - `issue_id` (path, required)
 
+## `GET /v2/calendar`
+
+Get Calendar
+
+- `from` (query, required)
+- `to` (query, required)
+- `project_id` (query)
+- `kinds` (query)
+
 ## Live progress (WebSocket)
 
 `GET /scans/{scan_id}/ws` (not part of OpenAPI).

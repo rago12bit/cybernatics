@@ -1,0 +1,178 @@
+/* The calendar (plan §49). */
+.ds-cal {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+}
+.ds-cal h1,
+.ds-cal h2,
+.ds-cal h3 {
+  margin: 0;
+}
+.ds-cal-top,
+.ds-cal-nav,
+.ds-cal-filters,
+.ds-cal-kinds {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+.ds-cal-top {
+  justify-content: space-between;
+}
+.ds-cal-month {
+  font-size: var(--ds-text-3, 1.1rem);
+  min-width: 10rem;
+  text-align: center;
+}
+.ds-cal-kinds {
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+.ds-cal-legend {
+  color: var(--ds-muted);
+  font-size: 0.85rem;
+  padding: 0;
+}
+.ds-cal-toggle {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.15rem 0.5rem 0.15rem 0.35rem;
+  border-left: 4px solid var(--cal-color);
+}
+.ds-cal-select {
+  width: auto;
+  max-width: 100%;
+}
+.ds-cal-verdict {
+  margin: 0;
+  font-size: var(--ds-text-3, 1.1rem);
+}
+.ds-cal-meta {
+  margin: 0;
+  color: var(--ds-muted);
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+}
+.ds-cal-error {
+  margin: 0;
+  color: var(--ds-sev-critical);
+}
+.ds-cal-engagement {
+  --cal-color: var(--ds-brand);
+}
+.ds-cal-sla {
+  --cal-color: var(--ds-sev-medium);
+}
+.ds-cal-acceptance {
+  --cal-color: var(--ds-sev-info);
+}
+.ds-cal-breached {
+  --cal-color: var(--ds-sev-critical);
+}
+.ds-cal-grid {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+.ds-cal-caption {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+.ds-cal-grid th {
+  background: none;
+  color: var(--ds-muted);
+  font-weight: 600;
+  text-align: left;
+  padding: 0.25rem 0.35rem;
+}
+.ds-cal-grid td {
+  vertical-align: top;
+  height: 6.5rem;
+  padding: 0.25rem;
+  border: 1px solid var(--ds-rule);
+  overflow: hidden;
+}
+.ds-cal-out {
+  opacity: 0.5;
+}
+.ds-cal-date {
+  font-size: 0.85rem;
+  color: var(--ds-muted);
+  margin-bottom: 0.2rem;
+}
+.ds-cal-today .ds-cal-date span {
+  display: inline-block;
+  min-width: 1.4rem;
+  text-align: center;
+  border-radius: 999px;
+  background: var(--ds-brand);
+  color: var(--ds-surface);
+  font-weight: 700;
+}
+.ds-cal-chip {
+  display: block;
+  font-size: 0.75rem;
+  line-height: 1.25;
+  padding: 0.1rem 0.3rem;
+  margin-bottom: 0.15rem;
+  border-left: 3px solid var(--cal-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-decoration: none;
+  color: inherit;
+}
+.ds-cal-chip:hover,
+.ds-cal-chip:focus-visible {
+  text-decoration: underline;
+}
+.ds-cal-kind {
+  font-weight: 600;
+}
+.ds-cal-more {
+  font-size: 0.75rem;
+  color: var(--ds-muted);
+}
+.ds-cal-days,
+.ds-cal-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.ds-cal-days > li {
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--ds-rule);
+}
+.ds-cal-days h3 {
+  font-size: 0.95rem;
+  margin-bottom: 0.2rem;
+}
+.ds-cal-today-h {
+  color: var(--ds-brand);
+}
+.ds-cal-list li {
+  overflow-wrap: anywhere;
+  padding: 0.1rem 0;
+}
+.ds-cal-tag {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0 0.35rem;
+  border-left: 3px solid var(--cal-color);
+}
+/* A phone shows the list, not the month. */
+@media (max-width: 640px) {
+  .ds-cal-grid {
+    display: none;
+  }
+}

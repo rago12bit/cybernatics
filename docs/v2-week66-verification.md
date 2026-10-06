@@ -97,4 +97,28 @@ A factual record of what was built, run and measured. The decision is
 - **No Celery worker ran.** The digest and ticket poll tasks wrap `run_digests` and `sync_due`, which
   the tests call directly. The browser run's digest was not reached (the hour was not due).
 - People are tokens until Week 75; an inbox belongs to a token.
-- The §49 calendar (engagements, SLA dates, expiring acceptances) is not built.
+- The calendar's SLA list reads up to 5,000 Issues per project and says when it stopped there; it
+  was not measured at that size.
+
+## Added after the week: the calendar (plan §49)
+
+The week's schedule did not list §49's "calendar of engagements, SLA due dates, and expiring risk
+acceptances", so it was built separately, on request.
+
+- **What it is.** `GET /v2/calendar?from=&to=&project_id=&kinds=` (UTC days, at most 100 at a
+  time) gathers each assessment from its start to its close or planned end, each open Issue's SLA due
+  date in the range (as its project's policy computes it; exempt Issues left out), and each approved
+  risk acceptance, or waiting request, whose date falls in the range. A Calendar page in the header
+  shows a month, Monday first, with filters by kind and project, and the same entries day by day
+  beneath, which is all a phone shows. No migration: it reads data Bulwark already has.
+- **Tests.** 3 backend tests (one compares every SLA date with the date the issues table shows for
+  the same Issue; another org sees nothing; exempt, fixed and withdrawn things leave it) and 3 web
+  tests (weeks laid out Monday first in UTC, engagements spanning days in the grid but named once in
+  the list, the request covering the whole grid, filters, axe).
+- **In the browser** (two projects, starter SLA, issues aged 1 to 60 days, a planned pentest, an
+  expiring acceptance): the month showed 4 breached SLAs in red, 8 still to fall due, the pentest
+  across its 12 days and the acceptance on its day; the project filter cut it to the 6 storefront
+  dates; at phone width the grid gives way to the list with nothing wider than the page; an entry
+  opened its engagement.
+- **Fixed on the way:** the filter toggles had a global label margin; breached SLAs were red in the
+  grid but not in the list.

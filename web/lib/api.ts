@@ -1,4 +1,4 @@
-import type { Inbox, IssueGroupSummary, IssueTicket, NotificationPrefsView, RuleTemplate, TicketConfigInput, TicketConfigView, Watchers, IssueOwner, Rule, RuleDryRun, RuleInput, RuleRun, RulesCatalogue, ChecklistCatalogue, ChecklistItem, ChecklistResult, ChecklistSummary, Engagement, EngagementDetail, EngagementInput, Mention, NoteFile, NotesView, Person, Portfolio, Retest, RetestAction, TagsView, PriorityBand, PriorityContext, PriorityOverview, PriorityPreview, RiskAcceptance, RiskAcceptanceInput, RiskAcceptancePolicy, SlaBand, SlaBasis, SlaOverview, ConnectorInput, ConnectorKind, ConnectorView, AnalyzeResult, MappingPreview, MappingSpec, SavedMapping, CvssScore, CweEntry,
+import type { CalendarKind, CalendarView, Inbox, IssueGroupSummary, IssueTicket, NotificationPrefsView, RuleTemplate, TicketConfigInput, TicketConfigView, Watchers, IssueOwner, Rule, RuleDryRun, RuleInput, RuleRun, RulesCatalogue, ChecklistCatalogue, ChecklistItem, ChecklistResult, ChecklistSummary, Engagement, EngagementDetail, EngagementInput, Mention, NoteFile, NotesView, Person, Portfolio, Retest, RetestAction, TagsView, PriorityBand, PriorityContext, PriorityOverview, PriorityPreview, RiskAcceptance, RiskAcceptanceInput, RiskAcceptancePolicy, SlaBand, SlaBasis, SlaOverview, ConnectorInput, ConnectorKind, ConnectorView, AnalyzeResult, MappingPreview, MappingSpec, SavedMapping, CvssScore, CweEntry,
   EvidenceFile, ManualFindingInput, ManualFindingView, ManualRecorded, ProjectRoutes, DedupApplied, DedupChangeRequest, DedupHistoryEntry, DedupOverview, DedupPreview,
   ImportCreated, ImportView, ParserInfo, ProjectTest, RevertView,
   AssetSummary, AssetVerification, AttackPath, BulkTriageResult,
@@ -724,3 +724,10 @@ export const fileIssueTicket = (issueId: string) => request<IssueTicket>(`/v2/is
 export const syncIssueTicket = (issueId: string) => request<IssueTicket>(`/v2/issues/${enc(issueId)}/ticket/sync`, { method: "POST" });
 export const setIssueGroup = (issueId: string, body: { group_id?: string | null; name?: string | null }) =>
   request<IssueTicket>(`/v2/issues/${enc(issueId)}/group`, json("PUT", body));
+
+export const getCalendar = (from: string, to: string, q: { projectId?: string; kinds?: CalendarKind[] } = {}) => {
+  const p = new URLSearchParams({ from, to });
+  if (q.projectId) p.set("project_id", q.projectId);
+  if (q.kinds) p.set("kinds", q.kinds.join(","));
+  return request<CalendarView>(`/v2/calendar?${p.toString()}`);
+};

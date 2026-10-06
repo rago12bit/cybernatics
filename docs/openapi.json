@@ -8248,6 +8248,90 @@
           }
         }
       }
+    },
+    "/v2/calendar": {
+      "get": {
+        "tags": [
+          "calendar"
+        ],
+        "summary": "Get Calendar",
+        "operationId": "get_calendar_v2_calendar_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "title": "From"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "title": "To"
+            }
+          },
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "kinds",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "engagement,sla,acceptance",
+              "title": "Kinds"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -9441,6 +9525,50 @@
           "failed"
         ],
         "title": "BulkTriageResult"
+      },
+      "CalendarOut": {
+        "properties": {
+          "start": {
+            "type": "string",
+            "format": "date",
+            "title": "Start"
+          },
+          "end": {
+            "type": "string",
+            "format": "date",
+            "title": "End"
+          },
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/EntryOut"
+            },
+            "type": "array",
+            "title": "Entries"
+          },
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Counts"
+          },
+          "truncated": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Truncated"
+          }
+        },
+        "type": "object",
+        "required": [
+          "start",
+          "end",
+          "entries",
+          "counts",
+          "truncated"
+        ],
+        "title": "CalendarOut"
       },
       "Candidate": {
         "properties": {
@@ -10927,6 +11055,80 @@
           "created_at"
         ],
         "title": "EngagementOut"
+      },
+      "EntryOut": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "start": {
+            "type": "string",
+            "format": "date",
+            "title": "Start"
+          },
+          "end": {
+            "type": "string",
+            "format": "date",
+            "title": "End"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "project_id": {
+            "type": "string",
+            "title": "Project Id"
+          },
+          "project": {
+            "type": "string",
+            "title": "Project"
+          },
+          "link": {
+            "type": "string",
+            "title": "Link"
+          },
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Severity"
+          },
+          "state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "State"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "start",
+          "end",
+          "title",
+          "project_id",
+          "project",
+          "link",
+          "detail",
+          "severity",
+          "state"
+        ],
+        "title": "EntryOut"
       },
       "ExtendIn": {
         "properties": {

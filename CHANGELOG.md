@@ -33,6 +33,9 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   API: `/v2/rules/templates`, `/v2/notifications`, `/v2/notification-prefs`, `/v2/issues/{id}/watch`,
   `/v2/projects/{id}/tickets`, `/v2/projects/{id}/groups`, `/v2/issues/{id}/ticket` and `/group`.
   Migration 0038. A native scan's completion event now carries its counts, like an import's.
+- **Calendar (plan §49).** Engagements, SLA due dates and expiring risk acceptances for a month, by
+  project and kind, from data Bulwark already has: `GET /v2/calendar` and a Calendar page (a month
+  view, and a day-by-day list on phones).
 
 ### Security
 - Notification titles are one line wherever they go, and email headers are stripped of line breaks,

@@ -85,4 +85,7 @@ it still needs from you; a test saves every one.
 - "A person" is still a token: one person with two tokens has two inboxes.
 - The digest is per person or team, once a day; there is no weekly digest and no per-project
   routing of team channels.
-- The calendar of engagements, SLA dates and expiring acceptances in §49 is not built.
+- The §49 calendar (engagements, SLA due dates, expiring risk acceptances) was added after this week
+  as a read of existing data (`core/calendar.py`, `GET /v2/calendar`, the Calendar page): no table
+  of its own, and SLA dates the same as the issues table's because both compute them from the policy
+  in force.

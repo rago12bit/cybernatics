@@ -1382,3 +1382,20 @@ export type TicketConfigInput = {
 };
 
 export type IssueGroupSummary = { id: string; name: string; project_id: string; count: number; created_at: string };
+
+// --- The calendar (plan §49) --------------------------------------------------------------------
+
+export type CalendarKind = "engagement" | "sla" | "acceptance";
+export type CalendarEntry = {
+  kind: CalendarKind;
+  start: string; // YYYY-MM-DD, UTC
+  end: string;
+  title: string;
+  project_id: string;
+  project: string;
+  link: string;
+  detail: string;
+  severity: string | null;
+  state: string | null;
+};
+export type CalendarView = { start: string; end: string; entries: CalendarEntry[]; counts: Record<CalendarKind, number>; truncated: string[] };
