@@ -47,20 +47,35 @@ def seed(owner_url: str, org: str, projects: int, issues: int, audit_n: int) -> 
     eng = create_engine(owner_url)
     assets = []
     with eng.begin() as c:
-        c.execute(text("INSERT INTO organizations (id, name, created_at) VALUES (:o, 'bench', now())"), {"o": org})  # noqa: E501
+        c.execute(
+            text("INSERT INTO organizations (id, name, created_at) VALUES (:o, 'bench', now())"),
+            {"o": org},
+        )  # noqa: E501
         for p in range(projects):
             aid, sid = str(uuid.uuid4()), str(uuid.uuid4())
             assets.append(aid)
-            c.execute(text("INSERT INTO assets (id, org_id, source_type, key, label, created_at, last_scanned_at) "
-                           "VALUES (:a, :o, 'git', :k, :l, now(), now())"),
-                      {"a": aid, "o": org, "k": f"https://example.com/{org}/{p}", "l": f"bench/p{p}"})  # noqa: E501
-            c.execute(text("INSERT INTO scans (id, org_id, status, source_type, source_ref, source_label, tools, "
-                           "asset_id, llm_tokens_used, created_at, finished_at) VALUES (:s, :o, 'completed', 'git', "
-                           "'x', :l, '[\"opengrep\"]', :a, 0, now(), now() - interval '3 days')"),
-                      {"s": sid, "o": org, "l": f"bench/p{p}", "a": aid})  # noqa: E501
-            c.execute(text("INSERT INTO sla_policies (id, org_id, asset_id, version, enabled, basis, bands, created_at) "
-                           "VALUES (:i, :o, :a, 1, true, 'severity', CAST(:b AS jsonb), now() - interval '400 days')"),
-                      {"i": str(uuid.uuid4()), "o": org, "a": aid, "b": json.dumps(STARTER)})  # noqa: E501
+            c.execute(
+                text(
+                    "INSERT INTO assets (id, org_id, source_type, key, label, created_at, last_scanned_at) "
+                    "VALUES (:a, :o, 'git', :k, :l, now(), now())"
+                ),
+                {"a": aid, "o": org, "k": f"https://example.com/{org}/{p}", "l": f"bench/p{p}"},
+            )  # noqa: E501
+            c.execute(
+                text(
+                    "INSERT INTO scans (id, org_id, status, source_type, source_ref, source_label, tools, "
+                    "asset_id, llm_tokens_used, created_at, finished_at) VALUES (:s, :o, 'completed', 'git', "
+                    "'x', :l, '[\"opengrep\"]', :a, 0, now(), now() - interval '3 days')"
+                ),
+                {"s": sid, "o": org, "l": f"bench/p{p}", "a": aid},
+            )  # noqa: E501
+            c.execute(
+                text(
+                    "INSERT INTO sla_policies (id, org_id, asset_id, version, enabled, basis, bands, created_at) "
+                    "VALUES (:i, :o, :a, 1, true, 'severity', CAST(:b AS jsonb), now() - interval '400 days')"
+                ),
+                {"i": str(uuid.uuid4()), "o": org, "a": aid, "b": json.dumps(STARTER)},
+            )  # noqa: E501
             rows, frows = [], []
             for i in range(issues):
                 iid = str(uuid.uuid4())
@@ -75,13 +90,25 @@ def seed(owner_url: str, org: str, projects: int, issues: int, audit_n: int) -> 
                              "band": f"P{SEVS.index(sev) + 1}"})  # fmt: skip
                 frows.append({"s": sid, "f": f"f{i}", "fp": f"sha256:{iid}", "sev": sev, "i": iid,
                               "d": json.dumps({"taxonomy": {"cwe": [rng.choice(CWES)]}})})  # fmt: skip
-            c.execute(text("INSERT INTO issues (id, asset_id, fingerprint, state, category, severity, path, title, "
-                           "first_seen_at, last_seen_at, fixed_at, triage_status, source, priority_band) VALUES "
-                           "(:id, :a, :fp, :st, 'sast', :sev, 'x.py', 't', :seen, :seen, :fixed, :tr, 'scanner', :band)"), rows)  # noqa: E501
-            c.execute(text("INSERT INTO findings (scan_id, finding_id, fingerprint, category, severity, severity_rank, "
-                           "path, start_line, tools, data, issue_id) VALUES (:s, :f, :fp, 'sast', :sev, 1, 'x.py', 1, "
-                           "'[]', CAST(:d AS jsonb), :i)"), frows)  # noqa: E501
-        last = c.execute(text("SELECT seq, entry_hash FROM audit_entries ORDER BY seq DESC LIMIT 1")).first()  # noqa: E501
+            c.execute(
+                text(
+                    "INSERT INTO issues (id, asset_id, fingerprint, state, category, severity, path, title, "
+                    "first_seen_at, last_seen_at, fixed_at, triage_status, source, priority_band) VALUES "
+                    "(:id, :a, :fp, :st, 'sast', :sev, 'x.py', 't', :seen, :seen, :fixed, :tr, 'scanner', :band)"
+                ),
+                rows,
+            )  # noqa: E501
+            c.execute(
+                text(
+                    "INSERT INTO findings (scan_id, finding_id, fingerprint, category, severity, severity_rank, "
+                    "path, start_line, tools, data, issue_id) VALUES (:s, :f, :fp, 'sast', :sev, 1, 'x.py', 1, "
+                    "'[]', CAST(:d AS jsonb), :i)"
+                ),
+                frows,
+            )  # noqa: E501
+        last = c.execute(
+            text("SELECT seq, entry_hash FROM audit_entries ORDER BY seq DESC LIMIT 1")
+        ).first()  # noqa: E501
         seq, prev = (last[0], last[1]) if last else (0, audit.GENESIS_HASH)
         entries = []
         for k in range(audit_n):
@@ -93,11 +120,18 @@ def seed(owner_url: str, org: str, projects: int, issues: int, audit_n: int) -> 
             body = audit.body_digest(timestamp=ts, org_id=o, actor="token:bench", action="bench.did",
                                      target=f"t{k}", payload_digest=pd)  # fmt: skip
             h = audit.compute_hash_v2(seq=seq, prev_hash=prev, body_digest=body)
-            entries.append({"seq": seq, "p": prev, "h": h, "ts": ts, "o": o, "pd": pd, "b": body, "t": f"t{k}"})  # noqa: E501
+            entries.append(
+                {"seq": seq, "p": prev, "h": h, "ts": ts, "o": o, "pd": pd, "b": body, "t": f"t{k}"}
+            )  # noqa: E501
             prev = h
-        c.execute(text("INSERT INTO audit_entries (seq, prev_hash, entry_hash, timestamp, actor, action, target, "
-                       "payload_digest, version, org_id, body_digest) VALUES (:seq, :p, :h, :ts, 'token:bench', "
-                       "'bench.did', :t, :pd, 2, :o, :b)"), entries)  # noqa: E501
+        c.execute(
+            text(
+                "INSERT INTO audit_entries (seq, prev_hash, entry_hash, timestamp, actor, action, target, "
+                "payload_digest, version, org_id, body_digest) VALUES (:seq, :p, :h, :ts, 'token:bench', "
+                "'bench.did', :t, :pd, 2, :o, :b)"
+            ),
+            entries,
+        )  # noqa: E501
     return assets
 
 
@@ -111,7 +145,10 @@ def main() -> int:
     org = f"bench-ev-{uuid.uuid4().hex[:8]}"
     t = time.perf_counter()
     assets = seed(owner_url, org, args.projects, args.issues, args.audit)
-    print(f"seeded {args.projects} projects x {args.issues} Issues, {args.audit} audit entries in {time.perf_counter() - t:.1f}s", flush=True)  # noqa: E501
+    print(
+        f"seeded {args.projects} projects x {args.issues} Issues, {args.audit} audit entries in {time.perf_counter() - t:.1f}s",
+        flush=True,
+    )  # noqa: E501
     app = sessionmaker(create_engine(app_url), expire_on_commit=False)
     end = date.today()
     start = end - timedelta(days=89)

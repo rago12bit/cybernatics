@@ -137,7 +137,6 @@ class ReachabilityIndex:
             "No source file of the application imports it (another dependency may still load it)",
         )
 
-
     def _assess_go(self, module: str) -> Reachability:
         g = self.go
         if module in ("stdlib", "toolchain"):

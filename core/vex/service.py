@@ -281,8 +281,7 @@ def annotate(s: Session, org_id: str, vuln_key: str, impact: dict[str, Any]) -> 
     """Add each open use's VEX evidence and statement to an impact view (`view.impact`), and how
     many uses a draft would propose for."""
     by_use = {
-        (u.impact.asset_id, u.library.purl, u.impact.version): u
-        for u in uses(s, org_id, vuln_key)
+        (u.impact.asset_id, u.library.purl, u.impact.version): u for u in uses(s, org_id, vuln_key)
     }
     draftable = 0
     for use in impact["uses"]:

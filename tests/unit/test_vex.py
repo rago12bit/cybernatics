@@ -50,8 +50,7 @@ func main() { z := h.NewTokenizer(nil); for z.Next() != h.ErrorToken {} }
 
 
 def test_go_source_says_which_names_of_each_package_are_used(tmp_path: Path) -> None:
-    f = scan_file(
-        b"""package main
+    f = scan_file(b"""package main
 import (
   "fmt"
   h "golang.org/x/net/html"
@@ -66,8 +65,7 @@ func main() {
   yaml.Unmarshal(nil, nil); f := h.Parse; _ = f; sqlite3.Version()
   var n h.Node; _ = n
 }
-"""
-    )
+""")
     assert f.parsed and f.imports["golang.org/x/net/html"] == "h"
     assert set(f.refs["golang.org/x/net/html"]) == {"NewTokenizer", "Parse", "Node"}
     assert "Next" in f.selectors and "Next" not in f.refs["golang.org/x/net/html"]
@@ -85,7 +83,9 @@ func main() {
         '\tgithub.com/x/y v1.0.0 // indirect\n)\nrequire gopkg.in/yaml.v3 v3.0.1\n'
     )  # fmt: skip
     assert (module, direct, indirect) == (
-        "example.com/app", {"golang.org/x/net", "gopkg.in/yaml.v3"}, {"github.com/x/y"}
+        "example.com/app",
+        {"golang.org/x/net", "gopkg.in/yaml.v3"},
+        {"github.com/x/y"},
     )
 
     u = GoUsage()
@@ -267,7 +267,9 @@ def test_a_dependency_issue_is_dismissed_in_vex_vocabulary(env: Env) -> None:
     assert wrong.status_code == 422
     r = env.client.post(url, json={"action": "not_a_risk", "reason": "JndiLookup class removed at build",
                                    "justification": "vulnerable_code_not_present"}, headers=AUTH)  # fmt: skip
-    assert r.status_code == 200 and r.json()["triage_justification"] == "vulnerable_code_not_present"
+    assert (
+        r.status_code == 200 and r.json()["triage_justification"] == "vulnerable_code_not_present"
+    )
     doc = env.client.get(f"/v2/projects/{ids['java']}/vex/openvex", headers=AUTH).json()
     [st] = doc["statements"]
     assert (st["status"], st["justification"]) == ("not_affected", "vulnerable_code_not_present")
@@ -320,7 +322,10 @@ def test_a_full_scan_records_what_its_go_code_uses(
     with sessions() as s:
         usage = s.scalars(select(CodeUsage)).one()
         assert usage.scan_id == sid and usage.data["go"]["module"] == "example.com/gw"
-        assert set(usage.data["go"]["refs"]["golang.org/x/net/html"]) == {"NewTokenizer", "ErrorToken"}
+        assert set(usage.data["go"]["refs"]["golang.org/x/net/html"]) == {
+            "NewTokenizer",
+            "ErrorToken",
+        }
         assert "Next" in usage.data["go"]["selectors"]
         reach = {c.purl.split("@")[0]: (c.reachable, c.reachable_reason) for c in s.scalars(select(ComponentRow))}  # fmt: skip
         assert reach["pkg:golang/golang.org/x/net"][0] is True
