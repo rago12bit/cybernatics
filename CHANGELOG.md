@@ -5,6 +5,12 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 
 ## [Unreleased]
 
+## [2.4.0] - 2026-10-06
+
+Milestone M15 (plan Phase 16, Weeks 65-69): the new-CVE morning -- rules and tickets for the
+routine, the component inventory, the advisory engine and VEX; journey J7 in under five minutes
+([docs/v2-week69-verification.md](docs/v2-week69-verification.md)).
+
 ### Added
 - **Rules engine (Week 65, plan §45, ADR-0049).** WHEN a trigger (Issue found, back, fixed,
   assigned; retest requested or decided; SLA due soon or breached; risk acceptance expiring or
