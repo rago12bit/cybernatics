@@ -1196,3 +1196,112 @@ export interface Portfolio {
   description: string | null;
   tags: string[];
 }
+
+// --- Rules (Week 65, plan §45) ------------------------------------------------------------------
+
+export type RuleTrigger =
+  | "issue.created" | "issue.reopened" | "issue.closed" | "issue.assigned"
+  | "issue.retest_requested" | "issue.retest_decided" | "sla.due_soon" | "sla.breached"
+  | "risk_acceptance.expiring" | "risk_acceptance.expired" | "scan.completed" | "project.quiet"
+  | "schedule";
+
+export type RuleAction =
+  | { type: "assign"; to: string }
+  | { type: "set_priority"; band: string }
+  | { type: "tag"; tags: string[] }
+  | { type: "request_retest"; note?: string | null }
+  | { type: "request_fix"; max_per_day?: number }
+  | { type: "notify"; message?: string | null };
+
+export type RuleInput = {
+  name: string;
+  description?: string | null;
+  project_id?: string | null;
+  enabled?: boolean;
+  trigger: RuleTrigger;
+  trigger_params?: Record<string, unknown>;
+  condition: string;
+  actions: RuleAction[];
+  confirm_over?: number;
+  template?: string | null;
+};
+
+export type Rule = Required<Omit<RuleInput, "description" | "project_id" | "template">> & {
+  id: string;
+  description: string | null;
+  project_id: string | null;
+  project_name: string | null;
+  template: string | null;
+  trigger_label: string;
+  rego: string;
+  summary: string[];
+  version: number;
+  created_by: string | null;
+  created_at: string;
+  updated_by: string | null;
+  updated_at: string;
+  last_fired_at: string | null;
+  names: Record<string, string>;
+};
+
+export type RuleSubject = {
+  id: string;
+  text: string;
+  project: string;
+  title?: string | null;
+  severity?: string | null;
+  priority_band?: string | null;
+  asset_id?: string | null;
+};
+
+export type RuleRunStatus = "running" | "applied" | "held" | "confirmed" | "dismissed" | "depth_limited" | "failed";
+
+export type RuleRun = {
+  id: string;
+  rule_id: string;
+  rule_name: string;
+  rule_version: number;
+  trigger: string;
+  cause: string;
+  cause_label: string;
+  depth: number;
+  status: RuleRunStatus;
+  subject_ids: string[];
+  subjects: RuleSubject[];
+  results: { action: string; subject: string; outcome: "changed" | "unchanged" | "skipped" | "failed"; detail?: string }[];
+  error: string | null;
+  created_at: string;
+  decided_by: string | null;
+  decided_at: string | null;
+  names: Record<string, string>;
+};
+
+export type RuleDryRun = {
+  subject: "issue" | "project";
+  matched: number;
+  runs: number;
+  would_hold: number;
+  checked: number;
+  window_days: number;
+  sample: RuleSubject[];
+  note: string;
+  sentence: string;
+};
+
+export type RulesCatalogue = {
+  triggers: { key: RuleTrigger; label: string; subject: "issue" | "project"; params: string[]; help: string }[];
+  actions: { key: RuleAction["type"]; label: string; subjects: string[]; params: string[]; help: string }[];
+  fields: Record<string, { path: string; help: string }[]>;
+  limits: { max_actions: number; max_depth: number; default_confirm_over: number; max_confirm_over: number };
+};
+
+export type IssueOwner = {
+  assignee: string | null;
+  assignee_name: string | null;
+  assignee_handle: string | null;
+  assigned_at: string | null;
+  priority_override: string | null;
+  priority_override_by: string | null;
+  computed_band: string | null;
+  names: Record<string, string>;
+};

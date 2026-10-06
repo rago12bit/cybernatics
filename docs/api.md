@@ -780,6 +780,101 @@ Add Proof
 
 - `acceptance_id` (path, required)
 
+## `GET /v2/rules/catalogue`
+
+Rules Catalogue
+
+
+## `GET /v2/rules`
+
+List Rules
+
+- `project_id` (query)
+
+## `POST /v2/rules`
+
+Create Rule
+
+
+## `GET /v2/rules/{rule_id}`
+
+Get Rule
+
+- `rule_id` (path, required)
+
+## `PUT /v2/rules/{rule_id}`
+
+Update Rule
+
+- `rule_id` (path, required)
+
+## `DELETE /v2/rules/{rule_id}`
+
+Delete Rule
+
+- `rule_id` (path, required)
+
+## `PUT /v2/rules/{rule_id}/enabled`
+
+Enable Rule
+
+- `rule_id` (path, required)
+
+## `POST /v2/rules/test`
+
+Test Draft
+
+
+## `POST /v2/rules/{rule_id}/test`
+
+Test Rule
+
+- `rule_id` (path, required)
+
+## `GET /v2/rule-runs`
+
+List Runs
+
+- `rule_id` (query)
+- `status` (query)
+- `limit` (query)
+
+## `GET /v2/rule-runs/{run_id}`
+
+Get Run
+
+- `run_id` (path, required)
+
+## `POST /v2/rule-runs/{run_id}/confirm`
+
+Confirm Run
+
+- `run_id` (path, required)
+
+## `POST /v2/rule-runs/{run_id}/dismiss`
+
+Dismiss Run
+
+- `run_id` (path, required)
+
+## `GET /v2/issues/{issue_id}/assignee`
+
+Get Owner
+
+- `issue_id` (path, required)
+
+## `PUT /v2/issues/{issue_id}/assignee`
+
+Set Owner
+
+- `issue_id` (path, required)
+
+## `PUT /v2/issues/{issue_id}/priority`
+
+Set Priority
+
+- `issue_id` (path, required)
+
 ## Live progress (WebSocket)
 
 `GET /scans/{scan_id}/ws` (not part of OpenAPI).

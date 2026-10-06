@@ -209,14 +209,57 @@ def apply(issue: IssueRow, result: dict[str, Any]) -> bool:
 
 
 def view(issue: IssueRow | None) -> dict[str, Any] | None:
-    if issue is None or issue.priority_version is None:
+    """`band` is the band in force: an override (Week 65) if a person or a rule set one, else the
+    computed band, which `computed_band` always carries."""
+    if issue is None or (issue.priority_version is None and not issue.priority_override):
         return None
-    return {
+    out: dict[str, Any] = {
         "score": issue.priority_score,
-        "band": issue.priority_band,
+        "band": issue.priority_override or issue.priority_band,
+        "computed_band": issue.priority_band,
         "version": issue.priority_version,
         "factors": issue.priority_factors or [],
     }
+    if issue.priority_override:
+        out["override"] = {"band": issue.priority_override, "by": issue.priority_override_by}
+    return out
+
+
+OVERRIDE_BANDS = ("P1", "P2", "P3", "P4")
+
+
+def set_override(
+    s: Session,
+    issue: IssueRow,
+    band: str | None,
+    *,
+    actor: str,
+    org_id: str,
+    event_extra: dict[str, Any] | None = None,
+) -> bool:
+    """A band set by hand, or by a rule (Week 65, plan §45); `None` goes back to the computed one.
+    It wins wherever a band is read, and no recomputation clears it. Returns False when nothing
+    changed. Commits (the audit entry)."""
+    if band is not None and band not in OVERRIDE_BANDS:
+        raise ValueError(f"band is one of {', '.join(OVERRIDE_BANDS)}")
+    if band == issue.priority_override:
+        return False
+    previous = issue.priority_override
+    issue.priority_override = band
+    issue.priority_override_by = actor if band else None
+    repo.add_outbox_event(
+        s, org_id=org_id, event_type="issue.priority_set",
+        payload={"issue_id": issue.id, "asset_id": issue.asset_id, "band": band,
+                 "computed_band": issue.priority_band, "previous": previous, "by": actor,
+                 **(event_extra or {})},
+    )  # fmt: skip
+    s.flush()
+    repo.append_audit_entry(  # commits
+        s, actor=actor, action="issue.priority.set" if band else "issue.priority.cleared",
+        target=issue.id,
+        payload={"asset_id": issue.asset_id, "band": band, "previous": previous},
+    )  # fmt: skip
+    return True
 
 
 def latest_occurrences(s: Session, issue_ids: Iterable[str]) -> dict[str, dict[str, Any]]:

@@ -21,9 +21,12 @@ _CHECKSUM_LEN = 6
 #: that) -- declaring a scope nothing checks would be a scope that lies about what it does. Add to
 #: this set only alongside the endpoint it actually gates. `ingest:write` is separate from
 #: `scans:write` on purpose: an import can close Issues, which starting a scan cannot.
+#: `rules:write` (Week 65) is plan §45's "only Admins create rules", until roles exist (Week 75): a
+#: rule acts on many Issues without a person, so writing one is its own grant.
 SCOPES = frozenset(
-    {"scans:read", "scans:write", "fixes:read", "fixes:write", "ingest:read", "ingest:write"}
-)
+    {"scans:read", "scans:write", "fixes:read", "fixes:write", "ingest:read", "ingest:write",
+     "rules:write"}
+)  # fmt: skip
 
 
 class TokenError(ValueError):

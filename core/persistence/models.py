@@ -377,6 +377,15 @@ class IssueRow(Base):
     retest_decided_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
     retest_decided_by: Mapped[str | None] = mapped_column(String(200), nullable=True)
 
+    # Week 65 (plan §45): who owns the fix -- a person's actor ("token:<prefix>"), set by a person
+    # or a rule -- and a priority band a person or a rule set by hand. The override wins over the
+    # computed band everywhere a band is read (the issues table, the SLA), and a recomputation never
+    # clears it: only a person or a rule does.
+    assignee: Mapped[str | None] = mapped_column(String(200), nullable=True, index=True)
+    assigned_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
+    priority_override: Mapped[str | None] = mapped_column(String(4), nullable=True)
+    priority_override_by: Mapped[str | None] = mapped_column(String(200), nullable=True)
+
     asset: Mapped[Asset] = relationship(back_populates="issues")
 
     __table_args__ = (
@@ -1052,6 +1061,8 @@ class RiskAcceptance(Base):
     )
     # Made from an Issue someone accepted alone, before four-eyes approval existed (migration 0034).
     legacy: Mapped[bool] = mapped_column(Boolean, default=False)
+    # When the "expiring soon" announcement went out (Week 65, plan §45), so it goes out once.
+    expiry_warned_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
 
 
 class RiskAcceptanceIssue(Base):
@@ -1340,3 +1351,68 @@ class OutboxEvent(Base):
     payload: Mapped[dict[str, Any]] = mapped_column(JsonType, default=dict)
     created_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
     dispatched_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True, index=True)
+
+
+class AutomationRule(Base):
+    """A rule (plan §45, Week 65): WHEN a trigger fires, IF a Rego condition holds, THEN actions.
+    `asset_id` null means every project in the organization. A deleted rule keeps its row
+    (`deleted_at`) so its run history still says what ran. `version` goes up on every change, and
+    each run records the version it ran, so the audit log can say which rule text did what."""
+
+    __tablename__ = "automation_rules"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"), index=True)
+    asset_id: Mapped[str | None] = mapped_column(
+        ForeignKey("assets.id", ondelete="CASCADE"), nullable=True, index=True
+    )
+    name: Mapped[str] = mapped_column(String(120))
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    trigger: Mapped[str] = mapped_column(String(40), index=True)
+    trigger_params: Mapped[dict[str, Any]] = mapped_column(JsonType, default=dict)
+    condition: Mapped[str] = mapped_column(Text, default="")  # Rego rule body; empty: always
+    actions: Mapped[list[dict[str, Any]]] = mapped_column(JsonType, default=list)
+    confirm_over: Mapped[int] = mapped_column(Integer, default=25)
+    version: Mapped[int] = mapped_column(Integer, default=1)
+    template: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    created_by: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+    updated_by: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+    last_fired_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
+    deleted_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
+
+
+class RuleRun(Base):
+    """One firing of a rule for one cause (a scan, an import, one event, a schedule tick, a quiet
+    project). `status`: running (acting now), applied, held (more Issues than the rule's
+    confirmation threshold, waiting
+    for an Admin), confirmed or dismissed (an Admin decided a held run), depth_limited (a chain of
+    rules too deep), failed. `subject_ids` are the Issues (or, for a project trigger, the projects)
+    it acted on or would act on; `results` says what each action did."""
+
+    __tablename__ = "rule_runs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"), index=True)
+    rule_id: Mapped[str] = mapped_column(
+        ForeignKey("automation_rules.id", ondelete="CASCADE"), index=True
+    )
+    rule_version: Mapped[int] = mapped_column(Integer)
+    trigger: Mapped[str] = mapped_column(String(40))
+    cause: Mapped[str] = mapped_column(String(160))
+    event_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    depth: Mapped[int] = mapped_column(Integer, default=0)
+    status: Mapped[str] = mapped_column(String(24), index=True)
+    subject_ids: Mapped[list[str]] = mapped_column(JsonType, default=list)
+    # "<event id>:<subject id>" for each thing it handled ("-:<subject>" from the sweep), so a
+    # redelivered batch is recognised and never acted on twice.
+    event_keys: Mapped[list[str]] = mapped_column(JsonType, default=list)
+    results: Mapped[list[dict[str, Any]]] = mapped_column(JsonType, default=list)
+    error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+    decided_by: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    decided_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
+
+    __table_args__ = (Index("ix_rule_runs_cause", "rule_id", "cause"),)

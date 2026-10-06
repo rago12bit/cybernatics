@@ -31,7 +31,7 @@ from fastapi import (
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from fastapi.websockets import WebSocketDisconnect
-from sqlalchemy import and_, select
+from sqlalchemy import and_, func, select
 from sqlalchemy.orm import Session
 
 from api.acceptance import register_acceptance_routes
@@ -55,6 +55,7 @@ from api.manual import register_manual_routes
 from api.mappings import register_mapping_routes
 from api.priority import register_priority_routes
 from api.retest import register_retest_routes
+from api.rules import register_rules_routes
 from api.schemas import (
     AssetSummary,
     AssetVerificationView,
@@ -875,7 +876,9 @@ def create_app(app_state: AppState) -> FastAPI:
             sla_service.clause(sla_service.policy_for(s, asset.id), sla, now) if sla else None
         )
         if priority:
-            by_band = IssueRow.priority_band.in_([p.upper() for p in priority])
+            by_band = func.coalesce(IssueRow.priority_override, IssueRow.priority_band).in_(
+                [p.upper() for p in priority]
+            )
             issue_filter = by_band if issue_filter is None else and_(issue_filter, by_band)
         if tag:
             try:
@@ -1092,76 +1095,19 @@ def create_app(app_state: AppState) -> FastAPI:
         to approve or reject before a pull request is ever opened. Runs as a Temporal workflow --
         `409` if Temporal is unreachable, `429` over this organization's concurrency cap
         (ADR-0015)."""
-        from core.fixagent import client as fixagent_client
-        from core.fixagent import store as fixagent_store
-        from core.fixagent.limits import WorkflowLimits
-        from core.models import finding_from_dict
+        from core.fixagent.start import FixStartError
+        from core.fixagent.start import start as start_fix
 
         asset = _get_asset(s, asset_id, org)
         _get_issue(s, issue_id, org)
-        scan = repo.latest_scan_for_asset(s, asset.id, org_id=org)
-        if scan is None:
-            raise HTTPException(409, "no completed scan for this asset")
-        finding_doc = repo.get_issue_finding(s, issue_id, scan.id)
-        if finding_doc is None:
-            raise HTTPException(409, "this issue has no occurrence in the latest scan")
-        finding = finding_from_dict(
-            {k: v for k, v in finding_doc.items() if k not in ("scan_id", "issue")}
-        )
-        tool = (
-            finding.evidence.reported_by[0]
-            if finding.evidence.reported_by
-            else next(iter(finding.evidence.rule_ids), "")
-        )
-        if not tool:
-            raise HTTPException(
-                409, "could not tell which scanner originally reported this finding"
-            )
-
-        limits = WorkflowLimits.from_env()
-        if fixagent_store.count_running_for_org(s, org) >= limits.max_concurrent_per_org:
-            raise HTTPException(
-                429,
-                f"too many verified-fix runs already in progress for this organization "
-                f"(max {limits.max_concurrent_per_org})",
-            )
-
-        verified_owner = scan.github_installation_id is not None
-        run_tests_spec: dict[str, Any] | None = None
-        if body.run_tests and verified_owner:
-            if not body.test_image or not body.test_command:
-                raise HTTPException(
-                    422, "test_image and test_command are required when run_tests is true"
-                )
-            run_tests_spec = {"image": body.test_image, "command": body.test_command}
-        # body.run_tests without a verified-owner asset is silently downgraded to "no tests," not a
-        # 4xx: asking for an opt-in you don't qualify for yet is a normal request, not an error
-        # (plan §21.2: "hardened Docker for now, verified-owner repositories only").
-
-        workflow_id = fixagent_client.new_workflow_id(issue_id)
-        run = fixagent_store.create_run(s, org, issue_id, workflow_id)
-        baseline = fixagent_store.baseline_fingerprints_for(s, scan.id, finding.location.path)
         try:
-            await fixagent_client.start_verified_fix(
-                run.id,
-                workflow_id,
-                org,
-                issue_id,
-                finding.to_dict(),
-                scan.source_ref,
-                scan.ref,
-                tool,
-                baseline,
-                scan.github_repo,
-                scan.github_installation_id,
-                run_tests_spec,
-                limits,
-            )
-        except (
-            Exception
-        ) as exc:  # noqa: BLE001 - Temporal unreachable, or any other startup failure
-            raise HTTPException(503, f"could not start the verified-fix workflow: {exc}") from exc
-        return VerifiedFixStarted(run_id=run.id, workflow_id=workflow_id)
+            started = await start_fix(
+                s, org, asset, issue_id, run_tests=body.run_tests, test_image=body.test_image,
+                test_command=body.test_command,
+            )  # fmt: skip
+        except FixStartError as exc:
+            raise HTTPException(exc.status, str(exc)) from exc
+        return VerifiedFixStarted(run_id=started.run_id, workflow_id=started.workflow_id)
 
     @app.get(
         "/assets/{asset_id}/issues/{issue_id}/verified-fix",
@@ -2181,6 +2127,7 @@ def create_app(app_state: AppState) -> FastAPI:
     register_retest_routes(app)
     register_collab_routes(app)
     register_acceptance_routes(app)
+    register_rules_routes(app)
     return app
 
 

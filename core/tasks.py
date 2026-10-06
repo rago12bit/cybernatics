@@ -46,6 +46,10 @@ celery_app.conf.beat_schedule = {
     "sla": {"task": "bulwark.sla_sweep", "schedule": 300.0},
     # Risk acceptance (Week 62, plan §44.2): end the ones whose date has come.
     "risk-acceptance-expiry": {"task": "bulwark.expire_risk_acceptances", "schedule": 300.0},
+    # Rules (Week 65, plan §45): hand new outbox events to the rules engine, and fire the
+    # triggers no event carries (a quiet project, a schedule).
+    "outbox": {"task": "bulwark.dispatch_outbox", "schedule": 10.0},
+    "rules-sweep": {"task": "bulwark.rules_sweep", "schedule": 300.0},
 }
 
 
@@ -220,7 +224,49 @@ def expire_risk_acceptances_task() -> int:
         with get_session_factory()() as s:
             set_session_org(s, org_id)
             ended += len(service.expire_due(s, org_id).expired)
+            service.warn_expiring(s, org_id)
     return ended
+
+
+def _org_ids() -> list[str]:
+    from sqlalchemy import select
+
+    from core.persistence.db import get_session_factory
+    from core.persistence.models import Organization
+
+    with get_session_factory()() as s:
+        return list(s.scalars(select(Organization.id)))
+
+
+@celery_app.task(name="bulwark.dispatch_outbox", ignore_result=True)  # type: ignore[untyped-decorator]
+def dispatch_outbox_task() -> int:
+    """Each organization's new outbox events, to the rules engine (plan §41.1, §45)."""
+    from core.dispatch import drain
+    from core.persistence.db import get_session_factory
+    from core.tenancy import set_session_org
+
+    total = 0
+    for org_id in _org_ids():
+        with get_session_factory()() as s:
+            set_session_org(s, org_id)
+            total += drain(s, org_id)
+    return total
+
+
+@celery_app.task(name="bulwark.rules_sweep", ignore_result=True)  # type: ignore[untyped-decorator]
+def rules_sweep_task() -> int:
+    """Quiet projects and schedules (plan §45), each organization with its scope set."""
+    from core.persistence.db import get_session_factory
+    from core.rules.engine import sweep
+    from core.tenancy import set_session_org
+
+    fired = 0
+    for org_id in _org_ids():
+        with get_session_factory()() as s:
+            set_session_org(s, org_id)
+            out = sweep(s, org_id)
+            fired += out.applied + out.held
+    return fired
 
 
 @celery_app.task(name="bulwark.recompute_priority", bind=True, acks_late=True, ignore_result=True)  # type: ignore[untyped-decorator]

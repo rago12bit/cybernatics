@@ -213,3 +213,15 @@
   overflow-wrap: anywhere;
   word-break: break-word;
 }
+
+/* Owner and a priority set by hand (plan §45, Week 65). */
+.ds-owner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.ds-owner-select {
+  font: inherit;
+  padding: 0.3rem 0.4rem;
+  max-width: 100%;
+}

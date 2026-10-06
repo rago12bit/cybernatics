@@ -69,9 +69,16 @@ def _event(s: Session, issue: IssueRow, event: str, **extra: Any) -> None:
 
 
 def act(
-    s: Session, issue: IssueRow, action: str, *, actor: str, note: str | None = None
+    s: Session,
+    issue: IssueRow,
+    action: str,
+    *,
+    actor: str,
+    note: str | None = None,
+    event_extra: dict[str, Any] | None = None,
 ) -> IssueRow:
-    """One step of the workflow, by a person. Audit-logged (commits)."""
+    """One step of the workflow, by a person (or a rule, which passes its chain depth in
+    `event_extra`). Audit-logged (commits)."""
     if action not in ACTIONS:
         raise RetestError("action", f"One of: {', '.join(ACTIONS)}.")
     now = _now()
@@ -99,7 +106,7 @@ def act(
             issue.retest_decided_at, issue.retest_decided_by = now, actor
     event = {"request": "requested", "confirm_fixed": "passed", "reproduced": "failed",
              "cancel": "cancelled"}[action]  # fmt: skip
-    _event(s, issue, event, by=actor)
+    _event(s, issue, event, by=actor, **(event_extra or {}))
     s.flush()
     repo.append_audit_entry(  # commits
         s, actor=actor, action=f"issue.retest.{event}", target=issue.id,

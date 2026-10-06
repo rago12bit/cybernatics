@@ -17,6 +17,7 @@ import { VerifiedFixPanel } from "@/components/VerifiedFixPanel";
 import { TriageAssistantPanel } from "@/components/TriageAssistantPanel";
 import { ManualFindingPanel } from "@/components/ManualFindingPanel";
 import { NotesPanel } from "@/components/NotesPanel";
+import { OwnerPanel } from "@/components/OwnerPanel";
 import { RetestPanel } from "@/components/RetestPanel";
 import { TagsEditor } from "@/components/TagsEditor";
 import { CopilotPanel } from "@/components/CopilotPanel";
@@ -254,6 +255,7 @@ export function IssueDetail({ assetId, issueId }: { assetId: string; issueId: st
             <Button variant="primary" onClick={() => setTriageOpen("not_a_risk")} disabled={triageStatus !== "open"}>Mark as not a risk</Button>
             <Button onClick={() => setTriageOpen("accepted")} disabled={triageStatus !== "open" || !!live}>Request risk acceptance…</Button>
           </div>
+          <OwnerPanel issueId={issueId} onChange={reload} />
           <RetestPanel issueId={issueId} onChange={reload} />
           <TagsEditor kind="issue" id={issueId} />
           <div>

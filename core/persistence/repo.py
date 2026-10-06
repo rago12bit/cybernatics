@@ -38,6 +38,7 @@ from core.persistence.models import (
     AssetVerification,
     AuditCheckpoint,
     AuditEntry,
+    AutomationRule,
     CodeChunkIndexRow,
     CodeChunkRow,
     CopilotConversationRow,
@@ -1122,13 +1123,24 @@ def issue_history(s: Session, issue_id: str) -> list[dict[str, Any]]:
             )
         )
     ]
-    entries = s.scalars(
-        select(AuditEntry)
-        .where(AuditEntry.target.in_([issue_id, *acceptances]))
-        .order_by(AuditEntry.seq)
+    entries = list(
+        s.scalars(
+            select(AuditEntry)
+            .where(AuditEntry.target.in_([issue_id, *acceptances]))
+            .order_by(AuditEntry.seq)
+        )
     )
+    # A change a rule made (Week 65) says which rule.
+    rule_ids = {e.actor.split(":", 1)[1] for e in entries if e.actor.startswith("rule:")}
+    rule_names: dict[str, str] = {}
+    if rule_ids:
+        q = select(AutomationRule.id, AutomationRule.name).where(AutomationRule.id.in_(rule_ids))
+        rule_names = {i: n for i, n in s.execute(q)}
     for e in entries:
-        events.append({"at": e.timestamp, "label": _audit_action_label(e.action)})
+        label = _audit_action_label(e.action)
+        if e.actor.startswith("rule:"):
+            label += f" by the rule “{rule_names.get(e.actor.split(':', 1)[1], 'deleted')}”"
+        events.append({"at": e.timestamp, "label": label})
     # A retest decided by a scan, an upload or a targeted retest (Week 64) is that run's outcome,
     # not a person's decision, so it is an outbox event rather than an audit entry.
     for ev in s.scalars(
@@ -1166,6 +1178,11 @@ def _audit_action_label(action: str) -> str:
         "issue.note.edited": "Note edited",
         "issue.note.deleted": "Note deleted",
         "tags.changed": "Tags changed",
+        "issue.assigned": "Assigned",
+        "issue.unassigned": "Unassigned",
+        "issue.priority.set": "Priority set",
+        "issue.priority.cleared": "Priority back to the computed band",
+        "issue.fix.requested": "Verified fix requested",
     }.get(action, action)
 
 

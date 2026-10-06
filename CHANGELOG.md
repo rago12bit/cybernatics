@@ -5,6 +5,24 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 
 ## [Unreleased]
 
+### Added
+- **Rules engine (Week 65, plan §45, ADR-0049).** WHEN a trigger (Issue found, back, fixed,
+  assigned; retest requested or decided; SLA due soon or breached; risk acceptance expiring or
+  expired; scan or import completed; no scan for N days; a schedule), IF a Rego condition (evaluated
+  in batches by OPA with network and environment builtins removed), THEN assign, set a priority band,
+  tag, mark ready for retest, request a verified fix, or notify. Every rule has a dry run over the
+  last seven days; a cause that would touch more Issues than the rule's threshold waits for an Admin;
+  chains stop at depth 3; fix requests respect the AI budget and a daily cap; writing rules needs the
+  new `rules:write` scope; every change and every run is audit-logged. The outbox now has a
+  dispatcher (every 10 s on the worker, one org at a time under an advisory lock). An Automation page
+  shows held runs, rules and run history; the issue page shows who owns the fix and a priority set by
+  hand or by a rule. API: `/v2/rules`, `/v2/rule-runs`, `/v2/issues/{id}/assignee` and `/priority`.
+  Migration 0037. OPA 1.21.0 ships in the app image, checksum-verified.
+
+### Security
+- Rule notifications escape Slack markup and disable Discord mentions, so an issue title cannot ping
+  a channel or post a disguised link.
+
 ## [2.3.0] - 2026-10-06
 
 Milestone M14 (plan Phase 15, Weeks 61-64): governance -- SLAs, risk acceptance with four-eyes

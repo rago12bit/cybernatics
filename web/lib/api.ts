@@ -1,4 +1,4 @@
-import type { ChecklistCatalogue, ChecklistItem, ChecklistResult, ChecklistSummary, Engagement, EngagementDetail, EngagementInput, Mention, NoteFile, NotesView, Person, Portfolio, Retest, RetestAction, TagsView, PriorityBand, PriorityContext, PriorityOverview, PriorityPreview, RiskAcceptance, RiskAcceptanceInput, RiskAcceptancePolicy, SlaBand, SlaBasis, SlaOverview, ConnectorInput, ConnectorKind, ConnectorView, AnalyzeResult, MappingPreview, MappingSpec, SavedMapping, CvssScore, CweEntry,
+import type { IssueOwner, Rule, RuleDryRun, RuleInput, RuleRun, RulesCatalogue, ChecklistCatalogue, ChecklistItem, ChecklistResult, ChecklistSummary, Engagement, EngagementDetail, EngagementInput, Mention, NoteFile, NotesView, Person, Portfolio, Retest, RetestAction, TagsView, PriorityBand, PriorityContext, PriorityOverview, PriorityPreview, RiskAcceptance, RiskAcceptanceInput, RiskAcceptancePolicy, SlaBand, SlaBasis, SlaOverview, ConnectorInput, ConnectorKind, ConnectorView, AnalyzeResult, MappingPreview, MappingSpec, SavedMapping, CvssScore, CweEntry,
   EvidenceFile, ManualFindingInput, ManualFindingView, ManualRecorded, ProjectRoutes, DedupApplied, DedupChangeRequest, DedupHistoryEntry, DedupOverview, DedupPreview,
   ImportCreated, ImportView, ParserInfo, ProjectTest, RevertView,
   AssetSummary, AssetVerification, AttackPath, BulkTriageResult,
@@ -79,6 +79,7 @@ async function request<T>(path: string, init: RequestInit = {}, token = getToken
     }
     throw new ApiError(res.status, detail, data);
   }
+  if (res.status === 204) return undefined as T;
   return (await res.json()) as T;
 }
 
@@ -671,3 +672,30 @@ export const listPortfolios = () => request<Portfolio[]>("/v2/portfolios");
 export const createPortfolio = (name: string) => request<Portfolio>("/v2/portfolios", json("POST", { name }));
 export const setPortfolioTags = (id: string, tags: string[]) =>
   request<Portfolio>(`/v2/portfolios/${enc(id)}/tags`, json("PUT", { tags }));
+
+export const getRulesCatalogue = () => request<RulesCatalogue>("/v2/rules/catalogue");
+export const listRules = (projectId?: string) =>
+  request<Rule[]>(`/v2/rules${projectId ? `?project_id=${enc(projectId)}` : ""}`);
+export const getRule = (id: string) => request<Rule>(`/v2/rules/${enc(id)}`);
+export const createRule = (body: RuleInput) => request<Rule>("/v2/rules", json("POST", body));
+export const updateRule = (id: string, body: RuleInput) => request<Rule>(`/v2/rules/${enc(id)}`, json("PUT", body));
+export const setRuleEnabled = (id: string, enabled: boolean) =>
+  request<Rule>(`/v2/rules/${enc(id)}/enabled`, json("PUT", { enabled }));
+export const deleteRule = (id: string) => request<void>(`/v2/rules/${enc(id)}`, { method: "DELETE" });
+export const testRuleDraft = (body: RuleInput) => request<RuleDryRun>("/v2/rules/test", json("POST", body));
+export const testRule = (id: string) => request<RuleDryRun>(`/v2/rules/${enc(id)}/test`, { method: "POST" });
+export const listRuleRuns = (q: { rule_id?: string; status?: string; limit?: number } = {}) => {
+  const p = new URLSearchParams();
+  if (q.rule_id) p.set("rule_id", q.rule_id);
+  if (q.status) p.set("status", q.status);
+  if (q.limit) p.set("limit", String(q.limit));
+  const s = p.toString();
+  return request<RuleRun[]>(`/v2/rule-runs${s ? `?${s}` : ""}`);
+};
+export const confirmRuleRun = (id: string) => request<RuleRun>(`/v2/rule-runs/${enc(id)}/confirm`, { method: "POST" });
+export const dismissRuleRun = (id: string) => request<RuleRun>(`/v2/rule-runs/${enc(id)}/dismiss`, { method: "POST" });
+export const getIssueOwner = (issueId: string) => request<IssueOwner>(`/v2/issues/${enc(issueId)}/assignee`);
+export const setIssueAssignee = (issueId: string, to: string | null) =>
+  request<IssueOwner>(`/v2/issues/${enc(issueId)}/assignee`, json("PUT", { to }));
+export const setIssuePriority = (issueId: string, band: string | null) =>
+  request<IssueOwner>(`/v2/issues/${enc(issueId)}/priority`, json("PUT", { band }));

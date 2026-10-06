@@ -124,7 +124,7 @@ def status_of(policy: Policy, issue: IssueRow, now: datetime | None = None) -> S
     return evaluate(
         policy,
         severity=issue.severity,
-        priority_band=issue.priority_band,
+        priority_band=issue.priority_override or issue.priority_band,
         state=issue.state,
         first_seen_at=issue.first_seen_at,
         sla_started_at=issue.sla_started_at,
@@ -153,7 +153,11 @@ def clause(policy: Policy, states: list[str], now: datetime) -> ColumnElement[bo
     if not policy.enabled or not wanted:
         return false()
     start = func.coalesce(IssueRow.sla_started_at, IssueRow.first_seen_at)
-    key = IssueRow.priority_band if policy.basis == "priority" else IssueRow.severity
+    key = (
+        func.coalesce(IssueRow.priority_override, IssueRow.priority_band)
+        if policy.basis == "priority"
+        else IssueRow.severity
+    )
     per_band = []
     for name, band in policy.bands.items():
         if band.days is None:

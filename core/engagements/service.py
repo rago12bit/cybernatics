@@ -334,7 +334,7 @@ def findings(s: Session, e: Engagement) -> list[dict[str, Any]]:
                 "triage_status": issue.triage_status,
                 "retest_status": issue.retest_status,
                 "retest_requested_by": issue.retest_requested_by,
-                "priority_band": issue.priority_band,
+                "priority_band": issue.priority_override or issue.priority_band,
                 "test": test_of[issue.id],
                 "manual_finding_id": m.id if m else None,
                 "also_found_by": sorted(also[issue.id]),

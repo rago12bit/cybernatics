@@ -462,6 +462,35 @@ def expire_due(
     return out
 
 
+EXPIRY_WARNING = timedelta(days=7)
+
+
+def warn_expiring(s: Session, org_id: str, *, now: datetime | None = None) -> int:
+    """Announce, once each, the approved acceptances whose date is within seven days (an outbox
+    event for rules, plan §45). An extension is a new acceptance, so it is announced afresh."""
+    now = now or _now()
+    n = 0
+    for ra in s.scalars(
+        select(RiskAcceptance).where(
+            RiskAcceptance.org_id == org_id,
+            RiskAcceptance.state == "approved",
+            RiskAcceptance.expiry_warned_at.is_(None),
+            RiskAcceptance.expires_at > now,
+            RiskAcceptance.expires_at <= now + EXPIRY_WARNING,
+        )
+    ):
+        ra.expiry_warned_at = now
+        repo.add_outbox_event(
+            s, org_id=org_id, event_type="risk_acceptance.expiring",
+            payload={"acceptance_id": ra.id, "asset_id": ra.asset_id,
+                     "issue_ids": issue_ids_of(s, ra.id),
+                     "expires_at": _utc(ra.expires_at).isoformat()},
+        )  # fmt: skip
+        n += 1
+    s.commit()
+    return n
+
+
 # --- notifications --------------------------------------------------------------------------------
 
 
