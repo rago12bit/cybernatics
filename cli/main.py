@@ -812,7 +812,18 @@ app.add_typer(audit_app, name="audit")
 
 
 @audit_app.command("verify")
-def audit_verify() -> None:
+def audit_verify(
+    pub: Path | None = typer.Option(
+        None,
+        help="The checkpoint key's public half: also verify every checkpoint's signature "
+        "and its Rekor entry.",
+    ),
+    trusted_root: Path | None = typer.Option(
+        None,
+        help="A private Rekor's trusted root (cosign trusted-root create); default: "
+        "Sigstore's public one.",
+    ),
+) -> None:
     """Walk the whole chain and recompute every hash. Exit 1 if anything doesn't match."""
     import core.audit as audit
     from core.persistence import repo
@@ -833,6 +844,7 @@ def audit_verify() -> None:
     typer.echo(json.dumps(out, indent=2))
     if not result.ok:
         raise typer.Exit(1)
+    by_seq = {e.seq: e.entry_hash for e in entries}
     for cp in checkpoints:
         if cp.seq_end > result.checked:
             typer.echo(
@@ -841,6 +853,21 @@ def audit_verify() -> None:
                 err=True,
             )
             raise typer.Exit(1)
+        if by_seq.get(cp.seq_end) != cp.chain_hash:
+            typer.echo(f"checkpoint at seq {cp.seq_end} names a different hash", err=True)
+            raise typer.Exit(1)
+    if pub is None:
+        return
+    from core.attest.cosign import AttestError
+    from core.audit_rekor import verify_checkpoint
+
+    for cp in checkpoints:
+        try:
+            verify_checkpoint(cp.seq_end, cp.chain_hash, cp.signature_bundle, pub, trusted_root)
+        except AttestError as exc:
+            typer.echo(f"checkpoint at seq {cp.seq_end}: {exc}", err=True)
+            raise typer.Exit(1) from exc
+        typer.echo(f"checkpoint at seq {cp.seq_end}: signature and Rekor entry verified")
 
 
 @audit_app.command("checkpoint")
@@ -849,10 +876,16 @@ def audit_checkpoint(
     dry_run: bool = typer.Option(
         False, "--dry-run", help="Print what would be checkpointed; sign and publish nothing."
     ),
+    rekor_url: str | None = typer.Option(
+        None,
+        envvar="BULWARK_REKOR_URL",
+        help="A private or local Rekor; default: Sigstore's public instance.",
+    ),
 ) -> None:
-    """Sign the current chain head and publish it to Sigstore's Rekor -- a REAL, public, permanent
-    transparency-log entry. Not run automatically on a schedule yet (a documented Week 30 scope
-    cut); run this by hand or from your own cron/CI until it is."""
+    """Sign the current chain head and publish it to Rekor -- by default Sigstore's public instance,
+    a REAL, public, permanent transparency-log entry; `--rekor-url` for a private one. Not run
+    automatically on a schedule yet (a documented Week 30 scope cut); run this by hand or from
+    your own cron/CI until it is."""
     from core.attest.cosign import AttestError
     from core.audit_rekor import sign_checkpoint
     from core.persistence import repo
@@ -874,7 +907,7 @@ def audit_checkpoint(
             )
             return
         try:
-            bundle, log_index = sign_checkpoint(last.seq, last.entry_hash, key)
+            bundle, log_index = sign_checkpoint(last.seq, last.entry_hash, key, rekor_url)
         except AttestError as exc:
             typer.echo(f"error: {exc}", err=True)
             raise typer.Exit(1) from exc

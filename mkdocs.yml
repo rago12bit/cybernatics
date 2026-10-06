@@ -14,6 +14,8 @@ nav:
       - Risk scoring: risk-score.md
       - Taxonomy (CWE / OWASP): taxonomy.md
       - Reachability: reachability.md
+      - VEX: vex.md
+      - Compliance and evidence packs: compliance.md
   - Writing a plugin: plugins.md
   - Policy cookbook: policy.md
   - Importing reports: ingest-api.md

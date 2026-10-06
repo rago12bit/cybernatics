@@ -1,0 +1,16 @@
+{
+  "id": "soc2-2017-cc7.1",
+  "name": "SOC 2, Trust Services Criteria CC7.1",
+  "framework_version": "2017 (points of focus revised 2022)",
+  "source": {
+    "title": "2017 Trust Services Criteria for Security, Availability, Processing Integrity, Confidentiality, and Privacy (with revised points of focus, 2022), criterion CC7.1",
+    "publisher": "AICPA",
+    "url": "https://www.aicpa-cima.com/",
+    "terms": "The criteria are copyrighted by the AICPA and are not reproduced. The title below is Bulwark's paraphrase."
+  },
+  "mapping_version": 1,
+  "mapping_date": "2026-10-06",
+  "controls": [
+    {"id": "CC7.1", "title": "Detection and monitoring find configuration changes that introduce vulnerabilities, and susceptibility to newly discovered vulnerabilities", "evidence": ["scan_coverage", "advisory_monitoring", "component_inventory", "open_issues", "audit_log"]}
+  ]
+}

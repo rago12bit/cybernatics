@@ -23,13 +23,14 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from core.models import Finding, Package
+from core.reachability.golang import GoUsage, read_go_mod, scan_file
 from core.reachability.imports import FileImports, js_imports, python_imports
 from core.reachability.manifests import norm_py, read_manifest
 
 MAX_FILES = 20_000
 SKIP_DIRS = frozenset(
     "node_modules .git .hg .svn .venv venv env __pycache__ site-packages dist build .tox .mypy_cache "
-    ".next .nuxt coverage vendor third_party bower_components target".split()
+    ".next .nuxt coverage vendor third_party bower_components target testdata".split()
 )
 TEST_DIRS = frozenset(
     "test tests __tests__ spec specs e2e testing fixtures __mocks__ cypress".split()
@@ -86,6 +87,7 @@ class ReachabilityIndex:
     source_files: dict[str, int] = field(default_factory=dict)
     unparsed: dict[str, int] = field(default_factory=dict)
     truncated: bool = False
+    go: GoUsage = field(default_factory=GoUsage)
 
     def assess(self, f: Finding) -> Reachability | None:
         return None if f.package is None else self.assess_package(f.package)
@@ -94,6 +96,8 @@ class ReachabilityIndex:
         """The same answer for a package with no finding: what the component inventory records
         for every package in the SBOM."""
         eco = pkg.ecosystem
+        if eco == "go":
+            return self._assess_go(pkg.name)
         if eco not in ("pypi", "npm"):
             return Reachability(None, f"Reachability is not analysed for {eco or 'this'} packages")
         if eco == "pypi":
@@ -128,6 +132,33 @@ class ReachabilityIndex:
             )
         if not known:
             return Reachability(None, "Import name for this package could not be determined")
+        return Reachability(
+            False,
+            "No source file of the application imports it (another dependency may still load it)",
+        )
+
+
+    def _assess_go(self, module: str) -> Reachability:
+        g = self.go
+        if module in ("stdlib", "toolchain"):
+            return Reachability(None, "The Go standard library: see each vulnerability's functions")
+        if not g.files:
+            return Reachability(None, "No Go source files were analysed")
+        app = g.in_module(module, g.imports)
+        if app:
+            return Reachability(True, f"Imported by application code ({app})")
+        if self.truncated or g.unparsed or g.unknown:
+            return Reachability(None, "Source files could not be fully analysed")
+        test = g.in_module(module, g.test_imports)
+        if test:
+            return Reachability(
+                False, f"Imported only by test code ({test}), not by the application's own code"
+            )
+        if module not in g.direct:
+            return Reachability(
+                None,
+                "Transitive dependency: reachability through its parent package is not analysed",
+            )
         return Reachability(
             False,
             "No source file of the application imports it (another dependency may still load it)",
@@ -175,6 +206,24 @@ def analyze(root: Path) -> ReachabilityIndex:
             if seen > MAX_FILES:
                 idx.truncated = True
                 return idx
+            if fn == "go.mod" and dirpath == str(root):
+                try:
+                    module, direct, indirect = read_go_mod(path.read_text("utf-8", "replace"))
+                except OSError:
+                    continue
+                idx.go.module, idx.go.direct, idx.go.indirect = module, direct, indirect
+                continue
+            if fn.endswith(".go"):
+                try:
+                    if path.stat().st_size > 1_000_000:
+                        continue
+                    data = path.read_bytes()
+                except OSError:
+                    continue
+                rel_go = path.relative_to(root)
+                test = fn.endswith("_test.go") or _classify(rel_go) == "test"
+                idx.go.add(rel_go.as_posix(), scan_file(data), test=test)
+                continue
             eco, names, scripts = read_manifest(path)
             if eco:
                 idx.direct.setdefault(eco, set()).update(names)

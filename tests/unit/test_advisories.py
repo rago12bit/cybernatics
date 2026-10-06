@@ -346,6 +346,7 @@ def test_an_advisory_issue_is_the_same_issue_osv_scanner_found(env: Env) -> None
     """The same package, version and CVE from a scan's osv-scanner and from the advisory engine is
     one Issue, not two."""
     from core.adapters.osv_scanner import OsvScannerAdapter
+    from core.imports.prepare import prepare
 
     report = {"results": [{"source": {"path": "/target/pom.xml"}, "packages": [{
         "package": {"name": "org.apache.logging.log4j:log4j-core", "version": "2.14.1",
@@ -355,7 +356,9 @@ def test_an_advisory_issue_is_the_same_issue_osv_scanner_found(env: Env) -> None
         "groups": [{"ids": ["GHSA-jfh8-c2jp-5v3q"], "aliases": ["CVE-2021-44228"],
                     "max_severity": "10.0"}],
     }]}]}  # fmt: skip
-    found = OsvScannerAdapter().parse(json.dumps(report).encode())
+    # Through correlate and finalize, as a scan's findings are (`run_scan_job`): the fingerprint
+    # the Issue is matched by is made there.
+    found = prepare(OsvScannerAdapter().parse(json.dumps(report).encode()))
     with env.sessions() as s:
         load_all(s)
         sc = repo.create_scan(s, source_type="git", source_ref="https://example.com/a/b",
@@ -369,3 +372,19 @@ def test_an_advisory_issue_is_the_same_issue_osv_scanner_found(env: Env) -> None
     assert out["issue_ids"][sc.asset_id] == [scanned.id]
     with env.sessions() as s:
         assert len(s.scalars(select(IssueRow).where(IssueRow.asset_id == sc.asset_id)).all()) == 1
+
+
+def test_two_vulnerabilities_in_one_project_are_two_issues(env: Env) -> None:
+    """Found in Week 69: advisory findings skipped `prepare`, so all of them carried an empty
+    fingerprint and every adopted vulnerability in a project matched the same Issue."""
+    with env.sessions() as s:
+        load_all(s)
+        pid = project(s, "two-vulns")
+        sbom(s, pid, f"{LOG4J}@2.14.1", "pkg:npm/lodash@4.17.20")
+    a = env.client.post("/v2/advisories/CVE-2021-44228/issues", json={}, headers=AUTH).json()
+    b = env.client.post("/v2/advisories/CVE-2021-23337/issues", json={}, headers=AUTH).json()
+    [log4shell], [lodash] = a["issue_ids"][pid], b["issue_ids"][pid]
+    assert log4shell != lodash
+    with env.sessions() as s:
+        rows = s.scalars(select(IssueRow).where(IssueRow.asset_id == pid)).all()
+        assert len(rows) == 2 and all(r.fingerprint.startswith("sha256:") for r in rows)

@@ -19,6 +19,7 @@ from core.correlation import correlate
 from core.dast.routes import extract_routes_from_workspace
 from core.ingest import IngestError
 from core.integrations.dispatch import notify_scan_result
+from core.inventory.identity import from_purl
 from core.models import Category, Finding, Package
 from core.observability import bind_scan, in_context, mark_error, set_attributes, span
 from core.observability import metrics as obs
@@ -37,6 +38,7 @@ from core.supplychain.scorecard import enrich_direct_dependencies
 from core.supplychain.typosquat import find_typosquats
 from core.taint import analyze_or_none as taint_analyze_or_none
 from core.tenancy import scoped_sessions
+from core.vex.evidence import record_usage
 
 log = logging.getLogger(__name__)
 
@@ -101,6 +103,16 @@ def _entrypoints(taint: Any) -> list[dict[str, Any]] | None:
     return sorted(out, key=lambda r: (r["route"], r["method"], r["path"], r["line"]))
 
 
+def _module_name(p: Any) -> str:
+    """A Go module's path, from its purl (`pkg:golang/golang.org/x/net@v0.1.0`): the SBOM's own
+    `name` may be only the last element."""
+    if p.ecosystem == "go" and p.purl:
+        ident = from_purl(p.purl)
+        if ident is not None:
+            return ident.name
+    return str(p.name)
+
+
 def _process_sbom(
     raw: bytes, reach: ReachabilityIndex | None = None
 ) -> tuple[list[Finding], dict[str, Any] | None]:
@@ -132,7 +144,7 @@ def _process_sbom(
             relation = "unknown"
         result = scorecard.get(p.purl)
         used = (
-            reach.assess_package(Package(p.name, p.version, p.ecosystem))
+            reach.assess_package(Package(_module_name(p), p.version, p.ecosystem))
             if reach is not None
             else None
         )
@@ -357,6 +369,15 @@ def _run_scan_job(
                     )  # fmt: skip
                 except Exception:  # noqa: BLE001 - the inventory must not fail the scan
                     log.exception("inventory: could not record the SBOM of scan %s", scan_id)
+                    s.rollback()
+            if status == "completed" and ref is None and asset_id:
+                try:  # what the code uses: the evidence a VEX draft cites (plan §46.3)
+                    record_usage(
+                        s, org_id=scan_org, asset_id=asset_id, scan_id=scan_id,
+                        go=reach.go if reach is not None else None,
+                    )  # fmt: skip
+                except Exception:  # noqa: BLE001 - must not fail the scan
+                    log.exception("vex: could not record the code usage of scan %s", scan_id)
                     s.rollback()
             repo.set_route_map(s, scan_id, route_map)
             repo.set_entrypoints(s, scan_id, _entrypoints(taint))

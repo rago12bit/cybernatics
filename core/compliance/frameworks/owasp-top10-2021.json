@@ -1,0 +1,14 @@
+{
+  "id": "owasp-top10-2021",
+  "name": "OWASP Top 10:2021",
+  "framework_version": "2021",
+  "source": {
+    "title": "OWASP Top 10:2021, with each category's mapped CWEs",
+    "publisher": "OWASP Foundation",
+    "url": "https://owasp.org/Top10/",
+    "terms": "CC BY-SA 4.0. Categories and CWEs from core/taxonomy/owasp_top10_2021.json."
+  },
+  "mapping_version": 1,
+  "mapping_date": "2026-10-06",
+  "controls_from": "owasp-top10-2021"
+}

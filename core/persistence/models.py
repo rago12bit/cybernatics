@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from typing import Any
 
 from sqlalchemy import (
     JSON,
     Boolean,
+    Date,
     Float,
     ForeignKey,
     Index,
@@ -111,7 +112,7 @@ class AuditEntry(Base):
     seq: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=False)
     prev_hash: Mapped[str] = mapped_column(String(64))
     entry_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
-    timestamp: Mapped[datetime] = mapped_column(UtcDateTime())
+    timestamp: Mapped[datetime] = mapped_column(UtcDateTime(), index=True)
     actor: Mapped[str] = mapped_column(
         String(200)
     )  # e.g. "cli:token-create", "webhook:installation"
@@ -120,6 +121,13 @@ class AuditEntry(Base):
     payload_digest: Mapped[str] = mapped_column(
         String(64)
     )  # sha256 of the payload; never the payload
+    # Version 2 (Week 69, migration 0041): the entry's organization is inside the hash, through
+    # `body_digest` (a digest of timestamp, org, actor, action, target and payload digest), so an
+    # organization's evidence pack can show its own entries in full and the rest as hashes only,
+    # every link still recomputable. Version 1 entries (all earlier ones) have neither.
+    version: Mapped[int] = mapped_column(Integer, default=1, server_default="1")
+    org_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
+    body_digest: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
 
 class AuditCheckpoint(Base):
@@ -325,6 +333,9 @@ class IssueRow(Base):
     triage_expires_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
     triaged_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
     triaged_by: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    # Why a dependency Issue is not a risk, in OpenVEX's vocabulary (Week 69, plan §46.3):
+    # `core.vex.vocab.JUSTIFICATIONS`. Only with `triage_status = "not_a_risk"`.
+    triage_justification: Mapped[str | None] = mapped_column(String(48), nullable=True)
 
     # Where this Issue came from (Week 43, plan §21.4): "scanner" for every ordinary issue (the
     # default, and every issue that existed before this column did); "llm-confirmed" only for one
@@ -1731,3 +1742,90 @@ class AdvisoryState(Base):
     updated_by: Mapped[str | None] = mapped_column(String(200), nullable=True)
 
     __table_args__ = (UniqueConstraint("org_id", "vuln_key", name="uq_advisory_states_vuln"),)
+
+
+class CodeUsage(Base):
+    """What one project's code imports and calls, from its latest full scan (Week 69, plan §46.3):
+    for Go, each imported package with the names the application refers to in it, and every
+    method name it calls. The evidence a VEX draft is built from; `core.reachability.golang`."""
+
+    __tablename__ = "code_usage"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"), index=True)
+    asset_id: Mapped[str] = mapped_column(
+        ForeignKey("assets.id", ondelete="CASCADE"), unique=True
+    )
+    scan_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    data: Mapped[dict[str, Any]] = mapped_column(JsonType, default=dict)
+    recorded_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+
+
+class VexStatement(Base):
+    """One VEX statement about a vulnerability at a library version in a project (plan §46.3):
+    proposed by Bulwark with its evidence, then confirmed or rejected by a person. `state`:
+    proposed | confirmed | rejected | withdrawn (a confirmed claim taken back, or its Issue
+    reopened). `core.vex`."""
+
+    __tablename__ = "vex_statements"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"), index=True)
+    asset_id: Mapped[str] = mapped_column(ForeignKey("assets.id", ondelete="CASCADE"), index=True)
+    library_id: Mapped[str] = mapped_column(ForeignKey("libraries.id", ondelete="CASCADE"))
+    version: Mapped[str] = mapped_column(String(200))
+    vuln_key: Mapped[str] = mapped_column(String(100))
+    status: Mapped[str] = mapped_column(String(24))  # OpenVEX: not_affected | affected | ...
+    justification: Mapped[str | None] = mapped_column(String(48), nullable=True)
+    impact_statement: Mapped[str] = mapped_column(Text, default="")
+    evidence: Mapped[dict[str, Any]] = mapped_column(JsonType, default=dict)
+    state: Mapped[str] = mapped_column(String(16), default="proposed")
+    scan_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    proposed_by: Mapped[str] = mapped_column(String(200))
+    proposed_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+    decided_by: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    decided_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
+    decision_note: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    __table_args__ = (Index("ix_vex_statements_org_vuln", "org_id", "vuln_key"),)
+
+
+class ComplianceStatus(Base):
+    """A person's status for one requirement of a framework in one project (plan §47): met, not
+    met or not applicable, with a note and links to evidence. Bulwark never sets "met" itself."""
+
+    __tablename__ = "compliance_statuses"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"), index=True)
+    asset_id: Mapped[str] = mapped_column(ForeignKey("assets.id", ondelete="CASCADE"))
+    framework: Mapped[str] = mapped_column(String(40))
+    requirement: Mapped[str] = mapped_column(String(40))
+    status: Mapped[str] = mapped_column(String(16))
+    note: Mapped[str] = mapped_column(Text, default="")
+    links: Mapped[list[str]] = mapped_column(JsonType, default=list)
+    set_by: Mapped[str] = mapped_column(String(200))
+    set_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+
+    __table_args__ = (
+        UniqueConstraint("asset_id", "framework", "requirement", name="uq_compliance_status"),
+    )
+
+
+class EvidencePack(Base):
+    """A generated evidence pack (plan §47): the signed bundle (a zip holding the PDF, the
+    machine-readable evidence, the audit-log extract and a verifier) and what it summarised."""
+
+    __tablename__ = "evidence_packs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"), index=True)
+    period_start: Mapped[date] = mapped_column(Date())
+    period_end: Mapped[date] = mapped_column(Date())
+    frameworks: Mapped[list[str]] = mapped_column(JsonType, default=list)
+    summary: Mapped[dict[str, Any]] = mapped_column(JsonType, default=dict)
+    sha256: Mapped[str] = mapped_column(String(64))
+    signed: Mapped[bool] = mapped_column(Boolean, default=False)
+    bundle: Mapped[bytes] = mapped_column(LargeBinary)
+    created_by: Mapped[str] = mapped_column(String(200))
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)

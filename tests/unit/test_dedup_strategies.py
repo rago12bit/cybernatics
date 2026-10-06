@@ -21,6 +21,7 @@ from core.dedup.strategies import (
 )
 from core.models import Category, Finding, Location, Package, Severity, Taxonomy
 
+
 def code(path: str = "a.py", line: int = 10, rule: str = "r1", cwe: str = "CWE-89", tool: str = "semgrep",
          snippet: str = "danger(x)", title: str = "SQL injection") -> Finding:  # fmt: skip
     f = Finding(

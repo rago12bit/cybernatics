@@ -215,3 +215,11 @@
   white-space: normal; /* "Known exploited (CISA KEV since ..., due ...)" must wrap on a phone */
   max-width: 100%;
 }
+
+.ds-adv-vex-ok { color: var(--ds-sev-low); font-weight: 600; }
+.ds-adv-vex-proposed { font-weight: 600; }
+.ds-adv-vex-list { display: grid; gap: 1rem; }
+.ds-adv-vex-item { border-top: 1px solid var(--ds-rule); padding-top: var(--ds-space-3); }
+.ds-adv-vex-item p { margin: 0.4rem 0; overflow-wrap: anywhere; }
+.ds-adv-vex-item ul { margin: 0.25rem 0 0.5rem 1.1rem; padding: 0; }
+.ds-adv-vex-kind { font-size: 0.85em; }

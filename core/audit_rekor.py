@@ -37,7 +37,7 @@ def _workdir() -> Path:
     return d
 
 
-def _run_networked(args: list[str], key: Path, work: Path) -> None:
+def _run_networked(args: list[str], key: Path, work: Path, key_name: str = "cosign.key") -> None:
     """Like `core.attest.cosign._run`, but WITH network -- Rekor upload needs it. Everything else
     (read-only rootfs, dropped caps, no new privileges, resource caps) stays identical."""
     if not key.is_file():
@@ -47,7 +47,7 @@ def _run_networked(args: list[str], key: Path, work: Path) -> None:
         "--security-opt=no-new-privileges", "--memory=512m", "--pids-limit=128",
         "--tmpfs=/tmp:rw,noexec,nosuid,size=16m", "-e", "HOME=/tmp",
         f"--user={os.getuid()}:{os.getgid()}",
-        "-v", f"{key.resolve()}:/keys/cosign.key:ro",
+        "-v", f"{key.resolve()}:/keys/{key_name}:ro",
         "-v", f"{work}:/work",
     ]  # fmt: skip
     if "COSIGN_PASSWORD" in os.environ:
@@ -67,19 +67,26 @@ def _run_networked(args: list[str], key: Path, work: Path) -> None:
         raise AttestError(f"cosign failed: {str(reason)[:300]}")
 
 
-def sign_checkpoint(seq_end: int, chain_hash: str, key: Path) -> tuple[str, int | None]:
-    """Signs `"{seq_end}:{chain_hash}"` and uploads the signature to the public Rekor instance.
-    Returns (bundle_json, rekor_log_index) -- `rekor_log_index` is `None` if cosign's output didn't
-    include one (an older cosign version, or the upload silently didn't happen); callers should
-    treat that as "not actually checkpointed to Rekor yet," not as success.
+REKOR_URL_ENV = "BULWARK_REKOR_URL"
+
+
+def sign_checkpoint(
+    seq_end: int, chain_hash: str, key: Path, rekor_url: str | None = None
+) -> tuple[str, int | None]:
+    """Signs `"{seq_end}:{chain_hash}"` and uploads the signature to Rekor: the public instance,
+    or `rekor_url` (a private or local Rekor, Week 69). Returns (bundle_json, rekor_log_index) --
+    `rekor_log_index` is `None` if the bundle holds no transparency-log entry (the upload silently
+    didn't happen); callers should treat that as "not actually checkpointed to Rekor yet," not as
+    success.
     """
     work = _workdir()
     try:
         payload = f"{seq_end}:{chain_hash}"
         (work / "checkpoint.txt").write_text(payload)
+        target = ["--use-signing-config=false", "--rekor-url", rekor_url] if rekor_url else []
         _run_networked(
-            ["sign-blob", "--key", "/keys/cosign.key", "--yes", "--bundle", "/work/out.bundle",
-             "/work/checkpoint.txt"],
+            ["sign-blob", "--key", "/keys/cosign.key", "--yes", *target, "--bundle",
+             "/work/out.bundle", "/work/checkpoint.txt"],
             key, work,
         )  # fmt: skip
         bundle_text = (work / "out.bundle").read_text("utf-8")
@@ -91,15 +98,47 @@ def sign_checkpoint(seq_end: int, chain_hash: str, key: Path) -> tuple[str, int 
 
 def _extract_log_index(bundle_text: str) -> int | None:
     """The Sigstore bundle format nests the Rekor entry under
-    `verificationMaterial.tlogEntries[0].logIndex`; tolerate any shape mismatch (a cosign version
-    difference) by returning `None` rather than raising -- the checkpoint's signature is still
-    valid either way, and `bulwark audit verify` reports a missing index as unverified-in-Rekor
-    rather than crashing."""
+    `verificationMaterial.tlogEntries[0].logIndex`. It is protobuf JSON, so the index is a string
+    (`"1234"`) and an index of 0 is left out altogether -- read both as cosign 3 writes them
+    (found in Week 69 against a local Rekor: the integer-only reading recorded no index for any
+    checkpoint). Any other shape returns `None` rather than raising: the checkpoint's signature
+    is still valid, and `bulwark audit verify` reports a missing index as unverified-in-Rekor."""
     try:
         bundle = json.loads(bundle_text)
         entries = bundle.get("verificationMaterial", {}).get("tlogEntries", [])
-        if entries and isinstance(entries[0].get("logIndex"), int):
-            return int(entries[0]["logIndex"])
+        if not entries or not isinstance(entries[0], dict):
+            return None
+        raw = entries[0].get("logIndex", 0)
+        if isinstance(raw, bool):
+            return None
+        if isinstance(raw, int):
+            return raw
+        if isinstance(raw, str) and raw.isdigit():
+            return int(raw)
     except (ValueError, AttributeError, KeyError, TypeError):
         pass
     return None
+
+
+def verify_checkpoint(
+    seq_end: int, chain_hash: str, bundle_text: str, pub: Path, trusted_root: Path | None = None
+) -> None:
+    """Raise AttestError unless `bundle_text` is a signature by `pub` over exactly this checkpoint
+    AND carries a transparency-log entry the Rekor in `trusted_root` signed. Without
+    `trusted_root`, cosign uses Sigstore's public trust root (fetched over the network); with
+    it -- a private or local Rekor -- the check runs with no network at all."""
+    from core.attest.cosign import _run
+
+    work = _workdir()
+    try:
+        (work / "checkpoint.txt").write_text(f"{seq_end}:{chain_hash}")
+        (work / "in.bundle").write_text(bundle_text)
+        args = ["verify-blob", "--key", "/keys/cosign.pub", "--bundle", "/work/in.bundle"]
+        if trusted_root is not None:
+            shutil.copyfile(trusted_root, work / "trusted-root.json")
+            args += ["--trusted-root", "/work/trusted-root.json"]
+            _run([*args, "/work/checkpoint.txt"], pub, "cosign.pub", work)
+        else:
+            _run_networked([*args, "/work/checkpoint.txt"], pub, work, key_name="cosign.pub")
+    finally:
+        shutil.rmtree(work, ignore_errors=True)

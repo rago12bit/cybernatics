@@ -1,4 +1,4 @@
-import type { AdvisoryFeeds, AdvisoryImpact, AdvisoryIssuesCreated, AdvisorySummary, ProjectOwner, CalendarKind, CalendarView, ComponentSearch, LibrarySummary, Inbox, IssueGroupSummary, IssueTicket, NotificationPrefsView, RuleTemplate, TicketConfigInput, TicketConfigView, Watchers, IssueOwner, Rule, RuleDryRun, RuleInput, RuleRun, RulesCatalogue, ChecklistCatalogue, ChecklistItem, ChecklistResult, ChecklistSummary, Engagement, EngagementDetail, EngagementInput, Mention, NoteFile, NotesView, Person, Portfolio, Retest, RetestAction, TagsView, PriorityBand, PriorityContext, PriorityOverview, PriorityPreview, RiskAcceptance, RiskAcceptanceInput, RiskAcceptancePolicy, SlaBand, SlaBasis, SlaOverview, ConnectorInput, ConnectorKind, ConnectorView, AnalyzeResult, MappingPreview, MappingSpec, SavedMapping, CvssScore, CweEntry,
+import type { VexJustification, AsvsBenchmark, ComplianceFramework, EvidencePack, EvidencePreview, ProjectVex, VexDrafted, VexStatement, AdvisoryFeeds, AdvisoryImpact, AdvisoryIssuesCreated, AdvisorySummary, ProjectOwner, CalendarKind, CalendarView, ComponentSearch, LibrarySummary, Inbox, IssueGroupSummary, IssueTicket, NotificationPrefsView, RuleTemplate, TicketConfigInput, TicketConfigView, Watchers, IssueOwner, Rule, RuleDryRun, RuleInput, RuleRun, RulesCatalogue, ChecklistCatalogue, ChecklistItem, ChecklistResult, ChecklistSummary, Engagement, EngagementDetail, EngagementInput, Mention, NoteFile, NotesView, Person, Portfolio, Retest, RetestAction, TagsView, PriorityBand, PriorityContext, PriorityOverview, PriorityPreview, RiskAcceptance, RiskAcceptanceInput, RiskAcceptancePolicy, SlaBand, SlaBasis, SlaOverview, ConnectorInput, ConnectorKind, ConnectorView, AnalyzeResult, MappingPreview, MappingSpec, SavedMapping, CvssScore, CweEntry,
   EvidenceFile, ManualFindingInput, ManualFindingView, ManualRecorded, ProjectRoutes, DedupApplied, DedupChangeRequest, DedupHistoryEntry, DedupOverview, DedupPreview,
   ImportCreated, ImportView, ParserInfo, ProjectTest, RevertView,
   AssetSummary, AssetVerification, AttackPath, BulkTriageResult,
@@ -271,6 +271,8 @@ export interface TriageAction {
   action: "not_a_risk" | "accepted" | "reopen";
   reason?: string;
   expires_at?: string;
+  /** For a dependency Issue marked not a risk: why, in OpenVEX's vocabulary (plan §46.3). */
+  justification?: VexJustification;
 }
 
 export const triageIssue = (assetId: string, issueId: string, body: TriageAction) =>
@@ -766,3 +768,44 @@ export const getCalendar = (from: string, to: string, q: { projectId?: string; k
   if (q.kinds) p.set("kinds", q.kinds.join(","));
   return request<CalendarView>(`/v2/calendar?${p.toString()}`);
 };
+
+/** VEX (plan §46.3): drafts with evidence, a person's decision, the exports. */
+export const draftVex = (key: string) =>
+  request<VexDrafted>(`/v2/advisories/${encodeURIComponent(key)}/vex-drafts`, { method: "POST" });
+export const decideVex = (id: string, decision: "confirm" | "reject" | "withdraw", note?: string) =>
+  request<VexStatement>(`/v2/vex/${enc(id)}/${decision}`, json("POST", { note: note || null }));
+export const getProjectVex = (id: string) => request<ProjectVex>(`/v2/projects/${enc(id)}/vex`);
+
+/** A download that needs the token: fetched, then handed to the browser as a file. */
+async function download(path: string, fallbackName: string, failure: string): Promise<void> {
+  const token = getToken();
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}${path}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+  } catch {
+    throw new ApiError(0, `Cannot reach the Bulwark API at ${API_URL}. Is it running?`);
+  }
+  if (!res.ok) throw new ApiError(res.status, failure);
+  const name = /filename="([^"]+)"/.exec(res.headers.get("content-disposition") ?? "")?.[1] ?? fallbackName;
+  const url = URL.createObjectURL(new Blob([await res.blob()], { type: "application/octet-stream" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+export const downloadVex = (id: string, format: "openvex" | "cyclonedx") =>
+  download(`/v2/projects/${enc(id)}/vex/${format}`, `vex.${format}.json`, "Could not download the VEX document.");
+
+/** Compliance (plan §47). */
+export const listFrameworks = () => request<ComplianceFramework[]>("/v2/compliance/frameworks");
+export const getAsvs = (id: string, level: number) => request<AsvsBenchmark>(`/v2/projects/${enc(id)}/asvs?level=${level}`);
+export const setAsvsStatus = (id: string, req: string, body: { status: "met" | "not_met" | "not_applicable" | null; note: string; links: string[] }) =>
+  request<{ requirement: string; status: string | null }>(`/v2/projects/${enc(id)}/asvs/${enc(req)}`, json("PUT", body));
+export const previewEvidencePack = (body: { start: string; end: string; frameworks: string[] }) =>
+  request<EvidencePreview>("/v2/evidence-packs/preview", json("POST", body));
+export const createEvidencePack = (body: { start: string; end: string; frameworks: string[] }) =>
+  request<EvidencePack>("/v2/evidence-packs", json("POST", body));
+export const listEvidencePacks = () => request<EvidencePack[]>("/v2/evidence-packs");
+export const downloadEvidencePack = (id: string) =>
+  download(`/v2/evidence-packs/${enc(id)}/bundle`, "evidence-pack.zip", "Could not download the evidence pack.");

@@ -28,6 +28,7 @@ from core.collab import assign
 from core.collab.people import names
 from core.persistence import repo
 from core.persistence.models import Advisory, FeedState, KevEntry
+from core.vex import service as vex
 
 _UUID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
 _KEY = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$")
@@ -63,6 +64,38 @@ class Kev(BaseModel):
 class IssueRef(BaseModel):
     id: str
     state: str
+    triage_status: str = "open"
+
+
+class VexStatementOut(BaseModel):
+    id: str
+    asset_id: str
+    vuln_key: str
+    library: str | None
+    ecosystem: str | None
+    version: str
+    status: str
+    justification: str | None
+    impact_statement: str
+    evidence: dict[str, Any]
+    state: str
+    proposed_by: str
+    proposed_at: datetime
+    decided_by: str | None
+    decided_at: datetime | None
+    note: str | None
+
+
+class VexUse(BaseModel):
+    """What Bulwark can show about whether the project executes the vulnerable code (plan §46.3),
+    and the VEX statement about this use, if any."""
+
+    draftable: bool
+    evidence: dict[str, Any] | None
+    summary: str
+    uses_code: bool | None
+    where: str
+    statement: VexStatementOut | None
 
 
 class Use(BaseModel):
@@ -84,6 +117,7 @@ class Use(BaseModel):
     exposure: str
     owner: str | None
     issues: list[IssueRef]
+    vex: VexUse | None = None
 
 
 class ImpactCounts(BaseModel):
@@ -94,6 +128,7 @@ class ImpactCounts(BaseModel):
     uncertain: int
     with_fix: int
     with_issues: int
+    vex_draftable: int = 0
 
 
 class ImpactOut(BaseModel):
@@ -194,6 +229,7 @@ def register_advisory_routes(app: FastAPI) -> None:
         found = view.impact(s, org, _key(vuln_key))
         if found is None:
             raise HTTPException(404, "advisory not found")
+        vex.annotate(s, org, vuln_key, found)
         return ImpactOut(**found)
 
     @app.post(

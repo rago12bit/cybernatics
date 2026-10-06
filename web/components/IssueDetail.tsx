@@ -24,6 +24,8 @@ import { TagsEditor } from "@/components/TagsEditor";
 import { CopilotPanel } from "@/components/CopilotPanel";
 import { SLA_MARK, slaSentence } from "@/lib/sla";
 import { RiskAcceptanceRequest } from "@/components/RiskAcceptanceRequest";
+import { JUSTIFICATIONS, justificationLabel } from "@/lib/vex";
+import type { VexJustification } from "@/lib/types";
 import "./issue-detail.css";
 
 const isTyping = (t: EventTarget | null) => t instanceof HTMLElement && /^(INPUT|SELECT|TEXTAREA)$/.test(t.tagName);
@@ -39,6 +41,7 @@ export function IssueDetail({ assetId, issueId }: { assetId: string; issueId: st
   const [aiExplanation, setAiExplanation] = useState<string | null>(null);
   const [triageOpen, setTriageOpen] = useState<"not_a_risk" | "accepted" | null>(null);
   const [reason, setReason] = useState("");
+  const [justification, setJustification] = useState<VexJustification | "">("");
   const [expiresAt, setExpiresAt] = useState("");
   const [busy, setBusy] = useState(false);
   const [acceptances, setAcceptances] = useState<RiskAcceptance[]>([]);
@@ -95,10 +98,13 @@ export function IssueDetail({ assetId, issueId }: { assetId: string; issueId: st
   async function runTriage(action: "not_a_risk" | "accepted" | "reopen") {
     setBusy(true);
     try {
-      const body = action === "not_a_risk" ? { action, reason } : action === "accepted" ? { action, reason, expires_at: expiresAt } : { action };
+      const body = action === "not_a_risk"
+        ? { action, reason, ...(justification ? { justification } : {}) }
+        : action === "accepted" ? { action, reason, expires_at: expiresAt } : { action };
       await triageIssue(assetId, issueId, body);
       setTriageOpen(null);
       setReason("");
+      setJustification("");
       setExpiresAt("");
       reload();
     } catch (e) {
@@ -173,6 +179,7 @@ export function IssueDetail({ assetId, issueId }: { assetId: string; issueId: st
         <div className="ds-issue-triage-banner">
           {triageStatus === "not_a_risk" ? "Marked as not a risk" : "Risk accepted"}
           {finding.issue?.triage_reason && <>: {finding.issue.triage_reason}</>}
+          {finding.issue?.triage_justification && <> (VEX: {justificationLabel(finding.issue.triage_justification)})</>}
           {finding.issue?.triage_expires_at && (
             <>
               {" "}
@@ -277,6 +284,15 @@ export function IssueDetail({ assetId, issueId }: { assetId: string; issueId: st
       <Dialog open={triageOpen === "not_a_risk"} onOpenChange={(o) => !o && setTriageOpen(null)} title="Mark as not a risk" description="A reason is required, and this is written to the audit log.">
         <label htmlFor="triage-reason" className="ds-issue-label">Reason</label>
         <textarea id="triage-reason" value={reason} onChange={(e) => setReason(e.target.value)} rows={3} placeholder="Why isn't this a risk?" className="ds-issue-input" />
+        {(finding.taxonomy.category === "sca" || finding.taxonomy.category === "container") && (
+          <>
+            <label htmlFor="triage-justification" className="ds-issue-label">In the project&apos;s VEX (optional)</label>
+            <select id="triage-justification" value={justification} onChange={(e) => setJustification(e.target.value as VexJustification | "")} className="ds-issue-input">
+              <option value="">No VEX justification: the reason is exported instead</option>
+              {JUSTIFICATIONS.map((j) => <option key={j.value} value={j.value}>{j.label}</option>)}
+            </select>
+          </>
+        )}
         <div style={{ marginTop: "1rem" }}>
           <Button variant="primary" disabled={!reason.trim() || busy} onClick={() => runTriage("not_a_risk")}>Confirm</Button>
         </div>

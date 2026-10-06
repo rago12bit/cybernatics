@@ -64,7 +64,7 @@ from core.persistence.models import (
     ToolRun,
 )
 from core.rag.embed import HashingEmbedder
-from core.tenancy import DEFAULT_ORG_ID
+from core.tenancy import DEFAULT_ORG_ID, session_org
 from core.triage_assistant.contract import TriageVerdict
 
 log = logging.getLogger(__name__)
@@ -919,6 +919,7 @@ def list_asset_issues(
                 "state": r.issue_state,
                 "triage_status": issue_row.triage_status if issue_row else "open",
                 "triage_reason": issue_row.triage_reason if issue_row else None,
+                "triage_justification": issue_row.triage_justification if issue_row else None,
                 "triage_expires_at": issue_row.triage_expires_at if issue_row else None,
                 "first_seen_at": issue_row.first_seen_at if issue_row else None,
                 "confirmed_at_runtime_at": (
@@ -981,6 +982,7 @@ def get_issue_finding(s: Session, issue_id: str, latest_scan_id: str) -> dict[st
         "state": row.issue_state,
         "triage_status": issue_row.triage_status if issue_row else "open",
         "triage_reason": issue_row.triage_reason if issue_row else None,
+        "triage_justification": issue_row.triage_justification if issue_row else None,
         "triage_expires_at": issue_row.triage_expires_at if issue_row else None,
         "first_seen_at": issue_row.first_seen_at if issue_row else None,
         "assistant_verdict": issue_row.assistant_verdict if issue_row else None,
@@ -1060,16 +1062,28 @@ def triage_issue(
     reason: str | None = None,
     expires_at: datetime | None = None,
     actor: str,
+    justification: str | None = None,
 ) -> IssueRow:
     """Mark an issue `not_a_risk` (requires `reason`) or `accepted` (requires `expires_at`), or
     `reopen` it back to the active queue. Writes an audit entry either way (plan §28.3: "Both write
     to the audit log (§19.3)") -- `reopen` too, since undoing a triage decision is itself a
-    security-relevant action worth a durable record."""
+    security-relevant action worth a durable record.
+
+    `justification` (Week 69, plan §46.3): for a dependency Issue marked not a risk, why, in
+    OpenVEX's vocabulary (`core.vex.vocab`); exported in the project's VEX documents."""
+    from core.vex.vocab import check_justification
+
     if action not in ("not_a_risk", "accepted", "reopen"):
         raise ValueError(f"unknown triage action: {action}")
+    justification = check_justification(justification)
+    if justification and action != "not_a_risk":
+        raise ValueError("a VEX justification only goes with marking an issue not a risk")
     row = get_issue(s, issue_id, org_id=org_id)
     if row is None:
         raise LookupError("issue not found")
+    if justification and row.category not in ("sca", "container"):
+        raise ValueError("a VEX justification is only for dependency issues")
+    row.triage_justification = justification
     now = _now()
     if action == "not_a_risk":
         if not reason or not reason.strip():
@@ -1095,6 +1109,8 @@ def triage_issue(
         "reason": reason,
         "expires_at": expires_at.isoformat() if expires_at else None,
     }
+    if justification:
+        payload["justification"] = justification
     # append_audit_entry() commits -- the same flush also persists this row's pending changes above,
     # so the triage decision and its audit entry land together, in one transaction.
     append_audit_entry(
@@ -1857,24 +1873,38 @@ def revoke_api_token(s: Session, token_id: str) -> bool:
 
 
 def append_audit_entry(
-    s: Session, *, actor: str, action: str, target: str, payload: dict[str, Any]
+    s: Session,
+    *,
+    actor: str,
+    action: str,
+    target: str,
+    payload: dict[str, Any],
+    org_id: str | None = None,
 ) -> AuditEntry:
     """A bounded optimistic-concurrency retry, not a database lock -- see `AuditEntry`'s docstring
     for why that's an accepted, documented simplification at this project's current scale (one API
-    process, one worker), not a claim that a concurrent-write race is impossible."""
+    process, one worker), not a claim that a concurrent-write race is impossible.
+
+    Writes a version-2 entry (`core.audit`). Its organization is `org_id`, else the one the session
+    acts for (`core.tenancy.set_session_org`), else the payload's `org_id`; none for a
+    deployment-wide action (a CLI command, a GitHub installation)."""
+    org = org_id or session_org(s) or payload.get("org_id")
+    org = str(org) if org else None
     digest = audit.payload_digest(payload)
     for _ in range(5):
         last = s.scalar(select(AuditEntry).order_by(AuditEntry.seq.desc()).limit(1))
         seq = (last.seq + 1) if last else 1
         prev_hash = last.entry_hash if last else audit.GENESIS_HASH
         now = _now()
-        entry_hash = audit.compute_hash(
-            seq=seq, prev_hash=prev_hash, timestamp=now, actor=actor, action=action,
-            target=target, payload_digest=digest,
+        body = audit.body_digest(
+            timestamp=now, org_id=org, actor=actor, action=action, target=target,
+            payload_digest=digest,
         )  # fmt: skip
+        entry_hash = audit.compute_hash_v2(seq=seq, prev_hash=prev_hash, body_digest=body)
         row = AuditEntry(
             seq=seq, prev_hash=prev_hash, entry_hash=entry_hash, timestamp=now, actor=actor,
-            action=action, target=target, payload_digest=digest,
+            action=action, target=target, payload_digest=digest, version=2, org_id=org,
+            body_digest=body,
         )  # fmt: skip
         s.add(row)
         try:

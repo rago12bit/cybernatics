@@ -73,6 +73,7 @@ export function AppShell({ crumbs, children }: { crumbs: Crumb[]; children: Reac
           <Link href="/app/components" className="ds-shell-settings-link">Components</Link>
           <Link href="/app/advisories" className="ds-shell-settings-link">Advisories</Link>
           <Link href="/app/risk-acceptances" className="ds-shell-settings-link">Approvals</Link>
+          <Link href="/app/evidence" className="ds-shell-settings-link">Evidence</Link>
           <Link href="/app/mentions" className="ds-shell-settings-link">Mentions</Link>
           <Link href="/app/automation" className="ds-shell-settings-link">Automation</Link>
           <Link href="/app/connectors" className="ds-shell-settings-link">Connectors</Link>

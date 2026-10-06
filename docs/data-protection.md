@@ -88,6 +88,16 @@ shared by every organization; what it means for one organization (`advisory_impa
 `advisory_states`) is under forced RLS. Fetching advisories sends nothing about an organization's
 packages anywhere: matching happens inside Bulwark.
 
+## VEX, compliance statuses and evidence packs
+
+Since Week 69 (ADR-0053) Bulwark keeps, per organization and under forced RLS: what each project's Go
+code imports and calls (`code_usage`: package paths, function and method names with a file and line,
+never source text), VEX statements with their evidence and who decided them, a person's status for
+ASVS requirements with a note and links, and generated evidence packs (the zip, including the PDF
+and an audit-log extract). Evidence packs are kept until deleted with the organization; they hold the
+actors (token references) of the organization's own audit entries in the period, and no payloads.
+Audit entries now record their organization (`audit_entries.org_id`) inside their hash.
+
 ## Email addresses and notifications
 
 Since Week 66 (ADR-0050) Bulwark stores one piece of personal contact data: the email address a

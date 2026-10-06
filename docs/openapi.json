@@ -8818,6 +8818,736 @@
           }
         }
       }
+    },
+    "/v2/advisories/{vuln_key}/vex-drafts": {
+      "post": {
+        "tags": [
+          "vex"
+        ],
+        "summary": "Draft Vex",
+        "description": "Propose `not_affected` (`vulnerable_code_not_in_execute_path`) for each open use with\nevidence; nothing is exported until a person confirms it.",
+        "operationId": "draft_vex_v2_advisories__vuln_key__vex_drafts_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "vuln_key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Vuln Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/vex/{statement_id}/confirm": {
+      "post": {
+        "tags": [
+          "vex"
+        ],
+        "summary": "Confirm Vex",
+        "operationId": "confirm_vex_v2_vex__statement_id__confirm_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "statement_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Statement Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecisionIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VexStatementOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/vex/{statement_id}/reject": {
+      "post": {
+        "tags": [
+          "vex"
+        ],
+        "summary": "Reject Vex",
+        "operationId": "reject_vex_v2_vex__statement_id__reject_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "statement_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Statement Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecisionIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VexStatementOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/vex/{statement_id}/withdraw": {
+      "post": {
+        "tags": [
+          "vex"
+        ],
+        "summary": "Withdraw Vex",
+        "operationId": "withdraw_vex_v2_vex__statement_id__withdraw_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "statement_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Statement Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecisionIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VexStatementOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/projects/{project_id}/vex": {
+      "get": {
+        "tags": [
+          "vex"
+        ],
+        "summary": "Project Vex",
+        "operationId": "project_vex_v2_projects__project_id__vex_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectVexOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/projects/{project_id}/vex/openvex": {
+      "get": {
+        "tags": [
+          "vex"
+        ],
+        "summary": "Project Openvex",
+        "operationId": "project_openvex_v2_projects__project_id__vex_openvex_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/projects/{project_id}/vex/cyclonedx": {
+      "get": {
+        "tags": [
+          "vex"
+        ],
+        "summary": "Project Cyclonedx Vex",
+        "operationId": "project_cyclonedx_vex_v2_projects__project_id__vex_cyclonedx_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/compliance/frameworks": {
+      "get": {
+        "tags": [
+          "compliance"
+        ],
+        "summary": "List Frameworks",
+        "operationId": "list_frameworks_v2_compliance_frameworks_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/FrameworkOut"
+                  },
+                  "type": "array",
+                  "title": "Response List Frameworks V2 Compliance Frameworks Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v2/compliance/frameworks/{framework_id}": {
+      "get": {
+        "tags": [
+          "compliance"
+        ],
+        "summary": "Get Framework",
+        "operationId": "get_framework_v2_compliance_frameworks__framework_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "framework_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Framework Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrameworkDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/projects/{project_id}/asvs": {
+      "get": {
+        "tags": [
+          "compliance"
+        ],
+        "summary": "Project Asvs",
+        "operationId": "project_asvs_v2_projects__project_id__asvs_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "level",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 3,
+              "minimum": 1,
+              "default": 2,
+              "title": "Level"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Project Asvs V2 Projects  Project Id  Asvs Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/projects/{project_id}/asvs/{requirement}": {
+      "put": {
+        "tags": [
+          "compliance"
+        ],
+        "summary": "Set Asvs Status",
+        "operationId": "set_asvs_status_v2_projects__project_id__asvs__requirement__put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "requirement",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Requirement"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatusIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Set Asvs Status V2 Projects  Project Id  Asvs  Requirement  Put"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/evidence-packs/preview": {
+      "post": {
+        "tags": [
+          "compliance"
+        ],
+        "summary": "Preview Pack",
+        "description": "What a pack for this period would hold, without generating or signing it.",
+        "operationId": "preview_pack_v2_evidence_packs_preview_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PackIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Preview Pack V2 Evidence Packs Preview Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v2/evidence-packs": {
+      "get": {
+        "tags": [
+          "compliance"
+        ],
+        "summary": "List Packs",
+        "operationId": "list_packs_v2_evidence_packs_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PackOut"
+                  },
+                  "type": "array",
+                  "title": "Response List Packs V2 Evidence Packs Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "compliance"
+        ],
+        "summary": "Create Pack",
+        "operationId": "create_pack_v2_evidence_packs_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PackIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PackOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v2/evidence-packs/{pack_id}/bundle": {
+      "get": {
+        "tags": [
+          "compliance"
+        ],
+        "summary": "Get Pack Bundle",
+        "operationId": "get_pack_bundle_v2_evidence_packs__pack_id__bundle_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "pack_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Pack Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -10080,6 +10810,24 @@
               }
             ],
             "title": "Expires At"
+          },
+          "justification": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "component_not_present",
+                  "vulnerable_code_not_present",
+                  "vulnerable_code_not_in_execute_path",
+                  "vulnerable_code_cannot_be_controlled_by_adversary",
+                  "inline_mitigations_already_exist"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Justification"
           }
         },
         "type": "object",
@@ -10839,6 +11587,62 @@
         "type": "object",
         "title": "ContextOut"
       },
+      "ControlOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "group": {
+            "type": "string",
+            "title": "Group"
+          },
+          "level": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Level"
+          },
+          "evidence": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Evidence"
+          },
+          "cwes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Cwes"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "group",
+          "level",
+          "evidence",
+          "cwes",
+          "note"
+        ],
+        "title": "ControlOut"
+      },
       "ConversationView": {
         "properties": {
           "id": {
@@ -11110,6 +11914,24 @@
         ],
         "title": "CweOut"
       },
+      "DecisionIn": {
+        "properties": {
+          "note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "title": "DecisionIn"
+      },
       "DedupOverview": {
         "properties": {
           "default": {
@@ -11201,6 +12023,40 @@
         ],
         "title": "DependenciesView",
         "description": "Plan \u00a720.5's Dependencies screen: one project's latest SBOM (`Scan.sbom_summary`), or an\nempty view when no scan has opted into `syft` yet -- never a 404, matching\n`/assets/{id}/issues`'s own \"empty, not missing\" shape."
+      },
+      "DraftOut": {
+        "properties": {
+          "proposed": {
+            "type": "integer",
+            "title": "Proposed"
+          },
+          "already": {
+            "type": "integer",
+            "title": "Already"
+          },
+          "skipped": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Skipped"
+          },
+          "ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "proposed",
+          "already",
+          "skipped",
+          "ids"
+        ],
+        "title": "DraftOut"
       },
       "DryRunOut": {
         "properties": {
@@ -11853,6 +12709,80 @@
         ],
         "title": "EntryOut"
       },
+      "ExportItem": {
+        "properties": {
+          "vuln_key": {
+            "type": "string",
+            "title": "Vuln Key"
+          },
+          "library": {
+            "type": "string",
+            "title": "Library"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "purl": {
+            "type": "string",
+            "title": "Purl"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "justification": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Justification"
+          },
+          "basis": {
+            "type": "string",
+            "title": "Basis"
+          },
+          "impact_statement": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Impact Statement"
+          },
+          "action_statement": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Action Statement"
+          }
+        },
+        "type": "object",
+        "required": [
+          "vuln_key",
+          "library",
+          "version",
+          "purl",
+          "status",
+          "justification",
+          "basis",
+          "impact_statement",
+          "action_statement"
+        ],
+        "title": "ExportItem"
+      },
       "ExtendIn": {
         "properties": {
           "expires_at": {
@@ -12260,6 +13190,119 @@
         ],
         "title": "FindingsPage"
       },
+      "FrameworkDetail": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "framework_version": {
+            "type": "string",
+            "title": "Framework Version"
+          },
+          "source": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Source"
+          },
+          "mapping_version": {
+            "type": "integer",
+            "title": "Mapping Version"
+          },
+          "mapping_date": {
+            "type": "string",
+            "title": "Mapping Date"
+          },
+          "controls": {
+            "type": "integer",
+            "title": "Controls"
+          },
+          "disclaimer": {
+            "type": "string",
+            "title": "Disclaimer"
+          },
+          "evidence_kinds": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Evidence Kinds"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ControlOut"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "framework_version",
+          "source",
+          "mapping_version",
+          "mapping_date",
+          "controls",
+          "disclaimer",
+          "evidence_kinds",
+          "items"
+        ],
+        "title": "FrameworkDetail"
+      },
+      "FrameworkOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "framework_version": {
+            "type": "string",
+            "title": "Framework Version"
+          },
+          "source": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Source"
+          },
+          "mapping_version": {
+            "type": "integer",
+            "title": "Mapping Version"
+          },
+          "mapping_date": {
+            "type": "string",
+            "title": "Mapping Date"
+          },
+          "controls": {
+            "type": "integer",
+            "title": "Controls"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "framework_version",
+          "source",
+          "mapping_version",
+          "mapping_date",
+          "controls"
+        ],
+        "title": "FrameworkOut"
+      },
       "GenerateHypothesesResult": {
         "properties": {
           "generated": {
@@ -12653,6 +13696,11 @@
           "with_issues": {
             "type": "integer",
             "title": "With Issues"
+          },
+          "vex_draftable": {
+            "type": "integer",
+            "title": "Vex Draftable",
+            "default": 0
           }
         },
         "type": "object",
@@ -13316,6 +14364,11 @@
           "state": {
             "type": "string",
             "title": "State"
+          },
+          "triage_status": {
+            "type": "string",
+            "title": "Triage Status",
+            "default": "open"
           }
         },
         "type": "object",
@@ -13361,6 +14414,17 @@
               }
             ],
             "title": "Triage Expires At"
+          },
+          "triage_justification": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Triage Justification"
           }
         },
         "type": "object",
@@ -14643,6 +15707,99 @@
         "type": "object",
         "title": "OwnerIn"
       },
+      "PackIn": {
+        "properties": {
+          "start": {
+            "type": "string",
+            "format": "date",
+            "title": "Start"
+          },
+          "end": {
+            "type": "string",
+            "format": "date",
+            "title": "End"
+          },
+          "frameworks": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 10,
+            "title": "Frameworks"
+          }
+        },
+        "type": "object",
+        "required": [
+          "start",
+          "end"
+        ],
+        "title": "PackIn"
+      },
+      "PackOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "period_start": {
+            "type": "string",
+            "format": "date",
+            "title": "Period Start"
+          },
+          "period_end": {
+            "type": "string",
+            "format": "date",
+            "title": "Period End"
+          },
+          "frameworks": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Frameworks"
+          },
+          "summary": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Summary"
+          },
+          "sha256": {
+            "type": "string",
+            "title": "Sha256"
+          },
+          "signed": {
+            "type": "boolean",
+            "title": "Signed"
+          },
+          "size": {
+            "type": "integer",
+            "title": "Size"
+          },
+          "created_by": {
+            "type": "string",
+            "title": "Created By"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "period_start",
+          "period_end",
+          "frameworks",
+          "summary",
+          "sha256",
+          "signed",
+          "size",
+          "created_by",
+          "created_at"
+        ],
+        "title": "PackOut"
+      },
       "ParserInfo": {
         "properties": {
           "name": {
@@ -15376,6 +16533,48 @@
           "last_import"
         ],
         "title": "ProjectTest"
+      },
+      "ProjectVexOut": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "title": "Project Id"
+          },
+          "project": {
+            "type": "string",
+            "title": "Project"
+          },
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Counts"
+          },
+          "statements": {
+            "items": {
+              "$ref": "#/components/schemas/VexStatementOut"
+            },
+            "type": "array",
+            "title": "Statements"
+          },
+          "exported": {
+            "items": {
+              "$ref": "#/components/schemas/ExportItem"
+            },
+            "type": "array",
+            "title": "Exported"
+          }
+        },
+        "type": "object",
+        "required": [
+          "project_id",
+          "project",
+          "counts",
+          "statements",
+          "exported"
+        ],
+        "title": "ProjectVexOut"
       },
       "PromoteHypothesisResult": {
         "properties": {
@@ -17209,6 +18408,45 @@
         "title": "StartDastCampaignRequest",
         "description": "Start a DAST campaign (plan \u00a722.4, Week 49 task 3) against an already ownership-verified web\nAsset. \"passive\" (ZAP baseline only) runs unconditionally once verification passes; \"active\"\n(adds curated Nuclei) is rate-limited to one per asset per\n`core.dast.campaign.ACTIVE_SCAN_MIN_INTERVAL`."
       },
+      "StatusIn": {
+        "properties": {
+          "status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "met",
+                  "not_met",
+                  "not_applicable"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 4000,
+            "title": "Note",
+            "default": ""
+          },
+          "links": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 10,
+            "title": "Links"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "StatusIn"
+      },
       "StepIn": {
         "properties": {
           "action": {
@@ -17932,6 +19170,24 @@
               }
             ],
             "title": "Expires At"
+          },
+          "justification": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "component_not_present",
+                  "vulnerable_code_not_present",
+                  "vulnerable_code_not_in_execute_path",
+                  "vulnerable_code_cannot_be_controlled_by_adversary",
+                  "inline_mitigations_already_exist"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Justification"
           }
         },
         "type": "object",
@@ -18056,6 +19312,16 @@
             },
             "type": "array",
             "title": "Issues"
+          },
+          "vex": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VexUse"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",
@@ -18387,6 +19653,199 @@
           "matches"
         ],
         "title": "VersionOut"
+      },
+      "VexStatementOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "asset_id": {
+            "type": "string",
+            "title": "Asset Id"
+          },
+          "vuln_key": {
+            "type": "string",
+            "title": "Vuln Key"
+          },
+          "library": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Library"
+          },
+          "ecosystem": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ecosystem"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "justification": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Justification"
+          },
+          "impact_statement": {
+            "type": "string",
+            "title": "Impact Statement"
+          },
+          "evidence": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Evidence"
+          },
+          "state": {
+            "type": "string",
+            "title": "State"
+          },
+          "proposed_by": {
+            "type": "string",
+            "title": "Proposed By"
+          },
+          "proposed_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Proposed At"
+          },
+          "decided_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decided By"
+          },
+          "decided_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decided At"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "asset_id",
+          "vuln_key",
+          "library",
+          "ecosystem",
+          "version",
+          "status",
+          "justification",
+          "impact_statement",
+          "evidence",
+          "state",
+          "proposed_by",
+          "proposed_at",
+          "decided_by",
+          "decided_at",
+          "note"
+        ],
+        "title": "VexStatementOut"
+      },
+      "VexUse": {
+        "properties": {
+          "draftable": {
+            "type": "boolean",
+            "title": "Draftable"
+          },
+          "evidence": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "uses_code": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Uses Code"
+          },
+          "where": {
+            "type": "string",
+            "title": "Where"
+          },
+          "statement": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VexStatementOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "draftable",
+          "evidence",
+          "summary",
+          "uses_code",
+          "where",
+          "statement"
+        ],
+        "title": "VexUse",
+        "description": "What Bulwark can show about whether the project executes the vulnerable code (plan \u00a746.3),\nand the VEX statement about this use, if any."
       },
       "WatchersOut": {
         "properties": {

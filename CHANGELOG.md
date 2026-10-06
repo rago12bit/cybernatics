@@ -60,6 +60,28 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   owners once. Projects have an owner. Component search shows each version's advisories. API:
   `/v2/advisories`, `/v2/advisories/{key}`, `/v2/advisories/{key}/issues`, `/v2/advisory-feeds`,
   `/v2/projects/{id}/owner`. Migration 0040.
+- **VEX (Week 69, plan §46.3, §55.5, ADR-0053).** A dependency Issue marked not a risk can say why
+  in OpenVEX's vocabulary. "Draft VEX for the others" on an advisory proposes "not affected: the
+  vulnerable code is not executed" where the code shows it: for Go, none of the vulnerable functions
+  Go's database names is used by the application's code (read from the Go source at scan time); for
+  Python and JavaScript, the package is not imported. Each proposal carries its evidence and its
+  limits; a person confirms it with a personal token, which also dismisses the Issue; reopening the
+  Issue withdraws it. A project's VEX as OpenVEX v0.2.0 or CycloneDX 1.6 (both schema-valid;
+  `vexctl` reads them), and a VEX page. Go components now record whether application code imports
+  them. API: `/v2/advisories/{key}/vex-drafts`, `/v2/vex/{id}/confirm|reject|withdraw`,
+  `/v2/projects/{id}/vex`, `/vex/openvex`, `/vex/cyclonedx`.
+- **Compliance and evidence packs (Week 69, plan §47, ADR-0053).** Mappings as versioned data that
+  cite their source: OWASP Top 10 and ASVS 4.0.3 (OWASP's own data), PCI DSS v4.0 Requirement 6, ISO
+  27001:2022 A.8.8 and SOC 2 CC7.1 (numbers and paraphrases only). An ASVS checklist per project in
+  which only a person marks a requirement met. Evidence packs for a period: SLA adherence, risk
+  acceptances with their approvals, scan coverage, open Issues by priority, VEX, assessments, each
+  framework's controls against that evidence, and the audit-log extract -- a signed zip with a PDF
+  and a standard-library `verify.py` that checks the files and the hash chain without Bulwark. API:
+  `/v2/compliance/frameworks`, `/v2/projects/{id}/asvs`, `/v2/evidence-packs`. Migration 0041.
+- **Audit log per organization (Week 69).** New entries carry their organization inside the hash,
+  so an organization's extract shows its own entries in full and every other entry as hashes that
+  still recompute. `bulwark audit checkpoint --rekor-url` publishes checkpoints to a private Rekor;
+  `bulwark audit verify --pub [--trusted-root]` verifies every checkpoint's signature and Rekor entry.
 
 ### Security
 - Notification titles are one line wherever they go, and email headers are stripped of line breaks,
@@ -68,6 +90,17 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 - Jira's address now passes the SSRF guard when saved and before every sync call.
 - Rule notifications escape Slack markup and disable Discord mentions, so an issue title cannot ping
   a channel or post a disguised link.
+- An evidence pack shows another organization's audit entries as hashes only, and is never produced
+  unsigned when signing was configured and failed. Confirming VEX needs a personal token.
+
+### Fixed
+- Every vulnerability adopted in a project matched the same Issue: advisory findings (Week 68)
+  skipped the import path's identity step and all had an empty fingerprint. They now take the same
+  steps as any imported report, so each is its own Issue and joins osv-scanner's for the same
+  package and CVE.
+- The Rekor log index of an audit checkpoint was never recorded with cosign 3, whose bundles write
+  it as a string (and leave out an index of 0). `bulwark audit verify` now also checks that each
+  checkpoint names the hash at its position.
 
 ## [2.3.0] - 2026-10-06
 

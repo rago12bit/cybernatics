@@ -42,6 +42,8 @@ render text, never to run scan-derived markup.
 | T13 | Poisoned or unavailable exploit-data feeds | Tampering | Partial |
 | T15 | Forged or tampered scan results, reports or SBOM in transit | Tampering / Repudiation | Partial |
 | T14 | Parser bug or resource exhaustion while analysing scanned source for reachability | Denial of service / Elevation | Partial |
+| T16 | A wrong VEX claim tells customers they are not affected | Repudiation / Information integrity | Partial |
+| T17 | An evidence pack discloses another organization's activity, or is forged | Information disclosure / Tampering | Partial |
 
 ## Detail
 
@@ -171,6 +173,31 @@ by environment-variable name, never on a command line. **Residual:** signatures 
 log, so they prove who held the key but not when the signature was made; a stolen key forges results; keyless
 (OIDC) signing is not implemented; nothing yet stops an attacker with the key from attesting a scan they did not
 run, and the attestation says nothing about whether the findings are correct. Status: Partial.
+
+### T16: a wrong VEX claim (Week 69, ADR-0053)
+
+A `not_affected` statement published to customers that is not true hides a real exposure from them.
+**Done:** Bulwark only proposes; a person confirms each statement with a personal token (the shared
+token is refused), and the confirmation, the evidence and its limits are in the statement and the
+audit log. Evidence errs towards "used" (names matched loosely, an unknown import name means "can't
+tell"); nothing is proposed for malicious packages, uncertain versions or unscanned projects. A
+confirmed statement a later scan contradicts is exported as `under_investigation`, and reopening its
+Issue withdraws it. **Residual:** the evidence does not see calls made inside other dependencies, by
+reflection or through function values; a reviewer who confirms without reading can still publish a
+wrong claim; the proposals' precision has not been measured. Status: Partial.
+
+### T17: evidence packs (Week 69, ADR-0053)
+
+A pack holds an organization's SLA history, risk acceptances, issue counts and audit-log extract.
+**Done:** packs are stored under forced RLS and served only to their organization; the audit extract
+shows other organizations' entries as hashes only, which still lets every link be recomputed
+(version-2 entries put the organization inside the hash); payloads are never in the log, only their
+digests. `verify.py` checks the files and the chain without Bulwark; the manifest is signed with
+cosign when a key is configured, and a pack is never produced unsigned after signing failed.
+Checkpoints can be verified against Rekor offline. **Residual:** the number and timing of other
+organizations' audit entries are visible in an extract; entries from before migration 0041 can be
+checked by link only; whoever holds the signing key can sign a fabricated pack (the chain and Rekor
+checkpoints still have to agree); a pack is only as current as its last checkpoint. Status: Partial.
 
 ### Observability endpoints
 

@@ -152,10 +152,21 @@ class ScannedTool(BaseModel):
     findings: int = 0
 
 
+VexJustification = Literal[
+    "component_not_present",
+    "vulnerable_code_not_present",
+    "vulnerable_code_not_in_execute_path",
+    "vulnerable_code_cannot_be_controlled_by_adversary",
+    "inline_mitigations_already_exist",
+]
+
+
 class TriageRequest(BaseModel):
     action: Literal["not_a_risk", "accepted", "reopen"]
     reason: str | None = Field(default=None, max_length=2000)
     expires_at: datetime | None = None
+    # For a dependency Issue marked not a risk: why, in OpenVEX's vocabulary (plan §46.3).
+    justification: VexJustification | None = None
 
 
 class BulkTriageRequest(BaseModel):
@@ -163,6 +174,7 @@ class BulkTriageRequest(BaseModel):
     action: Literal["not_a_risk", "accepted", "reopen"]
     reason: str | None = Field(default=None, max_length=2000)
     expires_at: datetime | None = None
+    justification: VexJustification | None = None
 
 
 class IssueView(BaseModel):
@@ -171,6 +183,7 @@ class IssueView(BaseModel):
     triage_status: str
     triage_reason: str | None
     triage_expires_at: datetime | None
+    triage_justification: str | None = None
 
 
 class BulkTriageResult(BaseModel):

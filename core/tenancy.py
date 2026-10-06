@@ -85,6 +85,12 @@ def set_session_org(s: Session, org_id: str) -> None:
         _apply_org(s.connection(), org_id)  # the transaction already open (if any) began earlier
 
 
+def session_org(s: Session) -> str | None:
+    """The org `set_session_org` declared for this session, if any."""
+    org = s.info.get(_ORG_INFO_KEY)
+    return str(org) if org is not None else None
+
+
 def scoped_sessions(factory: SessionFactory, org_id: str) -> SessionFactory:
     """Wrap a session factory so every session it opens has `app.current_org` set for `org_id`
     before the caller runs anything else on it. Mirrors `api.deps.db` for the worker, which has no

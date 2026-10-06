@@ -1,0 +1,16 @@
+{
+  "id": "iso27001-2022-a8.8",
+  "name": "ISO/IEC 27001:2022, Annex A control 8.8",
+  "framework_version": "2022",
+  "source": {
+    "title": "ISO/IEC 27001:2022 Information security, cybersecurity and privacy protection -- Information security management systems -- Requirements, Annex A, control 8.8 (from ISO/IEC 27002:2022)",
+    "publisher": "International Organization for Standardization / International Electrotechnical Commission",
+    "url": "https://www.iso.org/standard/27001",
+    "terms": "The standard is copyrighted by ISO and IEC and is not reproduced. The control's name is given; its wording is not."
+  },
+  "mapping_version": 1,
+  "mapping_date": "2026-10-06",
+  "controls": [
+    {"id": "A.8.8", "title": "Management of technical vulnerabilities", "evidence": ["advisory_monitoring", "scan_coverage", "component_inventory", "sla_adherence", "open_issues", "risk_acceptances", "vex", "audit_log"]}
+  ]
+}

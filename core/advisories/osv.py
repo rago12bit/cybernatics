@@ -44,18 +44,24 @@ class Affected:
     name: str  # as OSV writes it (Maven group:artifact)
     ranges: tuple[Range, ...] = ()
     versions: tuple[str, ...] = ()
+    # Go's database names the vulnerable packages and functions (`ecosystem_specific.imports`):
+    # (package path, (symbol, ...)), an empty tuple of symbols meaning the whole package.
+    imports: tuple[tuple[str, tuple[str, ...]], ...] = ()
 
     @property
     def library_key(self) -> str:
         return library_key(self.ecosystem, self.name)
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        out: dict[str, Any] = {
             "ranges": [
                 {"type": r.type, "events": [list(e) for e in r.events]} for r in self.ranges
             ],
             "versions": list(self.versions),
         }
+        if self.imports:  # only Go records have them, so nothing else stored changes shape
+            out["imports"] = [{"path": p, "symbols": list(s)} for p, s in self.imports]
+        return out
 
     @classmethod
     def from_dict(cls, ecosystem: str, name: str, d: dict[str, Any]) -> Affected:
@@ -67,7 +73,18 @@ class Affected:
                 for r in d.get("ranges") or []
             ),
             versions=tuple(str(v) for v in d.get("versions") or []),
+            imports=_imports(d.get("imports")),
         )
+
+
+def _imports(raw: Any) -> tuple[tuple[str, tuple[str, ...]], ...]:
+    out = []
+    for i in raw if isinstance(raw, list) else []:
+        if isinstance(i, dict) and isinstance(i.get("path"), str) and len(i["path"]) <= 300:
+            raw_symbols = i.get("symbols")
+            symbols: list[Any] = raw_symbols if isinstance(raw_symbols, list) else []
+            out.append((i["path"], tuple(str(x)[:200] for x in symbols[:500])))
+    return tuple(out[:100])
 
 
 @dataclass(frozen=True)
@@ -168,7 +185,9 @@ def parse(raw: bytes | str | dict[str, Any]) -> Advisory | None:
             )  # fmt: skip
             ranges.append(Range(str(r.get("type", "")), events))
         versions = tuple(str(v) for v in a.get("versions") or [] if isinstance(v, (str, int)))
-        affected.append(Affected(eco, name, tuple(ranges), versions))
+        specific = a.get("ecosystem_specific")
+        imports = _imports(specific.get("imports")) if isinstance(specific, dict) else ()
+        affected.append(Affected(eco, name, tuple(ranges), versions, imports))
     if not affected:
         return None
     scores = [

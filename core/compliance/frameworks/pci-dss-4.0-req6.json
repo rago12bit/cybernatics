@@ -1,0 +1,28 @@
+{
+  "id": "pci-dss-4.0-req6",
+  "name": "PCI DSS v4.0, Requirement 6",
+  "framework_version": "4.0",
+  "source": {
+    "title": "Payment Card Industry Data Security Standard, Requirements and Testing Procedures, v4.0 (March 2022); unchanged in substance for these requirements in v4.0.1 (June 2024)",
+    "publisher": "PCI Security Standards Council",
+    "url": "https://www.pcisecuritystandards.org/document_library/",
+    "terms": "The standard's text is copyrighted by the PCI SSC and is not reproduced. Titles below are Bulwark's short paraphrases; read the standard for each requirement's wording and testing procedures."
+  },
+  "mapping_version": 1,
+  "mapping_date": "2026-10-06",
+  "controls": [
+    {"id": "6.1.1", "title": "Secure development policies and procedures are documented and in use", "evidence": ["policies"]},
+    {"id": "6.2.1", "title": "Bespoke and custom software is developed securely", "evidence": ["scan_coverage"]},
+    {"id": "6.2.2", "title": "Developers are trained in secure development", "evidence": [], "note": "Bulwark holds no training records."},
+    {"id": "6.2.3", "title": "Bespoke software is reviewed before release to find and fix vulnerabilities", "evidence": ["scan_coverage", "policies"]},
+    {"id": "6.2.4", "title": "Engineering techniques prevent or mitigate common software attacks", "evidence": ["issues_by_cwe"],
+     "cwes": ["CWE-20", "CWE-22", "CWE-78", "CWE-79", "CWE-89", "CWE-94", "CWE-119", "CWE-120", "CWE-284", "CWE-285", "CWE-287", "CWE-326", "CWE-327", "CWE-352", "CWE-434", "CWE-502", "CWE-611", "CWE-639", "CWE-787", "CWE-862", "CWE-863", "CWE-918"]},
+    {"id": "6.3.1", "title": "Security vulnerabilities are identified from industry sources and ranked by risk", "evidence": ["advisory_monitoring", "open_issues"]},
+    {"id": "6.3.2", "title": "An inventory of bespoke software and third-party components is kept", "evidence": ["component_inventory"]},
+    {"id": "6.3.3", "title": "Known vulnerabilities are patched; critical ones within one month of release", "evidence": ["sla_adherence", "open_issues", "risk_acceptances", "vex"]},
+    {"id": "6.4.1", "title": "Public-facing web applications are protected against attacks (assessment or technical solution)", "evidence": ["dast", "engagements"]},
+    {"id": "6.4.2", "title": "An automated technical solution detects and prevents web attacks on public-facing applications", "evidence": [], "note": "Bulwark is not a web application firewall."},
+    {"id": "6.4.3", "title": "Payment page scripts are authorised, checked for integrity and inventoried", "evidence": [], "note": "Not covered."},
+    {"id": "6.5.1", "title": "Changes to system components follow change-control procedures", "evidence": ["audit_log"], "note": "Only changes made in Bulwark itself are logged."}
+  ]
+}

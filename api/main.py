@@ -38,6 +38,7 @@ from api.acceptance import register_acceptance_routes
 from api.advisories import register_advisory_routes
 from api.calendar import register_calendar_routes
 from api.collab import register_collab_routes
+from api.compliance import register_compliance_routes
 from api.components import register_component_routes
 from api.connectors import register_connector_routes
 from api.dedup import register_dedup_routes
@@ -117,6 +118,7 @@ from api.schemas import (
 )
 from api.sla import register_sla_routes
 from api.tickets import register_ticket_routes
+from api.vex import register_vex_routes
 from core.collab.tags import TagError
 from core.collab.tags import issue_clause as tag_clause
 from core.config import Settings
@@ -146,6 +148,7 @@ from core.scan import ADAPTERS, DEFAULT_TOOLS, HOSTED_DEFAULT_TOOLS
 from core.sla import policy as sla_policy
 from core.sla import service as sla_service
 from core.tenancy import DEFAULT_ORG_ID, set_session_org
+from core.vex import service as vex_service
 
 log = logging.getLogger(__name__)
 
@@ -222,6 +225,7 @@ def _issue_view(row: Any) -> IssueView:
     return IssueView(
         id=row.id, state=row.state, triage_status=row.triage_status,
         triage_reason=row.triage_reason, triage_expires_at=row.triage_expires_at,
+        triage_justification=row.triage_justification,
     )  # fmt: skip
 
 
@@ -968,12 +972,14 @@ def create_app(app_state: AppState) -> FastAPI:
         try:
             row = repo.triage_issue(
                 s, issue_id, org_id=org, action=body.action, reason=body.reason,
-                expires_at=body.expires_at, actor=auth.actor,
+                expires_at=body.expires_at, actor=auth.actor, justification=body.justification,
             )  # fmt: skip
         except LookupError as exc:
             raise HTTPException(404, "issue not found") from exc
         except ValueError as exc:
             raise HTTPException(422, str(exc)) from exc
+        if body.action == "reopen":
+            vex_service.on_issue_reopened(s, org, row, actor=auth.actor)
         return _issue_view(row)
 
     @app.post(
@@ -998,10 +1004,13 @@ def create_app(app_state: AppState) -> FastAPI:
         failed: list[dict[str, str]] = []
         for issue_id in body.issue_ids:
             try:
-                repo.triage_issue(
+                row = repo.triage_issue(
                     s, issue_id, org_id=org, action=body.action, reason=body.reason,
                     expires_at=body.expires_at, actor=auth.actor,
+                    justification=body.justification,
                 )  # fmt: skip
+                if body.action == "reopen":
+                    vex_service.on_issue_reopened(s, org, row, actor=auth.actor)
                 updated.append(issue_id)
             except LookupError:
                 failed.append({"issue_id": issue_id, "error": "not found"})
@@ -2160,6 +2169,8 @@ def create_app(app_state: AppState) -> FastAPI:
     register_calendar_routes(app)
     register_component_routes(app)
     register_advisory_routes(app)
+    register_vex_routes(app)
+    register_compliance_routes(app)
     return app
 
 

@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useId, useState } from "react";
-import { ApiError, createAdvisoryIssues, getAdvisory } from "@/lib/api";
-import type { AdvisoryImpact, AdvisoryIssuesCreated, AdvisoryUse } from "@/lib/types";
+import { ApiError, createAdvisoryIssues, decideVex, draftVex, getAdvisory } from "@/lib/api";
+import type { AdvisoryImpact, AdvisoryIssuesCreated, AdvisoryUse, VexDrafted } from "@/lib/types";
 import { Button } from "@/design-system/primitives/Button";
 import { Severity, ago } from "./AdvisoriesScreen";
 import "./advisories.css";
@@ -42,9 +42,38 @@ export function fixLine(uses: AdvisoryUse[]): string {
 }
 
 function Imported({ u }: { u: AdvisoryUse }) {
+  const v = u.vex;
+  if (v?.uses_code === true && v.where) {
+    return <span className="ds-adv-yes" title={v.summary}>Yes <span className="ds-adv-meta">{v.where}</span></span>;
+  }
+  if (v?.evidence?.kind === "symbols") {
+    return <span title={v.summary}>Not the vulnerable functions</span>;
+  }
+  return <ImportedOnly u={u} />;
+}
+
+function ImportedOnly({ u }: { u: AdvisoryUse }) {
   if (u.reachable === true) return <span className="ds-adv-yes" title={u.reachable_reason}>Yes</span>;
   if (u.reachable === false) return <span title={u.reachable_reason}>Not by application code</span>;
   return <span className="ds-adv-meta" title={u.reachable_reason || "Reachability is analysed for Python and JavaScript projects scanned by Bulwark"}>Can&apos;t tell</span>;
+}
+
+const issueWord = (i: { state: string; triage_status?: string }) =>
+  i.state === "fixed" ? "Fixed" : i.triage_status === "not_a_risk" ? "Not a risk" : i.triage_status === "accepted" ? "Accepted" : "Open";
+
+const VEX_STATE = { proposed: "Proposed", confirmed: "Not affected", rejected: "Rejected", withdrawn: "Withdrawn" } as const;
+
+function VexCell({ u }: { u: AdvisoryUse }) {
+  const st = u.vex?.statement;
+  if (st) {
+    return (
+      <span className={st.state === "confirmed" ? "ds-adv-vex-ok" : st.state === "proposed" ? "ds-adv-vex-proposed" : "ds-adv-meta"} title={st.impact_statement}>
+        {VEX_STATE[st.state]}
+      </span>
+    );
+  }
+  if (u.vex?.draftable) return <span className="ds-adv-meta" title={u.vex.summary}>Can be drafted</span>;
+  return <span className="ds-adv-meta" title={u.vex?.summary || undefined}>—</span>;
 }
 
 export function AdvisoryScreen({ vulnKey }: { vulnKey: string }) {
@@ -54,6 +83,8 @@ export function AdvisoryScreen({ vulnKey }: { vulnKey: string }) {
   const [all, setAll] = useState(false);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<AdvisoryIssuesCreated | null>(null);
+  const [drafted, setDrafted] = useState<VexDrafted | null>(null);
+  const [deciding, setDeciding] = useState<string | null>(null);
 
   const load = useCallback(() => {
     getAdvisory(vulnKey).then(setA, (e) => setError(e instanceof ApiError && e.status === 404 ? "This advisory does not affect any of your projects." : "Could not load the advisory."));
@@ -73,11 +104,48 @@ export function AdvisoryScreen({ vulnKey }: { vulnKey: string }) {
     }
   }
 
+  async function draft() {
+    setBusy(true);
+    setError(null);
+    try {
+      setDrafted(await draftVex(vulnKey));
+      load();
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Could not draft VEX.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function decide(id: string, decision: "confirm" | "reject") {
+    setDeciding(id);
+    setError(null);
+    try {
+      await decideVex(id, decision);
+      load();
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Could not record the decision.");
+    } finally {
+      setDeciding(null);
+    }
+  }
+
   if (!a) return <div className="ds-adv">{error ? <p role="alert" className="ds-adv-error">{error}</p> : <p>Loading…</p>}</div>;
   const uses = a.uses;
   const shown = all ? uses : uses.slice(0, SHOWN);
   const rest = uses.slice(SHOWN);
   const projects = a.summary_counts.projects - a.summary_counts.uncertain;
+  const draftable = a.summary_counts.vex_draftable ?? 0;
+  const proposals = uses.filter((u) => u.vex?.statement?.state === "proposed");
+  const decided = uses.filter((u) => u.vex?.statement && u.vex.statement.state !== "proposed").length;
+  const draftLabel = draftable === 0 ? "Draft VEX"
+    : draftable === uses.length ? `Draft VEX for ${draftable === 1 ? "the one use" : `all ${draftable} uses`}`
+    : `Draft VEX for the other ${plural(draftable, "use")}`;
+  const draftNote = draftable
+    ? "Proposes “not affected: the vulnerable code is not executed” where the code shows it, with the evidence. Nothing is published until a person confirms each one."
+    : proposals.length ? "Review the proposals below."
+    : decided ? "Every use with evidence already has a VEX decision."
+    : "No use has evidence that its code does not execute the vulnerability.";
   return (
     <div className="ds-adv">
       <header className="ds-adv-head">
@@ -102,8 +170,8 @@ export function AdvisoryScreen({ vulnKey }: { vulnKey: string }) {
             <caption className="ds-adv-meta">Projects with an affected version, those importing it from application code first</caption>
             <thead>
               <tr>
-                <th scope="col">Project</th><th scope="col">Version</th><th scope="col">Imported by application code</th>
-                <th scope="col">Owner</th><th scope="col">Exposure</th><th scope="col">Issue</th>
+                <th scope="col">Project</th><th scope="col">Version</th><th scope="col">Used by application code</th>
+                <th scope="col">Owner</th><th scope="col">Exposure</th><th scope="col">Issue</th><th scope="col">VEX</th>
               </tr>
             </thead>
             <tbody>
@@ -117,14 +185,15 @@ export function AdvisoryScreen({ vulnKey }: { vulnKey: string }) {
                     <code>{u.version}</code>{!u.certain && <span className="ds-adv-meta"> (could not be compared)</span>}
                     {u.fixed_version && <span className="ds-adv-meta"> → {u.fixed_version}</span>}
                   </td>
-                  <td data-label="Imported"><Imported u={u} /></td>
+                  <td data-label="Used by code"><Imported u={u} /></td>
                   <td data-label="Owner">{u.owner ?? <Link href={`/app/projects/${u.project_id}`} className="ds-adv-meta">Set an owner</Link>}</td>
                   <td data-label="Exposure" className="ds-adv-nowrap">{EXPOSURE[u.exposure]}</td>
                   <td data-label="Issue">
                     {u.issues.length
-                      ? u.issues.map((i) => <Link key={i.id} href={`/app/projects/${u.project_id}/issues/${i.id}`}>{i.state === "fixed" ? "Fixed" : "Open"}</Link>)
+                      ? u.issues.map((i) => <Link key={i.id} href={`/app/projects/${u.project_id}/issues/${i.id}`}>{issueWord(i)}</Link>)
                       : <span className="ds-adv-meta">—</span>}
                   </td>
+                  <td data-label="VEX"><VexCell u={u} /></td>
                 </tr>
               ))}
             </tbody>
@@ -148,6 +217,18 @@ export function AdvisoryScreen({ vulnKey }: { vulnKey: string }) {
             <span className="ds-adv-meta">Each project&apos;s Issues form one group; projects with ticket settings get one ticket; owners are assigned. They close when an SBOM no longer has an affected version.</span>
           </div>
         )}
+        {uses.length > 0 && (
+          <div className="ds-adv-actions">
+            <Button disabled={busy || draftable === 0} onClick={draft}>{draftLabel}</Button>
+            <span className="ds-adv-meta">{draftNote}</span>
+          </div>
+        )}
+        {drafted && (proposals.length > 0 || drafted.proposed === 0) && (
+          <p role="status" className="ds-adv-done-msg">
+            {drafted.proposed ? `${plural(drafted.proposed, "proposal")} to review below.` : "Nothing new to propose."}
+            {Object.keys(drafted.skipped).length > 0 && ` Not proposed: ${Object.entries(drafted.skipped).map(([why, n]) => `${n} (${why})`).join("; ")}.`}
+          </p>
+        )}
         {done && (
           <p role="status" className="ds-adv-done-msg">
             {plural(done.issues, "Issue")} in {plural(done.projects, "project")}; {plural(done.tickets, "ticket")} filed or updated.
@@ -156,6 +237,35 @@ export function AdvisoryScreen({ vulnKey }: { vulnKey: string }) {
         )}
         {error && <p role="alert" className="ds-adv-error">{error}</p>}
       </section>
+
+      {proposals.length > 0 && (
+        <section aria-labelledby={`${fid}-vex`} className="ds-adv-box">
+          <h2 id={`${fid}-vex`}>VEX proposals to review</h2>
+          <p className="ds-adv-meta">Each claims the project does not execute the vulnerable code. Confirming publishes it in the project&apos;s VEX and marks its Issue not a risk; it needs your own token.</p>
+          <ul className="ds-adv-plain ds-adv-vex-list">
+            {proposals.map((u) => {
+              const st = u.vex!.statement!;
+              const ev = u.vex!.evidence ?? (st.evidence && "kind" in st.evidence ? st.evidence : null);
+              return (
+                <li key={st.id} className="ds-adv-vex-item">
+                  <div>
+                    <Link href={`/app/projects/${u.project_id}`}>{u.project}</Link> · {u.library} <code>{u.version}</code>
+                    {ev && <span className="ds-adv-vex-kind"> · {ev.label}</span>}
+                  </div>
+                  <p>{st.impact_statement}</p>
+                  {ev && ev.caveats.length > 0 && (
+                    <ul className="ds-adv-meta">{ev.caveats.map((c) => <li key={c}>{c}</li>)}</ul>
+                  )}
+                  <div className="ds-adv-actions">
+                    <Button variant="primary" disabled={deciding !== null} onClick={() => decide(st.id, "confirm")}>Confirm</Button>
+                    <Button disabled={deciding !== null} onClick={() => decide(st.id, "reject")}>Reject</Button>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
 
       {a.no_longer_affected.length > 0 && (
         <details className="ds-adv-box">

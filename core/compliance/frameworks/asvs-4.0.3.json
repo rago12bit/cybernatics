@@ -1,0 +1,14 @@
+{
+  "id": "asvs-4.0.3",
+  "name": "OWASP ASVS 4.0.3",
+  "framework_version": "4.0.3",
+  "source": {
+    "title": "OWASP Application Security Verification Standard 4.0.3, every requirement with its level and CWE",
+    "publisher": "OWASP Foundation",
+    "url": "https://github.com/OWASP/ASVS/tree/v4.0.3",
+    "terms": "CC BY-SA 4.0. Requirements from core/engagements/checklists/asvs-4.0.3.json, not reworded."
+  },
+  "mapping_version": 1,
+  "mapping_date": "2026-10-06",
+  "controls_from": "asvs-4.0.3"
+}

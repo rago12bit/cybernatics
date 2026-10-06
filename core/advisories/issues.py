@@ -28,6 +28,7 @@ from sqlalchemy.orm import Session
 from core.advisories.view import representative, severity_of
 from core.collab import assign
 from core.imports import service as imports
+from core.imports.prepare import prepare
 from core.models import (
     Category,
     Evidence,
@@ -162,7 +163,10 @@ def _findings(s: Session, org_id: str, asset_id: str, vulns: set[str]) -> list[F
 def sync_asset(s: Session, org_id: str, asset_id: str, *, actor: str = TOOL) -> dict[str, str]:
     """Re-import the project's Advisories Test with its current findings. Returns each finding id's
     Issue id."""
-    findings = _findings(s, org_id, asset_id, adopted(s, org_id))
+    # Through the same steps every imported report takes (`core.imports.prepare`): without them
+    # every finding has an empty fingerprint, and all of a project's advisory findings would
+    # match one Issue -- and never the one osv-scanner found for the same package and CVE.
+    findings = prepare(_findings(s, org_id, asset_id, adopted(s, org_id)))
     engagement = repo.get_or_create_import_engagement(s, asset_id=asset_id, org_id=org_id)
     test = repo.get_or_create_engagement_test(
         s, org_id=org_id, engagement_id=engagement.id, name=TEST_NAME, parser=PARSER

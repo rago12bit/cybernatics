@@ -44,6 +44,7 @@ _CHUNK = 400
 _TRIAGE_COLUMNS = (
     "triage_status",
     "triage_reason",
+    "triage_justification",
     "triage_expires_at",
     "triaged_at",
     "triaged_by",

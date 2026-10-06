@@ -55,6 +55,7 @@ export interface IssueRef {
   state: "new" | "open" | "reintroduced";
   triage_status?: TriageStatus;
   triage_reason?: string | null;
+  triage_justification?: VexJustification | null;
   triage_expires_at?: string | null;
   first_seen_at?: string | null;
   /** Set once a DAST campaign's own finding matched this Issue on the same route+CWE (plan §22.4,
@@ -1472,7 +1473,8 @@ export type AdvisoryUse = {
   reachable_reason: string;
   exposure: "internet" | "internal" | "unset";
   owner: string | null;
-  issues: { id: string; state: string }[];
+  issues: { id: string; state: string; triage_status?: string }[];
+  vex?: VexUse | null;
 };
 export type AdvisoryImpact = {
   vuln_key: string;
@@ -1496,7 +1498,7 @@ export type AdvisoryImpact = {
   no_longer_affected: AdvisoryUse[];
   summary_counts: {
     projects: number; portfolios: number; imported_by_app: number; internet_facing: number;
-    uncertain: number; with_fix: number; with_issues: number;
+    uncertain: number; with_fix: number; with_issues: number; vex_draftable?: number;
   };
 };
 export type AdvisoryIssuesCreated = { projects: number; issues: number; tickets: number; ticket_errors: string[]; issue_ids: Record<string, string[]> };
@@ -1506,3 +1508,88 @@ export type AdvisoryFeeds = {
   kev_entries: number;
 };
 export type ProjectOwner = { project_id: string; owner: string | null; owner_name: string | null };
+
+/** VEX (plan §46.3). */
+export type VexJustification =
+  | "component_not_present"
+  | "vulnerable_code_not_present"
+  | "vulnerable_code_not_in_execute_path"
+  | "vulnerable_code_cannot_be_controlled_by_adversary"
+  | "inline_mitigations_already_exist";
+export type VexEvidence = {
+  kind: "symbols" | "imports";
+  label: string;
+  summary: string;
+  details: Record<string, unknown>;
+  caveats: string[];
+};
+export type VexStatement = {
+  id: string;
+  asset_id: string;
+  vuln_key: string;
+  library: string | null;
+  ecosystem: string | null;
+  version: string;
+  status: "not_affected" | "affected" | "fixed" | "under_investigation";
+  justification: VexJustification | null;
+  impact_statement: string;
+  evidence: VexEvidence | Record<string, never>;
+  state: "proposed" | "confirmed" | "rejected" | "withdrawn";
+  proposed_by: string;
+  proposed_at: string;
+  decided_by: string | null;
+  decided_at: string | null;
+  note: string | null;
+};
+export type VexUse = {
+  draftable: boolean;
+  evidence: VexEvidence | null;
+  summary: string;
+  uses_code: boolean | null;
+  where: string;
+  statement: VexStatement | null;
+};
+export type VexDrafted = { proposed: number; already: number; skipped: Record<string, number>; ids: string[] };
+export type ProjectVex = {
+  project_id: string;
+  project: string;
+  counts: Partial<Record<VexStatement["status"], number>>;
+  statements: VexStatement[];
+  exported: {
+    vuln_key: string; library: string; version: string; purl: string; status: VexStatement["status"];
+    justification: VexJustification | null; basis: string; impact_statement: string | null; action_statement: string | null;
+  }[];
+};
+
+/** Compliance (plan §47). */
+export type AsvsStatus = "met" | "not_met" | "not_applicable" | "issues_open" | "tested" | "not_assessed";
+export type AsvsRequirement = {
+  id: string; group: string; title: string; level: number | null; cwe: string | null;
+  status: AsvsStatus; source: "" | "person" | "assessment" | "issues";
+  issues: number; issue_ids: string[];
+  assessment: { status: string; engagement_id: string; engagement: string; at: string; by: string | null } | null;
+  note: string; links: string[]; set_by: string | null; set_at: string | null; conflict: boolean;
+};
+export type AsvsBenchmark = {
+  project_id: string; project: string; level: number;
+  counts: Partial<Record<AsvsStatus, number>>;
+  requirements: AsvsRequirement[];
+  disclaimer: string;
+  framework: { id: string; name: string; source: Record<string, string>; mapping_version: number };
+};
+export type ComplianceFramework = {
+  id: string; name: string; framework_version: string; source: Record<string, string>;
+  mapping_version: number; mapping_date: string; controls: number;
+};
+export type EvidenceSummary = {
+  projects: number; scanned: number;
+  sla: { met: number; missed: number; open_past_deadline: number; exempt: number; adherence: number | null };
+  risk_acceptances: number; open_issues: number; vex_confirmed: number; engagements: number;
+  audit: { entries: number; disclosed: number; ok: boolean; anchored_at: number[]; linked_only: number };
+  frameworks: string[];
+};
+export type EvidencePreview = EvidenceSummary & { signing: boolean; disclaimer: string };
+export type EvidencePack = {
+  id: string; period_start: string; period_end: string; frameworks: string[]; summary: EvidenceSummary;
+  sha256: string; signed: boolean; size: number; created_by: string; created_at: string;
+};

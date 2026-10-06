@@ -324,7 +324,9 @@ def impact(s: Session, org_id: str, vuln_key: str) -> dict[str, Any] | None:
         .join(IssueGroup, IssueGroup.id == IssueRow.group_id)
         .where(IssueGroup.org_id == org_id, IssueGroup.name == vuln_key)
     ):
-        issues[issue.asset_id].append({"id": issue.id, "state": issue.state})
+        issues[issue.asset_id].append(
+            {"id": issue.id, "state": issue.state, "triage_status": issue.triage_status}
+        )
     comps: dict[tuple[str, str, str], ComponentRow] = {}
     lib_ids = sorted({lib.id for _i, lib, _a, _p in rows})
     for i in range(0, len(lib_ids), 500):  # one read for every use, not one per use

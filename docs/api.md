@@ -1046,6 +1046,94 @@ Get Owner
 
 - `project_id` (path, required)
 
+## `POST /v2/advisories/{vuln_key}/vex-drafts`
+
+Draft Vex
+
+- `vuln_key` (path, required)
+
+## `POST /v2/vex/{statement_id}/confirm`
+
+Confirm Vex
+
+- `statement_id` (path, required)
+
+## `POST /v2/vex/{statement_id}/reject`
+
+Reject Vex
+
+- `statement_id` (path, required)
+
+## `POST /v2/vex/{statement_id}/withdraw`
+
+Withdraw Vex
+
+- `statement_id` (path, required)
+
+## `GET /v2/projects/{project_id}/vex`
+
+Project Vex
+
+- `project_id` (path, required)
+
+## `GET /v2/projects/{project_id}/vex/openvex`
+
+Project Openvex
+
+- `project_id` (path, required)
+
+## `GET /v2/projects/{project_id}/vex/cyclonedx`
+
+Project Cyclonedx Vex
+
+- `project_id` (path, required)
+
+## `GET /v2/compliance/frameworks`
+
+List Frameworks
+
+
+## `GET /v2/compliance/frameworks/{framework_id}`
+
+Get Framework
+
+- `framework_id` (path, required)
+
+## `GET /v2/projects/{project_id}/asvs`
+
+Project Asvs
+
+- `project_id` (path, required)
+- `level` (query)
+
+## `PUT /v2/projects/{project_id}/asvs/{requirement}`
+
+Set Asvs Status
+
+- `project_id` (path, required)
+- `requirement` (path, required)
+
+## `POST /v2/evidence-packs/preview`
+
+Preview Pack
+
+
+## `GET /v2/evidence-packs`
+
+List Packs
+
+
+## `POST /v2/evidence-packs`
+
+Create Pack
+
+
+## `GET /v2/evidence-packs/{pack_id}/bundle`
+
+Get Pack Bundle
+
+- `pack_id` (path, required)
+
 ## Live progress (WebSocket)
 
 `GET /scans/{scan_id}/ws` (not part of OpenAPI).
