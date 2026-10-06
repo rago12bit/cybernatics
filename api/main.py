@@ -57,6 +57,7 @@ from api.engagements import register_engagement_routes
 from api.ingest import register_ingest_routes
 from api.manual import register_manual_routes
 from api.mappings import register_mapping_routes
+from api.metrics import register_metric_routes
 from api.notify import register_notify_routes
 from api.priority import register_priority_routes
 from api.retest import register_retest_routes
@@ -2171,6 +2172,7 @@ def create_app(app_state: AppState) -> FastAPI:
     register_advisory_routes(app)
     register_vex_routes(app)
     register_compliance_routes(app)
+    register_metric_routes(app)
     return app
 
 

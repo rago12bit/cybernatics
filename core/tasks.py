@@ -57,6 +57,10 @@ celery_app.conf.beat_schedule = {
     "inventory-backfill": {"task": "bulwark.inventory_backfill", "schedule": 3600.0},
     # Week 68 (plan §46.2): OSV, KEV and NVD, then what changed matched for every organization.
     "advisories": {"task": "bulwark.update_advisories", "schedule": 6 * 3600.0},
+    # Week 70 (plan §48.1, ADR-0054): the metric summary tables -- what changed, every few minutes;
+    # everything hourly, as an acceptance expiring changes what is open without changing a row.
+    "metrics": {"task": "bulwark.refresh_metrics", "schedule": 120.0},
+    "metrics-all": {"task": "bulwark.refresh_metrics_all", "schedule": 3600.0},
 }
 
 
@@ -343,6 +347,36 @@ def update_advisories_task() -> dict[str, str]:
             matched = impact.match(s, org_id, vuln_keys=None if full else result.vuln_keys)
             issues.sync_changed(s, org_id, matched.changed_assets)
     return result.errors
+
+
+@celery_app.task(name="bulwark.refresh_metrics", ignore_result=True)  # type: ignore[untyped-decorator]
+def refresh_metrics_task() -> int:
+    """Each organization's dirty metric scopes (plan §48.1)."""
+    from core.metrics import rollup
+    from core.persistence.db import get_session_factory
+    from core.tenancy import set_session_org
+
+    n = 0
+    for org_id in _org_ids():
+        with get_session_factory()() as s:
+            set_session_org(s, org_id)
+            n += rollup.refresh_dirty(s, org_id)
+    return n
+
+
+@celery_app.task(name="bulwark.refresh_metrics_all", ignore_result=True)  # type: ignore[untyped-decorator]
+def refresh_metrics_all_task() -> int:
+    """Every project of every organization (plan §48.1)."""
+    from core.metrics import rollup
+    from core.persistence.db import get_session_factory
+    from core.tenancy import set_session_org
+
+    n = 0
+    for org_id in _org_ids():
+        with get_session_factory()() as s:
+            set_session_org(s, org_id)
+            n += rollup.refresh_all(s, org_id)
+    return n
 
 
 @celery_app.task(name="bulwark.recompute_priority", bind=True, acks_late=True, ignore_result=True)  # type: ignore[untyped-decorator]

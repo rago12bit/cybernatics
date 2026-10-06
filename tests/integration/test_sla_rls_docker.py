@@ -38,6 +38,12 @@ def two_orgs(sessions: sessionmaker[Session]) -> Iterator[tuple[str, str]]:  # n
         for org in (a, b):
             set_session_org(s, org)
             for table in (
+                "metric_open_issues",
+                "metric_issue_days",
+                "metric_sla_days",
+                "metric_asset_status",
+                "metric_components",
+                "metric_dirty",
                 "evidence_packs",
                 "compliance_statuses",
                 "vex_statements",

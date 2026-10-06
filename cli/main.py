@@ -923,6 +923,31 @@ def audit_checkpoint(
     typer.echo(json.dumps({"seq_end": seq_end, "rekor_log_index": log_index}))
 
 
+metrics_app = typer.Typer(help="The dashboards' summary tables (Week 70, ADR-0054).")
+app.add_typer(metrics_app, name="metrics")
+
+
+@metrics_app.command("refresh")
+def metrics_refresh(
+    org: str | None = typer.Option(None, help="One organization's id; default: every one."),
+) -> None:
+    """Rebuild every project's metric rows now (the worker otherwise does it within minutes)."""
+    from sqlalchemy import select
+
+    from core.metrics import rollup
+    from core.persistence.db import get_session_factory
+    from core.persistence.models import Organization
+    from core.tenancy import set_session_org
+
+    with get_session_factory()() as s:
+        orgs = [org] if org else list(s.scalars(select(Organization.id)))
+    for org_id in orgs:
+        with get_session_factory()() as s:
+            set_session_org(s, org_id)
+            n = rollup.refresh_all(s, org_id)
+        typer.echo(f"{org_id}: {n} refreshed")
+
+
 asset_app = typer.Typer(help="Web/DAST targets and ownership verification (Week 49, plan §22.4).")
 app.add_typer(asset_app, name="asset")
 

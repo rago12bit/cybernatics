@@ -8,6 +8,7 @@ from typing import Any
 
 from sqlalchemy import (
     JSON,
+    BigInteger,
     Boolean,
     Date,
     Float,
@@ -1753,9 +1754,7 @@ class CodeUsage(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
     org_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"), index=True)
-    asset_id: Mapped[str] = mapped_column(
-        ForeignKey("assets.id", ondelete="CASCADE"), unique=True
-    )
+    asset_id: Mapped[str] = mapped_column(ForeignKey("assets.id", ondelete="CASCADE"), unique=True)
     scan_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     data: Mapped[dict[str, Any]] = mapped_column(JsonType, default=dict)
     recorded_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
@@ -1829,3 +1828,137 @@ class EvidencePack(Base):
     bundle: Mapped[bytes] = mapped_column(LargeBinary)
     created_by: Mapped[str] = mapped_column(String(200))
     created_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+
+
+# --- Metrics (Week 70, plan §48.1, ADR-0054) ------------------------------------------------------
+# Summary tables kept per organization and refreshed when Issues change (`core.metrics.rollup`), so
+# a dashboard never aggregates Issues or Occurrences on page load. Ordinary tables rather than
+# Postgres materialized views: a materialized view cannot carry Row-Level Security, and refreshing
+# one recomputes it for every organization at once.
+
+
+class MetricOpenIssue(Base):
+    """One row per open Issue that is not dismissed (not marked not a risk, no acceptance in force):
+    its band, score, age and SLA deadline, computed when the project was last refreshed."""
+
+    __tablename__ = "metric_open_issues"
+
+    issue_id: Mapped[str] = mapped_column(
+        ForeignKey("issues.id", ondelete="CASCADE"), primary_key=True
+    )
+    org_id: Mapped[str] = mapped_column(
+        ForeignKey("organizations.id", ondelete="CASCADE"), index=True
+    )
+    asset_id: Mapped[str] = mapped_column(ForeignKey("assets.id", ondelete="CASCADE"))
+    portfolio_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    band: Mapped[str] = mapped_column(String(8))  # P1..P4, or "none"
+    severity: Mapped[str] = mapped_column(String(16))
+    priority_score: Mapped[int] = mapped_column(Integer, default=0)
+    first_seen_at: Mapped[datetime] = mapped_column(UtcDateTime())
+    due_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
+
+    __table_args__ = (
+        Index("ix_metric_open_issues_org_asset", "org_id", "asset_id"),
+        Index("ix_metric_open_issues_org_due", "org_id", "due_at"),
+        Index("ix_metric_open_issues_org_seen", "org_id", "first_seen_at"),
+    )
+
+
+class MetricIssueDay(Base):
+    """Per project, day and band: Issues first seen and fixed that day, the time they took, and
+    their priority scores (counted only for Issues not dismissed) -- trends, MTTR and burndown."""
+
+    __tablename__ = "metric_issue_days"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    org_id: Mapped[str] = mapped_column(
+        ForeignKey("organizations.id", ondelete="CASCADE"), index=True
+    )
+    asset_id: Mapped[str] = mapped_column(ForeignKey("assets.id", ondelete="CASCADE"))
+    portfolio_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    day: Mapped[date] = mapped_column(Date())
+    band: Mapped[str] = mapped_column(String(8))
+    opened: Mapped[int] = mapped_column(Integer, default=0)
+    fixed: Mapped[int] = mapped_column(Integer, default=0)
+    fix_seconds: Mapped[int] = mapped_column(BigInteger, default=0)
+    risk_opened: Mapped[int] = mapped_column(BigInteger, default=0)
+    risk_fixed: Mapped[int] = mapped_column(BigInteger, default=0)
+
+    __table_args__ = (
+        Index("ix_metric_issue_days_org_day", "org_id", "day"),
+        Index("ix_metric_issue_days_asset", "asset_id"),
+    )
+
+
+class MetricSlaDay(Base):
+    """Per project, deadline day and SLA band: Issues due that day under the project's SLA policy,
+    and whether each was fixed in time, late, is still open, or is exempt."""
+
+    __tablename__ = "metric_sla_days"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    org_id: Mapped[str] = mapped_column(
+        ForeignKey("organizations.id", ondelete="CASCADE"), index=True
+    )
+    asset_id: Mapped[str] = mapped_column(ForeignKey("assets.id", ondelete="CASCADE"))
+    portfolio_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    day: Mapped[date] = mapped_column(Date())
+    band: Mapped[str] = mapped_column(String(16))
+    met: Mapped[int] = mapped_column(Integer, default=0)
+    missed: Mapped[int] = mapped_column(Integer, default=0)
+    unfixed: Mapped[int] = mapped_column(Integer, default=0)
+    exempt: Mapped[int] = mapped_column(Integer, default=0)
+
+    __table_args__ = (
+        Index("ix_metric_sla_days_org_day", "org_id", "day"),
+        Index("ix_metric_sla_days_asset", "asset_id"),
+    )
+
+
+class MetricAssetStatus(Base):
+    """Per project: its last full scan and how many of the scanners that applied to it ran."""
+
+    __tablename__ = "metric_asset_status"
+
+    asset_id: Mapped[str] = mapped_column(
+        ForeignKey("assets.id", ondelete="CASCADE"), primary_key=True
+    )
+    org_id: Mapped[str] = mapped_column(
+        ForeignKey("organizations.id", ondelete="CASCADE"), index=True
+    )
+    portfolio_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    last_scan_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
+    scanners_ok: Mapped[int] = mapped_column(Integer, default=0)
+    scanners_applicable: Mapped[int] = mapped_column(Integer, default=0)
+    refreshed_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+
+
+class MetricComponent(Base):
+    """Per library and project with an affected version open: how many vulnerabilities affect the
+    project's version, and how many of them are known exploited -- from the advisory impacts."""
+
+    __tablename__ = "metric_components"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    org_id: Mapped[str] = mapped_column(
+        ForeignKey("organizations.id", ondelete="CASCADE"), index=True
+    )
+    library_id: Mapped[str] = mapped_column(ForeignKey("libraries.id", ondelete="CASCADE"))
+    asset_id: Mapped[str] = mapped_column(ForeignKey("assets.id", ondelete="CASCADE"))
+    portfolio_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    vulns: Mapped[int] = mapped_column(Integer, default=0)
+    kev: Mapped[int] = mapped_column(Integer, default=0)
+
+    __table_args__ = (Index("ix_metric_components_org_library", "org_id", "library_id"),)
+
+
+class MetricDirty(Base):
+    """What needs refreshing: a project (`scope` = its id) or the organization's components."""
+
+    __tablename__ = "metric_dirty"
+
+    org_id: Mapped[str] = mapped_column(
+        ForeignKey("organizations.id", ondelete="CASCADE"), primary_key=True
+    )
+    scope: Mapped[str] = mapped_column(String(40), primary_key=True)
+    marked_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)

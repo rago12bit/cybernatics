@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.sql.elements import ColumnElement
 
 import core.audit as audit
+import core.metrics  # noqa: F401  (marks metrics dirty when Issues change)
 from core.assets import asset_key
 from core.dast import ownership
 from core.dedup.settings import rekey_for_asset

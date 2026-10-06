@@ -20,6 +20,7 @@ from core.dast.routes import extract_routes_from_workspace
 from core.ingest import IngestError
 from core.integrations.dispatch import notify_scan_result
 from core.inventory.identity import from_purl
+from core.metrics.rollup import refresh_dirty
 from core.models import Category, Finding, Package
 from core.observability import bind_scan, in_context, mark_error, set_attributes, span
 from core.observability import metrics as obs
@@ -378,6 +379,12 @@ def _run_scan_job(
                     )  # fmt: skip
                 except Exception:  # noqa: BLE001 - must not fail the scan
                     log.exception("vex: could not record the code usage of scan %s", scan_id)
+                    s.rollback()
+            if status == "completed" and ref is None and asset_id:
+                try:  # the dashboards' numbers, refreshed on ingest (plan §48.1)
+                    refresh_dirty(s, scan_org)
+                except Exception:  # noqa: BLE001 - must not fail the scan; the worker retries
+                    log.exception("metrics: could not refresh after scan %s", scan_id)
                     s.rollback()
             repo.set_route_map(s, scan_id, route_map)
             repo.set_entrypoints(s, scan_id, _entrypoints(taint))

@@ -1134,6 +1134,40 @@ Get Pack Bundle
 
 - `pack_id` (path, required)
 
+## `GET /v2/metrics`
+
+List Metrics
+
+
+## `GET /v2/metrics/issues`
+
+Metric Issues
+
+- `kind` (query, required)
+- `band` (query)
+- `in_portfolio` (query)
+- `in_project` (query)
+- `older_than` (query)
+- `after` (query)
+- `limit` (query)
+- `portfolio` (query)
+- `project` (query)
+- `tag` (query)
+- `from` (query)
+- `to` (query)
+
+## `GET /v2/metrics/{metric_id}`
+
+Get Metric
+
+- `metric_id` (path, required)
+- `portfolio` (query)
+- `project` (query)
+- `tag` (query)
+- `from` (query)
+- `to` (query)
+- `group` (query)
+
 ## Live progress (WebSocket)
 
 `GET /scans/{scan_id}/ws` (not part of OpenAPI).

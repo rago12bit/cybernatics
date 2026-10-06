@@ -142,6 +142,13 @@ def process_import(
             from core.advisories.impact import match_after_record
 
             match_after_record(s, org_id, applied.inventory_changed, [applied.asset_id or ""])
+        try:  # the dashboards' numbers, refreshed on ingest (plan §48.1); the worker retries
+            from core.metrics.rollup import refresh_dirty
+
+            refresh_dirty(s, org_id)
+        except Exception:  # noqa: BLE001 - the import is applied either way
+            s.rollback()
+            log.exception("metrics: could not refresh after import %s", import_id)
         return applied.record
     except service.ImportRequestError as exc:
         return _fail(s, record, str(exc))
