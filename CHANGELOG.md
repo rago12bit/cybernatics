@@ -7,9 +7,26 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 
 Weeks 70–73 (plan Phase 17): metrics, dashboards, reports and filters at scale
 ([Weeks 70–71](docs/v2-week70-71-verification.md), [Week 72](docs/v2-week72-verification.md),
-[Week 73](docs/v2-week73-verification.md)).
+[Week 73](docs/v2-week73-verification.md)); and, ahead of Week 74, Week 75's sign-in and access
+([Week 75](docs/v2-week75-verification.md)).
 
 ### Added
+- **Accounts, single sign-on, SCIM and scoped roles (Week 75; plan §51, ADR-0058).** See
+  [Sign-in, people and access](docs/identity.md) and the [Week 75 verification](docs/v2-week75-verification.md).
+  - People with an organization role (admin, member, viewer, or only granted projects) and higher
+    roles on business units or projects. A person's scopes are decided per project from the request.
+    Migration 0048; `bulwark users add|list|disable`.
+  - Sign-in with OIDC (PKCE, strict ID-token checks) or SAML 2.0 (pysaml2 with xmlsec1, signed
+    assertions only), tested against forged tokens and signature-wrapping, comment-injection,
+    unsigned, replayed and unsolicited responses, and against a real Keycloak. Migration 0049.
+  - Short, HttpOnly session cookies with a CSRF token for every change.
+  - SCIM 2.0 Users for identity providers; turning someone off ends their sessions and tokens in the
+    same request.
+  - Someone limited to some projects sees nothing else, enforced by Postgres: their requests run as a
+    guest role with restrictive policies on every table that names a project. Two-project test.
+  - Personal API tokens that act as their person and never exceed their role.
+  - Web: a sign-in screen by work email, People and access, Sign-in and provisioning, My API tokens.
+  - Requires Postgres 16 or later.
 - **Issues across every project, by query (Week 73, task 1; plan §56).**
   - `GET /v2/issues?q=` lists the organization's Issues filtered by a query such as
     `priority:P1 sla:breached project:payments-* -status:accepted`: fifteen filters, exclusions,
@@ -97,6 +114,8 @@ Weeks 70–73 (plan Phase 17): metrics, dashboards, reports and filters at scale
   - [docs/reports.md](docs/reports.md), [verification](docs/v2-week72-verification.md).
 
 ### Changed
+- **JIT compilation is off for the app's database transactions.** It took 116 of a 153 ms count;
+  without it, counting 100,000 Issues went from 93 ms to 44 ms (ADR-0058).
 - **`/app` for a person is now their role home.** The shared token, which is nobody in particular,
   still lands on the scan page. Scanning is also at `/app/scan`.
 - **The app now looks like the public site.** Every screen uses the site's dark "blueprint" style:

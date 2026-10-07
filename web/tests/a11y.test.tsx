@@ -61,9 +61,13 @@ describe("axe accessibility audit", () => {
   });
 
   it("token screen (client-rendered), including its error state", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("{}", { status: 401 }))); // not signed in
     const { host } = await mount(<TokenGate><p>secret app</p></TokenGate>);
+    await act(async () => { await new Promise((r) => setTimeout(r, 20)); });
     expect(host.textContent).not.toContain("secret app"); // the wall really blocks the app
-    expect(host.querySelector("label[for=token]")).not.toBeNull(); // input has a real label
+    const label = [...host.querySelectorAll("label")].find((l) => l.textContent === "API token")!;
+    expect(host.querySelector(`#${CSS.escape(label.htmlFor)}`)).not.toBeNull(); // input has a real label
+    expect(host.textContent).toContain("Work email"); // single sign-on first
     expect(host.querySelector("a[href='/sample']")).not.toBeNull(); // and a way forward without a token
     expect(await violations(host)).toEqual([]);
   });

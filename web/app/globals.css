@@ -543,6 +543,14 @@ kbd { font: 500 0.6875rem/1 var(--mono); border: 1px solid var(--line-strong); p
 .gate .btn.primary { justify-content: center; margin-top: 0.75rem; padding: 0.75rem; }
 .gate-alt { margin-top: 0.5rem; padding-top: 1rem; border-top: 1px solid var(--line); }
 .gate-alt a { color: var(--teal); }
+.gate-sso { display: grid; gap: 0.35rem; }
+.gate-sso label { margin-top: 0.5rem; }
+.gate-choices { list-style: none; padding: 0; margin: 0.25rem 0 0; display: grid; gap: 0.4rem; }
+.gate-choices .btn { width: 100%; justify-content: center; }
+.gate-token { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--line); }
+.gate-token summary { cursor: pointer; font: 400 0.75rem/1.2 var(--mono); letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); }
+.gate-token form { display: grid; gap: 0.4rem; margin-top: 0.5rem; }
+.gate-token .btn { justify-content: center; margin-top: 0.5rem; }
 .empty { display: grid; gap: 0.9rem; justify-items: start; }
 
 /* ---------- Demo banner, state pages ---------- */
@@ -598,3 +606,6 @@ kbd { font: 500 0.6875rem/1 var(--mono); border: 1px solid var(--line-strong); p
 .tag.ok { color: var(--mint); }
 .tag.warn-tag { color: var(--sev-medium); }
 .patch-head { flex-wrap: wrap; }
+
+.settings-links { list-style: none; padding: 0; margin: 0 0 1.5rem; display: grid; gap: 0.5rem; }
+.settings-links a { color: var(--teal); }

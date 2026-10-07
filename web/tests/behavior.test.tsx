@@ -198,7 +198,7 @@ describe("sign-in state", () => {
     expect(h.querySelector("#secret")).not.toBeNull();
     await act(async () => clearToken());
     expect(h.querySelector("#secret")).toBeNull();
-    expect(h.querySelector("label[for=token]")).not.toBeNull();
+    expect(h.textContent).toContain("Sign in to Bulwark");
   });
 });
 

@@ -1,0 +1,52 @@
+/* People, sign-in and tokens (Week 75), in the blueprint look. */
+.idn { display: grid; gap: 0.75rem; }
+.idn-muted { color: var(--ds-muted); }
+.idn-small { font-size: var(--ds-text-1); margin: 0; }
+.idn-error { color: var(--ds-danger); margin: 0.25rem 0; }
+.idn-ok { color: var(--ds-ok); margin: 0.25rem 0; }
+.idn-said { margin: 0; min-height: 0; color: var(--ds-ok); font-size: var(--ds-text-2); }
+.idn-said:empty { display: none; }
+.idn-empty { border: 1px dashed var(--ds-rule-strong); padding: 1rem; color: var(--ds-muted); }
+.idn-bar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 0.75rem; }
+.idn-bar p { margin: 0; max-width: 48rem; font-size: var(--ds-text-2); }
+.idn-role-hint strong { color: var(--ds-ink-2); font-weight: 500; }
+.idn-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.25rem; }
+.idn-link { background: none; border: 0; padding: 0; color: var(--ds-brand); font: inherit; font-size: var(--ds-text-2); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.idn-link:focus-visible { outline: 2px solid var(--ds-brand); outline-offset: 2px; }
+.idn-tag { display: inline-block; margin-left: 0.4rem; font: 400 var(--ds-text-1)/1 var(--ds-font-mono); letter-spacing: 0.06em; text-transform: uppercase;
+  border: 1px solid var(--ds-brand); color: var(--ds-brand); background: var(--ds-brand-wash); padding: 0.2rem 0.35rem; vertical-align: middle; }
+.idn-tag.off { border-color: var(--ds-rule-strong); color: var(--ds-muted); background: none; }
+.idn-scroll { overflow-x: auto; border: 1px solid var(--ds-rule); }
+.idn-scroll:focus-visible { outline: 2px solid var(--ds-brand); outline-offset: 2px; }
+.idn-table { width: 100%; border-collapse: collapse; font-size: var(--ds-text-2); }
+.idn-table thead th { background: var(--ds-raised); }
+.idn-table td, .idn-table tbody th { padding: 0.6rem; border-bottom: 1px solid var(--ds-rule); vertical-align: top; text-align: left; }
+.idn-table tbody th { font: 400 var(--ds-text-2)/1.4 var(--ds-font-sans); letter-spacing: normal; text-transform: none; color: var(--ds-ink); background: none; }
+.idn-table tr.off { opacity: 0.75; }
+.idn-name { display: block; }
+.idn-email { display: block; color: var(--ds-muted); font-size: var(--ds-text-1); }
+.idn-overrides { list-style: none; margin: 0 0 0.35rem; padding: 0; display: grid; gap: 0.25rem; font-size: var(--ds-text-2); }
+.idn-form { display: grid; gap: 0.35rem; }
+.idn-form label, .idn-copy label, .idn-inline label, .idn-fresh label { margin: 0.4rem 0 0; }
+.idn-form input, .idn-form select, .idn-form textarea, .idn-copy input, .idn-inline input, .idn-fresh input, .idn-table select { width: 100%; max-width: 100%; }
+.idn-table select { min-width: 11rem; }
+.idn-narrow { max-width: 34rem; }
+.idn-check { display: flex !important; align-items: center; gap: 0.5rem; font: 400 var(--ds-text-2)/1.35 var(--ds-font-sans) !important; letter-spacing: normal !important; text-transform: none !important; color: var(--ds-ink-2) !important; margin: 0.25rem 0 !important; }
+.idn-kind { border: 0; padding: 0; margin: 0.4rem 0 0; display: grid; gap: 0.15rem; }
+.idn-kind legend { padding: 0; font: 400 var(--ds-text-1)/1.2 var(--ds-font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ds-muted); }
+.idn-section { border: 1px solid var(--ds-rule); background: var(--ds-raised); padding: 1rem 1.1rem; display: grid; gap: 0.5rem; }
+.idn-section h2 { margin: 0; font-size: var(--ds-text-4); }
+.idn-section p { margin: 0; }
+.idn-providers { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.75rem; }
+.idn-provider { border: 1px solid var(--ds-rule-strong); background: var(--ds-surface); padding: 0.75rem 0.9rem; display: grid; gap: 0.4rem; }
+.idn-provider-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.5rem; }
+.idn-provider-head h3 { margin: 0; font-size: var(--ds-text-3); }
+.idn-copy { display: grid; gap: 0.2rem; }
+.idn-copy input, .idn-fresh input { font-family: var(--ds-font-mono); font-size: var(--ds-text-1); }
+.idn-inline { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0.5rem; }
+.idn-inline input { width: auto; flex: 1 1 10rem; }
+.idn-inline label { flex-basis: 100%; }
+.idn-fresh { border: 1px solid var(--ds-brand); background: var(--ds-brand-wash); padding: 0.6rem 0.75rem; display: grid; gap: 0.4rem; }
+@media (max-width: 559px) { .idn-actions .ds-button { flex: 1 1 auto; } }
+.idn-table td > .idn-link { display: block; margin-top: 0.25rem; }
+.idn-table select { font-size: var(--ds-text-2); padding: 0.35rem 0.5rem; width: auto; }

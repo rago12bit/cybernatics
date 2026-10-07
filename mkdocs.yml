@@ -19,6 +19,7 @@ nav:
       - Metrics and dashboards: metrics.md
       - Reports: reports.md
       - Finding Issues: issue-search.md
+      - Sign-in, people and access: identity.md
   - Writing a plugin: plugins.md
   - Policy cookbook: policy.md
   - Importing reports: ingest-api.md

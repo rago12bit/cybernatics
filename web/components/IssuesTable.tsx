@@ -202,7 +202,7 @@ export function IssuesTable({ assetId }: { assetId: string }) {
   // Saved views live on the server now, on the Issues list across every project; this table saves
   // its filters there as a query for this project.
   useEffect(() => {
-    getAssetOverview(assetId).then((o) => setLabel(o.asset.label), () => setLabel(null));
+    getAssetOverview(assetId).then((o) => setLabel(o?.asset?.label ?? null), () => setLabel(null));
   }, [assetId]);
 
   async function saveView(name: string) {

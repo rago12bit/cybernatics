@@ -16,8 +16,9 @@ import { API_URL, E2E_TOKEN } from "../playwright.config";
 async function signedInScanAsset(page: Page, repoSuffix: string): Promise<string> {
   const url = `https://github.com/OWASP/NodeGoat-e2e-visual-${repoSuffix}`;
   await page.goto("/app");
+  await page.getByText("Use an API token instead").click(); // single sign-on comes first
   await page.getByLabel("API token").fill(E2E_TOKEN);
-  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByRole("button", { name: "Use this token" }).click();
   await page.getByLabel("Repository URL").fill(url);
   await page.getByRole("button", { name: "Start scan" }).click();
   await expect(page.getByText("Unique findings")).toBeVisible({ timeout: 10_000 });

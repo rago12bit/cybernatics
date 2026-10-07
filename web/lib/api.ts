@@ -5,6 +5,7 @@ import type { VexJustification, AsvsBenchmark, ComplianceFramework, EvidencePack
   StrideRow, ThreatModel, RetentionSettings, Citation, CopilotConversation, CopilotMessage, CostSummary, DependenciesView, Finding, FindingsPage, FindingsQuery, GenerateHypothesesResult, Guidance, GuidanceApi, Hypothesis, IssueHistoryEvent, ProjectOverview, Remediation, ScanComparison, ScanCost, ScanSummary, ScanView, TriageAssistantView, TriageStatus, VerifiedFixStarted, VerifiedFixView } from "./types";
 import type { AssignedIssue, Dashboard, DashboardList, Me, MetricIssue, MetricResult, MyEngagement, Role, UnitOverview, UnitSummary, Widget } from "./dashboard";
 import { findingsQueryString } from "./format";
+import type { OrgRole, OverrideRole, SsoChoice, SsoProvider, SsoProviderInput, TokenView, UserView } from "./identity";
 import type { BulkAction, BulkParams, BulkPreview, BulkResult, IssuePage, SavedView as SavedIssueView, Selection, TablePrefs, UndoResult, ViewInput } from "./issues";
 import type { Block, NewLink, Report as ReportT, ReportLink as ReportLinkT, ReportRun as ReportRunT, ReportTemplate, Schedule } from "./reports";
 
@@ -58,12 +59,59 @@ export function clearToken(): void {
   notifyAuth();
 }
 
+/* Signing in with the organization's identity provider (Week 75): the API sets an HttpOnly
+ * session cookie, which every request carries (`credentials: "include"`). A change made with it
+ * also needs the session's CSRF token in a header, which only this site can read (from
+ * /auth/session, over CORS). A pasted API token, when there is one, is used instead. */
+export interface WebSession { user: { id: string; email: string; name: string; role: string }; csrf: string; method: string; expires_at: string }
+let session: WebSession | null = null;
+let sessionChecked: Promise<WebSession | null> | null = null;
+const UNSAFE = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+
+/** The browser's sign-in session, if it has one (asked once, then remembered for the tab). */
+export function getSession(refresh = false): Promise<WebSession | null> {
+  if (!sessionChecked || refresh) {
+    sessionChecked = fetch(`${API_URL}/auth/session`, { credentials: "include" }).then(
+      async (r) => {
+        const body = r.ok ? ((await r.json()) as Partial<WebSession> | null) : null;
+        return body && typeof body.csrf === "string" && body.user ? (body as WebSession) : null;
+      },
+      () => null,
+    ).then((s) => {
+      const changed = Boolean(s) !== Boolean(session);
+      session = s;
+      if (changed) notifyAuth();
+      return s;
+    });
+  }
+  return sessionChecked;
+}
+export const hasSession = () => session !== null;
+
+export async function signOut(): Promise<void> {
+  clearToken();
+  if (session) {
+    try {
+      await fetch(`${API_URL}/auth/logout`, { method: "POST", credentials: "include" });
+    } catch {
+      /* the cookie ends with the browser anyway */
+    }
+  }
+  session = null;
+  sessionChecked = Promise.resolve(null);
+  notifyAuth();
+}
+
 async function request<T>(path: string, init: RequestInit = {}, token = getToken()): Promise<T> {
   const headers = new Headers(init.headers);
   if (token) headers.set("Authorization", `Bearer ${token}`);
+  else if (UNSAFE.has((init.method ?? "GET").toUpperCase())) {
+    const s = session ?? (await getSession());
+    if (s) headers.set("X-Bulwark-CSRF", s.csrf);
+  }
   let res: Response;
   try {
-    res = await fetch(`${API_URL}${path}`, { ...init, headers });
+    res = await fetch(`${API_URL}${path}`, { ...init, headers, credentials: "include" });
   } catch {
     throw new ApiError(0, `Cannot reach the Bulwark API at ${API_URL}. Is it running?`);
   }
@@ -121,7 +169,7 @@ export async function fetchReport(id: string, format: ReportFormat): Promise<Blo
   let res: Response;
   try {
     res = await fetch(`${API_URL}/scans/${encodeURIComponent(id)}/export?format=${format}`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      headers: token ? { Authorization: `Bearer ${token}` } : {}, credentials: "include",
     });
   } catch {
     throw new ApiError(0, `Cannot reach the Bulwark API at ${API_URL}. Is it running?`);
@@ -630,7 +678,7 @@ export const closeEngagement = (id: string, summary?: string) =>
 export async function downloadReport(id: string, format: "md" | "html"): Promise<void> {
   const token = getToken();
   const res = await fetch(`${API_URL}/v2/engagements/${enc(id)}/report?format=${format}`, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    headers: token ? { Authorization: `Bearer ${token}` } : {}, credentials: "include",
   });
   if (!res.ok) throw new ApiError(res.status, res.status === 404 ? "No report yet." : "Could not download the report.");
   const name = /filename="([^"]+)"/.exec(res.headers.get("content-disposition") ?? "")?.[1] ?? `report.${format}`;
@@ -784,7 +832,7 @@ async function download(path: string, fallbackName: string, failure: string): Pr
   const token = getToken();
   let res: Response;
   try {
-    res = await fetch(`${API_URL}${path}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+    res = await fetch(`${API_URL}${path}`, { headers: token ? { Authorization: `Bearer ${token}` } : {}, credentials: "include" });
   } catch {
     throw new ApiError(0, `Cannot reach the Bulwark API at ${API_URL}. Is it running?`);
   }
@@ -879,3 +927,29 @@ export const previewBulk = (body: Selection & { action: BulkAction; params: Bulk
 export const applyBulk = (body: Selection & { action: BulkAction; params: BulkParams; expected_count: number }) =>
   request<BulkResult>("/v2/issues/bulk", json("POST", body));
 export const undoBulk = (batchId: string) => request<UndoResult>(`/v2/issue-batches/${enc(batchId)}/undo`, { method: "POST" });
+
+/** Accounts, roles and single sign-on (Week 75). */
+export const discoverSso = (email: string) =>
+  request<{ providers: SsoChoice[] }>(`/auth/sso/discover?email=${enc(email)}`, {}, null);
+export const ssoStartUrl = (providerId: string, next: string) =>
+  `${API_URL}/auth/sso/${enc(providerId)}/start?next=${enc(next)}`;
+export const listUsers = () => request<UserView[]>("/v2/users");
+export const createUser = (body: { email: string; name?: string; role: OrgRole }) => request<UserView>("/v2/users", json("POST", body));
+export const updateUser = (id: string, body: { name?: string; role?: OrgRole; active?: boolean }) =>
+  request<UserView>(`/v2/users/${enc(id)}`, json("PATCH", body));
+export const setRoleOverride = (id: string, body: { target_type: "project" | "portfolio"; target_id: string; role: OverrideRole }) =>
+  request<UserView>(`/v2/users/${enc(id)}/roles`, json("PUT", body));
+export const removeRoleOverride = (id: string, overrideId: string) =>
+  request<UserView>(`/v2/users/${enc(id)}/roles/${enc(overrideId)}`, { method: "DELETE" });
+export const listSsoProviders = () => request<SsoProvider[]>("/v2/sso/providers");
+export const createSsoProvider = (body: SsoProviderInput) => request<SsoProvider>("/v2/sso/providers", json("POST", body));
+export const updateSsoProvider = (id: string, body: SsoProviderInput) => request<SsoProvider>(`/v2/sso/providers/${enc(id)}`, json("PATCH", body));
+export const deleteSsoProvider = (id: string) => request<void>(`/v2/sso/providers/${enc(id)}`, { method: "DELETE" });
+export const testSsoProvider = (id: string) => request<{ ok: boolean; message: string }>(`/v2/sso/providers/${enc(id)}/test`, { method: "POST" });
+export const listScimTokens = () => request<{ base_url: string; tokens: TokenView[] }>("/v2/scim/tokens");
+export const createScimToken = (name: string) => request<TokenView & { token: string; base_url: string }>("/v2/scim/tokens", json("POST", { name }));
+export const revokeScimToken = (id: string) => request<void>(`/v2/scim/tokens/${enc(id)}`, { method: "DELETE" });
+export const listMyTokens = () => request<TokenView[]>("/v2/me/tokens");
+export const createMyToken = (body: { name: string; scopes: string[]; days: number }) =>
+  request<TokenView & { token: string }>("/v2/me/tokens", json("POST", body));
+export const revokeMyToken = (id: string) => request<void>(`/v2/me/tokens/${enc(id)}`, { method: "DELETE" });

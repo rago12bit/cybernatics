@@ -11,10 +11,16 @@ import { API_URL, E2E_APPROVER_TOKEN, E2E_TOKEN } from "../playwright.config";
  * unnecessary step and no dead end, which is the part a test can actually verify.
  */
 
+/** The token way in (single sign-on needs an identity provider; tests/integration has those). */
+async function useToken(page: Page, token: string) {
+  await page.getByText("Use an API token instead").click();
+  await page.getByLabel("API token").fill(token);
+  await page.getByRole("button", { name: "Use this token" }).click();
+}
+
 async function signIn(page: Page) {
   await page.goto("/app");
-  await page.getByLabel("API token").fill(E2E_TOKEN);
-  await page.getByRole("button", { name: "Continue" }).click();
+  await useToken(page, E2E_TOKEN);
   await expect(page.getByRole("heading", { name: "Scan a codebase" })).toBeVisible();
 }
 
@@ -127,8 +133,7 @@ test.describe("J3 — triage", () => {
     // Approved by another person, with their own token, in their own browser.
     const priya = await browser.newPage();
     await priya.goto("/app");
-    await priya.getByLabel("API token").fill(E2E_APPROVER_TOKEN);
-    await priya.getByRole("button", { name: "Continue" }).click();
+    await useToken(priya, E2E_APPROVER_TOKEN);
     await expect(priya.getByRole("heading", { name: "What do you do here?" })).toBeVisible(); // a person
     await priya.goto(href!);
     await priya.getByRole("button", { name: "Approve" }).click();

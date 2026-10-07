@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { clearToken, getToken, onAuthChange } from "@/lib/api";
+import { getSession, getToken, hasSession, onAuthChange, signOut as endSession } from "@/lib/api";
 import { APP_HREF, APP_NAV, DEMO_ONLY } from "@/lib/site";
 import { APP_LINKS, InboxLink, MORE_LINKS, MoreMenu, isCurrent, useUnread } from "./AppNav";
 import { BrandMark } from "./graphics";
@@ -30,8 +30,9 @@ export function SiteHeader() {
 
   useEffect(() => { setMenu(false); }, [path]);
   useEffect(() => {
-    const sync = () => setSignedIn(Boolean(getToken()));
+    const sync = () => setSignedIn(Boolean(getToken()) || hasSession());
     sync();
+    if (!getToken() && path.startsWith("/app")) void getSession(); // a browser sign-in (Week 75)
     return onAuthChange(sync);
   }, [path]);
 
@@ -101,7 +102,7 @@ export function SiteHeader() {
     return path.startsWith(l.href) || (l.href === "/app" && inApp) ? "page" : undefined;
   };
 
-  const signOut = () => { clearToken(); setSignedIn(false); setMenu(false); router.push("/"); };
+  const signOut = () => { void endSession(); setSignedIn(false); setMenu(false); router.push("/"); };
 
   const links = LINKS.map((l) => (
     <Link key={l.href} href={l.href} aria-current={current(l)} onClick={() => { setMenu(false); if (l.id) setActive(l.id); }}>{l.label}</Link>
