@@ -5,8 +5,8 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 
 ## [Unreleased]
 
-Weeks 70–71 (plan Phase 17): metrics and dashboards
-([docs/v2-week70-71-verification.md](docs/v2-week70-71-verification.md)).
+Weeks 70–72 (plan Phase 17): metrics, dashboards and reports
+([Weeks 70–71](docs/v2-week70-71-verification.md), [Week 72](docs/v2-week72-verification.md)).
 
 ### Added
 - **Metrics layer (Week 70, plan §48.1, ADR-0054).**
@@ -41,9 +41,30 @@ Weeks 70–71 (plan Phase 17): metrics and dashboards
     "Scanners N of M" and a trend.
   - API: `/v2/me/assigned`, `/v2/me/engagements`, `/v2/portfolio-overviews`.
 
+- **Report builder (Week 72, plan §48.3, ADR-0055).**
+  - Blocks: cover, executive summary, metric, issue table, issue detail, risk acceptances,
+    compliance mapping, engagement scope, appendix. Three templates.
+  - PDFs are rendered by headless Chromium in a locked-down, network-less container on the worker,
+    kept with their SHA-256, and signed with cosign when a key is set up.
+  - Links need no sign-in, expire in 1 to 90 days, and can be revoked. Only their hash is stored,
+    and each opening is audit-logged.
+  - Weekly or monthly schedules email recipients a link.
+  - The executive summary can be drafted by a model from the report's own numbers. It is labelled
+    AI-written, and nothing is generated or sent until a person confirms it.
+  - Migration 0044. API: `/v2/reports`, `/v2/report-runs`, `/r/{token}`.
+  - Settings: `BULWARK_API_PUBLIC_URL`, `BULWARK_PDF_IMAGE`, `BULWARK_LLM_ROUTE_REPORT`.
+  - [docs/reports.md](docs/reports.md), [verification](docs/v2-week72-verification.md).
+
 ### Changed
 - **`/app` for a person is now their role home.** The shared token, which is nobody in particular,
   still lands on the scan page. Scanning is also at `/app/scan`.
+
+### Fixed
+- **End-to-end tests had gone stale.**
+  - The J3 risk-acceptance journey still used the one-person accept button removed in Week 62. It
+    now requests, approves as a second person, and ends early.
+  - The Linux visual baselines dated from Week 35. They are regenerated in the pinned Playwright
+    image.
 
 ## [2.4.0] - 2026-10-06
 

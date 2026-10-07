@@ -149,3 +149,6 @@ smtp:
   password: ""
   tls: starttls  # starttls | ssl | none
   publicUrl: ""
+  # The API's public address, for report links emailed on a schedule (plan §48.3), e.g.
+  # "https://api.bulwark.example". Empty: scheduled reports are generated but not emailed.
+  apiPublicUrl: ""

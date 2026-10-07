@@ -1234,6 +1234,93 @@ Portfolio Overview
 
 - `portfolio_id` (path, required)
 
+## `GET /v2/report-templates`
+
+Report Templates
+
+
+## `GET /v2/reports`
+
+List Reports
+
+
+## `POST /v2/reports`
+
+Create Report
+
+
+## `GET /v2/reports/{report_id}`
+
+Get Report
+
+- `report_id` (path, required)
+
+## `PUT /v2/reports/{report_id}`
+
+Save Report
+
+- `report_id` (path, required)
+
+## `DELETE /v2/reports/{report_id}`
+
+Delete Report
+
+- `report_id` (path, required)
+
+## `POST /v2/reports/{report_id}/summary/draft`
+
+Draft Summary
+
+- `report_id` (path, required)
+
+## `POST /v2/reports/{report_id}/summary/review`
+
+Review Summary
+
+- `report_id` (path, required)
+
+## `POST /v2/reports/{report_id}/runs`
+
+Generate Report
+
+- `report_id` (path, required)
+
+## `GET /v2/reports/{report_id}/runs`
+
+Report Runs
+
+- `report_id` (path, required)
+
+## `GET /v2/report-runs/{run_id}/pdf`
+
+Run Pdf
+
+- `run_id` (path, required)
+
+## `GET /v2/report-runs/{run_id}/signature`
+
+Run Signature
+
+- `run_id` (path, required)
+
+## `POST /v2/report-runs/{run_id}/links`
+
+Create Link
+
+- `run_id` (path, required)
+
+## `GET /v2/report-runs/{run_id}/links`
+
+Run Links
+
+- `run_id` (path, required)
+
+## `DELETE /v2/report-links/{link_id}`
+
+Revoke Link
+
+- `link_id` (path, required)
+
 ## Live progress (WebSocket)
 
 `GET /scans/{scan_id}/ws` (not part of OpenAPI).

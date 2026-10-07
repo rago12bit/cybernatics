@@ -61,6 +61,7 @@ from api.mappings import register_mapping_routes
 from api.metrics import register_metric_routes
 from api.notify import register_notify_routes
 from api.priority import register_priority_routes
+from api.reports import register_report_routes
 from api.retest import register_retest_routes
 from api.rules import register_rules_routes
 from api.schemas import (
@@ -2175,6 +2176,7 @@ def create_app(app_state: AppState) -> FastAPI:
     register_compliance_routes(app)
     register_metric_routes(app)
     register_dashboard_routes(app)
+    register_report_routes(app)
     return app
 
 
@@ -2209,6 +2211,7 @@ def build_default_app() -> FastAPI:
     from core.persistence.storage import S3Store
     from core.tasks import (
         recompute_priority_task,
+        render_report_task,
         run_connector_task,
         run_dast_campaign_task,
         run_import_task,
@@ -2237,6 +2240,8 @@ def build_default_app() -> FastAPI:
             llm_copilot=make_gateway_client(Task.COPILOT),
             llm_attack_path=make_gateway_client(Task.ATTACK_PATH),
             llm_mapper=make_gateway_client(Task.MAPPER),
+            llm_report=make_gateway_client(Task.REPORT),
+            enqueue_report=lambda run_id, org_id: render_report_task.delay(run_id, org_id),
             enqueue_connector=lambda cid, org_id: run_connector_task.delay(cid, org_id),
             enqueue_priority=lambda pid, org_id: recompute_priority_task.delay(pid, org_id),
             enqueue_retest=lambda rid, org_id: run_targeted_retest_task.delay(rid, org_id),

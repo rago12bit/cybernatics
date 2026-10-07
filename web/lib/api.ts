@@ -5,6 +5,7 @@ import type { VexJustification, AsvsBenchmark, ComplianceFramework, EvidencePack
   StrideRow, ThreatModel, RetentionSettings, Citation, CopilotConversation, CopilotMessage, CostSummary, DependenciesView, Finding, FindingsPage, FindingsQuery, GenerateHypothesesResult, Guidance, GuidanceApi, Hypothesis, IssueHistoryEvent, ProjectOverview, Remediation, ScanComparison, ScanCost, ScanSummary, ScanView, TriageAssistantView, TriageStatus, VerifiedFixStarted, VerifiedFixView } from "./types";
 import type { AssignedIssue, Dashboard, DashboardList, Me, MetricIssue, MetricResult, MyEngagement, Role, UnitOverview, UnitSummary, Widget } from "./dashboard";
 import { findingsQueryString } from "./format";
+import type { Block, NewLink, Report as ReportT, ReportLink as ReportLinkT, ReportRun as ReportRunT, ReportTemplate, Schedule } from "./reports";
 
 export const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/$/, "");
 const TOKEN_KEY = "bulwark.token";
@@ -832,3 +833,26 @@ export const getMyAssigned = () => request<{ total: number; rows: AssignedIssue[
 export const getMyEngagements = () => request<MyEngagement[]>("/v2/me/engagements");
 export const listUnitOverviews = () => request<UnitSummary[]>("/v2/portfolio-overviews");
 export const getUnitOverview = (id: string) => request<UnitOverview>(`/v2/portfolio-overviews/${enc(id)}`);
+
+/** Reports (plan §48.3). */
+export const listReportTemplates = () => request<ReportTemplate[]>("/v2/report-templates");
+export const listReports = () => request<ReportT[]>("/v2/reports");
+export const getReport = (id: string) => request<ReportT>(`/v2/reports/${enc(id)}`);
+export const createReport = (body: { name?: string; template?: string; blocks?: Block[]; period_days?: number }) =>
+  request<ReportT>("/v2/reports", json("POST", body));
+export const saveReport = (id: string, body: { version: number; name?: string; period_days?: number; blocks?: Block[]; schedule?: Schedule | null }) =>
+  request<ReportT>(`/v2/reports/${enc(id)}`, json("PUT", body));
+export const deleteReport = (id: string) => request<void>(`/v2/reports/${enc(id)}`, { method: "DELETE" });
+export const draftReportSummary = (id: string) => request<ReportT>(`/v2/reports/${enc(id)}/summary/draft`, { method: "POST" });
+export const reviewReportSummary = (id: string, version: number, text: string) =>
+  request<ReportT>(`/v2/reports/${enc(id)}/summary/review`, json("POST", { version, text }));
+export const generateReport = (id: string) => request<ReportRunT>(`/v2/reports/${enc(id)}/runs`, { method: "POST" });
+export const listReportRuns = (id: string) => request<ReportRunT[]>(`/v2/reports/${enc(id)}/runs`);
+export const downloadReportPdf = (runId: string) =>
+  download(`/v2/report-runs/${enc(runId)}/pdf`, "report.pdf", "Could not download the report.");
+export const downloadReportSignature = (runId: string) =>
+  download(`/v2/report-runs/${enc(runId)}/signature`, "report.pdf.sig", "Could not download the signature.");
+export const createReportLink = (runId: string, days: number) =>
+  request<NewLink>(`/v2/report-runs/${enc(runId)}/links`, json("POST", { days }));
+export const listReportLinks = (runId: string) => request<ReportLinkT[]>(`/v2/report-runs/${enc(runId)}/links`);
+export const revokeReportLink = (id: string) => request<ReportLinkT>(`/v2/report-links/${enc(id)}`, { method: "DELETE" });

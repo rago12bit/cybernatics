@@ -48,6 +48,12 @@ x-app-env: &app-env
   BULWARK_SMTP_PASSWORD: ${BULWARK_SMTP_PASSWORD:-}
   BULWARK_SMTP_TLS: ${BULWARK_SMTP_TLS:-starttls}
   BULWARK_PUBLIC_URL: ${BULWARK_PUBLIC_URL:-}
+  # Reports (Week 72, plan §48.3): the API's public address makes the links in scheduled report
+  # emails absolute; empty, scheduled reports are generated but not emailed. The worker renders
+  # PDFs with headless Chromium in a container (BULWARK_PDF_IMAGE overrides the pinned image) and
+  # signs them with BULWARK_EVIDENCE_SIGNING_KEY when set, as for evidence packs.
+  BULWARK_API_PUBLIC_URL: ${BULWARK_API_PUBLIC_URL:-}
+  BULWARK_PDF_IMAGE: ${BULWARK_PDF_IMAGE:-}
 
 x-app: &app
   build: { context: ., dockerfile: docker/app/Dockerfile }

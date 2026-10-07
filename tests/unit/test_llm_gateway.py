@@ -75,6 +75,7 @@ def test_gateway_status_lists_every_known_task_and_leaks_no_secrets() -> None:
         "copilot": "local",
         "attack_path": "local",
         "mapper": "local",
+        "report": "local",
     }
     assert "TOPSECRET" not in json.dumps(status) and status["hosted"]["api_key_set"] is True
 

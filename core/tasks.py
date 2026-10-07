@@ -61,6 +61,7 @@ celery_app.conf.beat_schedule = {
     # everything hourly, as an acceptance expiring changes what is open without changing a row.
     "metrics": {"task": "bulwark.refresh_metrics", "schedule": 120.0},
     "metrics-all": {"task": "bulwark.refresh_metrics_all", "schedule": 3600.0},
+    "reports": {"task": "bulwark.run_due_reports", "schedule": 300.0},
 }
 
 
@@ -376,6 +377,35 @@ def refresh_metrics_all_task() -> int:
         with get_session_factory()() as s:
             set_session_org(s, org_id)
             n += rollup.refresh_all(s, org_id)
+    return n
+
+
+@celery_app.task(name="bulwark.render_report", bind=True, acks_late=True, ignore_result=True)  # type: ignore[untyped-decorator]
+def render_report_task(self: Any, run_id: str, org_id: str) -> str:
+    """Render one queued report to a signed PDF (plan §48.3). Here, not in the API: only the worker
+    may run containers (Chromium, cosign)."""
+    from core.persistence.db import get_session_factory
+    from core.reports import service
+    from core.tenancy import scoped_sessions
+
+    with scoped_sessions(get_session_factory(), org_id)() as s:
+        run = service.render_run(s, org_id, run_id)
+        s.commit()
+        return run.status
+
+
+@celery_app.task(name="bulwark.run_due_reports", ignore_result=True)  # type: ignore[untyped-decorator]
+def run_due_reports_task() -> int:
+    """Generate and email each organization's reports whose schedule is due (plan §48.3)."""
+    from core.persistence.db import get_session_factory
+    from core.reports import service
+    from core.tenancy import set_session_org
+
+    n = 0
+    for org_id in _org_ids():
+        with get_session_factory()() as s:
+            set_session_org(s, org_id)
+            n += service.run_due(s, org_id)
     return n
 
 

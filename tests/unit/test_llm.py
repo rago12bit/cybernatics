@@ -608,6 +608,7 @@ def test_cli_status_prompt_and_suggest_without_a_key(
             "copilot": "hosted",
             "attack_path": "hosted",
             "mapper": "hosted",
+            "report": "hosted",
         }
         and status["privacy_mode"] is False
     )

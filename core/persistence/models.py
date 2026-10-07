@@ -1996,3 +1996,75 @@ class PersonRole(Base):
     person: Mapped[str] = mapped_column(String(200), primary_key=True)
     role: Mapped[str] = mapped_column(String(16))
     updated_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+
+
+class Report(Base):
+    """A report (plan §48.3): blocks in order, the period they cover, and optionally a schedule
+    that generates and emails it. `version` goes up on every save, as for dashboards."""
+
+    __tablename__ = "reports"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"), index=True)
+    name: Mapped[str] = mapped_column(String(120))
+    owner: Mapped[str] = mapped_column(String(200))
+    period_days: Mapped[int] = mapped_column(Integer, default=30)
+    blocks: Mapped[list[dict[str, Any]]] = mapped_column(JsonType, default=list)
+    schedule: Mapped[dict[str, Any] | None] = mapped_column(JsonType, nullable=True)
+    next_run_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
+    version: Mapped[int] = mapped_column(Integer, default=1)
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+    updated_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+    updated_by: Mapped[str] = mapped_column(String(200))
+
+    __table_args__ = (Index("ix_reports_next_run_at", "next_run_at"),)
+
+
+class ReportRun(Base):
+    """One generated report: queued by the API, rendered by the worker; then the PDF as it was,
+    its SHA-256 and cosign signature, what triggered it, and -- for a scheduled one -- to whom it
+    was sent and how that went."""
+
+    __tablename__ = "report_runs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"), index=True)
+    report_id: Mapped[str] = mapped_column(ForeignKey("reports.id", ondelete="CASCADE"), index=True)
+    report_name: Mapped[str] = mapped_column(String(120))
+    trigger: Mapped[str] = mapped_column(String(16))  # manual | schedule
+    # queued -> done | failed: the worker renders it (only the worker may run containers).
+    status: Mapped[str] = mapped_column(String(16), default="queued")
+    error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    period_start: Mapped[date] = mapped_column(Date())
+    period_end: Mapped[date] = mapped_column(Date())
+    sha256: Mapped[str] = mapped_column(String(64), default="")
+    signed: Mapped[bool] = mapped_column(Boolean, default=False)
+    pdf: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
+    signature: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
+    ai_summary: Mapped[bool] = mapped_column(Boolean, default=False)
+    delivery: Mapped[list[dict[str, Any]]] = mapped_column(JsonType, default=list)
+    created_by: Mapped[str] = mapped_column(String(200))
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+
+
+class ReportLink(Base):
+    """A link to one generated report that works without signing in, until it expires or is
+    revoked. Only the token's SHA-256 is stored. Like `api_tokens`, no RLS: following the link is
+    what tells Bulwark the organization, so the lookup by hash cannot need it first; every other
+    query filters by `org_id`, and the PDF itself is read from `report_runs` under RLS."""
+
+    __tablename__ = "report_links"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"), index=True)
+    run_id: Mapped[str] = mapped_column(
+        ForeignKey("report_runs.id", ondelete="CASCADE"), index=True
+    )
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    created_by: Mapped[str] = mapped_column(String(200))
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+    expires_at: Mapped[datetime] = mapped_column(UtcDateTime())
+    revoked_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
+    revoked_by: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    opens: Mapped[int] = mapped_column(Integer, default=0)
+    last_opened_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)

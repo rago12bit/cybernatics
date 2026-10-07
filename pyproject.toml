@@ -71,6 +71,8 @@ select = ["E", "F", "I", "B", "UP"]
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["E501", "F811"]  # F811: shared pytest fixtures are re-imported by name
 "core/export/*" = ["E501"]  # embedded CSS/HTML string literals
+"core/reports/render.py" = ["E501"]  # embedded CSS/HTML string literals
+"core/reports/summary.py" = ["E501"]  # the prompt
 "core/rag/*" = ["E501"]  # prose-heavy design docstrings
 "core/llm/*" = ["E501"]  # prompts and regexes
 "core/fixagent/*" = ["E501"]  # prose-heavy design docstrings

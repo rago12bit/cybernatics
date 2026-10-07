@@ -16,6 +16,8 @@ nav:
       - Reachability: reachability.md
       - VEX: vex.md
       - Compliance and evidence packs: compliance.md
+      - Metrics and dashboards: metrics.md
+      - Reports: reports.md
   - Writing a plugin: plugins.md
   - Policy cookbook: policy.md
   - Importing reports: ingest-api.md

@@ -72,4 +72,6 @@ wait-for-postgres initContainer uses.
   value: {{ .Values.smtp.tls | default "starttls" | quote }}
 - name: BULWARK_PUBLIC_URL
   value: {{ .Values.smtp.publicUrl | default "" | quote }}
+- name: BULWARK_API_PUBLIC_URL
+  value: {{ .Values.smtp.apiPublicUrl | default "" | quote }}
 {{- end -}}
