@@ -44,7 +44,7 @@ def _input(**overrides: Any) -> VerifiedFixInput:
 
 
 @activity.defn(name="set_awaiting_approval_activity")
-async def fake_awaiting(run_db_id: str, patch: dict[str, Any]) -> None:
+async def fake_awaiting(run_db_id: str, patch: dict[str, Any], org_id: str | None = None) -> None:
     pass
 
 
@@ -59,7 +59,7 @@ def test_an_approved_patch_opens_a_pr() -> None:
 
     @activity.defn(name="run_one_attempt_activity")
     async def fake_pass(
-        inp: VerifiedFixInput, feedback: str | None, attempt: int
+        inp: VerifiedFixInput, feedback: str | None, attempt: int, left: int | None = None
     ) -> dict[str, Any]:
         return {
             "passed": True,
@@ -101,7 +101,11 @@ def test_an_approved_patch_opens_a_pr() -> None:
 def _finish_recorder(calls: list[Any]) -> Any:
     @activity.defn(name="finish_run_activity")
     async def fake_finish(
-        run_db_id: str, status: str, ended_reason: str | None, pr_url: str | None
+        run_db_id: str,
+        status: str,
+        ended_reason: str | None,
+        pr_url: str | None,
+        org_id: str | None = None,
     ) -> None:
         calls.append(("finish", status, ended_reason, pr_url))
 
@@ -114,7 +118,7 @@ def test_a_rejected_patch_never_opens_a_pr() -> None:
 
     @activity.defn(name="run_one_attempt_activity")
     async def fake_pass(
-        inp: VerifiedFixInput, feedback: str | None, attempt: int
+        inp: VerifiedFixInput, feedback: str | None, attempt: int, left: int | None = None
     ) -> dict[str, Any]:
         return {
             "passed": True,
@@ -157,13 +161,15 @@ def test_max_attempts_exhausted_fails_without_ever_asking_for_approval() -> None
 
     @activity.defn(name="run_one_attempt_activity")
     async def fake_fail(
-        inp: VerifiedFixInput, feedback: str | None, attempt: int
+        inp: VerifiedFixInput, feedback: str | None, attempt: int, left: int | None = None
     ) -> dict[str, Any]:
         attempts.append(attempt)
         return {"passed": False, "patch": None, "feedback": f"nope {attempt}"}
 
     @activity.defn(name="set_awaiting_approval_activity")
-    async def tracking_awaiting(run_db_id: str, patch: dict[str, Any]) -> None:
+    async def tracking_awaiting(
+        run_db_id: str, patch: dict[str, Any], org_id: str | None = None
+    ) -> None:
         asked_for_approval.append(True)
 
     async def scenario() -> str:
@@ -193,7 +199,7 @@ def test_overall_timeout_stops_starting_new_attempts_and_reports_inconclusive() 
 
     @activity.defn(name="run_one_attempt_activity")
     async def slow_fail(
-        inp: VerifiedFixInput, feedback: str | None, attempt: int
+        inp: VerifiedFixInput, feedback: str | None, attempt: int, left: int | None = None
     ) -> dict[str, Any]:
         attempts.append(attempt)
         await asyncio.sleep(20)  # the time-skipping server fast-forwards this

@@ -10,6 +10,7 @@ from sqlalchemy import (
     JSON,
     BigInteger,
     Boolean,
+    CheckConstraint,
     Date,
     Float,
     ForeignKey,
@@ -19,6 +20,7 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    func,
     text,
 )
 from sqlalchemy.dialects.postgresql import JSONB
@@ -449,6 +451,9 @@ class Scan(Base):
     github_repo: Mapped[str | None] = mapped_column(String(200), nullable=True)  # "owner/repo"
     github_pr_number: Mapped[int | None] = mapped_column(Integer, nullable=True)
     github_installation_id: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    # The pull request's head commit as the webhook named it (Week 76, migration 0050): `/fix`
+    # only acts on a scan of the commit the pull request is at now. Null for every other scan.
+    github_head_sha: Mapped[str | None] = mapped_column(String(40), nullable=True)
     tools: Mapped[list[str]] = mapped_column(JsonType)
     asset_id: Mapped[str | None] = mapped_column(
         ForeignKey("assets.id", ondelete="SET NULL"), nullable=True, index=True
@@ -600,9 +605,20 @@ class VerifiedFixRun(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
     org_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"), index=True)
-    issue_id: Mapped[str] = mapped_column(ForeignKey("issues.id", ondelete="CASCADE"), index=True)
+    # The Issue it fixes, or -- a run started by `/fix` on a pull request (Week 76, migration 0050),
+    # whose findings have no Issue yet -- the request and the finding instead. One of the two is
+    # always set (a CHECK constraint).
+    issue_id: Mapped[str | None] = mapped_column(
+        ForeignKey("issues.id", ondelete="CASCADE"), nullable=True, index=True
+    )
+    pr_fix_request_id: Mapped[str | None] = mapped_column(
+        ForeignKey("pr_fix_requests.id", ondelete="CASCADE"), nullable=True, index=True
+    )
+    finding_id: Mapped[str | None] = mapped_column(String(300), nullable=True)
     workflow_id: Mapped[str] = mapped_column(String(100), unique=True, index=True)
-    # running | awaiting_approval | approved | rejected | opened_pr | failed | inconclusive
+    # running | awaiting_approval | approved | rejected | opened_pr | verified | failed |
+    # inconclusive. `verified`: a pull request run's patch passed and was posted as a comment
+    # (ended_reason "comment_not_posted" when GitHub could not be reached).
     status: Mapped[str] = mapped_column(String(20), default="running", index=True)
     attempts: Mapped[int] = mapped_column(Integer, default=0)
     latest_patch: Mapped[dict[str, Any] | None] = mapped_column(JsonType, nullable=True)
@@ -613,6 +629,13 @@ class VerifiedFixRun(Base):
     pr_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     created_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
     updated_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+
+    __table_args__ = (
+        CheckConstraint(
+            "issue_id IS NOT NULL OR pr_fix_request_id IS NOT NULL",
+            name="ck_verified_fix_runs_issue_or_request",
+        ),
+    )
 
 
 class HypothesisRow(Base):
@@ -2028,8 +2051,50 @@ class User(Base):
     #: The identity provider deleted them over SCIM: turned off, kept for the audit trail, and no
     #: longer one of the provider's users (core.identity.scim).
     deprovisioned_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
+    #: The GitHub account an admin linked to this person (Week 76): who a `/fix` comment on a pull
+    #: request is from. Unique per organization without case (migration 0050's index).
+    github_login: Mapped[str | None] = mapped_column(String(39), nullable=True)
 
-    __table_args__ = (UniqueConstraint("org_id", "email", name="uq_users_org_email"),)
+    __table_args__ = (
+        UniqueConstraint("org_id", "email", name="uq_users_org_email"),
+        Index("uq_users_org_github_login", "org_id", func.lower(github_login), unique=True),
+    )
+
+
+class PrFixRequest(Base):
+    """One `/fix` on a pull request (Week 76, plan §50): the preview, then -- once someone allowed
+    to confirms it -- the verified-fix runs it started (core.fixagent.pr_fix).
+
+    status: previewed | started | cancelled | expired | refused. `token_cap` is the most the runs
+    may spend, as the preview said; `head_sha` is the commit the preview was about, so a confirm
+    after the pull request moved is refused rather than fixing code nobody previewed."""
+
+    __tablename__ = "pr_fix_requests"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"), index=True)
+    asset_id: Mapped[str] = mapped_column(ForeignKey("assets.id", ondelete="CASCADE"))
+    scan_id: Mapped[str] = mapped_column(ForeignKey("scans.id", ondelete="CASCADE"))
+    installation_id: Mapped[str] = mapped_column(String(40))
+    repo: Mapped[str] = mapped_column(String(200))
+    pr_number: Mapped[int] = mapped_column(Integer)
+    head_sha: Mapped[str] = mapped_column(String(40))
+    code: Mapped[str] = mapped_column(String(12))
+    finding_ids: Mapped[list[str]] = mapped_column(JsonType)
+    tokens_per_finding: Mapped[int] = mapped_column(Integer)
+    token_cap: Mapped[int] = mapped_column(Integer)
+    status: Mapped[str] = mapped_column(String(16))
+    requested_by: Mapped[str] = mapped_column(ForeignKey("users.id"))
+    requested_login: Mapped[str] = mapped_column(String(39))
+    confirmed_by: Mapped[str | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+    expires_at: Mapped[datetime] = mapped_column(UtcDateTime())
+    decided_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("org_id", "code", name="uq_pr_fix_requests_code"),
+        Index("ix_pr_fix_requests_pr", "repo", "pr_number"),
+    )
 
 
 class RoleOverride(Base):

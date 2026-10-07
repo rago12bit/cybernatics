@@ -26,13 +26,42 @@ def http_transport(
 ) -> tuple[int, Any]:
     req = urllib.request.Request(url, data=body, headers=headers, method=method)
     try:
-        with urllib.request.urlopen(
-            req, timeout=30
-        ) as resp:  # noqa: S310 - https only, checked by caller
+        with urllib.request.urlopen(req, timeout=30) as resp:  # noqa: S310 - https only, checked by caller
             raw = resp.read(8 * 1024 * 1024)
             return resp.status, json.loads(raw) if raw else None
     except urllib.error.HTTPError as exc:
         return exc.code, None
+
+
+def post_comment(
+    repo: str,
+    pr_number: int,
+    body: str,
+    token: str,
+    api_url: str = "https://api.github.com",
+    transport: Transport = http_transport,
+) -> int:
+    """A new comment on a pull request (the GitHub App's `/fix` replies, Week 76: one per reply,
+    not one edited in place). Returns its id."""
+    if not _REPO.match(repo):
+        raise CommentError("invalid repository name")
+    if not api_url.startswith("https://") or pr_number < 1 or not token:
+        raise CommentError("invalid api url, pull request number or token")
+    status, data = transport(
+        "POST",
+        f"{api_url.rstrip('/')}/repos/{repo}/issues/{pr_number}/comments",
+        {
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+            "User-Agent": "bulwark-github-app",
+            "Content-Type": "application/json",
+        },
+        json.dumps({"body": body}).encode(),
+    )
+    if status != 201 or not isinstance(data, dict):
+        raise CommentError(f"GitHub returned HTTP {status} while posting the comment")
+    return int(data.get("id") or 0)
 
 
 def upsert_comment(

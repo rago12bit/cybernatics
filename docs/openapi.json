@@ -23530,6 +23530,9 @@
           },
           "active": {
             "title": "Active"
+          },
+          "github_login": {
+            "title": "Github Login"
           }
         },
         "type": "object",

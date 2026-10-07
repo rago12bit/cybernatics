@@ -43,9 +43,14 @@ Rules, in priority order:
 
 
 class AgentGiveUp(Exception):
-    """The model never called propose_patch within MAX_TURNS, or its patch never passed
-    validation after being told why -- the caller (the workflow) treats this the same as a
-    verification failure: another attempt, or exhausting attempts."""
+    """The model never called propose_patch within MAX_TURNS, its patch never passed validation
+    after being told why, or the token cap was reached -- the caller (the workflow) treats this the
+    same as a verification failure: another attempt, or exhausting attempts. `tokens_used` is what
+    the attempt spent anyway, so the budget is still charged for it."""
+
+    def __init__(self, message: str, tokens_used: int = 0) -> None:
+        super().__init__(message)
+        self.tokens_used = tokens_used
 
 
 @dataclass
@@ -105,10 +110,15 @@ def propose_patch(
     ctx: FixContext,
     *,
     feedback: str | None = None,
+    max_tokens: int | None = None,
 ) -> ProposedPatch:
     """One attempt's worth of tool-calling conversation. `feedback` is plain text from OUR verify
     step describing why a previous attempt failed (never repository- or model-derived text passed
     back as if it were data -- see `core/fixagent/verify.py`), included only when this is a retry.
+
+    `max_tokens` (Week 76, `/fix`'s cap): checked before every model call, so the attempt stops
+    once it has spent that many. A call's cost is known only after it, so the last call can take
+    the total past the cap by its own size -- never by more than one call.
     """
     user_text = _finding_brief(finding) + "\n" + context_summary(ctx)
     if feedback:
@@ -122,6 +132,8 @@ def propose_patch(
     transcript: list[dict[str, Any]] = [{"role": "user", "content": user_text}]
 
     for _turn in range(MAX_TURNS):
+        if max_tokens is not None and tokens >= max_tokens:
+            raise AgentGiveUp(f"the token cap ({max_tokens:,}) was reached", tokens)
         msg = client.complete_with_tools(SYSTEM, messages, tools)
         usage = getattr(msg, "usage", None)
         tokens += (getattr(usage, "input_tokens", 0) or 0) + (
@@ -159,4 +171,4 @@ def propose_patch(
             results.append(_tool_result(use.id, clean_text))
         messages.append({"role": "user", "content": results})
 
-    raise AgentGiveUp(f"no valid patch proposed within {MAX_TURNS} tool-calling turns")
+    raise AgentGiveUp(f"no valid patch proposed within {MAX_TURNS} tool-calling turns", tokens)

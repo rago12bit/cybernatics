@@ -50,6 +50,10 @@ async def start_verified_fix(
     installation_id: str | None,
     run_tests: dict[str, object] | None,
     limits: WorkflowLimits | None = None,
+    *,
+    token_cap: int | None = None,
+    pr_fix_request_id: str | None = None,
+    pr_number: int | None = None,
 ) -> str:
     client = await get_client()
     inp = VerifiedFixInput(
@@ -66,6 +70,9 @@ async def start_verified_fix(
         installation_id=installation_id,
         run_tests=run_tests,
         limits=(limits or WorkflowLimits.from_env()).__dict__,
+        token_cap=token_cap,
+        pr_fix_request_id=pr_fix_request_id,
+        pr_number=pr_number,
     )
     await client.start_workflow(
         VerifiedFixWorkflow.run, inp, id=workflow_id, task_queue=task_queue()

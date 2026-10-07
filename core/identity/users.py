@@ -16,7 +16,7 @@ import re
 from datetime import datetime, timezone
 from typing import Any
 
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
 
 from core.identity.roles import ORG_ROLES, OVERRIDE_ROLES, Access
@@ -25,6 +25,8 @@ from core.persistence.models import ApiToken, Asset, Portfolio, RoleOverride, Us
 
 SOURCES = ("admin", "oidc", "saml", "scim", "cli")
 _EMAIL = re.compile(r"^[^@\s<>\"',;]+@[^@\s<>\"',;]+\.[^@\s<>\"',;]+$")
+# GitHub's own rule: letters, digits and single hyphens, not at either end, at most 39 characters.
+_GITHUB_LOGIN = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9]|-(?=[A-Za-z0-9])){0,38}$")
 
 
 class UserError(ValueError):
@@ -63,7 +65,7 @@ def view(u: User) -> dict[str, Any]:
     return {"id": u.id, "email": u.email, "name": u.name, "role": u.role, "active": u.active,
             "source": u.source, "external_id": u.external_id, "created_at": u.created_at,
             "last_login_at": u.last_login_at, "disabled_at": u.disabled_at,
-            "deprovisioned_at": u.deprovisioned_at,
+            "deprovisioned_at": u.deprovisioned_at, "github_login": u.github_login,
             "actor": actor_of(u.id)}  # fmt: skip
 
 
@@ -118,6 +120,11 @@ def update_user(s: Session, org_id: str, actor: str, user_id: str, raw: dict[str
             _keep_an_admin(s, org_id, u.id)
         changed["role"] = {"from": u.role, "to": role}
         u.role = role
+    if "github_login" in raw:
+        login = _github_login(s, u, raw["github_login"])
+        if login != u.github_login:
+            changed["github_login"] = {"from": u.github_login, "to": login}
+            u.github_login = login
     if "active" in raw and bool(raw["active"]) != u.active:
         if not raw["active"]:
             return disable(s, org_id, actor, user_id, reason="by an admin")
@@ -128,6 +135,25 @@ def update_user(s: Session, org_id: str, actor: str, user_id: str, raw: dict[str
         s.flush()
         _audit(s, actor, "user.updated", u, **changed)
     return u
+
+
+def _github_login(s: Session, u: User, raw: Any) -> str | None:
+    """Who a `/fix` comment on a pull request is from (Week 76). Only an admin sets it: a person
+    naming their own login could name someone else's. Empty unlinks."""
+    if raw is None or (isinstance(raw, str) and not raw.strip()):
+        return None
+    login = raw.strip().removeprefix("@") if isinstance(raw, str) else ""
+    if not _GITHUB_LOGIN.match(login):
+        raise UserError("github_login", "A GitHub username: letters, digits and hyphens.")
+    taken = s.scalar(
+        select(User.email).where(
+            User.org_id == u.org_id, User.id != u.id,
+            func.lower(User.github_login) == login.lower(),
+        )
+    )  # fmt: skip
+    if taken is not None:
+        raise UserError("github_login", f"{login} is already linked to {taken}.", 409)
+    return login
 
 
 def _keep_an_admin(s: Session, org_id: str, user_id: str) -> None:

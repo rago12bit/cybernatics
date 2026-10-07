@@ -6,8 +6,10 @@
     GET    /v2/users                          the organization's people            (org:admin)
     POST   /v2/users                          {email, name?, role}                  (org:admin)
     GET    /v2/users/{user_id}                one person, with their roles          (org:admin)
-    PATCH  /v2/users/{user_id}                {name?, role?, active?}; turning someone off ends
-                                              their sessions and revokes their tokens (org:admin)
+    PATCH  /v2/users/{user_id}                {name?, role?, active?, github_login?}; turning
+                                              someone off ends their sessions and revokes their
+                                              tokens; github_login is who `/fix` on a pull
+                                              request is from                      (org:admin)
     PUT    /v2/users/{user_id}/roles          {target_type, target_id, role}: a higher role on a
                                               business unit or a project            (org:admin)
     DELETE /v2/users/{user_id}/roles/{override_id}                                  (org:admin)
@@ -45,6 +47,7 @@ class UserIn(BaseModel):
     name: Any = None
     role: Any = None
     active: Any = None
+    github_login: Any = None
 
 
 class OverrideIn(BaseModel):

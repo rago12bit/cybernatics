@@ -144,7 +144,7 @@ from core.llm.service import static_suggestion
 from core.models import finding_from_dict
 from core.observability import bind_scan, configure_logging, cost, setup_tracing
 from core.persistence import repo
-from core.persistence.models import FindingRow, IssueRow, Scan
+from core.persistence.models import FindingRow, GithubInstallation, IssueRow, Scan
 from core.plugins.registry import discover_plugins
 from core.plugins.signing import PluginSignatureError, verify_plugin_image
 from core.priority.engine import BAND_NAMES as PRIORITY_BANDS
@@ -546,10 +546,35 @@ def create_app(app_state: AppState) -> FastAPI:
                     tools=list(HOSTED_DEFAULT_TOOLS if st.settings.hosted_mode else DEFAULT_TOOLS),
                     org_id=installation.org_id, ref=pr.ref,
                     github_repo=pr.repo_full_name, github_pr_number=pr.pr_number,
-                    github_installation_id=pr.installation_id,
+                    github_installation_id=pr.installation_id, github_head_sha=pr.head_sha,
                 )  # fmt: skip
                 _dispatch(st, s, scan)
                 return {"status": "queued", "scan_id": scan.id}
+
+            if event == "issue_comment":
+                # `/fix` (Week 76, plan §50): core.fixagent.pr_fix checks everything else.
+                from core.fixagent import pr_fix
+                from core.github_app import installation_token
+
+                cmt = pr_fix.parse_comment_event(payload)
+                if cmt is None:
+                    return {"status": "ignored"}
+                known = s.get(GithubInstallation, cmt.installation_id)
+                if known is None or not (
+                    st.settings.github_app_id and st.settings.github_app_private_key
+                ):
+                    return {"status": "ignored"}  # never creates an organization, unlike a PR
+                settings = st.settings
+                gh = pr_fix.GitHub(
+                    lambda: installation_token(
+                        cmt.installation_id, settings.github_app_id,
+                        settings.github_app_private_key,
+                    )
+                )  # fmt: skip
+                outcome = await pr_fix.handle_comment(
+                    s, cmt, known.org_id, gh, usd_per_1k=st.settings.llm_cost_per_1k_tokens_usd
+                )
+                return {"status": outcome}
 
         return {"status": "ignored"}
 
@@ -1149,7 +1174,7 @@ def create_app(app_state: AppState) -> FastAPI:
         if run is None:
             raise HTTPException(404, "no verified-fix run for this issue")
         return VerifiedFixView(
-            run_id=run.id, issue_id=run.issue_id, status=run.status, attempts=run.attempts,
+            run_id=run.id, issue_id=issue_id, status=run.status, attempts=run.attempts,
             latest_patch=run.latest_patch, verification_record=run.verification_record,
             ended_reason=run.ended_reason, pr_url=run.pr_url, created_at=run.created_at,
             updated_at=run.updated_at,

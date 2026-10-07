@@ -389,6 +389,7 @@ def create_scan(
     github_repo: str | None = None,
     github_pr_number: int | None = None,
     github_installation_id: str | None = None,
+    github_head_sha: str | None = None,
 ) -> Scan:
     """`asset_label` (plan §36, PR mode): the identity a PR-triggered scan's Asset is matched
     against must be the repository's own normalized URL, same as an ordinary scan of it -- not the
@@ -410,6 +411,7 @@ def create_scan(
         github_repo=github_repo,
         github_pr_number=github_pr_number,
         github_installation_id=github_installation_id,
+        github_head_sha=github_head_sha,
     )
     s.add(scan)
     s.commit()

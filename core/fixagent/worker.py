@@ -22,6 +22,7 @@ from core.fixagent.workflow import (
     VerifiedFixWorkflow,
     finish_run_activity,
     open_pr_activity,
+    post_pr_result_activity,
     run_one_attempt_activity,
     set_awaiting_approval_activity,
 )
@@ -48,6 +49,7 @@ async def run_worker() -> None:
             set_awaiting_approval_activity,
             finish_run_activity,
             open_pr_activity,
+            post_pr_result_activity,
         ],
     )
     log.info("fixagent worker polling %s on task queue %s", address, task_queue())

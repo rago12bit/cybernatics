@@ -14,11 +14,23 @@ from sqlalchemy.orm import Session
 
 from core.persistence.models import FindingRow, VerifiedFixRun
 
+TERMINAL = frozenset({"approved", "rejected", "opened_pr", "verified", "failed", "inconclusive"})
 
-def create_run(s: Session, org_id: str, issue_id: str, workflow_id: str) -> VerifiedFixRun:
+
+def create_run(
+    s: Session,
+    org_id: str,
+    issue_id: str | None,
+    workflow_id: str,
+    *,
+    pr_fix_request_id: str | None = None,
+    finding_id: str | None = None,
+) -> VerifiedFixRun:
+    """For an Issue, or (`/fix`, Week 76) for one finding of a pull request request."""
     row = VerifiedFixRun(
-        org_id=org_id, issue_id=issue_id, workflow_id=workflow_id, verification_record=[]
-    )
+        org_id=org_id, issue_id=issue_id, workflow_id=workflow_id, verification_record=[],
+        pr_fix_request_id=pr_fix_request_id, finding_id=finding_id,
+    )  # fmt: skip
     s.add(row)
     s.commit()
     return row
@@ -51,9 +63,8 @@ def latest_run_for_issue(
 def count_running_for_org(s: Session, org_id: str) -> int:
     """ADR-0015's concurrency cap: how many of this org's runs are still active (not yet at a
     terminal status) right now."""
-    terminal = {"approved", "rejected", "opened_pr", "failed", "inconclusive"}
     q = select(VerifiedFixRun).where(
-        VerifiedFixRun.org_id == org_id, VerifiedFixRun.status.not_in(terminal)
+        VerifiedFixRun.org_id == org_id, VerifiedFixRun.status.not_in(TERMINAL)
     )
     return len(list(s.scalars(q)))
 

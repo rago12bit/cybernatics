@@ -12,6 +12,7 @@ HTTP client.
 from __future__ import annotations
 
 import hmac
+import re
 import time
 from dataclasses import dataclass
 from datetime import datetime
@@ -23,6 +24,7 @@ from core.ci.github import Transport, http_transport
 from core.ci.report import code, md
 
 _SAFE_ACTIONS = frozenset({"opened", "synchronize", "reopened"})
+_SHA = re.compile(r"^[0-9a-f]{40}$")
 
 
 class GithubAppError(RuntimeError):
@@ -120,6 +122,7 @@ class PullRequestEvent:
     clone_url: str
     pr_number: int
     ref: str
+    head_sha: str | None = None  # the commit the pull request is at; None if GitHub didn't say
 
 
 def parse_pull_request_event(payload: dict[str, Any]) -> PullRequestEvent | None:
@@ -136,6 +139,8 @@ def parse_pull_request_event(payload: dict[str, Any]) -> PullRequestEvent | None
         pr_number = int(payload["pull_request"]["number"])
     except (KeyError, TypeError, ValueError):
         return None
+    head = payload["pull_request"].get("head")
+    sha = str(head.get("sha") or "").lower() if isinstance(head, dict) else ""
     return PullRequestEvent(
         installation_id=installation_id,
         account_login=account_login,
@@ -143,6 +148,7 @@ def parse_pull_request_event(payload: dict[str, Any]) -> PullRequestEvent | None
         clone_url=clone_url,
         pr_number=pr_number,
         ref=f"refs/pull/{pr_number}/head",
+        head_sha=sha if _SHA.match(sha) else None,
     )
 
 
