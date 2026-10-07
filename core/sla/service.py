@@ -53,6 +53,27 @@ def current(s: Session, asset_id: str) -> SlaPolicy | None:
     ).first()
 
 
+def policies_for(s: Session, asset_ids: list[str]) -> dict[str, Policy]:
+    """Each project's policy in force, in one query (projects without one get the starter)."""
+    out = {a: STARTER_POLICY for a in asset_ids}
+    if not asset_ids:
+        return out
+    latest = (
+        select(SlaPolicy.asset_id, func.max(SlaPolicy.version).label("v"))
+        .where(SlaPolicy.asset_id.in_(asset_ids))
+        .group_by(SlaPolicy.asset_id)
+        .subquery()
+    )
+    rows = s.scalars(
+        select(SlaPolicy).join(
+            latest, and_(SlaPolicy.asset_id == latest.c.asset_id, SlaPolicy.version == latest.c.v)
+        )
+    )
+    for row in rows:
+        out[row.asset_id] = from_row(row.enabled, row.basis, row.bands)
+    return out
+
+
 def policy_for(s: Session, asset_id: str) -> Policy:
     row = current(s, asset_id)
     return from_row(row.enabled, row.basis, row.bands) if row is not None else STARTER_POLICY

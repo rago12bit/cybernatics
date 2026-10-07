@@ -18,6 +18,7 @@ nav:
       - Compliance and evidence packs: compliance.md
       - Metrics and dashboards: metrics.md
       - Reports: reports.md
+      - Finding Issues: issue-search.md
   - Writing a plugin: plugins.md
   - Policy cookbook: policy.md
   - Importing reports: ingest-api.md

@@ -56,6 +56,7 @@ from api.deps import (
 )
 from api.engagements import register_engagement_routes
 from api.ingest import register_ingest_routes
+from api.issues import register_issue_routes
 from api.manual import register_manual_routes
 from api.mappings import register_mapping_routes
 from api.metrics import register_metric_routes
@@ -2175,6 +2176,7 @@ def create_app(app_state: AppState) -> FastAPI:
     register_vex_routes(app)
     register_compliance_routes(app)
     register_metric_routes(app)
+    register_issue_routes(app)
     register_dashboard_routes(app)
     register_report_routes(app)
     return app

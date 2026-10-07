@@ -19,6 +19,7 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    text,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
@@ -412,6 +413,10 @@ class IssueRow(Base):
             "asset_id", "category", "fingerprint", name="uq_issues_asset_category_fingerprint"
         ),
         Index("ix_issues_asset_state", "asset_id", "state"),
+        # The org-wide Issues list's orders (Week 73, migration 0045): first page off the index.
+        Index("ix_issues_order_priority", text("coalesce(priority_score, -1)"), "id"),
+        Index("ix_issues_order_first_seen", "first_seen_at", "id"),
+        Index("ix_issues_order_last_seen", "last_seen_at", "id"),
     )
 
 

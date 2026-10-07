@@ -93,3 +93,30 @@ behind a number. Budget: 300 ms at p95 for every widget.
 
 Full numbers: [`metrics/one-million-occurrences.json`](metrics/one-million-occurrences.json).
 What they mean, and what the first run caught: [ADR-0054](../docs/adr/0054-metrics-layer.md).
+
+## The Issues list at 100,000 and 500,000 Issues (plan §56, §58, Week 73)
+
+`scripts/bench-issue-search.py` seeds P projects × I Issues in Postgres: a year of history, a third
+fixed, some accepted or not a risk, bands, scores, assignees, SLA policies on half the projects,
+a tag on two business units. As `bulwark_worker` under forced RLS, it times seven queries 20 times
+(first page of 50 with its count, and the page alone), then pages 25 pages deep by cursor.
+Budget: 300 ms for a page with its count. The plan's own target is 50,000 Issues (§58).
+
+| Apple M5, Postgres 16.15 in Docker | 100,000 Issues | 500,000 Issues |
+|---|---:|---:|
+| Active queue, page + exact count | 43 ms (60,000) | 151 ms (300,000) |
+| The plan's example query, page + count | 33 ms | 109 ms |
+| Everything (fixed too), page + count | 99 ms (100,000) | 167 ms (500,000) |
+| Free text (a word in 1 title in 5), page + count | 113 ms | **520 ms** |
+| A page alone, any order but free text | 4-27 ms | 6-64 ms |
+| Page 25, by cursor | 9.5 ms | 10.6 ms |
+
+Every count at 100,000 Issues is exact. At 500,000, one count (a tag inherited from business
+units) did not finish in 200 ms and the list said "more than 10,000", as designed.
+
+The ordered indexes of migration 0045 are what make a page cheap: before them, a page at 500,000
+Issues took 0.23-0.61 s, because every match was sorted. Free text cannot use an index under
+row-level security (a `LIKE` on the title is not leakproof, so Postgres applies it only after the
+policy), so it scans the organization's matching Issues: fine at the plan's scale, over budget at
+five times it. Full numbers: [`issues/search-100k.json`](issues/search-100k.json),
+[`issues/search-500k.json`](issues/search-500k.json); the reasoning: [ADR-0056](../docs/adr/0056-issue-search.md).

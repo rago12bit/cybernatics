@@ -9,6 +9,20 @@ Weeks 70–72 (plan Phase 17): metrics, dashboards and reports
 ([Weeks 70–71](docs/v2-week70-71-verification.md), [Week 72](docs/v2-week72-verification.md)).
 
 ### Added
+- **Issues across every project, by query (Week 73, task 1; plan §56).**
+  - `GET /v2/issues?q=` lists the organization's Issues filtered by a query such as
+    `priority:P1 sla:breached project:payments-* -status:accepted`: fifteen filters, exclusions,
+    `*` in names and paths, dates as an age or a day, free text in titles. See
+    [Finding Issues](docs/issue-search.md).
+  - The query language is parsed by the API and by a twin in the browser; both must pass the same
+    31 shared cases, so the filter panel (task 4) and the query bar cannot disagree.
+  - Pages by cursor, so deep pages cost the same as the first. Migration 0045 adds ordered
+    indexes: at 500,000 Issues a page went from 0.23-0.61 s to 6-10 ms.
+  - Counts are exact while they are quick, else "more than 10,000". Postgres's own estimate was
+    off by 2 to 7 times, so the plan's "about 48,000" is not used (ADR-0056).
+  - Measured on Postgres under row-level security: within 300 ms at 100,000 Issues for every query;
+    at 500,000, free text is the exception (0.5 s with its count). Benchmarks in
+    `benchmarks/issues/`.
 - **Metrics layer (Week 70, plan §48.1, ADR-0054).**
   - Twelve metrics, each with a written definition kept in one place. The same text is each
     widget's tooltip and `docs/metrics.md`.

@@ -1168,6 +1168,29 @@ Get Metric
 - `to` (query)
 - `group` (query)
 
+## `GET /v2/issues`
+
+List Issues
+
+- `q` (query)
+- `sort` (query)
+- `after` (query)
+- `limit` (query)
+- `count` (query)
+
+## `GET /v2/issues/parse`
+
+Parse Query
+
+- `q` (query)
+
+## `GET /v2/issues/suggest`
+
+Suggest
+
+- `key` (query, required)
+- `prefix` (query)
+
 ## `GET /v2/me`
 
 Me
