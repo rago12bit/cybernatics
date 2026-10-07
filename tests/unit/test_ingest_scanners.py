@@ -251,11 +251,44 @@ def test_csv_ending_on_a_quoted_field_with_no_line_break_reads_as_cut(data: byte
         list(iter_csv(io.BytesIO(data), ParseContext()))
 
 
-@pytest.mark.parametrize("data", [b"a,b,c\n1,2,", b"a,b\n1,2", b'a,b\n"1","2"\n', b'a,b\n"1",2'])
-def test_csv_that_ends_unquoted_or_with_a_line_break_still_reads(data: bytes) -> None:
+@pytest.mark.parametrize(
+    ("data", "can_close"),
+    [(b"a,b,c\n1,2,", False), (b"a,b\n1,2", False), (b'a,b\n"1",2', False),
+     (b'a,b\n"1","2"\n', True), (b"a,b\r\n1,2\r\n", True)],
+)  # fmt: skip
+def test_csv_that_ends_unquoted_still_reads_but_closes_only_with_a_line_break(
+    data: bytes, can_close: bool
+) -> None:
     """Real Tenable exports (nessus-template.csv, nessus_new.csv) end with no line break, on an
-    unquoted field; a cut there cannot be told from a whole file, so it is not refused."""
-    assert len(list(iter_csv(io.BytesIO(data), ParseContext()))) == 2
+    unquoted field; a cut there cannot be told from a whole file, so it is read, but closes nothing
+    unless its last row ends with a line break."""
+    ctx = ParseContext()
+    assert len(list(iter_csv(io.BytesIO(data), ctx))) == 2
+    assert ctx.can_close_missing is can_close
+    assert any("line break" in w for w in ctx.warnings) is not can_close
+
+
+def test_nessus_csv_cut_after_an_empty_field_closes_nothing() -> None:
+    """Cut right after the delimiter that follows an empty field, the row stays full width and ends
+    on a delimiter, exactly as a whole row with an empty last field does (nessus-template.csv ends
+    `...,,,`): only the missing line break says it may be cut off."""
+    header = NESSUS_CSV.split(b"\n", 1)[0]
+    n = header.count(b",") + 1
+    whole = header + b"\n" + b",".join([b'"v"'] * (n - 2) + [b"", b'"last"']) + b"\n"
+    cut = whole[: whole.rindex(b'"last"')]
+    assert cut.endswith(b'"v",,') and run("nessus", whole).can_close_missing
+    r = run("nessus", cut)
+    assert r.complete and not r.can_close_missing
+    assert any("line break" in w for w in r.warnings)
+
+
+@pytest.mark.parametrize("name", ["nessus-template.csv", "nessus_new.csv"])
+def test_real_exports_without_a_final_line_break_still_import_but_close_nothing(name: str) -> None:
+    whole = (DD / "nessus" / name).read_bytes()
+    assert not whole.endswith(b"\n")
+    r = run("nessus", whole)
+    assert r.complete and r.findings and not r.can_close_missing
+    assert run("nessus", whole + b"\n").can_close_missing
 
 
 # --- OpenVAS --------------------------------------------------------------------------------------
@@ -264,9 +297,7 @@ def test_csv_that_ends_unquoted_or_with_a_line_break_still_reads(data: bytes) ->
 def test_openvas_xml_gives_one_finding_per_result() -> None:
     r = run("openvas", OPENVAS_XML)
     assert r.complete and r.can_close_missing
-    assert (
-        len(r.findings) == len(ET.fromstring(OPENVAS_XML).findall(".//result")) == 44
-    )  # noqa: S314
+    assert len(r.findings) == len(ET.fromstring(OPENVAS_XML).findall(".//result")) == 44  # noqa: S314
 
 
 def test_openvas_xml_and_csv_agree_on_the_same_result() -> None:

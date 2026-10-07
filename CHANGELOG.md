@@ -176,6 +176,14 @@ Weeks 70–73 (plan Phase 17): metrics, dashboards, reports and filters at scale
 - **The verified-fix agent now spends within a budget (Week 76).** It counted its model tokens but
   never charged them to the organization's monthly budget, and never checked it; each attempt now
   does both, and a run can carry a token cap.
+- **A cut-off CSV report can no longer close Issues.** Nessus, OpenVAS and universal-mapper CSVs
+  cut so the last row stays full width (after a quoted field, inside an escaped quote, after the
+  delimiter that follows an empty field, or inside an unquoted last field) read as whole and could
+  close every Issue they no longer listed. A last row ending on a quoted field with no line break is
+  now refused, and any other last row with no line break is read but closes nothing -- real Tenable
+  exports end that way and cannot be told apart from a cut one. Every cut of every vendored Nessus
+  and OpenVAS CSV was checked (199,038): none can close; before, 29 dropped or garbled a finding and
+  could still close it.
 - **The fix agent no longer rejects a correct patch next to another finding.** Verification compared
   findings by fingerprint, which shifts when a nearby line changes (Bandit quotes three lines) and
   when correlation moves a rule into the neighbouring finding -- so an untouched neighbour looked

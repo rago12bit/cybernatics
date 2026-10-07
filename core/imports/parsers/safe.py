@@ -190,8 +190,13 @@ def iter_csv(stream: BinaryIO, ctx: ParseContext) -> Iterator[list[str]]:
     break after it. A cut there reads as a whole row: `..."text",` gains an empty last field, so the
     row is as wide as the header, and `..."text ""quoted` stops between the two quotes of an
     escaped `""`, which reads as a closing one. Exporters that quote fields end every row with a
-    line break. An unquoted last row with no line break (`a,b,c`, as some real Tenable exports end)
-    cannot be told apart from a cut one and is left alone. Parsers still check row widths."""
+    line break. Parsers still check row widths.
+
+    Any other last row with no line break is read, but the file closes nothing
+    (`ctx.can_close_missing`): it cannot be told apart from a cut one. Real Tenable exports end that
+    way (`...,20/8/2024,,,` and `...;Low;RESURFACED`), and so do the same rows cut after a delimiter
+    that follows an empty field (`..."v",,` with the last field gone) or inside an unquoted last
+    field (`RESURF`) -- the row stays full width, so only its missing line break shows."""
     limits = ctx.limits
     csv.field_size_limit(max(csv.field_size_limit(), 16 * 1024 * 1024))
     limited: Any = LimitedStream(stream, limits.max_bytes)  # read() is all the reader needs
@@ -219,6 +224,12 @@ def iter_csv(stream: BinaryIO, ctx: ParseContext) -> Iterator[list[str]]:
         raise ParseAborted(
             "the last row ends on a quoted field with no line break after it; "
             "the file may be cut off"
+        )
+    if tail is not first and not tail.endswith(("\n", "\r")):
+        ctx.can_close_missing = False
+        ctx.warn(
+            "The file's last row has no line break after it, so Bulwark cannot tell it was not cut "
+            "off; it will not close any Issue"
         )
 
 
