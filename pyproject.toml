@@ -34,6 +34,7 @@ dependencies = [
     "cvss>=3.6",  # CVSS 4.0 scoring for manual findings (LGPL-3.0, used as an unmodified library)
     "packaging>=24",  # PEP 440 version order (core/versions.py); already installed transitively
     "pysaml2>=7.5.5",  # SAML 2.0 sign-in (core.identity.saml, Week 75); needs the xmlsec1 binary
+    "mcp>=2.3,<3",  # `bulwark mcp` (core.mcp_server, Week 76): the official MCP Python SDK, MIT
 ]
 
 [project.scripts]

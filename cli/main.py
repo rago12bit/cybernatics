@@ -1340,3 +1340,32 @@ def precommit_uninstall(
         raise typer.Exit(1)
     hook_path.unlink()
     typer.echo(f"Removed {hook_path}")
+
+
+@app.command("mcp")
+def mcp_cmd(
+    api_url: str = typer.Option(
+        "http://localhost:8000", envvar="BULWARK_API_URL", help="The Bulwark API to talk to."
+    ),
+    allow_scans: bool = typer.Option(
+        False, "--allow-scans", help="Also offer run_scan, if the token may write scans."
+    ),
+) -> None:
+    """An MCP server for your own agent, over stdio (plan §50). Read-only unless --allow-scans.
+
+    Your MCP client starts it, with your personal API token in BULWARK_MCP_TOKEN (never on the
+    command line, where other users of the machine could read it). See docs/mcp.md."""
+    import asyncio
+    import os
+
+    from core.mcp_server import ApiError, serve
+
+    token = os.environ.get("BULWARK_MCP_TOKEN", "").strip()
+    if not token:
+        typer.echo("error: set BULWARK_MCP_TOKEN to a personal API token", err=True)
+        raise typer.Exit(2)
+    try:
+        asyncio.run(serve(api_url, token, allow_scans=allow_scans))
+    except ApiError as exc:
+        typer.echo(f"error: {exc}", err=True)
+        raise typer.Exit(1) from exc

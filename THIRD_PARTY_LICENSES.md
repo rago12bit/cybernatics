@@ -85,7 +85,7 @@ Bulwark is not affiliated with or endorsed by DefectDojo, Inc.
 >
 > THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-## Python dependencies (94)
+## Python dependencies (107)
 
 | Package | Version | License |
 |---|---|---|
@@ -96,6 +96,7 @@ Bulwark is not affiliated with or endorsed by DefectDojo, Inc.
 | anthropic | 1.8.0 | MIT |
 | anyio | 4.15.1 | MIT |
 | async-timeout | 5.0.1 | Apache 2 |
+| attrs | 26.1.0 | MIT |
 | billiard | 4.3.0 | BSD |
 | boto3 | 1.43.101 | Apache-2.0 |
 | botocore | 1.43.101 | Apache-2.0 |
@@ -113,6 +114,7 @@ Bulwark is not affiliated with or endorsed by DefectDojo, Inc.
 | defusedxml | 0.7.1 | PSFL |
 | dnspython | 2.8.0 | ISC |
 | docstring-parser | 0.18.0 | MIT |
+| elementpath | 4.8.0 | MIT |
 | exceptiongroup | 1.3.1 | MIT License |
 | fastapi | 0.141.1 | MIT |
 | google-re2 | 1.1.20251105 | BSD License |
@@ -127,10 +129,14 @@ Bulwark is not affiliated with or endorsed by DefectDojo, Inc.
 | ijson | 3.5.1 | BSD-3-Clause AND ISC |
 | jiter | 0.17.0 | MIT |
 | jmespath | 1.1.0 | MIT |
+| jsonschema | 4.26.0 | MIT |
+| jsonschema-specifications | 2025.9.1 | MIT |
 | kombu | 5.6.2 | BSD-3-Clause |
 | mako | 1.4.3 | MIT |
 | markdown-it-py | 4.2.0 | MIT License |
 | markupsafe | 3.0.3 | BSD-3-Clause |
+| mcp | 2.3.0 | MIT |
+| mcp-types | 2.3.0 | MIT |
 | mdurl | 0.1.2 | MIT License |
 | opentelemetry-api | 1.45.0 | Apache-2.0 |
 | opentelemetry-exporter-http-transport | 0.66b0 | Apache-2.0 |
@@ -152,18 +158,24 @@ Bulwark is not affiliated with or endorsed by DefectDojo, Inc.
 | pydantic-core | 2.46.5 | MIT |
 | pygments | 2.21.0 | BSD-2-Clause |
 | pyjwt | 2.15.0 | MIT |
+| pyopenssl | 26.4.0 | Apache License, Version 2.0 |
+| pysaml2 | 7.5.5 | Apache-2.0 |
 | python-dateutil | 2.9.0.post0 | Dual License |
 | python-dotenv | 1.2.3 | BSD-3-Clause |
 | python-multipart | 0.0.32 | Apache-2.0 |
 | pyyaml | 6.0.3 | MIT |
 | redis | 6.4.0 | MIT |
+| referencing | 0.37.0 | MIT |
 | reportlab | 5.0.1 | BSD License |
+| requests | 2.34.2 | Apache-2.0 |
 | rich | 15.0.0 | MIT |
+| rpds-py | 0.30.0 | MIT |
 | s3transfer | 0.19.2 | Apache License 2.0 |
 | shellingham | 1.5.4 | ISC License |
 | six | 1.17.0 | MIT |
 | sniffio | 1.3.1 | MIT OR Apache-2.0 |
 | sqlalchemy | 2.0.54 | MIT |
+| sse-starlette | 3.5.0 | BSD-3-Clause |
 | starlette | 1.7.0 | BSD-3-Clause |
 | tomli | 2.4.1 | MIT |
 | tree-sitter | 0.26.0 | MIT License |
@@ -183,6 +195,7 @@ Bulwark is not affiliated with or endorsed by DefectDojo, Inc.
 | watchfiles | 1.3.0 | MIT |
 | wcwidth | 0.9.1 | MIT License |
 | websockets | 16.1.1 | BSD-3-Clause |
+| xmlschema | 2.5.1 | MIT |
 
 ## npm dependencies: web app (270 runtime, 330 development)
 
