@@ -4,7 +4,7 @@ import { createColumnHelper, flexRender, getCoreRowModel, useReactTable } from "
 import { useVirtualizer } from "@tanstack/react-virtual";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ApiError, bulkTriageIssues, listIssues, type IssuesQuery, type OpenSlaState } from "@/lib/api";
+import { ApiError, bulkTriageIssues, createIssueView, getAssetOverview, listIssues, type IssuesQuery, type OpenSlaState } from "@/lib/api";
 import { SLA_MARK, SLA_WORD, slaDetail, slaSentence } from "@/lib/sla";
 import type { Finding, PriorityBand, Severity, TriageStatus } from "@/lib/types";
 import { SEVERITIES } from "@/lib/types";
@@ -13,7 +13,7 @@ import { Button } from "@/design-system/primitives/Button";
 import { Dialog } from "@/design-system/primitives/Dialog";
 import { RiskAcceptanceRequest } from "@/components/RiskAcceptanceRequest";
 import { useMode } from "@/design-system/mode";
-import { useSavedViews, type SavedView } from "@/lib/saved-views";
+import { legacyToQuery } from "@/lib/issues";
 import { setIssueNavList } from "@/lib/issue-nav";
 import "./issues-table.css";
 
@@ -38,7 +38,7 @@ export function IssuesTable({ assetId }: { assetId: string }) {
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
-  const { views, save, remove } = useSavedViews(assetId);
+  const [label, setLabel] = useState<string | null>(null);
   const [saveOpen, setSaveOpen] = useState(false);
   const [viewName, setViewName] = useState("");
   const [triageOpen, setTriageOpen] = useState<"not_a_risk" | "accepted" | null>(null);
@@ -199,8 +199,22 @@ export function IssuesTable({ assetId }: { assetId: string }) {
     }
   }
 
-  function applyView(v: SavedView) {
-    setQ(v.query);
+  // Saved views live on the server now, on the Issues list across every project; this table saves
+  // its filters there as a query for this project.
+  useEffect(() => {
+    getAssetOverview(assetId).then((o) => setLabel(o.asset.label), () => setLabel(null));
+  }, [assetId]);
+
+  async function saveView(name: string) {
+    if (!label) return;
+    try {
+      const v = await createIssueView(legacyToQuery({ assetId, name, query: q }, label));
+      setNotice(`Saved “${v.name}”. Find it under Saved views on the Issues list.`);
+      setSaveOpen(false);
+      setViewName("");
+    } catch (e) {
+      setError(e instanceof ApiError ? ((e.data as { message?: string } | undefined)?.message ?? e.message) : "Could not save the view.");
+    }
   }
 
   return (
@@ -244,15 +258,13 @@ export function IssuesTable({ assetId }: { assetId: string }) {
         <Button onClick={() => setSaveOpen(true)}>Save this view</Button>
       </div>
 
-      {views.length > 0 && (
-        <div className="ds-issues-views" aria-label="Saved views">
-          {views.map((v) => (
-            <span key={v.name} className="ds-saved-view">
-              <button type="button" onClick={() => applyView(v)}>{v.name}</button>
-              <button type="button" aria-label={`Delete view ${v.name}`} onClick={() => remove(v.name)}>×</button>
-            </span>
-          ))}
-        </div>
+      {label && (
+        <p className="ds-issues-across">
+          <Link href={`/app/issues?q=${encodeURIComponent(`project:${/^[^\s",:]+$/.test(label) ? label : `"${label}"`}`)}`}>
+            This project on the Issues list
+          </Link>{" "}
+          <span className="ds-issues-across-note">with saved views, queries and changes across pages</span>
+        </p>
       )}
 
       {selected.size > 0 && (
@@ -307,16 +319,14 @@ export function IssuesTable({ assetId }: { assetId: string }) {
         </div>
       )}
 
-      <Dialog open={saveOpen} onOpenChange={setSaveOpen} title="Save this view" description="Name the current filters so you can come back to them.">
+      <Dialog open={saveOpen} onOpenChange={setSaveOpen} title="Save this view" description="Name these filters to come back to them, from any device. Views are kept on the Issues list.">
         <input type="text" value={viewName} onChange={(e) => setViewName(e.target.value)} placeholder="e.g. Critical, unreachable-excluded" className="ds-palette-input" />
         <div style={{ marginTop: "1rem", display: "flex", gap: "0.5rem" }}>
           <Button
             variant="primary"
-            disabled={!viewName.trim()}
+            disabled={!viewName.trim() || !label}
             onClick={() => {
-              save(viewName.trim(), q);
-              setViewName("");
-              setSaveOpen(false);
+              void saveView(viewName.trim());
             }}
           >
             Save

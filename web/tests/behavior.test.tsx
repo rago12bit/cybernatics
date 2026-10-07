@@ -160,6 +160,7 @@ describe("site header navigation", () => {
     expect(links).toEqual([
       ["Home", "/app"],
       ["Projects", "/app/projects"],
+      ["Issues", "/app/issues"],
       ["Inbox3", "/app/inbox"],
       ["Dashboards", "/app/dashboards"],
       ["Advisories", "/app/advisories"],

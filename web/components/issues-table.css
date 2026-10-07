@@ -209,3 +209,6 @@
     font-size: 0;
   }
 }
+.ds-issues-across { margin: 0.5rem 0; font-size: var(--ds-text-2); }
+.ds-issues-across a { color: var(--ds-brand); }
+.ds-issues-across-note { color: var(--ds-muted); }

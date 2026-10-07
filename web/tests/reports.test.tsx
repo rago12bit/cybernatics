@@ -61,6 +61,8 @@ function api(o: { report?: Report; runs?: ReportRun[] } = {}) {
     if (p === "/v2/report-runs/run1/links") return json([]);
     if (p === "/v2/compliance/frameworks") return json([{ id: "owasp-top10-2021", name: "OWASP Top 10 2021" }]);
     if (p === "/v2/portfolios" || p === "/assets") return json([]);
+    if (p === "/v2/issue-views") return json([{ id: "v1", name: "Payments P1", owner: "token:p", query: "priority:P1 project:payments-*", sort: "priority",
+      columns: null, shared_with: [], version: 1, updated_at: null, updated_by: null, builtin: false, can_edit: true }]);
     return json({}, 404);
   }));
   return calls;
@@ -177,6 +179,24 @@ describe("the report builder", () => {
     expect(input.value).toMatch(/\/r\/tok$/);
     expect(host.querySelector(".rep-link")!.textContent).toContain("It is shown only now");
     expect((await axe.run(host, AXE)).violations).toEqual([]);
+  });
+
+  it("lets an issues block show a saved view", async () => {
+    const calls = api({ report: { ...REPORT, blocks: [{ id: "t", type: "issues", config: { kind: "open", band: null, limit: 50, title: "", filters: {} } }] } });
+    const host = await mount(<ReportBuilder reportId="r1" />);
+    const which = [...host.querySelectorAll<HTMLSelectElement>("select")].find((x) => x.id.endsWith("-kind"))!;
+    which.value = "view";
+    await act(async () => which.dispatchEvent(new Event("change", { bubbles: true })));
+    const pick = [...host.querySelectorAll<HTMLSelectElement>("select")].find((x) => x.id.endsWith("-view"))!;
+    expect([...pick.options].map((o) => o.textContent)).toEqual(["Choose a view…", "Payments P1"]);
+    pick.value = "v1";
+    await act(async () => pick.dispatchEvent(new Event("change", { bubbles: true })));
+    expect(host.textContent).toContain("priority:P1 project:payments-*");
+    expect((await axe.run(host, AXE)).violations).toEqual([]);
+    await act(async () => button(host, "Save").click());
+    await flush();
+    const put = calls.find((c) => c.method === "PUT")!;
+    expect((put.body as { blocks: Block[] }).blocks[0]!.config).toMatchObject({ kind: "view", view_id: "v1" });
   });
 
   it("sets a schedule and saves it with the report", async () => {

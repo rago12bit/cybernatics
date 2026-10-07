@@ -87,6 +87,7 @@ export const BLOCK_LABEL: Record<BlockType, string> = {
 export const BLOCK_TYPES = Object.keys(BLOCK_LABEL) as BlockType[];
 export const ISSUE_KINDS: [string, string][] = [
   ["open", "Open now"], ["past_sla", "Past their SLA"], ["opened", "First seen in the period"], ["fixed", "Fixed in the period"],
+  ["view", "A saved view of the Issues list"],
 ];
 export const ACCEPTANCE_STATES: [string, string][] = [
   ["approved", "In force"], ["requested", "Awaiting a decision"], ["expiring", "Expiring within 30 days"], ["all", "All"],

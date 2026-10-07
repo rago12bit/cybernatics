@@ -5,8 +5,9 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 
 ## [Unreleased]
 
-Weeks 70–72 (plan Phase 17): metrics, dashboards and reports
-([Weeks 70–71](docs/v2-week70-71-verification.md), [Week 72](docs/v2-week72-verification.md)).
+Weeks 70–73 (plan Phase 17): metrics, dashboards, reports and filters at scale
+([Weeks 70–71](docs/v2-week70-71-verification.md), [Week 72](docs/v2-week72-verification.md),
+[Week 73](docs/v2-week73-verification.md)).
 
 ### Added
 - **Issues across every project, by query (Week 73, task 1; plan §56).**
@@ -23,6 +24,32 @@ Weeks 70–72 (plan Phase 17): metrics, dashboards and reports
   - Measured on Postgres under row-level security: within 300 ms at 100,000 Issues for every query;
     at 500,000, free text is the exception (0.5 s with its count). Benchmarks in
     `benchmarks/issues/`.
+- **The Issues list across every project (Week 73, task 4; plan §56).** `/app/issues`, "Issues"
+  in the header. See the [Week 73 verification](docs/v2-week73-verification.md).
+  - A grouped, collapsible filter panel (each group shows how many filters are on), removable
+    chips with Clear all, and a query bar with suggestions. The panel and the query stay in step
+    both ways, and the address carries the list.
+  - Pages by cursor; a column chooser and density toggle remembered per person; saved views.
+  - "Select all N matching", then a bulk change previewed as counts and undoable for 10 seconds.
+  - The per-project table saves its views to the server and links to the new list.
+- **Saved views and table settings (Week 73, task 2; plan §56).**
+  - Save the Issues list's query, sort and columns under a name; personal, or shared with a role
+    to view or copy, like dashboards. Six built-in views. Queries are checked and stored
+    canonically. `/v2/issue-views`, migration 0046.
+  - Views saved in the browser before are imported once, each as a query for its project.
+  - Columns and density are remembered per person (`/v2/me/tables/issues`).
+  - A report's Issues block can show a saved view, as it is when the report is generated. This
+    closes the gap noted in Week 72.
+- **Bulk changes across pages, previewed and undoable (Week 73, task 3; plan §56, ADR-0057).**
+  - Assign or unassign, mark not a risk, reopen, add or remove a tag, for up to 10,000 Issues: the
+    ones picked, or every one matching the query.
+  - A preview first, as counts: what changes, what already is as asked, what is left alone and
+    why. Applying names the count the preview showed; if the list changed since, nothing changes.
+  - One audit entry per Issue and one for the batch, in one commit. Undo for 10 seconds puts back
+    every Issue nobody changed since.
+  - Risk acceptance stays in its own four-eyes flow: the preview groups the selection by project
+    for one request each. Migration 0047.
+  - At 100,000 Issues, 6,000 tagged in 0.7 s and undone in 1 s.
 - **Metrics layer (Week 70, plan §48.1, ADR-0054).**
   - Twelve metrics, each with a written definition kept in one place. The same text is each
     widget's tooltip and `docs/metrics.md`.

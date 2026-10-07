@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useId, useState } from "react";
 import {
   API_URL, ApiError, createReportLink, deleteReport, downloadReportPdf, downloadReportSignature, draftReportSummary,
-  generateReport, getReport, listAssets, listFrameworks, listPortfolios, listReportLinks, listReportRuns, reviewReportSummary,
+  generateReport, getReport, listAssets, listFrameworks, listIssueViews, listPortfolios, listReportLinks, listReportRuns, reviewReportSummary,
   revokeReportLink, saveReport,
 } from "@/lib/api";
 import { CATALOGUE, describeFilters, type WidgetFilters } from "@/lib/dashboard";
@@ -13,6 +13,7 @@ import {
   ACCEPTANCE_STATES, BLOCK_LABEL, BLOCK_TYPES, ISSUE_KINDS, WEEKDAYS, idFrom, moveBlock, newBlock, scheduleWords,
   type Block, type BlockType, type NewLink, type Report, type ReportLink, type ReportRun, type Schedule,
 } from "@/lib/reports";
+import type { SavedView } from "@/lib/issues";
 import type { AssetSummary, ComplianceFramework, Portfolio } from "@/lib/types";
 import { Button } from "@/design-system/primitives/Button";
 import { Dialog } from "@/design-system/primitives/Dialog";
@@ -87,9 +88,9 @@ function SummaryEditor({ report, block, onReport, onText, locked }: {
   );
 }
 
-function BlockSettings({ block, onChange, frameworks, portfolios, projects, names }: {
+function BlockSettings({ block, onChange, frameworks, portfolios, projects, names, views }: {
   block: Block; onChange: (b: Block) => void; frameworks: ComplianceFramework[]; portfolios: Portfolio[];
-  projects: AssetSummary[]; names: Record<string, string>;
+  projects: AssetSummary[]; names: Record<string, string>; views: SavedView[];
 }) {
   const id = useId();
   const [filtering, setFiltering] = useState(false);
@@ -136,6 +137,32 @@ function BlockSettings({ block, onChange, frameworks, portfolios, projects, name
     case "metric":
       return <div className="rep-fields">{select("metric", "Metric", CATALOGUE.map((m) => [m.metric, m.title]))}{filters}</div>;
     case "issues":
+      if (c.kind === "view") {
+        const chosen = views.find((v) => v.id === c.view_id);
+        return (
+          <div className="rep-fields">
+            {text("title", "Heading (optional)", 120)}
+            {select("kind", "Which issues", ISSUE_KINDS)}
+            <div className="rep-field">
+              <label htmlFor={`${id}-view`} className="dash-label">Saved view</label>
+              <select id={`${id}-view`} value={String(c.view_id ?? "")} aria-describedby={`${id}-view-q`}
+                onChange={(e) => set({ view_id: e.target.value || null })}>
+                <option value="">Choose a view…</option>
+                {views.map((v) => <option key={v.id} value={v.id}>{v.name}{v.builtin ? " (built in)" : ""}</option>)}
+              </select>
+              <p id={`${id}-view-q`} className="dash-muted dash-small">
+                {chosen ? <>Shows <code>{chosen.query || "the active queue"}</code> as it is when the report is generated; <q>me</q> is the report&apos;s owner.</>
+                  : <>Views are saved from the <Link href="/app/issues">Issues</Link> list.</>}
+              </p>
+            </div>
+            <div className="rep-field">
+              <label htmlFor={`${id}-limit`} className="dash-label">At most</label>
+              <input id={`${id}-limit`} type="number" min={1} max={200} value={Number(c.limit ?? 50)}
+                onChange={(e) => set({ limit: Number(e.target.value) })} />
+            </div>
+          </div>
+        );
+      }
       return (
         <div className="rep-fields">
           {text("title", "Heading (optional)", 120)}
@@ -312,6 +339,7 @@ export function ReportBuilder({ reportId }: { reportId: string }) {
   const [frameworks, setFrameworks] = useState<ComplianceFramework[]>([]);
   const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
   const [projects, setProjects] = useState<AssetSummary[]>([]);
+  const [views, setViews] = useState<SavedView[]>([]);
   const say = (text: string) => setAnnounce((a) => ({ text, n: a.n + 1 }));
 
   const show = useCallback((r: Report) => { setReport(r); setDraft(r); }, []);
@@ -321,6 +349,7 @@ export function ReportBuilder({ reportId }: { reportId: string }) {
     listFrameworks().then(setFrameworks, () => setFrameworks([]));
     listPortfolios().then(setPortfolios, () => setPortfolios([]));
     listAssets().then(setProjects, () => setProjects([]));
+    listIssueViews().then(setViews, () => setViews([]));
   }, [reportId, show]);
 
   // The worker renders a queued report; look again every two seconds until it is done or failed.
@@ -416,7 +445,7 @@ export function ReportBuilder({ reportId }: { reportId: string }) {
               <SummaryEditor report={report} block={b} onReport={show} locked={otherDirty}
                 onText={(t) => setBlocks(draft.blocks.map((x) => (x.id === b.id ? { ...x, config: { ...x.config, text: t } } : x)))} />
             ) : (
-              <BlockSettings block={b} frameworks={frameworks} portfolios={portfolios} projects={projects} names={names}
+              <BlockSettings block={b} frameworks={frameworks} portfolios={portfolios} projects={projects} names={names} views={views}
                 onChange={(nb) => setBlocks(draft.blocks.map((x) => (x.id === b.id ? nb : x)))} />
             )}
             {blockError(n)}

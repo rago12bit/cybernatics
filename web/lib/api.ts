@@ -5,6 +5,7 @@ import type { VexJustification, AsvsBenchmark, ComplianceFramework, EvidencePack
   StrideRow, ThreatModel, RetentionSettings, Citation, CopilotConversation, CopilotMessage, CostSummary, DependenciesView, Finding, FindingsPage, FindingsQuery, GenerateHypothesesResult, Guidance, GuidanceApi, Hypothesis, IssueHistoryEvent, ProjectOverview, Remediation, ScanComparison, ScanCost, ScanSummary, ScanView, TriageAssistantView, TriageStatus, VerifiedFixStarted, VerifiedFixView } from "./types";
 import type { AssignedIssue, Dashboard, DashboardList, Me, MetricIssue, MetricResult, MyEngagement, Role, UnitOverview, UnitSummary, Widget } from "./dashboard";
 import { findingsQueryString } from "./format";
+import type { BulkAction, BulkParams, BulkPreview, BulkResult, IssuePage, SavedView as SavedIssueView, Selection, TablePrefs, UndoResult, ViewInput } from "./issues";
 import type { Block, NewLink, Report as ReportT, ReportLink as ReportLinkT, ReportRun as ReportRunT, ReportTemplate, Schedule } from "./reports";
 
 export const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/$/, "");
@@ -856,3 +857,25 @@ export const createReportLink = (runId: string, days: number) =>
   request<NewLink>(`/v2/report-runs/${enc(runId)}/links`, json("POST", { days }));
 export const listReportLinks = (runId: string) => request<ReportLinkT[]>(`/v2/report-runs/${enc(runId)}/links`);
 export const revokeReportLink = (id: string) => request<ReportLinkT>(`/v2/report-links/${enc(id)}`, { method: "DELETE" });
+
+/** The org-wide Issues list (Week 73, plan §56): the query language, saved views, table settings,
+ * and bulk actions with a preview and Undo. */
+export const searchIssues = (params: URLSearchParams, signal?: AbortSignal) =>
+  request<IssuePage>(`/v2/issues?${params.toString()}`, { signal });
+export const suggestIssueValues = (key: string, prefix: string, signal?: AbortSignal) =>
+  request<{ key: string; values: string[] }>(`/v2/issues/suggest?key=${enc(key)}&prefix=${enc(prefix)}`, { signal });
+export const listIssueViews = () => request<SavedIssueView[]>("/v2/issue-views");
+export const createIssueView = (body: ViewInput) => request<SavedIssueView>("/v2/issue-views", json("POST", body));
+export const saveIssueView = (id: string, body: ViewInput) => request<SavedIssueView>(`/v2/issue-views/${enc(id)}`, json("PUT", body));
+export const deleteIssueView = (id: string) => request<void>(`/v2/issue-views/${enc(id)}`, { method: "DELETE" });
+export const copyIssueView = (id: string) => request<SavedIssueView>(`/v2/issue-views/${enc(id)}/copy`, { method: "POST" });
+export const importIssueViews = (views: { name: string; query: string; sort?: string }[]) =>
+  request<{ imported: SavedIssueView[]; skipped: number }>("/v2/issue-views/import", json("POST", { views }));
+export const getTablePrefs = (table: string) => request<TablePrefs>(`/v2/me/tables/${enc(table)}`);
+export const setTablePrefs = (table: string, body: Partial<Pick<TablePrefs, "columns" | "density">>) =>
+  request<TablePrefs>(`/v2/me/tables/${enc(table)}`, json("PUT", body));
+export const previewBulk = (body: Selection & { action: BulkAction; params: BulkParams }) =>
+  request<BulkPreview>("/v2/issues/bulk/preview", json("POST", body));
+export const applyBulk = (body: Selection & { action: BulkAction; params: BulkParams; expected_count: number }) =>
+  request<BulkResult>("/v2/issues/bulk", json("POST", body));
+export const undoBulk = (batchId: string) => request<UndoResult>(`/v2/issue-batches/${enc(batchId)}/undo`, { method: "POST" });

@@ -109,8 +109,8 @@ export function SiteHeader() {
   const appLink = (l: { href: string; label: string }) => (
     <Link key={l.href} href={l.href} aria-current={isCurrent(path, l.href) ? "page" : undefined} onClick={() => setMenu(false)}>{l.label}</Link>
   );
-  const appDesktop = [...APP_LINKS.slice(0, 2).map(appLink), <InboxLink key="inbox" path={path} unread={unread} />, ...APP_LINKS.slice(2).map(appLink)];
-  const appMobile = [...APP_LINKS.slice(0, 2).map(appLink), <InboxLink key="inbox" path={path} unread={unread} onClick={() => setMenu(false)} />, ...APP_LINKS.slice(2).map(appLink), ...MORE_LINKS.map(appLink)];
+  const appDesktop = [...APP_LINKS.slice(0, 3).map(appLink), <InboxLink key="inbox" path={path} unread={unread} />, ...APP_LINKS.slice(3).map(appLink)];
+  const appMobile = [...APP_LINKS.slice(0, 3).map(appLink), <InboxLink key="inbox" path={path} unread={unread} onClick={() => setMenu(false)} />, ...APP_LINKS.slice(3).map(appLink), ...MORE_LINKS.map(appLink)];
 
   return (
     <header className="top">

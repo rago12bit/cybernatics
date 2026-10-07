@@ -1,0 +1,184 @@
+/* The Issues list (plan §56), in the blueprint look: hairlines, 2px corners, mono uppercase labels. */
+.iss { --iss-pad-y: 0.6rem; }
+.iss-compact { --iss-pad-y: 0.3rem; }
+.iss-layout { display: grid; grid-template-columns: minmax(15rem, 18rem) minmax(0, 1fr); gap: var(--ds-space-3); align-items: start; }
+.iss-label { font: 400 var(--ds-text-1)/1.2 var(--ds-font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ds-muted); }
+.iss-muted { color: var(--ds-muted); }
+.iss-small { font-size: var(--ds-text-1); margin: 0.35rem 0 0; }
+.iss-error { color: var(--ds-danger); margin: 0.5rem 0; }
+.iss-ok { color: var(--ds-ok); font-family: var(--ds-font-mono); font-size: var(--ds-text-1); text-transform: uppercase; letter-spacing: 0.08em; }
+.iss-link { background: none; border: 0; padding: 0; color: var(--ds-brand); font: inherit; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.iss-link:focus-visible, .iss button:focus-visible { outline: 2px solid var(--ds-brand); outline-offset: 2px; }
+.iss input:not([type="checkbox"]):not([type="radio"]), .iss select, .iss textarea,
+.iss-bulk input, .iss-bulk textarea, .ds-dialog-content .iss-field input {
+  font: inherit; color: var(--ds-ink); background: var(--ds-inset);
+  border: 1px solid var(--ds-rule); border-radius: var(--ds-radius-input); padding: 0.4rem 0.55rem; min-width: 0;
+}
+.iss-field { display: flex; flex-direction: column; gap: 0.3rem; margin: 0 0 0.75rem; }
+.iss-field input, .iss-field textarea { width: 100%; }
+.iss-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+
+/* The side: saved views, then the grouped filters */
+.iss-side { border: 1px solid var(--ds-rule); background: var(--ds-raised); }
+.iss-side-toggle { display: none; width: 100%; }
+.iss-views { padding: 0.9rem 1rem; border-bottom: 1px solid var(--ds-rule); }
+.iss-views-head { margin: 0 0 0.5rem; font-size: var(--ds-text-3); }
+.iss-views h3 { margin: 0.75rem 0 0.3rem; }
+.iss-panel-head { padding: 0.75rem 1rem 0.25rem; margin: 0; }
+.iss-viewlist { list-style: none; margin: 0; padding: 0; }
+.iss-viewlist button {
+  width: 100%; text-align: left; background: none; border: 0; border-left: 2px solid transparent;
+  color: var(--ds-ink-2); padding: 0.3rem 0.5rem; font: inherit; font-size: var(--ds-text-2); cursor: pointer;
+}
+.iss-viewlist button:hover { color: var(--ds-ink); background: var(--ds-raised-2); }
+.iss-viewlist button[aria-current="true"] { border-left-color: var(--ds-brand); color: var(--ds-ink); background: var(--ds-brand-wash); }
+.iss-view-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.75rem; }
+.iss-import { border: 1px solid var(--ds-brand); background: var(--ds-brand-wash); padding: 0.6rem 0.75rem; margin: 0 0 0.75rem; }
+.iss-import p { margin: 0 0 0.5rem; font-size: var(--ds-text-2); }
+
+.iss-panel { padding: 0.25rem 0 0.75rem; }
+.iss-group { border-bottom: 1px solid var(--ds-rule); }
+.iss-group:last-of-type { border-bottom: 0; }
+.iss-group-head { margin: 0; }
+.iss-group-head button {
+  display: flex; align-items: center; gap: 0.5rem; width: 100%; background: none; border: 0; color: var(--ds-ink);
+  padding: 0.7rem 1rem; font: 500 var(--ds-text-2)/1.3 var(--ds-font-sans); text-align: left; cursor: pointer;
+}
+.iss-group-head button:hover { background: var(--ds-raised-2); }
+.iss-caret { color: var(--ds-muted); width: 0.8rem; }
+.iss-count {
+  margin-left: auto; font: 400 var(--ds-text-1)/1 var(--ds-font-mono); text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--ds-brand); border: 1px solid var(--ds-brand); background: var(--ds-brand-wash); padding: 0.2rem 0.35rem;
+}
+.iss-group-body { padding: 0 1rem 0.9rem; display: grid; gap: 0.9rem; }
+.iss-values { border: 0; margin: 0; padding: 0; display: grid; gap: 0.25rem; }
+.iss-values legend { margin-bottom: 0.35rem; padding: 0; }
+.iss-check { display: flex; align-items: center; gap: 0.5rem; font-size: var(--ds-text-2); color: var(--ds-ink-2); }
+.iss-names { display: grid; gap: 0.35rem; }
+.iss-add { display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap; }
+.iss-add input { flex: 1 1 6rem; }
+.iss-add .ds-button { padding: 0.35rem 0.6rem; }
+.iss-days { width: 4.5rem; flex: none !important; }
+.iss-tokens, .iss-chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.iss-tokens li, .iss-chips li > span {
+  display: inline-flex; align-items: center; gap: 0.3rem; font-size: var(--ds-text-1);
+}
+.iss-tokens li { border: 1px solid var(--ds-rule-strong); padding: 0.15rem 0.2rem 0.15rem 0.45rem; color: var(--ds-ink-2); }
+.iss-tokens button, .iss-chips button:not(.iss-clear), .iss-x {
+  background: none; border: 0; color: var(--ds-muted); cursor: pointer; font-size: 1rem; line-height: 1; padding: 0.1rem 0.3rem;
+}
+.iss-tokens button:hover, .iss-chips button:not(.iss-clear):hover, .iss-x:hover { color: var(--ds-ink); }
+
+/* The main column */
+.iss-main { min-width: 0; }
+.iss-query { position: relative; margin-bottom: 0.75rem; }
+.iss-query-row { display: flex; gap: 0.5rem; margin-top: 0.35rem; }
+.iss-query-input { flex: 1; font-family: var(--ds-font-mono) !important; font-size: var(--ds-text-2) !important; padding: 0.55rem 0.7rem !important; }
+.iss-query-input[aria-invalid="true"] { border-color: var(--ds-danger) !important; }
+.iss-suggest {
+  position: absolute; z-index: 20; left: 0; right: 0; top: 4.6rem; margin: 0; padding: 0.25rem 0; list-style: none;
+  background: var(--ds-raised-2); border: 1px solid var(--ds-rule-strong); box-shadow: var(--ds-elevation-float); max-height: 16rem; overflow: auto;
+}
+.iss-suggest li { padding: 0.35rem 0.75rem; cursor: pointer; font-size: var(--ds-text-2); }
+.iss-suggest li.active, .iss-suggest li:hover { background: var(--ds-brand-wash); }
+.iss-hint { color: var(--ds-muted); font-size: var(--ds-text-1); }
+.iss-help { margin: 0.35rem 0 0; font-size: var(--ds-text-1); color: var(--ds-muted); }
+.iss-query-error { margin-top: 0.4rem; font-size: var(--ds-text-2); color: var(--ds-danger); }
+.iss-query-error p { margin: 0.2rem 0 0; }
+.iss-echo { font-family: var(--ds-font-mono); color: var(--ds-ink-2); white-space: pre-wrap; overflow-wrap: anywhere; }
+.iss-echo mark { background: none; color: var(--ds-danger); text-decoration: underline wavy var(--ds-danger); text-underline-offset: 4px; }
+.iss-keys { margin-top: 0.35rem; font-size: var(--ds-text-1); color: var(--ds-muted); }
+.iss-keys summary { cursor: pointer; width: max-content; }
+.iss-keys dl { display: grid; grid-template-columns: max-content 1fr; gap: 0.2rem 0.75rem; margin: 0.5rem 0 0; }
+.iss-keys dl > div { display: contents; }
+.iss-keys dd { margin: 0; }
+
+.iss-chips { margin: 0 0 0.75rem; align-items: center; }
+.iss-chips li > span { border: 1px solid var(--ds-brand); background: var(--ds-brand-wash); color: var(--ds-ink); padding: 0.2rem 0.45rem; }
+.iss-chips li { display: inline-flex; align-items: center; }
+.iss-clear { background: none; border: 0; color: var(--ds-brand); font: 400 var(--ds-text-1)/1 var(--ds-font-mono); text-transform: uppercase; letter-spacing: 0.08em; cursor: pointer; padding: 0.3rem 0.4rem; }
+
+.iss-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; margin: 0 0 0.6rem; }
+.iss-total { margin: 0 auto 0 0; font-size: var(--ds-text-2); }
+.iss-total strong { font-size: var(--ds-text-4); font-weight: 600; margin-right: 0.15rem; }
+.iss-bulkbar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; padding: 0.5rem 0.75rem; margin: 0 0 0.5rem;
+  border: 1px solid var(--ds-brand); background: var(--ds-brand-wash);
+}
+.iss-picked { margin-right: 0.5rem; font-size: var(--ds-text-2); }
+.iss-selectall { margin: 0 0 0.5rem; font-size: var(--ds-text-2); color: var(--ds-ink-2); }
+.iss-undo {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; padding: 0.55rem 0.75rem; margin: 0 0 0.6rem;
+  border: 1px solid var(--ds-rule-strong); border-left: 3px solid var(--ds-ok); background: var(--ds-raised-2); font-size: var(--ds-text-2);
+}
+.iss-undo .iss-x { margin-left: auto; }
+.iss-said { margin: 0 0 0.6rem; font-size: var(--ds-text-2); color: var(--ds-ok); }
+.iss-empty { border: 1px dashed var(--ds-rule-strong); padding: 1.5rem; text-align: center; color: var(--ds-muted); }
+
+.iss-scroll { overflow-x: auto; border: 1px solid var(--ds-rule); }
+.iss-scroll:focus-visible { outline: 2px solid var(--ds-brand); outline-offset: 2px; }
+.iss-table { width: 100%; border-collapse: collapse; font-size: var(--ds-text-2); }
+.iss-table thead th {
+  position: sticky; top: 0; background: var(--ds-raised); text-align: left; white-space: nowrap;
+  font: 400 var(--ds-text-1)/1.2 var(--ds-font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ds-muted);
+  padding: 0.55rem 0.6rem; border-bottom: 1px solid var(--ds-rule-strong);
+}
+.iss-table td, .iss-table tbody th { padding: var(--iss-pad-y) 0.6rem; border-bottom: 1px solid var(--ds-rule); vertical-align: top; text-align: left; font-weight: 400; }
+.iss-table tbody tr:hover { background: var(--ds-raised); }
+.iss-table tbody tr.picked { background: var(--ds-brand-wash); }
+.iss-pick { width: 2.25rem; }
+.iss-title { min-width: 16rem; }
+.iss-title a { color: var(--ds-ink); text-decoration: none; }
+.iss-title a:hover { color: var(--ds-brand); text-decoration: underline; text-underline-offset: 3px; }
+.iss-c-project, .iss-c-first_seen, .iss-c-last_seen, .iss-c-fixed, .iss-c-status, .iss-c-sla { white-space: nowrap; color: var(--ds-ink-2); }
+.iss-sev { display: inline-flex; align-items: center; gap: 0.35rem; white-space: nowrap; }
+.iss-band { font-family: var(--ds-font-mono); font-size: var(--ds-text-1); border: 1px solid var(--ds-rule-strong); padding: 0.1rem 0.35rem; white-space: nowrap; }
+.iss-band-P1 { border-color: var(--ds-sev-critical); color: var(--ds-sev-critical); }
+.iss-band-P2 { border-color: var(--ds-sev-high); color: var(--ds-sev-high); }
+.iss-band-P3 { border-color: var(--ds-sev-medium); color: var(--ds-sev-medium); }
+.iss-sla-breached { color: var(--ds-danger); }
+.iss-sla-due_soon { color: var(--ds-sev-medium); }
+.iss-path { font-size: var(--ds-text-1); overflow-wrap: anywhere; }
+.iss-more { display: flex; align-items: center; gap: 0.75rem; margin-top: 0.75rem; font-size: var(--ds-text-2); }
+
+/* Dialogs */
+.iss-bulk { display: grid; gap: 0.5rem; }
+.iss-preview { border-top: 1px solid var(--ds-rule); padding-top: 0.75rem; margin-top: 0.25rem; }
+.iss-sentence { margin: 0 0 0.6rem; }
+.iss-mini { border-collapse: collapse; font-size: var(--ds-text-2); margin: 0 0 0.25rem; }
+.iss-mini th, .iss-mini td { padding: 0.25rem 0.75rem 0.25rem 0; border-bottom: 1px solid var(--ds-rule); text-align: left; }
+.iss-mini th { font: 400 var(--ds-text-1)/1.2 var(--ds-font-mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--ds-muted); }
+.iss-mini .num { text-align: right; font-variant-numeric: tabular-nums; }
+.iss-flow { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.4rem; }
+.iss-flow li { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; border: 1px solid var(--ds-rule); padding: 0.4rem 0.6rem; }
+.iss-subflow { border-top: 1px solid var(--ds-rule); margin-top: 0.75rem; padding-top: 0.75rem; }
+.iss-subflow h3 { margin: 0 0 0.5rem; font-size: var(--ds-text-3); }
+.iss-colpick { list-style: none; padding: 0; margin: 0 0 0.75rem; display: grid; gap: 0.25rem; }
+.iss-colpick li { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
+.iss-move { display: inline-flex; gap: 0.25rem; }
+.iss-move .ds-button { padding: 0.2rem 0.45rem; }
+
+@media (max-width: 899px) {
+  .iss-layout { grid-template-columns: minmax(0, 1fr); }
+  .iss-side-toggle { display: block; }
+  .iss-side { border: 0; background: none; }
+  .iss-side-body { display: none; border: 1px solid var(--ds-rule); background: var(--ds-raised); margin-top: 0.5rem; }
+  .iss-side-body.open { display: block; }
+}
+@media (max-width: 559px) {
+  .iss-query-row { flex-direction: column; }
+  .iss-title { min-width: 12rem; }
+}
+
+/* The site's global label and th styles are for forms and data tables elsewhere; here labels sit
+ * beside their controls and the row header is the Issue's title. */
+.iss label, .ds-dialog-content .iss-check, .ds-dialog-content .iss-label { margin: 0; }
+.iss-check, .ds-dialog-content .iss-check {
+  display: flex; font: 400 var(--ds-text-2)/1.35 var(--ds-font-sans); letter-spacing: normal; text-transform: none; color: var(--ds-ink-2);
+}
+.iss label.iss-label { display: block; }
+.iss-query > .iss-label { margin-bottom: 0; }
+.iss-table tbody th { font: 400 var(--ds-text-2)/1.4 var(--ds-font-sans); letter-spacing: normal; text-transform: none; color: var(--ds-ink); background: none; }
+.iss-table thead th { background: var(--ds-raised); }
+.iss-toolbar select { width: auto; font-size: var(--ds-text-2); padding: 0.4rem 0.55rem; }
+.iss-toolbar .iss-label { margin: 0; }

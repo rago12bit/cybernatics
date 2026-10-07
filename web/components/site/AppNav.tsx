@@ -16,6 +16,7 @@ export type NavLink = { href: string; label: string };
 export const APP_LINKS: NavLink[] = [
   { href: "/app", label: "Home" },
   { href: "/app/projects", label: "Projects" },
+  { href: "/app/issues", label: "Issues" },
   { href: "/app/dashboards", label: "Dashboards" },
   { href: "/app/advisories", label: "Advisories" },
   { href: "/app/risk-acceptances", label: "Approvals" },
