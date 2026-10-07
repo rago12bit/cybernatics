@@ -13,6 +13,7 @@ import { Button } from "@/design-system/primitives/Button";
 import { Dialog } from "@/design-system/primitives/Dialog";
 import { RiskAcceptanceRequest } from "@/components/RiskAcceptanceRequest";
 import { useMode } from "@/design-system/mode";
+import { shortLocation } from "@/lib/format";
 import { legacyToQuery } from "@/lib/issues";
 import { setIssueNavList } from "@/lib/issue-nav";
 import "./issues-table.css";
@@ -103,7 +104,7 @@ export function IssuesTable({ assetId }: { assetId: string }) {
           return (
             <div className="ds-issue-main">
               <Link href={`/app/projects/${assetId}/issues/${f.issue?.id ?? ""}`} className="ds-issue-title">{f.title}</Link>
-              {mode === "novice" && <code className="ds-issue-loc">{f.location.path}:{f.location.start_line}</code>}
+              {mode === "novice" && <code className="ds-issue-loc">{shortLocation(f)}</code>}
             </div>
           );
         },

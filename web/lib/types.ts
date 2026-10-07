@@ -363,7 +363,8 @@ export interface Finding {
   fingerprint: string;
   title: string;
   description: string;
-  location: { path: string; start_line: number; end_line: number; snippet: string };
+  // A DAST finding has no file: its place is `host` + `route` (ADR-0041), and `path` is "".
+  location: { path: string; start_line: number; end_line: number; snippet: string; route?: string | null; host?: string | null };
   taxonomy: {
     category: string;
     cwe: string[];

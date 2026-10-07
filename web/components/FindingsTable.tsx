@@ -204,8 +204,9 @@ export function FindingsTable({ scan, version, fetchFindings = getFindings, guid
               <caption className="sr-only">Findings for this scan. Use arrow keys to move between rows and Enter to open one.</caption>
               <thead><tr><th scope="col">Severity</th><th scope="col">Finding</th><th scope="col">Location</th><th scope="col">Scanners</th></tr></thead>
               <tbody ref={tbody} onKeyDown={onRowKeys}>
-                {page.items.map((f) => (
-                  <tr key={f.id} className={selected?.id === f.id ? "selected" : ""}>
+                {page.items.map((f, i) => (
+                  // A scanner can report one rule twice on one line, giving two findings one id.
+                  <tr key={`${f.id}#${i}`} className={selected?.id === f.id ? "selected" : ""}>
                     <td><span className="sevcell"><SeverityBadge severity={f.scoring.normalized_severity} /><RiskSignals score={f.scoring.risk_score} kev={f.scoring.in_cisa_kev} epss={f.scoring.epss_score} /></span></td>
                     <td>
                       <button type="button" className="row-title" data-fid={f.id} onClick={(e) => select(f, e.currentTarget)} aria-pressed={selected?.id === f.id}><span className="clamp">{f.title}</span></button>

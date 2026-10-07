@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { agreementLabel, dedupSummary, defaultQuery, findingsQueryString, formatDuration, issueSummary, locationLabel, pageCount } from "../lib/format";
+import { agreementLabel, dedupSummary, defaultQuery, findingsQueryString, formatDuration, issueSummary, locationLabel, pageCount, shortLocation } from "../lib/format";
 import { readFileSync } from "node:fs";
 import { OWASP_2021, owaspLabel } from "../lib/owasp";
 import { cveUrl, cweUrl, owaspUrl, safeHttpsUrl } from "../lib/safe";
@@ -93,6 +93,12 @@ describe("labels", () => {
   it("durations and locations", () => {
     expect([0.2, 5.4, 75, null].map(formatDuration)).toEqual(["<1s", "5s", "1m 15s", ""]);
     expect(locationLabel(finding(1))).toBe("a.py:3-5");
+    // A DAST finding (ADR-0041) has no file; it used to read ":0".
+    const web = finding(1);
+    web.location = { path: "", start_line: 0, end_line: 0, snippet: "", route: "/ftp", host: "http://localhost:3000" };
+    expect(locationLabel(web)).toBe("http://localhost:3000/ftp");
+    expect(shortLocation(web)).toBe("http://localhost:3000/ftp");
+    expect(shortLocation(finding(1))).toBe("a.py:3");
   });
 });
 

@@ -5,6 +5,7 @@ import { ProjectOwner } from "@/components/ProjectOwner";
 import { TagsEditor } from "@/components/TagsEditor";
 import { useEffect, useState } from "react";
 import { ApiError, getAssetOverview } from "@/lib/api";
+import { shortLocation } from "@/lib/format";
 import { CopilotPanel } from "@/components/CopilotPanel";
 import type { ProjectOverview as ProjectOverviewData } from "@/lib/types";
 import { SeverityBadge } from "@/design-system/severity";
@@ -123,7 +124,7 @@ export function ProjectOverview({ assetId }: { assetId: string }) {
                   </WhyRankedTrigger>
                   <div className="ds-ov-item-meta">
                     <SeverityBadge severity={severityKey(f.scoring.normalized_severity)} reachable={f.scoring.reachable !== false} />
-                    <code>{f.location.path}:{f.location.start_line}</code>
+                    <code>{shortLocation(f)}</code>
                   </div>
                 </div>
                 <Link href={f.issue ? `/app/projects/${assetId}/issues/${f.issue.id}` : `/scans/${data.latest_scan_id}`} className="ds-ov-item-action">View →</Link>

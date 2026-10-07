@@ -74,8 +74,15 @@ export function formatDuration(seconds: number | null): string {
 }
 
 export function locationLabel(f: Finding): string {
-  const { path, start_line: a, end_line: b } = f.location;
+  const { path, start_line: a, end_line: b, route, host } = f.location;
+  if (!path && route) return `${host ?? ""}${route}`; // a web finding: where it was reached, not a file
   return b > a ? `${path}:${a}-${b}` : `${path}:${a}`;
+}
+
+// One line, no range: the Issues list and the project overview.
+export function shortLocation(f: Finding): string {
+  const { path, start_line, route, host } = f.location;
+  return !path && route ? `${host ?? ""}${route}` : `${path}:${start_line}`;
 }
 
 export function nativeSeverities(f: Finding): string {

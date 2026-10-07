@@ -32,7 +32,7 @@ export function FixFirst({ scanId, version, fetchFindings, onOpen }: { scanId: s
       </div>
       <ol className="fixlist">
         {items.map((f, i) => (
-          <li key={f.id}>
+          <li key={`${f.id}#${i}`}>
             <span className="rank" aria-hidden="true">{i + 1}</span>
             <div className="fix-main">
               <button type="button" className="row-title" data-fid={f.id} onClick={(e) => onOpen(f, e.currentTarget, items)}><span className="clamp">{f.title}</span></button>
