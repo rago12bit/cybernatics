@@ -203,6 +203,25 @@ def test_nessus_csv_cut_off_mid_row_is_an_error() -> None:
     assert not r.complete and ("cut off" in (r.error or ""))
 
 
+def test_nessus_csv_cut_just_before_the_last_field_is_an_error() -> None:
+    """Found by the prefix property test: cut after `...deprecate-00",`, the row's last field
+    (Plugin Output) reads as empty, so the row is as wide as the header and used to pass as whole,
+    complete and able to close Issues."""
+    raw = NESSUS_CSV.rstrip()
+    assert raw[:29061].endswith(b'oldversions-deprecate-00",')
+    r = run("nessus", raw[:29061])
+    assert not r.complete and "cut off" in (r.error or "")
+
+
+def test_nessus_csv_cut_inside_an_escaped_quote_is_an_error() -> None:
+    """Cut between the two quotes of `""Strict-Transport-Security""`, the first reads as the field's
+    closing quote: a well-formed, full-width row whose last field is short."""
+    raw = NESSUS_CSV.rstrip()
+    cut = raw.index(b'""Strict-Transport-Security""') + 1
+    r = run("nessus", raw[:cut])
+    assert not r.complete and "cut off" in (r.error or "")
+
+
 def test_nessus_csv_with_only_a_header_closes_nothing() -> None:
     header = NESSUS_CSV.split(b"\n", 1)[0] + b"\n"
     r = run("nessus", header)
@@ -220,6 +239,23 @@ def test_csv_reader_limits_and_quotes() -> None:
     assert rows == [["a", "b"], ["x\ny", "2"]]  # BOM stripped, newline kept inside quotes
     with pytest.raises(Exception, match="cut off"):
         list(iter_csv(io.BytesIO(b'a,b\n"never closed'), ParseContext()))
+
+
+@pytest.mark.parametrize(
+    "data",
+    # The last is `1,"x ""quoted"""` cut inside its escaped quote.
+    [b'"a","b","c"\n"1","2",', b'"a";"b"\n"1";', b'a,b\n"1","2"', b'a,b\n1,"x "'],
+)
+def test_csv_ending_on_a_quoted_field_with_no_line_break_reads_as_cut(data: bytes) -> None:
+    with pytest.raises(Exception, match="cut off"):
+        list(iter_csv(io.BytesIO(data), ParseContext()))
+
+
+@pytest.mark.parametrize("data", [b"a,b,c\n1,2,", b"a,b\n1,2", b'a,b\n"1","2"\n', b'a,b\n"1",2'])
+def test_csv_that_ends_unquoted_or_with_a_line_break_still_reads(data: bytes) -> None:
+    """Real Tenable exports (nessus-template.csv, nessus_new.csv) end with no line break, on an
+    unquoted field; a cut there cannot be told from a whole file, so it is not refused."""
+    assert len(list(iter_csv(io.BytesIO(data), ParseContext()))) == 2
 
 
 # --- OpenVAS --------------------------------------------------------------------------------------
@@ -307,8 +343,8 @@ def test_no_strict_prefix_of_a_report_reads_as_a_complete_one(which: str, fracti
     """A file cut off anywhere is an error, or is read as a report that cannot close anything (a CSV
     cut inside its header line is a header and no rows) -- except a CSV cut exactly between two
     rows, which is a valid shorter CSV and cannot be told apart from one."""
-    parser, raw = FILES[which]
-    raw = raw.rstrip()
+    parser, whole = FILES[which]
+    raw = whole.rstrip()
     cut = int(len(raw) * fraction)
     r = run(parser, raw[:cut])
     row_boundary = which.endswith("csv") and (
@@ -317,7 +353,7 @@ def test_no_strict_prefix_of_a_report_reads_as_a_complete_one(which: str, fracti
     safe = not r.complete or not r.can_close_missing
     assert safe or row_boundary or (cut == 0 and r.findings == []), (which, cut)
     if r.complete and row_boundary and which.endswith("csv"):
-        assert len(r.findings) <= len(run(parser, raw).findings)
+        assert len(r.findings) <= len(run(parser, whole).findings)
 
 
 @settings(max_examples=200, deadline=None)

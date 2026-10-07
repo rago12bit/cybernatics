@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import codecs
 import csv
-import itertools
 import re as _stdlib_re
 from collections.abc import Callable, Iterator
 from typing import Any, BinaryIO
@@ -185,14 +184,30 @@ def iter_xml(
 def iter_csv(stream: BinaryIO, ctx: ParseContext) -> Iterator[list[str]]:
     """Rows of a CSV file (UTF-8, with or without a BOM), with the size, time and field-length
     limits enforced while reading, and an unterminated quoted field -- what a file cut off mid-row
-    looks like -- an error. The delimiter is `;` or `,`, whichever the header line uses more."""
+    looks like -- an error. The delimiter is `;` or `,`, whichever the header line uses more.
+
+    So is a file whose last row ends on a quoted field, or a delimiter just after one, with no line
+    break after it. A cut there reads as a whole row: `..."text",` gains an empty last field, so the
+    row is as wide as the header, and `..."text ""quoted` stops between the two quotes of an
+    escaped `""`, which reads as a closing one. Exporters that quote fields end every row with a
+    line break. An unquoted last row with no line break (`a,b,c`, as some real Tenable exports end)
+    cannot be told apart from a cut one and is left alone. Parsers still check row widths."""
     limits = ctx.limits
     csv.field_size_limit(max(csv.field_size_limit(), 16 * 1024 * 1024))
     limited: Any = LimitedStream(stream, limits.max_bytes)  # read() is all the reader needs
     text = codecs.getreader("utf-8-sig")(limited, "replace")
     first = text.readline()
     delimiter = ";" if first.count(";") > first.count(",") else ","
-    reader = csv.reader(itertools.chain([first], text), delimiter=delimiter, strict=True)
+    tail = first  # the last line the reader took: the end of the file once it stops
+
+    def lines() -> Iterator[str]:
+        nonlocal tail
+        yield first
+        for line in text:
+            tail = line
+            yield line
+
+    reader = csv.reader(lines(), delimiter=delimiter, strict=True)
     try:
         for n, row in enumerate(reader):
             if n % 1024 == 0:
@@ -200,6 +215,11 @@ def iter_csv(stream: BinaryIO, ctx: ParseContext) -> Iterator[list[str]]:
             yield row
     except csv.Error as exc:
         raise ParseAborted(f"not valid CSV ({exc}); the file may be cut off") from exc
+    if tail.removesuffix(delimiter).endswith('"'):
+        raise ParseAborted(
+            "the last row ends on a quoted field with no line break after it; "
+            "the file may be cut off"
+        )
 
 
 class SafePattern:

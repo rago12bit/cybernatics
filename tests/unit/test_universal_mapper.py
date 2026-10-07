@@ -115,6 +115,16 @@ def test_a_csv_missing_a_mapped_column_is_refused_not_read_as_empty() -> None:
     assert not r.complete and "File".lower() in (r.error or "")
 
 
+def test_a_csv_whose_last_row_is_short_reads_as_cut_off() -> None:
+    """A short row mid-file is read (some writers drop empty trailing fields); a short last row is
+    what a cut file looks like, and a cut file must not close the Issues it no longer lists."""
+    spec = {"format": "csv", "source": "acme-csv", "fields": {"title": "Title", "path": "File"}}
+    tolerated = parse(spec, b"Title,Severity,File\nXSS,High\nSQLi,High,db.py\n")
+    assert tolerated.complete and [f.title for f in tolerated.findings] == ["XSS", "SQLi"]
+    cut = parse(spec, b"Title,Severity,File\nXSS,High,a.js\nSQLi,Hi")
+    assert not cut.complete and "cut off" in (cut.error or "")
+
+
 def test_an_xml_mapping_reads_elements_and_attributes_ignoring_namespaces() -> None:
     xml = (
         b'<?xml version="1.0"?><r:report xmlns:r="urn:acme"><r:issues>'

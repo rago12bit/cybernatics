@@ -437,11 +437,21 @@ class UniversalParser(IngestParser):
             if missing:
                 raise ParseAborted(f"the CSV has no column(s) named {', '.join(missing)}")
             cols = {k: index[v] for k, v in c.fields.items()}
+            last: list[str] = header
             for row in rows:
                 if not any(cell.strip() for cell in row):
                     continue
+                last = row
                 yield lambda name, r=row: (
                     [r[cols[name]].strip()] if cols[name] < len(r) and r[cols[name]].strip() else []
+                )
+            # A short row mid-file is tolerated (some writers drop empty trailing fields); a short
+            # last row is what a file cut off mid-line looks like, and reimport closes whatever a
+            # file no longer lists.
+            if len(last) < len(header):
+                raise ParseAborted(
+                    f"the last row has {len(last)} fields and the header has {len(header)}; "
+                    "the file may be cut off"
                 )
 
     def _finding(self, get: Any, ctx: ParseContext) -> Finding | None:

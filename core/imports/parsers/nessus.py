@@ -9,7 +9,8 @@ no other.
 
 XML is streamed one `<ReportItem>` at a time. CSV is streamed row by row, and a row with fewer
 fields than the header -- what a file cut off mid-line looks like -- is an error, because reimport
-closes whatever a file no longer lists.
+closes whatever a file no longer lists. So is a cut that leaves the last row full width (see
+`iter_csv`).
 
 A report that lists no hosts at all, or a CSV with no rows, scanned nothing; it says nothing about
 what was fixed, so it closes nothing.
