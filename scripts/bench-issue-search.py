@@ -6,7 +6,9 @@ Seeds an organization inside Postgres (generate_series, seconds): P projects in 
 I Issues each -- a year of history, about a third fixed, some accepted and not a risk, bands,
 scores, assignees, SLA policies on half the projects, a tag on two portfolios. Then, as
 `bulwark_worker`, times each query 20 times (first page and its count) and pages 25 pages deep by
-cursor, reporting p50 and p95 against a 300 ms budget per page.
+cursor, reporting p50 and p95 against a 300 ms budget per page. Then a bulk change (core.search.bulk)
+of one business unit's open Issues, the most one batch may take (10,000) when there are that many:
+preview, apply (one audit entry per Issue, one commit) and undo, each timed once.
 
     BULWARK_BENCH_OWNER_URL=postgresql+psycopg://bulwark:...@localhost:55432/bulwark \
     BULWARK_BENCH_APP_URL=postgresql+psycopg://bulwark_worker:...@localhost:55432/bulwark \
@@ -34,6 +36,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from sqlalchemy import create_engine, text  # noqa: E402
 from sqlalchemy.orm import sessionmaker  # noqa: E402
 
+from core.search import bulk  # noqa: E402
 from core.search import issues as search  # noqa: E402
 from core.search.language import parse  # noqa: E402
 from core.tenancy import set_session_org  # noqa: E402
@@ -170,6 +173,29 @@ def main() -> int:
             print(
                 f"deep paging: first {pages[0]} ms, page 25 {pages[-1]} ms, worst {max(pages)} ms"
             )
+            # A bulk change: tag every open Issue of the largest units, up to one batch's cap.
+            units = max(1, min(10, bulk.MAX_BULK * 10 // max(1, result["issues"])))
+            bq = " ".join(["portfolio:" + ",".join(f"unit-{k}" for k in range(units))])
+            ctx = search.Context("token:bench0", datetime.now(timezone.utc))
+            t = time.perf_counter()
+            p = bulk.plan(s, org, "tag", {"tag": "bench"}, bq, None, ctx)
+            pv = bulk.preview(s, org, p)
+            t_preview = (time.perf_counter() - t) * 1000
+            t = time.perf_counter()
+            done = bulk.apply(s, org, "token:bench0", "tag", {"tag": "bench"}, bq, None,
+                              pv["expected_count"], ctx)  # fmt: skip
+            t_apply = (time.perf_counter() - t) * 1000
+            set_session_org(s, org)
+            t = time.perf_counter()
+            undone = bulk.undo(s, org, "token:bench0", done["batch_id"])
+            t_undo = (time.perf_counter() - t) * 1000
+            set_session_org(s, org)
+            timings["bulk tag, preview / apply / undo"] = {
+                "query": bq, "selected": pv["selected"], "changed": done["changed"],
+                "restored": undone["restored"], "preview_ms": round(t_preview, 1),
+                "apply_ms": round(t_apply, 1), "undo_ms": round(t_undo, 1)}  # fmt: skip
+            print(f"bulk tag of {done['changed']:,} Issues: preview {t_preview:.0f} ms, "
+                  f"apply {t_apply:.0f} ms, undo {t_undo:.0f} ms", flush=True)  # fmt: skip
         result["timings"] = timings
         result["worst_p95_ms"] = worst
         result["within_budget"] = worst <= BUDGET_MS
@@ -183,7 +209,8 @@ def main() -> int:
                     ),
                     {"o": org},
                 )  # noqa: E501
-                for table in ("sla_policies", "tags", "assets", "portfolios"):
+                c.execute(text("DELETE FROM outbox_events WHERE org_id = :o"), {"o": org})
+                for table in ("issue_batches", "sla_policies", "tags", "assets", "portfolios"):
                     c.execute(text(f"DELETE FROM {table} WHERE org_id = :o"), {"o": org})
                 c.execute(text("DELETE FROM organizations WHERE id = :o"), {"o": org})
     if args.out:

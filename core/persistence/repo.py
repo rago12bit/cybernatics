@@ -1198,6 +1198,7 @@ def _audit_action_label(action: str) -> str:
         "issue.note.deleted": "Note deleted",
         "tags.changed": "Tags changed",
         "issue.assigned": "Assigned",
+        "issue.bulk.undone": "Bulk change undone",
         "issue.unassigned": "Unassigned",
         "issue.priority.set": "Priority set",
         "issue.priority.cleared": "Priority back to the computed band",
@@ -1914,6 +1915,33 @@ def append_audit_entry(
         except IntegrityError:
             s.rollback()
     raise RuntimeError("could not append an audit entry after 5 attempts (high write contention)")
+
+
+def stage_audit_entries(s: Session, entries: list[dict[str, Any]], *, org_id: str) -> None:
+    """Many entries of one organization, chained in order, staged in the session without
+    committing: a bulk change (core.search.bulk) commits them with the rows they describe, in one
+    transaction. Each dict has `actor`, `action`, `target` and `payload`. A concurrent append makes
+    the commit fail on `seq`; the caller rolls back and runs the whole change again."""
+    if not entries:
+        return
+    last = s.scalar(select(AuditEntry).order_by(AuditEntry.seq.desc()).limit(1))
+    seq = last.seq if last else 0
+    prev_hash = last.entry_hash if last else audit.GENESIS_HASH
+    now = _now()
+    for e in entries:
+        seq += 1
+        digest = audit.payload_digest(e["payload"])
+        body = audit.body_digest(
+            timestamp=now, org_id=org_id, actor=e["actor"], action=e["action"], target=e["target"],
+            payload_digest=digest,
+        )  # fmt: skip
+        entry_hash = audit.compute_hash_v2(seq=seq, prev_hash=prev_hash, body_digest=body)
+        s.add(AuditEntry(
+            seq=seq, prev_hash=prev_hash, entry_hash=entry_hash, timestamp=now, actor=e["actor"],
+            action=e["action"], target=e["target"], payload_digest=digest, version=2,
+            org_id=org_id, body_digest=body,
+        ))  # fmt: skip
+        prev_hash = entry_hash
 
 
 def list_audit_entries(s: Session, *, since_seq: int = 0) -> list[AuditEntry]:

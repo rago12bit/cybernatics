@@ -309,7 +309,7 @@ def count(s: Session, conds: list[ColumnElement[bool]]) -> dict[str, Any]:
 # --- the page -----------------------------------------------------------------------------------
 
 
-def _status_of_row(r: IssueRow, now: datetime) -> str:
+def status_of_row(r: IssueRow, now: datetime) -> str:
     if r.state == "fixed":
         return "fixed"
     if r.triage_status == "not_a_risk":
@@ -392,7 +392,7 @@ def _rows(s: Session, org_id: str, issues: list[IssueRow], now: datetime) -> lis
                 "severity": i.severity.lower(),
                 "band": i.priority_override or i.priority_band,
                 "score": i.priority_score,
-                "status": _status_of_row(i, now),
+                "status": status_of_row(i, now),
                 "state": i.state,
                 "accepted_until": (
                     _utc(i.triage_expires_at) if i.triage_status == "accepted" else None

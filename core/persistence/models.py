@@ -2003,6 +2003,62 @@ class PersonRole(Base):
     updated_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
 
 
+class SavedView(Base):
+    """A saved view of the org-wide Issues list (plan §56): a named query (core.search.language),
+    its sort and columns. Personal, or shared with a role to view or copy, like a dashboard."""
+
+    __tablename__ = "saved_views"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"), index=True)
+    name: Mapped[str] = mapped_column(String(80))
+    owner: Mapped[str] = mapped_column(String(200))
+    query: Mapped[str] = mapped_column(String(2000))
+    sort: Mapped[str] = mapped_column(String(16))
+    columns: Mapped[list[str] | None] = mapped_column(JsonType, nullable=True)
+    shared_with: Mapped[list[str]] = mapped_column(JsonType, default=list)
+    version: Mapped[int] = mapped_column(Integer, default=1)
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+    updated_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+    updated_by: Mapped[str] = mapped_column(String(200))
+
+    __table_args__ = (Index("ix_saved_views_org_owner", "org_id", "owner"),)
+
+
+class PersonPref(Base):
+    """What a person chose for a table (plan §56: "column chooser and density toggle, remembered
+    per person"), keyed by the table's name."""
+
+    __tablename__ = "person_prefs"
+
+    org_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"), primary_key=True)
+    person: Mapped[str] = mapped_column(String(200), primary_key=True)
+    key: Mapped[str] = mapped_column(String(40), primary_key=True)
+    value: Mapped[dict[str, Any]] = mapped_column(JsonType)
+    updated_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+
+
+class IssueBatch(Base):
+    """One bulk change across the org's Issues (plan §56), kept so it can be undone for a short
+    while: each changed Issue's previous values, by Issue id (core.search.bulk)."""
+
+    __tablename__ = "issue_batches"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"), index=True)
+    actor: Mapped[str] = mapped_column(String(200))
+    action: Mapped[str] = mapped_column(String(16))
+    params: Mapped[dict[str, Any]] = mapped_column(JsonType, default=dict)
+    query: Mapped[str] = mapped_column(String(2000))
+    selected: Mapped[int] = mapped_column(Integer)
+    changed: Mapped[int] = mapped_column(Integer)
+    previous: Mapped[dict[str, Any]] = mapped_column(JsonType, default=dict)
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+    undo_until: Mapped[datetime] = mapped_column(UtcDateTime())
+    undone_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
+    undone_by: Mapped[str | None] = mapped_column(String(200), nullable=True)
+
+
 class Report(Base):
     """A report (plan §48.3): blocks in order, the period they cover, and optionally a schedule
     that generates and emails it. `version` goes up on every save, as for dashboards."""

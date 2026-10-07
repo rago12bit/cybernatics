@@ -1191,6 +1191,73 @@ Suggest
 - `key` (query, required)
 - `prefix` (query)
 
+## `GET /v2/issue-views`
+
+List Views
+
+
+## `POST /v2/issue-views`
+
+Create View
+
+
+## `POST /v2/issue-views/import`
+
+Import Views
+
+
+## `GET /v2/issue-views/{view_id}`
+
+Get View
+
+- `view_id` (path, required)
+
+## `PUT /v2/issue-views/{view_id}`
+
+Save View
+
+- `view_id` (path, required)
+
+## `DELETE /v2/issue-views/{view_id}`
+
+Delete View
+
+- `view_id` (path, required)
+
+## `POST /v2/issue-views/{view_id}/copy`
+
+Copy View
+
+- `view_id` (path, required)
+
+## `GET /v2/me/tables/{table}`
+
+Get Table Prefs
+
+- `table` (path, required)
+
+## `PUT /v2/me/tables/{table}`
+
+Set Table Prefs
+
+- `table` (path, required)
+
+## `POST /v2/issues/bulk/preview`
+
+Preview Bulk
+
+
+## `POST /v2/issues/bulk`
+
+Apply Bulk
+
+
+## `POST /v2/issue-batches/{batch_id}/undo`
+
+Undo Bulk
+
+- `batch_id` (path, required)
+
 ## `GET /v2/me`
 
 Me

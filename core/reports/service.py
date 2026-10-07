@@ -205,6 +205,30 @@ def listing(s: Session, org_id: str) -> list[Report]:
     return list(s.scalars(select(Report).where(Report.org_id == org_id).order_by(Report.name)))
 
 
+def _with_views(
+    s: Session,
+    org_id: str,
+    actor: str,
+    blocks: list[dict[str, Any]],
+    previous: list[dict[str, Any]] | None = None,
+) -> list[dict[str, Any]]:
+    """The blocks, once every saved view they name is one `actor` can see (core.search.views)."""
+    from core.dashboards import Viewer, role_of
+    from core.search import views
+
+    who = Viewer(actor, role_of(s, org_id, actor))
+
+    def can_see(view_id: str) -> bool:
+        try:
+            views.resolve(s, org_id, view_id, who)
+        except views.ViewError:
+            return False
+        return True
+
+    B.check_views(s, org_id, blocks, can_see, previous)
+    return blocks
+
+
 def create(s: Session, org_id: str, actor: str, raw: dict[str, Any]) -> Report:
     template = raw.get("template")
     base = TEMPLATES.get(str(template)) if template else None
@@ -218,7 +242,7 @@ def create(s: Session, org_id: str, actor: str, raw: dict[str, Any]) -> Report:
         name=_name(raw.get("name") or (base or {}).get("name")),
         owner=actor,
         period_days=_period(raw.get("period_days", (base or {}).get("period_days", 30))),
-        blocks=B.clean_blocks(copy.deepcopy(blocks_raw)),
+        blocks=_with_views(s, org_id, actor, B.clean_blocks(copy.deepcopy(blocks_raw))),
         schedule=schedule,
         next_run_at=next_run(schedule, now),
         version=1,
@@ -246,7 +270,7 @@ def update(s: Session, org_id: str, actor: str, report_id: str, raw: dict[str, A
     if "period_days" in raw:
         r.period_days = _period(raw["period_days"])
     if "blocks" in raw:
-        r.blocks = B.clean_blocks(raw["blocks"], r.blocks)
+        r.blocks = _with_views(s, org_id, actor, B.clean_blocks(raw["blocks"], r.blocks), r.blocks)
     if "schedule" in raw:
         r.schedule = clean_schedule(raw["schedule"])
         r.next_run_at = next_run(r.schedule, _now())
@@ -355,7 +379,7 @@ def build_html(
 ) -> tuple[str, B.Period, list[dict[str, Any]]]:
     now = now or _now()
     period = B.Period.last(r.period_days, now.date())
-    collected = B.collect(s, org_id, r.blocks, period, now)
+    collected = B.collect(s, org_id, r.blocks, period, now, owner=r.owner)
     org = s.get(Organization, org_id)
     people = _people(s, org_id, collected)
     by = "a schedule" if actor == "schedule" else people.get(actor, actor)

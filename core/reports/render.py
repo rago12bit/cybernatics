@@ -220,6 +220,8 @@ def metric_html(r: dict[str, Any], names: dict[str, str], group_by: str = "band"
     return f'<p class="headline">{e(r.get("value"))}</p>'
 
 
+STATUS_TEXT = {"open": "Open", "accepted": "Accepted", "not_a_risk": "Not a risk",
+               "fixed": "Fixed"}  # fmt: skip
 KIND_TITLE = {"open": "Open issues", "past_sla": "Issues past their SLA",
               "opened": "Issues first seen in the period", "fixed": "Issues fixed in the period"}  # fmt: skip
 
@@ -255,6 +257,22 @@ def _block(b: dict[str, Any], ctx: dict[str, Any]) -> str:
             scope.append(f"{data['period'][0]} to {data['period'][1]}")
         return (f"<h2>{e(title)}</h2>" + (f'<p class="meta">{e(" · ".join(scope))}</p>' if scope else "")
                 + metric_html(data, names, f.get("group") or "band"))  # fmt: skip
+    if kind == "issues" and cfg.get("kind") == "view":
+        if data.get("missing"):
+            return (f"<h2>{e(cfg.get('title') or 'Issues')}</h2>"
+                    '<p class="missing">The saved view this table showed no longer exists.</p>')  # fmt: skip
+        view = data.get("view") or {}
+        rows = data.get("rows") or []
+        n = data.get("count") or {}
+        total = f"more than {_n(n.get('value'))}" if n.get("at_least") else _n(n.get("value"))
+        shown = f"{_plural(len(rows), 'issue')}" + (f" of {total}" if data.get("next") else "")
+        query_text = f": {view.get('query')}" if view.get("query") else ""
+        return (f"<h2>{e(cfg.get('title') or view.get('name') or 'Issues')}</h2>"
+                f'<p class="meta">{e(shown)} · saved view “{e(view.get("name"))}”{e(query_text)}</p>'
+                + table(["Issue", "Project", "Priority", "Severity", "Status", "Assignee"],
+                        [[r.get("title"), r.get("project"), r.get("band") or "—", r.get("severity"),
+                          STATUS_TEXT.get(str(r.get("status")), r.get("status")),
+                          r.get("assignee_name") or "Unassigned"] for r in rows]))  # fmt: skip
     if kind == "issues":
         title = cfg.get("title") or KIND_TITLE[cfg["kind"]] + (
             f", {cfg['band']}" if cfg.get("band") else ""

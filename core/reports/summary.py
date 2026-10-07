@@ -73,7 +73,12 @@ def facts(blocks: list[dict[str, Any]], nonce: str) -> tuple[str, int, list[str]
             rows = data.get("rows") or []
             titles = ", ".join(untrusted(str(r.get("title", ""))) for r in rows[:5])
             more = " or more" if data.get("next") else ""
-            lines.append(f"Table of {cfg['kind'].replace('_', ' ')} issues: {len(rows)}{more} listed; "
+            what = (
+                f"from the saved view {untrusted(str((data.get('view') or {}).get('name', '')))}"
+                if cfg["kind"] == "view"
+                else f"of {cfg['kind'].replace('_', ' ')} issues"
+            )
+            lines.append(f"Table {what}: {len(rows)}{more} listed; "
                          f"first titles: {titles}")  # fmt: skip
         elif kind == "acceptances":
             rows = data.get("rows") or []

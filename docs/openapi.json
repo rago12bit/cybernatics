@@ -10176,6 +10176,577 @@
         }
       }
     },
+    "/v2/issue-views": {
+      "get": {
+        "tags": [
+          "issues"
+        ],
+        "summary": "List Views",
+        "operationId": "list_views_v2_issue_views_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "type": "array",
+                  "title": "Response List Views V2 Issue Views Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "issues"
+        ],
+        "summary": "Create View",
+        "operationId": "create_view_v2_issue_views_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ViewIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Create View V2 Issue Views Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v2/issue-views/import": {
+      "post": {
+        "tags": [
+          "issues"
+        ],
+        "summary": "Import Views",
+        "operationId": "import_views_v2_issue_views_import_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Import Views V2 Issue Views Import Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v2/issue-views/{view_id}": {
+      "get": {
+        "tags": [
+          "issues"
+        ],
+        "summary": "Get View",
+        "operationId": "get_view_v2_issue_views__view_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "view_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "View Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get View V2 Issue Views  View Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "issues"
+        ],
+        "summary": "Save View",
+        "operationId": "save_view_v2_issue_views__view_id__put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "view_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "View Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ViewIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Save View V2 Issue Views  View Id  Put"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "issues"
+        ],
+        "summary": "Delete View",
+        "operationId": "delete_view_v2_issue_views__view_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "view_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "View Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/issue-views/{view_id}/copy": {
+      "post": {
+        "tags": [
+          "issues"
+        ],
+        "summary": "Copy View",
+        "operationId": "copy_view_v2_issue_views__view_id__copy_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "view_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "View Id"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Copy View V2 Issue Views  View Id  Copy Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/me/tables/{table}": {
+      "get": {
+        "tags": [
+          "issues"
+        ],
+        "summary": "Get Table Prefs",
+        "operationId": "get_table_prefs_v2_me_tables__table__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "table",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Table"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Table Prefs V2 Me Tables  Table  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "issues"
+        ],
+        "summary": "Set Table Prefs",
+        "operationId": "set_table_prefs_v2_me_tables__table__put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "table",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Table"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true,
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Set Table Prefs V2 Me Tables  Table  Put"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/issues/bulk/preview": {
+      "post": {
+        "tags": [
+          "issues"
+        ],
+        "summary": "Preview Bulk",
+        "operationId": "preview_bulk_v2_issues_bulk_preview_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Preview Bulk V2 Issues Bulk Preview Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v2/issues/bulk": {
+      "post": {
+        "tags": [
+          "issues"
+        ],
+        "summary": "Apply Bulk",
+        "operationId": "apply_bulk_v2_issues_bulk_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Apply Bulk V2 Issues Bulk Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v2/issue-batches/{batch_id}/undo": {
+      "post": {
+        "tags": [
+          "issues"
+        ],
+        "summary": "Undo Bulk",
+        "operationId": "undo_bulk_v2_issue_batches__batch_id__undo_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "batch_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Batch Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Undo Bulk V2 Issue Batches  Batch Id  Undo Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v2/me": {
       "get": {
         "tags": [
@@ -12608,6 +13179,29 @@
           "archive"
         ],
         "title": "Body_upload_scan_scans_upload_post"
+      },
+      "BulkIn": {
+        "properties": {
+          "q": {
+            "title": "Q",
+            "default": ""
+          },
+          "ids": {
+            "title": "Ids"
+          },
+          "action": {
+            "title": "Action"
+          },
+          "params": {
+            "title": "Params"
+          },
+          "expected_count": {
+            "title": "Expected Count"
+          }
+        },
+        "type": "object",
+        "title": "BulkIn",
+        "description": "Checked by `core.search.bulk`. `ids` narrows the selection to Issues picked one by one;\nwithout it, every Issue matching `q` is selected."
       },
       "BulkTriageRequest": {
         "properties": {
@@ -15804,6 +16398,15 @@
           "test_id"
         ],
         "title": "ImportCreated"
+      },
+      "ImportIn": {
+        "properties": {
+          "views": {
+            "title": "Views"
+          }
+        },
+        "type": "object",
+        "title": "ImportIn"
       },
       "ImportSummary": {
         "properties": {
@@ -21800,6 +22403,31 @@
         ],
         "title": "VexUse",
         "description": "What Bulwark can show about whether the project executes the vulnerable code (plan \u00a746.3),\nand the VEX statement about this use, if any."
+      },
+      "ViewIn": {
+        "properties": {
+          "name": {
+            "title": "Name"
+          },
+          "query": {
+            "title": "Query"
+          },
+          "sort": {
+            "title": "Sort"
+          },
+          "columns": {
+            "title": "Columns"
+          },
+          "shared_with": {
+            "title": "Shared With"
+          },
+          "version": {
+            "title": "Version"
+          }
+        },
+        "type": "object",
+        "title": "ViewIn",
+        "description": "Checked by `core.search.views` field by field (the field named in a 422), so loose here.\nOn a save, `version` is the one the edit started from; fields left out stay as they are."
       },
       "WatchersOut": {
         "properties": {

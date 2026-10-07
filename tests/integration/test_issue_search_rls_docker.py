@@ -75,3 +75,49 @@ def test_search_stays_in_its_org_and_estimates_past_the_cap(
         set_session_org(s, b)
         got = {r["id"] for r in search.search(s, b, parse("project:*"), ctx=ctx)["rows"]}
         assert got == set(theirs)
+
+
+def test_views_preferences_and_bulk_changes_stay_in_their_org(
+    sessions: sessionmaker[Session],  # noqa: F811
+    two_orgs: tuple[str, str],  # noqa: F811
+) -> None:
+    """Saved views, table settings and bulk batches are under forced RLS; a bulk change picked by
+    id cannot reach another organization's Issues, and its many audit entries, written in one
+    commit, keep the chain whole."""
+    from core.audit import verify_chain
+    from core.dashboards import Viewer
+    from core.persistence.models import IssueBatch, PersonPref, SavedView
+    from core.search import bulk, views
+
+    a, b = two_orgs
+    with sessions() as s:
+        mine = _project(s, a, "acme/ledger", 5)
+        theirs = _project(s, b, "acme/vault", 3)
+    op = Viewer("shared-token", None)
+    with sessions() as s:
+        set_session_org(s, b)
+        hidden = views.create(s, b, op, {"name": "Theirs", "query": "sla:breached"}).id
+        views.set_prefs(s, b, "shared-token", "issues", {"density": "compact"})
+    with sessions() as s:
+        set_session_org(s, a)
+        views.create(s, a, op, {"name": "Ours", "query": "severity:high"})
+        assert [v["name"] for v in views.listing(s, a, op) if not v["builtin"]] == ["Ours"]
+        assert s.get(SavedView, hidden) is None  # RLS: not even by id
+        assert views.prefs(s, a, "shared-token", "issues")["saved"] is False
+        assert s.scalars(select(PersonPref)).all() == []
+
+        ctx = search.Context("shared-token", datetime.now(timezone.utc))
+        p = bulk.plan(s, a, "tag", {"tag": "pci"}, "", [*mine, *theirs], ctx)
+        assert {i.id for i in p.selected} == set(mine)
+        done = bulk.apply(s, a, "shared-token", "tag", {"tag": "pci"}, "", [*mine, *theirs], 5, ctx)
+        assert done["changed"] == 5
+        set_session_org(s, a)
+        undone = bulk.undo(s, a, "shared-token", done["batch_id"])
+        assert undone["restored"] == 5
+        set_session_org(s, a)
+        assert verify_chain(repo.list_audit_entries(s)).ok
+    with sessions() as s:
+        set_session_org(s, b)
+        assert s.get(IssueBatch, done["batch_id"]) is None
+        with pytest.raises(bulk.BulkError):
+            bulk.undo(s, b, "shared-token", done["batch_id"])

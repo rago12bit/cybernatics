@@ -120,3 +120,15 @@ row-level security (a `LIKE` on the title is not leakproof, so Postgres applies 
 policy), so it scans the organization's matching Issues: fine at the plan's scale, over budget at
 five times it. Full numbers: [`issues/search-100k.json`](issues/search-100k.json),
 [`issues/search-500k.json`](issues/search-500k.json); the reasoning: [ADR-0056](../docs/adr/0056-issue-search.md).
+
+**Bulk changes (Week 73, task 3).** The same script then tags every open Issue of one business
+unit in one batch (`core.search.bulk`): at 100,000 Issues that is 6,000 Issues, previewed in
+122 ms, applied in 708 ms (one audit entry per Issue and one for the batch, one commit) and undone
+in 977 ms. Removing tags one statement per Issue made Undo take 6.3 s; they are now removed a
+thousand at a time. Numbers: [`issues/search-and-bulk-100k-2026-10-07b.json`](issues/search-and-bulk-100k-2026-10-07b.json).
+
+That second run was on the same machine later the same day, and every search query took 2-3 times
+as long as in the table above (free text 275/328 ms p50/p95, over the budget). Task 1's own code,
+run against the same database straight after, gave the same slower numbers, so the difference is
+the machine's state that afternoon, not the change; the cause was not pinned down. Both runs are
+kept as measured.

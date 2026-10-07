@@ -7,7 +7,8 @@ summary tables (ADR-0054), Issues, risk acceptances, engagements and the complia
     summary      the executive summary: a person's text, or a model's draft a person has reviewed
     metric       any dashboard metric, with the widget filters (portfolio, project, tag, days)
     issues       a table of Issues: open, past SLA, first seen or fixed in the period, by priority,
-                 with the same filters
+                 with the same filters; or the Issues a saved view of the Issues list shows
+                 (core.search.views), as it shows them when the report is generated
     issue        one Issue in detail
     acceptances  risk acceptances: in force, awaiting a decision, or expiring soon
     compliance   one framework's controls with the evidence Bulwark holds for each
@@ -36,7 +37,11 @@ from core.persistence.models import (
     IssueRow,
     RiskAcceptance,
     RiskAcceptanceIssue,
+    SavedView,
 )
+from core.search import issues as search
+from core.search.language import QueryError, parse
+from core.search.views import BY_BUILTIN
 
 TYPES = ("cover", "summary", "metric", "issues", "issue", "acceptances", "compliance",
          "engagement", "appendix")  # fmt: skip
@@ -116,6 +121,15 @@ def clean_block(raw: Any, n: int, previous: dict[str, Any] | None = None) -> dic
         except DashboardError as exc:
             raise ReportError(exc.field, exc.message) from exc
         out = {"metric": cfg["metric"], "filters": filters}
+    elif kind == "issues" and cfg.get("kind") == "view":
+        limit = cfg.get("limit", 50)
+        if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= MAX_ISSUES:
+            raise ReportError(f"{at}.limit", f"From 1 to {MAX_ISSUES} rows.")
+        view_id = cfg.get("view_id")
+        if not isinstance(view_id, str) or not (_ID.match(view_id) or view_id in BY_BUILTIN):
+            raise ReportError(f"{at}.view_id", "Choose a saved view.")
+        out = {"kind": "view", "view_id": view_id, "band": None, "filters": {}, "limit": limit,
+               "title": _text(cfg.get("title"), f"{at}.title", 120)}  # fmt: skip
     elif kind == "issues":
         try:
             filters = clean_filters(cfg.get("filters"), f"{at}.filters")
@@ -264,12 +278,54 @@ def _engagement(s: Session, org_id: str, eid: str) -> dict[str, Any] | None:
             "target_end_at": _utc(e.target_end_at), "closed_at": _utc(e.closed_at)}  # fmt: skip
 
 
+def _from_view(
+    s: Session, org_id: str, cfg: dict[str, Any], owner: str | None, now: datetime
+) -> dict[str, Any]:
+    """The Issues a saved view shows now, as the report's owner would see them (`assignee:me` is
+    the owner). Whether the owner may use the view was checked when the report was saved."""
+    vid = cfg["view_id"]
+    if vid in BY_BUILTIN:
+        b = BY_BUILTIN[vid]
+        name, text, sort = b.name, b.query, b.sort
+    else:
+        v = s.get(SavedView, vid)
+        if v is None or v.org_id != org_id:
+            return {"missing": True}
+        name, text, sort = v.name, v.query, v.sort
+    try:
+        q = parse(text)
+    except QueryError:  # stored canonical, so only a language change could get here
+        return {"missing": True}
+    page = search.search(s, org_id, q, ctx=search.Context(owner, now), sort=sort,
+                         limit=cfg["limit"])  # fmt: skip
+    return {"rows": page["rows"], "next": page["next"], "count": page["count"],
+            "view": {"name": name, "query": text}}  # fmt: skip
+
+
+def check_views(
+    s: Session,
+    org_id: str,
+    blocks: list[dict[str, Any]],
+    can_see: Any,
+    previous: list[dict[str, Any]] | None = None,
+) -> None:
+    """Each issues block that names a saved view must name one its editor can see. A block left as
+    it was is not checked again, so unsharing a view does not lock a report against edits (the
+    block then shows whatever the view still is, or says it is gone)."""
+    old = {b["id"]: b["config"].get("view_id") for b in previous or [] if b["type"] == "issues"}
+    for n, b in enumerate(blocks):
+        vid = b["config"].get("view_id") if b["type"] == "issues" else None
+        if vid and old.get(b["id"]) != vid and not can_see(vid):
+            raise ReportError(f"blocks[{n}].config.view_id", "No such saved view.")
+
+
 def collect(
     s: Session, org_id: str, blocks: list[dict[str, Any]], period: Period,
-    now: datetime | None = None,
+    now: datetime | None = None, owner: str | None = None,
 ) -> list[dict[str, Any]]:  # fmt: skip
-    """Each block with the data it shows now. A block whose subject is gone (a deleted Issue or
-    engagement) says so instead of failing the report."""
+    """Each block with the data it shows now. A block whose subject is gone (a deleted Issue,
+    engagement or saved view) says so instead of failing the report. `owner` is whose "me" a
+    saved view's `assignee:me` means."""
     now = now or datetime.now(timezone.utc)
     out = []
     for b in blocks:
@@ -277,6 +333,8 @@ def collect(
         data: dict[str, Any] = {}
         if kind == "metric":
             data = query.compute(s, org_id, cfg["metric"], _filters(cfg, period), now=now)
+        elif kind == "issues" and cfg.get("kind") == "view":
+            data = _from_view(s, org_id, cfg, owner, now)
         elif kind == "issues":
             f = _filters(cfg, period)
             data = query.issues(s, org_id, f, kind=cfg["kind"], band=cfg.get("band"),
