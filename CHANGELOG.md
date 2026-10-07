@@ -5,6 +5,46 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 
 ## [Unreleased]
 
+Weeks 70–71 (plan Phase 17): metrics and dashboards
+([docs/v2-week70-71-verification.md](docs/v2-week70-71-verification.md)).
+
+### Added
+- **Metrics layer (Week 70, plan §48.1, ADR-0054).**
+  - Twelve metrics, each with a written definition kept in one place. The same text is each
+    widget's tooltip and `docs/metrics.md`.
+  - Read from summary tables under forced RLS (migration 0042), never from Occurrences on page
+    load. Tables are refreshed after every scan and import, every 2 minutes for triage and policy
+    changes, and hourly in full; changes mark their project automatically.
+  - Every number comes with its counts and the Issues behind it.
+  - API: `/v2/metrics`, `/v2/metrics/{id}`, `/v2/metrics/issues`.
+  - CLI: `bulwark metrics refresh`.
+- **One million Occurrences (Week 70, plan §60).** `scripts/bench-metrics.py` seeds 250,000
+  Issues and 1,000,000 Occurrences on Postgres. Every metric is under 100 ms at p95, and the
+  slowest request is 124 ms ([results](benchmarks/metrics/one-million-occurrences.json)).
+- **Dashboards (Week 71, plan §48.2, §55.4).**
+  - A catalogue of 12 widgets with per-widget filters (portfolio, project, tag, period, grouping).
+  - Drag and resize (react-grid-layout 2.2.4), with a keyboard alternative: arrows move a widget,
+    Shift + arrows resize it, and each change is announced.
+  - View as table on every chart; percentages always with their counts. Every count of Issues
+    opens exactly those Issues, and each widget's title opens its definition.
+  - Several saved dashboards per person, shared with a role, which can view or copy them. A stale
+    save is refused, and every change is audit-logged.
+  - A built-in program overview.
+  - Migration 0043. API: `/v2/dashboards`, `/v2/me`.
+- **Role homes and the portfolio overview (Week 71, plan §48.2, §55.6).**
+  - A person picks lead, engineer or tester (until Week 75) and lands on their home:
+    - leads: the program dashboard and each business unit's sentence;
+    - engineers: their Issues, the soonest SLA deadline first;
+    - testers: their engagements.
+  - Each business unit opens with a sentence naming what needs attention and why: Issues past SLA,
+    a new advisory, a project nobody has scanned in 14 days. Projects follow, sorted by need, with
+    "Scanners N of M" and a trend.
+  - API: `/v2/me/assigned`, `/v2/me/engagements`, `/v2/portfolio-overviews`.
+
+### Changed
+- **`/app` for a person is now their role home.** The shared token, which is nobody in particular,
+  still lands on the scan page. Scanning is also at `/app/scan`.
+
 ## [2.4.0] - 2026-10-06
 
 Milestone M15 (plan Phase 16, Weeks 65-69): the new-CVE morning -- rules and tickets for the

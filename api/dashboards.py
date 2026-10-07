@@ -8,7 +8,12 @@ each person picks for their home.
     DELETE /v2/dashboards/{id}
     POST   /v2/dashboards/{id}/copy        make a dashboard I can see (or the built-in one) mine
     GET    /v2/me                          who I am and the role I picked
-    PUT    /v2/me/role                     {role: lead | engineer | tester}
+    PUT    /v2/me/role                     {role: lead | engineer | tester}; a personal token
+    GET    /v2/me/assigned                 an engineer's home: my open Issues, soonest SLA first
+    GET    /v2/me/engagements              a tester's home: engagements naming me
+    GET    /v2/portfolio-overviews         every business unit's sentence, neediest first
+    GET    /v2/portfolio-overviews/{id}    one unit: the sentence and its projects by need
+                                           ("none": projects without a portfolio)
 
 All `scans:read`: a dashboard is a way of looking at what the token can already read. Every change
 is audit-logged. The widgets' numbers come from `/v2/metrics` (ADR-0054).
@@ -18,12 +23,13 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from api.deps import AuthContext, current_org, db, require_auth, require_scope
 from core import dashboards as svc
+from core.metrics import portfolio as units
 
 
 class RoleIn(BaseModel):
@@ -153,3 +159,35 @@ def register_dashboard_routes(app: FastAPI) -> None:
             return svc.view(svc.copy_of(s, org, v, dashboard_id), v)
         except svc.DashboardError as exc:
             raise _fail(s, exc) from exc
+
+    @app.get("/v2/me/assigned", tags=["dashboards"], dependencies=read)
+    def my_assigned(
+        limit: int = Query(default=100, ge=1, le=500),
+        s: Session = Depends(db),
+        org: str = Depends(current_org),
+        auth: AuthContext = Depends(require_auth),
+    ) -> dict[str, Any]:
+        return svc.assigned(s, org, auth.actor, limit)
+
+    @app.get("/v2/me/engagements", tags=["dashboards"], dependencies=read)
+    def my_engagements(
+        s: Session = Depends(db),
+        org: str = Depends(current_org),
+        auth: AuthContext = Depends(require_auth),
+    ) -> list[dict[str, Any]]:
+        return svc.my_engagements(s, org, auth.actor)
+
+    @app.get("/v2/portfolio-overviews", tags=["dashboards"], dependencies=read)
+    def portfolio_overviews(
+        s: Session = Depends(db), org: str = Depends(current_org)
+    ) -> list[dict[str, Any]]:
+        return units.overviews(s, org)
+
+    @app.get("/v2/portfolio-overviews/{portfolio_id}", tags=["dashboards"], dependencies=read)
+    def portfolio_overview(
+        portfolio_id: str, s: Session = Depends(db), org: str = Depends(current_org)
+    ) -> dict[str, Any]:
+        try:
+            return units.overview(s, org, portfolio_id)
+        except LookupError as exc:
+            raise HTTPException(404, "No such portfolio.") from exc

@@ -1212,6 +1212,28 @@ Copy Dashboard
 
 - `dashboard_id` (path, required)
 
+## `GET /v2/me/assigned`
+
+My Assigned
+
+- `limit` (query)
+
+## `GET /v2/me/engagements`
+
+My Engagements
+
+
+## `GET /v2/portfolio-overviews`
+
+Portfolio Overviews
+
+
+## `GET /v2/portfolio-overviews/{portfolio_id}`
+
+Portfolio Overview
+
+- `portfolio_id` (path, required)
+
 ## Live progress (WebSocket)
 
 `GET /scans/{scan_id}/ws` (not part of OpenAPI).

@@ -22,13 +22,21 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from core.collab.people import handle_of, names
 from core.metrics.definitions import BY_ID
 from core.metrics.query import GROUPS, MAX_DAYS
 from core.persistence import repo
-from core.persistence.models import Dashboard, PersonRole
+from core.persistence.models import (
+    Asset,
+    Dashboard,
+    Engagement,
+    IssueRow,
+    MetricOpenIssue,
+    PersonRole,
+)
 
 ROLES = ("lead", "engineer", "tester")
 COLS = 12
@@ -295,6 +303,10 @@ def role_of(s: Session, org_id: str, person: str) -> str | None:
 
 
 def set_role(s: Session, org_id: str, person: str, role: str) -> None:
+    if not person.startswith("token:"):
+        raise DashboardError(
+            "role", "The shared token is nobody: sign in with a personal token to pick a role.", 409
+        )
     if role not in ROLES:
         raise DashboardError("role", f"A role is one of: {', '.join(ROLES)}.")
     row = s.get(PersonRole, (org_id, person))
@@ -308,3 +320,65 @@ def set_role(s: Session, org_id: str, person: str, role: str) -> None:
         s, actor=person, action="home.role.chosen", target=f"person:{person}",
         payload={"org_id": org_id, "role": role},
     )  # fmt: skip
+
+
+# --- what each role lands on ------------------------------------------------------------------
+
+
+def assigned(s: Session, org_id: str, person: str, limit: int = 100) -> dict[str, Any]:
+    """An engineer's home: their open Issues, the soonest SLA deadline first (none last)."""
+    now = datetime.now(timezone.utc)
+    base = (
+        select(MetricOpenIssue, IssueRow.title, Asset.label)
+        .join(IssueRow, IssueRow.id == MetricOpenIssue.issue_id)
+        .join(Asset, Asset.id == MetricOpenIssue.asset_id)
+        .where(MetricOpenIssue.org_id == org_id, IssueRow.assignee == person)
+    )
+    total = s.scalar(select(func.count()).select_from(base.subquery())) or 0
+    rows = []
+    q = base.order_by(MetricOpenIssue.due_at.is_(None), MetricOpenIssue.due_at,
+                      MetricOpenIssue.band, MetricOpenIssue.first_seen_at)  # fmt: skip
+    for m, title, label in s.execute(q.limit(limit)):
+        due = (
+            m.due_at
+            if m.due_at is None or m.due_at.tzinfo
+            else m.due_at.replace(tzinfo=timezone.utc)
+        )
+        rows.append({"issue_id": m.issue_id, "project_id": m.asset_id, "project": label,
+                     "title": title, "band": m.band, "severity": m.severity, "due_at": due,
+                     "days_left": (due - now).days if due is not None else None})  # fmt: skip
+    return {"total": int(total), "rows": rows}
+
+
+def my_engagements(s: Session, org_id: str, person: str) -> list[dict[str, Any]]:
+    """A tester's home: engagements naming them as lead or tester -- by their token's name,
+    @handle or actor id, since engagements name people as text until user accounts (Week 75)."""
+    name = names(s, org_id, {person}).get(person)
+    me = {person.lower()}
+    if name:
+        h = handle_of(name)
+        me |= {name.lower(), h, f"@{h}"}
+    now = datetime.now(timezone.utc)
+    labels: dict[str, str] = {
+        i: label
+        for i, label in s.execute(select(Asset.id, Asset.label).where(Asset.org_id == org_id))
+    }
+    out = []
+    for e in s.scalars(select(Engagement).where(Engagement.org_id == org_id,
+                                                Engagement.engagement_type != "ci")):  # fmt: skip
+        roles = []
+        if e.lead and e.lead.strip().lower() in me:
+            roles.append("lead")
+        if any(str(t).strip().lower() in me for t in (e.testers or [])):
+            roles.append("tester")
+        if not roles:
+            continue
+        due = e.target_end_at
+        due = due if due is None or due.tzinfo else due.replace(tzinfo=timezone.utc)
+        out.append({"id": e.id, "name": e.name, "type": e.engagement_type, "status": e.status,
+                    "project_id": e.asset_id, "project": labels.get(e.asset_id, ""),
+                    "as": roles, "target_end_at": due,
+                    "overdue": bool(due and due < now and e.status == "active")})  # fmt: skip
+    order = {"active": 0, "planned": 1}
+    return sorted(out, key=lambda r: (order.get(r["status"], 2), r["target_end_at"] is None,
+                                      r["target_end_at"] or now, r["name"]))  # fmt: skip

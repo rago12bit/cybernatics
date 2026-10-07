@@ -55,3 +55,36 @@ def test_dashboards_and_roles_stay_in_their_org(
     with sessions() as s:
         set_session_org(s, a)
         assert svc.get(s, a, did, svc.Viewer("token:bob", "tester")).name == "Program"
+
+
+def test_overviews_and_homes_stay_in_their_org(
+    sessions: sessionmaker[Session], two_orgs: tuple[str, str]  # noqa: F811
+) -> None:
+    from core.metrics import portfolio, rollup
+    from core.persistence.models import IssueRow, Portfolio
+    from tests.integration.test_metrics_rls_docker import _project
+
+    a, b = two_orgs
+    with sessions() as s:
+        set_session_org(s, a)
+        unit = Portfolio(org_id=a, name="Payments")
+        s.add(unit)
+        s.commit()
+        asset = _project(s, a, 3)
+        from core.persistence.models import Asset
+
+        s.get(Asset, asset).portfolio_id = unit.id  # type: ignore[union-attr]
+        for i in s.scalars(select(IssueRow).where(IssueRow.asset_id == asset)):
+            i.assignee = "token:alice"
+        s.commit()
+        rollup.refresh_all(s, a)
+        assert [o["name"] for o in portfolio.overviews(s, a)] == ["Payments"]
+        assert svc.assigned(s, a, "token:alice")["total"] == 3
+        uid = unit.id
+    with sessions() as s:
+        set_session_org(s, b)
+        assert portfolio.overviews(s, b) == []
+        with pytest.raises(LookupError):
+            portfolio.overview(s, b, uid)
+        assert svc.assigned(s, b, "token:alice") == {"total": 0, "rows": []}
+        assert svc.my_engagements(s, b, "token:alice") == []

@@ -96,7 +96,7 @@ function useNarrow(): boolean {
   return narrow;
 }
 
-export function DashboardScreen({ initialId }: { initialId?: string }) {
+export function DashboardScreen({ initialId, embedded = false }: { initialId?: string; embedded?: boolean }) {
   const id = useId();
   const router = useRouter();
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -125,9 +125,10 @@ export function DashboardScreen({ initialId }: { initialId?: string }) {
       setCurrent(d ?? null);
       setDraft(null);
       setConflict(false);
-      if (d) router.replace(`/app/dashboards?d=${encodeURIComponent(d.id)}`, { scroll: false });
+      // On its own page the URL names the dashboard; embedded in a home, it leaves the URL alone.
+      if (d && !embedded) router.replace(`/app/dashboards?d=${encodeURIComponent(d.id)}`, { scroll: false });
     },
-    [router],
+    [router, embedded],
   );
 
   const load = useCallback(

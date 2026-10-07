@@ -3,7 +3,7 @@ import type { VexJustification, AsvsBenchmark, ComplianceFramework, EvidencePack
   ImportCreated, ImportView, ParserInfo, ProjectTest, RevertView,
   AssetSummary, AssetVerification, AttackPath, BulkTriageResult,
   StrideRow, ThreatModel, RetentionSettings, Citation, CopilotConversation, CopilotMessage, CostSummary, DependenciesView, Finding, FindingsPage, FindingsQuery, GenerateHypothesesResult, Guidance, GuidanceApi, Hypothesis, IssueHistoryEvent, ProjectOverview, Remediation, ScanComparison, ScanCost, ScanSummary, ScanView, TriageAssistantView, TriageStatus, VerifiedFixStarted, VerifiedFixView } from "./types";
-import type { Dashboard, DashboardList, Me, MetricIssue, MetricResult, Role, Widget } from "./dashboard";
+import type { AssignedIssue, Dashboard, DashboardList, Me, MetricIssue, MetricResult, MyEngagement, Role, UnitOverview, UnitSummary, Widget } from "./dashboard";
 import { findingsQueryString } from "./format";
 
 export const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/$/, "");
@@ -828,3 +828,7 @@ export const deleteDashboard = (id: string) => request<void>(`/v2/dashboards/${e
 export const copyDashboard = (id: string) => request<Dashboard>(`/v2/dashboards/${enc(id)}/copy`, { method: "POST" });
 export const listMetrics = () =>
   request<{ id: string; name: string; definition: string; unit: string; period: boolean }[]>("/v2/metrics");
+export const getMyAssigned = () => request<{ total: number; rows: AssignedIssue[] }>("/v2/me/assigned");
+export const getMyEngagements = () => request<MyEngagement[]>("/v2/me/engagements");
+export const listUnitOverviews = () => request<UnitSummary[]>("/v2/portfolio-overviews");
+export const getUnitOverview = (id: string) => request<UnitOverview>(`/v2/portfolio-overviews/${enc(id)}`);

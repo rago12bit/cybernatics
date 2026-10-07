@@ -1,0 +1,120 @@
+/* Role homes and the portfolio overview (plan §48.2, §55.6). */
+.home-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: var(--ds-space-2, 1rem);
+  margin-bottom: var(--ds-space-2, 1rem);
+}
+.home-why {
+  margin: 0.25rem 0 0;
+}
+.home-link-button {
+  font: inherit;
+  color: var(--ds-brand);
+  background: none;
+  border: 0;
+  padding: 0;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.home-link-button:focus-visible {
+  outline: 2px solid var(--ds-brand);
+  outline-offset: 2px;
+}
+.home-section {
+  margin: var(--ds-space-3, 1.5rem) 0;
+}
+.home-picker {
+  max-width: 40rem;
+  border: 1px solid var(--ds-rule);
+  border-radius: var(--ds-radius-panel, 6px);
+  background: var(--ds-raised);
+  padding: var(--ds-space-2, 1rem) var(--ds-space-3, 1.5rem);
+  margin: var(--ds-space-2, 1rem) 0;
+}
+.home-picker h2 {
+  margin-top: 0;
+}
+.home-picker fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0 0 var(--ds-space-2, 1rem);
+}
+.dash .home-choice {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  margin: 0.6rem 0;
+  font: inherit;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--ds-ink);
+}
+.home-choice input {
+  margin-top: 0.3rem;
+}
+.home-below {
+  margin-top: var(--ds-space-4, 2rem);
+}
+.home-verdict {
+  font-size: var(--ds-text-4, 1.25rem);
+  line-height: 1.45;
+  max-width: 60ch;
+  padding: var(--ds-space-2, 1rem) var(--ds-space-3, 1.5rem);
+  border-left: 4px solid var(--ds-brand);
+  background: var(--ds-raised);
+  margin: var(--ds-space-2, 1rem) 0;
+}
+.home-verdict.needs {
+  border-left-color: var(--ds-sev-high);
+}
+.home-units-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+.home-units-list li {
+  border: 1px solid var(--ds-rule);
+  border-left: 4px solid var(--ds-brand);
+  border-radius: var(--ds-radius-panel, 6px);
+  background: var(--ds-raised);
+  padding: 0.75rem 1rem;
+}
+.home-units-list li.needs {
+  border-left-color: var(--ds-sev-high);
+}
+.home-units-list p {
+  margin: 0.35rem 0 0;
+}
+.home-unit-name {
+  font-weight: 600;
+}
+.home-trend {
+  width: 4rem;
+  height: 1.2rem;
+  display: block;
+}
+.home-late {
+  color: var(--ds-sev-critical);
+  font-weight: 600;
+}
+.home-more {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.home-units {
+  min-width: 44rem;
+}
+.home-units td,
+.home-units th {
+  white-space: nowrap;
+}
+.home-units-wrap:focus-visible {
+  outline: 2px solid var(--ds-brand);
+  outline-offset: 2px;
+}

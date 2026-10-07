@@ -262,3 +262,83 @@ export function newWidgetId(widgets: Widget[], metric: string): string {
   while (widgets.some((w) => w.id === `${base}-${n}`)) n++;
   return `${base}-${n}`;
 }
+
+// --- role homes and the portfolio overview (plan §48.2, §55.6) ----------------------------------
+
+export interface AssignedIssue {
+  issue_id: string;
+  project_id: string;
+  project: string;
+  title: string;
+  band: string;
+  severity: string;
+  due_at: string | null;
+  days_left: number | null;
+}
+export interface MyEngagement {
+  id: string;
+  name: string;
+  type: string;
+  status: string;
+  project_id: string;
+  project: string;
+  as: ("lead" | "tester")[];
+  target_end_at: string | null;
+  overdue: boolean;
+}
+export interface UnitSummary {
+  id: string;
+  name: string;
+  verdict: string;
+  needs_attention: number;
+  projects: number;
+}
+export interface UnitProject {
+  asset: string;
+  label: string;
+  open: number;
+  open_p1: number;
+  past_sla: number;
+  new_advisories: string[];
+  last_scan_at: string | null;
+  days_since_scan: number | null;
+  scanners_ok: number;
+  scanners_applicable: number;
+  trend: number[];
+  needs: ("past_sla" | "new_advisory" | "not_scanned")[];
+}
+export interface UnitOverview {
+  id: string;
+  name: string;
+  verdict: string;
+  needs_attention: number;
+  projects: UnitProject[];
+  stale_days: number;
+  trend_weeks: number;
+  generated_at: string;
+}
+
+export const ROLE_HOME: Record<Role, { title: string; lands: string }> = {
+  lead: { title: "Lead", lands: "your program dashboard and how each business unit is doing" },
+  engineer: { title: "Engineer", lands: "the issues assigned to you, the soonest deadline first" },
+  tester: { title: "Tester", lands: "the engagements you lead or test on" },
+};
+
+/** "2 hours ago", "1 day ago", "19 days ago". */
+export function ago(iso: string | null, now = Date.now()): string {
+  if (!iso) return "never";
+  const mins = Math.max(0, Math.round((now - new Date(iso).getTime()) / 60000));
+  if (mins < 60) return mins <= 1 ? "just now" : `${mins} minutes ago`;
+  const hours = Math.round(mins / 60);
+  if (hours < 24) return hours === 1 ? "1 hour ago" : `${hours} hours ago`;
+  const days = Math.round(hours / 24);
+  return days === 1 ? "1 day ago" : `${days} days ago`;
+}
+
+/** An SLA deadline in words: "3 days overdue", "due today", "due in 5 days". */
+export function dueWords(daysLeft: number | null): string {
+  if (daysLeft === null) return "No SLA";
+  if (daysLeft < 0) return `${-daysLeft} day${daysLeft === -1 ? "" : "s"} overdue`;
+  if (daysLeft === 0) return "Due today";
+  return `Due in ${daysLeft} day${daysLeft === 1 ? "" : "s"}`;
+}
