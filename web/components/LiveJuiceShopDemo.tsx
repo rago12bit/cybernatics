@@ -5,15 +5,15 @@ import Link from "next/link";
 import { APP_HREF, DEMO_ONLY } from "@/lib/site";
 import { ScanReport } from "@/components/ScanReport";
 import { PAGE_SIZE, severityRank } from "@/lib/format";
+import { codeFindings, codeScan, provenance, runtimeFindings, runtimeScan } from "@/lib/recording";
 import type { Finding, FindingsPage, FindingsQuery, ScanView, ToolStatus } from "@/lib/types";
-import data from "@/lib/juiceshop-demo-data.json";
+import "./site/site-pages.css";
 
-// A real scan of the real, public OWASP Juice Shop (github.com/juice-shop/juice-shop), captured
-// once by Bulwark's own five scanners -- see scripts/gen-juiceshop-demo-data.py for exactly how.
-// Every finding, every tool's duration, and the final severity counts below are what Bulwark
-// actually reported; nothing here is written or tuned by hand for a better-looking demo.
-const finalScan = data.scan as unknown as ScanView;
-const allFindings = data.findings as unknown as Finding[];
+// A real scan of one release of the public OWASP Juice Shop, recorded by
+// scripts/record-juiceshop.py: its source by the default scanners, and its running container by a
+// passive DAST campaign's tools. Every finding, every tool's duration, and the severity counts are
+// what Bulwark actually reported; nothing here is written or tuned by hand.
+const finalScan = codeScan;
 
 // Reveal tools in the order they really finished (fastest first), proportional to their real
 // durations -- compressed into a few seconds so a visitor isn't staring at a loading screen for
@@ -28,13 +28,13 @@ const skippedTools = Object.fromEntries(
   Object.entries(finalScan.tool_status).filter(([, t]) => t.status === "skipped"),
 );
 
-async function fetchFindings(_id: string, q: FindingsQuery, limit: number = PAGE_SIZE): Promise<FindingsPage> {
+function pageOf(allFindings: Finding[], q: FindingsQuery, limit: number): FindingsPage {
   let rows = allFindings.filter(
     (f) =>
       (q.severity.length === 0 || q.severity.includes(f.scoring.normalized_severity)) &&
       (!q.category || f.taxonomy.category === q.category) &&
       (!q.tool || f.evidence.reported_by.includes(q.tool)) &&
-      (!q.path.trim() || f.location.path.includes(q.path.trim())),
+      (!q.path.trim() || (f.location.path || f.location.route || "").includes(q.path.trim())),
   );
   const risk = (f: Finding) => f.scoring.risk_score ?? -1;
   rows = [...rows].sort((a, b) =>
@@ -49,7 +49,15 @@ async function fetchFindings(_id: string, q: FindingsQuery, limit: number = PAGE
   return { total: rows.length, limit, offset: q.page * limit, items: rows.slice(q.page * limit, (q.page + 1) * limit) };
 }
 
+async function fetchCode(_id: string, q: FindingsQuery, limit: number = PAGE_SIZE): Promise<FindingsPage> {
+  return pageOf(codeFindings, q, limit);
+}
+async function fetchRuntime(_id: string, q: FindingsQuery, limit: number = PAGE_SIZE): Promise<FindingsPage> {
+  return pageOf(runtimeFindings, q, limit);
+}
+
 export function LiveJuiceShopDemo() {
+  const [half, setHalf] = useState<"code" | "runtime">("code");
   const [elapsed, setElapsed] = useState(0);
   const [runId, setRunId] = useState(0); // bumped to replay from the start
   // ElapsedTime (in ScanReport's header) counts up from `started_at` against the real clock, so a
@@ -82,19 +90,22 @@ export function LiveJuiceShopDemo() {
     return { ...finalScan, status: "running", created_at: startedAt, started_at: startedAt, finished_at: null, tool_status };
   }, [done, elapsed, startedAt]);
 
+  const code = half === "code";
   return (
     <div className="page">
       <div className="demo-banner">
         <div>
-          <span className="eyebrow plain">Live demo</span>
+          <span className="eyebrow plain">Recorded scan</span>
           <p className="small muted">
-            A real scan of the real, public <a href="https://github.com/juice-shop/juice-shop">OWASP Juice Shop</a> --
-            {done ? " replay finished; rerun it below." : " replaying how it happened, fastest scanner first."}{" "}
-            Prefer a smaller example? <Link href="/sample">See a 5-tool sample scan →</Link>
+            A real scan of the public <a href="https://github.com/juice-shop/juice-shop">OWASP Juice Shop</a>{" "}
+            {provenance.version}, recorded {provenance.recorded_on} --
+            {code
+              ? done ? " replay finished; rerun it below." : " replaying how it happened, fastest scanner first."
+              : " the running container, scanned by a passive web campaign (ZAP baseline)."}
           </p>
         </div>
-        <div style={{ display: "flex", gap: "0.5rem" }}>
-          {done && (
+        <div className="demo-actions">
+          {code && done && (
             <button type="button" className="btn sm" onClick={() => setRunId((n) => n + 1)}>
               ↻ Watch it again
             </button>
@@ -102,13 +113,33 @@ export function LiveJuiceShopDemo() {
           <Link href={APP_HREF} className="btn primary sm">{DEMO_ONLY ? "Run it yourself →" : "Scan your own →"}</Link>
         </div>
       </div>
-      <ScanReport
-        scan={scan}
-        connection={done ? "done" : "live"}
-        version={runId}
-        fetchFindings={fetchFindings}
-        crumb={{ href: "/", label: "← Home" }}
-      />
+      <div className="demo-switch">
+        <span className="label dimmed" id="half-label">Show</span>
+        <div className="seg" role="group" aria-labelledby="half-label">
+          <button type="button" aria-pressed={code} onClick={() => setHalf("code")}>The code · {codeScan.unique_findings}</button>
+          <button type="button" aria-pressed={!code} onClick={() => setHalf("runtime")}>The running app · {runtimeScan.unique_findings}</button>
+        </div>
+        <Link href="/#recording" className="small muted">What this recording does not show</Link>
+      </div>
+      {code ? (
+        <ScanReport
+          key="code"
+          scan={scan}
+          connection={done ? "done" : "live"}
+          version={runId}
+          fetchFindings={fetchCode}
+          crumb={{ href: "/", label: "← Home" }}
+        />
+      ) : (
+        <ScanReport
+          key="runtime"
+          scan={runtimeScan}
+          connection="done"
+          version={0}
+          fetchFindings={fetchRuntime}
+          crumb={{ href: "/", label: "← Home" }}
+        />
+      )}
     </div>
   );
 }

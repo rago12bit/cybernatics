@@ -8,11 +8,16 @@ import { APP_HREF, APP_NAV, DEMO_ONLY } from "@/lib/site";
 import { APP_LINKS, InboxLink, MORE_LINKS, MoreMenu, isCurrent, useUnread } from "./AppNav";
 import { BrandMark } from "./graphics";
 
-const LINKS = [
+// The public site's pages (Week 77). Home is the only landing section in the bar; the landing page's
+// other sections are reached by scrolling or from the footer.
+const LINKS: { href: string; label: string; id?: string }[] = [
   { href: "/", label: "Home", id: "product" },
-  { href: "/#results", label: "Results", id: "results" },
-  { href: "/#scanners", label: "Scanners", id: "scanners" },
-  { href: "/sample", label: "Sample scan" },
+  { href: "/how-it-works", label: "How it works" },
+  { href: "/integrations", label: "Integrations" },
+  { href: "/security", label: "Security" },
+  { href: "/compare", label: "Compare" },
+  { href: "/community", label: "Community" },
+  { href: "/sample", label: "Recorded scan" },
   { href: APP_HREF, label: APP_NAV },
 ];
 
@@ -39,7 +44,7 @@ export function SiteHeader() {
   // Highlight the landing section being read (scroll spy).
   useEffect(() => {
     if (!onLanding || typeof IntersectionObserver === "undefined") return; // progressive enhancement
-    const els = ["product", "results", "scanners"].map((id) => document.getElementById(id)).filter((e): e is HTMLElement => !!e);
+    const els = ["product", "recording", "results", "scanners"].map((id) => document.getElementById(id)).filter((e): e is HTMLElement => !!e);
     const io = new IntersectionObserver(
       (entries) => entries.forEach((e) => e.isIntersecting && setActive(e.target.id)),
       { rootMargin: "-35% 0px -55% 0px" },
@@ -94,8 +99,8 @@ export function SiteHeader() {
     return () => document.removeEventListener("keydown", onKey);
   }, [menu]);
 
-  // Home is the top of the landing page, so it is the current *page* while that section is in view;
-  // Results and Scanners are sections of it ("location"). Sample scan and App are pages.
+  // Home is the top of the landing page, so it is the current *page* while that section is in view.
+  // Every other link is a page.
   const current = (l: (typeof LINKS)[number]) => {
     if (l.href === "/") return path === "/" && active === "product" ? "page" : undefined;
     if (l.id) return onLanding && active === l.id ? "location" : undefined;

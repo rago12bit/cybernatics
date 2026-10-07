@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { BENCHMARK } from "@/lib/benchmark";
-import { APP_CTA, APP_HREF, CONTACT_URL, DEMO_ONLY, DOCS_HREF, REPO_URL } from "@/lib/site";
+import { counts } from "@/lib/catalogue";
+import { APP_CTA, APP_HREF, DEMO_ONLY, DOCS_HREF } from "@/lib/site";
 import { Blueprint, DedupChart, DedupDiagram, PipelineDiagram, StepChart, Stripes } from "./graphics";
 import { StackSection } from "./StackSection";
+import { Recording } from "./Recording";
 import { Scanners } from "./Scanners";
+import { SiteFooter } from "./SiteFooter";
 import { CountUp, Glow, Reveal, RiseText, ScrollProgress } from "./Motion";
 
 const pct = (n: number, d = 1) => `${(n * 100).toFixed(d)}%`;
@@ -12,6 +15,7 @@ const fmt = (n: number) => n.toLocaleString("en-US");
 export function Landing() {
   const max = Math.max(...BENCHMARK.rawPerScanner.map((s) => s.raw));
   const confirmed = BENCHMARK.repos.reduce((n, r) => n + r.merged, 0); // findings reported by 2+ scanners
+  const catalogue = counts(); // from the code's own registries (lib/integrations.json)
   return (
     <div className="page">
       <ScrollProgress />
@@ -28,12 +32,12 @@ export function Landing() {
             </p>
             <div className="hero-actions">
               <Link href={APP_HREF} className="btn primary">{APP_CTA}</Link>
-              <Link href="/sample" className="btn">View a sample scan</Link>
+              <Link href="/#recording" className="btn">See a recorded scan</Link>
             </div>
           </div>
           <div className="hero-stats">
-            <div><span className="numeral"><CountUp value={5} /></span><span className="label dimmed">Scanners, one pipeline</span></div>
-            <div><span className="numeral"><CountUp value={BENCHMARK.dedupRate * 100} decimals={1} suffix="%" /></span><span className="label dimmed">Fewer findings, 5 repos</span></div>
+            <div><span className="numeral"><CountUp value={catalogue.scanners} /></span><span className="label dimmed">Scanners, {catalogue.defaultScanners} by default</span></div>
+            <div><span className="numeral"><CountUp value={catalogue.parsers} /></span><span className="label dimmed">Report formats to import</span></div>
             <div><span className="numeral"><CountUp value={0} /></span><span className="label dimmed">Network access in sandbox</span></div>
           </div>
         </div>
@@ -52,8 +56,13 @@ export function Landing() {
       </section>
       </StackSection>
 
-      {/* ---- Feature grid ---- */}
+      {/* ---- The recorded scan (Week 77) ---- */}
       <StackSection index={1}>
+        <Recording />
+      </StackSection>
+
+      {/* ---- Feature grid ---- */}
+      <StackSection index={2}>
         <section className="section" aria-labelledby="more-h">
           <div className="sec-head">
             <h2 id="more-h">Do more with Bulwark</h2>
@@ -90,7 +99,7 @@ export function Landing() {
       </StackSection>
 
       {/* ---- Results ---- */}
-      <StackSection index={2}>
+      <StackSection index={3}>
         <section className="section metrics" id="results" aria-labelledby="results-h">
           <div className="metric-main">
             <div className="rule"><span className="eyebrow plain">Findings after merging</span></div>
@@ -131,12 +140,12 @@ export function Landing() {
       </StackSection>
 
       {/* ---- Scanners + pipeline ---- */}
-      <StackSection index={3}>
+      <StackSection index={4}>
         <section className="section ingredients" id="scanners" aria-labelledby="scan-h">
           <div className="cell stack">
-            <span className="eyebrow">The scanners [05]</span>
+            <span className="eyebrow">The default scanners [05]</span>
             <h2 id="scan-h">Best-in-class open source, one pipeline</h2>
-            <p className="lede">Detection is delegated to mature tools. Bulwark&apos;s contribution is normalisation and correlation, with risk-based prioritisation next.</p>
+            <p className="lede">Detection is delegated to mature tools. Bulwark&apos;s contribution is normalisation, correlation and prioritisation. <Link href="/integrations">All {catalogue.scanners} scanners and {catalogue.parsers} import formats →</Link></p>
             <Scanners />
           </div>
           <div className="hero-art">
@@ -150,27 +159,28 @@ export function Landing() {
       </StackSection>
 
       {/* ---- Shipped / roadmap ---- */}
-      <StackSection index={4}>
+      <StackSection index={5}>
         <section className="section stackrow" aria-label="Status">
           <div className="cell stack">
             <span className="eyebrow">What ships today</span>
             <h2>Built like a security tool</h2>
             <ul className="checklist">
-              <li>Sandboxed scanner containers</li>
-              <li>Cross-tool correlation and fingerprints</li>
+              <li>Sandboxed scanners and report parsers</li>
+              <li>Cross-tool correlation, per-source deduplication</li>
               <li>REST + WebSocket API, CLI, VS Code extension and GitHub Action</li>
               <li>EPSS + CISA KEV risk score, with reachability analysis</li>
-              <li>Plain-English fixes, labelled as AI suggestions</li>
-              <li>Signed reports, SBOMs and attestations</li>
+              <li>SLAs, four-eyes risk acceptance, tickets both ways</li>
+              <li>Single sign-on (OIDC, SAML), SCIM and scoped roles</li>
+              <li>Signed reports, SBOMs, VEX and attestations</li>
               <li>Strict CSP, text-only rendering of scanner data</li>
             </ul>
           </div>
           <div className="cell stack">
             <span className="eyebrow plain">Roadmap</span>
-            <h2>Next: broader coverage</h2>
+            <h2>Next: assistants and launch</h2>
             <ul className="checklist">
-              <li className="soon">More languages and frameworks per scanner</li>
-              <li className="soon">Multi-user accounts (today: one shared token)</li>
+              <li className="soon">An MCP server, read-only by default</li>
+              <li className="soon">/fix comments on pull requests</li>
               <li className="soon">Editor and CI marketplace listings (install from source today)</li>
             </ul>
           </div>
@@ -178,7 +188,7 @@ export function Landing() {
       </StackSection>
 
       {/* ---- CTA + footer (the last panel slides over everything) ---- */}
-      <StackSection index={5}>
+      <StackSection index={6}>
       <section className="cta" aria-label="Get started">
         <Stripes seed={7} groups={16} rows={2} />
         <div className="cta-copy">
@@ -188,15 +198,7 @@ export function Landing() {
           <span className="tagline">[ Bulwark ] local-first / sandboxed_</span>
         </div>
       </section>
-      <footer className="foot">
-        <div className="foot-links">
-          <div><h3>Product</h3><ul><li><Link href={APP_HREF}>{DEMO_ONLY ? "Run it yourself" : "Open app"}</Link></li><li><Link href="/#results">Results</Link></li><li><Link href="/#scanners">Scanners</Link></li></ul></div>
-          <div><h3>Developers</h3><ul><li><a href={DOCS_HREF}>API reference</a></li><li>CLI: bulwark scan</li><li>WebSocket progress</li></ul></div>
-          <div><h3>Security</h3><ul><li>Sandboxed runners</li><li>SSRF + zip-slip guards</li><li>Secret redaction</li></ul></div>
-          <div><h3>Project</h3><ul><li>Apache-2.0</li>{REPO_URL && <li><a href={REPO_URL} rel="noopener noreferrer">Source code</a></li>}{CONTACT_URL && <li><a href={CONTACT_URL} rel="noopener noreferrer">Contact</a></li>}<li>Benchmarks published</li></ul></div>
-        </div>
-        <Stripes seed={11} groups={16} rows={3} />
-      </footer>
+      <SiteFooter />
       </StackSection>
     </div>
   );

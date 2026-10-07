@@ -14,7 +14,7 @@ export function Scanners() {
   const [open, setOpen] = useState(0);
   return (
     <div className="ing-list">
-      <div className="panel-head green"><span className="eyebrow plain">Scanners</span><span className="label dimmed">{SCANNERS.length} integrated</span></div>
+      <div className="panel-head green"><span className="eyebrow plain">Scanners</span><span className="label dimmed">{SCANNERS.length} run by default</span></div>
       {SCANNERS.map((s, i) => (
         <div key={s.name} className="ing-item" data-open={open === i}>
           <button type="button" aria-expanded={open === i} onClick={() => setOpen(i)}>

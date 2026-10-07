@@ -8,9 +8,28 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 Weeks 70–73 (plan Phase 17): metrics, dashboards, reports and filters at scale
 ([Weeks 70–71](docs/v2-week70-71-verification.md), [Week 72](docs/v2-week72-verification.md),
 [Week 73](docs/v2-week73-verification.md)); and, ahead of Week 74, Week 75's sign-in and access
-([Week 75](docs/v2-week75-verification.md)).
+([Week 75](docs/v2-week75-verification.md)) and Week 77's public website
+([Week 77](docs/v2-week77-verification.md)).
 
 ### Added
+- **The public website (Week 77; plan §57).** See the [Week 77 verification](docs/v2-week77-verification.md).
+  - The home page shows a recorded scan of one release of OWASP Juice Shop (v17.3.0), done two
+    ways: its source by the default scanners, and its running container by a passive web
+    campaign behind the campaign's egress proxy. `scripts/record-juiceshop.py` makes it and
+    records the commit, the image digest, the date and the Bulwark version. The page says what
+    the recording leaves out: dependencies (the release has no lockfile), Nuclei, every URL (ZAP
+    lists at most five per alert), runtime confirmation (Express routes are not read), and how
+    many Issues the findings become. `/sample` shows both halves.
+  - New pages: How it works, Integrations, Security, Compare, Migration guides and Community,
+    each citing the files that do what it says. A test fails if a cited file is missing.
+  - The integrations catalogue is generated from the code's registries (scanners, DAST tools,
+    parsers, connectors, ticket systems, notification channels) by `scripts/gen-integrations.py`;
+    `tests/unit/test_integrations.py` fails when it is stale or misses a registry entry.
+  - Compare is Bulwark against DefectDojo, from facts checked against DefectDojo's repository on
+    2026-10-07, including where DefectDojo is ahead. The migration guides cover both directions
+    through the DefectDojo connectors, with what does and does not carry over.
+  - The landing page's "Roadmap" no longer lists multi-user accounts (they shipped in Week 75),
+    and the self-host page no longer says "no user accounts yet".
 - **Accounts, single sign-on, SCIM and scoped roles (Week 75; plan §51, ADR-0058).** See
   [Sign-in, people and access](docs/identity.md) and the [Week 75 verification](docs/v2-week75-verification.md).
   - People with an organization role (admin, member, viewer, or only granted projects) and higher
@@ -140,6 +159,15 @@ Weeks 70–73 (plan Phase 17): metrics, dashboards, reports and filters at scale
     is now off when Playwright starts it, so a snapshot can't catch "Compiling..." on some runs.
 
 ### Fixed
+- **A web finding's location read ":0".** The scan report, the Issues list and the project
+  overview printed a file and line, which a DAST finding does not have. They now show the host and
+  route it was reached at.
+- **The findings table logged duplicate-key errors** when a scanner reported one rule twice in
+  one place, giving two findings one id (Semgrep on one line, ZAP with different evidence on one
+  URL). Rows are now keyed by position as well; the duplicate findings themselves are not changed.
+- **The recorded scan's banner** used an inline style, which the production CSP drops, and linked
+  to "a smaller sample" that was the same page.
+- **SECURITY.md** said the supported version was `1.x`.
 - **End-to-end tests could collide when run in parallel.** Two tests starting in the same
   millisecond on different workers got the same "unique" repository URL. The URL now has a random
   part.

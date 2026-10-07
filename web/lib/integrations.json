@@ -1,0 +1,506 @@
+{
+ "_generated": "by scripts/gen-integrations.py from the code's own registries; do not edit",
+ "categories": {
+  "sast": "Code (SAST)",
+  "secrets": "Secrets",
+  "sca": "Dependencies (SCA)",
+  "iac": "Infrastructure as code",
+  "container": "Containers",
+  "dast": "Running apps (DAST)",
+  "network": "Network",
+  "sbom": "SBOM"
+ },
+ "items": [
+  {
+   "id": "scanner:bandit",
+   "name": "bandit",
+   "kind": "scanner",
+   "categories": [
+    "sast"
+   ],
+   "languages": [
+    "python"
+   ],
+   "version": "1.7.10",
+   "mode": "default",
+   "how": "Runs in a sandboxed container: no network, read-only, capabilities dropped."
+  },
+  {
+   "id": "scanner:semgrep",
+   "name": "semgrep",
+   "kind": "scanner",
+   "categories": [
+    "sast"
+   ],
+   "languages": [
+    "go",
+    "java",
+    "javascript",
+    "python"
+   ],
+   "version": "1.90.0",
+   "mode": "default",
+   "how": "Runs in a sandboxed container: no network, read-only, capabilities dropped."
+  },
+  {
+   "id": "scanner:gitleaks",
+   "name": "gitleaks",
+   "kind": "scanner",
+   "categories": [
+    "secrets"
+   ],
+   "languages": [],
+   "version": "v8.21.0",
+   "mode": "default",
+   "how": "Runs in a sandboxed container: no network, read-only, capabilities dropped."
+  },
+  {
+   "id": "scanner:trivy",
+   "name": "trivy",
+   "kind": "scanner",
+   "categories": [
+    "container",
+    "iac",
+    "sca"
+   ],
+   "languages": [],
+   "version": "0.55.2",
+   "mode": "default",
+   "how": "Runs in a sandboxed container: no network, read-only, capabilities dropped."
+  },
+  {
+   "id": "scanner:osv-scanner",
+   "name": "osv-scanner",
+   "kind": "scanner",
+   "categories": [
+    "sca"
+   ],
+   "languages": [],
+   "version": "2.6.0",
+   "mode": "default",
+   "how": "Runs in a sandboxed container: no network, read-only, capabilities dropped."
+  },
+  {
+   "id": "scanner:grype",
+   "name": "grype",
+   "kind": "scanner",
+   "categories": [
+    "sca"
+   ],
+   "languages": [],
+   "version": "0.119.0",
+   "mode": "opt-in",
+   "how": "Runs in a sandboxed container: no network, read-only, capabilities dropped."
+  },
+  {
+   "id": "scanner:checkov",
+   "name": "checkov",
+   "kind": "scanner",
+   "categories": [
+    "iac"
+   ],
+   "languages": [],
+   "version": "3.3.19",
+   "mode": "opt-in",
+   "how": "Runs in a sandboxed container: no network, read-only, capabilities dropped."
+  },
+  {
+   "id": "scanner:gosec",
+   "name": "gosec",
+   "kind": "scanner",
+   "categories": [
+    "sast"
+   ],
+   "languages": [
+    "go"
+   ],
+   "version": "2.29.0",
+   "mode": "opt-in",
+   "how": "Runs in a sandboxed container: no network, read-only, capabilities dropped."
+  },
+  {
+   "id": "scanner:dockle",
+   "name": "dockle",
+   "kind": "scanner",
+   "categories": [
+    "container"
+   ],
+   "languages": [],
+   "version": "0.4.15",
+   "mode": "opt-in",
+   "how": "Runs in a sandboxed container: no network, read-only, capabilities dropped."
+  },
+  {
+   "id": "scanner:syft",
+   "name": "syft",
+   "kind": "scanner",
+   "categories": [
+    "sbom"
+   ],
+   "languages": [],
+   "version": "1.52.0",
+   "mode": "opt-in",
+   "how": "Runs in a sandboxed container: no network, read-only, capabilities dropped."
+  },
+  {
+   "id": "scanner:opengrep",
+   "name": "opengrep",
+   "kind": "scanner",
+   "categories": [
+    "sast"
+   ],
+   "languages": [
+    "javascript",
+    "python",
+    "typescript"
+   ],
+   "version": "1.30.0",
+   "mode": "hosted",
+   "how": "Runs in a sandboxed container: no network, read-only, capabilities dropped."
+  },
+  {
+   "id": "scanner:zap-baseline",
+   "name": "OWASP ZAP baseline",
+   "kind": "scanner",
+   "categories": [
+    "dast"
+   ],
+   "languages": [],
+   "version": "stable",
+   "mode": "passive",
+   "how": "Spiders and passively checks a verified web target. Egress only to the target, through Bulwark's proxy."
+  },
+  {
+   "id": "scanner:nuclei",
+   "name": "Nuclei",
+   "kind": "scanner",
+   "categories": [
+    "dast"
+   ],
+   "languages": [],
+   "version": "latest",
+   "mode": "active",
+   "how": "Template checks against a verified target; active campaigns only. Egress only to the target, through Bulwark's proxy."
+  },
+  {
+   "id": "import:sarif",
+   "name": "SARIF 2.1.0",
+   "kind": "import",
+   "categories": [
+    "sast",
+    "secrets"
+   ],
+   "formats": [
+    "json"
+   ],
+   "dedup": "fingerprint_v2",
+   "ported_from_defectdojo": false,
+   "how": "Upload a file; parsed in a sandbox with no network."
+  },
+  {
+   "id": "import:cyclonedx",
+   "name": "CycloneDX",
+   "kind": "import",
+   "categories": [
+    "sca"
+   ],
+   "formats": [
+    "json",
+    "xml"
+   ],
+   "dedup": "fingerprint_v2",
+   "ported_from_defectdojo": false,
+   "how": "Upload a file; parsed in a sandbox with no network."
+  },
+  {
+   "id": "import:spdx",
+   "name": "SPDX 2.x (JSON)",
+   "kind": "import",
+   "categories": [
+    "sca"
+   ],
+   "formats": [
+    "json"
+   ],
+   "dedup": "fingerprint_v2",
+   "ported_from_defectdojo": false,
+   "how": "Upload a file; parsed in a sandbox with no network."
+  },
+  {
+   "id": "import:osv",
+   "name": "OSV-Scanner results",
+   "kind": "import",
+   "categories": [
+    "sca"
+   ],
+   "formats": [
+    "json"
+   ],
+   "dedup": "fingerprint_v2",
+   "ported_from_defectdojo": false,
+   "how": "Upload a file; parsed in a sandbox with no network."
+  },
+  {
+   "id": "import:zap",
+   "name": "OWASP ZAP report",
+   "kind": "import",
+   "categories": [
+    "dast"
+   ],
+   "formats": [
+    "json",
+    "xml"
+   ],
+   "dedup": "tool_id",
+   "ported_from_defectdojo": true,
+   "how": "Upload a file; parsed in a sandbox with no network."
+  },
+  {
+   "id": "import:nuclei",
+   "name": "Nuclei results",
+   "kind": "import",
+   "categories": [
+    "dast"
+   ],
+   "formats": [
+    "json",
+    "jsonl"
+   ],
+   "dedup": "tool_id",
+   "ported_from_defectdojo": true,
+   "how": "Upload a file; parsed in a sandbox with no network."
+  },
+  {
+   "id": "import:burp",
+   "name": "Burp Suite XML report",
+   "kind": "import",
+   "categories": [
+    "dast"
+   ],
+   "formats": [
+    "xml"
+   ],
+   "dedup": "tool_id",
+   "ported_from_defectdojo": true,
+   "how": "Upload a file; parsed in a sandbox with no network."
+  },
+  {
+   "id": "import:nessus",
+   "name": "Nessus / Tenable report",
+   "kind": "import",
+   "categories": [
+    "dast",
+    "network"
+   ],
+   "formats": [
+    "csv",
+    "xml"
+   ],
+   "dedup": "tool_id",
+   "ported_from_defectdojo": true,
+   "how": "Upload a file; parsed in a sandbox with no network."
+  },
+  {
+   "id": "import:openvas",
+   "name": "OpenVAS / Greenbone report",
+   "kind": "import",
+   "categories": [
+    "dast",
+    "network"
+   ],
+   "formats": [
+    "csv",
+    "xml"
+   ],
+   "dedup": "tool_id",
+   "ported_from_defectdojo": true,
+   "how": "Upload a file; parsed in a sandbox with no network."
+  },
+  {
+   "id": "import:grype",
+   "name": "Grype JSON report",
+   "kind": "import",
+   "categories": [
+    "container",
+    "sca"
+   ],
+   "formats": [
+    "json"
+   ],
+   "dedup": "package",
+   "ported_from_defectdojo": true,
+   "how": "Upload a file; parsed in a sandbox with no network."
+  },
+  {
+   "id": "import:trivy",
+   "name": "Trivy JSON report",
+   "kind": "import",
+   "categories": [
+    "container",
+    "iac",
+    "sca",
+    "secrets"
+   ],
+   "formats": [
+    "json"
+   ],
+   "dedup": "package",
+   "ported_from_defectdojo": true,
+   "how": "Upload a file; parsed in a sandbox with no network."
+  },
+  {
+   "id": "import:snyk",
+   "name": "Snyk JSON report",
+   "kind": "import",
+   "categories": [
+    "container",
+    "sca"
+   ],
+   "formats": [
+    "json"
+   ],
+   "dedup": "package",
+   "ported_from_defectdojo": true,
+   "how": "Upload a file; parsed in a sandbox with no network."
+  },
+  {
+   "id": "import:gitlab",
+   "name": "GitLab security report",
+   "kind": "import",
+   "categories": [
+    "container",
+    "dast",
+    "sast",
+    "sca",
+    "secrets"
+   ],
+   "formats": [
+    "json"
+   ],
+   "dedup": "fingerprint_v2",
+   "ported_from_defectdojo": true,
+   "how": "Upload a file; parsed in a sandbox with no network."
+  },
+  {
+   "id": "import:checkov",
+   "name": "Checkov JSON report",
+   "kind": "import",
+   "categories": [
+    "iac"
+   ],
+   "formats": [
+    "json"
+   ],
+   "dedup": "fingerprint_v2",
+   "ported_from_defectdojo": true,
+   "how": "Upload a file; parsed in a sandbox with no network."
+  },
+  {
+   "id": "import:universal",
+   "name": "Any other report (universal mapper)",
+   "kind": "import",
+   "categories": [],
+   "formats": [
+    "csv",
+    "json",
+    "xml"
+   ],
+   "dedup": "fingerprint_v2",
+   "ported_from_defectdojo": false,
+   "how": "Map its fields once, preview, save; the saved mapping becomes a parser."
+  },
+  {
+   "id": "connector:github_code_scanning",
+   "name": "GitHub code scanning",
+   "kind": "connector",
+   "direction": "pull",
+   "credential": false,
+   "permissions": "The Bulwark GitHub App, installed on the repository, with Code scanning alerts: read.",
+   "how": "Pulls on a schedule into a project."
+  },
+  {
+   "id": "connector:github_dependabot",
+   "name": "GitHub Dependabot",
+   "kind": "connector",
+   "direction": "pull",
+   "credential": false,
+   "permissions": "The Bulwark GitHub App, installed on the repository, with Dependabot alerts: read.",
+   "how": "Pulls on a schedule into a project."
+  },
+  {
+   "id": "connector:gitlab",
+   "name": "GitLab vulnerability report",
+   "kind": "connector",
+   "direction": "pull",
+   "credential": true,
+   "permissions": "A token with the read_api scope, from a user with at least the Developer role (GitLab Ultimate).",
+   "how": "Pulls on a schedule into a project."
+  },
+  {
+   "id": "connector:defectdojo_import",
+   "name": "DefectDojo (import from)",
+   "kind": "connector",
+   "direction": "pull",
+   "credential": true,
+   "permissions": "An API v2 key for a DefectDojo user who can read the product.",
+   "how": "Pulls on a schedule into a project."
+  },
+  {
+   "id": "connector:defectdojo_export",
+   "name": "DefectDojo (export to)",
+   "kind": "connector",
+   "direction": "push",
+   "credential": true,
+   "permissions": "An API v2 key for a DefectDojo user who can import scans into the engagement.",
+   "how": "Pushes a project's findings out."
+  },
+  {
+   "id": "tickets:jira",
+   "name": "Jira",
+   "kind": "tickets",
+   "how": "Tickets both ways: severity from Bulwark, status from the ticket."
+  },
+  {
+   "id": "tickets:github",
+   "name": "GitHub Issues",
+   "kind": "tickets",
+   "how": "Tickets both ways: severity from Bulwark, status from the issue."
+  },
+  {
+   "id": "notify:in_app",
+   "name": "Inbox",
+   "kind": "notifications",
+   "how": "In the app."
+  },
+  {
+   "id": "notify:email",
+   "name": "Email",
+   "kind": "notifications",
+   "how": "Instant, or a daily digest."
+  },
+  {
+   "id": "notify:slack",
+   "name": "Slack",
+   "kind": "notifications",
+   "how": "Incoming webhook."
+  },
+  {
+   "id": "notify:discord",
+   "name": "Discord",
+   "kind": "notifications",
+   "how": "Channel webhook."
+  },
+  {
+   "id": "notify:teams",
+   "name": "Microsoft Teams",
+   "kind": "notifications",
+   "how": "Incoming webhook."
+  },
+  {
+   "id": "notify:webhooks",
+   "name": "Webhook",
+   "kind": "notifications",
+   "how": "Signed JSON to your own endpoint, SSRF-checked."
+  }
+ ]
+}

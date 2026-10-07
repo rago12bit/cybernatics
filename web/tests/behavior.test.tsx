@@ -136,15 +136,18 @@ describe("live scan updates (useScan)", () => {
 });
 
 describe("site header navigation", () => {
-  it("starts with Home, links the landing sections, and gives the sample its own page", async () => {
+  it("starts with Home, then the site's pages (Week 77), the recorded scan and the app", async () => {
     clearToken();
     const h = await mount(<SiteHeader />);
     const links = [...h.querySelectorAll("nav.nav-desktop a")].map((a) => [a.textContent, a.getAttribute("href")]);
-    expect(links.slice(0, 5)).toEqual([
+    expect(links).toEqual([
       ["Home", "/"],
-      ["Results", "/#results"],
-      ["Scanners", "/#scanners"],
-      ["Sample scan", "/sample"],
+      ["How it works", "/how-it-works"],
+      ["Integrations", "/integrations"],
+      ["Security", "/security"],
+      ["Compare", "/compare"],
+      ["Community", "/community"],
+      ["Recorded scan", "/sample"],
       ["App", "/app"],
     ]);
   });

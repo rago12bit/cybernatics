@@ -14,14 +14,14 @@ export default function SelfHost() {
         <span className="eyebrow">Run it yourself</span>
         <h1>Scanning happens on your machine.</h1>
         <p className="lede">
-          This site is a read-only sample: a real report from a small test project. It runs no scanners and accepts no code.
+          This site is read-only: it shows a recorded scan of OWASP Juice Shop. It runs no scanners and accepts no code.
           Bulwark is built to run locally, next to the code it scans.
         </p>
         <h2>Why there is no hosted scanner</h2>
         <ul className="prose">
           <li>Scanning means running third-party tools over untrusted code. That belongs on a host you control, in the sandbox described in the threat model.</li>
           <li>Semgrep&apos;s community rules cannot be offered as a hosted service under their licence.</li>
-          <li>There are no user accounts yet: access is one shared token, meant for a private machine.</li>
+          <li>Accounts, single sign-on and project roles belong to a deployment you run. This site has none.</li>
         </ul>
         <h2>Start locally</h2>
         <pre className="snippet"><code>{`./scripts/init-env.sh                     # writes .env with random secrets
@@ -33,7 +33,7 @@ pip install -e ".[dev]"
 bulwark scan ./my-project --format html -o report.html`}</code></pre>
         <p className="muted">Needs Docker. The first build downloads scanner databases (about 1.4 GB for Trivy).</p>
         <div className="hero-actions">
-          <Link href="/sample" className="btn primary">Back to the sample report</Link>
+          <Link href="/sample" className="btn primary">Back to the recorded scan</Link>
           <Link href="/" className="btn">About Bulwark</Link>
           {REPO_URL && <a href={REPO_URL} className="btn" rel="noopener noreferrer">Source code</a>}
           {CONTACT_URL && <a href={CONTACT_URL} className="btn" rel="noopener noreferrer">Contact</a>}

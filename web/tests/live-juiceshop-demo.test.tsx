@@ -27,7 +27,7 @@ afterEach(async () => {
 describe("the launch landing page's live Juice Shop replay (plan §33, Week 52)", () => {
   it("starts mid-scan: no tool has reported in yet, and the real finding count isn't shown", async () => {
     const host = await mount();
-    expect(host.textContent).toContain("A real scan of the real, public");
+    expect(host.textContent).toContain("A real scan of the public");
     expect(host.textContent).not.toContain("Unique findings");
   });
 
@@ -61,11 +61,12 @@ describe("the launch landing page's live Juice Shop replay (plan §33, Week 52)"
     expect(host.querySelector("button")?.textContent).toContain("Watch it again");
   });
 
-  it("links to the full Juice Shop repo and to a smaller fixed sample", async () => {
+  it("links to the Juice Shop repo and to what the recording leaves out, not to itself", async () => {
     const host = await mount();
     const hrefs = [...host.querySelectorAll("a")].map((a) => a.getAttribute("href"));
     expect(hrefs).toContain("https://github.com/juice-shop/juice-shop");
-    expect(hrefs).toContain("/sample");
+    expect(hrefs).toContain("/#recording");
+    expect(hrefs).not.toContain("/sample"); // this page *is* /sample; it used to link to itself
   });
 
   it("never fabricates: every finding rendered once done comes from the real captured scan data", async () => {
