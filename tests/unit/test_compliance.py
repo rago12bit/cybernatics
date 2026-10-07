@@ -11,7 +11,7 @@ import json
 import subprocess
 import sys
 import zipfile
-from datetime import date, datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -307,7 +307,8 @@ def test_a_pack_is_signed_when_a_key_is_set_and_never_passes_unsigned_for_signed
         out.write_text('{"fake": "bundle"}')
 
     monkeypatch.setattr(cosign, "sign_blob", fake_sign)
-    body = {"start": str(date.today()), "end": str(date.today()), "frameworks": []}
+    today = str(datetime.now(timezone.utc).date())  # a pack's days are UTC days (pack.window)
+    body = {"start": today, "end": today, "frameworks": []}
     r = env.client.post("/v2/evidence-packs", json=body, headers=AUTH)
     assert r.status_code == 201 and r.json()["signed"] is True
     files = _unzip(env.client.get(f"/v2/evidence-packs/{r.json()['id']}/bundle", headers=AUTH).content)  # fmt: skip

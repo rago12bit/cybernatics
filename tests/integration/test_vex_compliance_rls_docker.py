@@ -8,7 +8,7 @@ from __future__ import annotations
 import io
 import json
 import zipfile
-from datetime import date
+from datetime import datetime, timezone
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, sessionmaker
@@ -33,7 +33,7 @@ def test_vex_compliance_and_packs_stay_in_their_org(
     sessions: sessionmaker[Session], two_orgs: tuple[str, str], advisories: None  # noqa: F811
 ) -> None:
     a, b = two_orgs
-    today = date.today()
+    today = datetime.now(timezone.utc).date()  # a pack's days are UTC days (pack.window)
     with sessions() as s:
         set_session_org(s, a)
         _sbom(s, a, XNET)
