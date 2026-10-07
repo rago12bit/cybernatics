@@ -3,7 +3,7 @@ import data from "./integrations.json";
 // The integrations catalogue, generated from the code's own registries by
 // scripts/gen-integrations.py (tests/unit/test_integrations.py keeps it current). Never edit the JSON.
 
-export type Kind = "scanner" | "import" | "connector" | "tickets" | "notifications";
+export type Kind = "scanner" | "import" | "connector" | "tickets" | "notifications" | "agents";
 
 export type Integration = {
   id: string;
@@ -31,6 +31,7 @@ export const KIND_LABELS: Record<Kind, string> = {
   connector: "Connectors",
   tickets: "Tickets",
   notifications: "Notifications",
+  agents: "Your agent and pull requests",
 };
 export const KINDS = Object.keys(KIND_LABELS) as Kind[];
 

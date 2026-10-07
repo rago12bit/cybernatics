@@ -8,10 +8,24 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 Weeks 70–73 (plan Phase 17): metrics, dashboards, reports and filters at scale
 ([Weeks 70–71](docs/v2-week70-71-verification.md), [Week 72](docs/v2-week72-verification.md),
 [Week 73](docs/v2-week73-verification.md)); and, ahead of Week 74, Week 75's sign-in and access
-([Week 75](docs/v2-week75-verification.md)) and Week 77's public website
-([Week 77](docs/v2-week77-verification.md)).
+([Week 75](docs/v2-week75-verification.md)), Week 77's public website
+([Week 77](docs/v2-week77-verification.md)), and Week 76's MCP server and `/fix`
+([Week 76](docs/v2-week76-verification.md)).
 
 ### Added
+- **`bulwark mcp`, an MCP server for your own agent (Week 76; plan §50, ADR-0059).** Tools
+  `list_issues`, `get_issue` (taint path, evidence), `get_verified_fix`, `search_components`, and
+  `run_scan` only with `--allow-scans` and a token that may write scans. It calls the API with the
+  person's own token (`BULWARK_MCP_TOKEN`), so roles, project limits and RLS apply; the shared token
+  is refused. Untrusted text comes back wrapped as `untrusted_text`, default-deny, with hidden
+  characters shown as codes. [docs/mcp.md](docs/mcp.md).
+- **`/fix` on pull requests (Week 76; plan §50, ADR-0059).** A member comments `/fix`; Bulwark
+  previews up to five findings the pull request introduced and the token cap, and runs nothing until
+  `/fix confirm <code>`. Owners, members and collaborators linked by an admin to a Member or higher;
+  never for forks; every check repeated on confirm, including that the pull request has not moved.
+  Verified patches are posted as comments. People and access gains a GitHub account field (admins
+  only). Migration 0050. [docs/fix-on-pull-requests.md](docs/fix-on-pull-requests.md).
+- The integrations catalogue lists both, generated from the code.
 - **The public website (Week 77; plan §57).** See the [Week 77 verification](docs/v2-week77-verification.md).
   - The home page shows a recorded scan of one release of OWASP Juice Shop (v17.3.0), done two
     ways: its source by the default scanners, and its running container by a passive web
@@ -159,6 +173,12 @@ Weeks 70–73 (plan Phase 17): metrics, dashboards, reports and filters at scale
     is now off when Playwright starts it, so a snapshot can't catch "Compiling..." on some runs.
 
 ### Fixed
+- **The verified-fix agent now spends within a budget (Week 76).** It counted its model tokens but
+  never charged them to the organization's monthly budget, and never checked it; each attempt now
+  does both, and a run can carry a token cap.
+- **The fix-agent worker now acts for the run's organization.** Under forced RLS its activities could
+  not see their own run, so on Postgres every attempt, patch and final status was silently dropped.
+  Found live while verifying Week 76.
 - **A web finding's location read ":0".** The scan report, the Issues list and the project
   overview printed a file and line, which a DAST finding does not have. They now show the host and
   route it was reached at.

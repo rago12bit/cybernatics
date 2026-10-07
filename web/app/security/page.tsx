@@ -44,6 +44,16 @@ export default function Security() {
             Everything a scanner says is rendered as text, never as HTML, under a per-request-nonce Content-Security-Policy
             with no inline scripts or styles.
           </Fact>
+          <Fact label="Your agent (MCP)" status="ok" src="core/mcp_server/untrusted.py · tests/unit/test_mcp_untrusted.py">
+            Read-only by default and only as the person whose token it holds. Code, file names and scanner text come back
+            wrapped as untrusted text, default-deny, with hidden and reordering characters shown as codes. A label cannot
+            stop an agent from acting on what it reads, so keep the agent&apos;s own permissions narrow.
+          </Fact>
+          <Fact label="/fix on pull requests" status="ok" src="core/fixagent/pr_command.py · core/fixagent/pr_fix.py">
+            Only an owner, member or collaborator of the repository whom an admin has linked to a Member in Bulwark. Never for
+            a pull request from a fork. A preview shows the most it may spend before anything runs; the confirm is checked
+            again, including that the pull request has not moved. Patches are posted for a person to apply.
+          </Fact>
         </div>
       </SiteSection>
 

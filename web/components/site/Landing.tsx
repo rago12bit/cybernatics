@@ -173,15 +173,16 @@ export function Landing() {
               <li>Single sign-on (OIDC, SAML), SCIM and scoped roles</li>
               <li>Signed reports, SBOMs, VEX and attestations</li>
               <li>Strict CSP, text-only rendering of scanner data</li>
+              <li>An MCP server for your own agent, read-only by default</li>
+              <li>/fix on pull requests: previewed, capped, never for forks</li>
             </ul>
           </div>
           <div className="cell stack">
             <span className="eyebrow plain">Roadmap</span>
-            <h2>Next: assistants and launch</h2>
+            <h2>Next: launch</h2>
             <ul className="checklist">
-              <li className="soon">An MCP server, read-only by default</li>
-              <li className="soon">/fix comments on pull requests</li>
               <li className="soon">Editor and CI marketplace listings (install from source today)</li>
+              <li className="soon">The verified-fix agent measured against a real model</li>
             </ul>
           </div>
         </section>

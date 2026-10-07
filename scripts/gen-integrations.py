@@ -10,7 +10,9 @@ that decides what Bulwark actually does:
 * imports: `core.imports.parsers.registry.PARSERS` (label, formats, categories, the default
   deduplication, and whether the parser was ported from DefectDojo), plus the universal mapper;
 * connectors: `core.connectors.service.KINDS` (direction, credential, the permissions it needs);
-* tickets: `core.tickets.config.PROVIDERS`; notifications: `core.notify.kinds`.
+* tickets: `core.tickets.config.PROVIDERS`; notifications: `core.notify.kinds`;
+* agents (Week 76): the MCP server's tools (`core.mcp_server.server.offered_tools`) and `/fix` on
+  pull requests (`core.fixagent.pr_command`).
 
 The only hand-written text is a label and a one-line description for the few registries that carry
 names alone (ticket providers, notification channels, DAST tools); `tests/unit/test_integrations.py`
@@ -177,11 +179,34 @@ def workflow() -> list[dict[str, Any]]:
     return out
 
 
+def agents() -> list[dict[str, Any]]:
+    from core.fixagent.pr_command import MAX_FINDINGS
+    from core.mcp_server.api import Identity
+    from core.mcp_server.server import offered_tools
+
+    everyone = Identity("catalogue", frozenset({"scans:read", "scans:write"}), "member")
+    reading = offered_tools(everyone, allow_scans=False)
+    extra = [t for t in offered_tools(everyone, allow_scans=True) if t not in reading]
+    return [
+        {"id": "agent:mcp", "name": "MCP server (bulwark mcp)", "kind": "agents",
+         "how": f"Your own agent asks Bulwark as you: {', '.join(reading)}; "
+                f"{', '.join(extra)} only with --allow-scans. Scanned text comes back labelled "
+                "untrusted.",
+         "permissions": "A personal API token; the shared token is refused"},
+        {"id": "agent:github-fix", "name": "/fix on GitHub pull requests", "kind": "agents",
+         "how": f"A member comments /fix: Bulwark previews up to {MAX_FINDINGS} new findings and "
+                "the most it may spend; once confirmed, each verified patch is posted as a "
+                "comment. Never for a fork.",
+         "permissions": "The GitHub App: pull requests (read and write), the issue comment "
+                        "event"},
+    ]  # fmt: skip
+
+
 def catalogue() -> dict[str, Any]:
     return {
         "_generated": "by scripts/gen-integrations.py from the code's own registries; do not edit",
         "categories": CATEGORY_LABELS,
-        "items": [*scanners(), *imports(), *connectors(), *workflow()],
+        "items": [*scanners(), *imports(), *connectors(), *workflow(), *agents()],
     }
 
 

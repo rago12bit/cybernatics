@@ -44,6 +44,8 @@ render text, never to run scan-derived markup.
 | T14 | Parser bug or resource exhaustion while analysing scanned source for reachability | Denial of service / Elevation | Partial |
 | T16 | A wrong VEX claim tells customers they are not affected | Repudiation / Information integrity | Partial |
 | T17 | An evidence pack discloses another organization's activity, or is forged | Information disclosure / Tampering | Partial |
+| T18 | Sign-in, sessions and access | Spoofing / Elevation of privilege | Partial |
+| T19 | Untrusted text steering an agent through MCP; `/fix` run by the wrong person or on a fork | Tampering / Elevation of privilege | Partial |
 
 ## Detail
 
@@ -222,6 +224,34 @@ are served with `Content-Security-Policy: sandbox`, so a file that runs script c
 **Residual:** Google, Entra ID and Okta are covered by standard OIDC but were exercised only through a
 local Keycloak; the shared token and pre-account tokens are nobody in particular and keep their scopes;
 a provider administrator can sign in as anyone the provider vouches for. Status: Partial.
+
+### T19: agents and pull request comments (Week 76, plan threat T29, ADR-0059)
+
+**MCP server.** `bulwark mcp` calls the API with the person's own token, so scopes, roles, project
+limits and RLS apply unchanged; the shared token is refused; ids are checked before a request;
+redirects are not followed and a remote API must be https. Read-only by default (`run_scan` needs
+`--allow-scans` and a token that may write scans); no tool changes a status. Every value Bulwark
+does not set itself is wrapped as `{"untrusted_text": ...}`, default-deny: a trusted key must also
+hold a value that looks like one. Hidden and reordering characters are shown as `<U+XXXX>`; long
+text is cut. Tested with a Hypothesis property (no unwrapped string escapes) and live: a planted
+injection in a scanned file came back wrapped, with its bidi override shown as a code, to the SDK's
+own stdio client. **Residual:** a label informs an agent, it cannot stop one from following the text;
+the agent's own permissions are the real limit.
+
+**`/fix`.** Only from a GitHub owner, member or collaborator (`author_association`) whose login an
+admin linked to an active person with the Member role or higher on that project; never for a pull
+request from a fork (its code must not run with the base repository's credentials, the
+`pull_request_target` lesson); only a new comment's first line is a command, never an edit; a bot is
+ignored; the organization comes from the App installation, and a comment never creates one. A
+preview shows the findings and the token cap and spends nothing; the confirm repeats every check and
+is refused when the pull request has new commits since the preview, the code has expired (24 h) or
+been used, the monthly budget cannot cover the cap, or the organization is at its concurrency limit.
+The agent stops at the cap (checked before each model call) and every token is charged to the
+organization's budget. Results are posted as comments; Bulwark never pushes to the branch. Tested on
+SQLite, on Postgres (RLS, a project-limited guest), and live with the real worker on Temporal.
+**Residual:** not exercised with a real GitHub App or a real model; a scan of the head commit is
+matched by the commit the webhook named, so a push in the seconds between the webhook and the clone
+could make the scan describe a newer commit. Status: Partial.
 
 ### Observability endpoints
 

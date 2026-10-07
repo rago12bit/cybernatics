@@ -49,8 +49,19 @@ def test_every_scanner_parser_and_connector_is_listed() -> None:
         | {f"connector:{k}" for k in KINDS}
         | {f"tickets:{p}" for p in PROVIDERS}
         | {f"notify:{c}" for c in PERSON_CHANNELS}
+        | {"agent:mcp", "agent:github-fix"}
     )
     assert want <= _ids()
+
+
+def test_the_mcp_entry_names_the_servers_real_tools() -> None:
+    from core.mcp_server.api import Identity
+    from core.mcp_server.server import offered_tools
+
+    entry = next(i for i in gen.catalogue()["items"] if i["id"] == "agent:mcp")
+    who = Identity("t", frozenset({"scans:read", "scans:write"}), "member")
+    for tool in offered_tools(who, allow_scans=True):
+        assert tool in entry["how"], tool
 
 
 def test_team_channels_name_real_senders() -> None:

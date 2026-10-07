@@ -18,7 +18,8 @@ close that gap; nothing here has been exercised against a real GitHub App yet.
    `BULWARK_GITHUB_WEBHOOK_SECRET` below — this is what proves a webhook actually came from GitHub.
 4. **Permissions**: Repository → Contents: Read-only, Pull requests: Read & write (for the result
    comment), Metadata: Read-only (mandatory).
-5. **Subscribe to events**: Pull request, Installation.
+5. **Subscribe to events**: Pull request, Installation, and Issue comment (for `/fix`,
+   [docs/fix-on-pull-requests.md](fix-on-pull-requests.md)).
 6. Create the App, then generate a **private key** (downloads a `.pem` file) and note the **App ID**
    shown on its settings page.
 7. Install the App on the account/repos you want scanned.
