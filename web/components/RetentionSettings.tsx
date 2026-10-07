@@ -46,8 +46,8 @@ export function RetentionSettings() {
     <div className="ds-retention">
       <p className="small muted ds-retention-intro">
         How long a scan&apos;s encrypted code snapshot and raw tool output are kept before being
-        permanently destroyed (crypto-shredding, plan §22.2) -- issues and findings are never
-        affected by this setting and are kept regardless.
+        permanently destroyed (its key is deleted, so it can never be read again). Issues and
+        findings are never affected by this setting and are kept regardless.
       </p>
 
       {error && <p className="ds-retention-error" role="alert">{error}</p>}

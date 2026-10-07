@@ -58,8 +58,31 @@ Weeks 70–72 (plan Phase 17): metrics, dashboards and reports
 ### Changed
 - **`/app` for a person is now their role home.** The shared token, which is nobody in particular,
   still lands on the scan page. Scanning is also at `/app/scan`.
+- **The app now looks like the public site.** Every screen uses the site's dark "blueprint" style:
+  warm near-black, hairline borders, sharp corners, Geist headings, uppercase monospace labels and
+  buttons, and the emerald accent.
+  - One header instead of two. Signed in, the site header carries the app's sections (Home,
+    Projects, Inbox, Dashboards, Advisories, Approvals, Reports, and the rest under More), so it no
+    longer wraps onto a second row. Under it, a slim bar holds the breadcrumbs, the project
+    switcher, the command palette and shortcut help.
+  - The design tokens carry the site's palette and fonts, so all screens changed together. The
+    app's separate light theme is gone: it made the app look unlike the site around it.
+  - Older screens referred to colour names the tokens never defined, so they fell back to
+    light-theme colours, dark red and grey text on a dark background. They now use the tokens.
+  - On-screen references to the project plan ("plan §28.1", "Week 30") are replaced with plain
+    wording.
+  - Seven screens that had no main heading now have one. Calendar days of the neighbouring
+    months are readable (they were faded below 4.5:1). The cost and SLA tables scroll on a phone
+    instead of widening the page.
+  - Code on the issue page is always highlighted dark; it used to follow the operating system's
+    light/dark setting and could show a white box in the dark app.
+  - The Linux visual snapshots are regenerated for the new design. The dev server's floating badge
+    is now off when Playwright starts it, so a snapshot can't catch "Compiling..." on some runs.
 
 ### Fixed
+- **End-to-end tests could collide when run in parallel.** Two tests starting in the same
+  millisecond on different workers got the same "unique" repository URL. The URL now has a random
+  part.
 - **End-to-end tests had gone stale.**
   - The J3 risk-acceptance journey still used the one-person accept button removed in Week 62. It
     now requests, approves as a second person, and ends early.

@@ -41,7 +41,7 @@
   margin: 0;
 }
 .ds-adv-tab-on {
-  font-weight: 600;
+  font-weight: 500;
 }
 .ds-adv-q {
   width: auto;
@@ -66,7 +66,7 @@
 .ds-adv-key,
 .ds-adv-title {
   font-family: var(--ds-font-mono);
-  font-weight: 700;
+  font-weight: 500;
   overflow-wrap: anywhere;
 }
 .ds-adv-title {
@@ -88,7 +88,7 @@
 .ds-adv-done {
   font-size: 0.75rem;
   padding: 0.05rem 0.45rem;
-  border-radius: 999px;
+  border-radius: var(--ds-radius-input);
   border: 1px solid var(--ds-rule);
   white-space: nowrap;
 }
@@ -135,7 +135,7 @@
 }
 .ds-adv-table tbody th {
   background: none;
-  font-weight: 600;
+  font-weight: 500;
   text-transform: none;
   letter-spacing: normal;
   color: inherit;
@@ -145,11 +145,11 @@
   white-space: nowrap;
 }
 .ds-adv-yes {
-  font-weight: 700;
+  font-weight: 500;
 }
 .ds-adv-fix {
   margin: 0;
-  font-weight: 600;
+  font-weight: 500;
 }
 .ds-adv-more,
 .ds-adv-done-msg {
@@ -216,8 +216,8 @@
   max-width: 100%;
 }
 
-.ds-adv-vex-ok { color: var(--ds-sev-low); font-weight: 600; }
-.ds-adv-vex-proposed { font-weight: 600; }
+.ds-adv-vex-ok { color: var(--ds-sev-low); font-weight: 500; }
+.ds-adv-vex-proposed { font-weight: 500; }
 .ds-adv-vex-list { display: grid; gap: 1rem; }
 .ds-adv-vex-item { border-top: 1px solid var(--ds-rule); padding-top: var(--ds-space-3); }
 .ds-adv-vex-item p { margin: 0.4rem 0; overflow-wrap: anywhere; }

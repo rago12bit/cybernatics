@@ -9,7 +9,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   const { id } = await params;
   return (
     <TokenGate>
-      <AppShell crumbs={[{ label: "Projects", href: "/app/projects" }, { label: "Threat model" }]}>
+      <AppShell crumbs={[{ label: "Projects", href: "/app/projects" }, { label: "Threat model" }]} eyebrow="Project" title="Threat model">
         <ThreatModelEditor assetId={id} />
       </AppShell>
     </TokenGate>

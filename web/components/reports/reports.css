@@ -27,7 +27,7 @@ fieldset.rep-panel legend { padding: 0 0.25rem; }
 .rep-block-head h3 { margin: 0; font-size: var(--ds-text-3, 1rem); }
 .rep-add, .rep-actions { margin: var(--ds-space-2, 1rem) 0; }
 .rep-ai { border-left: 4px solid var(--ds-brand); padding: 0.4rem 0.75rem; background: var(--ds-surface); margin: 0 0 0.5rem; }
-.rep-warn { color: var(--ds-sev-high); font-weight: 600; }
+.rep-warn { color: var(--ds-sev-high); font-weight: 500; }
 .rep-ai.rep-warn { border-left-color: var(--ds-sev-high); }
 .rep-runs { list-style: none; padding: 0; display: grid; gap: 0.75rem; }
 .rep-run { border: 1px solid var(--ds-rule); border-radius: var(--ds-radius-panel, 6px); background: var(--ds-raised); padding: 0.75rem 1rem; }

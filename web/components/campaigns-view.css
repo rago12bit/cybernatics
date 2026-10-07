@@ -4,7 +4,7 @@
 }
 
 .ds-campaigns-error {
-  color: var(--ds-color-danger, #b00020);
+  color: var(--ds-danger);
 }
 
 .ds-campaigns-actions {
@@ -22,5 +22,5 @@
 .ds-campaigns-table td {
   text-align: left;
   padding: 0.5rem 0.75rem;
-  border-bottom: 1px solid var(--ds-color-border, #d0d7de);
+  border-bottom: 1px solid var(--ds-rule);
 }

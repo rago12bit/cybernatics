@@ -78,25 +78,27 @@ export function ProjectOverview({ assetId }: { assetId: string }) {
 
   return (
     <div className="ds-ov">
-      <div className="ds-ov-crumbline">
-        {data.asset.label} <span aria-hidden="true">·</span>{" "}
-        <Link href={`/app/projects/${assetId}/issues`}>all issues</Link> <span aria-hidden="true">·</span>{" "}
-        <Link href={`/scans/${data.latest_scan_id}`}>full scan report</Link> <span aria-hidden="true">·</span>{" "}
-        <Link href={`/app/projects/${assetId}/compare`}>compare scans</Link> <span aria-hidden="true">·</span>{" "}
-        <Link href={`/app/projects/${assetId}/dependencies`}>dependencies</Link> <span aria-hidden="true">·</span>{" "}
-        <Link href={`/app/projects/${assetId}/hypotheses`}>hypotheses</Link> <span aria-hidden="true">·</span>{" "}
-        <Link href={`/app/projects/${assetId}/attack-paths`}>attack paths</Link> <span aria-hidden="true">·</span>{" "}
-        <Link href={`/app/projects/${assetId}/threat-model`}>threat model</Link> <span aria-hidden="true">·</span>{" "}
-        <Link href={`/app/projects/${assetId}/import`}>import a report</Link> <span aria-hidden="true">·</span>{" "}
-        <Link href={`/app/projects/${assetId}/findings/new`}>record a finding</Link> <span aria-hidden="true">·</span>{" "}
-        <Link href={`/app/projects/${assetId}/matching`}>matching</Link> <span aria-hidden="true">·</span>{" "}
-        <Link href={`/app/projects/${assetId}/sla`}>SLA</Link> <span aria-hidden="true">·</span>{" "}
-        <Link href={`/app/projects/${assetId}/priority`}>priority</Link> <span aria-hidden="true">·</span>{" "}
-        <Link href={`/app/projects/${assetId}/engagements`}>engagements</Link> <span aria-hidden="true">·</span>{" "}
-        <Link href={`/app/projects/${assetId}/tickets`}>tickets</Link> <span aria-hidden="true">·</span>{" "}
-        <Link href={`/app/projects/${assetId}/vex`}>VEX</Link> <span aria-hidden="true">·</span>{" "}
-        <Link href={`/app/projects/${assetId}/asvs`}>ASVS</Link>
-      </div>
+      <nav aria-label="This project" className="ds-ov-crumbline">
+        <span className="ds-ov-project">{data.asset.label}</span>
+        <ul>
+          <li><Link href={`/app/projects/${assetId}/issues`}>All issues</Link></li>
+          <li><Link href={`/scans/${data.latest_scan_id}`}>Full scan report</Link></li>
+          <li><Link href={`/app/projects/${assetId}/compare`}>Compare scans</Link></li>
+          <li><Link href={`/app/projects/${assetId}/dependencies`}>Dependencies</Link></li>
+          <li><Link href={`/app/projects/${assetId}/hypotheses`}>Hypotheses</Link></li>
+          <li><Link href={`/app/projects/${assetId}/attack-paths`}>Attack paths</Link></li>
+          <li><Link href={`/app/projects/${assetId}/threat-model`}>Threat model</Link></li>
+          <li><Link href={`/app/projects/${assetId}/import`}>Import a report</Link></li>
+          <li><Link href={`/app/projects/${assetId}/findings/new`}>Record a finding</Link></li>
+          <li><Link href={`/app/projects/${assetId}/matching`}>Matching</Link></li>
+          <li><Link href={`/app/projects/${assetId}/sla`}>SLA</Link></li>
+          <li><Link href={`/app/projects/${assetId}/priority`}>Priority</Link></li>
+          <li><Link href={`/app/projects/${assetId}/engagements`}>Engagements</Link></li>
+          <li><Link href={`/app/projects/${assetId}/tickets`}>Tickets</Link></li>
+          <li><Link href={`/app/projects/${assetId}/vex`}>VEX</Link></li>
+          <li><Link href={`/app/projects/${assetId}/asvs`}>ASVS</Link></li>
+        </ul>
+      </nav>
 
       <div className="ds-ov-verdict">
         <h1>

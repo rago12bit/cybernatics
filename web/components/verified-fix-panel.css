@@ -9,7 +9,7 @@
   gap: var(--ds-space-3);
   padding: var(--ds-space-3);
   border: 1px solid var(--ds-rule);
-  border-radius: var(--ds-radius, 8px);
+  border-radius: var(--ds-radius-panel, 8px);
   background: var(--ds-surface, transparent);
 }
 
@@ -24,7 +24,7 @@
   flex-wrap: wrap;
 }
 .ds-fix-title {
-  font-weight: 600;
+  font-weight: 500;
 }
 .ds-fix-status {
   color: var(--ds-muted);

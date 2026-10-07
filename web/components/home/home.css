@@ -27,36 +27,64 @@
   margin: var(--ds-space-3, 1.5rem) 0;
 }
 .home-picker {
-  max-width: 40rem;
+  max-width: 44rem;
   border: 1px solid var(--ds-rule);
-  border-radius: var(--ds-radius-panel, 6px);
+  border-radius: var(--ds-radius-panel);
   background: var(--ds-raised);
-  padding: var(--ds-space-2, 1rem) var(--ds-space-3, 1.5rem);
-  margin: var(--ds-space-2, 1rem) 0;
+  padding: var(--ds-space-3) var(--ds-space-3) var(--ds-space-3);
+  margin: var(--ds-space-3) 0 0;
 }
 .home-picker h2 {
-  margin-top: 0;
+  margin: 0 0 0.35rem;
 }
 .home-picker fieldset {
   border: 0;
   padding: 0;
-  margin: 0 0 var(--ds-space-2, 1rem);
+  margin: var(--ds-space-2) 0 var(--ds-space-3);
+  display: grid;
+  border-top: 1px solid var(--ds-rule);
 }
+/* Each role is a row, like the site's lists: hairline between rows, the chosen one tinted. */
 .dash .home-choice {
   display: flex;
-  gap: 0.6rem;
+  gap: 0.9rem;
   align-items: flex-start;
-  margin: 0.6rem 0;
+  margin: 0;
+  padding: 0.9rem 0.75rem;
+  border-bottom: 1px solid var(--ds-rule);
   font: inherit;
   letter-spacing: normal;
   text-transform: none;
   color: var(--ds-ink);
+  cursor: pointer;
+  transition: background-color var(--ds-duration-fast) linear;
+}
+.dash .home-choice:hover {
+  background: rgba(236, 235, 228, 0.03);
+}
+.dash .home-choice:has(input:checked) {
+  background: var(--ds-brand-wash);
 }
 .home-choice input {
-  margin-top: 0.3rem;
+  margin-top: 0.2rem;
 }
+.home-choice-text {
+  display: grid;
+  gap: 0.2rem;
+}
+.home-choice-text strong {
+  font: 400 var(--ds-text-1) / 1.3 var(--ds-font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.home-choice-text span {
+  color: var(--ds-ink-2);
+  font-size: var(--ds-text-2);
+}
+/* The scan page under the picker, framed like one of the site's panels rather than indented. */
 .home-below {
-  margin-top: var(--ds-space-4, 2rem);
+  margin-top: var(--ds-space-5);
+  border: 1px solid var(--ds-rule);
 }
 .home-verdict {
   font-size: var(--ds-text-4, 1.25rem);
@@ -91,7 +119,7 @@
   margin: 0.35rem 0 0;
 }
 .home-unit-name {
-  font-weight: 600;
+  font-weight: 500;
 }
 .home-trend {
   width: 4rem;
@@ -100,7 +128,7 @@
 }
 .home-late {
   color: var(--ds-sev-critical);
-  font-weight: 600;
+  font-weight: 500;
 }
 .home-more {
   display: flex;

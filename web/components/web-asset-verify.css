@@ -4,12 +4,12 @@
 }
 
 .ds-wav-error {
-  color: var(--ds-color-danger, #b00020);
+  color: var(--ds-danger);
 }
 
 .ds-wav-label {
   display: block;
-  font-weight: 600;
+  font-weight: 500;
   margin-bottom: 0.4rem;
 }
 
@@ -39,14 +39,14 @@
 }
 
 .ds-wav-instructions {
-  border: 1px solid var(--ds-color-border, #d0d7de);
-  border-radius: 6px;
+  border: 1px solid var(--ds-rule);
+  border-radius: var(--ds-radius-panel);
   padding: 1rem;
   margin-top: 1rem;
 }
 
 .ds-wav-instructions dt {
-  font-weight: 600;
+  font-weight: 500;
   margin-top: 0.6rem;
 }
 
@@ -57,9 +57,9 @@
 .ds-wav-code {
   display: block;
   font-family: var(--ds-font-mono, monospace);
-  background: var(--ds-color-surface-muted, #f6f8fa);
+  background: var(--ds-inset);
   padding: 0.4rem 0.6rem;
-  border-radius: 4px;
+  border-radius: var(--ds-radius-panel);
   word-break: break-all;
 }
 
@@ -67,14 +67,14 @@
   display: inline-block;
   margin-top: 1rem;
   margin-right: 0.75rem;
-  font-weight: 600;
+  font-weight: 500;
 }
 
-.ds-wav-status-pending { color: var(--ds-color-muted, #656d76); }
-.ds-wav-status-verified { color: var(--ds-color-success, #1a7f37); }
-.ds-wav-status-failed { color: var(--ds-color-danger, #b00020); }
+.ds-wav-status-pending { color: var(--ds-muted); }
+.ds-wav-status-verified { color: var(--ds-ok); }
+.ds-wav-status-failed { color: var(--ds-danger); }
 
 .ds-wav-last-error {
   margin-top: 0.5rem;
-  color: var(--ds-color-danger, #b00020);
+  color: var(--ds-danger);
 }

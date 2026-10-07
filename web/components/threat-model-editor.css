@@ -3,7 +3,7 @@
 }
 
 .ds-tm-error {
-  color: var(--ds-color-danger, #b00020);
+  color: var(--ds-danger);
 }
 
 .ds-tm-meta {
@@ -15,14 +15,14 @@
 
 .ds-tm-source {
   padding: 0.1rem 0.5rem;
-  border-radius: 999px;
+  border-radius: var(--ds-radius-input);
   font-size: 0.8rem;
-  border: 1px solid var(--ds-color-border, #ddd);
+  border: 1px solid var(--ds-rule);
 }
 
 .ds-tm-diagram {
-  border: 1px solid var(--ds-color-border, #ddd);
-  border-radius: 8px;
+  border: 1px solid var(--ds-rule);
+  border-radius: var(--ds-radius-panel);
   padding: 1rem;
   margin-bottom: 1rem;
   overflow-x: auto;
@@ -35,7 +35,7 @@
 
 .ds-tm-label {
   display: block;
-  font-weight: 600;
+  font-weight: 500;
   margin-bottom: 0.25rem;
 }
 
@@ -53,7 +53,7 @@
 
 .ds-tm-table th,
 .ds-tm-table td {
-  border: 1px solid var(--ds-color-border, #ddd);
+  border: 1px solid var(--ds-rule);
   padding: 0.4rem 0.6rem;
   text-align: left;
   vertical-align: top;

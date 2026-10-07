@@ -82,7 +82,7 @@
 }
 .ds-comp-name {
   font-family: var(--ds-font-mono);
-  font-weight: 600;
+  font-weight: 500;
 }
 .ds-comp-answer {
   display: flex;
@@ -102,7 +102,7 @@
 .ds-comp-v {
   padding: 0.15rem 0.5rem;
   border: 1px solid var(--ds-rule);
-  border-radius: 999px;
+  border-radius: var(--ds-radius-input);
   font-size: 0.85rem;
 }
 .ds-comp-v-true {
@@ -133,14 +133,14 @@
 }
 .ds-comp-table tbody th {
   background: none;
-  font-weight: 600;
+  font-weight: 500;
   text-transform: none;
   letter-spacing: normal;
   color: inherit;
   font-size: inherit;
 }
 .ds-comp-reach-true {
-  font-weight: 600;
+  font-weight: 500;
 }
 .ds-comp-paths {
   font-family: var(--ds-font-mono);

@@ -90,7 +90,7 @@
 .ds-cal-grid th {
   background: none;
   color: var(--ds-muted);
-  font-weight: 600;
+  font-weight: 500;
   text-align: left;
   padding: 0.25rem 0.35rem;
 }
@@ -101,8 +101,13 @@
   border: 1px solid var(--ds-rule);
   overflow: hidden;
 }
+/* Days of the neighbouring months: dimmer, but still readable (not opacity, which took the muted
+   text below 4.5:1). */
 .ds-cal-out {
-  opacity: 0.5;
+  background: var(--ds-inset);
+}
+.ds-cal-out .ds-cal-date {
+  color: var(--ds-muted);
 }
 .ds-cal-date {
   font-size: 0.85rem;
@@ -113,10 +118,10 @@
   display: inline-block;
   min-width: 1.4rem;
   text-align: center;
-  border-radius: 999px;
+  border-radius: var(--ds-radius-input);
   background: var(--ds-brand);
   color: var(--ds-surface);
-  font-weight: 700;
+  font-weight: 500;
 }
 .ds-cal-chip {
   display: block;
@@ -136,7 +141,7 @@
   text-decoration: underline;
 }
 .ds-cal-kind {
-  font-weight: 600;
+  font-weight: 500;
 }
 .ds-cal-more {
   font-size: 0.75rem;
@@ -166,7 +171,7 @@
 .ds-cal-tag {
   display: inline-block;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 500;
   padding: 0 0.35rem;
   border-left: 3px solid var(--cal-color);
 }

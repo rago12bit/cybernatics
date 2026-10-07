@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Projects · Bulwark" };
 export default function Page() {
   return (
     <TokenGate>
-      <AppShell crumbs={[{ label: "Projects" }]}>
+      <AppShell crumbs={[{ label: "Projects" }]} eyebrow="Projects" title="Your projects">
         <ProjectsList />
       </AppShell>
     </TokenGate>

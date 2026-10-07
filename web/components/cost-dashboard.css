@@ -4,7 +4,7 @@
 }
 
 .ds-cost-error {
-  color: var(--ds-color-danger, #b00020);
+  color: var(--ds-danger);
 }
 
 .ds-cost-window {
@@ -14,30 +14,34 @@
 }
 
 .ds-cost-window button {
-  padding: 0.25rem 0.75rem;
-  border: 1px solid var(--ds-color-border, #d0d7de);
-  border-radius: 999px;
+  padding: 0.5rem 0.8rem;
+  border: 1px solid var(--ds-rule-strong);
+  border-radius: var(--ds-radius-input);
   background: transparent;
+  color: var(--ds-muted);
+  font: 400 var(--ds-text-1) / 1 var(--ds-font-mono);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
   cursor: pointer;
 }
 
 .ds-cost-window-active {
-  background: var(--ds-color-accent, #0969da);
-  color: #fff;
-  border-color: transparent !important;
+  background: var(--ds-brand-wash);
+  color: var(--ds-brand);
+  border-color: var(--ds-brand) !important;
 }
 
 .ds-cost-totals {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
   gap: 1rem;
   margin-bottom: 1.5rem;
 }
 
 .ds-cost-tile {
   padding: 0.75rem 1rem;
-  border: 1px solid var(--ds-color-border, #d0d7de);
-  border-radius: 8px;
+  border: 1px solid var(--ds-rule);
+  border-radius: var(--ds-radius-panel);
 }
 
 .ds-cost-tile-label {
@@ -47,7 +51,7 @@
 
 .ds-cost-tile-value {
   font-size: 1.5rem;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .ds-cost-table {
@@ -59,5 +63,5 @@
 .ds-cost-table td {
   text-align: left;
   padding: 0.5rem 0.75rem;
-  border-bottom: 1px solid var(--ds-color-border, #d0d7de);
+  border-bottom: 1px solid var(--ds-rule);
 }

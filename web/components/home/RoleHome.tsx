@@ -71,9 +71,9 @@ export function RolePicker({
               checked={role === r}
               onChange={() => setRole(r)}
             />
-            <span>
-              <strong>{ROLE_HOME[r].title}</strong> — you land on{" "}
-              {ROLE_HOME[r].lands}.
+            <span className="home-choice-text">
+              <strong>{ROLE_HOME[r].title}</strong>
+              <span>You land on {ROLE_HOME[r].lands}.</span>
             </span>
           </label>
         ))}

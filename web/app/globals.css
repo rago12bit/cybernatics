@@ -24,7 +24,7 @@
   --sev-critical: #f28bb8;
   --sev-high: #ff8a66;
   --sev-medium: #e8b74f;
-  --sev-low: #8bd29d;
+  --sev-low: #7fb2e5;
   --sev-info: #9b9c8f;
   --err: #ff8a66;
 
@@ -110,11 +110,15 @@ h3 { font-weight: 500; font-size: 1.0625rem; line-height: 1.3; letter-spacing: -
 
 /* ---------- Forms ---------- */
 label { display: block; font: 400 0.75rem/1 var(--mono); letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); margin: 1rem 0 0.5rem; }
-input[type="text"], input[type="url"], input[type="password"], input[type="search"], input[type="file"], select {
+input:not([type]), input[type="text"], input[type="url"], input[type="password"], input[type="search"], input[type="file"],
+input[type="email"], input[type="number"], input[type="date"], input[type="datetime-local"], input[type="time"], textarea, select {
   width: 100%; padding: 0.65rem 0.75rem; font: 400 0.875rem/1.3 var(--mono); color: var(--text); background: var(--inset);
   border: 1px solid var(--line-strong); border-radius: var(--radius); transition: border-color 120ms linear;
 }
-input:focus-visible, select:focus-visible { outline: none; border-color: var(--teal); }
+input:focus-visible, select:focus-visible, textarea:focus-visible { outline: none; border-color: var(--teal); }
+textarea { font-family: var(--sans); line-height: 1.5; resize: vertical; }
+input[type="checkbox"], input[type="radio"], input[type="range"], progress { accent-color: var(--teal); }
+input[type="file"]::file-selector-button { margin-right: 0.75rem; padding: 0.4rem 0.6rem; font: 400 0.6875rem/1 var(--mono); letter-spacing: 0.07em; text-transform: uppercase; color: var(--text); background: transparent; border: 1px solid var(--text-2); border-radius: var(--radius); cursor: pointer; }
 /* Checkboxes and radios have no visible border box for the rule above to repaint, so removing
    their native outline (as the blanket `input:focus-visible` rule above does) left them with no
    focus indicator at all -- a real keyboard-walkthrough finding (Week 35), not a hypothetical. */
@@ -489,6 +493,15 @@ main:focus { outline: none; }
 .menu-btn { display: none; }
 .top nav.nav-mobile { display: none; } /* specificity must beat `.top nav { display: flex }` */
 .top nav.nav-desktop a[aria-current="location"], .top nav.nav-desktop a[aria-current="page"] { color: var(--text); box-shadow: inset 0 -1px 0 var(--teal); }
+/* Signed in to the app, the header carries the app's sections (components/site/AppNav.tsx). */
+.nav-app a { display: inline-flex; align-items: center; gap: 0.4rem; }
+.nav-count { display: inline-block; min-width: 1.1rem; padding: 0.15rem 0.3rem; font: 500 0.625rem/1 var(--mono); letter-spacing: 0; text-align: center; color: #04140f; background: var(--teal); }
+.nav-more { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.5rem 0; background: none; border: 0; font: 400 0.75rem/1 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); cursor: pointer; transition: color 120ms linear; }
+.nav-more:hover, .nav-more[data-state="open"] { color: var(--text); }
+.nav-more[data-current] { color: var(--text); box-shadow: inset 0 -1px 0 var(--teal); }
+.nav-more-menu { min-width: 13rem; }
+.nav-more-menu .ds-dropdown-item { font: 400 0.75rem/1 var(--mono); letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-2); text-decoration: none; padding: 0.7rem 0.75rem; }
+.nav-more-menu .ds-dropdown-item[aria-current="page"] { color: var(--teal); }
 @media (max-width: 960px) {
   .top nav.nav-desktop { display: none; }
   .menu-btn { display: inline-flex; }

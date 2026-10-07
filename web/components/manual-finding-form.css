@@ -17,7 +17,7 @@
 
 .ds-mf-field > label {
   display: block;
-  font-weight: 600;
+  font-weight: 500;
   margin-bottom: 0.35rem;
 }
 
@@ -29,24 +29,24 @@
 }
 
 .ds-mf-help {
-  color: var(--ds-muted, #666);
+  color: var(--ds-muted);
   font-size: var(--ds-text-1, 0.85rem);
   margin: 0.3rem 0 0;
 }
 
 .ds-mf-field-error,
 .ds-mf-error {
-  color: var(--ds-sev-critical, #b00020);
+  color: var(--ds-sev-critical);
   margin: 0.3rem 0 0;
 }
 
 [aria-invalid="true"] {
-  outline: 2px solid var(--ds-sev-critical, #b00020);
+  outline: 2px solid var(--ds-sev-critical);
   outline-offset: 1px;
 }
 
 .ds-mf-summary {
-  border: 2px solid var(--ds-sev-critical, #b00020);
+  border: 2px solid var(--ds-sev-critical);
   border-radius: var(--ds-radius-panel, 6px);
   padding: var(--ds-space-2, 0.5rem) var(--ds-space-3, 0.75rem);
   margin-bottom: var(--ds-space-3, 0.75rem);
@@ -59,7 +59,7 @@
 
 .ds-mf-cvss,
 .ds-mf-where {
-  border: 1px solid var(--ds-rule, #ccc);
+  border: 1px solid var(--ds-rule);
   border-radius: var(--ds-radius-panel, 6px);
   padding: var(--ds-space-2, 0.5rem) var(--ds-space-3, 0.75rem);
   margin: var(--ds-space-4, 1rem) 0;
@@ -67,7 +67,7 @@
 
 .ds-mf-cvss > legend,
 .ds-mf-where > legend {
-  font-weight: 600;
+  font-weight: 500;
   padding: 0 0.3rem;
 }
 
@@ -78,8 +78,8 @@
 }
 
 .ds-mf-group > legend {
-  font-weight: 600;
-  color: var(--ds-muted, #666);
+  font-weight: 500;
+  color: var(--ds-muted);
   margin-bottom: 0.3rem;
 }
 
@@ -106,7 +106,7 @@
 
 .ds-mf-metric abbr {
   text-decoration: none;
-  color: var(--ds-muted, #666);
+  color: var(--ds-muted);
 }
 
 .ds-mf-choice {
@@ -174,7 +174,7 @@
 }
 
 .ds-mf-link {
-  font-weight: 600;
+  font-weight: 500;
 }
 
 @media (max-width: 40rem) {

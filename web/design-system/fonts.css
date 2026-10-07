@@ -1,14 +1,7 @@
-/* Self-hosted fonts (plan §29.3, §32). No Google Fonts CDN request — the actual WOFF2 files ship
-   from @fontsource, which vendors the real IBM Plex (OFL) and JetBrains Mono (OFL) releases.
-   Ligatures are turned off on the mono face at the point of use (see the `.mono` rule below): in a
-   security review, `!=` must never render as one glyph, and `==` vs `===` must stay visibly
-   different (29.3). */
-@import "@fontsource/ibm-plex-sans/400.css";
-@import "@fontsource/ibm-plex-sans/500.css";
-@import "@fontsource/ibm-plex-sans/600.css";
-@import "@fontsource/ibm-plex-sans/400-italic.css";
-@import "@fontsource/jetbrains-mono/400.css";
-@import "@fontsource/jetbrains-mono/500.css";
+/* Fonts: Geist and JetBrains Mono, self-hosted at build time by next/font in app/layout.tsx (no
+   runtime request to Google), the same faces as the public site. Ligatures are turned off on the
+   mono face at the point of use: in a security review, `!=` must never render as one glyph, and
+   `==` vs `===` must stay visibly different (29.3). */
 
 .mono,
 code,

@@ -81,30 +81,32 @@ export function CostDashboard() {
           {summary.scans.length === 0 ? (
             <p className="small muted">No scans in this window.</p>
           ) : (
-            <table className="ds-cost-table">
-              <thead>
-                <tr>
-                  <th>Scan</th>
-                  <th>When</th>
-                  <th>Compute</th>
-                  <th>LLM tokens</th>
-                  <th>Estimated cost</th>
-                </tr>
-              </thead>
-              <tbody>
-                {summary.scans.map((row) => (
-                  <tr key={row.scan_id}>
-                    <td>
-                      <Link href={`/scans/${row.scan_id}`}>{row.source_label}</Link>
-                    </td>
-                    <td>{new Date(row.created_at).toLocaleString()}</td>
-                    <td>{formatDuration(row.compute_seconds)}</td>
-                    <td>{row.llm_tokens.toLocaleString()}</td>
-                    <td>{formatUsd(row.total_usd)}</td>
+            <div className="scroll" tabIndex={0} role="region" aria-label="Cost by scan">
+              <table className="ds-cost-table">
+                <thead>
+                  <tr>
+                    <th>Scan</th>
+                    <th>When</th>
+                    <th>Compute</th>
+                    <th>LLM tokens</th>
+                    <th>Estimated cost</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {summary.scans.map((row) => (
+                    <tr key={row.scan_id}>
+                      <td>
+                        <Link href={`/scans/${row.scan_id}`}>{row.source_label}</Link>
+                      </td>
+                      <td>{new Date(row.created_at).toLocaleString()}</td>
+                      <td>{formatDuration(row.compute_seconds)}</td>
+                      <td>{row.llm_tokens.toLocaleString()}</td>
+                      <td>{formatUsd(row.total_usd)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </>
       )}

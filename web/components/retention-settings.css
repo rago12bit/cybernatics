@@ -4,12 +4,12 @@
 }
 
 .ds-retention-error {
-  color: var(--ds-color-danger, #b00020);
+  color: var(--ds-danger);
 }
 
 .ds-retention-label {
   display: block;
-  font-weight: 600;
+  font-weight: 500;
   margin-bottom: 0.4rem;
 }
 
@@ -24,6 +24,6 @@
 }
 
 .ds-retention-saved {
-  color: var(--ds-color-success, #1a7f37);
+  color: var(--ds-ok);
   margin-top: 0.5rem;
 }

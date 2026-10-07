@@ -1,33 +1,34 @@
-/* The new app shell (Week 33) — built entirely on design-system/tokens.css's --ds-* custom
-   properties, namespaced so nothing here can collide with app/globals.css's own theme (see
-   design-system/tokens.css's header comment for why that matters). */
+/* The app shell — on design-system/tokens.css's --ds-* properties, which carry the site's blueprint
+   palette (see that file's header). The site header above it holds the app's sections; this bar
+   holds where you are (breadcrumbs) and the tools that act on it. */
 
 .ds-shell {
-  min-height: 100vh;
+  min-height: calc(100vh - var(--header-h, 3.5rem));
   background: var(--ds-surface);
   color: var(--ds-ink);
   font-family: var(--ds-font-sans);
 }
 
-.ds-shell-top {
+.ds-shell-bar {
   display: flex;
-  flex-wrap: wrap; /* the links wrap onto a second row rather than widen the page */
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--ds-space-2);
-  padding: var(--ds-space-1) var(--ds-space-3);
+  justify-content: space-between;
+  gap: var(--ds-space-1) var(--ds-space-2);
+  min-height: 3rem;
+  padding: 0.45rem clamp(1rem, 3vw, 2rem);
   border-bottom: 1px solid var(--ds-rule);
   background: var(--ds-raised);
 }
 
-.ds-shell-brand {
-  font-weight: 600;
-  font-size: var(--ds-text-3);
-  color: var(--ds-ink);
-  text-decoration: none;
-}
-
 .ds-shell-crumbs {
-  font-size: var(--ds-text-2);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  min-width: 0;
+  font: 400 var(--ds-text-1) / 1.4 var(--ds-font-mono);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
   color: var(--ds-muted);
 }
 .ds-shell-crumbs a {
@@ -35,29 +36,58 @@
   text-decoration: none;
 }
 .ds-shell-crumbs a:hover {
-  color: var(--ds-brand);
-  text-decoration: underline;
+  color: var(--ds-ink);
 }
 .ds-shell-crumbs [aria-current="page"] {
   color: var(--ds-ink);
 }
-
-.ds-shell-spacer {
-  flex: 1;
+.ds-shell-sep {
+  margin: 0 0.6rem;
+  color: var(--ds-rule-strong);
 }
 
-.ds-shell-settings-link {
-  color: var(--ds-muted);
-  text-decoration: none;
-  font-size: var(--ds-text-2);
+.ds-shell-tools {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
-.ds-shell-settings-link:hover {
-  color: var(--ds-brand);
-  text-decoration: underline;
+.ds-shell-tools .ds-button {
+  padding: 0.4rem 0.55rem;
+  font-size: 0.6875rem;
 }
 
 .ds-shell-main {
-  padding: var(--ds-space-3);
+  padding: clamp(1.25rem, 3vw, 2.5rem) clamp(1rem, 3vw, 2rem) clamp(2rem, 4vw, 3.5rem);
+}
+
+.ds-page-head {
+  display: grid;
+  gap: 0.6rem;
+  margin-bottom: var(--ds-space-3);
+}
+
+/* Headings inside a screen. The site's h2 is a landing-section headline (up to 2.5rem); on a screen
+   it titles a section under the page's h1, so it is smaller and gets room above it. `:where()`
+   keeps these at element specificity, so any screen's own heading class still wins. */
+:where(.ds-shell-main) h1 {
+  margin-bottom: 0.5rem;
+}
+:where(.ds-shell-main) h2 {
+  font-size: clamp(1.25rem, 1.05rem + 0.6vw, 1.625rem);
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+  margin: 2.25rem 0 0.75rem;
+}
+:where(.ds-shell-main) h2:first-child {
+  margin-top: 0;
+}
+:where(.ds-shell-main) h3 {
+  margin-bottom: 0.4rem;
+}
+/* A plain <section> (one without a screen's own class) is a section of the page: room above it. */
+:where(.ds-shell-main) section:not([class]) + section:not([class]),
+:where(.ds-shell-main) :is(h1, p, div, form) + section:not([class]) {
+  margin-top: 2.25rem;
 }
 
 /* Command palette */
@@ -129,18 +159,4 @@
 .ds-shortcuts-tag {
   color: var(--ds-sev-medium);
   font-size: var(--ds-text-1);
-}
-
-/* The inbox's unread count (Week 66). */
-.ds-shell-count {
-  display: inline-block;
-  margin-left: 0.3rem;
-  min-width: 1.2rem;
-  padding: 0 0.3rem;
-  border-radius: 999px;
-  background: var(--ds-brand);
-  color: var(--ds-surface);
-  font-size: 0.75rem;
-  text-align: center;
-  line-height: 1.2rem;
 }

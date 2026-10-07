@@ -37,7 +37,7 @@
   gap: var(--ds-space-2);
   padding: var(--ds-space-3);
   border: 1px dashed var(--ds-rule);
-  border-radius: var(--ds-radius, 8px);
+  border-radius: var(--ds-radius-panel, 8px);
 }
 
 .ds-hyp-head {
@@ -47,7 +47,7 @@
   flex-wrap: wrap;
 }
 .ds-hyp-route {
-  font-weight: 600;
+  font-weight: 500;
 }
 .ds-hyp-location,
 .ds-hyp-confidence {

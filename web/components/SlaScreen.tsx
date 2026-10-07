@@ -153,29 +153,31 @@ export function SlaScreen({ assetId }: { assetId: string }) {
           )}
           {errorFor("basis")}
         </fieldset>
-        <table className="ds-sla-bands">
-          <caption>Deadlines by {basis === "priority" ? "priority band" : "severity"}</caption>
-          <thead>
-            <tr><th scope="col">{basis === "priority" ? "Band" : "Severity"}</th><th scope="col">Fix within (days)</th><th scope="col">Due soon in the last (days)</th></tr>
-          </thead>
-          <tbody>
-            {BANDS.map((b) => (
-              <tr key={b}>
-                <th scope="row">{bandName(b)}</th>
-                <td>
-                  <input id={fid(`bands.${b}.days`)} inputMode="numeric" aria-label={`${b.toLowerCase()}: fix within, days`}
-                    value={draft[b]?.days ?? ""} placeholder="no deadline" onChange={(e) => set(b, "days", e.target.value)} {...aria(`bands.${b}.days`)} />
-                  {errorFor(`bands.${b}.days`)}
-                </td>
-                <td>
-                  <input id={fid(`bands.${b}.warn`)} inputMode="numeric" aria-label={`${b.toLowerCase()}: due soon in the last, days`}
-                    value={draft[b]?.warn ?? ""} disabled={!draft[b]?.days} onChange={(e) => set(b, "warn", e.target.value)} {...aria(`bands.${b}.warn`)} />
-                  {errorFor(`bands.${b}.warn`)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="scroll" tabIndex={0} role="region" aria-label="Deadlines">
+          <table className="ds-sla-bands">
+            <caption>Deadlines by {basis === "priority" ? "priority band" : "severity"}</caption>
+            <thead>
+              <tr><th scope="col">{basis === "priority" ? "Band" : "Severity"}</th><th scope="col">Fix within (days)</th><th scope="col">Due soon in the last (days)</th></tr>
+            </thead>
+            <tbody>
+              {BANDS.map((b) => (
+                <tr key={b}>
+                  <th scope="row">{bandName(b)}</th>
+                  <td>
+                    <input id={fid(`bands.${b}.days`)} inputMode="numeric" aria-label={`${b.toLowerCase()}: fix within, days`}
+                      value={draft[b]?.days ?? ""} placeholder="no deadline" onChange={(e) => set(b, "days", e.target.value)} {...aria(`bands.${b}.days`)} />
+                    {errorFor(`bands.${b}.days`)}
+                  </td>
+                  <td>
+                    <input id={fid(`bands.${b}.warn`)} inputMode="numeric" aria-label={`${b.toLowerCase()}: due soon in the last, days`}
+                      value={draft[b]?.warn ?? ""} disabled={!draft[b]?.days} onChange={(e) => set(b, "warn", e.target.value)} {...aria(`bands.${b}.warn`)} />
+                    {errorFor(`bands.${b}.warn`)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
         {errorFor("bands")}
         <div className="ds-sla-row">
           <label htmlFor={fid("note")}>Why (optional, kept in the history)</label>
@@ -189,21 +191,23 @@ export function SlaScreen({ assetId }: { assetId: string }) {
       </form>
 
       {data.history.length > 0 && (
-        <table className="ds-sla-history">
-          <caption>History</caption>
-          <thead><tr><th scope="col">Version</th><th scope="col">When</th><th scope="col">By</th><th scope="col">Policy</th><th scope="col">Why</th></tr></thead>
-          <tbody>
-            {data.history.map((h) => (
-              <tr key={h.version}>
-                <td>{h.version}</td>
-                <td>{new Date(h.changed_at).toLocaleString()}</td>
-                <td>{h.changed_by ?? "—"}</td>
-                <td>{h.enabled ? BANDS_BY[h.basis ?? "severity"].filter((b) => h.bands[b]?.days).map((b) => `${bandName(b)} ${h.bands[b]?.days}d`).join(", ") : "Off"}</td>
-                <td>{h.note ?? ""}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="scroll" tabIndex={0} role="region" aria-label="Policy history">
+          <table className="ds-sla-history">
+            <caption>History</caption>
+            <thead><tr><th scope="col">Version</th><th scope="col">When</th><th scope="col">By</th><th scope="col">Policy</th><th scope="col">Why</th></tr></thead>
+            <tbody>
+              {data.history.map((h) => (
+                <tr key={h.version}>
+                  <td>{h.version}</td>
+                  <td>{new Date(h.changed_at).toLocaleString()}</td>
+                  <td>{h.changed_by ?? "—"}</td>
+                  <td>{h.enabled ? BANDS_BY[h.basis ?? "severity"].filter((b) => h.bands[b]?.days).map((b) => `${bandName(b)} ${h.bands[b]?.days}d`).join(", ") : "Off"}</td>
+                  <td>{h.note ?? ""}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );

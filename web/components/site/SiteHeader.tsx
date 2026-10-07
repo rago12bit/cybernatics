@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { clearToken, getToken, onAuthChange } from "@/lib/api";
 import { APP_HREF, APP_NAV, DEMO_ONLY } from "@/lib/site";
+import { APP_LINKS, InboxLink, MORE_LINKS, MoreMenu, isCurrent, useUnread } from "./AppNav";
 import { BrandMark } from "./graphics";
 
 const LINKS = [
@@ -23,6 +24,9 @@ export function SiteHeader() {
   const [active, setActive] = useState("product");
   const onLanding = path === "/";
   const inApp = path.startsWith("/app") || path.startsWith("/scans");
+  // Signed in to the app, the header carries the app's own sections instead of the site's.
+  const appMode = inApp && signedIn && !DEMO_ONLY;
+  const unread = useUnread(appMode);
 
   useEffect(() => { setMenu(false); }, [path]);
   useEffect(() => {
@@ -102,19 +106,28 @@ export function SiteHeader() {
   const links = LINKS.map((l) => (
     <Link key={l.href} href={l.href} aria-current={current(l)} onClick={() => { setMenu(false); if (l.id) setActive(l.id); }}>{l.label}</Link>
   ));
+  const appLink = (l: { href: string; label: string }) => (
+    <Link key={l.href} href={l.href} aria-current={isCurrent(path, l.href) ? "page" : undefined} onClick={() => setMenu(false)}>{l.label}</Link>
+  );
+  const appDesktop = [...APP_LINKS.slice(0, 2).map(appLink), <InboxLink key="inbox" path={path} unread={unread} />, ...APP_LINKS.slice(2).map(appLink)];
+  const appMobile = [...APP_LINKS.slice(0, 2).map(appLink), <InboxLink key="inbox" path={path} unread={unread} onClick={() => setMenu(false)} />, ...APP_LINKS.slice(2).map(appLink), ...MORE_LINKS.map(appLink)];
 
   return (
     <header className="top">
       <div className="top-inner">
         <Link href="/" className="brand" aria-label="Bulwark home"><BrandMark />Bulwark</Link>
-        <nav aria-label="Primary" className="nav-desktop">{links}</nav>
+        {appMode ? (
+          <nav aria-label="App" className="nav-desktop nav-app">{appDesktop}<MoreMenu path={path} /></nav>
+        ) : (
+          <nav aria-label="Primary" className="nav-desktop">{links}</nav>
+        )}
         <span className="spacer" />
         {signedIn && inApp && <button type="button" className="btn sm" onClick={signOut}>Sign out</button>}
         {!inApp && <Link href={APP_HREF} className="btn primary sm nav-cta">{DEMO_ONLY ? "Run it yourself →" : "Open app →"}</Link>}
         <button type="button" className="btn sm menu-btn" aria-expanded={menu} aria-controls="mobile-nav" onClick={() => setMenu((m) => !m)}>{menu ? "Close" : "Menu"}</button>
       </div>
       <nav id="mobile-nav" aria-label="Mobile" className="nav-mobile" hidden={!menu}>
-        {links}
+        {appMode ? appMobile : links}
         {signedIn && <button type="button" className="linkbtn" onClick={signOut}>Sign out</button>}
       </nav>
     </header>

@@ -52,7 +52,7 @@
 
 .ds-cmp-col-title {
   font-size: var(--ds-text-2);
-  font-weight: 600;
+  font-weight: 500;
   color: var(--ds-ink);
   border-bottom: 1px solid var(--ds-rule);
   padding-bottom: 0.4rem;

@@ -21,7 +21,7 @@
 
 .ds-map-label {
   display: block;
-  font-weight: 600;
+  font-weight: 500;
   margin: var(--ds-space-3, 0.75rem) 0 0.4rem;
 }
 
@@ -38,23 +38,23 @@
 }
 
 .ds-map-error {
-  color: var(--ds-sev-critical, #b00020);
+  color: var(--ds-sev-critical);
 }
 
 .ds-map-done {
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .ds-map-help {
   display: block;
-  color: var(--ds-muted, #666);
+  color: var(--ds-muted);
   font-size: var(--ds-text-1, 0.85rem);
   font-weight: 400;
 }
 
 .ds-map-draft {
-  border: 1px solid var(--ds-rule, #ccc);
-  border-left: 4px solid var(--ds-accent, #3b5bdb);
+  border: 1px solid var(--ds-rule);
+  border-left: 4px solid var(--ds-brand);
   border-radius: var(--ds-radius-panel, 6px);
   padding: var(--ds-space-2, 0.5rem) var(--ds-space-3, 0.75rem);
   margin-bottom: var(--ds-space-3, 0.75rem);
@@ -69,7 +69,7 @@
   display: inline-block;
   margin-left: 0.4rem;
   padding: 0 0.4rem;
-  border: 1px solid var(--ds-rule, #ccc);
+  border: 1px solid var(--ds-rule);
   border-radius: var(--ds-radius-input, 4px);
   font-size: var(--ds-text-1, 0.85rem);
 }
@@ -83,7 +83,7 @@
 }
 
 .ds-map-grid label {
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .ds-map-fields,
@@ -96,7 +96,7 @@
 .ds-map-fields caption,
 .ds-map-preview caption {
   text-align: left;
-  font-weight: 600;
+  font-weight: 500;
   padding-bottom: var(--ds-space-2, 0.5rem);
 }
 
@@ -106,7 +106,7 @@
 .ds-map-preview td {
   text-align: left;
   padding: var(--ds-space-2, 0.5rem) var(--ds-space-3, 0.75rem);
-  border-bottom: 1px solid var(--ds-rule, #ccc);
+  border-bottom: 1px solid var(--ds-rule);
   vertical-align: top;
 }
 
@@ -142,7 +142,7 @@
 }
 
 .ds-map-sevmap {
-  border: 1px solid var(--ds-rule, #ccc);
+  border: 1px solid var(--ds-rule);
   border-radius: var(--ds-radius-panel, 6px);
   padding: var(--ds-space-2, 0.5rem) var(--ds-space-3, 0.75rem);
 }
@@ -156,7 +156,7 @@
 }
 
 .ds-map-warnings {
-  color: var(--ds-muted, #666);
+  color: var(--ds-muted);
 }
 
 .ds-map-actions {
@@ -166,7 +166,7 @@
 }
 
 .ds-map-button {
-  font-weight: 600;
+  font-weight: 500;
 }
 
 @media (max-width: 40rem) {
@@ -187,7 +187,7 @@
   }
 
   .ds-map-fields tr {
-    border-bottom: 1px solid var(--ds-rule, #ccc);
+    border-bottom: 1px solid var(--ds-rule);
     padding: var(--ds-space-2, 0.5rem) 0;
   }
 

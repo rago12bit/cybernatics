@@ -15,6 +15,8 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           { label: "Overview", href: `/app/projects/${id}` },
           { label: "Compare scans" },
         ]}
+        eyebrow="Project"
+        title="Compare scans"
       >
         <ScanComparison assetId={id} />
       </AppShell>

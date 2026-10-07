@@ -59,8 +59,8 @@ export function WebAssetVerification({ assetId }: { assetId?: string }) {
     return (
       <div>
         <p className="small muted ds-wav-intro">
-          Prove you control a domain before Bulwark will run any DAST scan against it (plan
-          §22.4) -- scanning a site without permission isn&apos;t a feature, it&apos;s an attack.
+          Prove you control a domain before Bulwark will run any DAST scan against it:
+          scanning a site without permission isn&apos;t a feature, it&apos;s an attack.
           Choose a domain and a verification method below.
         </p>
         {error && <p className="ds-wav-error" role="alert">{error}</p>}
@@ -148,8 +148,8 @@ export function WebAssetVerification({ assetId }: { assetId?: string }) {
       )}
       {verification.status === "verified" && (
         <p className="small muted" style={{ marginTop: "0.75rem" }}>
-          This re-checks the moment any DAST campaign starts (plan §22.4) -- a passing check here
-          isn&apos;t cached indefinitely.{" "}
+          This re-checks the moment any DAST campaign starts, so a passing check here
+          isn&apos;t trusted forever.{" "}
           <Link href={`/app/projects/${verification.asset_id}/campaigns`}>
             Start a DAST campaign →
           </Link>

@@ -8,11 +8,8 @@
  * syntax highlighter relies on (the same reasoning applies to every other highlighter in this
  * codebase, e.g. the diff view). It never executes anything the source contains.
  *
- * One theme is picked at render time and re-fetched on change, rather than using Shiki's built-in
- * dual light/dark output (CSS custom properties keyed to a specific `.dark`/media-query convention)
- * -- this design system's dark mode is driven by `data-theme` on <html> (see tokens.css's header
- * comment on why), and reconciling the two conventions isn't worth the complexity for a read-only
- * code view. */
+ * The app has one theme, the site's dark blueprint (see tokens.css), so the code is always
+ * highlighted with Shiki's dark theme, whatever the operating system's light/dark setting. */
 import { useEffect, useState } from "react";
 import { codeToHtml } from "shiki";
 
@@ -30,35 +27,14 @@ function languageFor(path: string): string {
   return EXT_LANG[ext] ?? "text";
 }
 
-function isDarkNow(): boolean {
-  if (typeof document === "undefined") return false;
-  const attr = document.documentElement.getAttribute("data-theme");
-  if (attr === "dark") return true;
-  if (attr === "light") return false;
-  return typeof window !== "undefined" && window.matchMedia?.("(prefers-color-scheme: dark)").matches;
-}
-
 export function CodeView({ code, path, highlightLine }: { code: string; path: string; highlightLine?: number }) {
   const [html, setHtml] = useState<string | null>(null);
-  const [dark, setDark] = useState(false);
-  useEffect(() => setDark(isDarkNow()), []);
-  useEffect(() => {
-    const mq = window.matchMedia?.("(prefers-color-scheme: dark)");
-    const onChange = () => setDark(isDarkNow());
-    mq?.addEventListener("change", onChange);
-    const observer = new MutationObserver(onChange);
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-    return () => {
-      mq?.removeEventListener("change", onChange);
-      observer.disconnect();
-    };
-  }, []);
 
   useEffect(() => {
     let cancelled = false;
     codeToHtml(code, {
       lang: languageFor(path),
-      theme: dark ? "github-dark" : "github-light",
+      theme: "github-dark",
       transformers: highlightLine
         ? [
             {
@@ -75,7 +51,7 @@ export function CodeView({ code, path, highlightLine }: { code: string; path: st
       () => { if (!cancelled) setHtml(null); }, // an unrecognized language: fall back to plain text below
     );
     return () => { cancelled = true; };
-  }, [code, path, highlightLine, dark]);
+  }, [code, path, highlightLine]);
 
   if (html === null) {
     return (

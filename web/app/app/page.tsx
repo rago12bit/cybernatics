@@ -25,8 +25,8 @@ function ScanHome() {
           <span className="eyebrow">Scans</span>
           <h1>Scan a codebase</h1>
           <p className="small muted">
-            Looking for a project you&apos;ve already scanned? <Link href="/app/projects">Go to Projects</Link> for the
-            new overview screen (verdict, fix-first queue, trend — plan §28.1).
+            Looking for a project you&apos;ve already scanned? <Link href="/app/projects">Go to Projects</Link> for its
+            verdict, what to fix first, and its trend.
           </p>
         </div>
         <div className="app-grid">

@@ -26,7 +26,7 @@
   font-size: var(--ds-text-1);
 }
 .ds-issue-topline-title {
-  font-weight: 600;
+  font-weight: 500;
   font-size: var(--ds-text-3);
   min-width: 0; /* a flex item: without this the ellipsis never applies and a long title widens the page */
   overflow: hidden;
@@ -189,9 +189,11 @@
   overflow: auto;
   font-size: var(--ds-text-1);
 }
+/* Shiki sets its theme's background inline; the site's inset surface replaces it. */
 .ds-code-shiki pre {
   margin: 0;
   padding: 0.8rem;
+  background: var(--ds-inset) !important;
 }
 .ds-code-plain {
   border: 1px solid var(--ds-rule);
@@ -200,7 +202,7 @@
   font-family: var(--ds-font-mono);
   font-size: var(--ds-text-1);
   overflow: auto;
-  background: var(--ds-surface);
+  background: var(--ds-inset);
   margin: 0;
 }
 .ds-code-highlight {
@@ -238,13 +240,13 @@
 }
 
 .ds-manual-error {
-  color: var(--ds-sev-critical, #b00020);
+  color: var(--ds-sev-critical);
 }
 
 .ds-issue-sla-line.ds-issue-sla-breached {
-  color: var(--ds-sev-critical, #b42318);
-  font-weight: 600;
+  color: var(--ds-sev-critical);
+  font-weight: 500;
 }
 .ds-issue-sla-line.ds-issue-sla-due_soon {
-  color: var(--ds-sev-medium, #a16207);
+  color: var(--ds-sev-medium);
 }

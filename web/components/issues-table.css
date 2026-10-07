@@ -171,14 +171,14 @@
   font-size: 0.85em;
 }
 .ds-issue-sla-detail {
-  color: var(--ds-muted, #5b6776);
+  color: var(--ds-muted);
 }
 .ds-issue-sla-breached {
-  color: var(--ds-sev-critical, #b42318);
-  font-weight: 600;
+  color: var(--ds-sev-critical);
+  font-weight: 500;
 }
 .ds-issue-sla-due_soon {
-  color: var(--ds-sev-medium, #a16207);
+  color: var(--ds-sev-medium);
 }
 
 /* Priority (plan §44.3, Week 63). Calm by default (plan §25 principle 2): only P1 gets colour. */
@@ -193,7 +193,7 @@
 }
 .ds-issue-prio-P1 {
   color: var(--ds-sev-critical);
-  font-weight: 600;
+  font-weight: 500;
 }
 .ds-issue-prio-P2 {
   color: var(--ds-ink);

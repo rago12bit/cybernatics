@@ -48,7 +48,7 @@ export default defineConfig({
       url: WEB_URL,
       reuseExistingServer: !process.env.CI,
       timeout: 60_000,
-      env: { NEXT_PUBLIC_API_URL: API_URL },
+      env: { NEXT_PUBLIC_API_URL: API_URL, BULWARK_E2E: "1" },
     },
   ],
 });

@@ -23,7 +23,7 @@
 .ds-match-counts caption,
 .ds-match-history caption {
   text-align: left;
-  font-weight: 600;
+  font-weight: 500;
   padding-bottom: var(--ds-space-2, 0.5rem);
 }
 
@@ -35,7 +35,7 @@
 .ds-match-history td {
   text-align: left;
   padding: var(--ds-space-2, 0.5rem) var(--ds-space-3, 0.75rem);
-  border-bottom: 1px solid var(--ds-rule, #ccc);
+  border-bottom: 1px solid var(--ds-rule);
   vertical-align: top;
 }
 
@@ -47,7 +47,7 @@
   background: none;
   border: 0;
   padding: 0;
-  color: var(--ds-brand, #0a58ca);
+  color: var(--ds-brand);
   text-decoration: underline;
   cursor: pointer;
   font: inherit;
@@ -65,7 +65,7 @@
 .ds-match-panel {
   margin-top: var(--ds-space-4, 1rem);
   padding: var(--ds-space-4, 1rem);
-  border: 1px solid var(--ds-rule, #ccc);
+  border: 1px solid var(--ds-rule);
   border-radius: var(--ds-radius-panel, 6px);
 }
 
@@ -87,7 +87,7 @@
 
 .ds-match-strategies legend,
 .ds-match-fields legend {
-  font-weight: 600;
+  font-weight: 500;
   margin-bottom: var(--ds-space-2, 0.5rem);
 }
 
@@ -118,21 +118,21 @@
 /* The sentence is the point of the preview: large, plain, first. */
 .ds-match-summary {
   font-size: 1.2rem;
-  font-weight: 600;
+  font-weight: 500;
   margin: 0 0 var(--ds-space-2, 0.5rem);
 }
 
 .ds-match-error {
-  color: var(--ds-sev-critical, #b00020);
+  color: var(--ds-sev-critical);
 }
 
 .ds-match-warn {
-  border-left: 3px solid var(--ds-sev-medium, #b58100);
+  border-left: 3px solid var(--ds-sev-medium);
   padding-left: var(--ds-space-3, 0.75rem);
 }
 
 .ds-match-done {
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .ds-match-examples {
@@ -146,7 +146,7 @@
 
 .ds-match-label {
   display: block;
-  font-weight: 600;
+  font-weight: 500;
   margin: var(--ds-space-3, 0.75rem) 0 0.4rem;
 }
 

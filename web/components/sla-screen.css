@@ -10,7 +10,7 @@
 }
 .ds-sla-help {
   max-width: 64ch;
-  color: var(--ds-muted, #5b6776);
+  color: var(--ds-muted);
 }
 .ds-sla-counts,
 .ds-sla-bands,
@@ -26,7 +26,7 @@
 .ds-sla-bands caption,
 .ds-sla-history caption {
   text-align: left;
-  font-weight: 600;
+  font-weight: 500;
   padding-bottom: var(--ds-space-2, 0.5rem);
 }
 .ds-sla-counts th,
@@ -37,7 +37,7 @@
 .ds-sla-history td {
   text-align: left;
   padding: var(--ds-space-2, 0.5rem) var(--ds-space-3, 0.75rem);
-  border-bottom: 1px solid var(--ds-rule, #ccc);
+  border-bottom: 1px solid var(--ds-rule);
   vertical-align: top;
 }
 .ds-sla-counts td {
@@ -49,7 +49,7 @@
   padding: 0.3rem 0.5rem;
 }
 .ds-sla-bands input[aria-invalid="true"] {
-  outline: 2px solid var(--ds-sev-critical, #b42318);
+  outline: 2px solid var(--ds-sev-critical);
 }
 .ds-sla-basis {
   border: 0;
@@ -61,7 +61,7 @@
   align-items: center;
 }
 .ds-sla-basis legend {
-  font-weight: 600;
+  font-weight: 500;
   padding: 0;
   margin-bottom: 0.25rem;
 }
@@ -99,7 +99,7 @@
 }
 .ds-sla-field-error,
 .ds-sla-error {
-  color: var(--ds-sev-critical, #b42318);
+  color: var(--ds-sev-critical);
   margin: 0.25rem 0 0;
 }
 .ds-sla-sr {

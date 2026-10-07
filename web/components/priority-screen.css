@@ -10,7 +10,7 @@
 }
 .ds-prio-help {
   max-width: 64ch;
-  color: var(--ds-muted, #5b6776);
+  color: var(--ds-muted);
   margin: 0.25rem 0 0.75rem;
 }
 .ds-prio-status {
@@ -19,11 +19,11 @@
   gap: 0.75rem;
   align-items: center;
   padding: 0.5rem 0.75rem;
-  border: 1px solid var(--ds-rule, #ccc);
+  border: 1px solid var(--ds-rule);
   border-radius: var(--ds-radius-panel, 6px);
 }
 .ds-prio-status-failed {
-  border-color: var(--ds-sev-critical, #b42318);
+  border-color: var(--ds-sev-critical);
 }
 .ds-prio-status progress {
   flex: 1 1 10rem;
@@ -31,14 +31,14 @@
 }
 .ds-prio-context,
 .ds-prio-weights {
-  border: 1px solid var(--ds-rule, #ccc);
+  border: 1px solid var(--ds-rule);
   border-radius: var(--ds-radius-panel, 6px);
   padding: var(--ds-space-3, 0.75rem) var(--ds-space-4, 1rem);
   margin: var(--ds-space-4, 1rem) 0;
 }
 .ds-prio-context legend,
 .ds-prio-weights legend {
-  font-weight: 600;
+  font-weight: 500;
   padding: 0 0.25rem;
 }
 .ds-prio-context-grid label {
@@ -62,7 +62,7 @@
   gap: 0.25rem 1rem;
   align-items: center;
   padding: 0.5rem 0;
-  border-bottom: 1px solid var(--ds-rule, #ccc);
+  border-bottom: 1px solid var(--ds-rule);
 }
 .ds-prio-weight:last-of-type {
   border-bottom: 0;
@@ -79,7 +79,7 @@
   color: var(--ds-ink);
 }
 .ds-prio-weight-name {
-  font-weight: 600;
+  font-weight: 500;
 }
 .ds-prio-weight-desc {
   color: var(--ds-muted);
@@ -121,7 +121,7 @@
 .ds-prio-top caption,
 .ds-prio-history caption {
   text-align: left;
-  font-weight: 600;
+  font-weight: 500;
   padding-bottom: var(--ds-space-2, 0.5rem);
 }
 .ds-prio-bands th,
@@ -132,7 +132,7 @@
 .ds-prio-history td {
   text-align: left;
   padding: 0.4rem 0.6rem;
-  border-bottom: 1px solid var(--ds-rule, #ccc);
+  border-bottom: 1px solid var(--ds-rule);
   vertical-align: top;
   font-variant-numeric: tabular-nums;
 }
@@ -148,11 +148,11 @@
   white-space: nowrap;
 }
 .ds-prio-move-same {
-  color: var(--ds-muted, #5b6776);
+  color: var(--ds-muted);
 }
 .ds-prio-was,
 .ds-prio-path {
-  color: var(--ds-muted, #5b6776);
+  color: var(--ds-muted);
   font-size: 0.85rem;
 }
 .ds-prio-dropped {
@@ -168,7 +168,7 @@
   max-width: 32rem;
 }
 .ds-prio-error {
-  color: var(--ds-sev-critical, #b42318);
+  color: var(--ds-sev-critical);
   margin: 0.25rem 0 0;
 }
 .ds-prio-sr {

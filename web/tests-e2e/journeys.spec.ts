@@ -22,8 +22,9 @@ async function signIn(page: Page) {
 // across scans of the same repository and reuses its existing Issue, triage state included --
 // exactly what it's for. A distinct fake repo path per test is what actually gives each test its
 // own independent asset and a fresh, untouched issue queue, not a coincidence of test order.
-let counter = 0;
-const uniqueRepoUrl = () => `https://github.com/OWASP/NodeGoat-e2e-${Date.now()}-${counter++}`;
+// Random, not a counter: each Playwright worker is its own process with its own counter, so two
+// tests starting in the same millisecond on different workers used to get the same URL.
+const uniqueRepoUrl = () => `https://github.com/OWASP/NodeGoat-e2e-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
 
 test.describe("J1 — first scan", () => {
   test("sign in, submit a scan, watch it go live, land on a verdict", async ({ page }) => {

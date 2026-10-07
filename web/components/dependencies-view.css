@@ -36,8 +36,8 @@
 }
 .ds-deps-summary-num {
   font-size: var(--ds-text-6);
-  font-weight: 600;
-  letter-spacing: -0.01em;
+  font-weight: 400;
+  letter-spacing: -0.035em;
   line-height: 1;
 }
 .ds-deps-summary-label {
@@ -122,21 +122,21 @@
 
 .ds-deps-scorecard {
   display: inline-flex;
-  font-weight: 600;
+  font-weight: 500;
   padding: 0.1rem 0.45rem;
   border-radius: var(--ds-radius-input);
 }
 .ds-deps-scorecard-good {
-  color: #1a7f37;
-  background: color-mix(in srgb, #1a7f37 12%, transparent);
+  color: var(--ds-ok);
+  background: color-mix(in srgb, var(--ds-ok) 12%, transparent);
 }
 .ds-deps-scorecard-fair {
-  color: #9a6700;
-  background: color-mix(in srgb, #9a6700 12%, transparent);
+  color: var(--ds-sev-medium);
+  background: color-mix(in srgb, var(--ds-sev-medium) 12%, transparent);
 }
 .ds-deps-scorecard-poor {
-  color: #cf222e;
-  background: color-mix(in srgb, #cf222e 12%, transparent);
+  color: var(--ds-danger);
+  background: color-mix(in srgb, var(--ds-danger) 12%, transparent);
 }
 
 .ds-deps-detail-row td {

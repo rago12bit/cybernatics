@@ -137,6 +137,7 @@ describe("live scan updates (useScan)", () => {
 
 describe("site header navigation", () => {
   it("starts with Home, links the landing sections, and gives the sample its own page", async () => {
+    clearToken();
     const h = await mount(<SiteHeader />);
     const links = [...h.querySelectorAll("nav.nav-desktop a")].map((a) => [a.textContent, a.getAttribute("href")]);
     expect(links.slice(0, 5)).toEqual([
@@ -146,6 +147,35 @@ describe("site header navigation", () => {
       ["Sample scan", "/sample"],
       ["App", "/app"],
     ]);
+  });
+
+  it("signed in to the app, the one header carries the app's sections, with the rest under More", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => json({ unread: 3, items: [] })));
+    path = "/app/reports/r1";
+    setToken(TOKEN);
+    const h = await mount(<SiteHeader />);
+    await flush();
+    const nav = h.querySelector('nav[aria-label="App"]');
+    const links = [...nav!.querySelectorAll("a")].map((a) => [a.textContent, a.getAttribute("href")]);
+    expect(links).toEqual([
+      ["Home", "/app"],
+      ["Projects", "/app/projects"],
+      ["Inbox3", "/app/inbox"],
+      ["Dashboards", "/app/dashboards"],
+      ["Advisories", "/app/advisories"],
+      ["Approvals", "/app/risk-acceptances"],
+      ["Reports", "/app/reports"],
+    ]);
+    expect(nav!.querySelector('a[aria-current="page"]')?.textContent).toBe("Reports");
+    expect(nav!.querySelector('a[href="/app/inbox"]')?.getAttribute("aria-label")).toBe("Inbox, 3 unread");
+    expect(nav!.querySelector("button")?.textContent).toMatch(/More/);
+    expect(h.querySelector('nav[aria-label="Primary"]')).toBeNull(); // not the site's links as well
+    // On a phone, the menu lists every section, the ones under More included.
+    const mobile = [...h.querySelectorAll("#mobile-nav a")].map((a) => a.textContent);
+    expect(mobile).toContain("Settings");
+    expect(mobile).toContain("Business units");
+    clearToken();
+    path = "/app";
   });
 });
 

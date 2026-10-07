@@ -1,7 +1,7 @@
 /* Dashboards (plan §55.4). Tokens only; react-grid-layout positions the cells itself. */
 .dash {
-  --dash-series-0: var(--ds-brand, #1f6f78);
-  --dash-series-1: var(--ds-sev-low, #3b6ea8);
+  --dash-series-0: var(--ds-brand);
+  --dash-series-1: var(--ds-sev-low);
   max-width: 80rem;
 }
 .dash-top {
@@ -32,7 +32,7 @@
   gap: 0.5rem;
 }
 .dash-label {
-  font-weight: 600;
+  font-weight: 500;
   font-size: var(--ds-text-2, 0.875rem);
 }
 .dash-muted {
@@ -169,7 +169,7 @@
 }
 .dash-title-button {
   font: inherit;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--ds-ink);
   background: none;
   border: 0;
@@ -345,9 +345,9 @@ rect.dash-series-1,
   background: none;
 }
 .dash-widget-tools .ds-button[aria-pressed="true"] {
-  background: var(--ds-brand);
+  background: var(--ds-brand-wash);
   border-color: var(--ds-brand);
-  color: var(--ds-raised);
+  color: var(--ds-brand);
 }
 .dash-table .num {
   text-align: right;

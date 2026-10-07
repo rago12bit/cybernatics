@@ -1,48 +1,53 @@
-/* Radix primitives restyled to the tokens (plan §32, Week 32). Sentence case everywhere — no
-   all-caps labels (29.4). Elevation only on things that float: tooltip, dropdown, dialog (29.4).
+/* Radix primitives restyled to the tokens (plan §32, Week 32), in the site's blueprint style:
+   buttons, tabs and menu labels are uppercase monospace with a 1px border, as on the landing page. Elevation only on things that float: tooltip, dropdown, dialog (29.4).
    Motion is 120-180ms ease-out, only in response to an action (29.6); Radix's own data-state
    attributes drive the enter/exit rather than a JS animation library. */
 
 .ds-button {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: var(--ds-space-1);
-  font-family: var(--ds-font-sans);
-  font-size: var(--ds-text-2);
-  font-weight: 500;
-  line-height: 1;
-  padding: 0.6rem 0.9rem;
+  font: 400 var(--ds-text-1) / 1 var(--ds-font-mono);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  padding: 0.6rem 0.8rem;
   border-radius: var(--ds-radius-input);
-  border: 1px solid var(--ds-rule);
-  background: var(--ds-raised);
+  border: 1px solid var(--ds-ink-2);
+  background: transparent;
   color: var(--ds-ink);
   cursor: pointer;
-  transition: background-color var(--ds-duration-fast) var(--ds-ease-out), border-color var(--ds-duration-fast) var(--ds-ease-out);
+  transition: transform 100ms ease-out, background-color var(--ds-duration-fast) linear, border-color var(--ds-duration-fast) linear, color var(--ds-duration-fast) linear;
 }
 .ds-button:hover {
-  background: color-mix(in srgb, var(--ds-brand) 8%, var(--ds-raised));
+  background: rgba(236, 235, 228, 0.07);
+}
+.ds-button:active:not(:disabled) {
+  transform: scale(0.97);
 }
 .ds-button:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 .ds-button.primary {
-  background: var(--ds-brand);
+  color: var(--ds-brand);
   border-color: var(--ds-brand);
-  color: var(--ds-raised);
+  background: var(--ds-brand-wash);
 }
 .ds-button.primary:hover {
-  background: color-mix(in srgb, var(--ds-brand) 85%, black);
+  background: rgba(18, 181, 139, 0.2);
 }
 .ds-button:focus-visible {
-  outline: 2px solid var(--ds-brand);
-  outline-offset: 2px;
+  outline: 1px solid var(--ds-brand);
+  outline-offset: 3px;
 }
 
 .ds-tooltip {
   border-radius: var(--ds-radius-panel);
-  background: var(--ds-ink);
-  color: var(--ds-surface);
+  border: 1px solid var(--ds-rule-strong);
+  background: var(--ds-raised-2);
+  color: var(--ds-ink);
   font-family: var(--ds-font-sans);
   font-size: var(--ds-text-1);
   padding: 0.4rem 0.6rem;
@@ -55,13 +60,13 @@
   animation-name: ds-fade-in;
 }
 .ds-tooltip-arrow {
-  fill: var(--ds-ink);
+  fill: var(--ds-rule-strong);
 }
 
 .ds-dropdown-content,
 .ds-dialog-content {
   background: var(--ds-raised);
-  border: 1px solid var(--ds-rule);
+  border: 1px solid var(--ds-rule-strong);
   border-radius: var(--ds-radius-panel);
   box-shadow: var(--ds-elevation-float);
   font-family: var(--ds-font-sans);
@@ -87,8 +92,13 @@
   outline: none;
 }
 .ds-dropdown-item[data-highlighted] {
-  background: color-mix(in srgb, var(--ds-brand) 10%, var(--ds-raised));
+  background: var(--ds-brand-wash);
   color: var(--ds-brand);
+}
+.ds-dropdown-item[aria-disabled="true"],
+.ds-dropdown-item[data-disabled] {
+  color: var(--ds-muted);
+  cursor: default;
 }
 .ds-dropdown-separator {
   height: 1px;
@@ -99,7 +109,7 @@
 .ds-dialog-overlay {
   position: fixed;
   inset: 0;
-  background: rgb(0 0 0 / 0.4);
+  background: rgb(0 0 0 / 0.6);
   animation-duration: var(--ds-duration-slow);
   animation-timing-function: var(--ds-ease-out);
 }
@@ -122,8 +132,10 @@
   animation-name: ds-scale-in;
 }
 .ds-dialog-title {
-  font-size: var(--ds-text-4);
-  font-weight: 600;
+  font-size: var(--ds-text-5);
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
   margin: 0 0 var(--ds-space-1);
 }
 .ds-dialog-description {
@@ -138,9 +150,9 @@
   border-bottom: 1px solid var(--ds-rule);
 }
 .ds-tabs-trigger {
-  font-family: var(--ds-font-sans);
-  font-size: var(--ds-text-2);
-  font-weight: 500;
+  font: 400 var(--ds-text-1) / 1 var(--ds-font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--ds-muted);
   background: none;
   border: none;
@@ -149,8 +161,11 @@
   cursor: pointer;
   transition: color var(--ds-duration-fast) var(--ds-ease-out), border-color var(--ds-duration-fast) var(--ds-ease-out);
 }
+.ds-tabs-trigger:hover {
+  color: var(--ds-ink);
+}
 .ds-tabs-trigger[data-state="active"] {
-  color: var(--ds-brand);
+  color: var(--ds-ink);
   border-bottom-color: var(--ds-brand);
 }
 .ds-tabs-content {

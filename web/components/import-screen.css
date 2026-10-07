@@ -22,12 +22,12 @@
 
 .ds-import-label {
   display: block;
-  font-weight: 600;
+  font-weight: 500;
   margin: var(--ds-space-3, 0.75rem) 0 0.4rem;
 }
 
 .ds-import-error {
-  color: var(--ds-sev-critical, #b00020);
+  color: var(--ds-sev-critical);
   margin-bottom: var(--ds-space-3, 0.75rem);
 }
 
@@ -38,7 +38,7 @@
 /* The File / Into / Matching header of the preview. */
 .ds-import-facts {
   margin: 0;
-  border: 1px solid var(--ds-rule, #ccc);
+  border: 1px solid var(--ds-rule);
   border-radius: var(--ds-radius-panel, 6px);
 }
 
@@ -47,7 +47,7 @@
   grid-template-columns: 7rem 1fr;
   gap: var(--ds-space-3, 0.75rem);
   padding: var(--ds-space-2, 0.5rem) var(--ds-space-3, 0.75rem);
-  border-bottom: 1px solid var(--ds-rule, #ccc);
+  border-bottom: 1px solid var(--ds-rule);
 }
 
 .ds-import-facts > div:last-child {
@@ -55,7 +55,7 @@
 }
 
 .ds-import-facts dt {
-  color: var(--ds-muted, #666);
+  color: var(--ds-muted);
 }
 
 .ds-import-facts dd {
@@ -66,7 +66,7 @@
   background: none;
   border: 0;
   padding: 0;
-  color: var(--ds-brand, #0a58ca);
+  color: var(--ds-brand);
   text-decoration: underline;
   cursor: pointer;
   font: inherit;
@@ -108,7 +108,7 @@
 .ds-import-into {
   margin-top: var(--ds-space-3, 0.75rem);
   padding: var(--ds-space-3, 0.75rem);
-  border: 1px dashed var(--ds-rule, #ccc);
+  border: 1px dashed var(--ds-rule);
   border-radius: var(--ds-radius-panel, 6px);
 }
 
@@ -145,7 +145,7 @@
 }
 
 .ds-import-check {
-  border-left: 3px solid var(--ds-sev-medium, #b58100);
+  border-left: 3px solid var(--ds-sev-medium);
   padding-left: var(--ds-space-3, 0.75rem);
   margin-top: var(--ds-space-3, 0.75rem);
 }
@@ -157,7 +157,7 @@
 
 .ds-import-saved-note {
   margin: var(--ds-space-4, 1rem) 0 var(--ds-space-2, 0.5rem);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .ds-import-actions {
@@ -169,10 +169,10 @@
 
 .ds-import-done {
   font-size: 1.15rem;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .ds-import-hint {
   margin: var(--ds-space-2, 0.5rem) 0;
-  color: var(--ds-muted, #666);
+  color: var(--ds-muted);
 }

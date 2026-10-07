@@ -71,7 +71,7 @@ export function SubmitForm() {
       </fieldset>
 
       <fieldset>
-        <legend>Supply-chain risk (plan §20.5)</legend>
+        <legend>Supply-chain risk</legend>
         <div className="checks">
           <label className="check">
             <input type="checkbox" checked={tools.includes("syft")} onChange={(e) => setTools((cur) => (e.target.checked ? [...cur, "syft"] : cur.filter((x) => x !== "syft")))} />

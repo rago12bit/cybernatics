@@ -22,12 +22,15 @@
 }
 .ds-au-new {
   display: inline-block;
-  padding: 0.4rem 0.8rem;
-  border-radius: var(--ds-radius-input, 6px);
-  background: var(--ds-brand);
-  color: var(--ds-surface);
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--ds-brand);
+  border-radius: var(--ds-radius-input);
+  background: var(--ds-brand-wash);
+  color: var(--ds-brand);
   text-decoration: none;
-  font-weight: 600;
+  font: 400 var(--ds-text-1) / 1 var(--ds-font-mono);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
 }
 .ds-au-verdict {
   margin: 0;
@@ -64,13 +67,13 @@
   gap: 0.25rem 0.75rem;
 }
 .ds-au-rule-name {
-  font-weight: 600;
+  font-weight: 500;
   overflow-wrap: anywhere;
 }
 .ds-au-state {
   font-size: 0.8rem;
   border: 1px solid var(--ds-rule);
-  border-radius: 999px;
+  border-radius: var(--ds-radius-input);
   padding: 0 0.5rem;
 }
 .ds-au-summary {
@@ -84,7 +87,7 @@
 .ds-au-word {
   display: inline-block;
   min-width: 3.2rem;
-  font-weight: 700;
+  font-weight: 500;
   font-size: 0.8rem;
   letter-spacing: 0.04em;
 }
@@ -140,10 +143,10 @@
 .ds-au-table th {
   background: none;
   color: var(--ds-muted);
-  font-weight: 600;
+  font-weight: 500;
 }
 .ds-au-run {
-  font-weight: 600;
+  font-weight: 500;
 }
 .ds-au-run-failed,
 .ds-au-run-depth_limited {
@@ -178,7 +181,7 @@
 }
 .ds-ed-row > label,
 .ds-ed-sub {
-  font-weight: 600;
+  font-weight: 500;
 }
 .ds-ed input:not([type="checkbox"]),
 .ds-ed select,
@@ -299,7 +302,7 @@
   min-width: 0;
 }
 .ds-in-unread .ds-in-head {
-  font-weight: 600;
+  font-weight: 500;
 }
 .ds-in-head,
 .ds-in-body {

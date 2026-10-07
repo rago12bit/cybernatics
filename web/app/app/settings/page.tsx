@@ -9,7 +9,7 @@ export const metadata: Metadata = { title: "Settings · Bulwark" };
 export default function Page() {
   return (
     <TokenGate>
-      <AppShell crumbs={[{ label: "Settings" }]}>
+      <AppShell crumbs={[{ label: "Settings" }]} eyebrow="Settings" title="Settings">
         <p>
           <Link href="/app/settings/notifications">Notifications</Link>: what reaches you and the team channels, and when.
         </p>

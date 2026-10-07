@@ -3,11 +3,11 @@
 }
 
 .ds-ap-error {
-  color: var(--ds-color-danger, #b00020);
+  color: var(--ds-danger);
 }
 
 .ds-ap-empty {
-  color: var(--ds-color-muted, #666);
+  color: var(--ds-muted);
 }
 
 .ds-ap-nav {
@@ -18,7 +18,7 @@
 }
 
 .ds-ap-counter {
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .ds-ap-badges {
@@ -29,9 +29,9 @@
 
 .ds-ap-badge {
   padding: 0.15rem 0.6rem;
-  border-radius: 999px;
+  border-radius: var(--ds-radius-input);
   font-size: 0.85rem;
-  border: 1px solid var(--ds-color-border, #ddd);
+  border: 1px solid var(--ds-rule);
 }
 
 .ds-ap-chain {
@@ -51,41 +51,41 @@
 .ds-ap-node {
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--ds-color-border, #ddd);
-  border-radius: 8px;
+  border: 1px solid var(--ds-rule);
+  border-radius: var(--ds-radius-panel);
   padding: 0.5rem 0.75rem;
   min-width: 10rem;
 }
 
 .ds-ap-node-cheapest {
-  border-color: var(--ds-color-primary, #2b6cb0);
+  border-color: var(--ds-brand);
   border-width: 2px;
 }
 
 .ds-ap-node-kind {
   font-size: 0.75rem;
   text-transform: uppercase;
-  color: var(--ds-color-muted, #666);
+  color: var(--ds-muted);
 }
 
 .ds-ap-node-label {
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .ds-ap-node-detail {
   font-size: 0.85rem;
-  color: var(--ds-color-muted, #666);
+  color: var(--ds-muted);
 }
 
 .ds-ap-cheapest-badge {
   margin-top: 0.35rem;
   font-size: 0.75rem;
-  color: var(--ds-color-primary, #2b6cb0);
+  color: var(--ds-brand);
 }
 
 .ds-ap-connector {
   margin: 0 0.5rem;
-  color: var(--ds-color-muted, #666);
+  color: var(--ds-muted);
   font-size: 0.8rem;
   white-space: nowrap;
 }
@@ -96,5 +96,5 @@
 
 .ds-ap-narrative-missing {
   font-style: italic;
-  color: var(--ds-color-muted, #666);
+  color: var(--ds-muted);
 }
