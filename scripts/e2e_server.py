@@ -39,7 +39,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import uvicorn
 from sqlalchemy import create_engine, event
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session, sessionmaker
 
 from api.deps import AppState
 from api.main import create_app
@@ -56,11 +56,18 @@ from core.models import (
     Taxonomy,
 )
 from core.persistence import repo
-from core.persistence.models import Base
+from core.persistence.models import ApiToken, Base
+from core.tenancy import DEFAULT_ORG_ID
+from core.tokens import hash_token, verify_checksum
 
 TEST_TOKEN = (
     "e2e-test-token-not-a-real-secret-0123456789"  # local, in-memory DB only; dies with the process
 )
+# A personal token (the shared token is nobody, so it can't approve a risk acceptance -- Week 62's
+# four-eyes rule). Fixed, so Playwright knows it; checksum-valid so it passes `core.tokens`'s
+# format check; as fake as TEST_TOKEN and gone with the process. Must match playwright.config.ts.
+APPROVER_TOKEN = "bulwark_e2e0approver0not0a0real0secret0000000000_0XGUOc"
+APPROVER_NAME = "Priya N."
 
 
 class _EmptySubscriber:
@@ -153,6 +160,19 @@ def make_fake_enqueue(sessions: sessionmaker) -> Any:
     return enqueue
 
 
+def _seed_approver(sessions: sessionmaker[Session]) -> None:
+    assert verify_checksum(APPROVER_TOKEN), "APPROVER_TOKEN must pass core.tokens's checksum"
+    with sessions() as s:
+        s.add(
+            ApiToken(
+                org_id=DEFAULT_ORG_ID, name=APPROVER_NAME, token_hash=hash_token(APPROVER_TOKEN),
+                display_prefix=APPROVER_TOKEN[: len("bulwark_") + 6],
+                scopes=["scans:read", "scans:write"],
+            )
+        )  # fmt: skip
+        s.commit()
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--port", type=int, default=8000)
@@ -178,6 +198,7 @@ def main() -> None:
 
     Base.metadata.create_all(engine)
     sessions = sessionmaker(engine, expire_on_commit=False)
+    _seed_approver(sessions)
 
     settings = Settings(
         database_url=f"sqlite:///{db_path}", redis_url="", s3_endpoint=None, s3_access_key="", s3_secret_key="",

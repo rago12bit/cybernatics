@@ -8,6 +8,9 @@ const WEB_PORT = 3911;
 export const API_URL = `http://127.0.0.1:${API_PORT}`;
 const WEB_URL = `http://127.0.0.1:${WEB_PORT}`;
 export const E2E_TOKEN = "e2e-test-token-not-a-real-secret-0123456789"; // must match scripts/e2e_server.py
+// A personal token the e2e server seeds as "Priya N." (the shared token can't approve a risk
+// acceptance: Week 62's four-eyes rule). Fake, checksum-valid; must match scripts/e2e_server.py.
+export const E2E_APPROVER_TOKEN = "bulwark_e2e0approver0not0a0real0secret0000000000_0XGUOc";
 
 // Which Python to run scripts/e2e_server.py with -- CI's e2e job installs the backend's own deps
 // (fastapi, uvicorn, sqlalchemy, ...) via `pip install -e ".[dev]"` the same way the `test` job

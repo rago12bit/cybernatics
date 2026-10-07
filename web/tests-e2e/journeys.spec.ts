@@ -1,5 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
-import { API_URL, E2E_TOKEN } from "../playwright.config";
+import { API_URL, E2E_APPROVER_TOKEN, E2E_TOKEN } from "../playwright.config";
 
 /**
  * Real end-to-end journeys against the real Next.js app and the real FastAPI backend (real HTTP,
@@ -104,19 +104,43 @@ test.describe("J3 — triage", () => {
     await expect(page.getByRole("heading", { name: "AWS access key committed in config.py" })).toBeVisible();
   });
 
-  test("accept risk requires an expiry, and it reopens on request", async ({ page }) => {
+  test("risk acceptance needs an expiry and someone else's approval, and can be ended early", async ({ page, browser }) => {
     await scanAndReachIssues(page);
     await page.getByRole("link", { name: "AWS access key committed in config.py" }).click();
 
-    await page.getByRole("button", { name: "Accept risk until…" }).click();
-    const confirm = page.getByRole("button", { name: "Confirm" });
-    await expect(confirm).toBeDisabled(); // no expiry yet
-    await page.getByLabel(/expires/i).fill("2027-01-01");
-    await expect(confirm).toBeEnabled();
-    await confirm.click();
-    await expect(page.getByText(/risk accepted/i).first()).toBeVisible();
+    // Requested with the shared token: an expiry is required, and the issue stays open.
+    await page.getByRole("button", { name: "Request risk acceptance…" }).click();
+    const form = page.getByRole("form", { name: "Request risk acceptance for 1 issue" });
+    await form.getByLabel("Why").fill("Rotated already; the old key is revoked.");
+    await form.getByLabel("Controls").fill("Key revoked in IAM; alert on any use.");
+    await form.getByRole("button", { name: "Send request" }).click();
+    await expect(form.getByRole("alert")).toHaveText("Choose when it expires.");
+    await expect(form.getByLabel("Expires")).toHaveAttribute("aria-invalid", "true");
+    const inThirtyDays = new Date(Date.now() + 30 * 86_400_000).toISOString().slice(0, 10);
+    await form.getByLabel("Expires").fill(inThirtyDays);
+    await form.getByLabel("Approver").selectOption({ label: "Priya N." });
+    await form.getByRole("button", { name: "Send request" }).click();
+    await expect(page.getByText(/waiting for Priya N\. to approve/)).toBeVisible();
+    const href = await page.getByRole("link", { name: "View it" }).getAttribute("href");
 
-    await page.getByRole("button", { name: "Reopen" }).click();
-    await expect(page.getByText("Reopened")).toBeVisible();
+    // Approved by another person, with their own token, in their own browser.
+    const priya = await browser.newPage();
+    await priya.goto("/app");
+    await priya.getByLabel("API token").fill(E2E_APPROVER_TOKEN);
+    await priya.getByRole("button", { name: "Continue" }).click();
+    await expect(priya.getByRole("heading", { name: "What do you do here?" })).toBeVisible(); // a person
+    await priya.goto(href!);
+    await priya.getByRole("button", { name: "Approve" }).click();
+    await expect(priya.getByText("Approved. The issues are accepted until the expiry.")).toBeVisible();
+
+    await page.reload();
+    await expect(page.getByText(/approved by Priya N\./)).toBeVisible();
+
+    // Ended early: the issue is open again.
+    await priya.getByRole("button", { name: "Expire now" }).click();
+    await expect(priya.getByText("Expired now. The issues are open again.")).toBeVisible();
+    await page.reload();
+    await expect(page.getByRole("button", { name: "Request risk acceptance…" })).toBeEnabled();
+    await priya.close();
   });
 });
