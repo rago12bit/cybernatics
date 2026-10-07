@@ -79,6 +79,20 @@ def baseline_fingerprints_for(s: Session, scan_id: str, path: str) -> list[str]:
     return list(s.scalars(q))
 
 
+def baseline_findings_for(s: Session, scan_id: str, path: str) -> list[dict[str, Any]]:
+    """The same findings as `baseline_fingerprints_for`, with what the verifier needs to recognise
+    each after a patch whose fingerprint shifted (`core.fixagent.verify.Known`)."""
+    q = select(FindingRow).where(FindingRow.scan_id == scan_id, FindingRow.path == path)
+    out = []
+    for r in s.scalars(q):
+        loc, ev = r.data.get("location") or {}, r.data.get("evidence") or {}
+        rules = sorted({x for rs in (ev.get("rule_ids") or {}).values() for x in rs})
+        out.append({"path": path, "fingerprint": r.fingerprint, "category": r.category,
+                    "rule_ids": rules, "start_line": int(loc.get("start_line") or 0),
+                    "end_line": int(loc.get("end_line") or 0)})  # fmt: skip
+    return out
+
+
 def update_run(s: Session, run: VerifiedFixRun, **fields: Any) -> None:
     for k, v in fields.items():
         setattr(run, k, v)

@@ -113,8 +113,15 @@ Replaced, because neither exists here:
 The one "1 new finding(s)" was not the patch's fault. Fingerprints hash the quoted snippet, and
 Bandit quotes neighbouring lines. So replacing `ciphers.py:30` changed the fingerprint of the
 untouched finding at line 32, and the verifier called that finding a regression. A correct fix next
-to another finding would be rejected the same way. This is older verifier behaviour, split off as
-its own task.
+to another finding would be rejected the same way. This was older verifier behaviour.
+
+**Fixed after this run** (commit "Fix agent: recognise a finding by the lines it flags"). Correlation
+also moves rules between neighbours, so on the real file the line-32 finding gained B303 from the
+removed line 30. Verification now matches a finding by the text of the lines it flags plus a shared
+rule, and refuses any rule firing more often than before. Re-run on the real file with real Bandit:
+the line-30 fix passes both steps, and a patch swapping in `eval` still fails as one new finding.
+Covered by tests on recorded Bandit output (tests/fixtures/fixagent/bandit-neighbours.json), with
+each part checked by mutation.
 
 Two cosmetic problems in the comments were fixed after this run: a doubled full stop after the last
 attempt's reason, and a blank line before the closing fence.

@@ -1,0 +1,927 @@
+{
+ "_about": "Real Bandit 1.7.10 output (bulwark/bandit:1.7.10) for each source, recorded by running core.scan.scan on app/crypto.py; generated_at removed. Sources written for these tests (Week 76 follow-up, core/fixagent/verify.py).",
+ "before": {
+  "bandit": {
+   "errors": [],
+   "metrics": {
+    "/target/app/crypto.py": {
+     "CONFIDENCE.HIGH": 3,
+     "CONFIDENCE.LOW": 0,
+     "CONFIDENCE.MEDIUM": 0,
+     "CONFIDENCE.UNDEFINED": 0,
+     "SEVERITY.HIGH": 3,
+     "SEVERITY.LOW": 0,
+     "SEVERITY.MEDIUM": 0,
+     "SEVERITY.UNDEFINED": 0,
+     "loc": 6,
+     "nosec": 0,
+     "skipped_tests": 0
+    },
+    "_totals": {
+     "CONFIDENCE.HIGH": 3,
+     "CONFIDENCE.LOW": 0,
+     "CONFIDENCE.MEDIUM": 0,
+     "CONFIDENCE.UNDEFINED": 0,
+     "SEVERITY.HIGH": 3,
+     "SEVERITY.LOW": 0,
+     "SEVERITY.MEDIUM": 0,
+     "SEVERITY.UNDEFINED": 0,
+     "loc": 6,
+     "nosec": 0,
+     "skipped_tests": 0
+    }
+   },
+   "results": [
+    {
+     "code": "1 from Crypto.Cipher import ARC4 as pycrypto_arc4\n2 from Cryptodome.Cipher import ARC4 as pycryptodomex_arc4\n3 \n",
+     "col_offset": 0,
+     "end_col_offset": 47,
+     "filename": "/target/app/crypto.py",
+     "issue_confidence": "HIGH",
+     "issue_cwe": {
+      "id": 327,
+      "link": "https://cwe.mitre.org/data/definitions/327.html"
+     },
+     "issue_severity": "HIGH",
+     "issue_text": "The pyCrypto library and its module ARC4 are no longer actively maintained and have been deprecated. Consider using pyca/cryptography library.",
+     "line_number": 1,
+     "line_range": [
+      1
+     ],
+     "more_info": "https://bandit.readthedocs.io/en/1.7.10/blacklists/blacklist_imports.html#b413-import-pycrypto",
+     "test_id": "B413",
+     "test_name": "blacklist"
+    },
+    {
+     "code": "5 def encrypt_both(key, message):\n6     legacy = pycrypto_arc4.new(key)\n7     modern = pycryptodomex_arc4.new(key)\n",
+     "col_offset": 13,
+     "end_col_offset": 35,
+     "filename": "/target/app/crypto.py",
+     "issue_confidence": "HIGH",
+     "issue_cwe": {
+      "id": 327,
+      "link": "https://cwe.mitre.org/data/definitions/327.html"
+     },
+     "issue_severity": "HIGH",
+     "issue_text": "Use of insecure cipher Crypto.Cipher.ARC4.new. Replace with a known secure cipher such as AES.",
+     "line_number": 6,
+     "line_range": [
+      6
+     ],
+     "more_info": "https://bandit.readthedocs.io/en/1.7.10/blacklists/blacklist_calls.html#b304-b305-ciphers-and-modes",
+     "test_id": "B304",
+     "test_name": "blacklist"
+    },
+    {
+     "code": "6     legacy = pycrypto_arc4.new(key)\n7     modern = pycryptodomex_arc4.new(key)\n8     return legacy.encrypt(message), modern.encrypt(message)\n",
+     "col_offset": 13,
+     "end_col_offset": 40,
+     "filename": "/target/app/crypto.py",
+     "issue_confidence": "HIGH",
+     "issue_cwe": {
+      "id": 327,
+      "link": "https://cwe.mitre.org/data/definitions/327.html"
+     },
+     "issue_severity": "HIGH",
+     "issue_text": "Use of insecure cipher Cryptodome.Cipher.ARC4.new. Replace with a known secure cipher such as AES.",
+     "line_number": 7,
+     "line_range": [
+      7
+     ],
+     "more_info": "https://bandit.readthedocs.io/en/1.7.10/blacklists/blacklist_calls.html#b304-b305-ciphers-and-modes",
+     "test_id": "B304",
+     "test_name": "blacklist"
+    }
+   ]
+  },
+  "source": "from Crypto.Cipher import ARC4 as pycrypto_arc4\nfrom Cryptodome.Cipher import ARC4 as pycryptodomex_arc4\n\n\ndef encrypt_both(key, message):\n    legacy = pycrypto_arc4.new(key)\n    modern = pycryptodomex_arc4.new(key)\n    return legacy.encrypt(message), modern.encrypt(message)\n"
+ },
+ "drift_before": {
+  "bandit": {
+   "errors": [],
+   "metrics": {
+    "/target/app/crypto.py": {
+     "CONFIDENCE.HIGH": 5,
+     "CONFIDENCE.LOW": 0,
+     "CONFIDENCE.MEDIUM": 0,
+     "CONFIDENCE.UNDEFINED": 0,
+     "SEVERITY.HIGH": 4,
+     "SEVERITY.LOW": 0,
+     "SEVERITY.MEDIUM": 1,
+     "SEVERITY.UNDEFINED": 0,
+     "loc": 9,
+     "nosec": 0,
+     "skipped_tests": 0
+    },
+    "_totals": {
+     "CONFIDENCE.HIGH": 5,
+     "CONFIDENCE.LOW": 0,
+     "CONFIDENCE.MEDIUM": 0,
+     "CONFIDENCE.UNDEFINED": 0,
+     "SEVERITY.HIGH": 4,
+     "SEVERITY.LOW": 0,
+     "SEVERITY.MEDIUM": 1,
+     "SEVERITY.UNDEFINED": 0,
+     "loc": 9,
+     "nosec": 0,
+     "skipped_tests": 0
+    }
+   },
+   "results": [
+    {
+     "code": "1 from Crypto.Cipher import ARC4 as pycrypto_arc4\n2 from Crypto.Hash import SHA\n3 from Cryptodome.Cipher import ARC4 as pycryptodomex_arc4\n",
+     "col_offset": 0,
+     "end_col_offset": 47,
+     "filename": "/target/app/crypto.py",
+     "issue_confidence": "HIGH",
+     "issue_cwe": {
+      "id": 327,
+      "link": "https://cwe.mitre.org/data/definitions/327.html"
+     },
+     "issue_severity": "HIGH",
+     "issue_text": "The pyCrypto library and its module ARC4 are no longer actively maintained and have been deprecated. Consider using pyca/cryptography library.",
+     "line_number": 1,
+     "line_range": [
+      1
+     ],
+     "more_info": "https://bandit.readthedocs.io/en/1.7.10/blacklists/blacklist_imports.html#b413-import-pycrypto",
+     "test_id": "B413",
+     "test_name": "blacklist"
+    },
+    {
+     "code": "1 from Crypto.Cipher import ARC4 as pycrypto_arc4\n2 from Crypto.Hash import SHA\n3 from Cryptodome.Cipher import ARC4 as pycryptodomex_arc4\n",
+     "col_offset": 0,
+     "end_col_offset": 27,
+     "filename": "/target/app/crypto.py",
+     "issue_confidence": "HIGH",
+     "issue_cwe": {
+      "id": 327,
+      "link": "https://cwe.mitre.org/data/definitions/327.html"
+     },
+     "issue_severity": "HIGH",
+     "issue_text": "The pyCrypto library and its module SHA are no longer actively maintained and have been deprecated. Consider using pyca/cryptography library.",
+     "line_number": 2,
+     "line_range": [
+      2
+     ],
+     "more_info": "https://bandit.readthedocs.io/en/1.7.10/blacklists/blacklist_imports.html#b413-import-pycrypto",
+     "test_id": "B413",
+     "test_name": "blacklist"
+    },
+    {
+     "code": "6 def encrypt_both(key, message):\n7     tempkey = SHA.new(key).digest()\n8     legacy = pycrypto_arc4.new(tempkey)\n",
+     "col_offset": 14,
+     "end_col_offset": 26,
+     "filename": "/target/app/crypto.py",
+     "issue_confidence": "HIGH",
+     "issue_cwe": {
+      "id": 327,
+      "link": "https://cwe.mitre.org/data/definitions/327.html"
+     },
+     "issue_severity": "MEDIUM",
+     "issue_text": "Use of insecure MD2, MD4, MD5, or SHA1 hash function.",
+     "line_number": 7,
+     "line_range": [
+      7
+     ],
+     "more_info": "https://bandit.readthedocs.io/en/1.7.10/blacklists/blacklist_calls.html#b303-md5",
+     "test_id": "B303",
+     "test_name": "blacklist"
+    },
+    {
+     "code": "7     tempkey = SHA.new(key).digest()\n8     legacy = pycrypto_arc4.new(tempkey)\n9     sealed = legacy.encrypt(message)\n",
+     "col_offset": 13,
+     "end_col_offset": 39,
+     "filename": "/target/app/crypto.py",
+     "issue_confidence": "HIGH",
+     "issue_cwe": {
+      "id": 327,
+      "link": "https://cwe.mitre.org/data/definitions/327.html"
+     },
+     "issue_severity": "HIGH",
+     "issue_text": "Use of insecure cipher Crypto.Cipher.ARC4.new. Replace with a known secure cipher such as AES.",
+     "line_number": 8,
+     "line_range": [
+      8
+     ],
+     "more_info": "https://bandit.readthedocs.io/en/1.7.10/blacklists/blacklist_calls.html#b304-b305-ciphers-and-modes",
+     "test_id": "B304",
+     "test_name": "blacklist"
+    },
+    {
+     "code": "9     sealed = legacy.encrypt(message)\n10     modern = pycryptodomex_arc4.new(tempkey)\n11     return sealed, modern.encrypt(message)\n",
+     "col_offset": 13,
+     "end_col_offset": 44,
+     "filename": "/target/app/crypto.py",
+     "issue_confidence": "HIGH",
+     "issue_cwe": {
+      "id": 327,
+      "link": "https://cwe.mitre.org/data/definitions/327.html"
+     },
+     "issue_severity": "HIGH",
+     "issue_text": "Use of insecure cipher Cryptodome.Cipher.ARC4.new. Replace with a known secure cipher such as AES.",
+     "line_number": 10,
+     "line_range": [
+      10
+     ],
+     "more_info": "https://bandit.readthedocs.io/en/1.7.10/blacklists/blacklist_calls.html#b304-b305-ciphers-and-modes",
+     "test_id": "B304",
+     "test_name": "blacklist"
+    }
+   ]
+  },
+  "source": "from Crypto.Cipher import ARC4 as pycrypto_arc4\nfrom Crypto.Hash import SHA\nfrom Cryptodome.Cipher import ARC4 as pycryptodomex_arc4\n\n\ndef encrypt_both(key, message):\n    tempkey = SHA.new(key).digest()\n    legacy = pycrypto_arc4.new(tempkey)\n    sealed = legacy.encrypt(message)\n    modern = pycryptodomex_arc4.new(tempkey)\n    return sealed, modern.encrypt(message)\n"
+ },
+ "drift_fixed": {
+  "bandit": {
+   "errors": [],
+   "metrics": {
+    "/target/app/crypto.py": {
+     "CONFIDENCE.HIGH": 4,
+     "CONFIDENCE.LOW": 0,
+     "CONFIDENCE.MEDIUM": 0,
+     "CONFIDENCE.UNDEFINED": 0,
+     "SEVERITY.HIGH": 3,
+     "SEVERITY.LOW": 0,
+     "SEVERITY.MEDIUM": 1,
+     "SEVERITY.UNDEFINED": 0,
+     "loc": 9,
+     "nosec": 0,
+     "skipped_tests": 0
+    },
+    "_totals": {
+     "CONFIDENCE.HIGH": 4,
+     "CONFIDENCE.LOW": 0,
+     "CONFIDENCE.MEDIUM": 0,
+     "CONFIDENCE.UNDEFINED": 0,
+     "SEVERITY.HIGH": 3,
+     "SEVERITY.LOW": 0,
+     "SEVERITY.MEDIUM": 1,
+     "SEVERITY.UNDEFINED": 0,
+     "loc": 9,
+     "nosec": 0,
+     "skipped_tests": 0
+    }
+   },
+   "results": [
+    {
+     "code": "1 from Crypto.Cipher import ARC4 as pycrypto_arc4\n2 from Crypto.Hash import SHA\n3 from Cryptodome.Cipher import ARC4 as pycryptodomex_arc4\n",
+     "col_offset": 0,
+     "end_col_offset": 47,
+     "filename": "/target/app/crypto.py",
+     "issue_confidence": "HIGH",
+     "issue_cwe": {
+      "id": 327,
+      "link": "https://cwe.mitre.org/data/definitions/327.html"
+     },
+     "issue_severity": "HIGH",
+     "issue_text": "The pyCrypto library and its module ARC4 are no longer actively maintained and have been deprecated. Consider using pyca/cryptography library.",
+     "line_number": 1,
+     "line_range": [
+      1
+     ],
+     "more_info": "https://bandit.readthedocs.io/en/1.7.10/blacklists/blacklist_imports.html#b413-import-pycrypto",
+     "test_id": "B413",
+     "test_name": "blacklist"
+    },
+    {
+     "code": "1 from Crypto.Cipher import ARC4 as pycrypto_arc4\n2 from Crypto.Hash import SHA\n3 from Cryptodome.Cipher import ARC4 as pycryptodomex_arc4\n",
+     "col_offset": 0,
+     "end_col_offset": 27,
+     "filename": "/target/app/crypto.py",
+     "issue_confidence": "HIGH",
+     "issue_cwe": {
+      "id": 327,
+      "link": "https://cwe.mitre.org/data/definitions/327.html"
+     },
+     "issue_severity": "HIGH",
+     "issue_text": "The pyCrypto library and its module SHA are no longer actively maintained and have been deprecated. Consider using pyca/cryptography library.",
+     "line_number": 2,
+     "line_range": [
+      2
+     ],
+     "more_info": "https://bandit.readthedocs.io/en/1.7.10/blacklists/blacklist_imports.html#b413-import-pycrypto",
+     "test_id": "B413",
+     "test_name": "blacklist"
+    },
+    {
+     "code": "6 def encrypt_both(key, message):\n7     tempkey = SHA.new(key).digest()\n8     legacy = None  # the legacy cipher is gone\n",
+     "col_offset": 14,
+     "end_col_offset": 26,
+     "filename": "/target/app/crypto.py",
+     "issue_confidence": "HIGH",
+     "issue_cwe": {
+      "id": 327,
+      "link": "https://cwe.mitre.org/data/definitions/327.html"
+     },
+     "issue_severity": "MEDIUM",
+     "issue_text": "Use of insecure MD2, MD4, MD5, or SHA1 hash function.",
+     "line_number": 7,
+     "line_range": [
+      7
+     ],
+     "more_info": "https://bandit.readthedocs.io/en/1.7.10/blacklists/blacklist_calls.html#b303-md5",
+     "test_id": "B303",
+     "test_name": "blacklist"
+    },
+    {
+     "code": "9     sealed = legacy.encrypt(message)\n10     modern = pycryptodomex_arc4.new(tempkey)\n11     return sealed, modern.encrypt(message)\n",
+     "col_offset": 13,
+     "end_col_offset": 44,
+     "filename": "/target/app/crypto.py",
+     "issue_confidence": "HIGH",
+     "issue_cwe": {
+      "id": 327,
+      "link": "https://cwe.mitre.org/data/definitions/327.html"
+     },
+     "issue_severity": "HIGH",
+     "issue_text": "Use of insecure cipher Cryptodome.Cipher.ARC4.new. Replace with a known secure cipher such as AES.",
+     "line_number": 10,
+     "line_range": [
+      10
+     ],
+     "more_info": "https://bandit.readthedocs.io/en/1.7.10/blacklists/blacklist_calls.html#b304-b305-ciphers-and-modes",
+     "test_id": "B304",
+     "test_name": "blacklist"
+    }
+   ]
+  },
+  "source": "from Crypto.Cipher import ARC4 as pycrypto_arc4\nfrom Crypto.Hash import SHA\nfrom Cryptodome.Cipher import ARC4 as pycryptodomex_arc4\n\n\ndef encrypt_both(key, message):\n    tempkey = SHA.new(key).digest()\n    legacy = None  # the legacy cipher is gone\n    sealed = legacy.encrypt(message)\n    modern = pycryptodomex_arc4.new(tempkey)\n    return sealed, modern.encrypt(message)\n"
+ },
+ "fixed": {
+  "bandit": {
+   "errors": [],
+   "metrics": {
+    "/target/app/crypto.py": {
+     "CONFIDENCE.HIGH": 2,
+     "CONFIDENCE.LOW": 0,
+     "CONFIDENCE.MEDIUM": 0,
+     "CONFIDENCE.UNDEFINED": 0,
+     "SEVERITY.HIGH": 2,
+     "SEVERITY.LOW": 0,
+     "SEVERITY.MEDIUM": 0,
+     "SEVERITY.UNDEFINED": 0,
+     "loc": 6,
+     "nosec": 0,
+     "skipped_tests": 0
+    },
+    "_totals": {
+     "CONFIDENCE.HIGH": 2,
+     "CONFIDENCE.LOW": 0,
+     "CONFIDENCE.MEDIUM": 0,
+     "CONFIDENCE.UNDEFINED": 0,
+     "SEVERITY.HIGH": 2,
+     "SEVERITY.LOW": 0,
+     "SEVERITY.MEDIUM": 0,
+     "SEVERITY.UNDEFINED": 0,
+     "loc": 6,
+     "nosec": 0,
+     "skipped_tests": 0
+    }
+   },
+   "results": [
+    {
+     "code": "1 from Crypto.Cipher import ARC4 as pycrypto_arc4\n2 from Cryptodome.Cipher import ARC4 as pycryptodomex_arc4\n3 \n",
+     "col_offset": 0,
+     "end_col_offset": 47,
+     "filename": "/target/app/crypto.py",
+     "issue_confidence": "HIGH",
+     "issue_cwe": {
+      "id": 327,
+      "link": "https://cwe.mitre.org/data/definitions/327.html"
+     },
+     "issue_severity": "HIGH",
+     "issue_text": "The pyCrypto library and its module ARC4 are no longer actively maintained and have been deprecated. Consider using pyca/cryptography library.",
+     "line_number": 1,
+     "line_range": [
+      1
+     ],
+     "more_info": "https://bandit.readthedocs.io/en/1.7.10/blacklists/blacklist_imports.html#b413-import-pycrypto",
+     "test_id": "B413",
+     "test_name": "blacklist"
+    },
+    {
+     "code": "6     legacy = None  # the legacy cipher is gone\n7     modern = pycryptodomex_arc4.new(key)\n8     return legacy.encrypt(message), modern.encrypt(message)\n",
+     "col_offset": 13,
+     "end_col_offset": 40,
+     "filename": "/target/app/crypto.py",
+     "issue_confidence": "HIGH",
+     "issue_cwe": {
+      "id": 327,
+      "link": "https://cwe.mitre.org/data/definitions/327.html"
+     },
+     "issue_severity": "HIGH",
+     "issue_text": "Use of insecure cipher Cryptodome.Cipher.ARC4.new. Replace with a known secure cipher such as AES.",
+     "line_number": 7,
+     "line_range": [
+      7
+     ],
+     "more_info": "https://bandit.readthedocs.io/en/1.7.10/blacklists/blacklist_calls.html#b304-b305-ciphers-and-modes",
+     "test_id": "B304",
+     "test_name": "blacklist"
+    }
+   ]
+  },
+  "source": "from Crypto.Cipher import ARC4 as pycrypto_arc4\nfrom Cryptodome.Cipher import ARC4 as pycryptodomex_arc4\n\n\ndef encrypt_both(key, message):\n    legacy = None  # the legacy cipher is gone\n    modern = pycryptodomex_arc4.new(key)\n    return legacy.encrypt(message), modern.encrypt(message)\n"
+ },
+ "folded_regression": {
+  "bandit": {
+   "errors": [],
+   "metrics": {
+    "/target/app/crypto.py": {
+     "CONFIDENCE.HIGH": 3,
+     "CONFIDENCE.LOW": 0,
+     "CONFIDENCE.MEDIUM": 0,
+     "CONFIDENCE.UNDEFINED": 0,
+     "SEVERITY.HIGH": 3,
+     "SEVERITY.LOW": 0,
+     "SEVERITY.MEDIUM": 0,
+     "SEVERITY.UNDEFINED": 0,
+     "loc": 8,
+     "nosec": 0,
+     "skipped_tests": 0
+    },
+    "_totals": {
+     "CONFIDENCE.HIGH": 3,
+     "CONFIDENCE.LOW": 0,
+     "CONFIDENCE.MEDIUM": 0,
+     "CONFIDENCE.UNDEFINED": 0,
+     "SEVERITY.HIGH": 3,
+     "SEVERITY.LOW": 0,
+     "SEVERITY.MEDIUM": 0,
+     "SEVERITY.UNDEFINED": 0,
+     "loc": 8,
+     "nosec": 0,
+     "skipped_tests": 0
+    }
+   },
+   "results": [
+    {
+     "code": "1 import hashlib\n2 from Crypto.Cipher import ARC4 as pycrypto_arc4\n3 from Cryptodome.Cipher import ARC4 as pycryptodomex_arc4\n",
+     "col_offset": 0,
+     "end_col_offset": 47,
+     "filename": "/target/app/crypto.py",
+     "issue_confidence": "HIGH",
+     "issue_cwe": {
+      "id": 327,
+      "link": "https://cwe.mitre.org/data/definitions/327.html"
+     },
+     "issue_severity": "HIGH",
+     "issue_text": "The pyCrypto library and its module ARC4 are no longer actively maintained and have been deprecated. Consider using pyca/cryptography library.",
+     "line_number": 2,
+     "line_range": [
+      2
+     ],
+     "more_info": "https://bandit.readthedocs.io/en/1.7.10/blacklists/blacklist_imports.html#b413-import-pycrypto",
+     "test_id": "B413",
+     "test_name": "blacklist"
+    },
+    {
+     "code": "7     legacy = None  # the legacy cipher is gone\n8     modern = pycryptodomex_arc4.new(key)\n9     check = hashlib.md5(message).hexdigest()\n",
+     "col_offset": 13,
+     "end_col_offset": 40,
+     "filename": "/target/app/crypto.py",
+     "issue_confidence": "HIGH",
+     "issue_cwe": {
+      "id": 327,
+      "link": "https://cwe.mitre.org/data/definitions/327.html"
+     },
+     "issue_severity": "HIGH",
+     "issue_text": "Use of insecure cipher Cryptodome.Cipher.ARC4.new. Replace with a known secure cipher such as AES.",
+     "line_number": 8,
+     "line_range": [
+      8
+     ],
+     "more_info": "https://bandit.readthedocs.io/en/1.7.10/blacklists/blacklist_calls.html#b304-b305-ciphers-and-modes",
+     "test_id": "B304",
+     "test_name": "blacklist"
+    },
+    {
+     "code": "8     modern = pycryptodomex_arc4.new(key)\n9     check = hashlib.md5(message).hexdigest()\n10     return legacy.encrypt(message), modern.encrypt(message)\n",
+     "col_offset": 12,
+     "end_col_offset": 32,
+     "filename": "/target/app/crypto.py",
+     "issue_confidence": "HIGH",
+     "issue_cwe": {
+      "id": 327,
+      "link": "https://cwe.mitre.org/data/definitions/327.html"
+     },
+     "issue_severity": "HIGH",
+     "issue_text": "Use of weak MD5 hash for security. Consider usedforsecurity=False",
+     "line_number": 9,
+     "line_range": [
+      9
+     ],
+     "more_info": "https://bandit.readthedocs.io/en/1.7.10/plugins/b324_hashlib.html",
+     "test_id": "B324",
+     "test_name": "hashlib"
+    }
+   ]
+  },
+  "source": "import hashlib\nfrom Crypto.Cipher import ARC4 as pycrypto_arc4\nfrom Cryptodome.Cipher import ARC4 as pycryptodomex_arc4\n\n\ndef encrypt_both(key, message):\n    legacy = None  # the legacy cipher is gone\n    modern = pycryptodomex_arc4.new(key)\n    check = hashlib.md5(message).hexdigest()\n    return legacy.encrypt(message), modern.encrypt(message)\n"
+ },
+ "neighbour_only": {
+  "bandit": {
+   "errors": [],
+   "metrics": {
+    "/target/app/crypto.py": {
+     "CONFIDENCE.HIGH": 3,
+     "CONFIDENCE.LOW": 0,
+     "CONFIDENCE.MEDIUM": 0,
+     "CONFIDENCE.UNDEFINED": 0,
+     "SEVERITY.HIGH": 3,
+     "SEVERITY.LOW": 0,
+     "SEVERITY.MEDIUM": 0,
+     "SEVERITY.UNDEFINED": 0,
+     "loc": 6,
+     "nosec": 0,
+     "skipped_tests": 0
+    },
+    "_totals": {
+     "CONFIDENCE.HIGH": 3,
+     "CONFIDENCE.LOW": 0,
+     "CONFIDENCE.MEDIUM": 0,
+     "CONFIDENCE.UNDEFINED": 0,
+     "SEVERITY.HIGH": 3,
+     "SEVERITY.LOW": 0,
+     "SEVERITY.MEDIUM": 0,
+     "SEVERITY.UNDEFINED": 0,
+     "loc": 6,
+     "nosec": 0,
+     "skipped_tests": 0
+    }
+   },
+   "results": [
+    {
+     "code": "1 from Crypto.Cipher import ARC4 as pycrypto_arc4\n2 from Cryptodome.Cipher import ARC4 as pycryptodomex_arc4\n3 \n",
+     "col_offset": 0,
+     "end_col_offset": 47,
+     "filename": "/target/app/crypto.py",
+     "issue_confidence": "HIGH",
+     "issue_cwe": {
+      "id": 327,
+      "link": "https://cwe.mitre.org/data/definitions/327.html"
+     },
+     "issue_severity": "HIGH",
+     "issue_text": "The pyCrypto library and its module ARC4 are no longer actively maintained and have been deprecated. Consider using pyca/cryptography library.",
+     "line_number": 1,
+     "line_range": [
+      1
+     ],
+     "more_info": "https://bandit.readthedocs.io/en/1.7.10/blacklists/blacklist_imports.html#b413-import-pycrypto",
+     "test_id": "B413",
+     "test_name": "blacklist"
+    },
+    {
+     "code": "6     # TODO: replace the legacy cipher\n7     legacy = pycrypto_arc4.new(key)\n8     modern = pycryptodomex_arc4.new(key)\n",
+     "col_offset": 13,
+     "end_col_offset": 35,
+     "filename": "/target/app/crypto.py",
+     "issue_confidence": "HIGH",
+     "issue_cwe": {
+      "id": 327,
+      "link": "https://cwe.mitre.org/data/definitions/327.html"
+     },
+     "issue_severity": "HIGH",
+     "issue_text": "Use of insecure cipher Crypto.Cipher.ARC4.new. Replace with a known secure cipher such as AES.",
+     "line_number": 7,
+     "line_range": [
+      7
+     ],
+     "more_info": "https://bandit.readthedocs.io/en/1.7.10/blacklists/blacklist_calls.html#b304-b305-ciphers-and-modes",
+     "test_id": "B304",
+     "test_name": "blacklist"
+    },
+    {
+     "code": "7     legacy = pycrypto_arc4.new(key)\n8     modern = pycryptodomex_arc4.new(key)\n9     return legacy.encrypt(message), modern.encrypt(message)\n",
+     "col_offset": 13,
+     "end_col_offset": 40,
+     "filename": "/target/app/crypto.py",
+     "issue_confidence": "HIGH",
+     "issue_cwe": {
+      "id": 327,
+      "link": "https://cwe.mitre.org/data/definitions/327.html"
+     },
+     "issue_severity": "HIGH",
+     "issue_text": "Use of insecure cipher Cryptodome.Cipher.ARC4.new. Replace with a known secure cipher such as AES.",
+     "line_number": 8,
+     "line_range": [
+      8
+     ],
+     "more_info": "https://bandit.readthedocs.io/en/1.7.10/blacklists/blacklist_calls.html#b304-b305-ciphers-and-modes",
+     "test_id": "B304",
+     "test_name": "blacklist"
+    }
+   ]
+  },
+  "source": "from Crypto.Cipher import ARC4 as pycrypto_arc4\nfrom Cryptodome.Cipher import ARC4 as pycryptodomex_arc4\n\n\ndef encrypt_both(key, message):\n    # TODO: replace the legacy cipher\n    legacy = pycrypto_arc4.new(key)\n    modern = pycryptodomex_arc4.new(key)\n    return legacy.encrypt(message), modern.encrypt(message)\n"
+ },
+ "regression": {
+  "bandit": {
+   "errors": [],
+   "metrics": {
+    "/target/app/crypto.py": {
+     "CONFIDENCE.HIGH": 3,
+     "CONFIDENCE.LOW": 0,
+     "CONFIDENCE.MEDIUM": 0,
+     "CONFIDENCE.UNDEFINED": 0,
+     "SEVERITY.HIGH": 2,
+     "SEVERITY.LOW": 0,
+     "SEVERITY.MEDIUM": 1,
+     "SEVERITY.UNDEFINED": 0,
+     "loc": 6,
+     "nosec": 0,
+     "skipped_tests": 0
+    },
+    "_totals": {
+     "CONFIDENCE.HIGH": 3,
+     "CONFIDENCE.LOW": 0,
+     "CONFIDENCE.MEDIUM": 0,
+     "CONFIDENCE.UNDEFINED": 0,
+     "SEVERITY.HIGH": 2,
+     "SEVERITY.LOW": 0,
+     "SEVERITY.MEDIUM": 1,
+     "SEVERITY.UNDEFINED": 0,
+     "loc": 6,
+     "nosec": 0,
+     "skipped_tests": 0
+    }
+   },
+   "results": [
+    {
+     "code": "1 from Crypto.Cipher import ARC4 as pycrypto_arc4\n2 from Cryptodome.Cipher import ARC4 as pycryptodomex_arc4\n3 \n",
+     "col_offset": 0,
+     "end_col_offset": 47,
+     "filename": "/target/app/crypto.py",
+     "issue_confidence": "HIGH",
+     "issue_cwe": {
+      "id": 327,
+      "link": "https://cwe.mitre.org/data/definitions/327.html"
+     },
+     "issue_severity": "HIGH",
+     "issue_text": "The pyCrypto library and its module ARC4 are no longer actively maintained and have been deprecated. Consider using pyca/cryptography library.",
+     "line_number": 1,
+     "line_range": [
+      1
+     ],
+     "more_info": "https://bandit.readthedocs.io/en/1.7.10/blacklists/blacklist_imports.html#b413-import-pycrypto",
+     "test_id": "B413",
+     "test_name": "blacklist"
+    },
+    {
+     "code": "5 def encrypt_both(key, message):\n6     legacy = eval(message)\n7     modern = pycryptodomex_arc4.new(key)\n",
+     "col_offset": 13,
+     "end_col_offset": 26,
+     "filename": "/target/app/crypto.py",
+     "issue_confidence": "HIGH",
+     "issue_cwe": {
+      "id": 78,
+      "link": "https://cwe.mitre.org/data/definitions/78.html"
+     },
+     "issue_severity": "MEDIUM",
+     "issue_text": "Use of possibly insecure function - consider using safer ast.literal_eval.",
+     "line_number": 6,
+     "line_range": [
+      6
+     ],
+     "more_info": "https://bandit.readthedocs.io/en/1.7.10/blacklists/blacklist_calls.html#b307-eval",
+     "test_id": "B307",
+     "test_name": "blacklist"
+    },
+    {
+     "code": "6     legacy = eval(message)\n7     modern = pycryptodomex_arc4.new(key)\n8     return legacy.encrypt(message), modern.encrypt(message)\n",
+     "col_offset": 13,
+     "end_col_offset": 40,
+     "filename": "/target/app/crypto.py",
+     "issue_confidence": "HIGH",
+     "issue_cwe": {
+      "id": 327,
+      "link": "https://cwe.mitre.org/data/definitions/327.html"
+     },
+     "issue_severity": "HIGH",
+     "issue_text": "Use of insecure cipher Cryptodome.Cipher.ARC4.new. Replace with a known secure cipher such as AES.",
+     "line_number": 7,
+     "line_range": [
+      7
+     ],
+     "more_info": "https://bandit.readthedocs.io/en/1.7.10/blacklists/blacklist_calls.html#b304-b305-ciphers-and-modes",
+     "test_id": "B304",
+     "test_name": "blacklist"
+    }
+   ]
+  },
+  "source": "from Crypto.Cipher import ARC4 as pycrypto_arc4\nfrom Cryptodome.Cipher import ARC4 as pycryptodomex_arc4\n\n\ndef encrypt_both(key, message):\n    legacy = eval(message)\n    modern = pycryptodomex_arc4.new(key)\n    return legacy.encrypt(message), modern.encrypt(message)\n"
+ },
+ "twice_before": {
+  "bandit": {
+   "errors": [],
+   "metrics": {
+    "/target/app/crypto.py": {
+     "CONFIDENCE.HIGH": 4,
+     "CONFIDENCE.LOW": 0,
+     "CONFIDENCE.MEDIUM": 0,
+     "CONFIDENCE.UNDEFINED": 0,
+     "SEVERITY.HIGH": 4,
+     "SEVERITY.LOW": 0,
+     "SEVERITY.MEDIUM": 0,
+     "SEVERITY.UNDEFINED": 0,
+     "loc": 7,
+     "nosec": 0,
+     "skipped_tests": 0
+    },
+    "_totals": {
+     "CONFIDENCE.HIGH": 4,
+     "CONFIDENCE.LOW": 0,
+     "CONFIDENCE.MEDIUM": 0,
+     "CONFIDENCE.UNDEFINED": 0,
+     "SEVERITY.HIGH": 4,
+     "SEVERITY.LOW": 0,
+     "SEVERITY.MEDIUM": 0,
+     "SEVERITY.UNDEFINED": 0,
+     "loc": 7,
+     "nosec": 0,
+     "skipped_tests": 0
+    }
+   },
+   "results": [
+    {
+     "code": "1 from Crypto.Cipher import ARC4 as pycrypto_arc4\n2 from Cryptodome.Cipher import ARC4 as pycryptodomex_arc4\n3 \n",
+     "col_offset": 0,
+     "end_col_offset": 47,
+     "filename": "/target/app/crypto.py",
+     "issue_confidence": "HIGH",
+     "issue_cwe": {
+      "id": 327,
+      "link": "https://cwe.mitre.org/data/definitions/327.html"
+     },
+     "issue_severity": "HIGH",
+     "issue_text": "The pyCrypto library and its module ARC4 are no longer actively maintained and have been deprecated. Consider using pyca/cryptography library.",
+     "line_number": 1,
+     "line_range": [
+      1
+     ],
+     "more_info": "https://bandit.readthedocs.io/en/1.7.10/blacklists/blacklist_imports.html#b413-import-pycrypto",
+     "test_id": "B413",
+     "test_name": "blacklist"
+    },
+    {
+     "code": "5 def encrypt_both(key, message):\n6     legacy = pycrypto_arc4.new(key)\n7     legacy = pycrypto_arc4.new(key)\n",
+     "col_offset": 13,
+     "end_col_offset": 35,
+     "filename": "/target/app/crypto.py",
+     "issue_confidence": "HIGH",
+     "issue_cwe": {
+      "id": 327,
+      "link": "https://cwe.mitre.org/data/definitions/327.html"
+     },
+     "issue_severity": "HIGH",
+     "issue_text": "Use of insecure cipher Crypto.Cipher.ARC4.new. Replace with a known secure cipher such as AES.",
+     "line_number": 6,
+     "line_range": [
+      6
+     ],
+     "more_info": "https://bandit.readthedocs.io/en/1.7.10/blacklists/blacklist_calls.html#b304-b305-ciphers-and-modes",
+     "test_id": "B304",
+     "test_name": "blacklist"
+    },
+    {
+     "code": "6     legacy = pycrypto_arc4.new(key)\n7     legacy = pycrypto_arc4.new(key)\n8     modern = pycryptodomex_arc4.new(key)\n",
+     "col_offset": 13,
+     "end_col_offset": 35,
+     "filename": "/target/app/crypto.py",
+     "issue_confidence": "HIGH",
+     "issue_cwe": {
+      "id": 327,
+      "link": "https://cwe.mitre.org/data/definitions/327.html"
+     },
+     "issue_severity": "HIGH",
+     "issue_text": "Use of insecure cipher Crypto.Cipher.ARC4.new. Replace with a known secure cipher such as AES.",
+     "line_number": 7,
+     "line_range": [
+      7
+     ],
+     "more_info": "https://bandit.readthedocs.io/en/1.7.10/blacklists/blacklist_calls.html#b304-b305-ciphers-and-modes",
+     "test_id": "B304",
+     "test_name": "blacklist"
+    },
+    {
+     "code": "7     legacy = pycrypto_arc4.new(key)\n8     modern = pycryptodomex_arc4.new(key)\n9     return legacy.encrypt(message), modern.encrypt(message)\n",
+     "col_offset": 13,
+     "end_col_offset": 40,
+     "filename": "/target/app/crypto.py",
+     "issue_confidence": "HIGH",
+     "issue_cwe": {
+      "id": 327,
+      "link": "https://cwe.mitre.org/data/definitions/327.html"
+     },
+     "issue_severity": "HIGH",
+     "issue_text": "Use of insecure cipher Cryptodome.Cipher.ARC4.new. Replace with a known secure cipher such as AES.",
+     "line_number": 8,
+     "line_range": [
+      8
+     ],
+     "more_info": "https://bandit.readthedocs.io/en/1.7.10/blacklists/blacklist_calls.html#b304-b305-ciphers-and-modes",
+     "test_id": "B304",
+     "test_name": "blacklist"
+    }
+   ]
+  },
+  "source": "from Crypto.Cipher import ARC4 as pycrypto_arc4\nfrom Cryptodome.Cipher import ARC4 as pycryptodomex_arc4\n\n\ndef encrypt_both(key, message):\n    legacy = pycrypto_arc4.new(key)\n    legacy = pycrypto_arc4.new(key)\n    modern = pycryptodomex_arc4.new(key)\n    return legacy.encrypt(message), modern.encrypt(message)\n"
+ },
+ "twice_one_fixed": {
+  "bandit": {
+   "errors": [],
+   "metrics": {
+    "/target/app/crypto.py": {
+     "CONFIDENCE.HIGH": 3,
+     "CONFIDENCE.LOW": 0,
+     "CONFIDENCE.MEDIUM": 0,
+     "CONFIDENCE.UNDEFINED": 0,
+     "SEVERITY.HIGH": 3,
+     "SEVERITY.LOW": 0,
+     "SEVERITY.MEDIUM": 0,
+     "SEVERITY.UNDEFINED": 0,
+     "loc": 7,
+     "nosec": 0,
+     "skipped_tests": 0
+    },
+    "_totals": {
+     "CONFIDENCE.HIGH": 3,
+     "CONFIDENCE.LOW": 0,
+     "CONFIDENCE.MEDIUM": 0,
+     "CONFIDENCE.UNDEFINED": 0,
+     "SEVERITY.HIGH": 3,
+     "SEVERITY.LOW": 0,
+     "SEVERITY.MEDIUM": 0,
+     "SEVERITY.UNDEFINED": 0,
+     "loc": 7,
+     "nosec": 0,
+     "skipped_tests": 0
+    }
+   },
+   "results": [
+    {
+     "code": "1 from Crypto.Cipher import ARC4 as pycrypto_arc4\n2 from Cryptodome.Cipher import ARC4 as pycryptodomex_arc4\n3 \n",
+     "col_offset": 0,
+     "end_col_offset": 47,
+     "filename": "/target/app/crypto.py",
+     "issue_confidence": "HIGH",
+     "issue_cwe": {
+      "id": 327,
+      "link": "https://cwe.mitre.org/data/definitions/327.html"
+     },
+     "issue_severity": "HIGH",
+     "issue_text": "The pyCrypto library and its module ARC4 are no longer actively maintained and have been deprecated. Consider using pyca/cryptography library.",
+     "line_number": 1,
+     "line_range": [
+      1
+     ],
+     "more_info": "https://bandit.readthedocs.io/en/1.7.10/blacklists/blacklist_imports.html#b413-import-pycrypto",
+     "test_id": "B413",
+     "test_name": "blacklist"
+    },
+    {
+     "code": "6     legacy = None  # the legacy cipher is gone\n7     legacy = pycrypto_arc4.new(key)\n8     modern = pycryptodomex_arc4.new(key)\n",
+     "col_offset": 13,
+     "end_col_offset": 35,
+     "filename": "/target/app/crypto.py",
+     "issue_confidence": "HIGH",
+     "issue_cwe": {
+      "id": 327,
+      "link": "https://cwe.mitre.org/data/definitions/327.html"
+     },
+     "issue_severity": "HIGH",
+     "issue_text": "Use of insecure cipher Crypto.Cipher.ARC4.new. Replace with a known secure cipher such as AES.",
+     "line_number": 7,
+     "line_range": [
+      7
+     ],
+     "more_info": "https://bandit.readthedocs.io/en/1.7.10/blacklists/blacklist_calls.html#b304-b305-ciphers-and-modes",
+     "test_id": "B304",
+     "test_name": "blacklist"
+    },
+    {
+     "code": "7     legacy = pycrypto_arc4.new(key)\n8     modern = pycryptodomex_arc4.new(key)\n9     return legacy.encrypt(message), modern.encrypt(message)\n",
+     "col_offset": 13,
+     "end_col_offset": 40,
+     "filename": "/target/app/crypto.py",
+     "issue_confidence": "HIGH",
+     "issue_cwe": {
+      "id": 327,
+      "link": "https://cwe.mitre.org/data/definitions/327.html"
+     },
+     "issue_severity": "HIGH",
+     "issue_text": "Use of insecure cipher Cryptodome.Cipher.ARC4.new. Replace with a known secure cipher such as AES.",
+     "line_number": 8,
+     "line_range": [
+      8
+     ],
+     "more_info": "https://bandit.readthedocs.io/en/1.7.10/blacklists/blacklist_calls.html#b304-b305-ciphers-and-modes",
+     "test_id": "B304",
+     "test_name": "blacklist"
+    }
+   ]
+  },
+  "source": "from Crypto.Cipher import ARC4 as pycrypto_arc4\nfrom Cryptodome.Cipher import ARC4 as pycryptodomex_arc4\n\n\ndef encrypt_both(key, message):\n    legacy = None  # the legacy cipher is gone\n    legacy = pycrypto_arc4.new(key)\n    modern = pycryptodomex_arc4.new(key)\n    return legacy.encrypt(message), modern.encrypt(message)\n"
+ }
+}

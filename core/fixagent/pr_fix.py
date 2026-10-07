@@ -156,6 +156,8 @@ async def temporal_starter(
         fixagent_store.baseline_fingerprints_for(s, scan.id, finding["location"]["path"]),
         req.repo, req.installation_id, None, WorkflowLimits.from_env(),
         token_cap=req.tokens_per_finding, pr_fix_request_id=req.id, pr_number=req.pr_number,
+        baseline_findings=fixagent_store.baseline_findings_for(
+            s, scan.id, finding["location"]["path"]),
     )  # fmt: skip
 
 

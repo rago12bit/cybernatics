@@ -96,6 +96,9 @@ async def start(
             scan.github_installation_id,
             run_tests_spec,
             limits,
+            baseline_findings=fixagent_store.baseline_findings_for(
+                s, scan.id, finding.location.path
+            ),
         )
     except Exception as exc:  # noqa: BLE001 - Temporal unreachable, or any other startup failure
         raise FixStartError(503, f"could not start the verified-fix workflow: {exc}") from exc

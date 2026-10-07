@@ -54,6 +54,7 @@ async def start_verified_fix(
     token_cap: int | None = None,
     pr_fix_request_id: str | None = None,
     pr_number: int | None = None,
+    baseline_findings: list[dict[str, object]] | None = None,
 ) -> str:
     client = await get_client()
     inp = VerifiedFixInput(
@@ -73,6 +74,7 @@ async def start_verified_fix(
         token_cap=token_cap,
         pr_fix_request_id=pr_fix_request_id,
         pr_number=pr_number,
+        baseline_findings=list(baseline_findings or []),
     )
     await client.start_workflow(
         VerifiedFixWorkflow.run, inp, id=workflow_id, task_queue=task_queue()

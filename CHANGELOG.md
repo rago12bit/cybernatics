@@ -176,6 +176,13 @@ Weeks 70–73 (plan Phase 17): metrics, dashboards, reports and filters at scale
 - **The verified-fix agent now spends within a budget (Week 76).** It counted its model tokens but
   never charged them to the organization's monthly budget, and never checked it; each attempt now
   does both, and a run can carry a token cap.
+- **The fix agent no longer rejects a correct patch next to another finding.** Verification compared
+  findings by fingerprint, which shifts when a nearby line changes (Bandit quotes three lines) and
+  when correlation moves a rule into the neighbouring finding -- so an untouched neighbour looked
+  like a regression, and an edit beside the flagged line could look like a fix. Both steps now also
+  recognise a finding by the text of the lines it flags and the rules that fire, and refuse any rule
+  firing more often than before. Tested on recorded real Bandit output; the Week 76 live case
+  (PyCQA/bandit#2, `examples/ciphers.py:30`) now passes, and a patch swapping in `eval` still fails.
 - **The fix-agent worker now acts for the run's organization.** Under forced RLS its activities could
   not see their own run, so on Postgres every attempt, patch and final status was silently dropped.
   Found live while verifying Week 76.

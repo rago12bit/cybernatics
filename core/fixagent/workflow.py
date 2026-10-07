@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import shutil
 import tempfile
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import timedelta
 from pathlib import Path
 from typing import Any
@@ -52,6 +52,9 @@ class VerifiedFixInput:
     token_cap: int | None = None  # the most this run may spend on the model, across attempts
     pr_fix_request_id: str | None = None  # set: a pull request run -- post the result, no approval
     pr_number: int | None = None
+    # The findings on the file before the patch (store.baseline_findings_for), so verification can
+    # tell an untouched neighbour from a regression (core.fixagent.verify, "which finding is which").
+    baseline_findings: list[dict[str, Any]] = field(default_factory=list)
 
 
 @workflow.defn
@@ -198,7 +201,13 @@ async def run_one_attempt_activity(
     from core.fixagent.context import gather_context
     from core.fixagent.sandbox import TestRunSpec
     from core.fixagent.sandbox import run_tests as sandbox_run_tests
-    from core.fixagent.verify import PatchApplyError, apply_patch, rerun_rule, rerun_scanners
+    from core.fixagent.verify import (
+        Known,
+        PatchApplyError,
+        apply_patch,
+        rerun_rule,
+        rerun_scanners,
+    )
     from core.gitfetch import clone_repo
     from core.llm.budget import BudgetExceeded, check_org
     from core.llm.client import AnthropicClient, LLMConfig
@@ -232,21 +241,30 @@ async def run_one_attempt_activity(
         _charge(inp.org_id, proposal.tokens_used)
         spent = proposal.tokens_used
 
+        path = finding.location.path
+        original = (
+            (checkout / path).read_text(errors="replace") if (checkout / path).is_file() else None
+        )
+        known = [Known.from_dict(d) for d in inp.baseline_findings]
         try:
             apply_patch(checkout, proposal.patch)
         except PatchApplyError as exc:
             return {**_record(inp, attempt, steps, False, str(exc)), "tokens": spent}
 
-        rule_step = rerun_rule(checkout, finding, inp.originating_tool)
+        rule_step = rerun_rule(
+            checkout, finding, inp.originating_tool, original=original, known=known
+        )
         steps.append(rule_step.__dict__)
         if not rule_step.passed:
             return {**_record(inp, attempt, steps, False, rule_step.detail), "tokens": spent}
 
         scanners_step = rerun_scanners(
             checkout,
-            [finding.location.path],
+            [path],
             [inp.originating_tool],
             frozenset(inp.baseline_fingerprints),
+            known=known,
+            originals={path: original} if original is not None else {},
         )
         steps.append(scanners_step.__dict__)
         if not scanners_step.passed:

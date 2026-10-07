@@ -489,6 +489,15 @@ def agent(sessions: sessionmaker[Session], monkeypatch: pytest.MonkeyPatch) -> A
         return dest
 
     passed = SimpleNamespace(name="rerun_rule", passed=True, detail="")
+    verified: dict[str, Any] = {}
+
+    def record(step: str) -> Any:
+        def run(*args: Any, **kw: Any) -> Any:
+            verified[step] = kw
+            return passed
+
+        return run
+
     monkeypatch.setenv("BULWARK_LLM_ENABLED", "1")
     monkeypatch.setenv("BULWARK_LLM_API_KEY", "test-key-not-real")
     monkeypatch.setenv("BULWARK_LLM_MAX_TOKENS_PER_ORG_MONTH", "1000000")
@@ -496,8 +505,8 @@ def agent(sessions: sessionmaker[Session], monkeypatch: pytest.MonkeyPatch) -> A
     monkeypatch.setattr("core.gitfetch.clone_repo", clone)
     monkeypatch.setattr("core.llm.client.AnthropicClient", FakeClient)
     monkeypatch.setattr("core.fixagent.verify.apply_patch", lambda root, patch: None)
-    monkeypatch.setattr("core.fixagent.verify.rerun_rule", lambda *a: passed)
-    monkeypatch.setattr("core.fixagent.verify.rerun_scanners", lambda *a: passed)
+    monkeypatch.setattr("core.fixagent.verify.rerun_rule", record("rule"))
+    monkeypatch.setattr("core.fixagent.verify.rerun_scanners", record("scanners"))
     with sessions() as s:
         org = Organization(name="o")
         s.add(org)
@@ -516,7 +525,8 @@ def agent(sessions: sessionmaker[Session], monkeypatch: pytest.MonkeyPatch) -> A
         installation_id="42", run_tests=None, limits=WorkflowLimits().__dict__,
         token_cap=50_000, pr_fix_request_id="req-1", pr_number=7,
     )  # fmt: skip
-    return SimpleNamespace(inp=inp, replies=replies, calls=calls, sessions=sessions, org=org_id)
+    return SimpleNamespace(inp=inp, replies=replies, calls=calls, sessions=sessions, org=org_id,
+                           verified=verified)  # fmt: skip
 
 
 def used(agent: Any) -> int:
@@ -532,6 +542,49 @@ def test_an_attempt_charges_the_organizations_budget(agent: Any) -> None:
     out = asyncio.run(wf.run_one_attempt_activity(agent.inp, None, 1, 50_000))
     assert out["passed"] and out["tokens"] == 3000
     assert used(agent) == 3000  # before Week 76 the fix agent spent without counting
+
+
+def test_verification_gets_the_file_before_the_patch_and_the_known_findings(agent: Any) -> None:
+    agent.inp.baseline_findings = [{"path": "app/users.py", "fingerprint": "fp", "category": "sast",
+                                    "rule_ids": ["B608"], "start_line": 1, "end_line": 1}]  # fmt: skip
+    agent.replies += [
+        message(tool("propose_patch", explanation="e", patch=PATCH, confidence="high"))
+    ]
+    assert asyncio.run(wf.run_one_attempt_activity(agent.inp, None, 1, 50_000))["passed"]
+    rule, scanners = agent.verified["rule"], agent.verified["scanners"]
+    assert rule["original"] == "x\n"  # the clone's text, read before the patch was applied
+    assert scanners["originals"] == {"app/users.py": "x\n"}
+    assert [k.rule_ids for k in rule["known"]] == [("B608",)] and scanners["known"] == rule["known"]
+
+
+def test_the_baseline_carries_what_verification_needs(world: World) -> None:
+    from core.fixagent.store import baseline_findings_for
+
+    f = finding("ruled")
+    f.evidence.rule_ids = {"bandit": ["B608"], "semgrep": ["python.sqli"]}
+    f.location = Location("app/users.py", 4, 6, "x")
+    with world.sessions() as s:
+        s.add(
+            FindingRow(
+                scan_id=world.scan,
+                finding_id="ruled",
+                fingerprint="fp-ruled",
+                category="sast",
+                severity="HIGH",
+                severity_rank=3,
+                risk_score=1,
+                path="app/users.py",
+                start_line=4,
+                tools=["bandit"],
+                data=f.to_dict(),
+            )
+        )
+        s.commit()
+        rows = {r["fingerprint"]: r for r in baseline_findings_for(s, world.scan, "app/users.py")}
+    assert {"fp-new1", "fp-new2", "fp-old", "fp-ruled"} <= set(rows)
+    assert rows["fp-ruled"] == {"path": "app/users.py", "fingerprint": "fp-ruled",
+                                "category": "sast", "rule_ids": ["B608", "python.sqli"],
+                                "start_line": 4, "end_line": 6}  # fmt: skip
 
 
 def test_the_cap_stops_the_attempt_before_the_next_model_call(agent: Any) -> None:
