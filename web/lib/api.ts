@@ -935,7 +935,7 @@ export const ssoStartUrl = (providerId: string, next: string) =>
   `${API_URL}/auth/sso/${enc(providerId)}/start?next=${enc(next)}`;
 export const listUsers = () => request<UserView[]>("/v2/users");
 export const createUser = (body: { email: string; name?: string; role: OrgRole }) => request<UserView>("/v2/users", json("POST", body));
-export const updateUser = (id: string, body: { name?: string; role?: OrgRole; active?: boolean }) =>
+export const updateUser = (id: string, body: { name?: string; role?: OrgRole; active?: boolean; github_login?: string | null }) =>
   request<UserView>(`/v2/users/${enc(id)}`, json("PATCH", body));
 export const setRoleOverride = (id: string, body: { target_type: "project" | "portfolio"; target_id: string; role: OverrideRole }) =>
   request<UserView>(`/v2/users/${enc(id)}/roles`, json("PUT", body));

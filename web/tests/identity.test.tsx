@@ -19,7 +19,7 @@ const SESSION = { user: { id: "u1", email: "boss@acme.test", name: "Boss", role:
 function person(over: Partial<UserView> = {}): UserView {
   return { id: "u2", email: "meera@acme.test", name: "Meera S", role: "member", active: true, source: "scim", external_id: "00u1",
     created_at: "2026-10-01T00:00:00Z", last_login_at: "2026-10-06T09:00:00Z", disabled_at: null, deprovisioned_at: null,
-    actor: "user:u2", roles: [], ...over };
+    github_login: null, actor: "user:u2", roles: [], ...over };
 }
 
 type Call = { method: string; path: string; body?: unknown; headers: Headers; credentials?: string };
@@ -153,6 +153,32 @@ describe("people and access", () => {
     await flush();
     expect(calls.find((c) => c.method === "PUT")!.body).toEqual({ target_type: "project", target_id: "a1", role: "member" });
     expect((await axe.run(d2, AXE)).violations).toEqual([]);
+  });
+
+  it("links a GitHub account for /fix, and unlinks it", async () => {
+    sessionStorage.setItem("bulwark.token", "t".repeat(24));
+    const calls = api({
+      "GET /v2/users": () => json([person()]),
+      "PATCH /v2/users/u2": (b) => json(person(b as Partial<UserView>)),
+      "/assets": () => json([]),
+      "/v2/portfolios": () => json([]),
+    });
+    const host = await mount(<PeopleScreen />);
+    const input = byLabel(host, "GitHub username of Meera S");
+    expect(input.value).toBe("");
+    expect(button(host, "Save")).toBeUndefined(); // nothing to save yet
+    await type(input, "@meera-s");
+    await act(async () => button(host, "Save").click());
+    await flush();
+    expect(calls.find((c) => c.method === "PATCH")!.body).toEqual({ github_login: "meera-s" });
+    expect(host.textContent).toContain("Meera S can now use /fix on pull requests as @meera-s.");
+    expect(byLabel(host, "GitHub username of Meera S").value).toBe("meera-s");
+    expect((await axe.run(host, AXE)).violations).toEqual([]);
+    await type(byLabel(host, "GitHub username of Meera S"), "");
+    await act(async () => button(host, "Save").click());
+    await flush();
+    expect(calls.filter((c) => c.method === "PATCH")[1]!.body).toEqual({ github_login: null });
+    expect(host.textContent).toContain("GitHub account is unlinked");
   });
 });
 

@@ -24,6 +24,8 @@ export interface UserView {
   last_login_at: string | null;
   disabled_at: string | null;
   deprovisioned_at: string | null;
+  /** Who a `/fix` comment on a pull request is from (Week 76). Set by an admin only. */
+  github_login: string | null;
   actor: string;
   roles: RoleOverrideView[];
 }

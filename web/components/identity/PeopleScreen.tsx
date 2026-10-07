@@ -48,7 +48,7 @@ export function PeopleScreen() {
 
   const replace = (u: UserView) => setPeople((cur) => cur?.map((x) => (x.id === u.id ? u : x)) ?? null);
 
-  async function change(u: UserView, body: { role?: OrgRole; active?: boolean }, sentence: string) {
+  async function change(u: UserView, body: { role?: OrgRole; active?: boolean; github_login?: string | null }, sentence: string) {
     setError(null);
     try { replace(await updateUser(u.id, body)); setSaid(sentence); }
     catch (e) { setError(message(e, "Could not save.")); }
@@ -68,7 +68,7 @@ export function PeopleScreen() {
         <table className="idn-table">
           <caption className="sr-only">People in this organization</caption>
           <thead>
-            <tr><th scope="col">Person</th><th scope="col">Organization role</th><th scope="col">Higher roles</th><th scope="col">Last sign-in</th><th scope="col">Status</th></tr>
+            <tr><th scope="col">Person</th><th scope="col">Organization role</th><th scope="col">Higher roles</th><th scope="col">GitHub account</th><th scope="col">Last sign-in</th><th scope="col">Status</th></tr>
           </thead>
           <tbody>
             {people.map((u) => (
@@ -93,6 +93,10 @@ export function PeopleScreen() {
                   )}
                   <button type="button" className="idn-link" onClick={() => setOpen(u.id)} aria-label={`Change higher roles of ${u.name}`}>Change</button>
                 </td>
+                <td>
+                  <GithubLogin person={u} onSave={(login) => change(u, { github_login: login || null },
+                    login ? `${u.name} can now use /fix on pull requests as @${login}.` : `${u.name}'s GitHub account is unlinked.`)} />
+                </td>
                 <td>{day(u.last_login_at)}</td>
                 <td>
                   {u.deprovisioned_at ? <span className="idn-muted">Removed by your identity provider</span>
@@ -116,6 +120,23 @@ export function PeopleScreen() {
         </div>
       </Dialog>
     </div>
+  );
+}
+
+/* Week 76: the GitHub account a `/fix` comment on a pull request must come from. Only an admin
+   links it -- a person naming their own could name someone else's. */
+function GithubLogin({ person, onSave }: { person: UserView; onSave: (login: string) => void }) {
+  const id = useId();
+  const [value, setValue] = useState(person.github_login ?? "");
+  useEffect(() => setValue(person.github_login ?? ""), [person.github_login]);
+  const dirty = value.trim().replace(/^@/, "") !== (person.github_login ?? "");
+  return (
+    <form className="idn-inline" onSubmit={(e) => { e.preventDefault(); onSave(value.trim().replace(/^@/, "")); }}>
+      <label className="sr-only" htmlFor={`${id}-gh`}>GitHub username of {person.name}</label>
+      <input id={`${id}-gh`} value={value} maxLength={40} placeholder="none" autoComplete="off" spellCheck={false}
+        disabled={!person.active} onChange={(e) => setValue(e.target.value)} />
+      {dirty && <button type="submit" className="idn-link">Save</button>}
+    </form>
   );
 }
 
