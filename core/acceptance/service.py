@@ -32,7 +32,6 @@ from sqlalchemy.orm import Session
 
 from core.persistence import repo
 from core.persistence.models import (
-    ApiToken,
     Asset,
     IssueRow,
     RiskAcceptance,
@@ -123,19 +122,12 @@ def list_for(
 
 
 def approvers(s: Session, org_id: str, *, excluding: str) -> list[dict[str, str]]:
-    """Who could approve: the org's live personal tokens that may write, other than the asker."""
-    now = _now()
-    out = []
-    for t in s.scalars(
-        select(ApiToken).where(ApiToken.org_id == org_id, ApiToken.revoked_at.is_(None))
-    ):
-        actor = f"token:{t.display_prefix}"
-        if actor == excluding or "scans:write" not in (t.scopes or []):
-            continue
-        if t.expires_at is not None and _utc(t.expires_at) <= now:
-            continue
-        out.append({"actor": actor, "name": t.name})
-    return sorted(out, key=lambda a: a["name"].lower())
+    """Who could approve: the org's people who may write (members and admins; tokens from before
+    accounts with `scans:write`), other than the asker."""
+    from core.collab.people import people_who_can
+
+    return [{"actor": p.actor, "name": p.name}
+            for p in people_who_can(s, org_id, "scans:write") if p.actor != excluding]  # fmt: skip
 
 
 def _audit(s: Session, actor: str, ra: RiskAcceptance, action: str, **extra: Any) -> None:

@@ -32,6 +32,7 @@ from core.search.language import Query, glob_match, glob_to_like
 from core.sla import service as sla_service
 from core.sla.policy import OPEN_STATES, Policy
 from core.sla.service import status_of
+from core.tenancy import session_projects
 
 COUNT_CAP = 10_000
 COUNT_TIMEOUT_MS = 200
@@ -111,7 +112,7 @@ def _assignee(s: Session, org_id: str, value: str, ctx: Context) -> ColumnElemen
         return IssueRow.assignee.is_(None)
     if v == "me":
         return IssueRow.assignee == ctx.actor if ctx.actor else false()
-    if value.startswith("token:"):
+    if value.startswith("token:") or value.startswith("user:"):
         return IssueRow.assignee == value
     matches = [p.actor for p in people(s, org_id) if v in (p.handle, p.name.lower())]
     return IssueRow.assignee.in_(matches) if matches else false()
@@ -134,6 +135,9 @@ def _projects(s: Session, org_id: str, q: Query) -> list[str]:
     rows = list(
         s.execute(select(Asset.id, Asset.label, Asset.portfolio_id).where(Asset.org_id == org_id))
     )
+    visible = session_projects(s)  # Week 75: a person limited to some projects (RLS does too)
+    if visible is not None:
+        rows = [r for r in rows if r[0] in visible]
     keep = {r[0] for r in rows}
     if "project" in q.clauses:
         c = q.clauses["project"]

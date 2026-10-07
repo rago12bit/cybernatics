@@ -38,17 +38,36 @@ CURRENT_ORG_SETTING = "app.current_org"
 ORG_HEADER = "X-Bulwark-Org"
 
 
+#: Which of the organization's projects the session may see (Week 75, migration 0048): `*` for
+#: all of them, else their ids separated by commas. A session limited to some projects runs as
+#: GUEST_ROLE, whose restrictive policies read this; unset, they match nothing.
+PROJECT_SCOPE_SETTING = "app.project_scope"
+ALL_PROJECTS = "*"
+GUEST_ROLE = "bulwark_guest"
+
 #: Where a session remembers which org it acts for, so every transaction it opens can re-apply it.
 _ORG_INFO_KEY = "bulwark.org_id"
+_SCOPE_INFO_KEY = "bulwark.project_scope"
 
 
-def _apply_org(conn: Connection, org_id: str) -> None:
+def _apply_org(conn: Connection, org_id: str, scope: str = ALL_PROJECTS) -> None:
     # `true` = local to the current transaction: it can never outlive it, so a connection returned
     # to the pool carries no org, and the next session to check it out cannot inherit this one's.
+    # JIT compilation off for the transaction (Week 75): the project-scope policies changed the
+    # planner's cost estimates on large counts enough to cross `jit_above_cost`, and compiling
+    # then took 116 of a 153 ms count at 100,000 Issues; without it the count took 90 ms. Every
+    # query here is short and interactive, where JIT costs more than it saves.
     conn.execute(
-        text("SELECT set_config(:key, :org, true)"),
-        {"key": CURRENT_ORG_SETTING, "org": org_id},
-    )
+        text("SELECT set_config(:key, :org, true), set_config(:skey, :scope, true), "
+             "set_config('jit', 'off', true)"),
+        {"key": CURRENT_ORG_SETTING, "org": org_id, "skey": PROJECT_SCOPE_SETTING,
+         "scope": scope},
+    )  # fmt: skip
+    if scope != ALL_PROJECTS:
+        # Limited to some projects: the policies that hide the rest apply to this role only, so
+        # they cost nothing for everyone else (migration 0048 says why). LOCAL: until the
+        # transaction ends, like the settings above.
+        conn.execute(text(f'SET LOCAL ROLE "{GUEST_ROLE}"'))
 
 
 @event.listens_for(_SessionBase, "after_begin")
@@ -66,10 +85,10 @@ def _reapply_org_on_every_transaction(
     connection always has none (which RLS reads as "see nothing")."""
     org_id = session.info.get(_ORG_INFO_KEY)
     if org_id is not None and connection.dialect.name == "postgresql":
-        _apply_org(connection, org_id)
+        _apply_org(connection, org_id, session.info.get(_SCOPE_INFO_KEY, ALL_PROJECTS))
 
 
-def set_session_org(s: Session, org_id: str) -> None:
+def set_session_org(s: Session, org_id: str, projects: frozenset[str] | None = None) -> None:
     """Declare which org this session acts for, for the rest of its life. The org is remembered on
     the session and applied (transaction-locally, see `_reapply_org_on_every_transaction`) at the
     start of every transaction it opens, including the one open right now. A no-op on SQLite, which
@@ -79,10 +98,23 @@ def set_session_org(s: Session, org_id: str) -> None:
     request's `X-Bulwark-Org` header), `scoped_sessions` below (from a worker task's payload), and
     the GitHub webhook handler (from a *resolved* installation -> org mapping, only knowable
     after looking one up -- see `core.persistence.repo.get_or_create_installation`'s docstring for
-    why that lookup itself must not be RLS-gated)."""
+    why that lookup itself must not be RLS-gated).
+
+    `projects` (Week 75) limits the session to those projects; None, the default, is all of the
+    organization's -- what every worker and service session wants."""
     s.info[_ORG_INFO_KEY] = org_id
+    scope = ALL_PROJECTS if projects is None else ",".join(sorted(projects))
+    s.info[_SCOPE_INFO_KEY] = scope
     if s.bind is not None and s.bind.dialect.name == "postgresql":
-        _apply_org(s.connection(), org_id)  # the transaction already open (if any) began earlier
+        _apply_org(s.connection(), org_id, scope)  # the transaction open now (if any) began earlier
+
+
+def session_projects(s: Session) -> frozenset[str] | None:
+    """The projects this session may see, or None for all of them (Week 75). Postgres enforces it
+    with restrictive policies; the app consults it too, so SQLite (tests) behaves the same where
+    a project is looked up by id or the organization's projects are listed."""
+    scope = s.info.get(_SCOPE_INFO_KEY, ALL_PROJECTS)
+    return None if scope == ALL_PROJECTS else frozenset(x for x in str(scope).split(",") if x)
 
 
 def session_org(s: Session) -> str | None:

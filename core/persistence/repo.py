@@ -65,7 +65,7 @@ from core.persistence.models import (
     ToolRun,
 )
 from core.rag.embed import HashingEmbedder
-from core.tenancy import DEFAULT_ORG_ID, session_org
+from core.tenancy import DEFAULT_ORG_ID, session_org, session_projects
 from core.triage_assistant.contract import TriageVerdict
 
 log = logging.getLogger(__name__)
@@ -552,12 +552,18 @@ def list_assets(s: Session, *, org_id: str | None = None, limit: int = 50) -> li
     q = select(Asset).order_by(Asset.last_scanned_at.desc()).limit(limit)
     if org_id is not None:
         q = q.where(Asset.org_id == org_id)
+    visible = session_projects(s)  # Week 75: a person limited to some projects (RLS does too)
+    if visible is not None:
+        q = q.where(Asset.id.in_(visible))
     return list(s.scalars(q))
 
 
 def get_asset(s: Session, asset_id: str, *, org_id: str | None = None) -> Asset | None:
     asset = s.get(Asset, asset_id)
     if asset is None or (org_id is not None and asset.org_id != org_id):
+        return None
+    visible = session_projects(s)
+    if visible is not None and asset.id not in visible:
         return None
     return asset
 
@@ -949,6 +955,9 @@ def get_issue(s: Session, issue_id: str, *, org_id: str | None = None) -> IssueR
     q = select(IssueRow).where(IssueRow.id == issue_id)
     if org_id is not None:
         q = q.join(Asset, Asset.id == IssueRow.asset_id).where(Asset.org_id == org_id)
+    visible = session_projects(s)
+    if visible is not None:
+        q = q.where(IssueRow.asset_id.in_(visible))
     return s.scalars(q).one_or_none()
 
 
@@ -1826,7 +1835,13 @@ def delete_installation(s: Session, installation_id: str) -> None:
 
 
 def create_api_token(
-    s: Session, *, org_id: str, name: str, scopes: list[str], expires_at: datetime | None = None
+    s: Session,
+    *,
+    org_id: str,
+    name: str,
+    scopes: list[str],
+    expires_at: datetime | None = None,
+    user_id: str | None = None,
 ) -> tuple[ApiToken, str]:
     """Returns `(row, raw_token)` -- the raw secret is generated here and returned exactly once;
     only its hash is ever persisted (`core/tokens.py`). Callers (the `bulwark token create` CLI)
@@ -1837,6 +1852,7 @@ def create_api_token(
     row = ApiToken(
         org_id=org_id, name=name, token_hash=generated.token_hash,
         display_prefix=generated.display_prefix, scopes=sorted(scopes), expires_at=expires_at,
+        user_id=user_id,
     )  # fmt: skip
     s.add(row)
     s.commit()

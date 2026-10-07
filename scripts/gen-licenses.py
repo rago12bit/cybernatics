@@ -47,6 +47,9 @@ TOOLS: dict[str, tuple[str, str, str]] = {
     "dockle": ("Apache-2.0", "https://github.com/goodwithtech/dockle", "runs in a container"),
     "syft": ("Apache-2.0", "https://github.com/anchore/syft", "SBOM generation, runs in a container"),
     "cosign": ("Apache-2.0", "https://github.com/sigstore/cosign", "signing, runs in a container"),
+    "xmlsec1": ("MIT", "https://www.aleksey.com/xmlsec/",
+                "SAML signature checks (Week 75): a Debian package in the API image, run by pysaml2 "
+                "as a separate process, never linked"),
     "prometheus": ("Apache-2.0", "https://github.com/prometheus/prometheus", "optional compose profile"),
     "jaeger": ("Apache-2.0", "https://github.com/jaegertracing/jaeger", "optional compose profile"),
     "grafana": ("AGPL-3.0-only", "https://github.com/grafana/grafana",

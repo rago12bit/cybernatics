@@ -665,13 +665,80 @@ token_app = typer.Typer(
 )
 app.add_typer(token_app, name="token")
 
+users_app = typer.Typer(
+    help="People in an organization (Week 75): add the first admin, list, turn someone off."
+)
+app.add_typer(users_app, name="users")
+
+
+@users_app.command("add")
+def users_add(
+    org_id: str = typer.Option(..., help="The organization."),
+    email: str = typer.Option(..., help="Their email, as the identity provider will send it."),
+    name: str = typer.Option("", help="Their name; defaults to the email's first part."),
+    role: str = typer.Option("member", help="admin, member, viewer or none."),
+) -> None:
+    """Add a person -- typically the first admin, who then signs in through the organization's
+    identity provider and manages everyone else in the app."""
+    from core.identity import users as svc
+    from core.persistence.db import get_session_factory
+    from core.tenancy import set_session_org
+
+    with get_session_factory()() as s:
+        set_session_org(s, org_id)
+        try:
+            u = svc.create(s, org_id, "cli:users-add", email=email, name=name or None, role=role,
+                           source="cli")  # fmt: skip
+        except svc.UserError as exc:
+            typer.echo(f"error: {exc.message}", err=True)
+            raise typer.Exit(1) from exc
+        typer.echo(json.dumps(svc.view(u), default=str))
+
+
+@users_app.command("list")
+def users_list(org_id: str = typer.Option(..., help="The organization.")) -> None:
+    from core.identity import users as svc
+    from core.persistence.db import get_session_factory
+    from core.tenancy import set_session_org
+
+    with get_session_factory()() as s:
+        set_session_org(s, org_id)
+        typer.echo(json.dumps([svc.view(u) for u in svc.listing(s, org_id)], default=str))
+
+
+@users_app.command("disable")
+def users_disable(
+    org_id: str = typer.Option(..., help="The organization."),
+    email: str = typer.Option(..., help="Who to turn off."),
+) -> None:
+    """Turn a person off: their sessions end and their tokens are revoked now."""
+    from core.identity import users as svc
+    from core.persistence.db import get_session_factory
+    from core.tenancy import set_session_org
+
+    with get_session_factory()() as s:
+        set_session_org(s, org_id)
+        u = svc.by_email(s, org_id, email)
+        if u is None:
+            typer.echo("error: no such person", err=True)
+            raise typer.Exit(1)
+        try:
+            svc.disable(s, org_id, "cli:users-disable", u.id, reason="by the CLI")
+        except svc.UserError as exc:
+            typer.echo(f"error: {exc.message}", err=True)
+            raise typer.Exit(1) from exc
+        typer.echo(f"{email} is turned off; their sessions and tokens no longer work.")
+
 
 @token_app.command("create")
 def token_create(
     org_id: str = typer.Option(..., help="The organization this token authenticates as."),
     name: str = typer.Option(..., help="A human label, e.g. 'CI pipeline' or 'laptop'."),
     scope: list[str] = typer.Option(
-        ..., "--scope", help="Repeatable. Valid: scans:read, scans:write."
+        ...,
+        "--scope",
+        help="Repeatable. Valid: scans:read, scans:write, fixes:read, fixes:write, ingest:read, "
+        "ingest:write, rules:write, org:admin.",
     ),
     expires_days: int | None = typer.Option(
         None, help="Expire this many days from now. Omit for a token that never expires."

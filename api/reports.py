@@ -27,6 +27,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from api.deps import AppState, AuthContext, current_org, db, require_auth, require_scope, state
+from core.collab.people import is_person
 from core.llm import budget as llm_budget
 from core.llm.limits import LimitExceeded
 from core.persistence.models import ReportRun
@@ -64,7 +65,7 @@ def _fail(s: Session, exc: ReportError) -> HTTPException:
 
 
 def _person(auth: AuthContext) -> None:
-    if not auth.actor.startswith("token:"):
+    if not is_person(auth.actor):
         message = (
             "The shared token is nobody: sign in with a personal token to draft or confirm a "
             "summary."

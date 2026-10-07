@@ -38,6 +38,13 @@ def two_orgs(sessions: sessionmaker[Session]) -> Iterator[tuple[str, str]]:  # n
         for org in (a, b):
             set_session_org(s, org)
             for table in (
+                "user_identities",
+                "login_attempts",
+                "sso_domains",
+                "identity_providers",
+                "user_sessions",
+                "role_overrides",
+                "users",
                 "issue_batches",
                 "saved_views",
                 "person_prefs",

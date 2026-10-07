@@ -29,6 +29,7 @@ from sqlalchemy.orm import Session
 
 from api.deps import AuthContext, current_org, db, require_auth, require_scope
 from core import dashboards as svc
+from core.collab.people import is_person
 from core.metrics import portfolio as units
 
 
@@ -64,8 +65,16 @@ def register_dashboard_routes(app: FastAPI) -> None:
         org: str = Depends(current_org),
         auth: AuthContext = Depends(require_auth),
     ) -> dict[str, Any]:
-        return {"actor": auth.actor, "person": auth.actor.startswith("token:"),
-                "role": svc.role_of(s, org, auth.actor), "roles": list(svc.ROLES)}  # fmt: skip
+        user = None
+        if auth.access is not None:
+            from core.identity.users import get as get_user
+            from core.identity.users import view as user_view
+
+            user = user_view(get_user(s, org, auth.access.user_id))
+        return {"actor": auth.actor, "person": is_person(auth.actor),
+                "role": svc.role_of(s, org, auth.actor), "roles": list(svc.ROLES),
+                "user": user, "org_role": auth.access.role if auth.access else None,
+                "scopes": sorted(auth.scopes) if auth.scopes is not None else None}  # fmt: skip
 
     @app.put("/v2/me/role", tags=["dashboards"], dependencies=read)
     def choose_role(

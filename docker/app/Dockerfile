@@ -2,7 +2,8 @@
 FROM docker:27-cli AS dockercli
 
 FROM python:3.12-slim
-RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates \
+# xmlsec1: SAML signature checks (Week 75, core.identity.saml, via pysaml2).
+RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates xmlsec1 \
  && rm -rf /var/lib/apt/lists/*
 # Docker CLI only: it talks to the restricted socket proxy over TCP, never the raw socket.
 COPY --from=dockercli /usr/local/bin/docker /usr/local/bin/docker

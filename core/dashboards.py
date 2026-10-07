@@ -25,7 +25,7 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from core.collab.people import handle_of, names
+from core.collab.people import handle_of, is_person, names
 from core.metrics.definitions import BY_ID
 from core.metrics.query import GROUPS, MAX_DAYS
 from core.persistence import repo
@@ -303,9 +303,9 @@ def role_of(s: Session, org_id: str, person: str) -> str | None:
 
 
 def set_role(s: Session, org_id: str, person: str, role: str) -> None:
-    if not person.startswith("token:"):
+    if not is_person(person):
         raise DashboardError(
-            "role", "The shared token is nobody: sign in with a personal token to pick a role.", 409
+            "role", "The shared token is nobody: sign in as yourself to pick a role.", 409
         )
     if role not in ROLES:
         raise DashboardError("role", f"A role is one of: {', '.join(ROLES)}.")

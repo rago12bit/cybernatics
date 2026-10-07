@@ -13,6 +13,8 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from core.config import Settings
+from core.identity import sessions as web_sessions
+from core.identity.roles import Access
 from core.llm.budget import BudgetConfig
 from core.llm.client import LLMClient
 from core.llm.limits import UsageLimiter
@@ -59,6 +61,9 @@ class AppState:
     # (retest_run_id, org_id) -> runs a targeted retest on the worker (Week 64, plan §43.3). None:
     # the API does it after responding, in its own process.
     enqueue_retest: Callable[[str, str], None] | None = None
+    # The HTTP client single sign-on uses to reach identity providers (Week 75); None makes one per
+    # call. Tests pass one backed by a fake provider.
+    sso_http: Any = None
 
 
 def state(request: Request) -> AppState:
@@ -85,7 +90,11 @@ class AuthContext:
 
     org_id: str | None
     scopes: frozenset[str] | None
-    actor: str  # for audit-log attribution: "token:<display_prefix>" or "shared-token"
+    actor: str  # for audit-log attribution: "user:<id>", "token:<display_prefix>", "shared-token"
+    #: Week 75: a signed-in person, or a token a person made. Their role decides their scopes,
+    #: project by project (`require_scope`), and which projects they see at all (`db`). `scopes`
+    #: is then their organization-level scopes, never None: None means the shared token.
+    access: Access | None = None
 
 
 def _scoped_token_context(st: AppState, raw: str) -> AuthContext | None:
@@ -112,16 +121,60 @@ def _scoped_token_context(st: AppState, raw: str) -> AuthContext | None:
             if expires_at <= datetime.now(timezone.utc):
                 return None
         repo.touch_api_token(s, row.id)
+        if row.user_id is not None:
+            # A token a person made acts as them, within both its own scopes and their role now.
+            return _person_context(s, row.org_id, row.user_id, frozenset(row.scopes))
         return AuthContext(
             org_id=row.org_id, scopes=frozenset(row.scopes), actor=f"token:{row.display_prefix}"
         )
 
 
+def _person_context(
+    s: Session, org_id: str, user_id: str, token_scopes: frozenset[str] | None = None
+) -> AuthContext | None:
+    """A person's context, or None when they are turned off or gone. Their overrides are read
+    under their organization's RLS, with every project visible (the scope comes from this)."""
+    from core.identity.users import access_for, actor_of
+    from core.persistence.models import User
+
+    set_session_org(s, org_id)
+    u = s.get(User, user_id)
+    if u is None or u.org_id != org_id or not u.active:
+        return None
+    access = access_for(s, u, token_scopes)
+    return AuthContext(org_id=org_id, scopes=access.scopes_on(None), actor=actor_of(u.id),
+                       access=access)  # fmt: skip
+
+
+_UNSAFE = frozenset({"POST", "PUT", "PATCH", "DELETE"})
+
+
+def _session_context(request: Request, st: AppState) -> AuthContext | None:
+    """A browser signed in with a session cookie (core.identity.sessions). A change needs the
+    session's CSRF token in a header as well."""
+    secret = request.cookies.get(web_sessions.COOKIE)
+    if not secret:
+        return None
+    with st.sessions() as s:
+        row = web_sessions.resolve(s, secret)
+        if row is None:
+            return None
+        if request.method in _UNSAFE and not web_sessions.csrf_ok(
+            row, request.headers.get(web_sessions.CSRF_HEADER)
+        ):
+            raise HTTPException(403, "missing or wrong CSRF token; reload the page")
+        return _person_context(s, row.org_id, row.user_id)
+
+
 def require_auth(
+    request: Request,
     creds: HTTPAuthorizationCredentials | None = Depends(_bearer),
     st: AppState = Depends(state),
 ) -> AuthContext:
     if creds is None:
+        signed_in = _session_context(request, st)
+        if signed_in is not None:
+            return signed_in
         raise HTTPException(401, "invalid or missing bearer token",
                             headers={"WWW-Authenticate": "Bearer"})  # fmt: skip
     if token_ok(creds.credentials, st.settings.api_token):
@@ -133,12 +186,91 @@ def require_auth(
                         headers={"WWW-Authenticate": "Bearer"})  # fmt: skip
 
 
-def require_scope(scope: str) -> Callable[[AuthContext], None]:
+#: Path parameters that name a project, or something that belongs to one, and how to find it.
+_PROJECT_OF: tuple[tuple[str, str], ...] = (
+    ("asset_id", "SELECT id FROM assets WHERE id = :v"),
+    ("project_id", "SELECT id FROM assets WHERE id = :v"),
+    ("scan_id", "SELECT asset_id FROM scans WHERE id = :v"),
+    ("issue_id", "SELECT asset_id FROM issues WHERE id = :v"),
+    ("acceptance_id", "SELECT asset_id FROM risk_acceptances WHERE id = :v"),
+    ("engagement_id", "SELECT asset_id FROM engagements WHERE id = :v"),
+    ("manual_id", "SELECT asset_id FROM manual_findings WHERE id = :v"),
+    ("statement_id", "SELECT asset_id FROM vex_statements WHERE id = :v"),
+    ("group_id", "SELECT asset_id FROM issue_groups WHERE id = :v"),
+    ("note_id", "SELECT i.asset_id FROM issue_notes n JOIN issues i ON i.id = n.issue_id "
+                "WHERE n.id = :v"),
+    ("test_id", "SELECT e.asset_id FROM engagement_tests t JOIN engagements e "
+                "ON e.id = t.engagement_id WHERE t.id = :v"),
+    ("import_id", "SELECT e.asset_id FROM import_records r JOIN engagement_tests t "
+                  "ON t.id = r.test_id JOIN engagements e ON e.id = t.engagement_id "
+                  "WHERE r.id = :v"),
+)  # fmt: skip
+_MISSING = object()
+
+#: Organization-level routes someone limited to some projects (organization role `none`) may
+#: still read: what they return is already limited to their projects (RLS and the app filter), or
+#: is their own. Organization-wide pages -- dashboards, reports, rules, evidence -- are not here:
+#: they are for people with an organization role.
+GUEST_ROUTES = frozenset({
+    "/assets", "/v2/issues", "/v2/issues/parse", "/v2/issues/suggest", "/v2/issue-views",
+    "/v2/issue-views/{view_id}", "/v2/issue-views/{view_id}/copy", "/v2/issue-views/import",
+    "/v2/me", "/v2/me/role", "/v2/me/assigned", "/v2/me/engagements", "/v2/me/tables/{table}",
+    "/v2/notifications", "/v2/notifications/read", "/v2/mentions", "/v2/calendar",
+})  # fmt: skip
+
+
+def _project_of(st: AppState, auth: AuthContext, params: dict[str, Any]) -> object:
+    """The project a request is about (from its path), None for an organization-level request,
+    or _MISSING when the path names something this person cannot see."""
+    from sqlalchemy import text
+
+    for name, sql in _PROJECT_OF:
+        value = params.get(name)
+        if not value:
+            continue
+        if len(str(value)) > 64:
+            return _MISSING
+        assert auth.org_id is not None and auth.access is not None
+        with st.sessions() as s:
+            set_session_org(s, auth.org_id, auth.access.visible_projects())
+            found = s.execute(text(sql), {"v": str(value)}).scalar()
+            if found is not None and _visible(s, str(found), auth.access):
+                return str(found)
+        return _MISSING
+    return None
+
+
+def _visible(s: Session, project_id: str, access: Access) -> bool:
+    """Postgres's RLS already hid everything else; SQLite (tests) has none, so check here too."""
+    from core.persistence.models import Asset
+
+    seen = access.visible_projects()
+    a = s.get(Asset, project_id)
+    return a is not None and (seen is None or project_id in seen)
+
+
+def require_scope(scope: str) -> Callable[..., None]:
     """`auth.scopes is None` (the legacy shared token) is treated as "every scope" -- the existing
     self-hosted, single-operator trust model already grants it unrestricted access; scopes only
     narrow what a *real* scoped token (`core/tokens.py`) may do."""
 
-    def _check(auth: AuthContext = Depends(require_auth)) -> None:
+    def _check(
+        request: Request, auth: AuthContext = Depends(require_auth), st: AppState = Depends(state)
+    ) -> None:
+        if auth.access is not None:
+            # A person: their role on the project the request is about, else in the organization.
+            project = _project_of(st, auth, request.path_params)
+            if project is _MISSING:
+                raise HTTPException(404, "not found")
+            allowed = auth.access.scopes_on(project if isinstance(project, str) else None)
+            route = getattr(request.scope.get("route"), "path", "")
+            if (project is None and auth.access.role == "none" and route in GUEST_ROUTES
+                    and scope.endswith(":read") and auth.access.visible_projects()):  # fmt: skip
+                return
+            if scope not in allowed:
+                where = "this project" if isinstance(project, str) else "this organization"
+                raise HTTPException(403, f"your role in {where} does not allow this ('{scope}')")
+            return
         if auth.scopes is not None and scope not in auth.scopes:
             raise HTTPException(403, f"this token does not have the '{scope}' scope")
 
@@ -159,12 +291,17 @@ def current_org(request: Request, auth: AuthContext = Depends(require_auth)) -> 
     return org.strip() if org and org.strip() else DEFAULT_ORG_ID
 
 
-def db(st: AppState = Depends(state), org: str = Depends(current_org)) -> Iterator[Session]:
+def db(
+    st: AppState = Depends(state),
+    org: str = Depends(current_org),
+    auth: AuthContext = Depends(require_auth),
+) -> Iterator[Session]:
+    projects = auth.access.visible_projects() if auth.access is not None else None
     with st.sessions() as s:
         # Session-scoped, not transaction-local (`core.tenancy.set_session_org`'s docstring has the
         # full reasoning): several `repo.py` functions commit internally more than once in one
         # session (e.g. `create_scan` commits the asset, then commits the scan), and a transaction-
         # local value would reset at the first of those, leaving the rest of the request running
         # with no org context -- which RLS then reads as "see nothing", not "see everything."
-        set_session_org(s, org)
+        set_session_org(s, org, projects)
         yield s

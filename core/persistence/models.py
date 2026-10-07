@@ -96,6 +96,9 @@ class ApiToken(Base):
     expires_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
     last_used_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
     revoked_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
+    # Week 75: a token made by a signed-in person acts as that person (core.identity), and never
+    # for more than their role allows now; None for tokens made before accounts, or by the CLI.
+    user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
 
 
 class AuditEntry(Base):
@@ -2001,6 +2004,147 @@ class PersonRole(Base):
     person: Mapped[str] = mapped_column(String(200), primary_key=True)
     role: Mapped[str] = mapped_column(String(16))
     updated_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+
+
+class User(Base):
+    """A person in an organization (Week 75, plan §51): signs in through the organization's
+    identity provider, or is provisioned by it over SCIM. `role` is the organization role --
+    admin, member, viewer, or none (only the projects granted by `RoleOverride`)."""
+
+    __tablename__ = "users"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"), index=True)
+    email: Mapped[str] = mapped_column(String(320))
+    name: Mapped[str] = mapped_column(String(200))
+    role: Mapped[str] = mapped_column(String(16))
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+    external_id: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    source: Mapped[str] = mapped_column(String(16))  # admin | oidc | saml | scim | cli
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+    updated_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+    last_login_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
+    disabled_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
+    #: The identity provider deleted them over SCIM: turned off, kept for the audit trail, and no
+    #: longer one of the provider's users (core.identity.scim).
+    deprovisioned_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
+
+    __table_args__ = (UniqueConstraint("org_id", "email", name="uq_users_org_email"),)
+
+
+class RoleOverride(Base):
+    """A higher role for one person on one business unit (`portfolio`) or one project. Overrides
+    only raise access; a business unit's covers its projects (core.identity.roles)."""
+
+    __tablename__ = "role_overrides"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"))
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    target_type: Mapped[str] = mapped_column(String(16))  # portfolio | project
+    target_id: Mapped[str] = mapped_column(String(36))
+    role: Mapped[str] = mapped_column(String(16))
+    created_by: Mapped[str] = mapped_column(String(200))
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "target_type", "target_id", name="uq_role_overrides"),
+    )
+
+
+class UserSession(Base):
+    """A browser sign-in (core.identity.sessions). `id` is the SHA-256 of the secret in the
+    cookie; the secret itself is never stored. No RLS, like `api_tokens`: resolving a session is
+    what tells a request its organization."""
+
+    __tablename__ = "user_sessions"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    org_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"))
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    method: Mapped[str] = mapped_column(String(16))  # oidc | saml | test
+    csrf: Mapped[str] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+    last_seen_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+    expires_at: Mapped[datetime] = mapped_column(UtcDateTime())
+    revoked_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
+    user_agent: Mapped[str | None] = mapped_column(String(200), nullable=True)
+
+
+class IdentityProvider(Base):
+    """An organization's OIDC or SAML identity provider (Week 75, plan §51; core.identity.sso).
+    `config` holds the protocol's settings; the client secret, when there is one, is in OpenBao
+    when it is configured (`secret_store`), else in `secret`."""
+
+    __tablename__ = "identity_providers"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"), index=True)
+    kind: Mapped[str] = mapped_column(String(8))  # oidc | saml
+    name: Mapped[str] = mapped_column(String(80))
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    config: Mapped[dict[str, Any]] = mapped_column(JsonType, default=dict)
+    secret_store: Mapped[str] = mapped_column(String(16), default="none")
+    secret: Mapped[str | None] = mapped_column(Text, nullable=True)
+    email_domains: Mapped[list[str]] = mapped_column(JsonType, default=list)
+    auto_create: Mapped[bool] = mapped_column(Boolean, default=False)
+    default_role: Mapped[str] = mapped_column(String(16), default="member")
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+    updated_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+    updated_by: Mapped[str] = mapped_column(String(200))
+
+
+class SsoDomain(Base):
+    """Which provider an email domain signs in with. No RLS: read before the organization is
+    known, and it holds nothing else."""
+
+    __tablename__ = "sso_domains"
+
+    domain: Mapped[str] = mapped_column(String(253), primary_key=True)
+    org_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"))
+    provider_id: Mapped[str] = mapped_column(
+        ForeignKey("identity_providers.id", ondelete="CASCADE")
+    )
+
+
+class LoginAttempt(Base):
+    """A sign-in in flight: the SHA-256 of its `state`, and what the callback must check -- the
+    OIDC nonce and PKCE verifier, or the SAML request id. Used once, within ten minutes."""
+
+    __tablename__ = "login_attempts"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    org_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"))
+    provider_id: Mapped[str] = mapped_column(
+        ForeignKey("identity_providers.id", ondelete="CASCADE")
+    )
+    nonce: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    verifier: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    request_id: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
+    next_path: Mapped[str] = mapped_column(String(500))
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+    expires_at: Mapped[datetime] = mapped_column(UtcDateTime())
+    used_at: Mapped[datetime | None] = mapped_column(UtcDateTime(), nullable=True)
+
+
+class UserIdentity(Base):
+    """A person's account at a provider, by its stable subject (OIDC `sub`, SAML NameID)."""
+
+    __tablename__ = "user_identities"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(ForeignKey("organizations.id"))
+    provider_id: Mapped[str] = mapped_column(
+        ForeignKey("identity_providers.id", ondelete="CASCADE")
+    )
+    subject: Mapped[str] = mapped_column(String(255))
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
+
+    __table_args__ = (
+        UniqueConstraint("provider_id", "subject", name="uq_user_identities_subject"),
+        UniqueConstraint("provider_id", "user_id", name="uq_user_identities_user"),
+    )
 
 
 class SavedView(Base):

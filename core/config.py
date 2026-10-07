@@ -58,6 +58,12 @@ class Settings:
     attachments_origin: str = ""
     # The longest a risk acceptance may run (plan §44.2; the policy gate's rule is 90 days too).
     risk_acceptance_max_days: int = 90
+    # Sign-in (Week 75, plan §51). The session cookie is `Secure` unless turned off for plain-HTTP
+    # local development; `web_url` is where a finished sign-in lands, `api_public_url` is what the
+    # identity provider calls back.
+    session_cookie_secure: bool = True
+    web_url: str = "http://localhost:3000"
+    api_public_url: str = "http://localhost:8000"
 
     @property
     def ingest_dir(self) -> Path:
@@ -110,6 +116,12 @@ class Settings:
             not in ("0", "false", "no"),
             attachments_origin=os.environ.get("BULWARK_ATTACHMENTS_ORIGIN", "").strip().rstrip("/"),
             risk_acceptance_max_days=_days(os.environ.get("BULWARK_RISK_ACCEPTANCE_MAX_DAYS")),
+            session_cookie_secure=os.environ.get("BULWARK_SESSION_COOKIE_SECURE", "true").lower()
+            not in ("0", "false", "no"),
+            web_url=os.environ.get("BULWARK_PUBLIC_URL", "http://localhost:3000").rstrip("/"),
+            api_public_url=os.environ.get("BULWARK_API_PUBLIC_URL", "http://localhost:8000").rstrip(
+                "/"
+            ),
         )
 
 

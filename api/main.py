@@ -55,6 +55,7 @@ from api.deps import (
     token_ok,
 )
 from api.engagements import register_engagement_routes
+from api.identity import register_identity_routes
 from api.ingest import register_ingest_routes
 from api.issues import register_issue_routes
 from api.manual import register_manual_routes
@@ -120,7 +121,9 @@ from api.schemas import (
     VerifiedFixStarted,
     VerifiedFixView,
 )
+from api.scim import register_scim_routes
 from api.sla import register_sla_routes
+from api.sso import register_sso_routes
 from api.tickets import register_ticket_routes
 from api.vex import register_vex_routes
 from core.collab.tags import TagError
@@ -347,7 +350,10 @@ def create_app(app_state: AppState) -> FastAPI:
         # threat model, SLA, connectors). With GET and POST only, a browser on another origin --
         # the default, web and API on different ports -- had every such save refused at preflight.
         allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
-        allow_headers=["Authorization", "Content-Type"],
+        allow_headers=["Authorization", "Content-Type", "X-Bulwark-CSRF"],
+        # Week 75: the web app signs in with a session cookie, so its requests carry credentials.
+        # Safe only because the origins above are an explicit list (never "*").
+        allow_credentials=True,
     )
 
     attachments_host = _host_of(app_state.settings.attachments_origin)
@@ -2177,6 +2183,9 @@ def create_app(app_state: AppState) -> FastAPI:
     register_compliance_routes(app)
     register_metric_routes(app)
     register_issue_routes(app)
+    register_identity_routes(app)
+    register_sso_routes(app)
+    register_scim_routes(app)
     register_dashboard_routes(app)
     register_report_routes(app)
     return app

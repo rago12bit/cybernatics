@@ -33,6 +33,7 @@ dependencies = [
     "dnspython>=2.6",
     "cvss>=3.6",  # CVSS 4.0 scoring for manual findings (LGPL-3.0, used as an unmodified library)
     "packaging>=24",  # PEP 440 version order (core/versions.py); already installed transitively
+    "pysaml2>=7.5.5",  # SAML 2.0 sign-in (core.identity.saml, Week 75); needs the xmlsec1 binary
 ]
 
 [project.scripts]
@@ -101,7 +102,7 @@ files = ["core", "api"]
 [[tool.mypy.overrides]]
 module = [
     "celery.*", "kombu.*", "boto3.*", "botocore.*", "reportlab.*", "anthropic.*",
-    "presidio_analyzer.*", "presidio_anonymizer.*", "dns.*",
+    "presidio_analyzer.*", "presidio_anonymizer.*", "dns.*", "saml2.*",
     "ijson.*", "re2", "defusedxml.*",  # untrusted-report parsing (core.imports.parsers)
     "cvss", "cvss.*",  # CVSS 4.0 scoring (core.manual.cvss4)
 ]  # fmt: skip

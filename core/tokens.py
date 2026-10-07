@@ -23,9 +23,14 @@ _CHECKSUM_LEN = 6
 #: `scans:write` on purpose: an import can close Issues, which starting a scan cannot.
 #: `rules:write` (Week 65) is plan §45's "only Admins create rules", until roles exist (Week 75): a
 #: rule acts on many Issues without a person, so writing one is its own grant.
+#: `org:admin` (Week 75): running the organization -- people and roles, sign-in and SCIM settings.
+#: `scim` (Week 75): only the identity provider's provisioning calls (/scim/v2); a token with it
+#: is made for a provider, belongs to no person, and is not offered to anyone as a person.
+#: A person's role decides their scopes (core.identity.roles); a token a person makes is limited to
+#: both its own scopes and their role at the time it is used.
 SCOPES = frozenset(
     {"scans:read", "scans:write", "fixes:read", "fixes:write", "ingest:read", "ingest:write",
-     "rules:write"}
+     "rules:write", "org:admin", "scim"}
 )  # fmt: skip
 
 

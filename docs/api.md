@@ -1258,6 +1258,203 @@ Undo Bulk
 
 - `batch_id` (path, required)
 
+## `GET /auth/session`
+
+Session
+
+
+## `POST /auth/logout`
+
+Logout
+
+
+## `GET /v2/users`
+
+List Users
+
+
+## `POST /v2/users`
+
+Create User
+
+
+## `GET /v2/users/{user_id}`
+
+Get User
+
+- `user_id` (path, required)
+
+## `PATCH /v2/users/{user_id}`
+
+Update User
+
+- `user_id` (path, required)
+
+## `PUT /v2/users/{user_id}/roles`
+
+Set Role
+
+- `user_id` (path, required)
+
+## `DELETE /v2/users/{user_id}/roles/{override_id}`
+
+Remove Role
+
+- `user_id` (path, required)
+- `override_id` (path, required)
+
+## `GET /v2/roles`
+
+Roles
+
+
+## `GET /v2/me/tokens`
+
+My Tokens
+
+
+## `POST /v2/me/tokens`
+
+Make Token
+
+
+## `DELETE /v2/me/tokens/{token_id}`
+
+Revoke Token
+
+- `token_id` (path, required)
+
+## `GET /auth/sso/discover`
+
+Discover
+
+- `email` (query, required)
+
+## `GET /auth/sso/{provider_id}/start`
+
+Start
+
+- `provider_id` (path, required)
+- `next` (query)
+- `login_hint` (query)
+
+## `GET /auth/oidc/callback`
+
+Oidc Callback
+
+- `code` (query)
+- `state` (query)
+- `error` (query)
+
+## `GET /auth/saml/{provider_id}/metadata`
+
+Saml Metadata
+
+- `provider_id` (path, required)
+
+## `POST /auth/saml/{provider_id}/acs`
+
+Saml Acs
+
+- `provider_id` (path, required)
+
+## `GET /v2/sso/providers`
+
+List Providers
+
+
+## `POST /v2/sso/providers`
+
+Create Provider
+
+
+## `GET /v2/sso/providers/{provider_id}`
+
+Get Provider
+
+- `provider_id` (path, required)
+
+## `PATCH /v2/sso/providers/{provider_id}`
+
+Update Provider
+
+- `provider_id` (path, required)
+
+## `DELETE /v2/sso/providers/{provider_id}`
+
+Delete Provider
+
+- `provider_id` (path, required)
+
+## `POST /v2/sso/providers/{provider_id}/test`
+
+Test Provider
+
+- `provider_id` (path, required)
+
+## `GET /scim/v2/ServiceProviderConfig`
+
+Config
+
+
+## `GET /scim/v2/ResourceTypes`
+
+Types
+
+
+## `GET /scim/v2/Users`
+
+List Users
+
+- `filter` (query)
+- `startIndex` (query)
+- `count` (query)
+
+## `POST /scim/v2/Users`
+
+Create User
+
+
+## `GET /scim/v2/Users/{user_id}`
+
+Get User
+
+- `user_id` (path, required)
+
+## `PUT /scim/v2/Users/{user_id}`
+
+Replace User
+
+- `user_id` (path, required)
+
+## `PATCH /scim/v2/Users/{user_id}`
+
+Patch User
+
+- `user_id` (path, required)
+
+## `DELETE /scim/v2/Users/{user_id}`
+
+Delete User
+
+- `user_id` (path, required)
+
+## `GET /v2/scim/tokens`
+
+Tokens
+
+
+## `POST /v2/scim/tokens`
+
+Make Token
+
+
+## `DELETE /v2/scim/tokens/{token_id}`
+
+Revoke Token
+
+- `token_id` (path, required)
+
 ## `GET /v2/me`
 
 Me

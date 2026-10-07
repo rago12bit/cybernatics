@@ -132,3 +132,16 @@ as long as in the table above (free text 275/328 ms p50/p95, over the budget). T
 run against the same database straight after, gave the same slower numbers, so the difference is
 the machine's state that afternoon, not the change; the cause was not pinned down. Both runs are
 kept as measured.
+
+**After Week 75 (accounts and project-scoped roles).** Both benchmarks were run again on a fresh
+Postgres, with the project-scope policies in place and JIT compilation off per transaction
+(`core.tenancy`): the worst search p95 at 100,000 Issues was **93 ms** (task 1's run: 113 ms) and the
+worst dashboard metric p95 at a million Occurrences **120 ms** (Week 70: 124 ms). Two things were
+measured and changed on the way, both in [ADR-0058](../docs/adr/0058-identity-sso-scim-roles.md):
+the policies first applied to every session and made the organization-wide "past SLA" metric 30 times
+slower (median 7 ms to 224 ms; its list of the ten most overdue Issues took 666 ms under EXPLAIN
+ANALYZE), so they now apply only to the role a person limited to some projects runs as;
+and JIT compilation took 116 of a 153 ms count, so it is off -- which also halved large counts that
+had nothing to do with roles (counting 100,000 Issues: 93 ms to 44 ms). Numbers:
+[`issues/search-100k-week75.json`](issues/search-100k-week75.json),
+[`metrics/one-million-occurrences-week75.json`](metrics/one-million-occurrences-week75.json).

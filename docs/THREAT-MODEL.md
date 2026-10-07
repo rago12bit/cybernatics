@@ -7,7 +7,7 @@ the code today, and what does not. Status is stated per threat so it can be chec
 Status key: **Done** (implemented and tested), **Partial** (some of the mitigation exists), **Open** (not
 implemented), **N/A yet** (the feature that creates the threat is not built).
 
-Last reviewed: 2026-09-25 (v0.1.0). Review again before any deployment that accepts scans from people you
+Last reviewed: 2026-10-07 (Week 75: sign-in, sessions and access, T11 and T18). Review again before any deployment that accepts scans from people you
 do not trust.
 
 ## Assets and trust boundaries
@@ -16,7 +16,7 @@ do not trust.
 |---|---|
 | The host running the worker and Docker | The worst outcome is code from a scanned repo running on it |
 | Source code and secrets inside scanned repos | Users upload private code; findings can echo secrets |
-| The API token | The only credential; grants full access |
+| The API tokens and sign-in sessions | Tokens act as their organization or person; a session is a signed-in person (T11, T18) |
 | Report consumers (browsers, GitHub, PDF readers) | They render text that came from an attacker-controlled repo |
 
 Boundaries: (1) the scanned repository is **untrusted** input to everything; (2) scanner containers are
@@ -127,8 +127,12 @@ production, verify signatures where publishers provide them.
 - **Done:** every endpoint except `/healthz` needs a bearer token; comparison is constant-time; the API refuses
   to start with a weak token (under 16 characters); CORS is an explicit allowlist; the WebSocket authenticates
   in its first message so the token is never in a URL.
-- **Open:** one shared token, no users, roles, expiry, rotation or rate limiting, so it can be brute-forced
-  online and cannot be revoked per person. Do not expose the API to the internet.
+- **Done since (Weeks 29 and 75):** scoped, expiring, revocable tokens per organization (ADR-0018); user
+  accounts that sign in through the organization's identity provider, with roles per organization,
+  business unit and project, and tokens that act as their person and die with them (T18, ADR-0058).
+- **Open:** the shared `BULWARK_API_TOKEN` still exists for the operator and has every scope; there is no
+  rate limiting, so a token can be guessed at online (they are 160 random bits). Keep the shared token for
+  automation you control, and do not expose the API to the internet without a reverse proxy that limits rates.
 
 ### T12 Worker's Docker access (Partial)
 The worker starts scanner containers through `docker-socket-proxy`, which allows only container
@@ -199,6 +203,26 @@ organizations' audit entries are visible in an extract; entries from before migr
 checked by link only; whoever holds the signing key can sign a fabricated pack (the chain and Rekor
 checkpoints still have to agree); a pack is only as current as its last checkpoint. Status: Partial.
 
+### T18: sign-in, sessions and access (Week 75, plan threat T30, ADR-0058)
+
+**Done:** OIDC with PKCE and strict checks of the ID token: asymmetric signatures only (never `none` or
+an HMAC "signed" with the public key), exact issuer, our audience (and `azp` when there are several),
+expiry, and the nonce of this sign-in; one-time `state`; HTTPS to the provider. SAML only through
+pysaml2 with xmlsec1, assertions required to be signed, no unsolicited responses, audience and
+destination checked; tests forge an unsigned assertion, another key's signature, a tampered one, three
+kinds of signature wrapping, a comment inside the NameID, another service's response, an expired one, a
+replayed one and an unsolicited one, and each is refused for its own reason. A person is bound to the
+provider's stable subject, so a second account with the same email cannot take theirs. Sessions are
+HttpOnly, SameSite=Lax, Secure cookies holding a secret whose SHA-256 alone is stored, at most 12 hours
+and 2 idle; every change made with one needs its CSRF token. SCIM deprovisioning (and turning someone
+off by hand) ends their sessions and revokes their tokens in the same request. A person limited to some
+projects runs as the `bulwark_guest` database role, whose restrictive RLS policies hide every other
+project's rows in every table that names one; the two-project test proves it on Postgres. Evidence files
+are served with `Content-Security-Policy: sandbox`, so a file that runs script cannot use the session.
+**Residual:** Google, Entra ID and Okta are covered by standard OIDC but were exercised only through a
+local Keycloak; the shared token and pre-account tokens are nobody in particular and keep their scopes;
+a provider administrator can sign in as anyone the provider vouches for. Status: Partial.
+
 ### Observability endpoints
 
 The worker's `/metrics` (port 9101) has no authentication and is not published to the host; only the compose network
@@ -209,7 +233,7 @@ code or findings.
 
 ## Out of scope
 DAST ([ADR-003](adr/0003-no-dast-in-v1.md)); the security of the upstream scanners themselves; multi-tenant
-isolation between users (there are no users yet); physical and cloud-account security of wherever it runs.
+isolation is covered by RLS (ADR-0013) and, between projects, by T18; physical and cloud-account security of wherever it runs.
 
 ## Before a public deployment
 1. Resolve the Semgrep rules licence ([ADR-006](adr/0006-semgrep-rules-licensing.md)).

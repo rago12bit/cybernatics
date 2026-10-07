@@ -1,0 +1,142 @@
+{
+  "projects": 200,
+  "issues_per_project": 500,
+  "date": "2026-10-07",
+  "machine": "macOS-26.5.1-arm64-arm-64bit",
+  "cpu": "arm",
+  "budget_ms_per_page": 300.0,
+  "postgres": "16.15 (Debian 16.15-1.pgdg12+2)",
+  "issues": 100000,
+  "seed_s": 2.4,
+  "timings": {
+    "default (the active queue)": {
+      "query": "",
+      "first_page_with_count": {
+        "p50": 31.0,
+        "p95": 40.2
+      },
+      "page_without_count": {
+        "p50": 8.9,
+        "p95": 14.0
+      },
+      "count": {
+        "value": 60000,
+        "exact": true
+      },
+      "rows": 50
+    },
+    "plan example": {
+      "query": "priority:P1 sla:breached project:p1* -status:accepted",
+      "first_page_with_count": {
+        "p50": 34.7,
+        "p95": 41.7
+      },
+      "page_without_count": {
+        "p50": 21.5,
+        "p95": 31.0
+      },
+      "count": {
+        "value": 2889,
+        "exact": true
+      },
+      "rows": 50
+    },
+    "one business unit, unassigned, older than 90 days": {
+      "query": "portfolio:unit-3 assignee:none first_seen:>90d",
+      "first_page_with_count": {
+        "p50": 17.5,
+        "p95": 24.1
+      },
+      "page_without_count": {
+        "p50": 13.6,
+        "p95": 16.5
+      },
+      "count": {
+        "value": 3876,
+        "exact": true
+      },
+      "rows": 50
+    },
+    "critical, newest first": {
+      "query": "severity:critical",
+      "first_page_with_count": {
+        "p50": 33.3,
+        "p95": 40.2
+      },
+      "page_without_count": {
+        "p50": 8.6,
+        "p95": 12.8
+      },
+      "count": {
+        "value": 13400,
+        "exact": true
+      },
+      "rows": 50
+    },
+    "free text": {
+      "query": "injection",
+      "first_page_with_count": {
+        "p50": 90.2,
+        "p95": 92.6
+      },
+      "page_without_count": {
+        "p50": 38.8,
+        "p95": 42.1
+      },
+      "count": {
+        "value": 13400,
+        "exact": true
+      },
+      "rows": 50
+    },
+    "a tag (inherited from units)": {
+      "query": "tag:pci",
+      "first_page_with_count": {
+        "p50": 43.8,
+        "p95": 47.8
+      },
+      "page_without_count": {
+        "p50": 7.9,
+        "p95": 8.9
+      },
+      "count": {
+        "value": 12000,
+        "exact": true
+      },
+      "rows": 50
+    },
+    "everything, fixed too": {
+      "query": "status:open,accepted,not_a_risk,fixed",
+      "first_page_with_count": {
+        "p50": 39.6,
+        "p95": 54.5
+      },
+      "page_without_count": {
+        "p50": 5.8,
+        "p95": 8.3
+      },
+      "count": {
+        "value": 100000,
+        "exact": true
+      },
+      "rows": 50
+    },
+    "deep paging (25 pages of 50, no count)": {
+      "first": 8.2,
+      "last": 6.0,
+      "max": 11.3,
+      "median": 6.0
+    },
+    "bulk tag, preview / apply / undo": {
+      "query": "portfolio:unit-0",
+      "selected": 6000,
+      "changed": 6000,
+      "restored": 6000,
+      "preview_ms": 121.1,
+      "apply_ms": 703.2,
+      "undo_ms": 1037.2
+    }
+  },
+  "worst_p95_ms": 92.6,
+  "within_budget": true
+}

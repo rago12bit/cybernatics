@@ -30,6 +30,7 @@ inventory, not legal advice: check licenses that matter to you at the source.
 | semgrep-rules | Semgrep Rules License v1.0 | <https://github.com/semgrep/semgrep-rules> | fetched at image build; never committed or redistributed (ADR-006) |
 | syft | Apache-2.0 | <https://github.com/anchore/syft> | SBOM generation, runs in a container |
 | trivy | Apache-2.0 | <https://github.com/aquasecurity/trivy> | runs in a container |
+| xmlsec1 | MIT | <https://www.aleksey.com/xmlsec/> | SAML signature checks (Week 75): a Debian package in the API image, run by pysaml2 as a separate process, never linked |
 
 The scanners are separate programs executed in sandboxed containers; Bulwark neither links to nor
 redistributes them. **Semgrep's community rules** (Semgrep Rules License v1.0) are fetched at image build
@@ -84,7 +85,7 @@ Bulwark is not affiliated with or endorsed by DefectDojo, Inc.
 >
 > THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-## Python dependencies (90)
+## Python dependencies (94)
 
 | Package | Version | License |
 |---|---|---|
@@ -108,10 +109,13 @@ Bulwark is not affiliated with or endorsed by DefectDojo, Inc.
 | click-repl | 0.4.0 | MIT |
 | colorama | 0.4.6 | BSD License |
 | cryptography | 50.0.1 | Apache-2.0 OR BSD-3-Clause |
+| cvss | 3.6 | LGPLv3+ |
+| defusedxml | 0.7.1 | PSFL |
 | dnspython | 2.8.0 | ISC |
 | docstring-parser | 0.18.0 | MIT |
 | exceptiongroup | 1.3.1 | MIT License |
 | fastapi | 0.141.1 | MIT |
+| google-re2 | 1.1.20251105 | BSD License |
 | googleapis-common-protos | 1.75.4 | Apache-2.0 |
 | h11 | 0.16.0 | MIT |
 | httpcore | 1.0.9 | BSD-3-Clause |
@@ -120,6 +124,7 @@ Bulwark is not affiliated with or endorsed by DefectDojo, Inc.
 | httpx | 0.28.1 | BSD-3-Clause |
 | httpx2 | 2.13.1 | BSD-3-Clause |
 | idna | 3.20 | BSD-3-Clause |
+| ijson | 3.5.1 | BSD-3-Clause AND ISC |
 | jiter | 0.17.0 | MIT |
 | jmespath | 1.1.0 | MIT |
 | kombu | 5.6.2 | BSD-3-Clause |
@@ -179,9 +184,9 @@ Bulwark is not affiliated with or endorsed by DefectDojo, Inc.
 | wcwidth | 0.9.1 | MIT License |
 | websockets | 16.1.1 | BSD-3-Clause |
 
-## npm dependencies: web app (259 runtime, 331 development)
+## npm dependencies: web app (270 runtime, 330 development)
 
-Runtime license summary: MIT 180, ISC 35, Apache-2.0 17, LGPL-3.0-or-later 10, BSD-3-Clause 7, Apache-2.0 AND LGPL-3.0-or-later 3, OFL-1.1 2, Apache-2.0 AND LGPL-3.0-or-later AND MIT 1, CC-BY-4.0 1, (MPL-2.0 OR Apache-2.0) 1, Unlicense 1, 0BSD 1
+Runtime license summary: MIT 191, ISC 35, Apache-2.0 17, LGPL-3.0-or-later 10, BSD-3-Clause 7, Apache-2.0 AND LGPL-3.0-or-later 3, OFL-1.1 2, Apache-2.0 AND LGPL-3.0-or-later AND MIT 1, CC-BY-4.0 1, (MPL-2.0 OR Apache-2.0) 1, Unlicense 1, 0BSD 1
 
 | Package | Version | License |
 |---|---|---|
@@ -322,6 +327,7 @@ Runtime license summary: MIT 180, ISC 35, Apache-2.0 17, LGPL-3.0-or-later 10, B
 | character-entities-html4 | 2.1.0 | MIT |
 | character-entities-legacy | 3.0.0 | MIT |
 | client-only | 0.0.1 | MIT |
+| clsx | 2.1.1 | MIT |
 | comma-separated-tokens | 2.0.3 | MIT |
 | commander | 7.2.0 | MIT |
 | commander | 8.3.0 | MIT |
@@ -374,6 +380,7 @@ Runtime license summary: MIT 180, ISC 35, Apache-2.0 17, LGPL-3.0-or-later 10, B
 | devlop | 1.1.0 | MIT |
 | dompurify | 3.4.16 | (MPL-2.0 OR Apache-2.0) |
 | es-toolkit | 1.52.0 | MIT |
+| fast-equals | 4.0.3 | MIT |
 | fastdom | 1.0.12 | MIT |
 | get-nonce | 1.0.1 | MIT |
 | hachure-fill | 0.5.2 | MIT |
@@ -384,11 +391,13 @@ Runtime license summary: MIT 180, ISC 35, Apache-2.0 17, LGPL-3.0-or-later 10, B
 | import-meta-resolve | 4.2.0 | MIT |
 | internmap | 1.0.1 | ISC |
 | internmap | 2.0.3 | ISC |
+| js-tokens | 4.0.0 | MIT |
 | katex | 0.16.47 | MIT |
 | khroma | 2.1.0 | MIT |
 | layout-base | 1.0.2 | MIT |
 | layout-base | 2.0.1 | MIT |
 | lodash-es | 4.18.1 | MIT |
+| loose-envify | 1.4.0 | MIT |
 | marked | 16.4.2 | MIT |
 | mdast-util-to-hast | 13.2.1 | MIT |
 | mermaid | 11.17.2 | MIT |
@@ -399,6 +408,7 @@ Runtime license summary: MIT 180, ISC 35, Apache-2.0 17, LGPL-3.0-or-later 10, B
 | micromark-util-types | 2.0.3 | MIT |
 | nanoid | 3.3.19 | MIT |
 | next | 16.3.6 | MIT |
+| object-assign | 4.1.1 | MIT |
 | oniguruma-parser | 0.12.2 | MIT |
 | oniguruma-to-es | 4.3.6 | MIT |
 | package-manager-detector | 1.8.0 | MIT |
@@ -407,15 +417,21 @@ Runtime license summary: MIT 180, ISC 35, Apache-2.0 17, LGPL-3.0-or-later 10, B
 | points-on-curve | 0.2.0 | MIT |
 | points-on-path | 0.2.1 | MIT |
 | postcss | 8.5.23 | MIT |
+| prop-types | 15.8.1 | MIT |
 | property-information | 7.2.0 | MIT |
 | react | 19.3.0 | MIT |
 | react-dom | 19.3.0 | MIT |
+| react-draggable | 4.7.2 | MIT |
+| react-grid-layout | 2.2.4 | MIT |
+| react-is | 16.13.1 | MIT |
 | react-remove-scroll | 2.7.2 | MIT |
 | react-remove-scroll-bar | 2.3.8 | MIT |
+| react-resizable | 3.2.0 | MIT |
 | react-style-singleton | 2.2.3 | MIT |
 | regex | 6.1.0 | MIT |
 | regex-recursion | 6.0.2 | MIT |
 | regex-utilities | 2.3.0 | MIT |
+| resize-observer-polyfill | 1.5.1 | MIT |
 | robust-predicates | 3.0.3 | Unlicense |
 | roughjs | 4.6.6 | MIT |
 | rw | 1.3.3 | BSD-3-Clause |
@@ -471,6 +487,7 @@ Allowed, listed so the obligations are visible (dynamic linking or use as an unm
 - @img/sharp-win32-ia32: Apache-2.0 AND LGPL-3.0-or-later
 - @img/sharp-win32-x64: Apache-2.0 AND LGPL-3.0-or-later
 - certifi: MPL-2.0
+- cvss: LGPLv3+
 - dompurify: (MPL-2.0 OR Apache-2.0)
 - psycopg: LGPL-3.0-only
 - psycopg-binary: LGPL-3.0-only

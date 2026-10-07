@@ -36,7 +36,6 @@ from core.notify import prefs as prefs_service
 from core.notify.kinds import PERSON_KINDS, TEAM_KINDS, TEAM_OWNER
 from core.persistence import repo
 from core.persistence.models import (
-    ApiToken,
     Asset,
     IssueNote,
     IssueRow,
@@ -59,7 +58,9 @@ def _aware(dt: datetime) -> datetime:
 
 
 def _person(actor: str | None) -> bool:
-    return bool(actor) and str(actor).startswith("token:")
+    from core.collab.people import is_person
+
+    return is_person(actor)
 
 
 # --- watchers -------------------------------------------------------------------------------------
@@ -269,16 +270,9 @@ def _watchers_of(s: Session, issue_id: str) -> list[str]:
 
 
 def _admins(s: Session, org_id: str) -> list[str]:
-    now = _now()
-    out = []
-    for t in s.scalars(
-        select(ApiToken).where(ApiToken.org_id == org_id, ApiToken.revoked_at.is_(None))
-    ):
-        if t.expires_at is not None and _aware(t.expires_at) <= now:
-            continue
-        if "rules:write" in (t.scopes or []):
-            out.append(f"token:{t.display_prefix}")
-    return out
+    from core.collab.people import people_who_can
+
+    return [p.actor for p in people_who_can(s, org_id, "rules:write")]
 
 
 def _messages(c: _Ctx, etype: str, p: dict[str, Any]) -> list[Message]:  # noqa: C901 - one table

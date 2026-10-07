@@ -32,7 +32,7 @@ from api.deps import AppState, AuthContext, current_org, db, require_auth, requi
 from core.acceptance import service
 from core.manual import attachments
 from core.persistence import repo
-from core.persistence.models import ApiToken, AuditEntry, EvidenceAttachment, RiskAcceptance
+from core.persistence.models import AuditEntry, EvidenceAttachment, RiskAcceptance
 
 _UUID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
 
@@ -192,15 +192,9 @@ def _out(s: Session, ra: RiskAcceptance, actor: str, full: bool = False) -> Acce
 
 
 def _names(s: Session, org: str, actors: set[str]) -> dict[str, str]:
-    prefixes = [a.split(":", 1)[1] for a in actors if a.startswith("token:")]
-    if not prefixes:
-        return {}
-    rows = s.execute(
-        select(ApiToken.display_prefix, ApiToken.name).where(
-            ApiToken.org_id == org, ApiToken.display_prefix.in_(prefixes)
-        )
-    )
-    return {f"token:{p}": n for p, n in rows}
+    from core.collab.people import names
+
+    return names(s, org, actors)
 
 
 def _get(s: Session, acceptance_id: str, org: str) -> RiskAcceptance:

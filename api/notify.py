@@ -26,7 +26,7 @@ from sqlalchemy.orm import Session
 
 from api.deps import AuthContext, current_org, db, require_auth, require_scope
 from api.retest import issue_for
-from core.collab.people import names
+from core.collab.people import is_person, names
 from core.notify import prefs as prefs_service
 from core.notify import service as notify
 from core.notify.email import SmtpConfig
@@ -109,7 +109,7 @@ def register_notify_routes(app: FastAPI) -> None:
             ],
             unread=notify.unread(s, org, auth.actor),
             you=auth.actor,
-            person=auth.actor.startswith("token:"),
+            person=is_person(auth.actor),
             names=names(s, org, actors),
         )
 
@@ -143,7 +143,7 @@ def register_notify_routes(app: FastAPI) -> None:
         org: str = Depends(current_org),
         auth: AuthContext = Depends(require_auth),
     ) -> dict[str, Any]:
-        return {**_prefs_view(s, org, auth.actor), "person": auth.actor.startswith("token:")}
+        return {**_prefs_view(s, org, auth.actor), "person": is_person(auth.actor)}
 
     @app.put(
         "/v2/notification-prefs",
@@ -156,7 +156,7 @@ def register_notify_routes(app: FastAPI) -> None:
         org: str = Depends(current_org),
         auth: AuthContext = Depends(require_auth),
     ) -> dict[str, Any]:
-        if not auth.actor.startswith("token:"):
+        if not is_person(auth.actor):
             raise HTTPException(409, "The shared token is nobody: sign in with a personal token.")
         try:
             prefs_service.save(s, org, auth.actor, body.model_dump(), actor=auth.actor)
@@ -229,7 +229,7 @@ def register_notify_routes(app: FastAPI) -> None:
         auth: AuthContext = Depends(require_auth),
     ) -> WatchersOut:
         issue = issue_for(s, issue_id, org)
-        if not auth.actor.startswith("token:"):
+        if not is_person(auth.actor):
             raise HTTPException(409, "The shared token is nobody: sign in with a personal token.")
         notify.watch(s, org, issue.id, auth.actor, "manual")
         s.commit()
