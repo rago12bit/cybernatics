@@ -144,7 +144,7 @@ def test_preview_changes_nothing_and_matches_what_the_import_then_records(
             applied = {
                 "new": rec.new_count, "unchanged": rec.unchanged_count,
                 "reopened": rec.reopened_count, "closed": rec.closed_count,
-                "detached": rec.detached_count,
+                "detached": rec.detached_count, "held": rec.held_count,
             }  # fmt: skip
             assert preview.counts == applied  # the screen's numbers are the import's numbers
 

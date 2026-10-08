@@ -59,6 +59,12 @@ class ImportCounts(BaseModel):
         description="Issues this file stopped listing that stay open because another source still "
         "reports them. Not 'closed': they are not fixed."
     )
+    held: int = Field(
+        default=0,
+        description="Issues this file stopped listing at a place its tool only samples (ZAP), "
+        "while the same rule still fires on the same host. Held open: not seen, but not shown "
+        "fixed either.",
+    )
 
 
 class ImportCreated(BaseModel):
@@ -90,6 +96,7 @@ class ImportView(BaseModel):
     reopened_issue_ids: list[str]
     closed_issue_ids: list[str]
     detached_issue_ids: list[str]
+    held_issue_ids: list[str] = []
     ids_truncated: bool
     warnings: list[str]
     error: str | None
@@ -159,6 +166,7 @@ def _view(s: Session, record: ImportRecord, org: str) -> ImportView:
     reopened: list[str] = []
     closed: list[str] = []
     detached: list[str] = []
+    held: list[str] = []
     counts: ImportCounts | None = None
     if record.status in ("applied", "reverted", "duplicate"):
         counts = ImportCounts(
@@ -167,7 +175,9 @@ def _view(s: Session, record: ImportRecord, org: str) -> ImportView:
             reopened=record.reopened_count,
             closed=record.closed_count,
             detached=record.detached_count,
+            held=record.held_count,
         )
+        held = list(record.held_issue_ids or [])
         for change in record.changes or []:
             if change.get("after_state") == "reintroduced":
                 reopened.append(change["issue_id"])
@@ -178,7 +188,9 @@ def _view(s: Session, record: ImportRecord, org: str) -> ImportView:
         reopened = list(record.preview.get("reopened_issue_ids", []))
         closed = list(record.preview.get("closed_issue_ids", []))
         detached = list(record.preview.get("detached_issue_ids", []))
+        held = list(record.preview.get("held_issue_ids", []))
     (reopened, t1), (closed, t2), (detached, t3) = _lite(reopened), _lite(closed), _lite(detached)
+    held, t4 = _lite(held)
     return ImportView(
         id=record.id,
         status=record.status,
@@ -191,7 +203,8 @@ def _view(s: Session, record: ImportRecord, org: str) -> ImportView:
         reopened_issue_ids=reopened,
         closed_issue_ids=closed,
         detached_issue_ids=detached,
-        ids_truncated=t1 or t2 or t3,
+        held_issue_ids=held,
+        ids_truncated=t1 or t2 or t3 or t4,
         warnings=[str(w) for w in record.warnings or []],
         error=record.error,
         close_missing=record.close_missing,
@@ -548,6 +561,7 @@ def register_ingest_routes(app: FastAPI) -> None:
                                 reopened=latest.reopened_count,
                                 closed=latest.closed_count,
                                 detached=latest.detached_count,
+                                held=latest.held_count,
                             ),
                         )
                         if latest is not None

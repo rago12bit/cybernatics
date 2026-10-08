@@ -6,6 +6,15 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 ## [Unreleased]
 
 ### Fixed
+- **ZAP no longer closes Issues at pages it simply didn't list this time.** A ZAP report lists a
+  sample of the places an alert fires: at most five for a site-wide alert, and its spider reaches
+  different pages each run. Each place is its own Issue, so a campaign or reimport closed Issues that
+  were still there. Measured on an unchanged Juice Shop with ZAP 2.17.0, two consecutive baseline
+  runs closed 4 of 36; on DefectDojo's two ZAP samples, 16 of 17 closures were at a rule still firing
+  on the same host. A ZAP place (native, a ZAP report or GitLab's DAST report) is now *held* open
+  while its rule still fires on the same host, and closes once the rule is gone from the host. The
+  import preview shows how many were held and why; migration 0051 records them, so a later import
+  can still close them. ADR-0041 has the amendment and what is still not covered.
 - **A saved mapping that finds nothing no longer closes every Issue.** If a tool renamed the list
   or field a universal-mapper mapping reads, the next import found no findings and reimport read
   that as "everything was fixed". A mapped import that yields no findings now closes nothing and

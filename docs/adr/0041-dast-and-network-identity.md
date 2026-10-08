@@ -61,6 +61,37 @@ A DAST or network finding's **place is its identity**, and it is carried explici
 - **CSV truncation.** A row with fewer fields than the header, or an unterminated quoted field, is
   an error. A cut exactly between two rows is a valid shorter CSV and cannot be detected.
 
+### Amendment (2026-10-08): a ZAP place closes only when its rule leaves the host
+
+"Fixing `/a` closes that Issue and not `/b`" assumed a report lists every place an alert fires. ZAP's
+does not. Measured on one unchanged OWASP Juice Shop v17.3.0 with ZAP 2.17.0 (`zap-baseline.py`):
+
+- ZAP lists at most five places for a *systemic* alert (a missing header, site-wide), marked
+  `"systemic": true` in the JSON report; with `alert.systemicLimit` raised, the CSP alert has 11-12.
+- Its spider reaches different pages each run: with every limit lifted, two runs disagreed on 26
+  places. Two runs with default settings: 4 of 36 places in the first were missing from the second.
+- DefectDojo's own two ZAP samples: 17 places drop out of the second; for 16 of them the same rule
+  still fires on the same host.
+
+So for a tool that crawls (ZAP natively, a ZAP report, GitLab's DAST report, which is ZAP's), a place
+missing from a run is **held**, not closed, while the same rule still fires on the same host
+(`core.dast.mapping.crawl_samples`, `repo.issues_at_sampled_places`, `plan_reimport`'s
+`held_issue_ids`). Once the rule is gone from the host, every place of it closes, including those
+held. An import records which Issues it held (`import_records.held_issue_ids`, migration 0051) and
+they stay part of its Test's snapshot, so a later file can still close them; the preview counts them
+as "held". Nuclei is unchanged: its templates request fixed paths, so a missing place is a real
+absence.
+
+Costs, accepted: a place fixed while the same rule still fires elsewhere on the host stays open until
+the rule is gone from the host; a run that lists a different sample adds the new places as new
+Issues. Native campaigns keep ZAP's default limits, since raising them multiplies Issues for one
+site-wide header (11-12 places instead of 5) without making any closure more correct.
+
+Not covered: a crawl that misses a rule entirely (the spider never reached the one page with the
+problem; "Vulnerable JS Library" appeared in 2 of 3 runs on 2026-10-07) still reads as the rule
+gone, and closes its places. Telling that apart needs the list of pages a run reached, which a ZAP
+report does not carry. Burp also crawls, but was not measured, so it is not treated as sampling.
+
 ## Consequences
 
 - **One-time churn for existing DAST Issues.** Native DAST Issues created before this change have

@@ -117,7 +117,7 @@ def test_apply_reimport_and_revert_work_under_row_level_security(
         assert preview.counts == {
             "new": second.record.new_count, "unchanged": second.record.unchanged_count,
             "reopened": second.record.reopened_count, "closed": second.record.closed_count,
-            "detached": second.record.detached_count,
+            "detached": second.record.detached_count, "held": second.record.held_count,
         }  # fmt: skip
         assert (second.record.new_count, second.record.closed_count) == (1, 1)
         kinds = {e.event_type for e in repo.pending_outbox_events(s, org)}
@@ -129,6 +129,32 @@ def test_apply_reimport_and_revert_work_under_row_level_security(
         assert states == ["new", "new", "new"]  # exactly as after the first import
         assert s.scalar(select(func.count()).select_from(Scan)) == 1
         assert s.scalar(select(func.count()).select_from(FindingRow)) == 3
+
+
+def test_zap_places_are_held_then_closed_under_row_level_security(
+    sessions: sessionmaker[Session], two_orgs: tuple[str, str]
+) -> None:
+    """The held-Issue lookup reads stored findings' JSON (JSONB here) with a grouped subquery; the
+    same sequence as the SQLite test, on Postgres as the worker role."""
+    from core.imports.parsers import get_parser, run_parser_on_bytes
+    from core.imports.prepare import prepare
+    from tests.unit.test_dast_sampled_places import zap_json
+
+    org, _ = two_orgs
+    test_id = _test_for(sessions, org)
+
+    def zap(s: Session, alerts: dict[str, list[str]], n: int) -> ImportRecord:
+        found = prepare(run_parser_on_bytes(get_parser("zap"), zap_json(alerts)).findings)
+        return apply_import(s, org_id=org, test_id=test_id, findings=found, parser="zap",
+                            file_digest=f"{n:064x}", file_name=f"z{n}.json").record  # fmt: skip
+
+    with sessions() as s:
+        set_session_org(s, org)
+        zap(s, {"10038": ["/a0", "/a1"], "10020": ["/x"]}, 1)
+        two = zap(s, {"10038": ["/b0"], "10020": ["/x"]}, 2)
+        assert (two.closed_count, two.held_count, len(two.held_issue_ids)) == (0, 2, 2)
+        three = zap(s, {"10020": ["/x"]}, 3)
+        assert (three.closed_count, three.held_count) == (3, 0)
 
 
 def test_another_org_cannot_preview_apply_or_revert_a_test_it_does_not_own(

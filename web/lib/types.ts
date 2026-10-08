@@ -687,6 +687,9 @@ export type ImportCounts = {
   closed: number;
   /** Issues the file stopped listing that stay open because another source still reports them. */
   detached: number;
+  /** Issues the file stopped listing at a place its tool only samples (ZAP), while the same rule
+   * still fires on the same host: held open. */
+  held: number;
 };
 
 export type ImportStatus =
@@ -714,6 +717,7 @@ export type ImportView = {
   reopened_issue_ids: string[];
   closed_issue_ids: string[];
   detached_issue_ids: string[];
+  held_issue_ids: string[];
   ids_truncated: boolean;
   warnings: string[];
   error: string | null;

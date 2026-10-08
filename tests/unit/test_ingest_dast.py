@@ -274,11 +274,18 @@ def _places(xml: bytes) -> set[tuple[str, str, str]]:
     return out
 
 
-def test_importing_a_second_zap_scan_counts_new_unchanged_and_closed_by_place(
+def test_importing_a_second_zap_scan_closes_a_place_only_when_its_rule_left_the_host(
     sessions: sessionmaker[Session],
 ) -> None:
+    """ZAP lists a sample of the places an alert fires, so a place missing from the second scan is
+    closed only if its rule no longer fires anywhere on that host; otherwise it is held open."""
     first, second = _places(ZAP_FIRST), _places(ZAP_SECOND)
     assert first - second and second - first and first & second  # the sample really differs
+    still_firing = {(plugin, host) for plugin, host, _ in second}
+    gone = first - second
+    held = {p for p in gone if (p[0], p[1]) in still_firing}
+    closed = gone - held
+    assert held and closed  # the fixture exercises both
 
     with sessions() as s:
         _, t = setup(s, "ZAP baseline")
@@ -293,8 +300,9 @@ def test_importing_a_second_zap_scan_counts_new_unchanged_and_closed_by_place(
 
         one, two = do(ZAP_FIRST, 1).record, do(ZAP_SECOND, 2).record
     assert one.new_count == len(first)
-    assert (two.new_count, two.unchanged_count, two.closed_count) == (
+    assert (two.new_count, two.unchanged_count, two.closed_count, two.held_count) == (
         len(second - first),
         len(second & first),
-        len(first - second),
+        len(closed),
+        len(held),
     )

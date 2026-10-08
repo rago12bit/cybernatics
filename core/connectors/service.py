@@ -520,6 +520,7 @@ def run(
                     "reopened": rec.reopened_count,
                     "closed": rec.closed_count,
                     "detached": rec.detached_count,
+                    "held": rec.held_count,
                     "duplicate": not result.created,
                 }
                 record.outcome = "ok" if fetched.items else "empty"

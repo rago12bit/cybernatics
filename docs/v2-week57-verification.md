@@ -108,7 +108,10 @@ finding) and [ADR-0042](adr/0042-dedup-strategies-per-source.md) (deduplication 
 - **Real ZAP and Nuclei output was not produced here.** Their samples are DefectDojo's; ZAP's JSON
   report has no real sample (the JSON test is built from a real XML one), and the images to run them
   were not pulled. Everything else was checked against real files, but ZAP versions after 2.16 and
-  Nuclei's newest JSON are untested.
+  Nuclei's newest JSON are untested. *(2026-10-08: real ZAP 2.17.0 JSON reports of Juice Shop are
+  now vendored in tests/fixtures/dast. They showed ZAP lists only a sample of an alert's places, so
+  reimport was closing Issues at places still affected; a place now closes only once its rule is gone
+  from the host -- ADR-0041's amendment.)*
 - **Closing is not scoped to the hosts a report covers**: a Nessus or OpenVAS report covering fewer hosts
   than the last one lists the missing hosts' Issues as closed. The preview shows the count, and the docs
   say so; making it host-aware is not done (ADR-0041).

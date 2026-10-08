@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import logging
 import uuid
-from collections.abc import Sequence
+from collections.abc import Collection, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, cast
@@ -19,6 +19,7 @@ import core.audit as audit
 import core.metrics  # noqa: F401  (marks metrics dirty when Issues change)
 from core.assets import asset_key
 from core.dast import ownership
+from core.dast.mapping import crawl_samples, sampled_places
 from core.dedup.settings import rekey_for_asset
 from core.embeddings.chunk import CodeChunk
 from core.imports.reimport import ReimportPlan, plan_reimport
@@ -1489,6 +1490,32 @@ def issue_ids_in_scans(s: Session, scan_ids: list[str]) -> set[str]:
     }
 
 
+def issues_at_sampled_places(
+    s: Session, issue_ids: Collection[str], samples: frozenset[tuple[str, str]]
+) -> set[str]:
+    """Of `issue_ids`, the web Issues whose last reported place is one of `samples` -- a (rule,
+    host) this run's tool lists only some places for (`core.dast.mapping.crawl_samples`). Missing
+    from the run, they are held open rather than closed."""
+    if not samples or not issue_ids:
+        return set()
+    ids = sorted(issue_ids)
+    held: set[str] = set()
+    for start in range(0, len(ids), 500):
+        latest = (
+            select(func.max(FindingRow.pk))
+            .where(FindingRow.issue_id.in_(ids[start : start + 500]), FindingRow.category == "dast")
+            .group_by(FindingRow.issue_id)
+        )
+        for issue_id, data in s.execute(
+            select(FindingRow.issue_id, FindingRow.data).where(FindingRow.pk.in_(latest))
+        ):
+            location = data.get("location") or {}
+            rule_ids = (data.get("evidence") or {}).get("rule_ids") or {}
+            if sampled_places(str(location.get("host") or ""), rule_ids) & samples:
+                held.add(issue_id)
+    return held
+
+
 def _issue_prior(row: IssueRow) -> dict[str, Any]:
     return {
         "state": row.state,
@@ -1634,13 +1661,15 @@ def sync_issues_for_scan(s: Session, scan_id: str, findings: list[Finding]) -> S
         return SyncResult()
     rekey_for_asset(s, scan.asset_id, findings)  # a source the project deduplicates by its own key
     existing_rows, existing = _existing_issues(s, scan.asset_id)
+    live = {i.id for i in existing if i.state in LIVE_STATES}
     plan = plan_reimport(
         findings,
         existing,
-        previous_issue_ids={i.id for i in existing if i.state in LIVE_STATES},
+        previous_issue_ids=live,
         other_live_issue_ids=issue_ids_in_scans(
             s, import_snapshot_scan_ids(s, scan.org_id, scan.asset_id)
         ),
+        held_issue_ids=issues_at_sampled_places(s, live, crawl_samples(findings)),
         new_issue_id=_new_issue_id,
     )
     apply_reimport_plan(

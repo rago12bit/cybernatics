@@ -294,6 +294,39 @@ def zap_alert_findings(
     return findings
 
 
+# A ZAP report lists a sample of the places an alert fires, not all of them. Its spider reaches
+# different pages on every run, and ZAP itself lists at most five places for a "systemic" alert
+# (a missing header, site-wide). Measured 2026-10-08 on one unchanged Juice Shop v17.3.0 with ZAP
+# 2.17.0: the CSP alert listed 5 of 11-12 pages, and two runs with every limit lifted still
+# disagreed on 26 places. So a page missing from a ZAP report says nothing about that page while
+# the same rule still fires on the same host. GitLab's DAST report is ZAP's, merged.
+_CRAWL_SAMPLED = re.compile(r"(?i)\bzap\b|zaproxy|zed attack proxy")
+
+
+def sampled_places(host: str, rule_ids: dict[str, list[str]]) -> set[tuple[str, str]]:
+    """The (rule, host) pairs of one web finding whose places its tool only samples; empty for a
+    tool that lists every place it checked (Nuclei requests fixed paths)."""
+    if not host:
+        return set()
+    return {
+        (rule, host)
+        for tool, rules in rule_ids.items()
+        if _CRAWL_SAMPLED.search(tool)
+        for rule in rules
+    }
+
+
+def crawl_samples(findings: Iterable[Finding]) -> frozenset[tuple[str, str]]:
+    """Every (rule, host) a set of findings reports only a sample of. A missing Issue at one of
+    these is held open, not closed: the rule still fires on that host, on pages this run listed
+    (`core.imports.reimport.plan_reimport`)."""
+    out: set[tuple[str, str]] = set()
+    for f in findings:
+        if f.taxonomy.category is Category.DAST:
+            out |= sampled_places(f.location.host, f.evidence.rule_ids)
+    return frozenset(out)
+
+
 # --- Nuclei ------------------------------------------------------------------------------------
 
 

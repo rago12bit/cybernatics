@@ -17,6 +17,7 @@ from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from core import inventory
+from core.dast.mapping import crawl_samples
 from core.dedup.settings import rekey_for_asset
 from core.imports.reimport import ReimportPlan, plan_reimport
 from core.models.finding import Finding
@@ -37,6 +38,7 @@ _COUNT_FIELDS = (
     "reopened_count",
     "closed_count",
     "detached_count",
+    "held_count",
 )
 
 
@@ -62,6 +64,7 @@ class ImportPreview:
             "reopened_issue_ids": list(self.plan.reopened_issue_ids),
             "closed_issue_ids": list(self.plan.closed_issue_ids),
             "detached_issue_ids": list(self.plan.detached_issue_ids),
+            "held_issue_ids": list(self.plan.held_issue_ids),
             "close_missing": self.close_missing,
             "scope": self.scope,
         }
@@ -98,12 +101,17 @@ def _load(s: Session, org_id: str, test_id: str) -> tuple[EngagementTest, Engage
 
 
 def _snapshot_issue_ids(s: Session, org_id: str, test_ids: list[str]) -> set[str]:
+    """What these Tests currently report: their latest imports' findings, plus the Issues those
+    imports held open (a place their tool only samples). A held Issue is still this Test's to
+    close, once a later file shows its rule gone from the host."""
     scan_ids = []
+    held: set[str] = set()
     for test_id in test_ids:
         latest = repo.latest_applied_import(s, test_id, org_id)
         if latest is not None and latest.scan_id is not None:
             scan_ids.append(latest.scan_id)
-    return repo.issue_ids_in_scans(s, scan_ids)
+            held.update(latest.held_issue_ids or [])
+    return repo.issue_ids_in_scans(s, scan_ids) | held
 
 
 def _decide(
@@ -136,6 +144,7 @@ def _decide(
         previous_issue_ids=previous,
         other_live_issue_ids=repo.issue_ids_in_scans(s, other_scans),
         close_missing=close_missing,
+        held_issue_ids=repo.issues_at_sampled_places(s, previous, crawl_samples(findings)),
         new_issue_id=repo._new_issue_id,
     )
     return plan, existing_rows
@@ -279,6 +288,8 @@ def apply_import(
         record.reopened_count = len(plan.reopened_issue_ids)
         record.closed_count = len(plan.closed_issue_ids)
         record.detached_count = len(plan.detached_issue_ids)
+        record.held_count = len(plan.held_issue_ids)
+        record.held_issue_ids = list(plan.held_issue_ids)
         record.warnings = list(warnings or [])
         record.changes = changes
 
@@ -411,6 +422,7 @@ def _counts(record: ImportRecord) -> dict[str, int]:
         "reopened": record.reopened_count,
         "closed": record.closed_count,
         "detached": record.detached_count,
+        "held": record.held_count,
     }
 
 

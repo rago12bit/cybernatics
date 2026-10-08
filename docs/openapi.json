@@ -17800,6 +17800,12 @@
             "type": "integer",
             "title": "Detached",
             "description": "Issues this file stopped listing that stay open because another source still reports them. Not 'closed': they are not fixed."
+          },
+          "held": {
+            "type": "integer",
+            "title": "Held",
+            "description": "Issues this file stopped listing at a place its tool only samples (ZAP), while the same rule still fires on the same host. Held open: not seen, but not shown fixed either.",
+            "default": 0
           }
         },
         "type": "object",
@@ -17971,6 +17977,14 @@
             },
             "type": "array",
             "title": "Detached Issue Ids"
+          },
+          "held_issue_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Held Issue Ids",
+            "default": []
           },
           "ids_truncated": {
             "type": "boolean",

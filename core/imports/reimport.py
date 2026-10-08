@@ -33,7 +33,9 @@ class ReimportPlan:
     Counts are of **Issues**, not findings: a file reporting the same defect twice is one Issue.
     `closed_issue_ids` become `fixed`. `detached_issue_ids` are Issues this file stopped
     reporting that stay open because another source still reports them (ADR-0040) -- not "fixed",
-    so not counted as closed."""
+    so not counted as closed. `held_issue_ids` are Issues this file stopped reporting at a place
+    its tool only samples (ZAP: `core.dast.mapping.crawl_samples`), while the same rule still fires
+    on the same host -- not seen, but not shown fixed either, so they stay open."""
 
     updates: tuple[IssueUpdate, ...]  # one per finding, same order as the input
     new_issue_ids: tuple[str, ...]
@@ -41,6 +43,7 @@ class ReimportPlan:
     reopened_issue_ids: tuple[str, ...]
     closed_issue_ids: tuple[str, ...]
     detached_issue_ids: tuple[str, ...]
+    held_issue_ids: tuple[str, ...] = ()
 
     @property
     def counts(self) -> dict[str, int]:
@@ -50,6 +53,7 @@ class ReimportPlan:
             "reopened": len(self.reopened_issue_ids),
             "closed": len(self.closed_issue_ids),
             "detached": len(self.detached_issue_ids),
+            "held": len(self.held_issue_ids),
         }
 
     def resulting_states(self) -> dict[str, State]:
@@ -78,6 +82,7 @@ def plan_reimport(
     previous_issue_ids: Collection[str],
     other_live_issue_ids: Collection[str] = (),
     close_missing: bool = True,
+    held_issue_ids: Collection[str] = (),
     new_issue_id: Callable[[], str] = _default_issue_id,
 ) -> ReimportPlan:
     """Decide an import.
@@ -86,8 +91,10 @@ def plan_reimport(
     reopened rather than new). `previous_issue_ids` is the Issues this scope reported last time --
     the only ones the file can close ("one tool's report cannot close another tool's findings").
     `other_live_issue_ids` is the Issues some *other* source still reports; a file that stops
-    reporting one of those has not fixed it. `close_missing=False` closes nothing and detaches
-    nothing: the file is only added.
+    reporting one of those has not fixed it. `held_issue_ids` is the Issues at a place this file
+    only samples (the caller decides which, from the findings and each Issue's last place); missing
+    from the file, they are held open. `close_missing=False` closes nothing and detaches nothing:
+    the file is only added.
     """
     result = sync_issues(findings, existing, new_issue_id)
 
@@ -106,11 +113,18 @@ def plan_reimport(
 
     closed: list[str] = []
     detached: list[str] = []
+    held: list[str] = []
     if close_missing:
         live = {i.id for i in existing if i.state in LIVE_STATES}
         other_live = set(other_live_issue_ids)
+        hold = set(held_issue_ids)
         for issue_id in sorted((set(previous_issue_ids) & live) - set(outcome)):
-            (detached if issue_id in other_live else closed).append(issue_id)
+            if issue_id in other_live:
+                detached.append(issue_id)
+            elif issue_id in hold:
+                held.append(issue_id)
+            else:
+                closed.append(issue_id)
 
     def ids(kind: Outcome) -> tuple[str, ...]:
         return tuple(sorted(i for i, o in outcome.items() if o == kind))
@@ -122,4 +136,5 @@ def plan_reimport(
         reopened_issue_ids=ids("reopened"),
         closed_issue_ids=tuple(closed),
         detached_issue_ids=tuple(detached),
+        held_issue_ids=tuple(held),
     )

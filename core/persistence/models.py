@@ -980,6 +980,11 @@ class ImportRecord(Base):
     # Issues this file stopped reporting that stay open because another source still reports
     # them: honest about "no longer in this file" versus "actually fixed" (ADR-0040).
     detached_count: Mapped[int] = mapped_column(Integer, default=0)
+    # Issues this file stopped reporting at a place its tool only samples (ZAP), while the same rule
+    # still fires on the same host: held open, and still part of this Test's snapshot, so a later
+    # file that shows the rule gone can close them.
+    held_count: Mapped[int] = mapped_column(Integer, default=0)
+    held_issue_ids: Mapped[list[Any]] = mapped_column(JsonType, default=list)
     warnings: Mapped[list[Any]] = mapped_column(JsonType, default=list)
     # [{"issue_id", "created": bool, "prior_state", "prior_fixed_at"}, ...] -- enough to undo it.
     changes: Mapped[list[Any]] = mapped_column(JsonType, default=list)

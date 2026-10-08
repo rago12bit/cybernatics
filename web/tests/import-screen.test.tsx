@@ -23,8 +23,8 @@ function view(over: Partial<ImportView> = {}): ImportView {
   return {
     id: IMPORT, status: "previewed", mode: "preview", parser: "sarif", file_name: "scan.sarif",
     test_id: "t1", engagement_id: "e1",
-    counts: { new: 38, unchanged: 212, reopened: 2, closed: 17, detached: 0 },
-    reopened_issue_ids: REOPENED, closed_issue_ids: CLOSED, detached_issue_ids: [],
+    counts: { new: 38, unchanged: 212, reopened: 2, closed: 17, detached: 0, held: 0 },
+    reopened_issue_ids: REOPENED, closed_issue_ids: CLOSED, detached_issue_ids: [], held_issue_ids: [],
     ids_truncated: false, warnings: [], error: null, close_missing: true, scope: "test",
     dedup_complete: true, created_at: "2026-10-04T00:00:00Z", reverted_at: null, ...over,
   };
@@ -68,7 +68,7 @@ function api(opts: {
       polls += 1;
       if (confirmed) {
         return json(opts.applied ?? view({ status: "applied", mode: "apply",
-          counts: { new: 38, unchanged: 212, reopened: 2, closed: 17, detached: 0 } }));
+          counts: { new: 38, unchanged: 212, reopened: 2, closed: 17, detached: 0, held: 0 } }));
       }
       return json(polls < 2 ? view({ status: "queued", counts: null }) : (opts.preview ?? view()));
     }
@@ -181,12 +181,21 @@ describe("ImportScreen", () => {
 
   it("shows warnings under Check, and issues that stay open because another source reports them", async () => {
     api({ preview: view({ warnings: ["3 finding(s) use the severity 'moderate', which is not a known severity; imported as Info"],
-      counts: { new: 1, unchanged: 0, reopened: 0, closed: 0, detached: 4 } }) });
+      counts: { new: 1, unchanged: 0, reopened: 0, closed: 0, detached: 4, held: 0 } }) });
     const host = await mount();
     await pickFile(host);
     expect(host.textContent).toContain("Check");
     expect(host.textContent).toContain("'moderate'");
     expect(host.textContent).toContain("4 more issues are no longer in this file but stay open");
+    expect(host.textContent).not.toContain("lists only some of the pages");
+  });
+
+  it("says why issues at pages a ZAP report only samples stay open", async () => {
+    api({ preview: view({ counts: { new: 5, unchanged: 1, reopened: 0, closed: 0, detached: 0, held: 5 } }) });
+    const host = await mount();
+    await pickFile(host);
+    expect(host.textContent).toContain("5 more issues are not in this file but stay open");
+    expect(host.textContent).toContain("lists only some of the pages where a problem appears");
   });
 
   it("Import file applies that upload and confirms in the same words and numbers", async () => {
@@ -204,7 +213,7 @@ describe("ImportScreen", () => {
 
   it("says so when the numbers moved between the preview and the import", async () => {
     api({ applied: view({ status: "applied", mode: "apply",
-      counts: { new: 40, unchanged: 210, reopened: 2, closed: 17, detached: 0 } }) });
+      counts: { new: 40, unchanged: 210, reopened: 2, closed: 17, detached: 0, held: 0 } }) });
     const host = await mount();
     await pickFile(host);
     await act(async () => button(host, "Import file").click());
@@ -362,7 +371,7 @@ describe("ImportScreen", () => {
     await pickFile(host);
     expect(await violations(host)).toEqual([]); // choosing a format
     await act(async () => root?.unmount());
-    api({ preview: view({ warnings: ["w"], counts: { new: 1, unchanged: 1, reopened: 1, closed: 1, detached: 1 } }) });
+    api({ preview: view({ warnings: ["w"], counts: { new: 1, unchanged: 1, reopened: 1, closed: 1, detached: 1, held: 0 } }) });
     host = await mount();
     await pickFile(host);
     await act(async () => button(host, "Show all").click());

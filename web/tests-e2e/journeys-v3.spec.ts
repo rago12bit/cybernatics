@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import path from "node:path";
 import { test, expect } from "@playwright/test";
 import { API_URL, E2E_TOKEN } from "../playwright.config";
@@ -35,6 +36,30 @@ test.describe("J6 — import a report from a tool you don't run", () => {
     await page.getByRole("link", { name: "View issues" }).click();
     await expect(page.getByRole("table")).toBeVisible();
     await expect(page.getByRole("table")).toContainText(/SSL|TLS/);
+  });
+
+  test("a second ZAP run that lists other pages holds the missing ones open, and says why", async ({ page }) => {
+    // Two real, consecutive zap-baseline runs of one unchanged Juice Shop (tests/fixtures/dast).
+    const fixtures = path.resolve(__dirname, "../../tests/fixtures/dast");
+    const project = await newProject(page, "juice-shop");
+    const auth = { Authorization: `Bearer ${E2E_TOKEN}` };
+    const first = await page.request.post(`${API_URL}/v2/ingest`, {
+      headers: auth,
+      multipart: { project: project.id, file: { name: "zap-1.json", mimeType: "application/json",
+        buffer: fs.readFileSync(path.join(fixtures, "zap-baseline-juiceshop-1.json")) } },
+    });
+    expect(first.status()).toBe(202);
+    const firstId = (await first.json()).import_id;
+    await expect.poll(async () => (await page.request.get(`${API_URL}/v2/imports/${firstId}`, { headers: auth }).then((r) => r.json())).status)
+      .toBe("applied");
+
+    await page.goto(`/app/projects/${project.id}/import`);
+    await page.getByLabel("Report file").setInputFiles(path.join(fixtures, "zap-baseline-juiceshop-2.json"));
+    await expect(page.getByRole("heading", { name: "Import results" })).toBeVisible({ timeout: 15_000 });
+    const counts = page.getByRole("list", { name: "What would change" });
+    await expect(counts).toContainText("0 closed"); // was 4: pages this run simply didn't list
+    await expect(page.getByText(/4 more issues are not in this file but stay open/)).toBeVisible();
+    await expectAccessible(page, "the import preview with held issues");
   });
 });
 

@@ -470,6 +470,13 @@ export function ImportScreen({
               longer in this file but stay open, because another source still reports them.
             </p>
           )}
+          {view.counts.held > 0 && (
+            <p className="ds-import-line">
+              <strong>{view.counts.held}</strong> more issue{view.counts.held === 1 ? " is" : "s are"} not
+              in this file but stay open: the tool lists only some of the pages where a problem
+              appears, and it still reports the same problem on that site.
+            </p>
+          )}
           {view.warnings.length > 0 && (
             <div className="ds-import-check">
               <h3 className="ds-import-h3">Check</h3>

@@ -86,14 +86,14 @@ class World:
 
 def test_import_is_reimport_with_an_empty_history() -> None:
     plan = World().import_into("nessus", {1, 2, 3})
-    assert plan.counts == {"new": 3, "unchanged": 0, "reopened": 0, "closed": 0, "detached": 0}
+    assert plan.counts == {"new": 3, "unchanged": 0, "reopened": 0, "closed": 0, "detached": 0, "held": 0}
 
 
 def test_the_same_report_again_changes_nothing() -> None:
     w = World()
     w.import_into("nessus", {1, 2, 3})
     plan = w.import_into("nessus", {1, 2, 3})
-    assert plan.counts == {"new": 0, "unchanged": 3, "reopened": 0, "closed": 0, "detached": 0}
+    assert plan.counts == {"new": 0, "unchanged": 3, "reopened": 0, "closed": 0, "detached": 0, "held": 0}
 
 
 def test_a_defect_the_file_stops_reporting_is_closed() -> None:
@@ -111,7 +111,7 @@ def test_a_closed_defect_that_comes_back_is_reopened_not_new() -> None:
     w.import_into("nessus", {1, 2})
     w.import_into("nessus", {1})  # 2 closed
     plan = w.import_into("nessus", {1, 2})
-    assert plan.counts == {"new": 0, "unchanged": 1, "reopened": 1, "closed": 0, "detached": 0}
+    assert plan.counts == {"new": 0, "unchanged": 1, "reopened": 1, "closed": 0, "detached": 0, "held": 0}
     assert w.state(plan.reopened_issue_ids[0]) == "reintroduced"
 
 
