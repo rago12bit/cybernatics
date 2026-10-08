@@ -5,6 +5,12 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 
 ## [Unreleased]
 
+### Fixed
+- **A saved mapping that finds nothing no longer closes every Issue.** If a tool renamed the list
+  or field a universal-mapper mapping reads, the next import found no findings and reimport read
+  that as "everything was fixed". A mapped import that yields no findings now closes nothing and
+  says so; a known format's empty report still closes, since it does say nothing was found.
+
 ## [3.0.0] - 2026-10-08
 
 Weeks 75–78: sign-in and access ([Week 75](docs/v2-week75-verification.md)), the MCP server and

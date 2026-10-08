@@ -404,6 +404,16 @@ class UniversalParser(IngestParser):
             ctx.warn(f"{skipped} record(s) had no title and were skipped")
         if records == 0 and self.spec.format != "csv":
             ctx.warn(f"no records were found at {self.spec.records}")
+        # A mapping that yields nothing cannot be told from a mapping that no longer fits the file
+        # (a renamed key, a records path into the wrong list, a wrong title column): reimport would
+        # read either as "everything was fixed". A known format's empty report says that; a
+        # mapping's says only that the mapping found nothing, so it closes nothing.
+        if records == skipped:
+            ctx.can_close_missing = False
+            ctx.warn(
+                "the mapping found no findings in this file, so nothing will be closed; if the "
+                "tool really reported nothing, close the Issues by hand"
+            )
 
     # Each record is handed over as a `get(field) -> list[str]` function, so the finding builder
     # does not care which format it came from.

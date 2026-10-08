@@ -183,6 +183,36 @@ def test_no_records_at_the_records_path_is_said_out_loud() -> None:
 
 
 @pytest.mark.parametrize(
+    ("spec", "data"),
+    [
+        (JSON_SPEC, b'{"scan": {"other": []}}'),  # the records path no longer matches
+        (JSON_SPEC, b'{"scan": {"results": []}}'),  # matches, and lists nothing
+        (  # every record is there, but the title key was renamed
+            {**JSON_SPEC, "fields": {"title": "$.title"}},
+            json.dumps({"scan": {"results": records()}}).encode(),
+        ),
+        ({"format": "csv", "source": "acme-csv", "fields": {"title": "Title"}}, b"Title,File\n"),
+        (
+            {"format": "xml", "source": "acme-xml", "records": "r/issue", "fields": {"title": "name"}},
+            b"<r><finding><name>x</name></finding></r>",
+        ),
+    ],
+)
+def test_a_mapping_that_finds_nothing_cannot_close_anything(spec: Any, data: bytes) -> None:
+    """A mapping that yields nothing looks exactly like one that stopped fitting the file, and
+    reimport reads "nothing listed" as "everything fixed"."""
+    r = parse(spec, data)
+    assert r.complete and r.findings == []
+    assert r.can_close_missing is False
+    assert any("nothing will be closed" in w for w in r.warnings)
+
+
+def test_a_mapping_that_finds_something_can_still_close() -> None:
+    r = parse(JSON_SPEC, json.dumps({"scan": {"results": records()[:1]}}).encode())
+    assert len(r.findings) == 1 and r.can_close_missing is True
+
+
+@pytest.mark.parametrize(
     ("spec", "message"),
     [
         ({**JSON_SPEC, "format": "yaml"}, "format"),

@@ -124,6 +124,25 @@ def test_a_saved_mapping_imports_and_reimports_like_any_parser(env: Env) -> None
     assert (second["counts"]["unchanged"], second["counts"]["closed"]) == (len(NAMES) - 1, 1)
 
 
+def test_a_mapping_that_finds_nothing_closes_nothing(env: Env) -> None:
+    """The tool renamed its list (`issues` -> `findings`): the saved mapping now finds no records,
+    which must not read as "every Issue was fixed"."""
+    m = save(env, drafted(env)).json()
+    first = env.import_and_get(report(NAMES), parser=m["parser"], filename="acme-1.json")
+    assert first["counts"]["new"] == len(NAMES)
+
+    renamed = json.loads(report(NAMES))
+    renamed["findings"] = renamed.pop("issues")
+    second = env.import_and_get(
+        json.dumps(renamed).encode(), parser=m["parser"], filename="acme-2.json"
+    )
+    assert second["status"] == "applied", second
+    assert second["counts"]["closed"] == 0 and second["close_missing"] is False
+    assert any("found no findings" in w for w in second["warnings"])
+    with env.sessions() as s:
+        assert {r.state for r in s.scalars(select(IssueRow))} == {"new"}
+
+
 def test_saving_again_under_a_name_adds_a_version(env: Env) -> None:
     spec = drafted(env)
     one = save(env, spec).json()
