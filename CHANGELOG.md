@@ -10,9 +10,16 @@ Weeks 70–73 (plan Phase 17): metrics, dashboards, reports and filters at scale
 [Week 73](docs/v2-week73-verification.md)); and, ahead of Week 74, Week 75's sign-in and access
 ([Week 75](docs/v2-week75-verification.md)), Week 77's public website
 ([Week 77](docs/v2-week77-verification.md)), and Week 76's MCP server and `/fix`
-([Week 76](docs/v2-week76-verification.md)).
+([Week 76](docs/v2-week76-verification.md)); and Week 74's journeys J6–J10 as tests, with the
+third usability study ready but not run ([Week 74](docs/v2-week74-verification.md)).
 
 ### Added
+- **Journeys J6–J10 as Playwright tests, and the third usability study ready to run (Week 74;
+  plan §58).** Import a report, the new-CVE morning, risk acceptance, a pen test to its report, and
+  a scheduled monthly report, each on the real app; axe-core now runs in the real browser; visual
+  snapshots for six more screens. The study itself needs five people and has not run:
+  [docs/ux-study-v3-protocol.md](docs/ux-study-v3-protocol.md), `scripts/ux-study-seed.py` and
+  `scripts/ux-study-score.py` are ready. [Week 74](docs/v2-week74-verification.md).
 - **`bulwark mcp`, an MCP server for your own agent (Week 76; plan §50, ADR-0059).** Tools
   `list_issues`, `get_issue` (taint path, evidence), `get_verified_fix`, `search_components`, and
   `run_scan` only with `--allow-scans` and a token that may write scans. It calls the API with the
@@ -173,6 +180,19 @@ Weeks 70–73 (plan Phase 17): metrics, dashboards, reports and filters at scale
     is now off when Playwright starts it, so a snapshot can't catch "Compiling..." on some runs.
 
 ### Fixed
+- **Found by writing journeys J6–J10 (Week 74):**
+  - A project's Issues list now shows imported Issues: it listed only the latest scan's, though
+    the import screen links there, and a project fed only by imports showed none.
+  - The import file picker no longer greys out `.csv`, `.nessus` and `.jsonl` reports, and lists
+    the fourteen formats the server reads instead of four.
+  - Component search no longer says "No library in use is named like log4j-core" above that very
+    library when Search is pressed before the suggestions arrive; a short name finds Maven's
+    `group:artifact`.
+  - Report blocks are named by their metric, not five identical "Metric" buttons.
+  - The advisory text can be scrolled from the keyboard; severity filter chips meet 4.5:1 contrast
+    (they were dimmed to 3.2–4.3:1).
+  - An engagement's start date and a risk acceptance's expiry use the person's calendar day, not
+    UTC's (after midnight east of UTC, "today" was yesterday).
 - **The verified-fix agent now spends within a budget (Week 76).** It counted its model tokens but
   never charged them to the organization's monthly budget, and never checked it; each attempt now
   does both, and a run can carry a token cap.
