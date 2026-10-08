@@ -13,7 +13,7 @@ best effort, but every credible report gets a written answer.
 
 ## Supported versions
 
-Only the latest release and `main` (currently `2.x`). There are no backports yet.
+Only the latest release and `main` (currently `3.x`). There are no backports yet.
 
 ## What Bulwark defends against
 

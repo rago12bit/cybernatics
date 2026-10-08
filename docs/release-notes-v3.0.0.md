@@ -1,10 +1,12 @@
-# Bulwark 3.0.0 — release notes (draft)
+# Bulwark 3.0.0 — release notes
 
-> **Draft, not tagged.** The plan tags `v3.0.0` at Week 78, after milestone M16, whose third
-> usability study needs five security leads or pen testers and has not run
-> ([ux-study.md](ux-study.md)). Tagging also starts the release workflow, which publishes signed images;
-> no run of it has been observed yet. The changes since 2.4.0 are under "Unreleased" in
-> [CHANGELOG.md](../CHANGELOG.md).
+Released 2026-10-08, with 2.5.0 the same day.
+
+> **Released without the third usability study.** The plan tags `v3.0.0` after milestone M16,
+> whose study needs five security leads or pen testers; it has not run
+> ([ux-study.md](ux-study.md)), and both tags were cut at the owner's decision without it. The tag
+> also starts the release workflow, which publishes signed images; no run of it has been observed
+> from here. Every change since 2.4.0 is in [CHANGELOG.md](../CHANGELOG.md), under 2.5.0 and 3.0.0.
 
 Version 2 found vulnerabilities, ranked them and helped fix them. Version 3 (Weeks 53–78) manages
 them, alongside the tools a team already uses. The write-up is [blog-v3.0.0.md](blog-v3.0.0.md); the
@@ -34,13 +36,13 @@ evidence that a person confirms. Compliance mappings and signed evidence packs a
 
 **See it.** A metrics layer, dashboards with a keyboard alternative to drag-and-drop, role homes, a
 report builder with signed PDFs and schedules, and filters, saved views and bulk changes that work across
-every project. (Unreleased)
+every project. (2.5.0)
 
 **Who and how.** OIDC and SAML sign-in, SCIM, organization roles with per-portfolio and per-project
 overrides enforced by Postgres row-level security, personal API tokens. An MCP server so your own agent
 can ask Bulwark as you, read-only by default, with scanned text labelled as untrusted; `/fix` on pull
 requests, previewed with its cost and never run for a fork. A public website with a recorded scan of
-OWASP Juice Shop and a generated integrations catalogue. (Unreleased)
+OWASP Juice Shop and a generated integrations catalogue. (3.0.0)
 
 ## Upgrading from 2.x
 

@@ -1,9 +1,9 @@
 # Bulwark 3.0: three things a security platform has to get right
 
-> **Draft (Week 78, plan §59).** Written before `v3.0.0` is tagged; the tag waits for the third
-> usability study (M16), which needs five real people. Every number links to the record of how it was
-> measured. Nothing here is a claim the evaluation ([evaluation-v3.md](evaluation-v3.md)) does not
-> back.
+> Week 78 (plan §59). Bulwark 3.0.0 was tagged on 2026-10-08 without the third usability study
+> (M16), which needs five real people and has not run. Every number links to the record of how it
+> was measured. Nothing here is a claim the evaluation ([evaluation-v3.md](evaluation-v3.md)) does
+> not back.
 
 Version 2 found vulnerabilities and helped fix them. Version 3 manages them: imports from tools
 Bulwark doesn't run, SLAs, risk acceptance with a second person, a rules engine, an SBOM inventory,

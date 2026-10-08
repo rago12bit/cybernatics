@@ -5,11 +5,14 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-10-08
+
 Weeks 75–78: sign-in and access ([Week 75](docs/v2-week75-verification.md)), the MCP server and
 `/fix` ([Week 76](docs/v2-week76-verification.md)), the public website
 ([Week 77](docs/v2-week77-verification.md)), and the v3 benchmark table, write-up and release notes
 (Week 78: [docs/evaluation-v3.md](docs/evaluation-v3.md),
-[docs/release-notes-v3.0.0.md](docs/release-notes-v3.0.0.md)).
+[docs/release-notes-v3.0.0.md](docs/release-notes-v3.0.0.md)). Released without the third usability study,
+which has not run; what else is unproven is under "Known limits" in the release notes.
 
 ### Added
 - **`bulwark mcp`, an MCP server for your own agent (Week 76; plan §50, ADR-0059).** Tools
