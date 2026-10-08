@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import logging
 import uuid
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, cast
@@ -850,7 +851,7 @@ def _active_triage_clause(now: datetime) -> ColumnElement[bool]:
 def list_asset_issues(
     s: Session,
     asset_id: str,
-    latest_scan_id: str,
+    latest_scan_id: str | Sequence[str],
     *,
     severities: list[str] | None = None,
     categories: list[str] | None = None,
@@ -864,12 +865,30 @@ def list_asset_issues(
     `issue_filter` narrows by any condition on the Issue (the SLA filter, `core.sla.service`).
     `triage=None` (the default) is the active triage queue: untouched issues, plus any accepted
     issue whose expiry has passed. Pass an explicit list (e.g. `["accepted", "not_a_risk"]`) to see
-    triaged-away issues instead."""
-    conds = [FindingRow.scan_id == latest_scan_id, FindingRow.issue_id.is_not(None)]
+    triaged-away issues instead.
+
+    Several scans (`latest_scan_id` a list, Week 74): the project's current snapshots -- its latest
+    scan and each Test's latest applied import (`open_snapshot_scan_ids`) -- with one row per Issue:
+    the first scan's occurrence when it has one, else the newest import's."""
+    scan_ids = [latest_scan_id] if isinstance(latest_scan_id, str) else list(latest_scan_id)
+    conds: list[ColumnElement[bool]] = [
+        FindingRow.scan_id.in_(scan_ids),
+        FindingRow.issue_id.is_not(None),
+    ]
     if severities:
         conds.append(FindingRow.severity.in_([x.upper() for x in severities]))
     if categories:
         conds.append(FindingRow.category.in_([x.lower() for x in categories]))
+    if len(scan_ids) > 1:  # one occurrence per Issue
+        first = select(FindingRow.issue_id).where(
+            FindingRow.scan_id == scan_ids[0], FindingRow.issue_id.is_not(None)
+        )
+        newest_elsewhere = (
+            select(func.max(FindingRow.pk))
+            .where(FindingRow.scan_id.in_(scan_ids[1:]), FindingRow.issue_id.not_in(first))
+            .group_by(FindingRow.issue_id)
+        )
+        conds.append(or_(FindingRow.scan_id == scan_ids[0], FindingRow.pk.in_(newest_elsewhere)))
 
     # An Issue a tester or a targeted retest confirmed fixed (Week 64) can still have an occurrence
     # in the latest scan; it leaves the table until a scan reports it again.
@@ -920,7 +939,7 @@ def list_asset_issues(
     )
     items = []
     for r in rows:
-        d = {**r.data, "scan_id": latest_scan_id}
+        d = {**r.data, "scan_id": r.scan_id}
         issue_row = triage_by_id.get(r.issue_id) if r.issue_id else None
         d["issue"] = (
             {
@@ -1426,6 +1445,16 @@ def import_snapshot_scan_ids(
         if latest is not None and latest.scan_id is not None:
             out.append(latest.scan_id)
     return out
+
+
+def open_snapshot_scan_ids(s: Session, org_id: str, asset_id: str) -> list[str]:
+    """Every source of the project's open Issues as it stands: its latest scan first (when it has
+    one), then each Test's latest applied import -- what the Issues table lists (Week 74: imported
+    Issues were missing from it, though the import screen links there)."""
+    latest = latest_scan_for_asset(s, asset_id, org_id=org_id)
+    return ([latest.id] if latest is not None else []) + import_snapshot_scan_ids(
+        s, org_id, asset_id
+    )
 
 
 def latest_native_snapshot_scan_id(s: Session, org_id: str, asset_id: str) -> str | None:
@@ -2105,10 +2134,19 @@ def promote_hypothesis(s: Session, hypothesis_id: str, *, actor: str) -> IssueRo
 
     s.add(
         FindingRow(
-            scan_id=latest.id, finding_id=finding_id, fingerprint=fingerprint, category="sast",
-            severity="MEDIUM", severity_rank=SEVERITY_RANK["MEDIUM"], path=hyp.file,
-            start_line=hyp.line, tools=["hypotheses-lane"], data=finding.to_dict(),
-            issue_id=issue.id, issue_state="new", risk_score=finding.scoring.risk_score,
+            scan_id=latest.id,
+            finding_id=finding_id,
+            fingerprint=fingerprint,
+            category="sast",
+            severity="MEDIUM",
+            severity_rank=SEVERITY_RANK["MEDIUM"],
+            path=hyp.file,
+            start_line=hyp.line,
+            tools=["hypotheses-lane"],
+            data=finding.to_dict(),
+            issue_id=issue.id,
+            issue_state="new",
+            risk_score=finding.scoring.risk_score,
         )  # fmt: skip
     )
     from core.priority.service import refresh_ingested

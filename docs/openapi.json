@@ -499,7 +499,7 @@
     "/assets/{asset_id}/issues": {
       "get": {
         "summary": "List Issues",
-        "description": "Plan \u00a728.3's issues table: the asset's currently-open issues (its latest scan's\nfindings, joined with each one's triage state). Empty, not 404, when nothing has scanned\nyet -- mirrors `/scans/{id}/findings`'s own shape so the same frontend table component\ncan render either.",
+        "description": "Plan \u00a728.3's issues table: the asset's currently-open issues (its latest scan's\nfindings and each Test's latest applied import -- `repo.open_snapshot_scan_ids` --\njoined with each one's triage state). Empty, not 404, when nothing has scanned or been\nimported yet -- mirrors `/scans/{id}/findings`'s own shape so the same frontend table\ncomponent can render either.",
         "operationId": "list_issues_assets__asset_id__issues_get",
         "security": [
           {

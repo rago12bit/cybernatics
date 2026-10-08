@@ -19,6 +19,7 @@ from api.main import create_app
 from core.config import Settings
 from core.imports.jobs import process_import
 from core.imports.parsers import PARSERS
+from core.models import Category, Finding, Location, Taxonomy
 from core.persistence import repo
 from core.persistence.models import FindingRow, ImportRecord, IssueRow, Organization, Scan
 from core.tenancy import DEFAULT_ORG_ID
@@ -519,3 +520,37 @@ def test_an_import_is_not_listed_as_a_recent_scan_but_its_scan_page_still_opens(
     assert r.status_code == 200 and r.json()["status"] == "completed"
     findings = env.client.get(f"/scans/{scan_id}/findings", headers=AUTH)
     assert findings.status_code == 200 and findings.json()["total"] == 3
+
+
+def _table(env: Env) -> list[dict[str, Any]]:
+    r = env.client.get(f"/assets/{env.asset_id}/issues", headers=AUTH)
+    assert r.status_code == 200, r.text
+    return r.json()["items"]  # type: ignore[no-any-return]
+
+
+def test_the_projects_issues_table_lists_imported_issues_once_each(env: Env) -> None:
+    """Week 74 (journey J6): the table listed only the latest scan's occurrences, so an imported
+    report's Issues were missing from the screen the import links to -- and a project with only
+    imports showed none at all."""
+    env.import_and_get(SARIF)
+    rows = _table(env)
+    assert len(rows) == 3 and len({r["issue"]["id"] for r in rows}) == 3
+
+    # The same report into a second Test: the same three Issues, still one row each.
+    env.import_and_get(SARIF, test="Second pass")
+    rows = _table(env)
+    assert len(rows) == 3 and len({r["issue"]["id"] for r in rows}) == 3
+
+    # A scan of the project adds its own Issue; the imported ones stay listed beside it.
+    with env.sessions() as s:
+        scan = repo.create_scan(s, source_type="git", source_ref="https://example.com/a/b",
+                                source_label="a/b", tools=["semgrep"], org_id=DEFAULT_ORG_ID)  # fmt: skip
+        f = Finding("scan:1", "Found by the scan", "d", Location("app.py", 9, 9, "eval(x)"),
+                    Taxonomy(Category.SAST, cwe=("CWE-95",)), fingerprint="scan-only-fp")  # fmt: skip
+        sync = repo.sync_issues_for_scan(s, scan.id, [f])
+        repo.add_findings(s, scan.id, [f], sync.updates)
+        repo.finish_scan(s, scan.id, "completed")
+    rows = _table(env)
+    assert len(rows) == 4 and "Found by the scan" in {r["title"] for r in rows}
+    scan_row = next(r for r in rows if r["title"] == "Found by the scan")
+    assert scan_row["scan_id"] == scan.id  # each row says which snapshot it came from

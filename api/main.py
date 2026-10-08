@@ -902,12 +902,13 @@ def create_app(app_state: AppState) -> FastAPI:
         org: str = Depends(current_org),
     ) -> FindingsPage:
         """Plan §28.3's issues table: the asset's currently-open issues (its latest scan's
-        findings, joined with each one's triage state). Empty, not 404, when nothing has scanned
-        yet -- mirrors `/scans/{id}/findings`'s own shape so the same frontend table component
-        can render either."""
+        findings and each Test's latest applied import -- `repo.open_snapshot_scan_ids` --
+        joined with each one's triage state). Empty, not 404, when nothing has scanned or been
+        imported yet -- mirrors `/scans/{id}/findings`'s own shape so the same frontend table
+        component can render either."""
         asset = _get_asset(s, asset_id, org)
-        latest = repo.latest_scan_for_asset(s, asset.id, org_id=org)
-        if latest is None:
+        snapshots = repo.open_snapshot_scan_ids(s, org, asset.id)
+        if not snapshots:
             return FindingsPage(total=0, limit=limit, offset=offset, items=[])
         bad = sorted(set(sla or []) - set(sla_policy.OPEN_SLA))
         if bad:
@@ -931,7 +932,7 @@ def create_app(app_state: AppState) -> FastAPI:
                 raise HTTPException(422, str(exc)) from exc
             issue_filter = by_tag if issue_filter is None else and_(issue_filter, by_tag)
         page = repo.list_asset_issues(
-            s, asset.id, latest.id, severities=severity, categories=category, triage=triage,
+            s, asset.id, snapshots, severities=severity, categories=category, triage=triage,
             issue_filter=issue_filter, sort=sort, limit=limit, offset=offset,
         )  # fmt: skip
         sla_service.annotate(s, asset.id, page.items, now)
