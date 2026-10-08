@@ -1,5 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 import { API_URL, E2E_APPROVER_TOKEN, E2E_TOKEN } from "../playwright.config";
+import { expectAccessible } from "./helpers";
 
 /**
  * Real end-to-end journeys against the real Next.js app and the real FastAPI backend (real HTTP,
@@ -49,6 +50,7 @@ test.describe("J1 — first scan", () => {
     await expect(page.getByText("Unique findings")).toBeVisible({ timeout: 10_000 });
     await expect(page.getByText(/SQL injection in the login handler/).first()).toBeVisible();
     await expect(page.locator(".elapsed")).toHaveCount(0); // gone once the scan is done
+    await expectAccessible(page, "the scan verdict");
   });
 });
 
@@ -75,6 +77,7 @@ test.describe("J3 — triage", () => {
 
   test("filter by severity, mark an issue as not a risk with a reason, and see it leave the active queue", async ({ page }) => {
     await scanAndReachIssues(page);
+    await expectAccessible(page, "the issues table");
 
     await page.getByRole("button", { name: /critical/i }).click();
     await expect(page.getByText("AWS access key committed in config.py")).toBeVisible();
@@ -83,6 +86,7 @@ test.describe("J3 — triage", () => {
 
     await page.getByRole("link", { name: "SQL injection in the login handler" }).click();
     await expect(page.getByRole("heading", { name: "SQL injection in the login handler" })).toBeVisible();
+    await expectAccessible(page, "the issue page");
 
     await page.getByRole("button", { name: "Mark as not a risk" }).click();
     await page.getByLabel(/reason/i).fill("Behind an internal-only admin gate; not reachable externally.");
@@ -111,7 +115,7 @@ test.describe("J3 — triage", () => {
     await expect(page.getByRole("heading", { name: "AWS access key committed in config.py" })).toBeVisible();
   });
 
-  test("risk acceptance needs an expiry and someone else's approval, and can be ended early", async ({ page, browser }) => {
+  test("J8 — risk acceptance needs an expiry and someone else's approval, and can be ended early", async ({ page, browser }) => {
     await scanAndReachIssues(page);
     await page.getByRole("link", { name: "AWS access key committed in config.py" }).click();
 

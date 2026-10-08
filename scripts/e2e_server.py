@@ -20,6 +20,20 @@ scanner-less, worker-less CI job genuinely cannot do are faked, both clearly mar
      is exactly what makes `web/lib/useScan.ts` fall back to its own real polling path (see that
      file's docstring). Polling every 3s is fast enough for a scan that "finishes" in ~1.5s.
 
+Week 74 (journeys J6-J10) adds three more, for the same reason -- the e2e job has no Docker, no
+network and no worker:
+
+  3. Uploaded reports are parsed in this process (`ingest_sandbox=False`, the mode
+     `core.imports.jobs.parse_file` already has for Docker-less runs), on a thread standing in for
+     the worker, through the real `core.imports.jobs.process_import`.
+  4. The advisory feeds are not fetched: two real OSV records from `tests/fixtures/osv/` are stored
+     at start-up through the real `core.advisories.store.upsert` -- Log4Shell (GHSA-jfh8-c2jp-5v3q,
+     journey J7) and lodash's CVE-2021-23337 (GHSA-35jh-r3h4-6jhm, only the visual snapshot uses
+     it, so its screen does not depend on which journeys ran first). Matching is the real code.
+  5. GitHub's Issues API is an in-memory stand-in (`_FakeGitHubIssues`), set as
+     `core.tickets.sync.TRANSPORT`, so filing a ticket runs the real ticket code end to end without
+     calling github.com.
+
 Usage: python scripts/e2e_server.py --port 8000
 Prints "E2E_TOKEN=<token>" and "E2E_READY" to stdout once listening, for the caller to parse.
 """
@@ -27,6 +41,8 @@ Prints "E2E_TOKEN=<token>" and "E2E_READY" to stdout once listening, for the cal
 from __future__ import annotations
 
 import argparse
+import json
+import re
 import sys
 import tempfile
 import threading
@@ -173,6 +189,79 @@ def _seed_approver(sessions: sessionmaker[Session]) -> None:
         s.commit()
 
 
+ROOT = Path(__file__).resolve().parent.parent
+
+
+def _seed_advisory(sessions: sessionmaker[Session]) -> None:
+    """See module docstring (4)."""
+    from core.advisories import osv, store
+
+    for record, source in (
+        ("GHSA-jfh8-c2jp-5v3q", "osv:Maven"),
+        ("GHSA-35jh-r3h4-6jhm", "osv:npm"),
+    ):
+        advisory = osv.parse((ROOT / f"tests/fixtures/osv/{record}.json").read_bytes())
+        assert advisory is not None
+        with sessions() as s:
+            store.upsert(s, [advisory], source=source)
+
+
+def make_import_runner(sessions: sessionmaker[Session], settings: Settings) -> Any:
+    """See module docstring (3)."""
+    from core.imports.jobs import process_import
+
+    def _run(import_id: str, org_id: str) -> None:
+        time.sleep(0.2)
+        with sessions() as s:
+            process_import(s, import_id, org_id, settings)
+
+    def enqueue(import_id: str, org_id: str) -> None:
+        threading.Thread(target=_run, args=(import_id, org_id), daemon=True).start()
+
+    return enqueue
+
+
+class _FakeGitHubIssues:
+    """See module docstring (5): GitHub's Issues API, in memory, for one process's lifetime."""
+
+    _URL = re.compile(
+        r"^https://api\.github\.com/repos/([^/]+/[^/]+)/issues(?:/(\d+))?(/comments)?$"
+    )
+
+    def __init__(self) -> None:
+        self.issues: dict[tuple[str, int], dict[str, Any]] = {}
+        self._lock = threading.Lock()
+
+    def __call__(
+        self, method: str, url: str, headers: dict[str, str], body: bytes | None
+    ) -> tuple[int, Any]:
+        m = self._URL.match(url.split("?", 1)[0])
+        if m is None:
+            return 404, None
+        repo_name, number, comments = m.group(1), m.group(2), m.group(3)
+        data = json.loads(body) if body else {}
+        with self._lock:
+            if number is None and method == "POST":
+                n = 1 + sum(1 for r, _ in self.issues if r == repo_name)
+                self.issues[(repo_name, n)] = {
+                    "number": n,
+                    "state": "open",
+                    "labels": [],
+                    "assignee": None,
+                    "title": data.get("title", ""),
+                    "html_url": f"https://github.com/{repo_name}/issues/{n}",
+                }
+                return 201, self.issues[(repo_name, n)]
+            issue = self.issues.get((repo_name, int(number or 0)))
+            if issue is None:
+                return 404, None
+            if comments:
+                return 201, {"id": 1}
+            if method == "PATCH":
+                issue.update({k: v for k, v in data.items() if k in ("state", "title")})
+            return 200, issue
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--port", type=int, default=8000)
@@ -199,12 +288,16 @@ def main() -> None:
     Base.metadata.create_all(engine)
     sessions = sessionmaker(engine, expire_on_commit=False)
     _seed_approver(sessions)
+    _seed_advisory(sessions)
+    import core.tickets.sync
+
+    core.tickets.sync.TRANSPORT = _FakeGitHubIssues()
 
     settings = Settings(
         database_url=f"sqlite:///{db_path}", redis_url="", s3_endpoint=None, s3_access_key="", s3_secret_key="",
         s3_bucket="e2e", api_token=TEST_TOKEN, workdir=Path("/tmp/bulwark-e2e"),
         upload_dir=Path("/tmp/bulwark-e2e/uploads"), max_upload_bytes=50 * 1024 * 1024,
-        cors_origins=(args.web_origin,),
+        cors_origins=(args.web_origin,), ingest_sandbox=False,
     )  # fmt: skip
     settings.workdir.mkdir(parents=True, exist_ok=True)
     settings.upload_dir.mkdir(parents=True, exist_ok=True)
@@ -212,6 +305,7 @@ def main() -> None:
     state = AppState(
         settings=settings, sessions=sessions, enqueue=make_fake_enqueue(sessions),
         subscriber=_EmptySubscriber(), llm=None, limiter=UsageLimiter(),
+        enqueue_import=make_import_runner(sessions, settings),
     )  # fmt: skip
     app = create_app(state)
 

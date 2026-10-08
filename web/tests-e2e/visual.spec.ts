@@ -1,3 +1,4 @@
+import path from "node:path";
 import { test, expect, type Page } from "@playwright/test";
 import { API_URL, E2E_TOKEN } from "../playwright.config";
 
@@ -57,5 +58,84 @@ test.describe("visual regression", () => {
       fullPage: true,
       mask: [page.locator("time"), page.locator(".ds-issue-topline code")],
     });
+  });
+});
+
+// --- Week 74: the screens journeys J6-J10 use (plan §58: "visual regression for every new screen").
+// Fixed names and dates, and an advisory (lodash's CVE-2021-23337) no journey touches, so each
+// picture is the same on every run of a fresh server.
+
+const GOLDEN = path.resolve(__dirname, "../../tests/golden/ingest");
+const auth = { Authorization: `Bearer ${E2E_TOKEN}` };
+
+async function sbomInto(page: Page, projectId: string, name: string, version: string, purl: string) {
+  const sbom = { bomFormat: "CycloneDX", specVersion: "1.5", version: 1,
+                 components: [{ type: "library", name, version, purl: `${purl}@${version}` }] };
+  const r = await page.request.post(`${API_URL}/v2/ingest`, {
+    headers: auth,
+    multipart: { project: projectId, file: { name: "sbom.cdx.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(sbom)) } },
+  });
+  const id = (await r.json()).import_id;
+  await expect.poll(async () => (await page.request.get(`${API_URL}/v2/imports/${id}`, { headers: auth }).then((x) => x.json())).status).toBe("applied");
+}
+
+test.describe("visual regression, v3 screens", () => {
+  test("import preview", async ({ page }) => {
+    const assetId = await signedInScanAsset(page, "import-preview");
+    await page.goto(`/app/projects/${assetId}/import`);
+    await page.getByLabel("Report file").setInputFiles(path.join(GOLDEN, "defectdojo/nessus/nessus_many_vuln2-default.csv"));
+    await expect(page.getByRole("heading", { name: "Import results" })).toBeVisible({ timeout: 15_000 });
+    await expect(page).toHaveScreenshot("import-preview.png", { fullPage: true, mask: [page.locator("time")] });
+  });
+
+  test("component search", async ({ page }) => {
+    const assetId = await signedInScanAsset(page, "components");
+    await sbomInto(page, assetId, "left-pad", "1.3.0", "pkg:npm/left-pad"); // its own: no other test uses it
+    await page.goto("/app/components?purl=pkg%3Anpm%2Fleft-pad");
+    await expect(page.getByRole("region", { name: /left-pad is in 1 project/ })).toBeVisible();
+    await expect(page).toHaveScreenshot("component-search.png", {
+      fullPage: true,
+      mask: [page.locator("time"), page.getByText(/answered in \d+ ms/), page.getByRole("cell", { name: /import, / })],
+    });
+  });
+
+  test("advisory impact", async ({ page }) => {
+    const assetId = await signedInScanAsset(page, "advisory");
+    await sbomInto(page, assetId, "lodash", "4.17.20", "pkg:npm/lodash");
+    await page.goto("/app/advisories/CVE-2021-23337");
+    await expect(page.getByRole("heading", { name: "CVE-2021-23337", level: 1 })).toBeVisible();
+    await expect(page).toHaveScreenshot("advisory-impact.png", {
+      fullPage: true,
+      mask: [page.locator("time"), page.getByText(/first seen here/)],
+    });
+  });
+
+  test("engagement", async ({ page }) => {
+    const assetId = await signedInScanAsset(page, "engagement");
+    const e = await page.request.post(`${API_URL}/v2/projects/${assetId}/engagements`, {
+      headers: auth,
+      data: { name: "Q1 external pentest", engagement_type: "pentest", scope_targets: ["shop.acme.example"],
+              scope_routes: ["/v2/"], out_of_scope: "Admin panel", lead: "Priya N.", testers: ["Arjun K."],
+              starts_at: "2027-01-04T00:00:00Z", ends_at: "2027-01-29T00:00:00Z" },
+    }).then((r) => r.json());
+    await page.goto(`/app/engagements/${e.id}`);
+    await expect(page.getByRole("heading", { name: "Q1 external pentest", level: 1 })).toBeVisible();
+    await expect(page).toHaveScreenshot("engagement.png", { fullPage: true, mask: [page.locator("time")] });
+  });
+
+  test("manual finding form", async ({ page }) => {
+    const assetId = await signedInScanAsset(page, "manual-finding");
+    await page.goto(`/app/projects/${assetId}/findings/new`);
+    await expect(page.getByRole("heading", { name: "Record a finding" })).toBeVisible();
+    await expect(page).toHaveScreenshot("manual-finding.png", { fullPage: true, mask: [page.locator("time")] });
+  });
+
+  test("report builder", async ({ page }) => {
+    await signedInScanAsset(page, "report-builder");
+    await page.goto("/app/reports");
+    await page.getByLabel("Start from").selectOption({ label: "Penetration test report" });
+    await page.getByRole("button", { name: "Create" }).click();
+    await expect(page.getByRole("heading", { name: "Penetration test report", level: 1 })).toBeVisible();
+    await expect(page).toHaveScreenshot("report-builder.png", { fullPage: true, mask: [page.locator("time")] });
   });
 });
