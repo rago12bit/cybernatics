@@ -5,21 +5,13 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 
 ## [Unreleased]
 
-Weeks 70–73 (plan Phase 17): metrics, dashboards, reports and filters at scale
-([Weeks 70–71](docs/v2-week70-71-verification.md), [Week 72](docs/v2-week72-verification.md),
-[Week 73](docs/v2-week73-verification.md)); and, ahead of Week 74, Week 75's sign-in and access
-([Week 75](docs/v2-week75-verification.md)), Week 77's public website
-([Week 77](docs/v2-week77-verification.md)), and Week 76's MCP server and `/fix`
-([Week 76](docs/v2-week76-verification.md)); and Week 74's journeys J6–J10 as tests, with the
-third usability study ready but not run ([Week 74](docs/v2-week74-verification.md)).
+Weeks 75–78: sign-in and access ([Week 75](docs/v2-week75-verification.md)), the MCP server and
+`/fix` ([Week 76](docs/v2-week76-verification.md)), the public website
+([Week 77](docs/v2-week77-verification.md)), and the v3 benchmark table, write-up and release notes
+(Week 78: [docs/evaluation-v3.md](docs/evaluation-v3.md),
+[docs/release-notes-v3.0.0.md](docs/release-notes-v3.0.0.md)).
 
 ### Added
-- **Journeys J6–J10 as Playwright tests, and the third usability study ready to run (Week 74;
-  plan §58).** Import a report, the new-CVE morning, risk acceptance, a pen test to its report, and
-  a scheduled monthly report, each on the real app; axe-core now runs in the real browser; visual
-  snapshots for six more screens. The study itself needs five people and has not run:
-  [docs/ux-study-v3-protocol.md](docs/ux-study-v3-protocol.md), `scripts/ux-study-seed.py` and
-  `scripts/ux-study-score.py` are ready. [Week 74](docs/v2-week74-verification.md).
 - **`bulwark mcp`, an MCP server for your own agent (Week 76; plan §50, ADR-0059).** Tools
   `list_issues`, `get_issue` (taint path, evidence), `get_verified_fix`, `search_components`, and
   `run_scan` only with `--allow-scans` and a token that may write scans. It calls the API with the
@@ -67,6 +59,83 @@ third usability study ready but not run ([Week 74](docs/v2-week74-verification.m
   - Personal API tokens that act as their person and never exceed their role.
   - Web: a sign-in screen by work email, People and access, Sign-in and provisioning, My API tokens.
   - Requires Postgres 16 or later.
+
+### Changed
+- **JIT compilation is off for the app's database transactions.** It took 116 of a 153 ms count;
+  without it, counting 100,000 Issues went from 93 ms to 44 ms (ADR-0058).
+- **The app now looks like the public site.** Every screen uses the site's dark "blueprint" style:
+  warm near-black, hairline borders, sharp corners, Geist headings, uppercase monospace labels and
+  buttons, and the emerald accent.
+  - One header instead of two. Signed in, the site header carries the app's sections (Home,
+    Projects, Inbox, Dashboards, Advisories, Approvals, Reports, and the rest under More), so it no
+    longer wraps onto a second row. Under it, a slim bar holds the breadcrumbs, the project
+    switcher, the command palette and shortcut help.
+  - The design tokens carry the site's palette and fonts, so all screens changed together. The
+    app's separate light theme is gone: it made the app look unlike the site around it.
+  - Older screens referred to colour names the tokens never defined, so they fell back to
+    light-theme colours, dark red and grey text on a dark background. They now use the tokens.
+  - On-screen references to the project plan ("plan §28.1", "Week 30") are replaced with plain
+    wording.
+  - Seven screens that had no main heading now have one. Calendar days of the neighbouring
+    months are readable (they were faded below 4.5:1). The cost and SLA tables scroll on a phone
+    instead of widening the page.
+  - Code on the issue page is always highlighted dark; it used to follow the operating system's
+    light/dark setting and could show a white box in the dark app.
+  - The Linux visual snapshots are regenerated for the new design. The dev server's floating badge
+    is now off when Playwright starts it, so a snapshot can't catch "Compiling..." on some runs.
+
+### Fixed
+- **The verified-fix agent now spends within a budget (Week 76).** It counted its model tokens but
+  never charged them to the organization's monthly budget, and never checked it; each attempt now
+  does both, and a run can carry a token cap.
+- **A cut-off CSV report can no longer close Issues.** Nessus, OpenVAS and universal-mapper CSVs
+  cut so the last row stays full width (after a quoted field, inside an escaped quote, after the
+  delimiter that follows an empty field, or inside an unquoted last field) read as whole and could
+  close every Issue they no longer listed. A last row ending on a quoted field with no line break is
+  now refused, and any other last row with no line break is read but closes nothing -- real Tenable
+  exports end that way and cannot be told apart from a cut one. Every cut of every vendored Nessus
+  and OpenVAS CSV was checked (199,038): none can close; before, 29 dropped or garbled a finding and
+  could still close it.
+- **The fix agent no longer rejects a correct patch next to another finding.** Verification compared
+  findings by fingerprint, which shifts when a nearby line changes (Bandit quotes three lines) and
+  when correlation moves a rule into the neighbouring finding -- so an untouched neighbour looked
+  like a regression, and an edit beside the flagged line could look like a fix. Both steps now also
+  recognise a finding by the text of the lines it flags and the rules that fire, and refuse any rule
+  firing more often than before. Tested on recorded real Bandit output; the Week 76 live case
+  (PyCQA/bandit#2, `examples/ciphers.py:30`) now passes, and a patch swapping in `eval` still fails.
+- **The fix-agent worker now acts for the run's organization.** Under forced RLS its activities could
+  not see their own run, so on Postgres every attempt, patch and final status was silently dropped.
+  Found live while verifying Week 76.
+- **A web finding's location read ":0".** The scan report, the Issues list and the project
+  overview printed a file and line, which a DAST finding does not have. They now show the host and
+  route it was reached at.
+- **The findings table logged duplicate-key errors** when a scanner reported one rule twice in
+  one place, giving two findings one id (Semgrep on one line, ZAP with different evidence on one
+  URL). Rows are now keyed by position as well; the duplicate findings themselves are not changed.
+- **The recorded scan's banner** used an inline style, which the production CSP drops, and linked
+  to "a smaller sample" that was the same page.
+- **SECURITY.md** said the supported version was `1.x`.
+- **End-to-end tests could collide when run in parallel.** Two tests starting in the same
+  millisecond on different workers got the same "unique" repository URL. The URL now has a random
+  part.
+
+## [2.5.0] - 2026-10-08
+
+Milestone M16 (plan Phase 17, Weeks 70–74): metrics, dashboards, reports and filters at scale
+([Weeks 70–71](docs/v2-week70-71-verification.md), [Week 72](docs/v2-week72-verification.md),
+[Week 73](docs/v2-week73-verification.md)), and journeys J6–J10 as tests
+([Week 74](docs/v2-week74-verification.md)). **Tagged without the milestone's usability study:** it
+needs five security leads or pen testers and has not run, so SUS and time on task for J6–J10 are not
+measured ([docs/ux-study.md](docs/ux-study.md)). Weeks 75–77 were built before Week 74, so this
+tag's code also contains them; they are described under 3.0.0.
+
+### Added
+- **Journeys J6–J10 as Playwright tests, and the third usability study ready to run (Week 74;
+  plan §58).** Import a report, the new-CVE morning, risk acceptance, a pen test to its report, and
+  a scheduled monthly report, each on the real app; axe-core now runs in the real browser; visual
+  snapshots for six more screens. The study itself needs five people and has not run:
+  [docs/ux-study-v3-protocol.md](docs/ux-study-v3-protocol.md), `scripts/ux-study-seed.py` and
+  `scripts/ux-study-score.py` are ready. [Week 74](docs/v2-week74-verification.md).
 - **Issues across every project, by query (Week 73, task 1; plan §56).**
   - `GET /v2/issues?q=` lists the organization's Issues filtered by a query such as
     `priority:P1 sla:breached project:payments-* -status:accepted`: fifteen filters, exclusions,
@@ -138,7 +207,6 @@ third usability study ready but not run ([Week 74](docs/v2-week74-verification.m
     a new advisory, a project nobody has scanned in 14 days. Projects follow, sorted by need, with
     "Scanners N of M" and a trend.
   - API: `/v2/me/assigned`, `/v2/me/engagements`, `/v2/portfolio-overviews`.
-
 - **Report builder (Week 72, plan §48.3, ADR-0055).**
   - Blocks: cover, executive summary, metric, issue table, issue detail, risk acceptances,
     compliance mapping, engagement scope, appendix. Three templates.
@@ -154,30 +222,8 @@ third usability study ready but not run ([Week 74](docs/v2-week74-verification.m
   - [docs/reports.md](docs/reports.md), [verification](docs/v2-week72-verification.md).
 
 ### Changed
-- **JIT compilation is off for the app's database transactions.** It took 116 of a 153 ms count;
-  without it, counting 100,000 Issues went from 93 ms to 44 ms (ADR-0058).
 - **`/app` for a person is now their role home.** The shared token, which is nobody in particular,
   still lands on the scan page. Scanning is also at `/app/scan`.
-- **The app now looks like the public site.** Every screen uses the site's dark "blueprint" style:
-  warm near-black, hairline borders, sharp corners, Geist headings, uppercase monospace labels and
-  buttons, and the emerald accent.
-  - One header instead of two. Signed in, the site header carries the app's sections (Home,
-    Projects, Inbox, Dashboards, Advisories, Approvals, Reports, and the rest under More), so it no
-    longer wraps onto a second row. Under it, a slim bar holds the breadcrumbs, the project
-    switcher, the command palette and shortcut help.
-  - The design tokens carry the site's palette and fonts, so all screens changed together. The
-    app's separate light theme is gone: it made the app look unlike the site around it.
-  - Older screens referred to colour names the tokens never defined, so they fell back to
-    light-theme colours, dark red and grey text on a dark background. They now use the tokens.
-  - On-screen references to the project plan ("plan §28.1", "Week 30") are replaced with plain
-    wording.
-  - Seven screens that had no main heading now have one. Calendar days of the neighbouring
-    months are readable (they were faded below 4.5:1). The cost and SLA tables scroll on a phone
-    instead of widening the page.
-  - Code on the issue page is always highlighted dark; it used to follow the operating system's
-    light/dark setting and could show a white box in the dark app.
-  - The Linux visual snapshots are regenerated for the new design. The dev server's floating badge
-    is now off when Playwright starts it, so a snapshot can't catch "Compiling..." on some runs.
 
 ### Fixed
 - **Found by writing journeys J6–J10 (Week 74):**
@@ -193,39 +239,6 @@ third usability study ready but not run ([Week 74](docs/v2-week74-verification.m
     (they were dimmed to 3.2–4.3:1).
   - An engagement's start date and a risk acceptance's expiry use the person's calendar day, not
     UTC's (after midnight east of UTC, "today" was yesterday).
-- **The verified-fix agent now spends within a budget (Week 76).** It counted its model tokens but
-  never charged them to the organization's monthly budget, and never checked it; each attempt now
-  does both, and a run can carry a token cap.
-- **A cut-off CSV report can no longer close Issues.** Nessus, OpenVAS and universal-mapper CSVs
-  cut so the last row stays full width (after a quoted field, inside an escaped quote, after the
-  delimiter that follows an empty field, or inside an unquoted last field) read as whole and could
-  close every Issue they no longer listed. A last row ending on a quoted field with no line break is
-  now refused, and any other last row with no line break is read but closes nothing -- real Tenable
-  exports end that way and cannot be told apart from a cut one. Every cut of every vendored Nessus
-  and OpenVAS CSV was checked (199,038): none can close; before, 29 dropped or garbled a finding and
-  could still close it.
-- **The fix agent no longer rejects a correct patch next to another finding.** Verification compared
-  findings by fingerprint, which shifts when a nearby line changes (Bandit quotes three lines) and
-  when correlation moves a rule into the neighbouring finding -- so an untouched neighbour looked
-  like a regression, and an edit beside the flagged line could look like a fix. Both steps now also
-  recognise a finding by the text of the lines it flags and the rules that fire, and refuse any rule
-  firing more often than before. Tested on recorded real Bandit output; the Week 76 live case
-  (PyCQA/bandit#2, `examples/ciphers.py:30`) now passes, and a patch swapping in `eval` still fails.
-- **The fix-agent worker now acts for the run's organization.** Under forced RLS its activities could
-  not see their own run, so on Postgres every attempt, patch and final status was silently dropped.
-  Found live while verifying Week 76.
-- **A web finding's location read ":0".** The scan report, the Issues list and the project
-  overview printed a file and line, which a DAST finding does not have. They now show the host and
-  route it was reached at.
-- **The findings table logged duplicate-key errors** when a scanner reported one rule twice in
-  one place, giving two findings one id (Semgrep on one line, ZAP with different evidence on one
-  URL). Rows are now keyed by position as well; the duplicate findings themselves are not changed.
-- **The recorded scan's banner** used an inline style, which the production CSP drops, and linked
-  to "a smaller sample" that was the same page.
-- **SECURITY.md** said the supported version was `1.x`.
-- **End-to-end tests could collide when run in parallel.** Two tests starting in the same
-  millisecond on different workers got the same "unique" repository URL. The URL now has a random
-  part.
 - **End-to-end tests had gone stale.**
   - The J3 risk-acceptance journey still used the one-person accept button removed in Week 62. It
     now requests, approves as a second person, and ends early.

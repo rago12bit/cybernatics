@@ -7,7 +7,8 @@ The plan's Week 74 row:
   (the script, with tasks, hints and targets), `scripts/ux-study-seed.py` (the same scenario for
   every participant, through the public API) and `scripts/ux-study-score.py` (SUS and time on task
   into [ux-study.md](ux-study.md)). The two earlier studies were never run either, and ux-study.md
-  says so. **M16 (`v2.5.0`) waits for the study.**
+  says so. The plan gates M16 (`v2.5.0`) on the study; `v2.5.0` was tagged on 2026-10-08 at the
+  owner's decision without it, and the changelog says so.
 - **Fix the top problems found.** The study's are still to come. Writing the journeys as tests found
   eight, fixed below.
 - **Playwright tests for J6–J10; visual regression for every new screen.** Done, and axe-core now
