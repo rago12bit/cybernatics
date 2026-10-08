@@ -24,7 +24,7 @@ from urllib.parse import urlsplit
 from core.correlation import correlate
 from core.dast import campaign as campaign_rules
 from core.dast import ownership
-from core.dast.adapters.nuclei import NucleiError, run_nuclei
+from core.dast.adapters.nuclei import NucleiError, NucleiTimeout, run_nuclei
 from core.dast.adapters.zap import ZapError, run_zap_baseline
 from core.dast.correlate import correlate_dast_with_sast
 from core.dast.proxy import BackgroundProxy, ProxyConfig, ProxyError
@@ -152,6 +152,17 @@ def run_dast_campaign_job(
                         s, scan_id, "nuclei",
                         {"status": "ok", "findings": len(nuclei_findings),
                          "duration_seconds": elapsed},
+                    )  # fmt: skip
+            except NucleiTimeout as exc:
+                # What it found before the deadline is kept; the campaign is then "partial", so
+                # nothing it didn't get to check is read as fixed.
+                findings.extend(exc.findings)
+                tool_errors.append(str(exc))
+                with sessions() as s:
+                    repo.add_tool_run(
+                        s, scan_id, "nuclei",
+                        {"status": "timeout", "findings": len(exc.findings), "error": str(exc),
+                         "duration_seconds": time.monotonic() - started},
                     )  # fmt: skip
             except NucleiError as exc:
                 tool_errors.append(str(exc))

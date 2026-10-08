@@ -20,6 +20,7 @@ from __future__ import annotations
 import json
 import subprocess
 import tempfile
+import uuid
 from pathlib import Path
 from typing import Any
 
@@ -44,7 +45,8 @@ def run_zap_baseline(
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
         tmp_path.chmod(0o777)  # the zap container runs as its own non-root user, not this one
-        argv = ["docker", "run", "--rm"]
+        name = f"bulwark-zap-{uuid.uuid4().hex[:8]}"
+        argv = ["docker", "run", "--rm", "--name", name]
         if proxy is not None:
             # See core.dast.adapters.nuclei.run_nuclei for why this flag is unconditional whenever
             # a proxy is configured: host.docker.internal needs it on Linux, and it's a no-op on
@@ -67,6 +69,8 @@ def run_zap_baseline(
         try:
             proc = subprocess.run(argv, capture_output=True, timeout=timeout_s, check=False)
         except subprocess.TimeoutExpired as exc:
+            # Stopping the `docker` client does not stop the container: kill it by name.
+            subprocess.run(["docker", "kill", name], capture_output=True, check=False)
             raise ZapError(f"zap-baseline timed out after {timeout_s}s") from exc
         except FileNotFoundError as exc:
             raise ZapError("docker is not available") from exc

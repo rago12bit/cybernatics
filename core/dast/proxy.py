@@ -271,7 +271,12 @@ class BackgroundProxy:
                     t for t in asyncio.all_tasks(self._loop) if t is not asyncio.current_task()
                 ]
                 if pending:
-                    await asyncio.wait(pending, timeout=2.0)
+                    _, still = await asyncio.wait(pending, timeout=2.0)
+                    # A relay a scanner kept open (HTTP keep-alive) never finishes by itself: cancel
+                    # it and let it close its sockets now, while the loop can still run that.
+                    for task in still:
+                        task.cancel()
+                    await asyncio.gather(*still, return_exceptions=True)
 
             try:
                 self._loop.run_until_complete(_start())

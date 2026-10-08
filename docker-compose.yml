@@ -316,6 +316,10 @@ services:
     profiles: [scanners]
     build: docker/grype
     image: bulwark/grype:0.119.0
+  scanner-nuclei:
+    profiles: [scanners]
+    build: docker/nuclei
+    image: bulwark/nuclei:3.11.1
   scanner-checkov:
     profiles: [scanners]
     build: docker/checkov

@@ -6,6 +6,25 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 ## [Unreleased]
 
 ### Fixed
+- **An active campaign whose Nuclei run times out keeps what Nuclei found.** It used to raise with
+  nothing, so a run against a real app lost every finding. The findings are kept, the campaign ends
+  `partial` (closing nothing), and the timed-out container is killed instead of left running (ZAP's
+  too).
+- **Nuclei no longer reaches past the campaign's egress proxy.** A real run kept a connection open to
+  `oast.me`, a public interactsh server, and downloaded ~86 MB of templates from GitHub on every
+  run, both straight from the container. It now runs with `-ni` (no out-of-band templates) and
+  `-duc`, from `bulwark/nuclei:3.11.1` with templates v10.5.0 baked in (docker/nuclei). Through the
+  proxy it still stalls after about five minutes; that is not fixed yet (ADR-0035 amendment).
+- **The egress proxy shuts down cleanly with a relay still open**, instead of printing "Event loop is
+  closed" on every campaign where a scanner kept a connection alive.
+- **A scan's "unique findings" no longer counts one report several times.** A tool that reported one
+  defect at one place more than once -- Semgrep five times on one line, Gitleaks one secret twice,
+  ZAP one URL with different evidence -- gave several findings, often with one id. They are now one
+  finding that says how many more times it was reported; confidence is not raised by a tool
+  repeating itself. On the recorded Juice Shop scans: code 139 -> 124 (every id now one finding),
+  running app 49 -> 39 (its 39 Issues). Identical code on several lines of one file stays several
+  findings but is one Issue, by the fingerprint's design (it ignores the line so a moved defect
+  stays one Issue).
 - **ZAP no longer closes Issues at pages it simply didn't list this time.** A ZAP report lists a
   sample of the places an alert fires: at most five for a site-wide alert, and its spider reaches
   different pages each run. Each place is its own Issue, so a campaign or reimport closed Issues that

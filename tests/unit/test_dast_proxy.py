@@ -8,6 +8,8 @@ decision itself.
 
 from __future__ import annotations
 
+import pytest
+
 from core.dast.proxy import AllowListProxy, parse_request_line
 
 
@@ -75,3 +77,43 @@ def test_allow_list_proxy_calls_on_blocked_for_a_disallowed_host() -> None:
     # is_allowed alone never reports -- only the request-handling path does; verified in the live
     # integration test, which exercises handle() against a real socket.
     assert calls == []
+
+
+def test_closing_with_a_relay_still_open_leaves_nothing_pending(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """A scanner can still hold a keep-alive connection through the proxy when its container exits
+    and the campaign closes the proxy. Those relays used to outlive the loop and print "Event loop
+    is closed" (or "Task was destroyed but it is pending") on every such campaign."""
+    import gc
+    import socket
+    import sys
+    import threading
+
+    from core.dast.proxy import BackgroundProxy
+
+    upstream = socket.create_server(("127.0.0.1", 0))
+    held: list[socket.socket] = []
+    threading.Thread(target=lambda: held.append(upstream.accept()[0]), daemon=True).start()
+    port = upstream.getsockname()[1]
+
+    unraisable: list[object] = []
+    previous_hook = sys.unraisablehook
+    sys.unraisablehook = unraisable.append
+    try:
+        with caplog.at_level("DEBUG", logger="asyncio"):
+            proxy = BackgroundProxy(frozenset({"127.0.0.1"}), bind_host="127.0.0.1")
+            client = socket.create_connection(("127.0.0.1", proxy.port))
+            client.sendall(f"CONNECT 127.0.0.1:{port} HTTP/1.1\r\n\r\n".encode())
+            assert b" 200 " in client.recv(1024)  # the relay is up, and stays open
+            proxy.close()
+            assert not proxy._thread.is_alive()
+            gc.collect()
+        client.close()
+    finally:
+        sys.unraisablehook = previous_hook
+        upstream.close()
+        for s in held:
+            s.close()
+    assert not unraisable, unraisable
+    assert not [r for r in caplog.records if r.levelname in ("ERROR", "WARNING")], caplog.text

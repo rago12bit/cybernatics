@@ -5,10 +5,17 @@ from __future__ import annotations
 
 import json
 import subprocess
+import sys
+import time
 from typing import Any
 
 from core.dast.adapters import nuclei
-from core.dast.adapters.nuclei import ALLOWED_PROTOCOL_TYPES, EXCLUDED_TAGS, _parse_jsonl
+from core.dast.adapters.nuclei import (
+    ALLOWED_PROTOCOL_TYPES,
+    EXCLUDED_TAGS,
+    NucleiTimeout,
+    _parse_jsonl,
+)
 from core.dast.proxy import ProxyConfig
 from core.models import Category, Severity
 
@@ -125,14 +132,21 @@ def test_allowed_protocol_types_is_http_only() -> None:
     assert set(ALLOWED_PROTOCOL_TYPES) == {"http"}
 
 
-def test_without_a_proxy_the_argv_has_no_proxy_or_add_host_flags(monkeypatch: Any) -> None:
+def _capture_argv(monkeypatch: Any) -> dict[str, list[str]]:
+    """Run nothing: record the argv `run_nuclei` would start, as a process that prints nothing."""
     captured: dict[str, list[str]] = {}
+    real_popen = subprocess.Popen
 
-    def fake_run(argv: list[str], **kwargs: Any) -> Any:
+    def fake_popen(argv: list[str], **kwargs: Any) -> Any:
         captured["argv"] = argv
-        return subprocess.CompletedProcess(argv, 0, stdout=b"", stderr=b"")
+        return real_popen([sys.executable, "-c", "pass"], **kwargs)
 
-    monkeypatch.setattr(nuclei.subprocess, "run", fake_run)
+    monkeypatch.setattr(nuclei.subprocess, "Popen", fake_popen)
+    return captured
+
+
+def test_without_a_proxy_the_argv_has_no_proxy_or_add_host_flags(monkeypatch: Any) -> None:
+    captured = _capture_argv(monkeypatch)
     nuclei.run_nuclei("https://example.com/")
     assert "-proxy" not in captured["argv"]
     assert "--add-host" not in captured["argv"]
@@ -143,13 +157,7 @@ def test_without_a_proxy_the_argv_has_no_proxy_or_add_host_flags(monkeypatch: An
 def test_with_a_proxy_the_argv_points_nuclei_at_it_through_host_docker_internal(
     monkeypatch: Any,
 ) -> None:
-    captured: dict[str, list[str]] = {}
-
-    def fake_run(argv: list[str], **kwargs: Any) -> Any:
-        captured["argv"] = argv
-        return subprocess.CompletedProcess(argv, 0, stdout=b"", stderr=b"")
-
-    monkeypatch.setattr(nuclei.subprocess, "run", fake_run)
+    captured = _capture_argv(monkeypatch)
     nuclei.run_nuclei(
         "https://example.com/", proxy=ProxyConfig(host="host.docker.internal", port=1234)
     )
@@ -158,3 +166,42 @@ def test_with_a_proxy_the_argv_points_nuclei_at_it_through_host_docker_internal(
     assert argv[argv.index("--add-host") + 1] == "host.docker.internal:host-gateway"
     assert "-proxy" in argv
     assert argv[argv.index("-proxy") + 1] == "http://host.docker.internal:1234"
+
+
+def test_a_run_that_times_out_keeps_what_it_found_and_kills_its_container(monkeypatch: Any) -> None:
+    """A real process stands in for the container: it prints two findings, then hangs. The two
+    are kept (they used to be lost with everything else), and the container is killed by name --
+    stopping the `docker` client alone leaves the container running."""
+    one = _line(**{"template-id": "swagger-api", "info": {"name": "Swagger", "severity": "info"},
+                   "matched-at": "http://t/api-docs"})  # fmt: skip
+    two = _line(**{"template-id": "missing-sri", "info": {"name": "SRI", "severity": "info"},
+                   "matched-at": "http://t/"})  # fmt: skip
+    script = (
+        f"import sys, time; sys.stdout.write({(one + chr(10) + two + chr(10))!r}); "
+        "sys.stdout.write('{\"template-id\": \"cut'); sys.stdout.flush(); time.sleep(60)"
+    )
+    started: dict[str, list[str]] = {}
+    killed: list[list[str]] = []
+    real_popen = subprocess.Popen
+
+    def fake_popen(argv: list[str], **kwargs: Any) -> Any:
+        started["argv"] = argv
+        return real_popen([sys.executable, "-c", script], **kwargs)
+
+    def fake_run(argv: list[str], **kwargs: Any) -> Any:
+        killed.append(argv)
+        return subprocess.CompletedProcess(argv, 0, b"", b"")
+
+    monkeypatch.setattr(nuclei.subprocess, "Popen", fake_popen)
+    monkeypatch.setattr(nuclei.subprocess, "run", fake_run)
+    t0 = time.monotonic()
+    try:
+        nuclei.run_nuclei("http://t/", timeout_s=2)
+        raise AssertionError("expected a timeout")
+    except NucleiTimeout as exc:
+        assert sorted(f.evidence.rule_ids["nuclei"][0] for f in exc.findings) == [
+            "missing-sri", "swagger-api"]  # fmt: skip
+        assert "kept the 2 finding(s)" in str(exc)
+    assert time.monotonic() - t0 < 15
+    name = started["argv"][started["argv"].index("--name") + 1]
+    assert name.startswith("bulwark-nuclei-") and killed == [["docker", "kill", name]]

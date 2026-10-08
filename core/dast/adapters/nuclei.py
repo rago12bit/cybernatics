@@ -16,19 +16,29 @@ and `rdap.verisign.com` would mean either breaking those templates outright or w
 list past the one host the ownership check actually verified -- the latter is a bigger hole than the
 feature these templates provide. Restricting to `http`-protocol templates keeps every request inside
 the one relationship DAST is actually authorized for: an HTTP(S) request to the verified target.
+
+`-ni` and `-duc` follow from the same rule (2026-10-08, measured on Juice Shop v17.3.0). By default
+Nuclei registers with a public interactsh server (`oast.me` and friends) and plants its URLs in
+payloads, so the target is asked to call a third party -- and the registration went straight out of
+the container, around the proxy. The OAST templates are excluded with it; blind, out-of-band issues
+are not found. And the upstream image ships no templates: every run downloaded ~86 MB from GitHub,
+also around the proxy. `bulwark/nuclei` (docker/nuclei) bakes in a pinned template release, and
+`-duc` stops the update check.
 """
 
 from __future__ import annotations
 
 import json
 import subprocess
-from typing import Any
+import threading
+import uuid
+from typing import IO, Any
 
 from core.dast.mapping import nuclei_finding
 from core.dast.proxy import ProxyConfig
 from core.models import Finding
 
-NUCLEI_IMAGE = "projectdiscovery/nuclei:latest"
+NUCLEI_IMAGE = "bulwark/nuclei:3.11.1"  # docker/nuclei: engine v3.11.1, templates v10.5.0 baked in
 
 # Never run, regardless of what the caller asks for -- see the module docstring.
 EXCLUDED_TAGS = ("dos", "fuzz", "intrusive", "bruteforce")
@@ -41,6 +51,16 @@ class NucleiError(Exception):
     pass
 
 
+class NucleiTimeout(NucleiError):
+    """The run hit its deadline. `findings` is what Nuclei reported before then: real results, but
+    not everything it would have checked, so a campaign that keeps them is partial and closes
+    nothing (core.dast.pipeline)."""
+
+    def __init__(self, message: str, findings: list[Finding]) -> None:
+        super().__init__(message)
+        self.findings = findings
+
+
 def run_nuclei(
     target_url: str,
     *,
@@ -49,8 +69,13 @@ def run_nuclei(
     template_ids: tuple[str, ...] = (),
 ) -> list[Finding]:
     """`template_ids`: only these templates (a targeted retest, plan §43.3). The excluded tags and
-    allowed protocol types still apply, so naming a template cannot bring in an excluded one."""
-    argv = ["docker", "run", "--rm"]
+    allowed protocol types still apply, so naming a template cannot bring in an excluded one.
+
+    Output is read as Nuclei prints it, so a run that hits `timeout_s` still returns what it found
+    (as `NucleiTimeout.findings`) instead of nothing, and its container is killed rather than left
+    running: stopping the `docker` client alone does not stop the container."""
+    name = f"bulwark-nuclei-{uuid.uuid4().hex[:8]}"
+    argv = ["docker", "run", "--rm", "--name", name]
     if proxy is not None:
         # host.docker.internal needs this explicit mapping on Linux too (Docker Engine >= 20.10);
         # macOS Docker Desktop already resolves it without the flag, but passing it unconditionally
@@ -63,18 +88,41 @@ def run_nuclei(
         "-pt", ",".join(ALLOWED_PROTOCOL_TYPES),
         "-jsonl",
         "-silent",
+        "-duc",  # no update check: nothing is downloaded during a campaign
+        "-ni",  # no interactsh: no third-party callback server
     ]  # fmt: skip
     if proxy is not None:
         argv += ["-proxy", f"http://{proxy.host}:{proxy.port}"]
     if template_ids:
         argv += ["-id", ",".join(template_ids)]
     try:
-        proc = subprocess.run(argv, capture_output=True, timeout=timeout_s, check=False)
-    except subprocess.TimeoutExpired as exc:
-        raise NucleiError(f"nuclei timed out after {timeout_s}s") from exc
+        proc = subprocess.Popen(argv, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
     except FileNotFoundError as exc:
         raise NucleiError("docker is not available") from exc
-    return _parse_jsonl(proc.stdout.decode("utf-8", errors="replace"))
+    assert proc.stdout is not None
+    lines: list[str] = []
+    reader = threading.Thread(target=_read_lines, args=(proc.stdout, lines), daemon=True)
+    reader.start()
+    try:
+        proc.wait(timeout=timeout_s)
+    except subprocess.TimeoutExpired:
+        subprocess.run(["docker", "kill", name], capture_output=True, check=False)
+        proc.kill()
+        proc.wait()
+        reader.join(timeout=10)
+        found = _parse_jsonl("".join(lines))  # a line cut by the kill is not valid JSON: dropped
+        raise NucleiTimeout(
+            f"nuclei timed out after {timeout_s}s; kept the {len(found)} finding(s) it reported "
+            "before then",
+            found,
+        ) from None
+    reader.join()
+    return _parse_jsonl("".join(lines))
+
+
+def _read_lines(stream: IO[bytes], into: list[str]) -> None:
+    for raw in iter(stream.readline, b""):
+        into.append(raw.decode("utf-8", errors="replace"))
 
 
 def _parse_jsonl(output: str) -> list[Finding]:

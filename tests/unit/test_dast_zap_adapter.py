@@ -9,6 +9,8 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
+import pytest
+
 from core.dast.adapters import zap
 from core.dast.adapters.zap import _parse_report
 from core.dast.proxy import ProxyConfig
@@ -154,3 +156,19 @@ def test_with_a_proxy_the_argv_configures_zaps_own_httpproxy_option(monkeypatch:
     assert "network.connection.httpProxy.enabled=true" in z_value
     assert "network.connection.httpProxy.host=host.docker.internal" in z_value
     assert "network.connection.httpProxy.port=4567" in z_value
+
+
+def test_a_zap_run_that_times_out_kills_its_container_by_name(monkeypatch: Any) -> None:
+    calls: list[list[str]] = []
+
+    def fake_run(argv: list[str], **kwargs: Any) -> Any:
+        calls.append(argv)
+        if argv[:2] == ["docker", "run"]:
+            raise subprocess.TimeoutExpired(argv, kwargs.get("timeout", 0))
+        return subprocess.CompletedProcess(argv, 0, stdout=b"", stderr=b"")
+
+    monkeypatch.setattr(zap.subprocess, "run", fake_run)
+    with pytest.raises(zap.ZapError, match="timed out"):
+        zap.run_zap_baseline("http://t/", timeout_s=1)
+    name = calls[0][calls[0].index("--name") + 1]
+    assert name.startswith("bulwark-zap-") and calls[1] == ["docker", "kill", name]

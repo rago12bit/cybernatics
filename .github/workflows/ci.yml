@@ -191,6 +191,7 @@ jobs:
           python-version: "3.12"
       - run: pip install -e ".[dev]"
       - run: docker build -t bulwark/grype:0.119.0 docker/grype
+      - run: docker build -t bulwark/nuclei:3.11.1 docker/nuclei
       - run: docker build -t bulwark/checkov:3.3.19 docker/checkov
       - run: docker build -t bulwark/gosec:2.29.0 docker/gosec
       - run: docker build -t bulwark/dockle:0.4.15 docker/dockle

@@ -42,6 +42,9 @@ TOOLS: dict[str, tuple[str, str, str]] = {
     "trivy": ("Apache-2.0", "https://github.com/aquasecurity/trivy", "runs in a container"),
     "osv-scanner": ("Apache-2.0", "https://github.com/google/osv-scanner", "runs in a container"),
     "grype": ("Apache-2.0", "https://github.com/anchore/grype", "runs in a container"),
+    "nuclei": ("MIT", "https://github.com/projectdiscovery/nuclei",
+               "active DAST tier, runs in a container; templates from projectdiscovery/nuclei-templates "
+               "(MIT) baked into the image at build time"),
     "checkov": ("Apache-2.0", "https://github.com/bridgecrewio/checkov", "runs in a container"),
     "gosec": ("Apache-2.0", "https://github.com/securego/gosec", "runs in a container"),
     "dockle": ("Apache-2.0", "https://github.com/goodwithtech/dockle", "runs in a container"),

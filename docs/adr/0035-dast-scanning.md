@@ -133,6 +133,27 @@ uses) against existing SAST findings near that route's handler, marking the matc
 (CWE-78 command injection) produced a real route map in real Postgres, and a DAST finding on the
 same route/CWE correctly confirmed the right Issue.
 
+### Amendment (2026-10-08): Nuclei's egress, templates and timeouts
+
+Measured against OWASP Juice Shop v17.3.0 with Nuclei v3.11.1:
+
+- **Interactsh went around the proxy.** By default Nuclei registers with a public interactsh server
+  and plants its URLs in payloads; a run held an open connection to `oast.me` (178.128.209.14)
+  straight from the container. That is a third party, and the target is asked to call it. Every run
+  now passes `-ni`; the OAST templates are excluded with it, so blind out-of-band issues are not found.
+- **Templates came from GitHub on every run, also around the proxy.** The upstream image ships none
+  (about 86 MB, 14,036 files, fetched each time). `bulwark/nuclei:3.11.1` (docker/nuclei) bakes in
+  templates v10.5.0 and runs with `-duc`; it lists 11,278 HTTP templates with networking off.
+- **A timeout lost everything.** `run_nuclei` now reads output as it comes; a run that hits its
+  deadline raises `NucleiTimeout` carrying the findings reported so far, the campaign keeps them and
+  ends `partial` (so it closes nothing), and the container is killed by name -- stopping the `docker`
+  client alone left it running. ZAP's adapter kills its container the same way.
+
+Still open: through `BackgroundProxy`, Nuclei stops making progress after about five minutes (17
+findings, then 75-81 relays held open with no traffic for over 30 minutes); the same scan without the
+proxy finishes in 111 s with 19. The cause is not found yet, so an active campaign currently ends at
+its timeout as `partial`, with what Nuclei found by then.
+
 ## What is NOT done
 
 - The egress proxy is now wired into the campaign runner (Week 49b), but only at the application

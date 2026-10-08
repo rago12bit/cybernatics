@@ -178,7 +178,7 @@
     "dast"
    ],
    "languages": [],
-   "version": "latest",
+   "version": "3.11.1",
    "mode": "active",
    "how": "Template checks against a verified target; active campaigns only. Egress only to the target, through Bulwark's proxy."
   },
