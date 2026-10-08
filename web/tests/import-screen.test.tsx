@@ -129,6 +129,16 @@ describe("ImportScreen", () => {
     expect(host.textContent).not.toContain("If you import this file");
   });
 
+  it("lets any file be picked and names the formats the server reads", async () => {
+    // Week 74: the picker was limited to .json/.xml/.sarif, which greyed out a Nessus CSV.
+    api();
+    const host = await mount();
+    const input = host.querySelector<HTMLInputElement>("#import-file")!;
+    expect(input.hasAttribute("accept")).toBe(false);
+    const formats = host.querySelector(`#${input.getAttribute("aria-describedby")}`)!;
+    expect(formats.textContent).toContain("SARIF 2.1.0, CycloneDX, up to 100 MB");
+  });
+
   it("uploads for a preview, with the choices as form fields, and never saves on its own", async () => {
     const { calls } = api();
     const host = await mount();

@@ -1,5 +1,5 @@
 /* Reports (plan §48.3): what the builder edits and what the API returns. */
-import type { WidgetFilters } from "./dashboard";
+import { ENTRY, type WidgetFilters } from "./dashboard";
 
 export type BlockType =
   | "cover" | "summary" | "metric" | "issues" | "issue" | "acceptances" | "compliance" | "engagement" | "appendix";
@@ -85,6 +85,12 @@ export const BLOCK_LABEL: Record<BlockType, string> = {
   appendix: "Appendix",
 };
 export const BLOCK_TYPES = Object.keys(BLOCK_LABEL) as BlockType[];
+/** What a person hears and reads for a block: a metric block by its metric ("Metric: SLA
+ * adherence"), so a template's five metrics are not five identical "Move Metric up" buttons. */
+export function blockName(b: Pick<Block, "type" | "config">): string {
+  const metric = b.type === "metric" ? String((b.config as { metric?: unknown }).metric ?? "") : "";
+  return metric ? `${BLOCK_LABEL.metric}: ${ENTRY[metric]?.title ?? metric}` : BLOCK_LABEL[b.type];
+}
 export const ISSUE_KINDS: [string, string][] = [
   ["open", "Open now"], ["past_sla", "Past their SLA"], ["opened", "First seen in the period"], ["fixed", "Fixed in the period"],
   ["view", "A saved view of the Issues list"],

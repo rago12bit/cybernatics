@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useState } from "react";
 import { ApiError, listChecklists } from "@/lib/api";
+import { localDay } from "@/lib/format";
 import type { ChecklistCatalogue, Engagement, EngagementInput } from "@/lib/types";
 import { Button } from "@/design-system/primitives/Button";
 import "./engagement.css";
@@ -34,7 +35,7 @@ export function EngagementForm({
   const [out, setOut] = useState(initial?.out_of_scope ?? "");
   const [lead, setLead] = useState(initial?.lead ?? "");
   const [testers, setTesters] = useState((initial?.testers ?? []).join(", "));
-  const [starts, setStarts] = useState(day(initial?.starts_at) || new Date().toISOString().slice(0, 10));
+  const [starts, setStarts] = useState(day(initial?.starts_at) || localDay());
   const [ends, setEnds] = useState(day(initial?.ends_at));
   const [checklist, setChecklist] = useState(initial?.checklist?.id ?? "");
   const [fieldError, setFieldError] = useState<FieldError | null>(null);

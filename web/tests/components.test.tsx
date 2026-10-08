@@ -82,6 +82,31 @@ describe("the components screen", () => {
     expect(results.violations.map((v) => v.id)).toEqual([]);
   });
 
+  it("searching a library's short name at once opens it, without waiting for the suggestions", async () => {
+    // Week 74 (J7): pressing Search before the suggestions arrived said "No library in use is
+    // named like log4j-core" above the very library -- the screen's own placeholder example.
+    const calls: string[] = [];
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      const u = new URL(String(url));
+      calls.push(u.pathname + u.search);
+      if (u.pathname === "/v2/libraries") return json(u.searchParams.get("q") ? [LIB, { ...LIB, id: "l3", name: "org.example:log4j-core-shim", purl: "pkg:maven/org.example/log4j-core-shim" }] : []);
+      if (u.pathname === "/v2/components") return json(RESULT);
+      return json({}, 404);
+    }));
+    const host = document.createElement("div");
+    document.body.replaceChildren(host);
+    root = createRoot(host);
+    await act(async () => root!.render(<ComponentsScreen />));
+    await flush();
+    const lib = host.querySelector<HTMLInputElement>("input[id$='-lib']")!;
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!;
+    await act(async () => { setter.call(lib, "log4j-core"); lib.dispatchEvent(new Event("input", { bubbles: true })); });
+    await act(async () => host.querySelector("form")!.requestSubmit()); // no wait for the 200 ms list
+    await flush();
+    expect(host.querySelector("[role=alert]")).toBeNull();
+    expect(calls).toContain(`/v2/components?purl=${encodeURIComponent(LOG4J)}`);
+  });
+
   it("suggests libraries by name, and a bad version condition is marked on its field", async () => {
     const calls: string[] = [];
     vi.stubGlobal("fetch", vi.fn(async (url: string) => {

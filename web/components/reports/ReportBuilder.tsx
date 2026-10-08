@@ -10,7 +10,7 @@ import {
 } from "@/lib/api";
 import { CATALOGUE, describeFilters, type WidgetFilters } from "@/lib/dashboard";
 import {
-  ACCEPTANCE_STATES, BLOCK_LABEL, BLOCK_TYPES, ISSUE_KINDS, WEEKDAYS, idFrom, moveBlock, newBlock, scheduleWords,
+  ACCEPTANCE_STATES, BLOCK_LABEL, BLOCK_TYPES, blockName, ISSUE_KINDS, WEEKDAYS, idFrom, moveBlock, newBlock, scheduleWords,
   type Block, type BlockType, type NewLink, type Report, type ReportLink, type ReportRun, type Schedule,
 } from "@/lib/reports";
 import type { SavedView } from "@/lib/issues";
@@ -122,8 +122,8 @@ function BlockSettings({ block, onChange, frameworks, portfolios, projects, name
     <div className="rep-field">
       <span className="dash-label">Filters</span>
       <p className="dash-small">{describeFilters(c.filters as WidgetFilters, names) || "All projects; the report's period"}</p>
-      <Button type="button" onClick={() => setFiltering(true)} aria-label={`Filters: ${BLOCK_LABEL[block.type]}`}>Filters</Button>
-      <Dialog open={filtering} onOpenChange={setFiltering} title={`Filters: ${BLOCK_LABEL[block.type]}`}>
+      <Button type="button" onClick={() => setFiltering(true)} aria-label={`Filters: ${blockName(block)}`}>Filters</Button>
+      <Dialog open={filtering} onOpenChange={setFiltering} title={`Filters: ${blockName(block)}`}>
         <WidgetFiltersForm
           widget={{ id: block.id, metric: block.type === "metric" ? String(c.metric) : "open_issues", x: 0, y: 0, w: 6, h: 4, filters: c.filters as WidgetFilters }}
           portfolios={portfolios} projects={projects}
@@ -400,7 +400,7 @@ export function ReportBuilder({ reportId }: { reportId: string }) {
     const next = moveBlock(draft!.blocks, b.id, by);
     setBlocks(next);
     const at = next.findIndex((x) => x.id === b.id);
-    say(next === draft!.blocks ? `${BLOCK_LABEL[b.type]} is already ${by < 0 ? "first" : "last"}.` : `${BLOCK_LABEL[b.type]} moved to position ${at + 1} of ${next.length}.`);
+    say(next === draft!.blocks ? `${blockName(b)} is already ${by < 0 ? "first" : "last"}.` : `${blockName(b)} moved to position ${at + 1} of ${next.length}.`);
     requestAnimationFrame(() => document.getElementById(`${id}-${b.id}-${by < 0 ? "up" : "down"}`)?.focus());
   }
   const blockError = (n: number) => (error?.field.startsWith(`blocks[${n}]`) ? <p role="alert" className="dash-error">{error.message}</p> : null);
@@ -433,12 +433,12 @@ export function ReportBuilder({ reportId }: { reportId: string }) {
         {draft.blocks.map((b, n) => (
           <li key={b.id} className="rep-block" aria-labelledby={`${id}-${b.id}-h`}>
             <div className="rep-block-head">
-              <h3 id={`${id}-${b.id}-h`}>{n + 1}. {BLOCK_LABEL[b.type]}</h3>
+              <h3 id={`${id}-${b.id}-h`}>{n + 1}. {blockName(b)}</h3>
               <div className="dash-row">
-                <Button type="button" id={`${id}-${b.id}-up`} onClick={() => move(b, -1)} disabled={n === 0} aria-label={`Move ${BLOCK_LABEL[b.type]} up`}>Up</Button>
-                <Button type="button" id={`${id}-${b.id}-down`} onClick={() => move(b, 1)} disabled={n === draft.blocks.length - 1} aria-label={`Move ${BLOCK_LABEL[b.type]} down`}>Down</Button>
-                <Button type="button" onClick={() => { setBlocks(draft.blocks.filter((x) => x.id !== b.id)); say(`Removed ${BLOCK_LABEL[b.type]}.`); }}
-                  aria-label={`Remove ${BLOCK_LABEL[b.type]}`}>Remove</Button>
+                <Button type="button" id={`${id}-${b.id}-up`} onClick={() => move(b, -1)} disabled={n === 0} aria-label={`Move ${blockName(b)} up`}>Up</Button>
+                <Button type="button" id={`${id}-${b.id}-down`} onClick={() => move(b, 1)} disabled={n === draft.blocks.length - 1} aria-label={`Move ${blockName(b)} down`}>Down</Button>
+                <Button type="button" onClick={() => { setBlocks(draft.blocks.filter((x) => x.id !== b.id)); say(`Removed ${blockName(b)}.`); }}
+                  aria-label={`Remove ${blockName(b)}`}>Remove</Button>
               </div>
             </div>
             {b.type === "summary" ? (

@@ -303,9 +303,12 @@ button.row-title:hover { color: var(--teal); }
 .filters .inline { display: grid; gap: 0.4rem; margin: 0; } .filters .inline.grow { flex: 1 1 12rem; }
 .filters select, .filters input { padding: 0.5rem 0.6rem; }
 .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
-button.filter { padding: 0.4rem 0.55rem; background: transparent; border: 1px solid currentColor; border-radius: var(--radius); font: 500 0.6875rem/1 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; opacity: 0.6; transition: opacity 120ms linear, background-color 120ms linear; }
-button.filter:hover { opacity: 1; }
-button.filter[aria-pressed="true"] { opacity: 1; background: color-mix(in srgb, currentColor 18%, transparent); }
+/* Unselected chips keep full-colour text (Week 74: `opacity: 0.6` put every severity label at
+   3.2-4.3:1, under WCAG's 4.5:1, found by axe in the real browser); a lighter border says
+   "not selected", the fill and the full border say "selected". */
+button.filter { padding: 0.4rem 0.55rem; background: transparent; border: 1px solid color-mix(in srgb, currentColor 45%, transparent); border-radius: var(--radius); font: 500 0.6875rem/1 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; transition: border-color 120ms linear, background-color 120ms linear; }
+button.filter:hover { border-color: currentColor; }
+button.filter[aria-pressed="true"] { border-color: currentColor; background: color-mix(in srgb, currentColor 18%, transparent); }
 .pager { display: flex; align-items: center; justify-content: center; gap: 1.25rem; padding: 1rem; font: 400 0.75rem/1 var(--mono); letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); border-top: 1px solid var(--line); }
 .f-empty { padding: 2rem clamp(1.25rem, 3vw, 2.5rem); }
 

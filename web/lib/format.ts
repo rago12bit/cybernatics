@@ -154,3 +154,11 @@ export function relativeTime(iso: string, now: number = Date.now()): string {
   if (s < 7 * 86400) return `${Math.round(s / 86400)} d ago`;
   return new Date(t).toLocaleDateString();
 }
+
+/** A date as the person's own calendar day, "2026-10-08" -- for a date a person picks (an
+ * engagement's start, an acceptance's expiry). Not `toISOString()`, which is the UTC day: east of
+ * UTC, just after midnight, that is still yesterday (found in Week 74). */
+export function localDay(d: Date = new Date()): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}

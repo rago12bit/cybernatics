@@ -284,7 +284,9 @@ export function AdvisoryScreen({ vulnKey }: { vulnKey: string }) {
       {a.details && (
         <section aria-labelledby={`${fid}-details`} className="ds-adv-box">
           <h2 id={`${fid}-details`}>Details</h2>
-          <p className="ds-adv-details">{a.details}</p>
+          {/* It scrolls, so it takes focus: keyboard users can scroll it too (WCAG 2.1.1; found by
+              axe in the real browser in Week 74). */}
+          <div className="ds-adv-details" tabIndex={0} role="region" aria-label="The advisory's text">{a.details}</div>
           {a.references.length > 0 && (
             <ul className="ds-adv-plain">
               {a.references.filter((r) => /^https?:\/\//.test(r)).slice(0, 12).map((r) => (

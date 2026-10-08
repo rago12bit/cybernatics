@@ -269,15 +269,19 @@ export function ImportScreen({
             </p>
           )}
           <label className="ds-import-label" htmlFor="import-file">Report file</label>
+          {/* No `accept` filter: reports come as .csv, .nessus, .jsonl and more, and the format is
+              detected from the contents, not the name (Week 74: a picker limited to .json/.xml/.sarif
+              greyed out the Nessus CSV journey J6 imports). */}
           <input
             id="import-file"
             type="file"
-            accept=".json,.xml,.sarif"
+            aria-describedby="import-file-formats"
             onChange={(e) => pickFile(e.target.files?.[0] ?? null)}
           />
-          <p className="small muted">
-            SARIF, CycloneDX (JSON or XML), OSV-Scanner JSON or SPDX JSON, up to 100 MB. The format is
-            detected from the file.
+          <p className="small muted" id="import-file-formats">
+            {parsers.length > 0 ? parsers.map((p) => p.label).join(", ") : "SARIF, CycloneDX, SPDX, scanner reports"}
+            {mappings.length > 0 && ", or a format you mapped"}, up to 100 MB. The format is detected from
+            the file.
           </p>
         </div>
       )}

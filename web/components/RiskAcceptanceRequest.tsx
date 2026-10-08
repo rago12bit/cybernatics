@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useMemo, useState } from "react";
 import { ApiError, addRiskAcceptanceProof, getRiskAcceptancePolicy, requestRiskAcceptance } from "@/lib/api";
+import { localDay } from "@/lib/format";
 import type { RiskAcceptance, RiskAcceptancePolicy, RiskDecision } from "@/lib/types";
 import { Button } from "@/design-system/primitives/Button";
 import "./risk-acceptance.css";
@@ -15,9 +16,7 @@ const DAY = 86_400_000;
 
 type FieldError = { field: string; message: string };
 
-function isoDay(d: Date): string {
-  return d.toISOString().slice(0, 10);
-}
+const isoDay = localDay; // the same calendar day endOfDay() reads it as
 
 /** End of the chosen day, local time -- "30 November" means until that day is over. */
 function endOfDay(day: string): Date {

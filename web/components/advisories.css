@@ -162,6 +162,10 @@
   max-height: 20rem;
   overflow: auto;
 }
+.ds-adv-details:focus-visible {
+  outline: 2px solid var(--ds-brand);
+  outline-offset: 2px;
+}
 .ds-adv-plain a {
   overflow-wrap: anywhere;
 }

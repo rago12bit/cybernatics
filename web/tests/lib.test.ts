@@ -102,7 +102,7 @@ describe("labels", () => {
   });
 });
 
-import { isDefaultQuery, queryToSearch, rangeLabel, relativeTime, searchToQuery } from "../lib/format";
+import { isDefaultQuery, localDay, queryToSearch, rangeLabel, relativeTime, searchToQuery } from "../lib/format";
 import { collectAll, exportFilename, exportPayload } from "../lib/export";
 
 describe("filter state <-> URL", () => {
@@ -181,5 +181,14 @@ describe("owasp table", () => {
     expect(owaspLabel("A03:2021")).toBe("OWASP A03 Injection");
     expect(owaspLabel("__proto__")).toBe("OWASP __proto__");
     expect(owaspUrl("__proto__")).toBeNull();
+  });
+});
+
+describe("localDay (Week 74)", () => {
+  it("is the person's calendar day, not the UTC one", () => {
+    // 00:30 on 8 October in UTC+5:30 is still 7 October in UTC.
+    const d = new Date(2026, 9, 8, 0, 30);
+    expect(localDay(d)).toBe("2026-10-08");
+    expect(localDay(new Date(2026, 0, 5))).toBe("2026-01-05");
   });
 });

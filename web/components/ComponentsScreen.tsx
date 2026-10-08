@@ -96,15 +96,25 @@ export function ComponentsScreen({ initialPurl = "", initialVersion = "" }: { in
     }
   }
 
-  function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
     const q = text.trim();
     if (!q) { setError({ field: "purl", message: "Name a library, or paste its package URL." }); return; }
     if (q.startsWith("pkg:")) { void run(q, version); return; }
-    const exact = suggestions.filter((l) => l.name.toLowerCase() === q.toLowerCase());
-    const only = exact.length === 1 ? exact[0] : suggestions.length === 1 ? suggestions[0] : undefined;
+    // Asked for the text as it is now: the list under the field arrives 200 ms after typing stops,
+    // so deciding from it said "no library is named like log4j-core" above the very match (Week 74).
+    let found = suggestions;
+    try {
+      const l = await listLibraries(q, 8);
+      found = Array.isArray(l) ? l : [];
+      setSuggestions(found);
+    } catch { /* keep what the field already shows */ }
+    // "log4j-core" names Maven's org.apache.logging.log4j:log4j-core, npm's @scope/name by its name.
+    const named = (l: LibrarySummary) => [l.name, l.name.split(/[:/]/).pop() ?? ""].map((n) => n.toLowerCase());
+    const exact = found.filter((l) => named(l).includes(q.toLowerCase()));
+    const only = exact.length === 1 ? exact[0] : found.length === 1 ? found[0] : undefined;
     if (only) { pick(only); return; }
-    setError({ field: "purl", message: suggestions.length ? "More than one library matches: pick one below." : `No library in use is named like “${q}”.` });
+    setError({ field: "purl", message: found.length ? "More than one library matches: pick one below." : `No library in use is named like “${q}”.` });
   }
 
   function pick(l: LibrarySummary) {

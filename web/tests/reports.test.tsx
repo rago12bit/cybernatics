@@ -5,7 +5,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ReportBuilder } from "../components/reports/ReportBuilder";
 import { ReportsScreen } from "../components/reports/ReportsScreen";
-import { idFrom, moveBlock, newBlock, scheduleWords, type Block, type Report, type ReportRun } from "../lib/reports";
+import { blockName, idFrom, moveBlock, newBlock, scheduleWords, type Block, type Report, type ReportRun } from "../lib/reports";
 
 const push = vi.fn();
 vi.mock("next/navigation", () => ({ usePathname: () => "/app/reports", useRouter: () => ({ push, replace: vi.fn() }) }));
@@ -102,6 +102,13 @@ describe("report helpers", () => {
       .toBe("22222222-2222-4222-8222-222222222222");
     expect(idFrom("nothing here")).toBeNull();
   });
+  it("names a metric block by its metric, so a template's metrics are told apart", () => {
+    // Week 74: the weekly template's five metric blocks were five identical "Move Metric up" buttons.
+    expect(blockName({ type: "metric", config: { metric: "sla_adherence" } })).toBe("Metric: SLA adherence");
+    expect(blockName({ type: "metric", config: { metric: "mttr" } })).toBe("Metric: Mean time to remediate");
+    expect(blockName({ type: "cover", config: {} })).toBe("Cover");
+  });
+
   it("moves blocks a place at a time and makes unique ids", () => {
     expect(moveBlock(BLOCKS, "sla", -1).map((b) => b.id)).toEqual(["cover", "sla", "summary", "appendix"]);
     expect(moveBlock(BLOCKS, "cover", -1)).toBe(BLOCKS);
@@ -130,10 +137,10 @@ describe("the report builder", () => {
     const host = await mount(<ReportBuilder reportId="r1" />);
     expect((await axe.run(host, AXE)).violations).toEqual([]);
     expect(button(host, "Move Cover up").disabled).toBe(true);
-    await act(async () => button(host, "Move Metric up").click());
-    expect(live()).toBe("Metric moved to position 2 of 4.");
+    await act(async () => button(host, "Move Metric: SLA adherence up").click());
+    expect(live()).toBe("Metric: SLA adherence moved to position 2 of 4.");
     expect([...host.querySelectorAll(".rep-block h3")].map((h) => h.textContent)).toEqual(
-      ["1. Cover", "2. Metric", "3. Executive summary", "4. Appendix"]);
+      ["1. Cover", "2. Metric: SLA adherence", "3. Executive summary", "4. Appendix"]);
     await act(async () => button(host, "Save").click());
     await flush();
     const put = calls.find((c) => c.method === "PUT")!;
