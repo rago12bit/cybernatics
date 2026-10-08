@@ -8,6 +8,10 @@ Rules (ADR-004):
   DAST       never merged (see `same_defect`).
   Never      merge two findings from the same tool and the same rule: those are distinct
              occurrences, even when a third tool's finding spans both.
+  Repeats    are folded: one tool reporting one defect at one place more than once (Semgrep five
+             times on one line, Gitleaks one secret twice, ZAP one URL with different evidence) is
+             one finding. Same fingerprint *and* same place; two places that share a fingerprint
+             (identical code on two lines) stay two findings, though they are one Issue.
 """
 
 from __future__ import annotations
@@ -120,8 +124,13 @@ class _Clusters:
 
 @dataclass(frozen=True)
 class CorrelationStats:
+    """`raw`: what the tools reported. `unique`: findings after merging the same defect across tools
+    and folding repeats -- one per defect per place, each with its own id. `repeats`: how many raw
+    reports were repeats of a finding at the same place."""
+
     raw: int
     unique: int
+    repeats: int = 0
 
     @property
     def dedup_rate(self) -> float:
@@ -149,10 +158,41 @@ def correlate(findings: Iterable[Finding]) -> tuple[list[Finding], CorrelationSt
     groups: dict[int, list[Finding]] = defaultdict(list)
     for i, f in enumerate(items):
         groups[clusters.find(i)].append(f)
-    merged = [_merge(g) for g in groups.values()]
+    merged, repeats = _fold_repeats([_merge(g) for g in groups.values()])
     merged.sort(key=lambda f: (-_SEV_ORDER.index(f.scoring.normalized_severity), f.location.path,
                                f.location.start_line, f.id))  # fmt: skip
-    return merged, CorrelationStats(raw=len(items), unique=len(merged))
+    return merged, CorrelationStats(raw=len(items), unique=len(merged), repeats=repeats)
+
+
+def _place(f: Finding) -> tuple[str, ...]:
+    """What makes a report a repeat: the same tool(s), the same kind and defect, the same place. Two
+    tools at one place are left to the merge rules above, which decide whether they are one defect;
+    a code finding and a secret never are (Issues keep categories apart too)."""
+    loc = f.location
+    return (
+        ",".join(sorted(f.evidence.reported_by)), f.taxonomy.category.value, f.fingerprint or "",
+        loc.path, str(loc.start_line), loc.host, loc.route,
+    )  # fmt: skip
+
+
+def _fold_repeats(findings: list[Finding]) -> tuple[list[Finding], int]:
+    """One finding per tool, fingerprint and place. The kept one is the group's `_primary`, and says
+    how many more times it was reported; confidence is not raised -- a tool repeating itself is not
+    a second opinion. Returns the findings, first-seen order, and how many repeats were folded."""
+    groups: dict[tuple[str, ...], list[Finding]] = {}
+    for f in findings:
+        groups.setdefault(_place(f), []).append(f)
+    out: list[Finding] = []
+    for group in groups.values():
+        kept = _primary(group)
+        more = len(group) - 1
+        if more:
+            kept.description = (
+                f"{kept.description}\n\nReported {more} more time{'s' if more > 1 else ''} at this "
+                "place in this scan."
+            )
+        out.append(kept)
+    return out, len(findings) - len(out)
 
 
 def _primary(group: list[Finding]) -> Finding:

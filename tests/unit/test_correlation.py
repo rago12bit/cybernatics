@@ -237,6 +237,66 @@ def test_correlate_is_order_independent_and_does_not_mutate_inputs() -> None:
     assert [f.to_dict() for f in fs] == before
 
 
+# ---- repeats: one tool, one defect, one place, reported more than once ---------------------
+def test_a_rule_reported_several_times_on_one_line_is_one_finding() -> None:
+    """Semgrep reported `no-replaceall` 5 times on one line of Juice Shop (different columns)."""
+    repeats = [code("semgrep", "no-replaceall", 59, snippet="s.replaceAll(a, b)", conf=0.6)
+               for _ in range(5)]  # fmt: skip
+    merged, stats = correlate(repeats)
+    assert len(merged) == 1 and (stats.raw, stats.unique, stats.repeats) == (5, 1, 4)
+    (m,) = merged
+    assert m.scoring.confidence == 0.6  # a tool repeating itself is not a second opinion
+    assert m.evidence.agreement_count == 1
+    assert m.description.endswith("Reported 4 more times at this place in this scan.")
+
+
+def test_two_tools_at_one_place_are_not_repeats_of_each_other() -> None:
+    """With no CWE and no rule id, a Bandit and a Gitleaks finding on one line share a fingerprint;
+    the merge rules keep them apart (nothing says they are one defect), and folding must not undo
+    that -- a repeat is one tool reporting again."""
+    a, b = code("bandit", "", 20), code("gitleaks", "", 20)
+    for f in (a, b):
+        f.taxonomy, f.evidence.rule_ids = Taxonomy(Category.SAST), {}
+    merged, stats = correlate([a, b])
+    assert len(merged) == 2 and stats.repeats == 0
+
+
+def test_identical_code_on_two_lines_is_two_findings_though_one_issue() -> None:
+    """Juice Shop's server.ts has the same `app.use(..., serveIndex(...))` on lines 270, 274 and
+    278: three places to fix. They share a fingerprint (it ignores the line, so a moved defect stays
+    one Issue), so they are one Issue -- but the scan still lists all three."""
+    snippet = "app.use('/x', serveIndex('y', { icons: true }))"
+    found = [code("semgrep", "dir-listing", n, snippet=snippet) for n in (270, 274, 278)]
+    merged, stats = correlate(found)
+    assert (len(merged), stats.repeats) == (3, 0)
+    assert len({m.fingerprint for m in merged}) == 1 and len({m.id for m in merged}) == 3
+
+
+def test_a_web_alert_on_one_url_with_different_evidence_is_one_finding() -> None:
+    from core.dast.mapping import zap_alert_findings
+
+    alert = {"pluginid": "10096", "alert": "Timestamp Disclosure - Unix", "riskcode": "0",
+             "instances": [{"uri": "http://t/styles.css", "evidence": e}
+                           for e in ("1650485437", "1981395349", "2038834951")]
+             + [{"uri": "http://t/main.js", "evidence": "1650485437"}]}  # fmt: skip
+    merged, stats = correlate(zap_alert_findings(alert, "http://t"))
+    assert sorted(m.location.route for m in merged) == ["/main.js", "/styles.css"]
+    assert stats.repeats == 2 and len({m.id for m in merged}) == 2
+
+
+def test_the_recorded_juice_shop_scans_have_one_finding_per_issue_place() -> None:
+    """The site's first recording (real scans of Juice Shop v17.3.0, kept in tests/fixtures) said
+    139 unique code findings with 124 distinct ids, and 49 runtime findings for 39 Issues."""
+    from core.models.finding import finding_from_dict
+
+    data = json.loads(Path("tests/fixtures/correlation/juiceshop-2026-10-07-findings.json").read_text())
+    for raw, unique, issues in ((data["code"], 124, 113), (data["runtime"], 39, 39)):
+        merged, stats = correlate([finding_from_dict(f) for f in raw])
+        assert stats.unique == len(merged) == unique
+        assert len({m.id for m in merged}) == unique  # every id is one finding
+        assert len({m.fingerprint for m in merged}) == issues
+
+
 def test_empty_input() -> None:
     assert correlate([]) == ([], correlate([])[1]) and correlate([])[1].dedup_rate == 0.0
 
