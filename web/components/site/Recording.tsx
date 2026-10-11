@@ -79,7 +79,7 @@ export function Recording() {
           <div className="rec-nums">
             <div><span className="numeral">{codeScan.raw_findings}</span><span className="label dimmed">Reported</span></div>
             <div><span className="numeral">{codeScan.unique_findings}</span><span className="label dimmed">After merging</span></div>
-            <div><span className="numeral">{merged}</span><span className="label dimmed">Reported twice, merged</span></div>
+            <div><span className="numeral">{merged}</span><span className="label dimmed">Reported more than once</span></div>
           </div>
           <SevBars scan={codeScan} />
           <Tools scan={codeScan} />
@@ -114,8 +114,9 @@ export function Recording() {
             Dockerfile.
           </li>
           <li>
-            The active web tier. Nuclei is not in this recording: a live run against this target ran out of time and kept
-            nothing. That is being fixed.
+            The active web tier. Nuclei is not in this recording. Run directly, it finishes against this target in about
+            two minutes; through the campaign&apos;s egress proxy it stalls before finishing, so an active campaign keeps
+            what Nuclei found by its time limit. The stall is being fixed.
           </li>
           <li>
             Every URL. ZAP lists at most five URLs for each kind of alert, and which five changes between runs, so the
@@ -126,9 +127,10 @@ export function Recording() {
             app&apos;s routes, and that is read today from Python route decorators only; Juice Shop is Express.
           </li>
           <li>
-            Issue counts. A scan counts every report, and some scanners report one rule more than once in one place
-            (Semgrep on one line, ZAP with different evidence on one URL). Issues are matched by fingerprint, and these
-            findings have {fingerprintCount(codeFindings)} and {fingerprintCount(runtimeFindings)} distinct ones.
+            One Issue per finding. Each finding is one place, but identical code on several lines of one file is one Issue
+            (it stays open until every line is fixed), so the {codeScan.unique_findings} code findings are{" "}
+            {fingerprintCount(codeFindings)} Issues and the {runtimeScan.unique_findings} running-app findings are{" "}
+            {fingerprintCount(runtimeFindings)}.
           </li>
           <li>Raw scanner output. Gitleaks found secrets (Juice Shop ships them on purpose), so raw output is withheld.</li>
         </ul>

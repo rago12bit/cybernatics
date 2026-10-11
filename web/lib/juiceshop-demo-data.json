@@ -4,8 +4,8 @@
   "version": "v17.3.0",
   "commit": "1867b926c5f50e4e692dc9c8f61821413cebe0cd",
   "image": "bkimminich/juice-shop@sha256:123acb31ed8bb05ebb06934a29be83d4e11a46cae937b9ed2bf2bda29d98130a",
-  "recorded_on": "2026-10-07",
-  "bulwark_version": "2.4.0",
+  "recorded_on": "2026-10-11",
+  "bulwark_version": "3.0.0",
   "made_by": "scripts/record-juiceshop.py"
  },
  "scan": {
@@ -20,9 +20,9 @@
    "gitleaks",
    "trivy"
   ],
-  "created_at": "2026-10-07T16:41:58Z",
-  "started_at": "2026-10-07T16:41:58Z",
-  "finished_at": "2026-10-07T16:41:58Z",
+  "created_at": "2026-10-11T18:52:21Z",
+  "started_at": "2026-10-11T18:52:21Z",
+  "finished_at": "2026-10-11T18:52:21Z",
   "error": null,
   "tool_status": {
    "osv-scanner": {
@@ -38,7 +38,7 @@
     "status": "ok",
     "findings": 0,
     "exit_code": 0,
-    "duration_seconds": 0.86,
+    "duration_seconds": 3.43,
     "error": null,
     "warnings": null,
     "raw_artifact": "withheld"
@@ -47,7 +47,7 @@
     "status": "ok",
     "findings": 99,
     "exit_code": 0,
-    "duration_seconds": 20.52,
+    "duration_seconds": 25.55,
     "error": null,
     "warnings": [
      "3 rule/file pairs timed out and were skipped; results may be incomplete"
@@ -58,7 +58,7 @@
     "status": "ok",
     "findings": 47,
     "exit_code": 1,
-    "duration_seconds": 6.78,
+    "duration_seconds": 8.76,
     "error": null,
     "warnings": null,
     "raw_artifact": "withheld"
@@ -67,20 +67,20 @@
     "status": "ok",
     "findings": 8,
     "exit_code": 0,
-    "duration_seconds": 2.88,
+    "duration_seconds": 8.91,
     "error": null,
     "warnings": null,
     "raw_artifact": "withheld"
    }
   },
   "severity_counts": {
-   "HIGH": 59,
-   "MEDIUM": 56,
-   "LOW": 24
+   "HIGH": 58,
+   "MEDIUM": 55,
+   "LOW": 11
   },
   "raw_findings": 154,
-  "unique_findings": 139,
-  "dedup_rate": 0.097
+  "unique_findings": 124,
+  "dedup_rate": 0.195
  },
  "findings": [
   {
@@ -772,76 +772,7 @@
   {
    "id": "gitleaks:42803dbe2abd",
    "title": "Detected a Generic API Key, potentially exposing access to various services and sensitive operations.",
-   "description": "Possible hardcoded secret matched rule 'generic-api-key'.",
-   "location": {
-    "path": "frontend/src/app/oauth/oauth.component.spec.ts",
-    "start_line": 84,
-    "end_line": 84,
-    "snippet": "[secret redacted]",
-    "snippet_hash": "sha256:6cb1162e2ac89bfd9ec7f3fc4eb87a673ec550997500f8dc42368f0df01d079d",
-    "route": "",
-    "host": ""
-   },
-   "taxonomy": {
-    "category": "secrets",
-    "cwe": [
-     "CWE-798"
-    ],
-    "owasp_top_10_2021": [
-     "A07:2021"
-    ],
-    "cve": [],
-    "aliases": []
-   },
-   "scoring": {
-    "native_severity": {
-     "gitleaks": "ALL"
-    },
-    "normalized_severity": "HIGH",
-    "cvss_v3_1": null,
-    "epss_score": null,
-    "in_cisa_kev": false,
-    "reachable": null,
-    "risk_score": 64,
-    "risk_factors": [
-     "High severity",
-     "Flagged by 1 scanner, confidence 70%"
-    ],
-    "confidence": 0.7
-   },
-   "evidence": {
-    "reported_by": [
-     "gitleaks"
-    ],
-    "agreement_count": 1,
-    "rule_ids": {
-     "gitleaks": [
-      "generic-api-key"
-     ]
-    }
-   },
-   "remediation": {
-    "summary": "Rotate this credential and load it from the environment or a secrets manager; committed secrets should be treated as compromised.",
-    "suggested_patch": null,
-    "references": [
-     "https://cwe.mitre.org/data/definitions/798.html"
-    ],
-    "generated_by": "static",
-    "is_suggestion": true
-   },
-   "triage": {
-    "state": "open",
-    "user_marked_false_positive": false,
-    "suppression_reason": null
-   },
-   "fingerprint": "sha256:4e2456e579dc9dfa2a676c0cf2a045ccc1e3009d440fead9e982c3c2725dad3e",
-   "package": null,
-   "taint_path": []
-  },
-  {
-   "id": "gitleaks:42803dbe2abd",
-   "title": "Detected a Generic API Key, potentially exposing access to various services and sensitive operations.",
-   "description": "Possible hardcoded secret matched rule 'generic-api-key'.",
+   "description": "Possible hardcoded secret matched rule 'generic-api-key'.\n\nReported 1 more time at this place in this scan.",
    "location": {
     "path": "frontend/src/app/oauth/oauth.component.spec.ts",
     "start_line": 84,
@@ -4330,70 +4261,7 @@
   {
    "id": "semgrep:javascript.lang.correctness.no-replaceall:data/static/codefixes/restfulXssChallenge_2.ts:59",
    "title": "The string method replaceAll is not supported in all versions of javascript, and is not supported by older browser versions",
-   "description": "The string method replaceAll is not supported in all versions of javascript, and is not supported by older browser versions. Consider using replace() with a regex as the first argument instead like mystring.replace(/bad/g, \"good\") instead of mystring.replaceAll(\"bad\", \"good\") (https://discourse.threejs.org/t/replaceall-is-not-a-function/14585)",
-   "location": {
-    "path": "data/static/codefixes/restfulXssChallenge_2.ts",
-    "start_line": 59,
-    "end_line": 59,
-    "snippet": "      tableData[i].description = tableData[i].description.replaceAll('<', '&lt;').replaceAll('>', '&gt;')",
-    "snippet_hash": "sha256:eafaecd32908435449448f70e5f65c131f2324d688b7c9e61554bc179b8c225b",
-    "route": "",
-    "host": ""
-   },
-   "taxonomy": {
-    "category": "sast",
-    "cwe": [],
-    "owasp_top_10_2021": [],
-    "cve": [],
-    "aliases": []
-   },
-   "scoring": {
-    "native_severity": {
-     "semgrep": "WARNING"
-    },
-    "normalized_severity": "MEDIUM",
-    "cvss_v3_1": null,
-    "epss_score": null,
-    "in_cisa_kev": false,
-    "reachable": null,
-    "risk_score": 38,
-    "risk_factors": [
-     "Medium severity",
-     "Flagged by 1 scanner, confidence 50%"
-    ],
-    "confidence": 0.5
-   },
-   "evidence": {
-    "reported_by": [
-     "semgrep"
-    ],
-    "agreement_count": 1,
-    "rule_ids": {
-     "semgrep": [
-      "javascript.lang.correctness.no-replaceall"
-     ]
-    }
-   },
-   "remediation": {
-    "summary": "",
-    "suggested_patch": null,
-    "references": [],
-    "generated_by": "static",
-    "is_suggestion": true
-   },
-   "triage": {
-    "state": "open",
-    "user_marked_false_positive": false,
-    "suppression_reason": null
-   },
-   "fingerprint": "sha256:6cc35ffabc1b06e8d4c40284dd182abdd2f0adc3fd5aa6e4966b555d1508cd16",
-   "package": null,
-   "taint_path": []
-  },
-  {
-   "id": "semgrep:javascript.lang.correctness.no-replaceall:data/static/codefixes/restfulXssChallenge_2.ts:59",
-   "title": "The string method replaceAll is not supported in all versions of javascript, and is not supported by older browser versions",
-   "description": "The string method replaceAll is not supported in all versions of javascript, and is not supported by older browser versions. Consider using replace() with a regex as the first argument instead like mystring.replace(/bad/g, \"good\") instead of mystring.replaceAll(\"bad\", \"good\") (https://discourse.threejs.org/t/replaceall-is-not-a-function/14585)",
+   "description": "The string method replaceAll is not supported in all versions of javascript, and is not supported by older browser versions. Consider using replace() with a regex as the first argument instead like mystring.replace(/bad/g, \"good\") instead of mystring.replaceAll(\"bad\", \"good\") (https://discourse.threejs.org/t/replaceall-is-not-a-function/14585)\n\nReported 1 more time at this place in this scan.",
    "location": {
     "path": "data/static/codefixes/restfulXssChallenge_2.ts",
     "start_line": 59,
@@ -7921,74 +7789,7 @@
   {
    "id": "semgrep:javascript.audit.detect-replaceall-sanitization:data/static/codefixes/restfulXssChallenge_2.ts:59",
    "title": "Detected a call to `replaceAll()` in an attempt to HTML escape the string `tableData[i].description`",
-   "description": "Detected a call to `replaceAll()` in an attempt to HTML escape the string `tableData[i].description`. Manually sanitizing input through a manually built list can be circumvented in many situations, and it's better to use a well known sanitization library such as `sanitize-html` or `DOMPurify`.",
-   "location": {
-    "path": "data/static/codefixes/restfulXssChallenge_2.ts",
-    "start_line": 59,
-    "end_line": 59,
-    "snippet": "      tableData[i].description = tableData[i].description.replaceAll('<', '&lt;').replaceAll('>', '&gt;')",
-    "snippet_hash": "sha256:eafaecd32908435449448f70e5f65c131f2324d688b7c9e61554bc179b8c225b",
-    "route": "",
-    "host": ""
-   },
-   "taxonomy": {
-    "category": "sast",
-    "cwe": [
-     "CWE-79"
-    ],
-    "owasp_top_10_2021": [
-     "A03:2021"
-    ],
-    "cve": [],
-    "aliases": []
-   },
-   "scoring": {
-    "native_severity": {
-     "semgrep": "NOTE"
-    },
-    "normalized_severity": "LOW",
-    "cvss_v3_1": null,
-    "epss_score": null,
-    "in_cisa_kev": false,
-    "reachable": null,
-    "risk_score": 16,
-    "risk_factors": [
-     "Low severity",
-     "Flagged by 1 scanner, confidence 30%"
-    ],
-    "confidence": 0.3
-   },
-   "evidence": {
-    "reported_by": [
-     "semgrep"
-    ],
-    "agreement_count": 1,
-    "rule_ids": {
-     "semgrep": [
-      "javascript.audit.detect-replaceall-sanitization"
-     ]
-    }
-   },
-   "remediation": {
-    "summary": "",
-    "suggested_patch": null,
-    "references": [],
-    "generated_by": "static",
-    "is_suggestion": true
-   },
-   "triage": {
-    "state": "open",
-    "user_marked_false_positive": false,
-    "suppression_reason": null
-   },
-   "fingerprint": "sha256:623b8ece5ddf63f4cde8321dde43ce3578ad340e17f4054b1524c3cc30b67964",
-   "package": null,
-   "taint_path": []
-  },
-  {
-   "id": "semgrep:javascript.audit.detect-replaceall-sanitization:data/static/codefixes/restfulXssChallenge_2.ts:59",
-   "title": "Detected a call to `replaceAll()` in an attempt to HTML escape the string `tableData[i].description.replaceAll('<', '&lt;')`",
-   "description": "Detected a call to `replaceAll()` in an attempt to HTML escape the string `tableData[i].description.replaceAll('<', '&lt;')`. Manually sanitizing input through a manually built list can be circumvented in many situations, and it's better to use a well known sanitization library such as `sanitize-html` or `DOMPurify`.",
+   "description": "Detected a call to `replaceAll()` in an attempt to HTML escape the string `tableData[i].description`. Manually sanitizing input through a manually built list can be circumvented in many situations, and it's better to use a well known sanitization library such as `sanitize-html` or `DOMPurify`.\n\nReported 1 more time at this place in this scan.",
    "location": {
     "path": "data/static/codefixes/restfulXssChallenge_2.ts",
     "start_line": 59,
@@ -8055,70 +7856,7 @@
   {
    "id": "semgrep:javascript.lang.correctness.missing-template-string-indicator:frontend/src/app/web3-sandbox/web3-sandbox.component.ts:73",
    "title": "This looks like a JavaScript template string",
-   "description": "This looks like a JavaScript template string. Are you missing a '$' in front of '{...}'?",
-   "location": {
-    "path": "frontend/src/app/web3-sandbox/web3-sandbox.component.ts",
-    "start_line": 73,
-    "end_line": 80,
-    "snippet": "  code: string = `// SPDX-License-Identifier: MIT\npragma solidity ^0.8.14;\n\ncontract HelloWorld {\n    function get()public pure returns (string memory){\n        return 'Hello Contracts';\n    }\n}`",
-    "snippet_hash": "sha256:33464160e76cb15ecd3d22574fdbdea104bc2a6933502720c88329a8ccccf5e1",
-    "route": "",
-    "host": ""
-   },
-   "taxonomy": {
-    "category": "sast",
-    "cwe": [],
-    "owasp_top_10_2021": [],
-    "cve": [],
-    "aliases": []
-   },
-   "scoring": {
-    "native_severity": {
-     "semgrep": "NOTE"
-    },
-    "normalized_severity": "LOW",
-    "cvss_v3_1": null,
-    "epss_score": null,
-    "in_cisa_kev": false,
-    "reachable": null,
-    "risk_score": 19,
-    "risk_factors": [
-     "Low severity",
-     "Flagged by 1 scanner, confidence 50%"
-    ],
-    "confidence": 0.5
-   },
-   "evidence": {
-    "reported_by": [
-     "semgrep"
-    ],
-    "agreement_count": 1,
-    "rule_ids": {
-     "semgrep": [
-      "javascript.lang.correctness.missing-template-string-indicator"
-     ]
-    }
-   },
-   "remediation": {
-    "summary": "",
-    "suggested_patch": null,
-    "references": [],
-    "generated_by": "static",
-    "is_suggestion": true
-   },
-   "triage": {
-    "state": "open",
-    "user_marked_false_positive": false,
-    "suppression_reason": null
-   },
-   "fingerprint": "sha256:4f7ebe5be746177599cf39f4a1c310b34f11a04b56b152ba2d5336ad96a3d54c",
-   "package": null,
-   "taint_path": []
-  },
-  {
-   "id": "semgrep:javascript.lang.correctness.missing-template-string-indicator:frontend/src/app/web3-sandbox/web3-sandbox.component.ts:73",
-   "title": "This looks like a JavaScript template string",
-   "description": "This looks like a JavaScript template string. Are you missing a '$' in front of '{...}'?",
+   "description": "This looks like a JavaScript template string. Are you missing a '$' in front of '{...}'?\n\nReported 1 more time at this place in this scan.",
    "location": {
     "path": "frontend/src/app/web3-sandbox/web3-sandbox.component.ts",
     "start_line": 73,
@@ -8244,70 +7982,7 @@
   {
    "id": "semgrep:javascript.lang.correctness.missing-template-string-indicator:lib/codingChallenges.ts:59",
    "title": "This looks like a JavaScript template string",
-   "description": "This looks like a JavaScript template string. Are you missing a '$' in front of '{...}'?",
-   "location": {
-    "path": "lib/codingChallenges.ts",
-    "start_line": 59,
-    "end_line": 59,
-    "snippet": "  const snippets = source.match(`[/#]{0,2} vuln-code-snippet start.*${challengeKey}([^])*vuln-code-snippet end.*${challengeKey}`)",
-    "snippet_hash": "sha256:61b5d0c3d81fb3fab7eb64815b97d95eb2372387628ba05e50260d678585623a",
-    "route": "",
-    "host": ""
-   },
-   "taxonomy": {
-    "category": "sast",
-    "cwe": [],
-    "owasp_top_10_2021": [],
-    "cve": [],
-    "aliases": []
-   },
-   "scoring": {
-    "native_severity": {
-     "semgrep": "NOTE"
-    },
-    "normalized_severity": "LOW",
-    "cvss_v3_1": null,
-    "epss_score": null,
-    "in_cisa_kev": false,
-    "reachable": null,
-    "risk_score": 19,
-    "risk_factors": [
-     "Low severity",
-     "Flagged by 1 scanner, confidence 50%"
-    ],
-    "confidence": 0.5
-   },
-   "evidence": {
-    "reported_by": [
-     "semgrep"
-    ],
-    "agreement_count": 1,
-    "rule_ids": {
-     "semgrep": [
-      "javascript.lang.correctness.missing-template-string-indicator"
-     ]
-    }
-   },
-   "remediation": {
-    "summary": "",
-    "suggested_patch": null,
-    "references": [],
-    "generated_by": "static",
-    "is_suggestion": true
-   },
-   "triage": {
-    "state": "open",
-    "user_marked_false_positive": false,
-    "suppression_reason": null
-   },
-   "fingerprint": "sha256:9557ecdafc207034654f6b2ce9b8fd1b4c493a42c3a1cb8bf001a420f9d4bfe3",
-   "package": null,
-   "taint_path": []
-  },
-  {
-   "id": "semgrep:javascript.lang.correctness.missing-template-string-indicator:lib/codingChallenges.ts:59",
-   "title": "This looks like a JavaScript template string",
-   "description": "This looks like a JavaScript template string. Are you missing a '$' in front of '{...}'?",
+   "description": "This looks like a JavaScript template string. Are you missing a '$' in front of '{...}'?\n\nReported 1 more time at this place in this scan.",
    "location": {
     "path": "lib/codingChallenges.ts",
     "start_line": 59,
@@ -8370,259 +8045,7 @@
   {
    "id": "semgrep:javascript.lang.correctness.missing-template-string-indicator:lib/startup/validateConfig.ts:114",
    "title": "This looks like a JavaScript template string",
-   "description": "This looks like a JavaScript template string. Are you missing a '$' in front of '{...}'?",
-   "location": {
-    "path": "lib/startup/validateConfig.ts",
-    "start_line": 114,
-    "end_line": 114,
-    "snippet": "      logger.warn(`Product ${colors.italic(product.name)} is used as ${appliedSpecials.map(({ name }) => `${colors.italic(name)}`).join(' and ')} but can only be used for one challenge (${colors.red('NOT OK')})`)",
-    "snippet_hash": "sha256:6fc89d3e598ca3eabdbd9ecddcfe5a799d99a6aa43e4b2479fea7e1175f05cf1",
-    "route": "",
-    "host": ""
-   },
-   "taxonomy": {
-    "category": "sast",
-    "cwe": [],
-    "owasp_top_10_2021": [],
-    "cve": [],
-    "aliases": []
-   },
-   "scoring": {
-    "native_severity": {
-     "semgrep": "NOTE"
-    },
-    "normalized_severity": "LOW",
-    "cvss_v3_1": null,
-    "epss_score": null,
-    "in_cisa_kev": false,
-    "reachable": null,
-    "risk_score": 19,
-    "risk_factors": [
-     "Low severity",
-     "Flagged by 1 scanner, confidence 50%"
-    ],
-    "confidence": 0.5
-   },
-   "evidence": {
-    "reported_by": [
-     "semgrep"
-    ],
-    "agreement_count": 1,
-    "rule_ids": {
-     "semgrep": [
-      "javascript.lang.correctness.missing-template-string-indicator"
-     ]
-    }
-   },
-   "remediation": {
-    "summary": "",
-    "suggested_patch": null,
-    "references": [],
-    "generated_by": "static",
-    "is_suggestion": true
-   },
-   "triage": {
-    "state": "open",
-    "user_marked_false_positive": false,
-    "suppression_reason": null
-   },
-   "fingerprint": "sha256:c8471da6e79719a9fe7e0c697b3e1ecd7c4eab6d1432684f706afadb651d6c2d",
-   "package": null,
-   "taint_path": []
-  },
-  {
-   "id": "semgrep:javascript.lang.correctness.missing-template-string-indicator:lib/startup/validateConfig.ts:114",
-   "title": "This looks like a JavaScript template string",
-   "description": "This looks like a JavaScript template string. Are you missing a '$' in front of '{...}'?",
-   "location": {
-    "path": "lib/startup/validateConfig.ts",
-    "start_line": 114,
-    "end_line": 114,
-    "snippet": "      logger.warn(`Product ${colors.italic(product.name)} is used as ${appliedSpecials.map(({ name }) => `${colors.italic(name)}`).join(' and ')} but can only be used for one challenge (${colors.red('NOT OK')})`)",
-    "snippet_hash": "sha256:6fc89d3e598ca3eabdbd9ecddcfe5a799d99a6aa43e4b2479fea7e1175f05cf1",
-    "route": "",
-    "host": ""
-   },
-   "taxonomy": {
-    "category": "sast",
-    "cwe": [],
-    "owasp_top_10_2021": [],
-    "cve": [],
-    "aliases": []
-   },
-   "scoring": {
-    "native_severity": {
-     "semgrep": "NOTE"
-    },
-    "normalized_severity": "LOW",
-    "cvss_v3_1": null,
-    "epss_score": null,
-    "in_cisa_kev": false,
-    "reachable": null,
-    "risk_score": 19,
-    "risk_factors": [
-     "Low severity",
-     "Flagged by 1 scanner, confidence 50%"
-    ],
-    "confidence": 0.5
-   },
-   "evidence": {
-    "reported_by": [
-     "semgrep"
-    ],
-    "agreement_count": 1,
-    "rule_ids": {
-     "semgrep": [
-      "javascript.lang.correctness.missing-template-string-indicator"
-     ]
-    }
-   },
-   "remediation": {
-    "summary": "",
-    "suggested_patch": null,
-    "references": [],
-    "generated_by": "static",
-    "is_suggestion": true
-   },
-   "triage": {
-    "state": "open",
-    "user_marked_false_positive": false,
-    "suppression_reason": null
-   },
-   "fingerprint": "sha256:c8471da6e79719a9fe7e0c697b3e1ecd7c4eab6d1432684f706afadb651d6c2d",
-   "package": null,
-   "taint_path": []
-  },
-  {
-   "id": "semgrep:javascript.lang.correctness.missing-template-string-indicator:lib/startup/validateConfig.ts:114",
-   "title": "This looks like a JavaScript template string",
-   "description": "This looks like a JavaScript template string. Are you missing a '$' in front of '{...}'?",
-   "location": {
-    "path": "lib/startup/validateConfig.ts",
-    "start_line": 114,
-    "end_line": 114,
-    "snippet": "      logger.warn(`Product ${colors.italic(product.name)} is used as ${appliedSpecials.map(({ name }) => `${colors.italic(name)}`).join(' and ')} but can only be used for one challenge (${colors.red('NOT OK')})`)",
-    "snippet_hash": "sha256:6fc89d3e598ca3eabdbd9ecddcfe5a799d99a6aa43e4b2479fea7e1175f05cf1",
-    "route": "",
-    "host": ""
-   },
-   "taxonomy": {
-    "category": "sast",
-    "cwe": [],
-    "owasp_top_10_2021": [],
-    "cve": [],
-    "aliases": []
-   },
-   "scoring": {
-    "native_severity": {
-     "semgrep": "NOTE"
-    },
-    "normalized_severity": "LOW",
-    "cvss_v3_1": null,
-    "epss_score": null,
-    "in_cisa_kev": false,
-    "reachable": null,
-    "risk_score": 19,
-    "risk_factors": [
-     "Low severity",
-     "Flagged by 1 scanner, confidence 50%"
-    ],
-    "confidence": 0.5
-   },
-   "evidence": {
-    "reported_by": [
-     "semgrep"
-    ],
-    "agreement_count": 1,
-    "rule_ids": {
-     "semgrep": [
-      "javascript.lang.correctness.missing-template-string-indicator"
-     ]
-    }
-   },
-   "remediation": {
-    "summary": "",
-    "suggested_patch": null,
-    "references": [],
-    "generated_by": "static",
-    "is_suggestion": true
-   },
-   "triage": {
-    "state": "open",
-    "user_marked_false_positive": false,
-    "suppression_reason": null
-   },
-   "fingerprint": "sha256:c8471da6e79719a9fe7e0c697b3e1ecd7c4eab6d1432684f706afadb651d6c2d",
-   "package": null,
-   "taint_path": []
-  },
-  {
-   "id": "semgrep:javascript.lang.correctness.missing-template-string-indicator:lib/startup/validateConfig.ts:114",
-   "title": "This looks like a JavaScript template string",
-   "description": "This looks like a JavaScript template string. Are you missing a '$' in front of '{...}'?",
-   "location": {
-    "path": "lib/startup/validateConfig.ts",
-    "start_line": 114,
-    "end_line": 114,
-    "snippet": "      logger.warn(`Product ${colors.italic(product.name)} is used as ${appliedSpecials.map(({ name }) => `${colors.italic(name)}`).join(' and ')} but can only be used for one challenge (${colors.red('NOT OK')})`)",
-    "snippet_hash": "sha256:6fc89d3e598ca3eabdbd9ecddcfe5a799d99a6aa43e4b2479fea7e1175f05cf1",
-    "route": "",
-    "host": ""
-   },
-   "taxonomy": {
-    "category": "sast",
-    "cwe": [],
-    "owasp_top_10_2021": [],
-    "cve": [],
-    "aliases": []
-   },
-   "scoring": {
-    "native_severity": {
-     "semgrep": "NOTE"
-    },
-    "normalized_severity": "LOW",
-    "cvss_v3_1": null,
-    "epss_score": null,
-    "in_cisa_kev": false,
-    "reachable": null,
-    "risk_score": 19,
-    "risk_factors": [
-     "Low severity",
-     "Flagged by 1 scanner, confidence 50%"
-    ],
-    "confidence": 0.5
-   },
-   "evidence": {
-    "reported_by": [
-     "semgrep"
-    ],
-    "agreement_count": 1,
-    "rule_ids": {
-     "semgrep": [
-      "javascript.lang.correctness.missing-template-string-indicator"
-     ]
-    }
-   },
-   "remediation": {
-    "summary": "",
-    "suggested_patch": null,
-    "references": [],
-    "generated_by": "static",
-    "is_suggestion": true
-   },
-   "triage": {
-    "state": "open",
-    "user_marked_false_positive": false,
-    "suppression_reason": null
-   },
-   "fingerprint": "sha256:c8471da6e79719a9fe7e0c697b3e1ecd7c4eab6d1432684f706afadb651d6c2d",
-   "package": null,
-   "taint_path": []
-  },
-  {
-   "id": "semgrep:javascript.lang.correctness.missing-template-string-indicator:lib/startup/validateConfig.ts:114",
-   "title": "This looks like a JavaScript template string",
-   "description": "This looks like a JavaScript template string. Are you missing a '$' in front of '{...}'?",
+   "description": "This looks like a JavaScript template string. Are you missing a '$' in front of '{...}'?\n\nReported 4 more times at this place in this scan.",
    "location": {
     "path": "lib/startup/validateConfig.ts",
     "start_line": 114,
@@ -8685,259 +8108,7 @@
   {
    "id": "semgrep:javascript.lang.correctness.missing-template-string-indicator:lib/startup/validateConfig.ts:162",
    "title": "This looks like a JavaScript template string",
-   "description": "This looks like a JavaScript template string. Are you missing a '$' in front of '{...}'?",
-   "location": {
-    "path": "lib/startup/validateConfig.ts",
-    "start_line": 162,
-    "end_line": 162,
-    "snippet": "      logger.warn(`Memory ${colors.italic(memory.caption)} is used as ${appliedSpecials.map(({ name }) => `${colors.italic(name)}`).join(' and ')} but can only be used for one challenge (${colors.red('NOT OK')})`)",
-    "snippet_hash": "sha256:55031cc70eeee5b9b5aa2062c8069116897498549cdb03e077e79107edb13460",
-    "route": "",
-    "host": ""
-   },
-   "taxonomy": {
-    "category": "sast",
-    "cwe": [],
-    "owasp_top_10_2021": [],
-    "cve": [],
-    "aliases": []
-   },
-   "scoring": {
-    "native_severity": {
-     "semgrep": "NOTE"
-    },
-    "normalized_severity": "LOW",
-    "cvss_v3_1": null,
-    "epss_score": null,
-    "in_cisa_kev": false,
-    "reachable": null,
-    "risk_score": 19,
-    "risk_factors": [
-     "Low severity",
-     "Flagged by 1 scanner, confidence 50%"
-    ],
-    "confidence": 0.5
-   },
-   "evidence": {
-    "reported_by": [
-     "semgrep"
-    ],
-    "agreement_count": 1,
-    "rule_ids": {
-     "semgrep": [
-      "javascript.lang.correctness.missing-template-string-indicator"
-     ]
-    }
-   },
-   "remediation": {
-    "summary": "",
-    "suggested_patch": null,
-    "references": [],
-    "generated_by": "static",
-    "is_suggestion": true
-   },
-   "triage": {
-    "state": "open",
-    "user_marked_false_positive": false,
-    "suppression_reason": null
-   },
-   "fingerprint": "sha256:c8471da6e79719a9fe7e0c697b3e1ecd7c4eab6d1432684f706afadb651d6c2d",
-   "package": null,
-   "taint_path": []
-  },
-  {
-   "id": "semgrep:javascript.lang.correctness.missing-template-string-indicator:lib/startup/validateConfig.ts:162",
-   "title": "This looks like a JavaScript template string",
-   "description": "This looks like a JavaScript template string. Are you missing a '$' in front of '{...}'?",
-   "location": {
-    "path": "lib/startup/validateConfig.ts",
-    "start_line": 162,
-    "end_line": 162,
-    "snippet": "      logger.warn(`Memory ${colors.italic(memory.caption)} is used as ${appliedSpecials.map(({ name }) => `${colors.italic(name)}`).join(' and ')} but can only be used for one challenge (${colors.red('NOT OK')})`)",
-    "snippet_hash": "sha256:55031cc70eeee5b9b5aa2062c8069116897498549cdb03e077e79107edb13460",
-    "route": "",
-    "host": ""
-   },
-   "taxonomy": {
-    "category": "sast",
-    "cwe": [],
-    "owasp_top_10_2021": [],
-    "cve": [],
-    "aliases": []
-   },
-   "scoring": {
-    "native_severity": {
-     "semgrep": "NOTE"
-    },
-    "normalized_severity": "LOW",
-    "cvss_v3_1": null,
-    "epss_score": null,
-    "in_cisa_kev": false,
-    "reachable": null,
-    "risk_score": 19,
-    "risk_factors": [
-     "Low severity",
-     "Flagged by 1 scanner, confidence 50%"
-    ],
-    "confidence": 0.5
-   },
-   "evidence": {
-    "reported_by": [
-     "semgrep"
-    ],
-    "agreement_count": 1,
-    "rule_ids": {
-     "semgrep": [
-      "javascript.lang.correctness.missing-template-string-indicator"
-     ]
-    }
-   },
-   "remediation": {
-    "summary": "",
-    "suggested_patch": null,
-    "references": [],
-    "generated_by": "static",
-    "is_suggestion": true
-   },
-   "triage": {
-    "state": "open",
-    "user_marked_false_positive": false,
-    "suppression_reason": null
-   },
-   "fingerprint": "sha256:c8471da6e79719a9fe7e0c697b3e1ecd7c4eab6d1432684f706afadb651d6c2d",
-   "package": null,
-   "taint_path": []
-  },
-  {
-   "id": "semgrep:javascript.lang.correctness.missing-template-string-indicator:lib/startup/validateConfig.ts:162",
-   "title": "This looks like a JavaScript template string",
-   "description": "This looks like a JavaScript template string. Are you missing a '$' in front of '{...}'?",
-   "location": {
-    "path": "lib/startup/validateConfig.ts",
-    "start_line": 162,
-    "end_line": 162,
-    "snippet": "      logger.warn(`Memory ${colors.italic(memory.caption)} is used as ${appliedSpecials.map(({ name }) => `${colors.italic(name)}`).join(' and ')} but can only be used for one challenge (${colors.red('NOT OK')})`)",
-    "snippet_hash": "sha256:55031cc70eeee5b9b5aa2062c8069116897498549cdb03e077e79107edb13460",
-    "route": "",
-    "host": ""
-   },
-   "taxonomy": {
-    "category": "sast",
-    "cwe": [],
-    "owasp_top_10_2021": [],
-    "cve": [],
-    "aliases": []
-   },
-   "scoring": {
-    "native_severity": {
-     "semgrep": "NOTE"
-    },
-    "normalized_severity": "LOW",
-    "cvss_v3_1": null,
-    "epss_score": null,
-    "in_cisa_kev": false,
-    "reachable": null,
-    "risk_score": 19,
-    "risk_factors": [
-     "Low severity",
-     "Flagged by 1 scanner, confidence 50%"
-    ],
-    "confidence": 0.5
-   },
-   "evidence": {
-    "reported_by": [
-     "semgrep"
-    ],
-    "agreement_count": 1,
-    "rule_ids": {
-     "semgrep": [
-      "javascript.lang.correctness.missing-template-string-indicator"
-     ]
-    }
-   },
-   "remediation": {
-    "summary": "",
-    "suggested_patch": null,
-    "references": [],
-    "generated_by": "static",
-    "is_suggestion": true
-   },
-   "triage": {
-    "state": "open",
-    "user_marked_false_positive": false,
-    "suppression_reason": null
-   },
-   "fingerprint": "sha256:c8471da6e79719a9fe7e0c697b3e1ecd7c4eab6d1432684f706afadb651d6c2d",
-   "package": null,
-   "taint_path": []
-  },
-  {
-   "id": "semgrep:javascript.lang.correctness.missing-template-string-indicator:lib/startup/validateConfig.ts:162",
-   "title": "This looks like a JavaScript template string",
-   "description": "This looks like a JavaScript template string. Are you missing a '$' in front of '{...}'?",
-   "location": {
-    "path": "lib/startup/validateConfig.ts",
-    "start_line": 162,
-    "end_line": 162,
-    "snippet": "      logger.warn(`Memory ${colors.italic(memory.caption)} is used as ${appliedSpecials.map(({ name }) => `${colors.italic(name)}`).join(' and ')} but can only be used for one challenge (${colors.red('NOT OK')})`)",
-    "snippet_hash": "sha256:55031cc70eeee5b9b5aa2062c8069116897498549cdb03e077e79107edb13460",
-    "route": "",
-    "host": ""
-   },
-   "taxonomy": {
-    "category": "sast",
-    "cwe": [],
-    "owasp_top_10_2021": [],
-    "cve": [],
-    "aliases": []
-   },
-   "scoring": {
-    "native_severity": {
-     "semgrep": "NOTE"
-    },
-    "normalized_severity": "LOW",
-    "cvss_v3_1": null,
-    "epss_score": null,
-    "in_cisa_kev": false,
-    "reachable": null,
-    "risk_score": 19,
-    "risk_factors": [
-     "Low severity",
-     "Flagged by 1 scanner, confidence 50%"
-    ],
-    "confidence": 0.5
-   },
-   "evidence": {
-    "reported_by": [
-     "semgrep"
-    ],
-    "agreement_count": 1,
-    "rule_ids": {
-     "semgrep": [
-      "javascript.lang.correctness.missing-template-string-indicator"
-     ]
-    }
-   },
-   "remediation": {
-    "summary": "",
-    "suggested_patch": null,
-    "references": [],
-    "generated_by": "static",
-    "is_suggestion": true
-   },
-   "triage": {
-    "state": "open",
-    "user_marked_false_positive": false,
-    "suppression_reason": null
-   },
-   "fingerprint": "sha256:c8471da6e79719a9fe7e0c697b3e1ecd7c4eab6d1432684f706afadb651d6c2d",
-   "package": null,
-   "taint_path": []
-  },
-  {
-   "id": "semgrep:javascript.lang.correctness.missing-template-string-indicator:lib/startup/validateConfig.ts:162",
-   "title": "This looks like a JavaScript template string",
-   "description": "This looks like a JavaScript template string. Are you missing a '$' in front of '{...}'?",
+   "description": "This looks like a JavaScript template string. Are you missing a '$' in front of '{...}'?\n\nReported 4 more times at this place in this scan.",
    "location": {
     "path": "lib/startup/validateConfig.ts",
     "start_line": 162,
@@ -9130,133 +8301,7 @@
   {
    "id": "semgrep:javascript.lang.correctness.missing-template-string-indicator:test/api/authenticatedUsersSpec.ts:14",
    "title": "This looks like a JavaScript template string",
-   "description": "This looks like a JavaScript template string. Are you missing a '$' in front of '{...}'?",
-   "location": {
-    "path": "test/api/authenticatedUsersSpec.ts",
-    "start_line": 14,
-    "end_line": 14,
-    "snippet": "const authHeader = { Authorization: `Bearer ${security.authorize({ data: { email: 'admin@juice-sh.op' } })}`, 'content-type': 'application/json' }",
-    "snippet_hash": "sha256:a0c6a080ec63f3a7aefd2aabdcbb9e913cd74707b32f0fa497e0e4c22610b265",
-    "route": "",
-    "host": ""
-   },
-   "taxonomy": {
-    "category": "sast",
-    "cwe": [],
-    "owasp_top_10_2021": [],
-    "cve": [],
-    "aliases": []
-   },
-   "scoring": {
-    "native_severity": {
-     "semgrep": "NOTE"
-    },
-    "normalized_severity": "LOW",
-    "cvss_v3_1": null,
-    "epss_score": null,
-    "in_cisa_kev": false,
-    "reachable": null,
-    "risk_score": 19,
-    "risk_factors": [
-     "Low severity",
-     "Flagged by 1 scanner, confidence 50%"
-    ],
-    "confidence": 0.5
-   },
-   "evidence": {
-    "reported_by": [
-     "semgrep"
-    ],
-    "agreement_count": 1,
-    "rule_ids": {
-     "semgrep": [
-      "javascript.lang.correctness.missing-template-string-indicator"
-     ]
-    }
-   },
-   "remediation": {
-    "summary": "",
-    "suggested_patch": null,
-    "references": [],
-    "generated_by": "static",
-    "is_suggestion": true
-   },
-   "triage": {
-    "state": "open",
-    "user_marked_false_positive": false,
-    "suppression_reason": null
-   },
-   "fingerprint": "sha256:d3caa21b2525506b018b1a27a10d086c1a42ebcc4a78b3e0471d1f64f5d20875",
-   "package": null,
-   "taint_path": []
-  },
-  {
-   "id": "semgrep:javascript.lang.correctness.missing-template-string-indicator:test/api/authenticatedUsersSpec.ts:14",
-   "title": "This looks like a JavaScript template string",
-   "description": "This looks like a JavaScript template string. Are you missing a '$' in front of '{...}'?",
-   "location": {
-    "path": "test/api/authenticatedUsersSpec.ts",
-    "start_line": 14,
-    "end_line": 14,
-    "snippet": "const authHeader = { Authorization: `Bearer ${security.authorize({ data: { email: 'admin@juice-sh.op' } })}`, 'content-type': 'application/json' }",
-    "snippet_hash": "sha256:a0c6a080ec63f3a7aefd2aabdcbb9e913cd74707b32f0fa497e0e4c22610b265",
-    "route": "",
-    "host": ""
-   },
-   "taxonomy": {
-    "category": "sast",
-    "cwe": [],
-    "owasp_top_10_2021": [],
-    "cve": [],
-    "aliases": []
-   },
-   "scoring": {
-    "native_severity": {
-     "semgrep": "NOTE"
-    },
-    "normalized_severity": "LOW",
-    "cvss_v3_1": null,
-    "epss_score": null,
-    "in_cisa_kev": false,
-    "reachable": null,
-    "risk_score": 19,
-    "risk_factors": [
-     "Low severity",
-     "Flagged by 1 scanner, confidence 50%"
-    ],
-    "confidence": 0.5
-   },
-   "evidence": {
-    "reported_by": [
-     "semgrep"
-    ],
-    "agreement_count": 1,
-    "rule_ids": {
-     "semgrep": [
-      "javascript.lang.correctness.missing-template-string-indicator"
-     ]
-    }
-   },
-   "remediation": {
-    "summary": "",
-    "suggested_patch": null,
-    "references": [],
-    "generated_by": "static",
-    "is_suggestion": true
-   },
-   "triage": {
-    "state": "open",
-    "user_marked_false_positive": false,
-    "suppression_reason": null
-   },
-   "fingerprint": "sha256:d3caa21b2525506b018b1a27a10d086c1a42ebcc4a78b3e0471d1f64f5d20875",
-   "package": null,
-   "taint_path": []
-  },
-  {
-   "id": "semgrep:javascript.lang.correctness.missing-template-string-indicator:test/api/authenticatedUsersSpec.ts:14",
-   "title": "This looks like a JavaScript template string",
-   "description": "This looks like a JavaScript template string. Are you missing a '$' in front of '{...}'?",
+   "description": "This looks like a JavaScript template string. Are you missing a '$' in front of '{...}'?\n\nReported 2 more times at this place in this scan.",
    "location": {
     "path": "test/api/authenticatedUsersSpec.ts",
     "start_line": 14,
@@ -9391,16 +8436,16 @@
    "tools": [
     "zap-baseline"
    ],
-   "created_at": "2026-10-07T16:41:58Z",
-   "started_at": "2026-10-07T16:41:58Z",
-   "finished_at": "2026-10-07T16:41:58Z",
+   "created_at": "2026-10-11T18:52:21Z",
+   "started_at": "2026-10-11T18:52:21Z",
+   "finished_at": "2026-10-11T18:52:21Z",
    "error": null,
    "tool_status": {
     "zap-baseline": {
      "status": "ok",
-     "findings": 49,
+     "findings": 47,
      "exit_code": null,
-     "duration_seconds": 177.21,
+     "duration_seconds": 49.61,
      "error": null,
      "warnings": null,
      "raw_artifact": null
@@ -9409,16 +8454,16 @@
    "severity_counts": {
     "HIGH": 1,
     "MEDIUM": 10,
-    "LOW": 27,
-    "INFO": 11
+    "LOW": 17,
+    "INFO": 10
    },
-   "raw_findings": 49,
-   "unique_findings": 49,
-   "dedup_rate": 0.0
+   "raw_findings": 47,
+   "unique_findings": 38,
+   "dedup_rate": 0.191
   },
   "findings": [
    {
-    "id": "zap-10003-9242fa29e377",
+    "id": "zap-10003-a9184d8ff627",
     "title": "Vulnerable JS Library",
     "description": "The identified library appears to be vulnerable.\n\nMethod: GET\nEvidence: [\"ng-version\",\"19.2.7\"]\nOther info: The identified library @angular/core, version 19.2.7 is vulnerable.\nCVE-2026-32635\nCVE-2026-50557\nCVE-2026-52725\nCVE-2026-88057\nCVE-2026-27970\nCVE-2026-54267\nhttps://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP\nhttps://github.com/angular/angular/pull/67561\nhttps://github.com/angular/angular/commit/2f96c8020f85ccb715a76de4b79a0c680c2c7264\nhttps://github.com/angular/angular/releases/tag/v20.3.28\nhttps://github.com/angular/angular/pull/67541\nhttps://developer.mozilla.org/en-US/docs/Web/API/Trusted_Types_API\nhttps://github.com/angular/angular/pull/69064\nhttps://github.com/angular/angular/pull/67183\nhttps://developer.mozilla.org/en-US/docs/Web/Security/Attacks/XSS\nhttps://github.com/angular/angular/issues/69550\nhttps://github.com/angular/angular/security/advisories/GHSA-rgjc-h3x7-9mwg\nhttps://github.com/angular/angular/commit/306f367899dfc2e04238fecd3455547b5d54075d\nhttps://github.com/angular/angular/security/advisories/GHSA-g93w-mfhg-p222\nhttps://github.com/angular/angular/security\u2026",
     "location": {
@@ -9428,7 +8473,7 @@
      "snippet": "",
      "snippet_hash": "",
      "route": "/vendor.js",
-     "host": "http://localhost:3000"
+     "host": "http://localhost:3300"
     },
     "taxonomy": {
      "category": "dast",
@@ -9480,12 +8525,12 @@
      "user_marked_false_positive": false,
      "suppression_reason": null
     },
-    "fingerprint": "sha256:a6ec15dbd06cc1bcc589c8fef82b19f981b0881389f0245f1a34913a4464b90f",
+    "fingerprint": "sha256:8d1a1e724ee7aa7e10f7d3e7022f42a47a12e37236e47bfc6800b29faa1d477a",
     "package": null,
     "taint_path": []
    },
    {
-    "id": "zap-10038-23f96b03219e",
+    "id": "zap-10038-8476004845b2",
     "title": "Content Security Policy (CSP) Header Not Set",
     "description": "Content Security Policy (CSP) is an added layer of security that helps to detect and mitigate certain types of attacks, including Cross Site Scripting (XSS) and data injection attacks. These attacks are used for everything from data theft to site defacement or distribution of malware. CSP provides a set of standard HTTP headers that allow website owners to declare approved sources of content that browsers should be allowed to load on that page \u2014 covered types are JavaScript, CSS, HTML frames, fonts, images and embeddable objects such as Java applets, ActiveX, audio and video files.\n\nMethod: GET",
     "location": {
@@ -9494,8 +8539,8 @@
      "end_line": 0,
      "snippet": "",
      "snippet_hash": "",
-     "route": "/assets/public/assets/public/favicon_js.ico",
-     "host": "http://localhost:3000"
+     "route": "/styles.css",
+     "host": "http://localhost:3300"
     },
     "taxonomy": {
      "category": "dast",
@@ -9553,12 +8598,12 @@
      "user_marked_false_positive": false,
      "suppression_reason": null
     },
-    "fingerprint": "sha256:d9aead031bc5a997e90611e63a1d0d14bc3f507f629d622d9994fa5eb22b6334",
+    "fingerprint": "sha256:88b320458daaef6a2aa322d1aa5deb4ab5036dc76541da3b2c660e3134a56b93",
     "package": null,
     "taint_path": []
    },
    {
-    "id": "zap-10038-32f41cc24e62",
+    "id": "zap-10038-93fae5ab4fa1",
     "title": "Content Security Policy (CSP) Header Not Set",
     "description": "Content Security Policy (CSP) is an added layer of security that helps to detect and mitigate certain types of attacks, including Cross Site Scripting (XSS) and data injection attacks. These attacks are used for everything from data theft to site defacement or distribution of malware. CSP provides a set of standard HTTP headers that allow website owners to declare approved sources of content that browsers should be allowed to load on that page \u2014 covered types are JavaScript, CSS, HTML frames, fonts, images and embeddable objects such as Java applets, ActiveX, audio and video files.\n\nMethod: GET",
     "location": {
@@ -9567,8 +8612,8 @@
      "end_line": 0,
      "snippet": "",
      "snippet_hash": "",
-     "route": "/assets/public/styles.css",
-     "host": "http://localhost:3000"
+     "route": "/runtime.js",
+     "host": "http://localhost:3300"
     },
     "taxonomy": {
      "category": "dast",
@@ -9626,12 +8671,158 @@
      "user_marked_false_positive": false,
      "suppression_reason": null
     },
-    "fingerprint": "sha256:372530d1e76d250534582c3c2402e4e2976be215d59799fcd447bce0c7a2e5b9",
+    "fingerprint": "sha256:6fe57b9ecce61a9cd3d61c78c1bfd3924427446ccc59501cd9464dae5ef7ac79",
     "package": null,
     "taint_path": []
    },
    {
-    "id": "zap-10038-43a47108331f",
+    "id": "zap-10038-a1a5abb920ef",
+    "title": "Content Security Policy (CSP) Header Not Set",
+    "description": "Content Security Policy (CSP) is an added layer of security that helps to detect and mitigate certain types of attacks, including Cross Site Scripting (XSS) and data injection attacks. These attacks are used for everything from data theft to site defacement or distribution of malware. CSP provides a set of standard HTTP headers that allow website owners to declare approved sources of content that browsers should be allowed to load on that page \u2014 covered types are JavaScript, CSS, HTML frames, fonts, images and embeddable objects such as Java applets, ActiveX, audio and video files.\n\nMethod: GET",
+    "location": {
+     "path": "",
+     "start_line": 0,
+     "end_line": 0,
+     "snippet": "",
+     "snippet_hash": "",
+     "route": "/polyfills.js",
+     "host": "http://localhost:3300"
+    },
+    "taxonomy": {
+     "category": "dast",
+     "cwe": [
+      "CWE-693"
+     ],
+     "owasp_top_10_2021": [],
+     "cve": [],
+     "aliases": []
+    },
+    "scoring": {
+     "native_severity": {
+      "zap": "Medium (High)"
+     },
+     "normalized_severity": "MEDIUM",
+     "cvss_v3_1": null,
+     "epss_score": null,
+     "in_cisa_kev": false,
+     "reachable": null,
+     "risk_score": 48,
+     "risk_factors": [
+      "Medium severity",
+      "Flagged by 1 scanner, confidence 90%"
+     ],
+     "confidence": 0.9
+    },
+    "evidence": {
+     "reported_by": [
+      "zap-baseline"
+     ],
+     "agreement_count": 1,
+     "rule_ids": {
+      "zap-baseline": [
+       "10038"
+      ]
+     }
+    },
+    "remediation": {
+     "summary": "Ensure that your web server, application server, load balancer, etc. is configured to set the Content-Security-Policy header.",
+     "suggested_patch": null,
+     "references": [
+      "https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP",
+      "https://cheatsheetseries.owasp.org/cheatsheets/Content_Security_Policy_Cheat_Sheet.html",
+      "https://www.w3.org/TR/CSP/",
+      "https://w3c.github.io/webappsec-csp/",
+      "https://web.dev/articles/csp",
+      "https://caniuse.com/#feat=contentsecuritypolicy",
+      "https://content-security-policy.com/"
+     ],
+     "generated_by": "static",
+     "is_suggestion": true
+    },
+    "triage": {
+     "state": "open",
+     "user_marked_false_positive": false,
+     "suppression_reason": null
+    },
+    "fingerprint": "sha256:9551225961b473e50fe20b9952387851766973eaf41328aaf183160dc8942f72",
+    "package": null,
+    "taint_path": []
+   },
+   {
+    "id": "zap-10038-d1b5d4fcc571",
+    "title": "Content Security Policy (CSP) Header Not Set",
+    "description": "Content Security Policy (CSP) is an added layer of security that helps to detect and mitigate certain types of attacks, including Cross Site Scripting (XSS) and data injection attacks. These attacks are used for everything from data theft to site defacement or distribution of malware. CSP provides a set of standard HTTP headers that allow website owners to declare approved sources of content that browsers should be allowed to load on that page \u2014 covered types are JavaScript, CSS, HTML frames, fonts, images and embeddable objects such as Java applets, ActiveX, audio and video files.\n\nMethod: GET",
+    "location": {
+     "path": "",
+     "start_line": 0,
+     "end_line": 0,
+     "snippet": "",
+     "snippet_hash": "",
+     "route": "/main.js",
+     "host": "http://localhost:3300"
+    },
+    "taxonomy": {
+     "category": "dast",
+     "cwe": [
+      "CWE-693"
+     ],
+     "owasp_top_10_2021": [],
+     "cve": [],
+     "aliases": []
+    },
+    "scoring": {
+     "native_severity": {
+      "zap": "Medium (High)"
+     },
+     "normalized_severity": "MEDIUM",
+     "cvss_v3_1": null,
+     "epss_score": null,
+     "in_cisa_kev": false,
+     "reachable": null,
+     "risk_score": 48,
+     "risk_factors": [
+      "Medium severity",
+      "Flagged by 1 scanner, confidence 90%"
+     ],
+     "confidence": 0.9
+    },
+    "evidence": {
+     "reported_by": [
+      "zap-baseline"
+     ],
+     "agreement_count": 1,
+     "rule_ids": {
+      "zap-baseline": [
+       "10038"
+      ]
+     }
+    },
+    "remediation": {
+     "summary": "Ensure that your web server, application server, load balancer, etc. is configured to set the Content-Security-Policy header.",
+     "suggested_patch": null,
+     "references": [
+      "https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP",
+      "https://cheatsheetseries.owasp.org/cheatsheets/Content_Security_Policy_Cheat_Sheet.html",
+      "https://www.w3.org/TR/CSP/",
+      "https://w3c.github.io/webappsec-csp/",
+      "https://web.dev/articles/csp",
+      "https://caniuse.com/#feat=contentsecuritypolicy",
+      "https://content-security-policy.com/"
+     ],
+     "generated_by": "static",
+     "is_suggestion": true
+    },
+    "triage": {
+     "state": "open",
+     "user_marked_false_positive": false,
+     "suppression_reason": null
+    },
+    "fingerprint": "sha256:4da65cc8e4efb2c7f000efb498405dfdc5afad394c85a4a907968aa4cd11a77a",
+    "package": null,
+    "taint_path": []
+   },
+   {
+    "id": "zap-10038-e0c74618194e",
     "title": "Content Security Policy (CSP) Header Not Set",
     "description": "Content Security Policy (CSP) is an added layer of security that helps to detect and mitigate certain types of attacks, including Cross Site Scripting (XSS) and data injection attacks. These attacks are used for everything from data theft to site defacement or distribution of malware. CSP provides a set of standard HTTP headers that allow website owners to declare approved sources of content that browsers should be allowed to load on that page \u2014 covered types are JavaScript, CSS, HTML frames, fonts, images and embeddable objects such as Java applets, ActiveX, audio and video files.\n\nMethod: GET",
     "location": {
@@ -9641,7 +8832,7 @@
      "snippet": "",
      "snippet_hash": "",
      "route": "/assets/public/favicon_js.ico",
-     "host": "http://localhost:3000"
+     "host": "http://localhost:3300"
     },
     "taxonomy": {
      "category": "dast",
@@ -9699,87 +8890,14 @@
      "user_marked_false_positive": false,
      "suppression_reason": null
     },
-    "fingerprint": "sha256:5556384dfd58ace794c607d4282f0f066c37229db00ae6885fb57f797778db2e",
+    "fingerprint": "sha256:626d2e0f6b42de141007ea67648cff55a30ed5241e0c17d83617a1372b5eedff",
     "package": null,
     "taint_path": []
    },
    {
-    "id": "zap-10038-461542af4b17",
-    "title": "Content Security Policy (CSP) Header Not Set",
-    "description": "Content Security Policy (CSP) is an added layer of security that helps to detect and mitigate certain types of attacks, including Cross Site Scripting (XSS) and data injection attacks. These attacks are used for everything from data theft to site defacement or distribution of malware. CSP provides a set of standard HTTP headers that allow website owners to declare approved sources of content that browsers should be allowed to load on that page \u2014 covered types are JavaScript, CSS, HTML frames, fonts, images and embeddable objects such as Java applets, ActiveX, audio and video files.\n\nMethod: GET",
-    "location": {
-     "path": "",
-     "start_line": 0,
-     "end_line": 0,
-     "snippet": "",
-     "snippet_hash": "",
-     "route": "/",
-     "host": "http://localhost:3000"
-    },
-    "taxonomy": {
-     "category": "dast",
-     "cwe": [
-      "CWE-693"
-     ],
-     "owasp_top_10_2021": [],
-     "cve": [],
-     "aliases": []
-    },
-    "scoring": {
-     "native_severity": {
-      "zap": "Medium (High)"
-     },
-     "normalized_severity": "MEDIUM",
-     "cvss_v3_1": null,
-     "epss_score": null,
-     "in_cisa_kev": false,
-     "reachable": null,
-     "risk_score": 48,
-     "risk_factors": [
-      "Medium severity",
-      "Flagged by 1 scanner, confidence 90%"
-     ],
-     "confidence": 0.9
-    },
-    "evidence": {
-     "reported_by": [
-      "zap-baseline"
-     ],
-     "agreement_count": 1,
-     "rule_ids": {
-      "zap-baseline": [
-       "10038"
-      ]
-     }
-    },
-    "remediation": {
-     "summary": "Ensure that your web server, application server, load balancer, etc. is configured to set the Content-Security-Policy header.",
-     "suggested_patch": null,
-     "references": [
-      "https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP",
-      "https://cheatsheetseries.owasp.org/cheatsheets/Content_Security_Policy_Cheat_Sheet.html",
-      "https://www.w3.org/TR/CSP/",
-      "https://w3c.github.io/webappsec-csp/",
-      "https://web.dev/articles/csp",
-      "https://caniuse.com/#feat=contentsecuritypolicy",
-      "https://content-security-policy.com/"
-     ],
-     "generated_by": "static",
-     "is_suggestion": true
-    },
-    "triage": {
-     "state": "open",
-     "user_marked_false_positive": false,
-     "suppression_reason": null
-    },
-    "fingerprint": "sha256:d5d52add36b82ff0d2edfa111f84b38133d56983ad202a8c2ac13de2d5d29c56",
-    "package": null,
-    "taint_path": []
-   },
-   {
-    "id": "zap-10038-b1252872d71a",
-    "title": "Content Security Policy (CSP) Header Not Set",
-    "description": "Content Security Policy (CSP) is an added layer of security that helps to detect and mitigate certain types of attacks, including Cross Site Scripting (XSS) and data injection attacks. These attacks are used for everything from data theft to site defacement or distribution of malware. CSP provides a set of standard HTTP headers that allow website owners to declare approved sources of content that browsers should be allowed to load on that page \u2014 covered types are JavaScript, CSS, HTML frames, fonts, images and embeddable objects such as Java applets, ActiveX, audio and video files.\n\nMethod: GET",
+    "id": "zap-10098-0226739ea900",
+    "title": "Cross-Domain Misconfiguration",
+    "description": "Web browser data loading may be possible, due to a Cross Origin Resource Sharing (CORS) misconfiguration on the web server.\n\nMethod: GET\nEvidence: Access-Control-Allow-Origin: *\nOther info: The CORS misconfiguration on the web server permits cross-domain read requests from arbitrary third party domains, using unauthenticated APIs on this domain. Web browser implementations do not permit arbitrary third parties to read the response from authenticated APIs, however. This reduces the risk somewhat. This misconfiguration could be used by an attacker to access data that is available in an unauthenticated manner, but which uses some other form of security, such as IP address white-listing.",
     "location": {
      "path": "",
      "start_line": 0,
@@ -9787,32 +8905,34 @@
      "snippet": "",
      "snippet_hash": "",
      "route": "/styles.css",
-     "host": "http://localhost:3000"
+     "host": "http://localhost:3300"
     },
     "taxonomy": {
      "category": "dast",
      "cwe": [
-      "CWE-693"
+      "CWE-264"
      ],
-     "owasp_top_10_2021": [],
+     "owasp_top_10_2021": [
+      "A01:2021"
+     ],
      "cve": [],
      "aliases": []
     },
     "scoring": {
      "native_severity": {
-      "zap": "Medium (High)"
+      "zap": "Medium (Medium)"
      },
      "normalized_severity": "MEDIUM",
      "cvss_v3_1": null,
      "epss_score": null,
      "in_cisa_kev": false,
      "reachable": null,
-     "risk_score": 48,
+     "risk_score": 40,
      "risk_factors": [
       "Medium severity",
-      "Flagged by 1 scanner, confidence 90%"
+      "Flagged by 1 scanner, confidence 60%"
      ],
-     "confidence": 0.9
+     "confidence": 0.6
     },
     "evidence": {
      "reported_by": [
@@ -9821,21 +8941,15 @@
      "agreement_count": 1,
      "rule_ids": {
       "zap-baseline": [
-       "10038"
+       "10098"
       ]
      }
     },
     "remediation": {
-     "summary": "Ensure that your web server, application server, load balancer, etc. is configured to set the Content-Security-Policy header.",
+     "summary": "Ensure that sensitive data is not available in an unauthenticated manner (using IP address white-listing, for instance).\n\nConfigure the \"Access-Control-Allow-Origin\" HTTP header to a more restrictive set of domains, or remove all CORS headers entirely, to allow the web browser to enforce the Same Origin Policy (SOP) in a more restrictive manner.",
      "suggested_patch": null,
      "references": [
-      "https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP",
-      "https://cheatsheetseries.owasp.org/cheatsheets/Content_Security_Policy_Cheat_Sheet.html",
-      "https://www.w3.org/TR/CSP/",
-      "https://w3c.github.io/webappsec-csp/",
-      "https://web.dev/articles/csp",
-      "https://caniuse.com/#feat=contentsecuritypolicy",
-      "https://content-security-policy.com/"
+      "https://vulncat.fortify.com/en/detail?category=HTML5&subcategory=Overly%20Permissive%20CORS%20Policy"
      ],
      "generated_by": "static",
      "is_suggestion": true
@@ -9845,12 +8959,219 @@
      "user_marked_false_positive": false,
      "suppression_reason": null
     },
-    "fingerprint": "sha256:b540c808945549e7c082e5634b081e74fa37a5d361e511f31b518934158b4f7f",
+    "fingerprint": "sha256:9b5268ef003d091091890d7107e814c9ee1f283e58018337d56c98f31a9ef5fc",
     "package": null,
     "taint_path": []
    },
    {
-    "id": "zap-10098-024ec2af8082",
+    "id": "zap-10098-089f444afbf4",
+    "title": "Cross-Domain Misconfiguration",
+    "description": "Web browser data loading may be possible, due to a Cross Origin Resource Sharing (CORS) misconfiguration on the web server.\n\nMethod: GET\nEvidence: Access-Control-Allow-Origin: *\nOther info: The CORS misconfiguration on the web server permits cross-domain read requests from arbitrary third party domains, using unauthenticated APIs on this domain. Web browser implementations do not permit arbitrary third parties to read the response from authenticated APIs, however. This reduces the risk somewhat. This misconfiguration could be used by an attacker to access data that is available in an unauthenticated manner, but which uses some other form of security, such as IP address white-listing.",
+    "location": {
+     "path": "",
+     "start_line": 0,
+     "end_line": 0,
+     "snippet": "",
+     "snippet_hash": "",
+     "route": "/main.js",
+     "host": "http://localhost:3300"
+    },
+    "taxonomy": {
+     "category": "dast",
+     "cwe": [
+      "CWE-264"
+     ],
+     "owasp_top_10_2021": [
+      "A01:2021"
+     ],
+     "cve": [],
+     "aliases": []
+    },
+    "scoring": {
+     "native_severity": {
+      "zap": "Medium (Medium)"
+     },
+     "normalized_severity": "MEDIUM",
+     "cvss_v3_1": null,
+     "epss_score": null,
+     "in_cisa_kev": false,
+     "reachable": null,
+     "risk_score": 40,
+     "risk_factors": [
+      "Medium severity",
+      "Flagged by 1 scanner, confidence 60%"
+     ],
+     "confidence": 0.6
+    },
+    "evidence": {
+     "reported_by": [
+      "zap-baseline"
+     ],
+     "agreement_count": 1,
+     "rule_ids": {
+      "zap-baseline": [
+       "10098"
+      ]
+     }
+    },
+    "remediation": {
+     "summary": "Ensure that sensitive data is not available in an unauthenticated manner (using IP address white-listing, for instance).\n\nConfigure the \"Access-Control-Allow-Origin\" HTTP header to a more restrictive set of domains, or remove all CORS headers entirely, to allow the web browser to enforce the Same Origin Policy (SOP) in a more restrictive manner.",
+     "suggested_patch": null,
+     "references": [
+      "https://vulncat.fortify.com/en/detail?category=HTML5&subcategory=Overly%20Permissive%20CORS%20Policy"
+     ],
+     "generated_by": "static",
+     "is_suggestion": true
+    },
+    "triage": {
+     "state": "open",
+     "user_marked_false_positive": false,
+     "suppression_reason": null
+    },
+    "fingerprint": "sha256:64dc7aef53862ac0dac4cb07b1b14306eb2d4ae27a9b370a2c74606fd5c48c97",
+    "package": null,
+    "taint_path": []
+   },
+   {
+    "id": "zap-10098-8dcd2e71c5f9",
+    "title": "Cross-Domain Misconfiguration",
+    "description": "Web browser data loading may be possible, due to a Cross Origin Resource Sharing (CORS) misconfiguration on the web server.\n\nMethod: GET\nEvidence: Access-Control-Allow-Origin: *\nOther info: The CORS misconfiguration on the web server permits cross-domain read requests from arbitrary third party domains, using unauthenticated APIs on this domain. Web browser implementations do not permit arbitrary third parties to read the response from authenticated APIs, however. This reduces the risk somewhat. This misconfiguration could be used by an attacker to access data that is available in an unauthenticated manner, but which uses some other form of security, such as IP address white-listing.",
+    "location": {
+     "path": "",
+     "start_line": 0,
+     "end_line": 0,
+     "snippet": "",
+     "snippet_hash": "",
+     "route": "/robots.txt",
+     "host": "http://localhost:3300"
+    },
+    "taxonomy": {
+     "category": "dast",
+     "cwe": [
+      "CWE-264"
+     ],
+     "owasp_top_10_2021": [
+      "A01:2021"
+     ],
+     "cve": [],
+     "aliases": []
+    },
+    "scoring": {
+     "native_severity": {
+      "zap": "Medium (Medium)"
+     },
+     "normalized_severity": "MEDIUM",
+     "cvss_v3_1": null,
+     "epss_score": null,
+     "in_cisa_kev": false,
+     "reachable": null,
+     "risk_score": 40,
+     "risk_factors": [
+      "Medium severity",
+      "Flagged by 1 scanner, confidence 60%"
+     ],
+     "confidence": 0.6
+    },
+    "evidence": {
+     "reported_by": [
+      "zap-baseline"
+     ],
+     "agreement_count": 1,
+     "rule_ids": {
+      "zap-baseline": [
+       "10098"
+      ]
+     }
+    },
+    "remediation": {
+     "summary": "Ensure that sensitive data is not available in an unauthenticated manner (using IP address white-listing, for instance).\n\nConfigure the \"Access-Control-Allow-Origin\" HTTP header to a more restrictive set of domains, or remove all CORS headers entirely, to allow the web browser to enforce the Same Origin Policy (SOP) in a more restrictive manner.",
+     "suggested_patch": null,
+     "references": [
+      "https://vulncat.fortify.com/en/detail?category=HTML5&subcategory=Overly%20Permissive%20CORS%20Policy"
+     ],
+     "generated_by": "static",
+     "is_suggestion": true
+    },
+    "triage": {
+     "state": "open",
+     "user_marked_false_positive": false,
+     "suppression_reason": null
+    },
+    "fingerprint": "sha256:c0bc8909db3ee6fd3d50e53531693c454388e4e7d4246dd3622c325af217d921",
+    "package": null,
+    "taint_path": []
+   },
+   {
+    "id": "zap-10098-c7fe253d26ff",
+    "title": "Cross-Domain Misconfiguration",
+    "description": "Web browser data loading may be possible, due to a Cross Origin Resource Sharing (CORS) misconfiguration on the web server.\n\nMethod: GET\nEvidence: Access-Control-Allow-Origin: *\nOther info: The CORS misconfiguration on the web server permits cross-domain read requests from arbitrary third party domains, using unauthenticated APIs on this domain. Web browser implementations do not permit arbitrary third parties to read the response from authenticated APIs, however. This reduces the risk somewhat. This misconfiguration could be used by an attacker to access data that is available in an unauthenticated manner, but which uses some other form of security, such as IP address white-listing.",
+    "location": {
+     "path": "",
+     "start_line": 0,
+     "end_line": 0,
+     "snippet": "",
+     "snippet_hash": "",
+     "route": "/runtime.js",
+     "host": "http://localhost:3300"
+    },
+    "taxonomy": {
+     "category": "dast",
+     "cwe": [
+      "CWE-264"
+     ],
+     "owasp_top_10_2021": [
+      "A01:2021"
+     ],
+     "cve": [],
+     "aliases": []
+    },
+    "scoring": {
+     "native_severity": {
+      "zap": "Medium (Medium)"
+     },
+     "normalized_severity": "MEDIUM",
+     "cvss_v3_1": null,
+     "epss_score": null,
+     "in_cisa_kev": false,
+     "reachable": null,
+     "risk_score": 40,
+     "risk_factors": [
+      "Medium severity",
+      "Flagged by 1 scanner, confidence 60%"
+     ],
+     "confidence": 0.6
+    },
+    "evidence": {
+     "reported_by": [
+      "zap-baseline"
+     ],
+     "agreement_count": 1,
+     "rule_ids": {
+      "zap-baseline": [
+       "10098"
+      ]
+     }
+    },
+    "remediation": {
+     "summary": "Ensure that sensitive data is not available in an unauthenticated manner (using IP address white-listing, for instance).\n\nConfigure the \"Access-Control-Allow-Origin\" HTTP header to a more restrictive set of domains, or remove all CORS headers entirely, to allow the web browser to enforce the Same Origin Policy (SOP) in a more restrictive manner.",
+     "suggested_patch": null,
+     "references": [
+      "https://vulncat.fortify.com/en/detail?category=HTML5&subcategory=Overly%20Permissive%20CORS%20Policy"
+     ],
+     "generated_by": "static",
+     "is_suggestion": true
+    },
+    "triage": {
+     "state": "open",
+     "user_marked_false_positive": false,
+     "suppression_reason": null
+    },
+    "fingerprint": "sha256:60423aebb1827c2097298ecc062c7d7872fce1dfd52b0fc78e2f5b93321bb640",
+    "package": null,
+    "taint_path": []
+   },
+   {
+    "id": "zap-10098-db6054179088",
     "title": "Cross-Domain Misconfiguration",
     "description": "Web browser data loading may be possible, due to a Cross Origin Resource Sharing (CORS) misconfiguration on the web server.\n\nMethod: GET\nEvidence: Access-Control-Allow-Origin: *\nOther info: The CORS misconfiguration on the web server permits cross-domain read requests from arbitrary third party domains, using unauthenticated APIs on this domain. Web browser implementations do not permit arbitrary third parties to read the response from authenticated APIs, however. This reduces the risk somewhat. This misconfiguration could be used by an attacker to access data that is available in an unauthenticated manner, but which uses some other form of security, such as IP address white-listing.",
     "location": {
@@ -9860,7 +9181,7 @@
      "snippet": "",
      "snippet_hash": "",
      "route": "/polyfills.js",
-     "host": "http://localhost:3000"
+     "host": "http://localhost:3300"
     },
     "taxonomy": {
      "category": "dast",
@@ -9914,298 +9235,22 @@
      "user_marked_false_positive": false,
      "suppression_reason": null
     },
-    "fingerprint": "sha256:46fa011b00decf970ce6f86f2f4b643cb7eb686d142f19d3ea67ff67ce98f104",
+    "fingerprint": "sha256:b3de054d831fba613665978787d31cef78098c9c3b4443dd451d6dfd68aa6518",
     "package": null,
     "taint_path": []
    },
    {
-    "id": "zap-10098-2602f6634d6a",
-    "title": "Cross-Domain Misconfiguration",
-    "description": "Web browser data loading may be possible, due to a Cross Origin Resource Sharing (CORS) misconfiguration on the web server.\n\nMethod: GET\nEvidence: Access-Control-Allow-Origin: *\nOther info: The CORS misconfiguration on the web server permits cross-domain read requests from arbitrary third party domains, using unauthenticated APIs on this domain. Web browser implementations do not permit arbitrary third parties to read the response from authenticated APIs, however. This reduces the risk somewhat. This misconfiguration could be used by an attacker to access data that is available in an unauthenticated manner, but which uses some other form of security, such as IP address white-listing.",
-    "location": {
-     "path": "",
-     "start_line": 0,
-     "end_line": 0,
-     "snippet": "",
-     "snippet_hash": "",
-     "route": "/styles.css",
-     "host": "http://localhost:3000"
-    },
-    "taxonomy": {
-     "category": "dast",
-     "cwe": [
-      "CWE-264"
-     ],
-     "owasp_top_10_2021": [
-      "A01:2021"
-     ],
-     "cve": [],
-     "aliases": []
-    },
-    "scoring": {
-     "native_severity": {
-      "zap": "Medium (Medium)"
-     },
-     "normalized_severity": "MEDIUM",
-     "cvss_v3_1": null,
-     "epss_score": null,
-     "in_cisa_kev": false,
-     "reachable": null,
-     "risk_score": 40,
-     "risk_factors": [
-      "Medium severity",
-      "Flagged by 1 scanner, confidence 60%"
-     ],
-     "confidence": 0.6
-    },
-    "evidence": {
-     "reported_by": [
-      "zap-baseline"
-     ],
-     "agreement_count": 1,
-     "rule_ids": {
-      "zap-baseline": [
-       "10098"
-      ]
-     }
-    },
-    "remediation": {
-     "summary": "Ensure that sensitive data is not available in an unauthenticated manner (using IP address white-listing, for instance).\n\nConfigure the \"Access-Control-Allow-Origin\" HTTP header to a more restrictive set of domains, or remove all CORS headers entirely, to allow the web browser to enforce the Same Origin Policy (SOP) in a more restrictive manner.",
-     "suggested_patch": null,
-     "references": [
-      "https://vulncat.fortify.com/en/detail?category=HTML5&subcategory=Overly%20Permissive%20CORS%20Policy"
-     ],
-     "generated_by": "static",
-     "is_suggestion": true
-    },
-    "triage": {
-     "state": "open",
-     "user_marked_false_positive": false,
-     "suppression_reason": null
-    },
-    "fingerprint": "sha256:c50563efa14273a537586283d141dc6d3a8f4a2fc67d1705e1e4bc1f2dc4145a",
-    "package": null,
-    "taint_path": []
-   },
-   {
-    "id": "zap-10098-7fb1a48bc8da",
-    "title": "Cross-Domain Misconfiguration",
-    "description": "Web browser data loading may be possible, due to a Cross Origin Resource Sharing (CORS) misconfiguration on the web server.\n\nMethod: GET\nEvidence: Access-Control-Allow-Origin: *\nOther info: The CORS misconfiguration on the web server permits cross-domain read requests from arbitrary third party domains, using unauthenticated APIs on this domain. Web browser implementations do not permit arbitrary third parties to read the response from authenticated APIs, however. This reduces the risk somewhat. This misconfiguration could be used by an attacker to access data that is available in an unauthenticated manner, but which uses some other form of security, such as IP address white-listing.",
-    "location": {
-     "path": "",
-     "start_line": 0,
-     "end_line": 0,
-     "snippet": "",
-     "snippet_hash": "",
-     "route": "/assets/public/styles.css",
-     "host": "http://localhost:3000"
-    },
-    "taxonomy": {
-     "category": "dast",
-     "cwe": [
-      "CWE-264"
-     ],
-     "owasp_top_10_2021": [
-      "A01:2021"
-     ],
-     "cve": [],
-     "aliases": []
-    },
-    "scoring": {
-     "native_severity": {
-      "zap": "Medium (Medium)"
-     },
-     "normalized_severity": "MEDIUM",
-     "cvss_v3_1": null,
-     "epss_score": null,
-     "in_cisa_kev": false,
-     "reachable": null,
-     "risk_score": 40,
-     "risk_factors": [
-      "Medium severity",
-      "Flagged by 1 scanner, confidence 60%"
-     ],
-     "confidence": 0.6
-    },
-    "evidence": {
-     "reported_by": [
-      "zap-baseline"
-     ],
-     "agreement_count": 1,
-     "rule_ids": {
-      "zap-baseline": [
-       "10098"
-      ]
-     }
-    },
-    "remediation": {
-     "summary": "Ensure that sensitive data is not available in an unauthenticated manner (using IP address white-listing, for instance).\n\nConfigure the \"Access-Control-Allow-Origin\" HTTP header to a more restrictive set of domains, or remove all CORS headers entirely, to allow the web browser to enforce the Same Origin Policy (SOP) in a more restrictive manner.",
-     "suggested_patch": null,
-     "references": [
-      "https://vulncat.fortify.com/en/detail?category=HTML5&subcategory=Overly%20Permissive%20CORS%20Policy"
-     ],
-     "generated_by": "static",
-     "is_suggestion": true
-    },
-    "triage": {
-     "state": "open",
-     "user_marked_false_positive": false,
-     "suppression_reason": null
-    },
-    "fingerprint": "sha256:42088e1f87e69c3974d221f26c921608861956cf09db7e71156dfddb99b67539",
-    "package": null,
-    "taint_path": []
-   },
-   {
-    "id": "zap-10098-d09cec2f1e79",
-    "title": "Cross-Domain Misconfiguration",
-    "description": "Web browser data loading may be possible, due to a Cross Origin Resource Sharing (CORS) misconfiguration on the web server.\n\nMethod: GET\nEvidence: Access-Control-Allow-Origin: *\nOther info: The CORS misconfiguration on the web server permits cross-domain read requests from arbitrary third party domains, using unauthenticated APIs on this domain. Web browser implementations do not permit arbitrary third parties to read the response from authenticated APIs, however. This reduces the risk somewhat. This misconfiguration could be used by an attacker to access data that is available in an unauthenticated manner, but which uses some other form of security, such as IP address white-listing.",
-    "location": {
-     "path": "",
-     "start_line": 0,
-     "end_line": 0,
-     "snippet": "",
-     "snippet_hash": "",
-     "route": "/robots.txt",
-     "host": "http://localhost:3000"
-    },
-    "taxonomy": {
-     "category": "dast",
-     "cwe": [
-      "CWE-264"
-     ],
-     "owasp_top_10_2021": [
-      "A01:2021"
-     ],
-     "cve": [],
-     "aliases": []
-    },
-    "scoring": {
-     "native_severity": {
-      "zap": "Medium (Medium)"
-     },
-     "normalized_severity": "MEDIUM",
-     "cvss_v3_1": null,
-     "epss_score": null,
-     "in_cisa_kev": false,
-     "reachable": null,
-     "risk_score": 40,
-     "risk_factors": [
-      "Medium severity",
-      "Flagged by 1 scanner, confidence 60%"
-     ],
-     "confidence": 0.6
-    },
-    "evidence": {
-     "reported_by": [
-      "zap-baseline"
-     ],
-     "agreement_count": 1,
-     "rule_ids": {
-      "zap-baseline": [
-       "10098"
-      ]
-     }
-    },
-    "remediation": {
-     "summary": "Ensure that sensitive data is not available in an unauthenticated manner (using IP address white-listing, for instance).\n\nConfigure the \"Access-Control-Allow-Origin\" HTTP header to a more restrictive set of domains, or remove all CORS headers entirely, to allow the web browser to enforce the Same Origin Policy (SOP) in a more restrictive manner.",
-     "suggested_patch": null,
-     "references": [
-      "https://vulncat.fortify.com/en/detail?category=HTML5&subcategory=Overly%20Permissive%20CORS%20Policy"
-     ],
-     "generated_by": "static",
-     "is_suggestion": true
-    },
-    "triage": {
-     "state": "open",
-     "user_marked_false_positive": false,
-     "suppression_reason": null
-    },
-    "fingerprint": "sha256:cbf7df95dae370b221d70c5b47f7c215e3197d2fc981e9041ceecb044dba42ff",
-    "package": null,
-    "taint_path": []
-   },
-   {
-    "id": "zap-10098-f81da7db6e36",
-    "title": "Cross-Domain Misconfiguration",
-    "description": "Web browser data loading may be possible, due to a Cross Origin Resource Sharing (CORS) misconfiguration on the web server.\n\nMethod: GET\nEvidence: Access-Control-Allow-Origin: *\nOther info: The CORS misconfiguration on the web server permits cross-domain read requests from arbitrary third party domains, using unauthenticated APIs on this domain. Web browser implementations do not permit arbitrary third parties to read the response from authenticated APIs, however. This reduces the risk somewhat. This misconfiguration could be used by an attacker to access data that is available in an unauthenticated manner, but which uses some other form of security, such as IP address white-listing.",
-    "location": {
-     "path": "",
-     "start_line": 0,
-     "end_line": 0,
-     "snippet": "",
-     "snippet_hash": "",
-     "route": "/assets/public/assets/public/favicon_js.ico",
-     "host": "http://localhost:3000"
-    },
-    "taxonomy": {
-     "category": "dast",
-     "cwe": [
-      "CWE-264"
-     ],
-     "owasp_top_10_2021": [
-      "A01:2021"
-     ],
-     "cve": [],
-     "aliases": []
-    },
-    "scoring": {
-     "native_severity": {
-      "zap": "Medium (Medium)"
-     },
-     "normalized_severity": "MEDIUM",
-     "cvss_v3_1": null,
-     "epss_score": null,
-     "in_cisa_kev": false,
-     "reachable": null,
-     "risk_score": 40,
-     "risk_factors": [
-      "Medium severity",
-      "Flagged by 1 scanner, confidence 60%"
-     ],
-     "confidence": 0.6
-    },
-    "evidence": {
-     "reported_by": [
-      "zap-baseline"
-     ],
-     "agreement_count": 1,
-     "rule_ids": {
-      "zap-baseline": [
-       "10098"
-      ]
-     }
-    },
-    "remediation": {
-     "summary": "Ensure that sensitive data is not available in an unauthenticated manner (using IP address white-listing, for instance).\n\nConfigure the \"Access-Control-Allow-Origin\" HTTP header to a more restrictive set of domains, or remove all CORS headers entirely, to allow the web browser to enforce the Same Origin Policy (SOP) in a more restrictive manner.",
-     "suggested_patch": null,
-     "references": [
-      "https://vulncat.fortify.com/en/detail?category=HTML5&subcategory=Overly%20Permissive%20CORS%20Policy"
-     ],
-     "generated_by": "static",
-     "is_suggestion": true
-    },
-    "triage": {
-     "state": "open",
-     "user_marked_false_positive": false,
-     "suppression_reason": null
-    },
-    "fingerprint": "sha256:585590008e61570863efcfa4d4276bb489da8ce6c980dc0e901af66169f9450a",
-    "package": null,
-    "taint_path": []
-   },
-   {
-    "id": "zap-10017-2bb21796925a",
+    "id": "zap-10017-16440158d532",
     "title": "Cross-Domain JavaScript Source File Inclusion",
-    "description": "The page includes one or more script files from a third-party domain.\n\nMethod: GET\nParameter: //cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.1.0/cookieconsent.min.js\nEvidence: <script src=\"//cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.1.0/cookieconsent.min.js\"></script>",
+    "description": "The page includes one or more script files from a third-party domain.\n\nMethod: GET\nParameter: //cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.1.0/cookieconsent.min.js\nEvidence: <script src=\"//cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.1.0/cookieconsent.min.js\"></script>\n\nReported 1 more time at this place in this scan.",
     "location": {
      "path": "",
      "start_line": 0,
      "end_line": 0,
      "snippet": "",
      "snippet_hash": "",
-     "route": "/assets/public/styles.css",
-     "host": "http://localhost:3000"
+     "route": "/polyfills.js",
+     "host": "http://localhost:3300"
     },
     "taxonomy": {
      "category": "dast",
@@ -10257,977 +9302,14 @@
      "user_marked_false_positive": false,
      "suppression_reason": null
     },
-    "fingerprint": "sha256:66cbbe168fb6ffdda383ff90f592450f1f2d73015220ac75a826769c5046c8df",
+    "fingerprint": "sha256:68727ef7a28c42b2ff508b3451a8116c1fc6fbc1596ec27cc36142d78abcf44a",
     "package": null,
     "taint_path": []
    },
    {
-    "id": "zap-10017-4891f2d29685",
+    "id": "zap-10017-33f0af3931f3",
     "title": "Cross-Domain JavaScript Source File Inclusion",
-    "description": "The page includes one or more script files from a third-party domain.\n\nMethod: GET\nParameter: //cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.1.0/cookieconsent.min.js\nEvidence: <script src=\"//cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.1.0/cookieconsent.min.js\"></script>",
-    "location": {
-     "path": "",
-     "start_line": 0,
-     "end_line": 0,
-     "snippet": "",
-     "snippet_hash": "",
-     "route": "/styles.css",
-     "host": "http://localhost:3000"
-    },
-    "taxonomy": {
-     "category": "dast",
-     "cwe": [
-      "CWE-829"
-     ],
-     "owasp_top_10_2021": [
-      "A08:2021"
-     ],
-     "cve": [],
-     "aliases": []
-    },
-    "scoring": {
-     "native_severity": {
-      "zap": "Low (Medium)"
-     },
-     "normalized_severity": "LOW",
-     "cvss_v3_1": null,
-     "epss_score": null,
-     "in_cisa_kev": false,
-     "reachable": null,
-     "risk_score": 20,
-     "risk_factors": [
-      "Low severity",
-      "Flagged by 1 scanner, confidence 60%"
-     ],
-     "confidence": 0.6
-    },
-    "evidence": {
-     "reported_by": [
-      "zap-baseline"
-     ],
-     "agreement_count": 1,
-     "rule_ids": {
-      "zap-baseline": [
-       "10017"
-      ]
-     }
-    },
-    "remediation": {
-     "summary": "Ensure JavaScript source files are loaded from only trusted sources, and the sources can't be controlled by end users of the application.",
-     "suggested_patch": null,
-     "references": [],
-     "generated_by": "static",
-     "is_suggestion": true
-    },
-    "triage": {
-     "state": "open",
-     "user_marked_false_positive": false,
-     "suppression_reason": null
-    },
-    "fingerprint": "sha256:498fe4425f426d8677c0717e50de9230064e42f0c04541ff7a6274d453f1b53f",
-    "package": null,
-    "taint_path": []
-   },
-   {
-    "id": "zap-10017-7e03545dd1b1",
-    "title": "Cross-Domain JavaScript Source File Inclusion",
-    "description": "The page includes one or more script files from a third-party domain.\n\nMethod: GET\nParameter: //cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.1.0/cookieconsent.min.js\nEvidence: <script src=\"//cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.1.0/cookieconsent.min.js\"></script>",
-    "location": {
-     "path": "",
-     "start_line": 0,
-     "end_line": 0,
-     "snippet": "",
-     "snippet_hash": "",
-     "route": "/assets/public/assets/public/favicon_js.ico",
-     "host": "http://localhost:3000"
-    },
-    "taxonomy": {
-     "category": "dast",
-     "cwe": [
-      "CWE-829"
-     ],
-     "owasp_top_10_2021": [
-      "A08:2021"
-     ],
-     "cve": [],
-     "aliases": []
-    },
-    "scoring": {
-     "native_severity": {
-      "zap": "Low (Medium)"
-     },
-     "normalized_severity": "LOW",
-     "cvss_v3_1": null,
-     "epss_score": null,
-     "in_cisa_kev": false,
-     "reachable": null,
-     "risk_score": 20,
-     "risk_factors": [
-      "Low severity",
-      "Flagged by 1 scanner, confidence 60%"
-     ],
-     "confidence": 0.6
-    },
-    "evidence": {
-     "reported_by": [
-      "zap-baseline"
-     ],
-     "agreement_count": 1,
-     "rule_ids": {
-      "zap-baseline": [
-       "10017"
-      ]
-     }
-    },
-    "remediation": {
-     "summary": "Ensure JavaScript source files are loaded from only trusted sources, and the sources can't be controlled by end users of the application.",
-     "suggested_patch": null,
-     "references": [],
-     "generated_by": "static",
-     "is_suggestion": true
-    },
-    "triage": {
-     "state": "open",
-     "user_marked_false_positive": false,
-     "suppression_reason": null
-    },
-    "fingerprint": "sha256:85301de26262a9f7ce811988634a604149d4a1289d71f5e7395a5c089f7273d6",
-    "package": null,
-    "taint_path": []
-   },
-   {
-    "id": "zap-10017-b68353231a4b",
-    "title": "Cross-Domain JavaScript Source File Inclusion",
-    "description": "The page includes one or more script files from a third-party domain.\n\nMethod: GET\nParameter: //cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js\nEvidence: <script src=\"//cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js\"></script>",
-    "location": {
-     "path": "",
-     "start_line": 0,
-     "end_line": 0,
-     "snippet": "",
-     "snippet_hash": "",
-     "route": "/styles.css",
-     "host": "http://localhost:3000"
-    },
-    "taxonomy": {
-     "category": "dast",
-     "cwe": [
-      "CWE-829"
-     ],
-     "owasp_top_10_2021": [
-      "A08:2021"
-     ],
-     "cve": [],
-     "aliases": []
-    },
-    "scoring": {
-     "native_severity": {
-      "zap": "Low (Medium)"
-     },
-     "normalized_severity": "LOW",
-     "cvss_v3_1": null,
-     "epss_score": null,
-     "in_cisa_kev": false,
-     "reachable": null,
-     "risk_score": 20,
-     "risk_factors": [
-      "Low severity",
-      "Flagged by 1 scanner, confidence 60%"
-     ],
-     "confidence": 0.6
-    },
-    "evidence": {
-     "reported_by": [
-      "zap-baseline"
-     ],
-     "agreement_count": 1,
-     "rule_ids": {
-      "zap-baseline": [
-       "10017"
-      ]
-     }
-    },
-    "remediation": {
-     "summary": "Ensure JavaScript source files are loaded from only trusted sources, and the sources can't be controlled by end users of the application.",
-     "suggested_patch": null,
-     "references": [],
-     "generated_by": "static",
-     "is_suggestion": true
-    },
-    "triage": {
-     "state": "open",
-     "user_marked_false_positive": false,
-     "suppression_reason": null
-    },
-    "fingerprint": "sha256:498fe4425f426d8677c0717e50de9230064e42f0c04541ff7a6274d453f1b53f",
-    "package": null,
-    "taint_path": []
-   },
-   {
-    "id": "zap-10017-ba3a81777e53",
-    "title": "Cross-Domain JavaScript Source File Inclusion",
-    "description": "The page includes one or more script files from a third-party domain.\n\nMethod: GET\nParameter: //cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js\nEvidence: <script src=\"//cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js\"></script>",
-    "location": {
-     "path": "",
-     "start_line": 0,
-     "end_line": 0,
-     "snippet": "",
-     "snippet_hash": "",
-     "route": "/assets/public/styles.css",
-     "host": "http://localhost:3000"
-    },
-    "taxonomy": {
-     "category": "dast",
-     "cwe": [
-      "CWE-829"
-     ],
-     "owasp_top_10_2021": [
-      "A08:2021"
-     ],
-     "cve": [],
-     "aliases": []
-    },
-    "scoring": {
-     "native_severity": {
-      "zap": "Low (Medium)"
-     },
-     "normalized_severity": "LOW",
-     "cvss_v3_1": null,
-     "epss_score": null,
-     "in_cisa_kev": false,
-     "reachable": null,
-     "risk_score": 20,
-     "risk_factors": [
-      "Low severity",
-      "Flagged by 1 scanner, confidence 60%"
-     ],
-     "confidence": 0.6
-    },
-    "evidence": {
-     "reported_by": [
-      "zap-baseline"
-     ],
-     "agreement_count": 1,
-     "rule_ids": {
-      "zap-baseline": [
-       "10017"
-      ]
-     }
-    },
-    "remediation": {
-     "summary": "Ensure JavaScript source files are loaded from only trusted sources, and the sources can't be controlled by end users of the application.",
-     "suggested_patch": null,
-     "references": [],
-     "generated_by": "static",
-     "is_suggestion": true
-    },
-    "triage": {
-     "state": "open",
-     "user_marked_false_positive": false,
-     "suppression_reason": null
-    },
-    "fingerprint": "sha256:66cbbe168fb6ffdda383ff90f592450f1f2d73015220ac75a826769c5046c8df",
-    "package": null,
-    "taint_path": []
-   },
-   {
-    "id": "zap-10063-0c1f4c12dfc6",
-    "title": "Deprecated Feature Policy Header Set",
-    "description": "The header has now been renamed to Permissions-Policy.\n\nMethod: GET\nEvidence: Feature-Policy",
-    "location": {
-     "path": "",
-     "start_line": 0,
-     "end_line": 0,
-     "snippet": "",
-     "snippet_hash": "",
-     "route": "/sitemap.xml",
-     "host": "http://localhost:3000"
-    },
-    "taxonomy": {
-     "category": "dast",
-     "cwe": [
-      "CWE-16"
-     ],
-     "owasp_top_10_2021": [
-      "A05:2021"
-     ],
-     "cve": [],
-     "aliases": []
-    },
-    "scoring": {
-     "native_severity": {
-      "zap": "Low (Medium)"
-     },
-     "normalized_severity": "LOW",
-     "cvss_v3_1": null,
-     "epss_score": null,
-     "in_cisa_kev": false,
-     "reachable": null,
-     "risk_score": 20,
-     "risk_factors": [
-      "Low severity",
-      "Flagged by 1 scanner, confidence 60%"
-     ],
-     "confidence": 0.6
-    },
-    "evidence": {
-     "reported_by": [
-      "zap-baseline"
-     ],
-     "agreement_count": 1,
-     "rule_ids": {
-      "zap-baseline": [
-       "10063"
-      ]
-     }
-    },
-    "remediation": {
-     "summary": "Ensure that your web server, application server, load balancer, etc. is configured to set the Permissions-Policy header instead of the Feature-Policy header.",
-     "suggested_patch": null,
-     "references": [
-      "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Permissions-Policy",
-      "https://scotthelme.co.uk/goodbye-feature-policy-and-hello-permissions-policy/"
-     ],
-     "generated_by": "static",
-     "is_suggestion": true
-    },
-    "triage": {
-     "state": "open",
-     "user_marked_false_positive": false,
-     "suppression_reason": null
-    },
-    "fingerprint": "sha256:d1a12a32e8b23669fb56c00cb9560e91a8d56f1a0d5992358abe87b4ea26854b",
-    "package": null,
-    "taint_path": []
-   },
-   {
-    "id": "zap-10063-3b57a9a8361d",
-    "title": "Deprecated Feature Policy Header Set",
-    "description": "The header has now been renamed to Permissions-Policy.\n\nMethod: GET\nEvidence: Feature-Policy",
-    "location": {
-     "path": "",
-     "start_line": 0,
-     "end_line": 0,
-     "snippet": "",
-     "snippet_hash": "",
-     "route": "/",
-     "host": "http://localhost:3000"
-    },
-    "taxonomy": {
-     "category": "dast",
-     "cwe": [
-      "CWE-16"
-     ],
-     "owasp_top_10_2021": [
-      "A05:2021"
-     ],
-     "cve": [],
-     "aliases": []
-    },
-    "scoring": {
-     "native_severity": {
-      "zap": "Low (Medium)"
-     },
-     "normalized_severity": "LOW",
-     "cvss_v3_1": null,
-     "epss_score": null,
-     "in_cisa_kev": false,
-     "reachable": null,
-     "risk_score": 20,
-     "risk_factors": [
-      "Low severity",
-      "Flagged by 1 scanner, confidence 60%"
-     ],
-     "confidence": 0.6
-    },
-    "evidence": {
-     "reported_by": [
-      "zap-baseline"
-     ],
-     "agreement_count": 1,
-     "rule_ids": {
-      "zap-baseline": [
-       "10063"
-      ]
-     }
-    },
-    "remediation": {
-     "summary": "Ensure that your web server, application server, load balancer, etc. is configured to set the Permissions-Policy header instead of the Feature-Policy header.",
-     "suggested_patch": null,
-     "references": [
-      "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Permissions-Policy",
-      "https://scotthelme.co.uk/goodbye-feature-policy-and-hello-permissions-policy/"
-     ],
-     "generated_by": "static",
-     "is_suggestion": true
-    },
-    "triage": {
-     "state": "open",
-     "user_marked_false_positive": false,
-     "suppression_reason": null
-    },
-    "fingerprint": "sha256:b85a8c43c57a17433ee9e95032b72b42d36aeaa7481546251bda06a2895e418a",
-    "package": null,
-    "taint_path": []
-   },
-   {
-    "id": "zap-10063-540089a75d18",
-    "title": "Deprecated Feature Policy Header Set",
-    "description": "The header has now been renamed to Permissions-Policy.\n\nMethod: GET\nEvidence: Feature-Policy",
-    "location": {
-     "path": "",
-     "start_line": 0,
-     "end_line": 0,
-     "snippet": "",
-     "snippet_hash": "",
-     "route": "/assets/public/assets/public/favicon_js.ico",
-     "host": "http://localhost:3000"
-    },
-    "taxonomy": {
-     "category": "dast",
-     "cwe": [
-      "CWE-16"
-     ],
-     "owasp_top_10_2021": [
-      "A05:2021"
-     ],
-     "cve": [],
-     "aliases": []
-    },
-    "scoring": {
-     "native_severity": {
-      "zap": "Low (Medium)"
-     },
-     "normalized_severity": "LOW",
-     "cvss_v3_1": null,
-     "epss_score": null,
-     "in_cisa_kev": false,
-     "reachable": null,
-     "risk_score": 20,
-     "risk_factors": [
-      "Low severity",
-      "Flagged by 1 scanner, confidence 60%"
-     ],
-     "confidence": 0.6
-    },
-    "evidence": {
-     "reported_by": [
-      "zap-baseline"
-     ],
-     "agreement_count": 1,
-     "rule_ids": {
-      "zap-baseline": [
-       "10063"
-      ]
-     }
-    },
-    "remediation": {
-     "summary": "Ensure that your web server, application server, load balancer, etc. is configured to set the Permissions-Policy header instead of the Feature-Policy header.",
-     "suggested_patch": null,
-     "references": [
-      "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Permissions-Policy",
-      "https://scotthelme.co.uk/goodbye-feature-policy-and-hello-permissions-policy/"
-     ],
-     "generated_by": "static",
-     "is_suggestion": true
-    },
-    "triage": {
-     "state": "open",
-     "user_marked_false_positive": false,
-     "suppression_reason": null
-    },
-    "fingerprint": "sha256:2fa0d62669cc1dc18fffd234b7298bee77843183ec40af843aeaa05c5fbe7271",
-    "package": null,
-    "taint_path": []
-   },
-   {
-    "id": "zap-10063-a15fe1466d24",
-    "title": "Deprecated Feature Policy Header Set",
-    "description": "The header has now been renamed to Permissions-Policy.\n\nMethod: GET\nEvidence: Feature-Policy",
-    "location": {
-     "path": "",
-     "start_line": 0,
-     "end_line": 0,
-     "snippet": "",
-     "snippet_hash": "",
-     "route": "/assets/public/styles.css",
-     "host": "http://localhost:3000"
-    },
-    "taxonomy": {
-     "category": "dast",
-     "cwe": [
-      "CWE-16"
-     ],
-     "owasp_top_10_2021": [
-      "A05:2021"
-     ],
-     "cve": [],
-     "aliases": []
-    },
-    "scoring": {
-     "native_severity": {
-      "zap": "Low (Medium)"
-     },
-     "normalized_severity": "LOW",
-     "cvss_v3_1": null,
-     "epss_score": null,
-     "in_cisa_kev": false,
-     "reachable": null,
-     "risk_score": 20,
-     "risk_factors": [
-      "Low severity",
-      "Flagged by 1 scanner, confidence 60%"
-     ],
-     "confidence": 0.6
-    },
-    "evidence": {
-     "reported_by": [
-      "zap-baseline"
-     ],
-     "agreement_count": 1,
-     "rule_ids": {
-      "zap-baseline": [
-       "10063"
-      ]
-     }
-    },
-    "remediation": {
-     "summary": "Ensure that your web server, application server, load balancer, etc. is configured to set the Permissions-Policy header instead of the Feature-Policy header.",
-     "suggested_patch": null,
-     "references": [
-      "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Permissions-Policy",
-      "https://scotthelme.co.uk/goodbye-feature-policy-and-hello-permissions-policy/"
-     ],
-     "generated_by": "static",
-     "is_suggestion": true
-    },
-    "triage": {
-     "state": "open",
-     "user_marked_false_positive": false,
-     "suppression_reason": null
-    },
-    "fingerprint": "sha256:63a296494a250f76d8d85c1765fb09fdf09d00aab27d718c2979ec89b95175d1",
-    "package": null,
-    "taint_path": []
-   },
-   {
-    "id": "zap-10063-f8c3be2bdea8",
-    "title": "Deprecated Feature Policy Header Set",
-    "description": "The header has now been renamed to Permissions-Policy.\n\nMethod: GET\nEvidence: Feature-Policy",
-    "location": {
-     "path": "",
-     "start_line": 0,
-     "end_line": 0,
-     "snippet": "",
-     "snippet_hash": "",
-     "route": "/styles.css",
-     "host": "http://localhost:3000"
-    },
-    "taxonomy": {
-     "category": "dast",
-     "cwe": [
-      "CWE-16"
-     ],
-     "owasp_top_10_2021": [
-      "A05:2021"
-     ],
-     "cve": [],
-     "aliases": []
-    },
-    "scoring": {
-     "native_severity": {
-      "zap": "Low (Medium)"
-     },
-     "normalized_severity": "LOW",
-     "cvss_v3_1": null,
-     "epss_score": null,
-     "in_cisa_kev": false,
-     "reachable": null,
-     "risk_score": 20,
-     "risk_factors": [
-      "Low severity",
-      "Flagged by 1 scanner, confidence 60%"
-     ],
-     "confidence": 0.6
-    },
-    "evidence": {
-     "reported_by": [
-      "zap-baseline"
-     ],
-     "agreement_count": 1,
-     "rule_ids": {
-      "zap-baseline": [
-       "10063"
-      ]
-     }
-    },
-    "remediation": {
-     "summary": "Ensure that your web server, application server, load balancer, etc. is configured to set the Permissions-Policy header instead of the Feature-Policy header.",
-     "suggested_patch": null,
-     "references": [
-      "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Permissions-Policy",
-      "https://scotthelme.co.uk/goodbye-feature-policy-and-hello-permissions-policy/"
-     ],
-     "generated_by": "static",
-     "is_suggestion": true
-    },
-    "triage": {
-     "state": "open",
-     "user_marked_false_positive": false,
-     "suppression_reason": null
-    },
-    "fingerprint": "sha256:5a515f76b1a9349dc72365afbc7e6c4f5b13e3e0d679e723097b172b9e647e7e",
-    "package": null,
-    "taint_path": []
-   },
-   {
-    "id": "zap-10096-178b7227ccf3",
-    "title": "Timestamp Disclosure - Unix",
-    "description": "A timestamp was disclosed by the application/web server. - Unix\n\nMethod: GET\nEvidence: 1650485437\nOther info: 1650485437, which evaluates to: 2022-04-20 20:10:37.",
-    "location": {
-     "path": "",
-     "start_line": 0,
-     "end_line": 0,
-     "snippet": "",
-     "snippet_hash": "",
-     "route": "/assets/public/styles.css",
-     "host": "http://localhost:3000"
-    },
-    "taxonomy": {
-     "category": "dast",
-     "cwe": [
-      "CWE-497"
-     ],
-     "owasp_top_10_2021": [
-      "A01:2021"
-     ],
-     "cve": [],
-     "aliases": []
-    },
-    "scoring": {
-     "native_severity": {
-      "zap": "Low (Low)"
-     },
-     "normalized_severity": "LOW",
-     "cvss_v3_1": null,
-     "epss_score": null,
-     "in_cisa_kev": false,
-     "reachable": null,
-     "risk_score": 16,
-     "risk_factors": [
-      "Low severity",
-      "Flagged by 1 scanner, confidence 30%"
-     ],
-     "confidence": 0.3
-    },
-    "evidence": {
-     "reported_by": [
-      "zap-baseline"
-     ],
-     "agreement_count": 1,
-     "rule_ids": {
-      "zap-baseline": [
-       "10096"
-      ]
-     }
-    },
-    "remediation": {
-     "summary": "Manually confirm that the timestamp data is not sensitive, and that the data cannot be aggregated to disclose exploitable patterns.",
-     "suggested_patch": null,
-     "references": [
-      "https://cwe.mitre.org/data/definitions/200.html"
-     ],
-     "generated_by": "static",
-     "is_suggestion": true
-    },
-    "triage": {
-     "state": "open",
-     "user_marked_false_positive": false,
-     "suppression_reason": null
-    },
-    "fingerprint": "sha256:93e45ec7bfcf8b7e45f1eeb65a0de5f2f59fb07b88dc1d7cab46a473b140f362",
-    "package": null,
-    "taint_path": []
-   },
-   {
-    "id": "zap-10096-178b7227ccf3",
-    "title": "Timestamp Disclosure - Unix",
-    "description": "A timestamp was disclosed by the application/web server. - Unix\n\nMethod: GET\nEvidence: 1981395349\nOther info: 1981395349, which evaluates to: 2032-10-14 19:35:49.",
-    "location": {
-     "path": "",
-     "start_line": 0,
-     "end_line": 0,
-     "snippet": "",
-     "snippet_hash": "",
-     "route": "/assets/public/styles.css",
-     "host": "http://localhost:3000"
-    },
-    "taxonomy": {
-     "category": "dast",
-     "cwe": [
-      "CWE-497"
-     ],
-     "owasp_top_10_2021": [
-      "A01:2021"
-     ],
-     "cve": [],
-     "aliases": []
-    },
-    "scoring": {
-     "native_severity": {
-      "zap": "Low (Low)"
-     },
-     "normalized_severity": "LOW",
-     "cvss_v3_1": null,
-     "epss_score": null,
-     "in_cisa_kev": false,
-     "reachable": null,
-     "risk_score": 16,
-     "risk_factors": [
-      "Low severity",
-      "Flagged by 1 scanner, confidence 30%"
-     ],
-     "confidence": 0.3
-    },
-    "evidence": {
-     "reported_by": [
-      "zap-baseline"
-     ],
-     "agreement_count": 1,
-     "rule_ids": {
-      "zap-baseline": [
-       "10096"
-      ]
-     }
-    },
-    "remediation": {
-     "summary": "Manually confirm that the timestamp data is not sensitive, and that the data cannot be aggregated to disclose exploitable patterns.",
-     "suggested_patch": null,
-     "references": [
-      "https://cwe.mitre.org/data/definitions/200.html"
-     ],
-     "generated_by": "static",
-     "is_suggestion": true
-    },
-    "triage": {
-     "state": "open",
-     "user_marked_false_positive": false,
-     "suppression_reason": null
-    },
-    "fingerprint": "sha256:93e45ec7bfcf8b7e45f1eeb65a0de5f2f59fb07b88dc1d7cab46a473b140f362",
-    "package": null,
-    "taint_path": []
-   },
-   {
-    "id": "zap-10096-178b7227ccf3",
-    "title": "Timestamp Disclosure - Unix",
-    "description": "A timestamp was disclosed by the application/web server. - Unix\n\nMethod: GET\nEvidence: 2038834951\nOther info: 2038834951, which evaluates to: 2034-08-10 15:02:31.",
-    "location": {
-     "path": "",
-     "start_line": 0,
-     "end_line": 0,
-     "snippet": "",
-     "snippet_hash": "",
-     "route": "/assets/public/styles.css",
-     "host": "http://localhost:3000"
-    },
-    "taxonomy": {
-     "category": "dast",
-     "cwe": [
-      "CWE-497"
-     ],
-     "owasp_top_10_2021": [
-      "A01:2021"
-     ],
-     "cve": [],
-     "aliases": []
-    },
-    "scoring": {
-     "native_severity": {
-      "zap": "Low (Low)"
-     },
-     "normalized_severity": "LOW",
-     "cvss_v3_1": null,
-     "epss_score": null,
-     "in_cisa_kev": false,
-     "reachable": null,
-     "risk_score": 16,
-     "risk_factors": [
-      "Low severity",
-      "Flagged by 1 scanner, confidence 30%"
-     ],
-     "confidence": 0.3
-    },
-    "evidence": {
-     "reported_by": [
-      "zap-baseline"
-     ],
-     "agreement_count": 1,
-     "rule_ids": {
-      "zap-baseline": [
-       "10096"
-      ]
-     }
-    },
-    "remediation": {
-     "summary": "Manually confirm that the timestamp data is not sensitive, and that the data cannot be aggregated to disclose exploitable patterns.",
-     "suggested_patch": null,
-     "references": [
-      "https://cwe.mitre.org/data/definitions/200.html"
-     ],
-     "generated_by": "static",
-     "is_suggestion": true
-    },
-    "triage": {
-     "state": "open",
-     "user_marked_false_positive": false,
-     "suppression_reason": null
-    },
-    "fingerprint": "sha256:93e45ec7bfcf8b7e45f1eeb65a0de5f2f59fb07b88dc1d7cab46a473b140f362",
-    "package": null,
-    "taint_path": []
-   },
-   {
-    "id": "zap-10096-77750c949a09",
-    "title": "Timestamp Disclosure - Unix",
-    "description": "A timestamp was disclosed by the application/web server. - Unix\n\nMethod: GET\nEvidence: 1650485437\nOther info: 1650485437, which evaluates to: 2022-04-20 20:10:37.",
-    "location": {
-     "path": "",
-     "start_line": 0,
-     "end_line": 0,
-     "snippet": "",
-     "snippet_hash": "",
-     "route": "/styles.css",
-     "host": "http://localhost:3000"
-    },
-    "taxonomy": {
-     "category": "dast",
-     "cwe": [
-      "CWE-497"
-     ],
-     "owasp_top_10_2021": [
-      "A01:2021"
-     ],
-     "cve": [],
-     "aliases": []
-    },
-    "scoring": {
-     "native_severity": {
-      "zap": "Low (Low)"
-     },
-     "normalized_severity": "LOW",
-     "cvss_v3_1": null,
-     "epss_score": null,
-     "in_cisa_kev": false,
-     "reachable": null,
-     "risk_score": 16,
-     "risk_factors": [
-      "Low severity",
-      "Flagged by 1 scanner, confidence 30%"
-     ],
-     "confidence": 0.3
-    },
-    "evidence": {
-     "reported_by": [
-      "zap-baseline"
-     ],
-     "agreement_count": 1,
-     "rule_ids": {
-      "zap-baseline": [
-       "10096"
-      ]
-     }
-    },
-    "remediation": {
-     "summary": "Manually confirm that the timestamp data is not sensitive, and that the data cannot be aggregated to disclose exploitable patterns.",
-     "suggested_patch": null,
-     "references": [
-      "https://cwe.mitre.org/data/definitions/200.html"
-     ],
-     "generated_by": "static",
-     "is_suggestion": true
-    },
-    "triage": {
-     "state": "open",
-     "user_marked_false_positive": false,
-     "suppression_reason": null
-    },
-    "fingerprint": "sha256:b9b501d31da84db0241d8a7fb25bb68cefc1a8acbe741cef0528069e2ff8af3a",
-    "package": null,
-    "taint_path": []
-   },
-   {
-    "id": "zap-10096-77750c949a09",
-    "title": "Timestamp Disclosure - Unix",
-    "description": "A timestamp was disclosed by the application/web server. - Unix\n\nMethod: GET\nEvidence: 2038834951\nOther info: 2038834951, which evaluates to: 2034-08-10 15:02:31.",
-    "location": {
-     "path": "",
-     "start_line": 0,
-     "end_line": 0,
-     "snippet": "",
-     "snippet_hash": "",
-     "route": "/styles.css",
-     "host": "http://localhost:3000"
-    },
-    "taxonomy": {
-     "category": "dast",
-     "cwe": [
-      "CWE-497"
-     ],
-     "owasp_top_10_2021": [
-      "A01:2021"
-     ],
-     "cve": [],
-     "aliases": []
-    },
-    "scoring": {
-     "native_severity": {
-      "zap": "Low (Low)"
-     },
-     "normalized_severity": "LOW",
-     "cvss_v3_1": null,
-     "epss_score": null,
-     "in_cisa_kev": false,
-     "reachable": null,
-     "risk_score": 16,
-     "risk_factors": [
-      "Low severity",
-      "Flagged by 1 scanner, confidence 30%"
-     ],
-     "confidence": 0.3
-    },
-    "evidence": {
-     "reported_by": [
-      "zap-baseline"
-     ],
-     "agreement_count": 1,
-     "rule_ids": {
-      "zap-baseline": [
-       "10096"
-      ]
-     }
-    },
-    "remediation": {
-     "summary": "Manually confirm that the timestamp data is not sensitive, and that the data cannot be aggregated to disclose exploitable patterns.",
-     "suggested_patch": null,
-     "references": [
-      "https://cwe.mitre.org/data/definitions/200.html"
-     ],
-     "generated_by": "static",
-     "is_suggestion": true
-    },
-    "triage": {
-     "state": "open",
-     "user_marked_false_positive": false,
-     "suppression_reason": null
-    },
-    "fingerprint": "sha256:b9b501d31da84db0241d8a7fb25bb68cefc1a8acbe741cef0528069e2ff8af3a",
-    "package": null,
-    "taint_path": []
-   },
-   {
-    "id": "zap-10110-6be89b8a8c01",
-    "title": "Dangerous JS Functions",
-    "description": "A dangerous JS function seems to be in use that would leave the site vulnerable.\n\nMethod: GET\nEvidence: bypassSecurityTrustHtml(",
+    "description": "The page includes one or more script files from a third-party domain.\n\nMethod: GET\nParameter: //cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.1.0/cookieconsent.min.js\nEvidence: <script src=\"//cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.1.0/cookieconsent.min.js\"></script>\n\nReported 1 more time at this place in this scan.",
     "location": {
      "path": "",
      "start_line": 0,
@@ -11235,14 +9317,500 @@
      "snippet": "",
      "snippet_hash": "",
      "route": "/main.js",
-     "host": "http://localhost:3000"
+     "host": "http://localhost:3300"
     },
     "taxonomy": {
      "category": "dast",
      "cwe": [
-      "CWE-749"
+      "CWE-829"
      ],
-     "owasp_top_10_2021": [],
+     "owasp_top_10_2021": [
+      "A08:2021"
+     ],
+     "cve": [],
+     "aliases": []
+    },
+    "scoring": {
+     "native_severity": {
+      "zap": "Low (Medium)"
+     },
+     "normalized_severity": "LOW",
+     "cvss_v3_1": null,
+     "epss_score": null,
+     "in_cisa_kev": false,
+     "reachable": null,
+     "risk_score": 20,
+     "risk_factors": [
+      "Low severity",
+      "Flagged by 1 scanner, confidence 60%"
+     ],
+     "confidence": 0.6
+    },
+    "evidence": {
+     "reported_by": [
+      "zap-baseline"
+     ],
+     "agreement_count": 1,
+     "rule_ids": {
+      "zap-baseline": [
+       "10017"
+      ]
+     }
+    },
+    "remediation": {
+     "summary": "Ensure JavaScript source files are loaded from only trusted sources, and the sources can't be controlled by end users of the application.",
+     "suggested_patch": null,
+     "references": [],
+     "generated_by": "static",
+     "is_suggestion": true
+    },
+    "triage": {
+     "state": "open",
+     "user_marked_false_positive": false,
+     "suppression_reason": null
+    },
+    "fingerprint": "sha256:3cb019844785d837c4f46c533806d1dffee24c1fa9585c9ac13382ce4a9c3bbf",
+    "package": null,
+    "taint_path": []
+   },
+   {
+    "id": "zap-10017-38d1c24b008c",
+    "title": "Cross-Domain JavaScript Source File Inclusion",
+    "description": "The page includes one or more script files from a third-party domain.\n\nMethod: GET\nParameter: //cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.1.0/cookieconsent.min.js\nEvidence: <script src=\"//cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.1.0/cookieconsent.min.js\"></script>",
+    "location": {
+     "path": "",
+     "start_line": 0,
+     "end_line": 0,
+     "snippet": "",
+     "snippet_hash": "",
+     "route": "/styles.css",
+     "host": "http://localhost:3300"
+    },
+    "taxonomy": {
+     "category": "dast",
+     "cwe": [
+      "CWE-829"
+     ],
+     "owasp_top_10_2021": [
+      "A08:2021"
+     ],
+     "cve": [],
+     "aliases": []
+    },
+    "scoring": {
+     "native_severity": {
+      "zap": "Low (Medium)"
+     },
+     "normalized_severity": "LOW",
+     "cvss_v3_1": null,
+     "epss_score": null,
+     "in_cisa_kev": false,
+     "reachable": null,
+     "risk_score": 20,
+     "risk_factors": [
+      "Low severity",
+      "Flagged by 1 scanner, confidence 60%"
+     ],
+     "confidence": 0.6
+    },
+    "evidence": {
+     "reported_by": [
+      "zap-baseline"
+     ],
+     "agreement_count": 1,
+     "rule_ids": {
+      "zap-baseline": [
+       "10017"
+      ]
+     }
+    },
+    "remediation": {
+     "summary": "Ensure JavaScript source files are loaded from only trusted sources, and the sources can't be controlled by end users of the application.",
+     "suggested_patch": null,
+     "references": [],
+     "generated_by": "static",
+     "is_suggestion": true
+    },
+    "triage": {
+     "state": "open",
+     "user_marked_false_positive": false,
+     "suppression_reason": null
+    },
+    "fingerprint": "sha256:79e0dc60b58a7d741e1dffd45f6fc60f2bd785c0e04c8dc80d9589c7a8e01746",
+    "package": null,
+    "taint_path": []
+   },
+   {
+    "id": "zap-10063-4f3bd14869de",
+    "title": "Deprecated Feature Policy Header Set",
+    "description": "The header has now been renamed to Permissions-Policy.\n\nMethod: GET\nEvidence: Feature-Policy",
+    "location": {
+     "path": "",
+     "start_line": 0,
+     "end_line": 0,
+     "snippet": "",
+     "snippet_hash": "",
+     "route": "/ftp",
+     "host": "http://localhost:3300"
+    },
+    "taxonomy": {
+     "category": "dast",
+     "cwe": [
+      "CWE-16"
+     ],
+     "owasp_top_10_2021": [
+      "A05:2021"
+     ],
+     "cve": [],
+     "aliases": []
+    },
+    "scoring": {
+     "native_severity": {
+      "zap": "Low (Medium)"
+     },
+     "normalized_severity": "LOW",
+     "cvss_v3_1": null,
+     "epss_score": null,
+     "in_cisa_kev": false,
+     "reachable": null,
+     "risk_score": 20,
+     "risk_factors": [
+      "Low severity",
+      "Flagged by 1 scanner, confidence 60%"
+     ],
+     "confidence": 0.6
+    },
+    "evidence": {
+     "reported_by": [
+      "zap-baseline"
+     ],
+     "agreement_count": 1,
+     "rule_ids": {
+      "zap-baseline": [
+       "10063"
+      ]
+     }
+    },
+    "remediation": {
+     "summary": "Ensure that your web server, application server, load balancer, etc. is configured to set the Permissions-Policy header instead of the Feature-Policy header.",
+     "suggested_patch": null,
+     "references": [
+      "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Permissions-Policy",
+      "https://scotthelme.co.uk/goodbye-feature-policy-and-hello-permissions-policy/"
+     ],
+     "generated_by": "static",
+     "is_suggestion": true
+    },
+    "triage": {
+     "state": "open",
+     "user_marked_false_positive": false,
+     "suppression_reason": null
+    },
+    "fingerprint": "sha256:653687019371a8cd721f61606d01f22600c0d2d8d53c21ae7bc5c70080c480e9",
+    "package": null,
+    "taint_path": []
+   },
+   {
+    "id": "zap-10063-5f237e1813bd",
+    "title": "Deprecated Feature Policy Header Set",
+    "description": "The header has now been renamed to Permissions-Policy.\n\nMethod: GET\nEvidence: Feature-Policy",
+    "location": {
+     "path": "",
+     "start_line": 0,
+     "end_line": 0,
+     "snippet": "",
+     "snippet_hash": "",
+     "route": "/runtime.js",
+     "host": "http://localhost:3300"
+    },
+    "taxonomy": {
+     "category": "dast",
+     "cwe": [
+      "CWE-16"
+     ],
+     "owasp_top_10_2021": [
+      "A05:2021"
+     ],
+     "cve": [],
+     "aliases": []
+    },
+    "scoring": {
+     "native_severity": {
+      "zap": "Low (Medium)"
+     },
+     "normalized_severity": "LOW",
+     "cvss_v3_1": null,
+     "epss_score": null,
+     "in_cisa_kev": false,
+     "reachable": null,
+     "risk_score": 20,
+     "risk_factors": [
+      "Low severity",
+      "Flagged by 1 scanner, confidence 60%"
+     ],
+     "confidence": 0.6
+    },
+    "evidence": {
+     "reported_by": [
+      "zap-baseline"
+     ],
+     "agreement_count": 1,
+     "rule_ids": {
+      "zap-baseline": [
+       "10063"
+      ]
+     }
+    },
+    "remediation": {
+     "summary": "Ensure that your web server, application server, load balancer, etc. is configured to set the Permissions-Policy header instead of the Feature-Policy header.",
+     "suggested_patch": null,
+     "references": [
+      "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Permissions-Policy",
+      "https://scotthelme.co.uk/goodbye-feature-policy-and-hello-permissions-policy/"
+     ],
+     "generated_by": "static",
+     "is_suggestion": true
+    },
+    "triage": {
+     "state": "open",
+     "user_marked_false_positive": false,
+     "suppression_reason": null
+    },
+    "fingerprint": "sha256:f7c6d3477317e2542b2d1ecce871e09e5eee1eaf1547231de45566ce85dd6ee0",
+    "package": null,
+    "taint_path": []
+   },
+   {
+    "id": "zap-10063-8edc0a8afea2",
+    "title": "Deprecated Feature Policy Header Set",
+    "description": "The header has now been renamed to Permissions-Policy.\n\nMethod: GET\nEvidence: Feature-Policy",
+    "location": {
+     "path": "",
+     "start_line": 0,
+     "end_line": 0,
+     "snippet": "",
+     "snippet_hash": "",
+     "route": "/assets/public/favicon_js.ico",
+     "host": "http://localhost:3300"
+    },
+    "taxonomy": {
+     "category": "dast",
+     "cwe": [
+      "CWE-16"
+     ],
+     "owasp_top_10_2021": [
+      "A05:2021"
+     ],
+     "cve": [],
+     "aliases": []
+    },
+    "scoring": {
+     "native_severity": {
+      "zap": "Low (Medium)"
+     },
+     "normalized_severity": "LOW",
+     "cvss_v3_1": null,
+     "epss_score": null,
+     "in_cisa_kev": false,
+     "reachable": null,
+     "risk_score": 20,
+     "risk_factors": [
+      "Low severity",
+      "Flagged by 1 scanner, confidence 60%"
+     ],
+     "confidence": 0.6
+    },
+    "evidence": {
+     "reported_by": [
+      "zap-baseline"
+     ],
+     "agreement_count": 1,
+     "rule_ids": {
+      "zap-baseline": [
+       "10063"
+      ]
+     }
+    },
+    "remediation": {
+     "summary": "Ensure that your web server, application server, load balancer, etc. is configured to set the Permissions-Policy header instead of the Feature-Policy header.",
+     "suggested_patch": null,
+     "references": [
+      "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Permissions-Policy",
+      "https://scotthelme.co.uk/goodbye-feature-policy-and-hello-permissions-policy/"
+     ],
+     "generated_by": "static",
+     "is_suggestion": true
+    },
+    "triage": {
+     "state": "open",
+     "user_marked_false_positive": false,
+     "suppression_reason": null
+    },
+    "fingerprint": "sha256:57bdf8b26f3493ae4019ef96065e348391cb92b040055247ccaf85f28d1aea00",
+    "package": null,
+    "taint_path": []
+   },
+   {
+    "id": "zap-10063-962e7e6bfe55",
+    "title": "Deprecated Feature Policy Header Set",
+    "description": "The header has now been renamed to Permissions-Policy.\n\nMethod: GET\nEvidence: Feature-Policy",
+    "location": {
+     "path": "",
+     "start_line": 0,
+     "end_line": 0,
+     "snippet": "",
+     "snippet_hash": "",
+     "route": "/polyfills.js",
+     "host": "http://localhost:3300"
+    },
+    "taxonomy": {
+     "category": "dast",
+     "cwe": [
+      "CWE-16"
+     ],
+     "owasp_top_10_2021": [
+      "A05:2021"
+     ],
+     "cve": [],
+     "aliases": []
+    },
+    "scoring": {
+     "native_severity": {
+      "zap": "Low (Medium)"
+     },
+     "normalized_severity": "LOW",
+     "cvss_v3_1": null,
+     "epss_score": null,
+     "in_cisa_kev": false,
+     "reachable": null,
+     "risk_score": 20,
+     "risk_factors": [
+      "Low severity",
+      "Flagged by 1 scanner, confidence 60%"
+     ],
+     "confidence": 0.6
+    },
+    "evidence": {
+     "reported_by": [
+      "zap-baseline"
+     ],
+     "agreement_count": 1,
+     "rule_ids": {
+      "zap-baseline": [
+       "10063"
+      ]
+     }
+    },
+    "remediation": {
+     "summary": "Ensure that your web server, application server, load balancer, etc. is configured to set the Permissions-Policy header instead of the Feature-Policy header.",
+     "suggested_patch": null,
+     "references": [
+      "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Permissions-Policy",
+      "https://scotthelme.co.uk/goodbye-feature-policy-and-hello-permissions-policy/"
+     ],
+     "generated_by": "static",
+     "is_suggestion": true
+    },
+    "triage": {
+     "state": "open",
+     "user_marked_false_positive": false,
+     "suppression_reason": null
+    },
+    "fingerprint": "sha256:d616a011c7bab980944322c40ce45a3175ec60261ddb048a99168f914abf5ccd",
+    "package": null,
+    "taint_path": []
+   },
+   {
+    "id": "zap-10063-b91f17e95123",
+    "title": "Deprecated Feature Policy Header Set",
+    "description": "The header has now been renamed to Permissions-Policy.\n\nMethod: GET\nEvidence: Feature-Policy",
+    "location": {
+     "path": "",
+     "start_line": 0,
+     "end_line": 0,
+     "snippet": "",
+     "snippet_hash": "",
+     "route": "/main.js",
+     "host": "http://localhost:3300"
+    },
+    "taxonomy": {
+     "category": "dast",
+     "cwe": [
+      "CWE-16"
+     ],
+     "owasp_top_10_2021": [
+      "A05:2021"
+     ],
+     "cve": [],
+     "aliases": []
+    },
+    "scoring": {
+     "native_severity": {
+      "zap": "Low (Medium)"
+     },
+     "normalized_severity": "LOW",
+     "cvss_v3_1": null,
+     "epss_score": null,
+     "in_cisa_kev": false,
+     "reachable": null,
+     "risk_score": 20,
+     "risk_factors": [
+      "Low severity",
+      "Flagged by 1 scanner, confidence 60%"
+     ],
+     "confidence": 0.6
+    },
+    "evidence": {
+     "reported_by": [
+      "zap-baseline"
+     ],
+     "agreement_count": 1,
+     "rule_ids": {
+      "zap-baseline": [
+       "10063"
+      ]
+     }
+    },
+    "remediation": {
+     "summary": "Ensure that your web server, application server, load balancer, etc. is configured to set the Permissions-Policy header instead of the Feature-Policy header.",
+     "suggested_patch": null,
+     "references": [
+      "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Permissions-Policy",
+      "https://scotthelme.co.uk/goodbye-feature-policy-and-hello-permissions-policy/"
+     ],
+     "generated_by": "static",
+     "is_suggestion": true
+    },
+    "triage": {
+     "state": "open",
+     "user_marked_false_positive": false,
+     "suppression_reason": null
+    },
+    "fingerprint": "sha256:8bb17e3f24287430b7faab73a38caa606530f92526178b926677db23b6205054",
+    "package": null,
+    "taint_path": []
+   },
+   {
+    "id": "zap-10096-690ce5953047",
+    "title": "Timestamp Disclosure - Unix",
+    "description": "A timestamp was disclosed by the application/web server. - Unix\n\nMethod: GET\nEvidence: 1650485437\nOther info: 1650485437, which evaluates to: 2022-04-20 20:10:37.\n\nReported 1 more time at this place in this scan.",
+    "location": {
+     "path": "",
+     "start_line": 0,
+     "end_line": 0,
+     "snippet": "",
+     "snippet_hash": "",
+     "route": "/styles.css",
+     "host": "http://localhost:3300"
+    },
+    "taxonomy": {
+     "category": "dast",
+     "cwe": [
+      "CWE-497"
+     ],
+     "owasp_top_10_2021": [
+      "A01:2021"
+     ],
      "cve": [],
      "aliases": []
     },
@@ -11269,15 +9837,15 @@
      "agreement_count": 1,
      "rule_ids": {
       "zap-baseline": [
-       "10110"
+       "10096"
       ]
      }
     },
     "remediation": {
-     "summary": "See the references for security advice on the use of these functions.",
+     "summary": "Manually confirm that the timestamp data is not sensitive, and that the data cannot be aggregated to disclose exploitable patterns.",
      "suggested_patch": null,
      "references": [
-      "https://v17.angular.io/guide/security"
+      "https://cwe.mitre.org/data/definitions/200.html"
      ],
      "generated_by": "static",
      "is_suggestion": true
@@ -11287,12 +9855,81 @@
      "user_marked_false_positive": false,
      "suppression_reason": null
     },
-    "fingerprint": "sha256:f3a143abb3ac729fbea9041ade5f09591945849d221a3bfb02435cd8b9cab52e",
+    "fingerprint": "sha256:e99760bd13b1c92e6c0852b2d0dbf30a79774f882941e0b92f54dc1dbc3a391a",
     "package": null,
     "taint_path": []
    },
    {
-    "id": "zap-10110-994920e0aee8",
+    "id": "zap-10096-b41278e3ea65",
+    "title": "Timestamp Disclosure - Unix",
+    "description": "A timestamp was disclosed by the application/web server. - Unix\n\nMethod: GET\nEvidence: 1650485437\nOther info: 1650485437, which evaluates to: 2022-04-20 20:10:37.\n\nReported 2 more times at this place in this scan.",
+    "location": {
+     "path": "",
+     "start_line": 0,
+     "end_line": 0,
+     "snippet": "",
+     "snippet_hash": "",
+     "route": "/assets/public/favicon_js.ico",
+     "host": "http://localhost:3300"
+    },
+    "taxonomy": {
+     "category": "dast",
+     "cwe": [
+      "CWE-497"
+     ],
+     "owasp_top_10_2021": [
+      "A01:2021"
+     ],
+     "cve": [],
+     "aliases": []
+    },
+    "scoring": {
+     "native_severity": {
+      "zap": "Low (Low)"
+     },
+     "normalized_severity": "LOW",
+     "cvss_v3_1": null,
+     "epss_score": null,
+     "in_cisa_kev": false,
+     "reachable": null,
+     "risk_score": 16,
+     "risk_factors": [
+      "Low severity",
+      "Flagged by 1 scanner, confidence 30%"
+     ],
+     "confidence": 0.3
+    },
+    "evidence": {
+     "reported_by": [
+      "zap-baseline"
+     ],
+     "agreement_count": 1,
+     "rule_ids": {
+      "zap-baseline": [
+       "10096"
+      ]
+     }
+    },
+    "remediation": {
+     "summary": "Manually confirm that the timestamp data is not sensitive, and that the data cannot be aggregated to disclose exploitable patterns.",
+     "suggested_patch": null,
+     "references": [
+      "https://cwe.mitre.org/data/definitions/200.html"
+     ],
+     "generated_by": "static",
+     "is_suggestion": true
+    },
+    "triage": {
+     "state": "open",
+     "user_marked_false_positive": false,
+     "suppression_reason": null
+    },
+    "fingerprint": "sha256:802bf427e136c7431c629d64abeb641c9d365d764923e96ac54501bbb22a7cd4",
+    "package": null,
+    "taint_path": []
+   },
+   {
+    "id": "zap-10110-80718528fdb4",
     "title": "Dangerous JS Functions",
     "description": "A dangerous JS function seems to be in use that would leave the site vulnerable.\n\nMethod: GET\nEvidence: bypassSecurityTrustHtml(",
     "location": {
@@ -11302,7 +9939,7 @@
      "snippet": "",
      "snippet_hash": "",
      "route": "/vendor.js",
-     "host": "http://localhost:3000"
+     "host": "http://localhost:3300"
     },
     "taxonomy": {
      "category": "dast",
@@ -11354,89 +9991,22 @@
      "user_marked_false_positive": false,
      "suppression_reason": null
     },
-    "fingerprint": "sha256:f8ad0070450781e8383d671083a464eb638e23099ec208f52c40953c2a13414e",
+    "fingerprint": "sha256:1010e70422a2132218aabfa911b8ee389eb5192fa301c00eb860e65df81cd42d",
     "package": null,
     "taint_path": []
    },
    {
-    "id": "zap-90004-020b9c5ed5ba",
-    "title": "Cross-Origin-Opener-Policy Header Missing or Invalid",
-    "description": "Cross-Origin-Opener-Policy header is a response header that allows a site to control if others included documents share the same browsing context. Sharing the same browsing context with untrusted documents might lead to data leak.\n\nMethod: GET\nParameter: Cross-Origin-Opener-Policy",
-    "location": {
-     "path": "",
-     "start_line": 0,
-     "end_line": 0,
-     "snippet": "",
-     "snippet_hash": "",
-     "route": "/assets/public/styles.css",
-     "host": "http://localhost:3000"
-    },
-    "taxonomy": {
-     "category": "dast",
-     "cwe": [
-      "CWE-693"
-     ],
-     "owasp_top_10_2021": [],
-     "cve": [],
-     "aliases": []
-    },
-    "scoring": {
-     "native_severity": {
-      "zap": "Low (Medium)"
-     },
-     "normalized_severity": "LOW",
-     "cvss_v3_1": null,
-     "epss_score": null,
-     "in_cisa_kev": false,
-     "reachable": null,
-     "risk_score": 20,
-     "risk_factors": [
-      "Low severity",
-      "Flagged by 1 scanner, confidence 60%"
-     ],
-     "confidence": 0.6
-    },
-    "evidence": {
-     "reported_by": [
-      "zap-baseline"
-     ],
-     "agreement_count": 1,
-     "rule_ids": {
-      "zap-baseline": [
-       "90004"
-      ]
-     }
-    },
-    "remediation": {
-     "summary": "Ensure that the application/web server sets the Cross-Origin-Opener-Policy header appropriately, and that it sets the Cross-Origin-Opener-Policy header to 'same-origin' for documents.\n\n'same-origin-allow-popups' is considered as less secured and should be avoided.\n\nIf possible, ensure that the end user uses a standards-compliant and modern web browser that supports the Cross-Origin-Opener-Policy header (https://caniuse.com/mdn-http_headers_cross-origin-opener-policy).",
-     "suggested_patch": null,
-     "references": [
-      "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cross-Origin-Opener-Policy"
-     ],
-     "generated_by": "static",
-     "is_suggestion": true
-    },
-    "triage": {
-     "state": "open",
-     "user_marked_false_positive": false,
-     "suppression_reason": null
-    },
-    "fingerprint": "sha256:1feb93602f7e82cf4bf1821e0944bbdabff68b9ddafecb073d00fc7edcb0ca37",
-    "package": null,
-    "taint_path": []
-   },
-   {
-    "id": "zap-90004-38076b5afc2a",
+    "id": "zap-90004-387b1373012d",
     "title": "Cross-Origin-Embedder-Policy Header Missing or Invalid",
-    "description": "Cross-Origin-Embedder-Policy header is a response header that prevents a document from loading any cross-origin resources that don't explicitly grant the document permission (using CORP or CORS).\n\nMethod: GET\nParameter: Cross-Origin-Embedder-Policy",
+    "description": "Cross-Origin-Embedder-Policy header is a response header that prevents a document from loading any cross-origin resources that don't explicitly grant the document permission (using CORP or CORS).\n\nMethod: GET\nParameter: Cross-Origin-Embedder-Policy\n\nReported 1 more time at this place in this scan.",
     "location": {
      "path": "",
      "start_line": 0,
      "end_line": 0,
      "snippet": "",
      "snippet_hash": "",
-     "route": "/sitemap.xml",
-     "host": "http://localhost:3000"
+     "route": "/main.js",
+     "host": "http://localhost:3300"
     },
     "taxonomy": {
      "category": "dast",
@@ -11488,156 +10058,22 @@
      "user_marked_false_positive": false,
      "suppression_reason": null
     },
-    "fingerprint": "sha256:923f5f485adbb5d9c9938606e4b2de18fdea7155180bb22b27b6b545a1272032",
+    "fingerprint": "sha256:da3b738b0d51d14ba362cae2e986ecc9a0158cbba967b65105cb597f5b124f0e",
     "package": null,
     "taint_path": []
    },
    {
-    "id": "zap-90004-488b6bf7c8c5",
-    "title": "Cross-Origin-Opener-Policy Header Missing or Invalid",
-    "description": "Cross-Origin-Opener-Policy header is a response header that allows a site to control if others included documents share the same browsing context. Sharing the same browsing context with untrusted documents might lead to data leak.\n\nMethod: GET\nParameter: Cross-Origin-Opener-Policy",
-    "location": {
-     "path": "",
-     "start_line": 0,
-     "end_line": 0,
-     "snippet": "",
-     "snippet_hash": "",
-     "route": "/assets/public/assets/public/favicon_js.ico",
-     "host": "http://localhost:3000"
-    },
-    "taxonomy": {
-     "category": "dast",
-     "cwe": [
-      "CWE-693"
-     ],
-     "owasp_top_10_2021": [],
-     "cve": [],
-     "aliases": []
-    },
-    "scoring": {
-     "native_severity": {
-      "zap": "Low (Medium)"
-     },
-     "normalized_severity": "LOW",
-     "cvss_v3_1": null,
-     "epss_score": null,
-     "in_cisa_kev": false,
-     "reachable": null,
-     "risk_score": 20,
-     "risk_factors": [
-      "Low severity",
-      "Flagged by 1 scanner, confidence 60%"
-     ],
-     "confidence": 0.6
-    },
-    "evidence": {
-     "reported_by": [
-      "zap-baseline"
-     ],
-     "agreement_count": 1,
-     "rule_ids": {
-      "zap-baseline": [
-       "90004"
-      ]
-     }
-    },
-    "remediation": {
-     "summary": "Ensure that the application/web server sets the Cross-Origin-Opener-Policy header appropriately, and that it sets the Cross-Origin-Opener-Policy header to 'same-origin' for documents.\n\n'same-origin-allow-popups' is considered as less secured and should be avoided.\n\nIf possible, ensure that the end user uses a standards-compliant and modern web browser that supports the Cross-Origin-Opener-Policy header (https://caniuse.com/mdn-http_headers_cross-origin-opener-policy).",
-     "suggested_patch": null,
-     "references": [
-      "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cross-Origin-Opener-Policy"
-     ],
-     "generated_by": "static",
-     "is_suggestion": true
-    },
-    "triage": {
-     "state": "open",
-     "user_marked_false_positive": false,
-     "suppression_reason": null
-    },
-    "fingerprint": "sha256:3be84a299f8eb74717ca4181e9de0fe2959f0d25b012fc3760fb932953bc2fa7",
-    "package": null,
-    "taint_path": []
-   },
-   {
-    "id": "zap-90004-584633480d65",
-    "title": "Cross-Origin-Opener-Policy Header Missing or Invalid",
-    "description": "Cross-Origin-Opener-Policy header is a response header that allows a site to control if others included documents share the same browsing context. Sharing the same browsing context with untrusted documents might lead to data leak.\n\nMethod: GET\nParameter: Cross-Origin-Opener-Policy",
-    "location": {
-     "path": "",
-     "start_line": 0,
-     "end_line": 0,
-     "snippet": "",
-     "snippet_hash": "",
-     "route": "/sitemap.xml",
-     "host": "http://localhost:3000"
-    },
-    "taxonomy": {
-     "category": "dast",
-     "cwe": [
-      "CWE-693"
-     ],
-     "owasp_top_10_2021": [],
-     "cve": [],
-     "aliases": []
-    },
-    "scoring": {
-     "native_severity": {
-      "zap": "Low (Medium)"
-     },
-     "normalized_severity": "LOW",
-     "cvss_v3_1": null,
-     "epss_score": null,
-     "in_cisa_kev": false,
-     "reachable": null,
-     "risk_score": 20,
-     "risk_factors": [
-      "Low severity",
-      "Flagged by 1 scanner, confidence 60%"
-     ],
-     "confidence": 0.6
-    },
-    "evidence": {
-     "reported_by": [
-      "zap-baseline"
-     ],
-     "agreement_count": 1,
-     "rule_ids": {
-      "zap-baseline": [
-       "90004"
-      ]
-     }
-    },
-    "remediation": {
-     "summary": "Ensure that the application/web server sets the Cross-Origin-Opener-Policy header appropriately, and that it sets the Cross-Origin-Opener-Policy header to 'same-origin' for documents.\n\n'same-origin-allow-popups' is considered as less secured and should be avoided.\n\nIf possible, ensure that the end user uses a standards-compliant and modern web browser that supports the Cross-Origin-Opener-Policy header (https://caniuse.com/mdn-http_headers_cross-origin-opener-policy).",
-     "suggested_patch": null,
-     "references": [
-      "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cross-Origin-Opener-Policy"
-     ],
-     "generated_by": "static",
-     "is_suggestion": true
-    },
-    "triage": {
-     "state": "open",
-     "user_marked_false_positive": false,
-     "suppression_reason": null
-    },
-    "fingerprint": "sha256:923f5f485adbb5d9c9938606e4b2de18fdea7155180bb22b27b6b545a1272032",
-    "package": null,
-    "taint_path": []
-   },
-   {
-    "id": "zap-90004-5de8ebb6401d",
+    "id": "zap-90004-5cc478c9d2b3",
     "title": "Cross-Origin-Embedder-Policy Header Missing or Invalid",
-    "description": "Cross-Origin-Embedder-Policy header is a response header that prevents a document from loading any cross-origin resources that don't explicitly grant the document permission (using CORP or CORS).\n\nMethod: GET\nParameter: Cross-Origin-Embedder-Policy",
+    "description": "Cross-Origin-Embedder-Policy header is a response header that prevents a document from loading any cross-origin resources that don't explicitly grant the document permission (using CORP or CORS).\n\nMethod: GET\nParameter: Cross-Origin-Embedder-Policy\n\nReported 1 more time at this place in this scan.",
     "location": {
      "path": "",
      "start_line": 0,
      "end_line": 0,
      "snippet": "",
      "snippet_hash": "",
-     "route": "/assets/public/assets/public/favicon_js.ico",
-     "host": "http://localhost:3000"
+     "route": "/assets/public/favicon_js.ico",
+     "host": "http://localhost:3300"
     },
     "taxonomy": {
      "category": "dast",
@@ -11689,79 +10125,12 @@
      "user_marked_false_positive": false,
      "suppression_reason": null
     },
-    "fingerprint": "sha256:3be84a299f8eb74717ca4181e9de0fe2959f0d25b012fc3760fb932953bc2fa7",
+    "fingerprint": "sha256:d272a64a27885e64bfe1c7fcc191e2a68b223e31673e27efaa2077bdc96ce8f8",
     "package": null,
     "taint_path": []
    },
    {
-    "id": "zap-90004-c8585e4bcae2",
-    "title": "Cross-Origin-Opener-Policy Header Missing or Invalid",
-    "description": "Cross-Origin-Opener-Policy header is a response header that allows a site to control if others included documents share the same browsing context. Sharing the same browsing context with untrusted documents might lead to data leak.\n\nMethod: GET\nParameter: Cross-Origin-Opener-Policy",
-    "location": {
-     "path": "",
-     "start_line": 0,
-     "end_line": 0,
-     "snippet": "",
-     "snippet_hash": "",
-     "route": "/styles.css",
-     "host": "http://localhost:3000"
-    },
-    "taxonomy": {
-     "category": "dast",
-     "cwe": [
-      "CWE-693"
-     ],
-     "owasp_top_10_2021": [],
-     "cve": [],
-     "aliases": []
-    },
-    "scoring": {
-     "native_severity": {
-      "zap": "Low (Medium)"
-     },
-     "normalized_severity": "LOW",
-     "cvss_v3_1": null,
-     "epss_score": null,
-     "in_cisa_kev": false,
-     "reachable": null,
-     "risk_score": 20,
-     "risk_factors": [
-      "Low severity",
-      "Flagged by 1 scanner, confidence 60%"
-     ],
-     "confidence": 0.6
-    },
-    "evidence": {
-     "reported_by": [
-      "zap-baseline"
-     ],
-     "agreement_count": 1,
-     "rule_ids": {
-      "zap-baseline": [
-       "90004"
-      ]
-     }
-    },
-    "remediation": {
-     "summary": "Ensure that the application/web server sets the Cross-Origin-Opener-Policy header appropriately, and that it sets the Cross-Origin-Opener-Policy header to 'same-origin' for documents.\n\n'same-origin-allow-popups' is considered as less secured and should be avoided.\n\nIf possible, ensure that the end user uses a standards-compliant and modern web browser that supports the Cross-Origin-Opener-Policy header (https://caniuse.com/mdn-http_headers_cross-origin-opener-policy).",
-     "suggested_patch": null,
-     "references": [
-      "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cross-Origin-Opener-Policy"
-     ],
-     "generated_by": "static",
-     "is_suggestion": true
-    },
-    "triage": {
-     "state": "open",
-     "user_marked_false_positive": false,
-     "suppression_reason": null
-    },
-    "fingerprint": "sha256:b3dd1565cabe704bc3e7e1c809c96d04f8cf4cc8078aee0c411e2202d17bafa4",
-    "package": null,
-    "taint_path": []
-   },
-   {
-    "id": "zap-90004-d2b9d0e0f01b",
+    "id": "zap-90004-5e4925b2ec7b",
     "title": "Cross-Origin-Embedder-Policy Header Missing or Invalid",
     "description": "Cross-Origin-Embedder-Policy header is a response header that prevents a document from loading any cross-origin resources that don't explicitly grant the document permission (using CORP or CORS).\n\nMethod: GET\nParameter: Cross-Origin-Embedder-Policy",
     "location": {
@@ -11770,8 +10139,8 @@
      "end_line": 0,
      "snippet": "",
      "snippet_hash": "",
-     "route": "/",
-     "host": "http://localhost:3000"
+     "route": "/runtime.js",
+     "host": "http://localhost:3300"
     },
     "taxonomy": {
      "category": "dast",
@@ -11823,22 +10192,22 @@
      "user_marked_false_positive": false,
      "suppression_reason": null
     },
-    "fingerprint": "sha256:56b588d485e66d1bfb0025d451e6fe76a8dd509966a176d9b5bbfacaca74bdc9",
+    "fingerprint": "sha256:28953eff8989ac1b51fcf1aefdfef46559e84f1327566947c2838af35b97c02e",
     "package": null,
     "taint_path": []
    },
    {
-    "id": "zap-90004-d4c635a04f03",
+    "id": "zap-90004-6fd5497b9edb",
     "title": "Cross-Origin-Embedder-Policy Header Missing or Invalid",
-    "description": "Cross-Origin-Embedder-Policy header is a response header that prevents a document from loading any cross-origin resources that don't explicitly grant the document permission (using CORP or CORS).\n\nMethod: GET\nParameter: Cross-Origin-Embedder-Policy",
+    "description": "Cross-Origin-Embedder-Policy header is a response header that prevents a document from loading any cross-origin resources that don't explicitly grant the document permission (using CORP or CORS).\n\nMethod: GET\nParameter: Cross-Origin-Embedder-Policy\n\nReported 1 more time at this place in this scan.",
     "location": {
      "path": "",
      "start_line": 0,
      "end_line": 0,
      "snippet": "",
      "snippet_hash": "",
-     "route": "/assets/public/styles.css",
-     "host": "http://localhost:3000"
+     "route": "/polyfills.js",
+     "host": "http://localhost:3300"
     },
     "taxonomy": {
      "category": "dast",
@@ -11890,22 +10259,22 @@
      "user_marked_false_positive": false,
      "suppression_reason": null
     },
-    "fingerprint": "sha256:1feb93602f7e82cf4bf1821e0944bbdabff68b9ddafecb073d00fc7edcb0ca37",
+    "fingerprint": "sha256:ab1aebce8ce26384ce574c7f5613613f76547a2679da2fd5d85f807c5ed2b58b",
     "package": null,
     "taint_path": []
    },
    {
-    "id": "zap-90004-f0fc32450b3f",
+    "id": "zap-90004-92dd8a9f1781",
     "title": "Cross-Origin-Embedder-Policy Header Missing or Invalid",
-    "description": "Cross-Origin-Embedder-Policy header is a response header that prevents a document from loading any cross-origin resources that don't explicitly grant the document permission (using CORP or CORS).\n\nMethod: GET\nParameter: Cross-Origin-Embedder-Policy",
+    "description": "Cross-Origin-Embedder-Policy header is a response header that prevents a document from loading any cross-origin resources that don't explicitly grant the document permission (using CORP or CORS).\n\nMethod: GET\nParameter: Cross-Origin-Embedder-Policy\n\nReported 1 more time at this place in this scan.",
     "location": {
      "path": "",
      "start_line": 0,
      "end_line": 0,
      "snippet": "",
      "snippet_hash": "",
-     "route": "/styles.css",
-     "host": "http://localhost:3000"
+     "route": "/ftp",
+     "host": "http://localhost:3300"
     },
     "taxonomy": {
      "category": "dast",
@@ -11957,12 +10326,12 @@
      "user_marked_false_positive": false,
      "suppression_reason": null
     },
-    "fingerprint": "sha256:b3dd1565cabe704bc3e7e1c809c96d04f8cf4cc8078aee0c411e2202d17bafa4",
+    "fingerprint": "sha256:9039f269751a7bacfb330f72903efd4dd7604854f61148fbf76c09a21ef8836e",
     "package": null,
     "taint_path": []
    },
    {
-    "id": "zap-90004-f290160cb651",
+    "id": "zap-90004-f115fac7b288",
     "title": "Cross-Origin-Opener-Policy Header Missing or Invalid",
     "description": "Cross-Origin-Opener-Policy header is a response header that allows a site to control if others included documents share the same browsing context. Sharing the same browsing context with untrusted documents might lead to data leak.\n\nMethod: GET\nParameter: Cross-Origin-Opener-Policy",
     "location": {
@@ -11972,7 +10341,7 @@
      "snippet": "",
      "snippet_hash": "",
      "route": "/",
-     "host": "http://localhost:3000"
+     "host": "http://localhost:3300"
     },
     "taxonomy": {
      "category": "dast",
@@ -12024,12 +10393,12 @@
      "user_marked_false_positive": false,
      "suppression_reason": null
     },
-    "fingerprint": "sha256:56b588d485e66d1bfb0025d451e6fe76a8dd509966a176d9b5bbfacaca74bdc9",
+    "fingerprint": "sha256:2e5c77863788d16571101d324ea7ab05c7fd77a9f6f6e74fef02b6b73758e9b6",
     "package": null,
     "taint_path": []
    },
    {
-    "id": "zap-10049-02ba0b36dbc1",
+    "id": "zap-10049-34ecb540dad4",
     "title": "Storable but Non-Cacheable Content",
     "description": "The response contents are storable by caching components such as proxy servers, but will not be retrieved directly from the cache, without validating the request upstream, in response to similar requests from other users.\n\nMethod: GET\nEvidence: max-age=0",
     "location": {
@@ -12038,8 +10407,8 @@
      "end_line": 0,
      "snippet": "",
      "snippet_hash": "",
-     "route": "/styles.css",
-     "host": "http://localhost:3000"
+     "route": "/assets/public/favicon_js.ico",
+     "host": "http://localhost:3300"
     },
     "taxonomy": {
      "category": "dast",
@@ -12093,12 +10462,12 @@
      "user_marked_false_positive": false,
      "suppression_reason": null
     },
-    "fingerprint": "sha256:de1fca40f927361035f3b34c4ce085b9b7b059c88da582aabae0edcb50938df6",
+    "fingerprint": "sha256:c0a386b776512bca69ea62435b6c7b4ed4f16b1cdb5fd40d7148f1440a1d5c26",
     "package": null,
     "taint_path": []
    },
    {
-    "id": "zap-10049-1fd567f9b6cf",
+    "id": "zap-10049-376f72122276",
     "title": "Storable but Non-Cacheable Content",
     "description": "The response contents are storable by caching components such as proxy servers, but will not be retrieved directly from the cache, without validating the request upstream, in response to similar requests from other users.\n\nMethod: GET\nEvidence: max-age=0",
     "location": {
@@ -12108,7 +10477,7 @@
      "snippet": "",
      "snippet_hash": "",
      "route": "/",
-     "host": "http://localhost:3000"
+     "host": "http://localhost:3300"
     },
     "taxonomy": {
      "category": "dast",
@@ -12162,12 +10531,12 @@
      "user_marked_false_positive": false,
      "suppression_reason": null
     },
-    "fingerprint": "sha256:b7391f4adccfb41cefb993456490c2117475675760fba15d4c6951fbae105680",
+    "fingerprint": "sha256:cc01363bb8a37078be85fef0df8f84f708ac7d46bc3230ed4cc75984c6793d14",
     "package": null,
     "taint_path": []
    },
    {
-    "id": "zap-10049-39b956493c3d",
+    "id": "zap-10049-61b1dd65df7a",
     "title": "Storable but Non-Cacheable Content",
     "description": "The response contents are storable by caching components such as proxy servers, but will not be retrieved directly from the cache, without validating the request upstream, in response to similar requests from other users.\n\nMethod: GET\nEvidence: max-age=0",
     "location": {
@@ -12176,8 +10545,8 @@
      "end_line": 0,
      "snippet": "",
      "snippet_hash": "",
-     "route": "/sitemap.xml",
-     "host": "http://localhost:3000"
+     "route": "/runtime.js",
+     "host": "http://localhost:3300"
     },
     "taxonomy": {
      "category": "dast",
@@ -12231,81 +10600,12 @@
      "user_marked_false_positive": false,
      "suppression_reason": null
     },
-    "fingerprint": "sha256:9f3fc27a68fe3ed852d3e155bb46271f592e46b49b41458d0df9a829843544a5",
+    "fingerprint": "sha256:987a9b3c77401f1b718840857777875069d50a60a1391e019ef2ab8b6096ddeb",
     "package": null,
     "taint_path": []
    },
    {
-    "id": "zap-10049-8af0b40f2019",
-    "title": "Storable but Non-Cacheable Content",
-    "description": "The response contents are storable by caching components such as proxy servers, but will not be retrieved directly from the cache, without validating the request upstream, in response to similar requests from other users.\n\nMethod: GET\nEvidence: max-age=0",
-    "location": {
-     "path": "",
-     "start_line": 0,
-     "end_line": 0,
-     "snippet": "",
-     "snippet_hash": "",
-     "route": "/assets/public/assets/public/favicon_js.ico",
-     "host": "http://localhost:3000"
-    },
-    "taxonomy": {
-     "category": "dast",
-     "cwe": [
-      "CWE-524"
-     ],
-     "owasp_top_10_2021": [],
-     "cve": [],
-     "aliases": []
-    },
-    "scoring": {
-     "native_severity": {
-      "zap": "Informational (Medium)"
-     },
-     "normalized_severity": "INFO",
-     "cvss_v3_1": null,
-     "epss_score": null,
-     "in_cisa_kev": false,
-     "reachable": null,
-     "risk_score": 4,
-     "risk_factors": [
-      "Info severity",
-      "Flagged by 1 scanner, confidence 60%"
-     ],
-     "confidence": 0.6
-    },
-    "evidence": {
-     "reported_by": [
-      "zap-baseline"
-     ],
-     "agreement_count": 1,
-     "rule_ids": {
-      "zap-baseline": [
-       "10049"
-      ]
-     }
-    },
-    "remediation": {
-     "summary": "",
-     "suggested_patch": null,
-     "references": [
-      "https://datatracker.ietf.org/doc/html/rfc7234",
-      "https://datatracker.ietf.org/doc/html/rfc7231",
-      "https://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html"
-     ],
-     "generated_by": "static",
-     "is_suggestion": true
-    },
-    "triage": {
-     "state": "open",
-     "user_marked_false_positive": false,
-     "suppression_reason": null
-    },
-    "fingerprint": "sha256:b8ac65c910e2570c9943d202518e141a24d6057538c2af90a5c07537b46936e0",
-    "package": null,
-    "taint_path": []
-   },
-   {
-    "id": "zap-10049-a048b5b0ae37",
+    "id": "zap-10049-b3a36b5e9b39",
     "title": "Storable and Cacheable Content",
     "description": "The response contents are storable by caching components such as proxy servers, and may be retrieved directly from the cache, rather than from the origin server by the caching servers, in response to similar requests from other users. If the response data is sensitive, personal or user-specific, this may result in sensitive information being leaked. In some cases, this may even result in a user gaining complete control of the session of another user, depending on the configuration of the caching components in use in their environment. This is primarily an issue where \"shared\" caching servers such as \"proxy\" caches are configured on the local network. This configuration is typically found in corporate or educational environments, for instance.\n\nMethod: GET\nOther info: In the absence of an explicitly specified caching lifetime directive in the response, a liberal lifetime heuristic of 1 year was assumed. This is permitted by rfc7234.",
     "location": {
@@ -12315,7 +10615,7 @@
      "snippet": "",
      "snippet_hash": "",
      "route": "/robots.txt",
-     "host": "http://localhost:3000"
+     "host": "http://localhost:3300"
     },
     "taxonomy": {
      "category": "dast",
@@ -12369,12 +10669,12 @@
      "user_marked_false_positive": false,
      "suppression_reason": null
     },
-    "fingerprint": "sha256:f308ca1b8a3fd5af6da9821710a852f263fd97d8db40896df819c587e4a8b2fd",
+    "fingerprint": "sha256:739d55545f25f600afe76c4610a0d400e1f92d7d89616ebbc0950120c19de8a8",
     "package": null,
     "taint_path": []
    },
    {
-    "id": "zap-10049-aa502fb7b967",
+    "id": "zap-10049-eebb578345b7",
     "title": "Storable but Non-Cacheable Content",
     "description": "The response contents are storable by caching components such as proxy servers, but will not be retrieved directly from the cache, without validating the request upstream, in response to similar requests from other users.\n\nMethod: GET\nEvidence: max-age=0",
     "location": {
@@ -12383,8 +10683,8 @@
      "end_line": 0,
      "snippet": "",
      "snippet_hash": "",
-     "route": "/assets/public/styles.css",
-     "host": "http://localhost:3000"
+     "route": "/main.js",
+     "host": "http://localhost:3300"
     },
     "taxonomy": {
      "category": "dast",
@@ -12438,264 +10738,12 @@
      "user_marked_false_positive": false,
      "suppression_reason": null
     },
-    "fingerprint": "sha256:c15ccd093af75036329e3ff8a01d6826b0de41fc5416bf4c0284e7473b48325b",
+    "fingerprint": "sha256:bc010d45cfb281aa7dd179f5979e513b496e6cd006cbfad0326bec7de7db6b87",
     "package": null,
     "taint_path": []
    },
    {
-    "id": "zap-10109-209d0e97dbe5",
-    "title": "Modern Web Application",
-    "description": "The application appears to be a modern web application. If you need to explore it automatically then the Client Spider may well be more effective than the standard one.\n\nMethod: GET\nEvidence: <script src=\"//cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.1.0/cookieconsent.min.js\"></script>\nOther info: No links have been found while there are scripts, which is an indication that this is a modern web application.",
-    "location": {
-     "path": "",
-     "start_line": 0,
-     "end_line": 0,
-     "snippet": "",
-     "snippet_hash": "",
-     "route": "/assets/public/favicon_js.ico",
-     "host": "http://localhost:3000"
-    },
-    "taxonomy": {
-     "category": "dast",
-     "cwe": [],
-     "owasp_top_10_2021": [],
-     "cve": [],
-     "aliases": []
-    },
-    "scoring": {
-     "native_severity": {
-      "zap": "Informational (Medium)"
-     },
-     "normalized_severity": "INFO",
-     "cvss_v3_1": null,
-     "epss_score": null,
-     "in_cisa_kev": false,
-     "reachable": null,
-     "risk_score": 4,
-     "risk_factors": [
-      "Info severity",
-      "Flagged by 1 scanner, confidence 60%"
-     ],
-     "confidence": 0.6
-    },
-    "evidence": {
-     "reported_by": [
-      "zap-baseline"
-     ],
-     "agreement_count": 1,
-     "rule_ids": {
-      "zap-baseline": [
-       "10109"
-      ]
-     }
-    },
-    "remediation": {
-     "summary": "This is an informational alert and so no changes are required.",
-     "suggested_patch": null,
-     "references": [],
-     "generated_by": "static",
-     "is_suggestion": true
-    },
-    "triage": {
-     "state": "open",
-     "user_marked_false_positive": false,
-     "suppression_reason": null
-    },
-    "fingerprint": "sha256:409c0aa8e863a453362c8b1bc8b24ddaf3f769c0a4f7d381ffa8395e7f3fb1d9",
-    "package": null,
-    "taint_path": []
-   },
-   {
-    "id": "zap-10109-2e5ca290ab5a",
-    "title": "Modern Web Application",
-    "description": "The application appears to be a modern web application. If you need to explore it automatically then the Client Spider may well be more effective than the standard one.\n\nMethod: GET\nEvidence: <script src=\"//cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.1.0/cookieconsent.min.js\"></script>\nOther info: No links have been found while there are scripts, which is an indication that this is a modern web application.",
-    "location": {
-     "path": "",
-     "start_line": 0,
-     "end_line": 0,
-     "snippet": "",
-     "snippet_hash": "",
-     "route": "/assets/public/styles.css",
-     "host": "http://localhost:3000"
-    },
-    "taxonomy": {
-     "category": "dast",
-     "cwe": [],
-     "owasp_top_10_2021": [],
-     "cve": [],
-     "aliases": []
-    },
-    "scoring": {
-     "native_severity": {
-      "zap": "Informational (Medium)"
-     },
-     "normalized_severity": "INFO",
-     "cvss_v3_1": null,
-     "epss_score": null,
-     "in_cisa_kev": false,
-     "reachable": null,
-     "risk_score": 4,
-     "risk_factors": [
-      "Info severity",
-      "Flagged by 1 scanner, confidence 60%"
-     ],
-     "confidence": 0.6
-    },
-    "evidence": {
-     "reported_by": [
-      "zap-baseline"
-     ],
-     "agreement_count": 1,
-     "rule_ids": {
-      "zap-baseline": [
-       "10109"
-      ]
-     }
-    },
-    "remediation": {
-     "summary": "This is an informational alert and so no changes are required.",
-     "suggested_patch": null,
-     "references": [],
-     "generated_by": "static",
-     "is_suggestion": true
-    },
-    "triage": {
-     "state": "open",
-     "user_marked_false_positive": false,
-     "suppression_reason": null
-    },
-    "fingerprint": "sha256:48ba8e1adfc01d976fc9c09a567e1365a38840b95c5782509cca9d8a1011b927",
-    "package": null,
-    "taint_path": []
-   },
-   {
-    "id": "zap-10109-3cfbe055b738",
-    "title": "Modern Web Application",
-    "description": "The application appears to be a modern web application. If you need to explore it automatically then the Client Spider may well be more effective than the standard one.\n\nMethod: GET\nEvidence: <script src=\"//cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.1.0/cookieconsent.min.js\"></script>\nOther info: No links have been found while there are scripts, which is an indication that this is a modern web application.",
-    "location": {
-     "path": "",
-     "start_line": 0,
-     "end_line": 0,
-     "snippet": "",
-     "snippet_hash": "",
-     "route": "/styles.css",
-     "host": "http://localhost:3000"
-    },
-    "taxonomy": {
-     "category": "dast",
-     "cwe": [],
-     "owasp_top_10_2021": [],
-     "cve": [],
-     "aliases": []
-    },
-    "scoring": {
-     "native_severity": {
-      "zap": "Informational (Medium)"
-     },
-     "normalized_severity": "INFO",
-     "cvss_v3_1": null,
-     "epss_score": null,
-     "in_cisa_kev": false,
-     "reachable": null,
-     "risk_score": 4,
-     "risk_factors": [
-      "Info severity",
-      "Flagged by 1 scanner, confidence 60%"
-     ],
-     "confidence": 0.6
-    },
-    "evidence": {
-     "reported_by": [
-      "zap-baseline"
-     ],
-     "agreement_count": 1,
-     "rule_ids": {
-      "zap-baseline": [
-       "10109"
-      ]
-     }
-    },
-    "remediation": {
-     "summary": "This is an informational alert and so no changes are required.",
-     "suggested_patch": null,
-     "references": [],
-     "generated_by": "static",
-     "is_suggestion": true
-    },
-    "triage": {
-     "state": "open",
-     "user_marked_false_positive": false,
-     "suppression_reason": null
-    },
-    "fingerprint": "sha256:9d13770e2f3f14663b5efc36f6a771122d33b0ee8d2f01c83a734af5a6c57379",
-    "package": null,
-    "taint_path": []
-   },
-   {
-    "id": "zap-10109-bb60fd218d01",
-    "title": "Modern Web Application",
-    "description": "The application appears to be a modern web application. If you need to explore it automatically then the Client Spider may well be more effective than the standard one.\n\nMethod: GET\nEvidence: <script src=\"//cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.1.0/cookieconsent.min.js\"></script>\nOther info: No links have been found while there are scripts, which is an indication that this is a modern web application.",
-    "location": {
-     "path": "",
-     "start_line": 0,
-     "end_line": 0,
-     "snippet": "",
-     "snippet_hash": "",
-     "route": "/assets/public/assets/public/favicon_js.ico",
-     "host": "http://localhost:3000"
-    },
-    "taxonomy": {
-     "category": "dast",
-     "cwe": [],
-     "owasp_top_10_2021": [],
-     "cve": [],
-     "aliases": []
-    },
-    "scoring": {
-     "native_severity": {
-      "zap": "Informational (Medium)"
-     },
-     "normalized_severity": "INFO",
-     "cvss_v3_1": null,
-     "epss_score": null,
-     "in_cisa_kev": false,
-     "reachable": null,
-     "risk_score": 4,
-     "risk_factors": [
-      "Info severity",
-      "Flagged by 1 scanner, confidence 60%"
-     ],
-     "confidence": 0.6
-    },
-    "evidence": {
-     "reported_by": [
-      "zap-baseline"
-     ],
-     "agreement_count": 1,
-     "rule_ids": {
-      "zap-baseline": [
-       "10109"
-      ]
-     }
-    },
-    "remediation": {
-     "summary": "This is an informational alert and so no changes are required.",
-     "suggested_patch": null,
-     "references": [],
-     "generated_by": "static",
-     "is_suggestion": true
-    },
-    "triage": {
-     "state": "open",
-     "user_marked_false_positive": false,
-     "suppression_reason": null
-    },
-    "fingerprint": "sha256:b1fb93a59a3dea2dbaf429ff9422cf66e9646061ef6b99e6e02a9751d601c830",
-    "package": null,
-    "taint_path": []
-   },
-   {
-    "id": "zap-10109-df41f1037980",
+    "id": "zap-10109-1a59991c5cf6",
     "title": "Modern Web Application",
     "description": "The application appears to be a modern web application. If you need to explore it automatically then the Client Spider may well be more effective than the standard one.\n\nMethod: GET\nEvidence: <script src=\"//cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.1.0/cookieconsent.min.js\"></script>\nOther info: No links have been found while there are scripts, which is an indication that this is a modern web application.",
     "location": {
@@ -12705,7 +10753,7 @@
      "snippet": "",
      "snippet_hash": "",
      "route": "/sitemap.xml",
-     "host": "http://localhost:3000"
+     "host": "http://localhost:3300"
     },
     "taxonomy": {
      "category": "dast",
@@ -12753,7 +10801,259 @@
      "user_marked_false_positive": false,
      "suppression_reason": null
     },
-    "fingerprint": "sha256:68fc28adb0ac22c99fdf6c9eb9a5129bc52daf24784e06ddc331f3d564c7bea4",
+    "fingerprint": "sha256:e18c89e6fb71fe037b5f9bd9349b4f39c2a56b7b55548b3430aed992c95ecc04",
+    "package": null,
+    "taint_path": []
+   },
+   {
+    "id": "zap-10109-6573838896ea",
+    "title": "Modern Web Application",
+    "description": "The application appears to be a modern web application. If you need to explore it automatically then the Client Spider may well be more effective than the standard one.\n\nMethod: GET\nEvidence: <script src=\"//cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.1.0/cookieconsent.min.js\"></script>\nOther info: No links have been found while there are scripts, which is an indication that this is a modern web application.",
+    "location": {
+     "path": "",
+     "start_line": 0,
+     "end_line": 0,
+     "snippet": "",
+     "snippet_hash": "",
+     "route": "/styles.css",
+     "host": "http://localhost:3300"
+    },
+    "taxonomy": {
+     "category": "dast",
+     "cwe": [],
+     "owasp_top_10_2021": [],
+     "cve": [],
+     "aliases": []
+    },
+    "scoring": {
+     "native_severity": {
+      "zap": "Informational (Medium)"
+     },
+     "normalized_severity": "INFO",
+     "cvss_v3_1": null,
+     "epss_score": null,
+     "in_cisa_kev": false,
+     "reachable": null,
+     "risk_score": 4,
+     "risk_factors": [
+      "Info severity",
+      "Flagged by 1 scanner, confidence 60%"
+     ],
+     "confidence": 0.6
+    },
+    "evidence": {
+     "reported_by": [
+      "zap-baseline"
+     ],
+     "agreement_count": 1,
+     "rule_ids": {
+      "zap-baseline": [
+       "10109"
+      ]
+     }
+    },
+    "remediation": {
+     "summary": "This is an informational alert and so no changes are required.",
+     "suggested_patch": null,
+     "references": [],
+     "generated_by": "static",
+     "is_suggestion": true
+    },
+    "triage": {
+     "state": "open",
+     "user_marked_false_positive": false,
+     "suppression_reason": null
+    },
+    "fingerprint": "sha256:110a4bc9fb28d9bbf519e7e972c5230d4e83efaebae7bb6f0b1f5ff9661dc1cf",
+    "package": null,
+    "taint_path": []
+   },
+   {
+    "id": "zap-10109-9a02834af47c",
+    "title": "Modern Web Application",
+    "description": "The application appears to be a modern web application. If you need to explore it automatically then the Client Spider may well be more effective than the standard one.\n\nMethod: GET\nEvidence: <script src=\"//cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.1.0/cookieconsent.min.js\"></script>\nOther info: No links have been found while there are scripts, which is an indication that this is a modern web application.",
+    "location": {
+     "path": "",
+     "start_line": 0,
+     "end_line": 0,
+     "snippet": "",
+     "snippet_hash": "",
+     "route": "/",
+     "host": "http://localhost:3300"
+    },
+    "taxonomy": {
+     "category": "dast",
+     "cwe": [],
+     "owasp_top_10_2021": [],
+     "cve": [],
+     "aliases": []
+    },
+    "scoring": {
+     "native_severity": {
+      "zap": "Informational (Medium)"
+     },
+     "normalized_severity": "INFO",
+     "cvss_v3_1": null,
+     "epss_score": null,
+     "in_cisa_kev": false,
+     "reachable": null,
+     "risk_score": 4,
+     "risk_factors": [
+      "Info severity",
+      "Flagged by 1 scanner, confidence 60%"
+     ],
+     "confidence": 0.6
+    },
+    "evidence": {
+     "reported_by": [
+      "zap-baseline"
+     ],
+     "agreement_count": 1,
+     "rule_ids": {
+      "zap-baseline": [
+       "10109"
+      ]
+     }
+    },
+    "remediation": {
+     "summary": "This is an informational alert and so no changes are required.",
+     "suggested_patch": null,
+     "references": [],
+     "generated_by": "static",
+     "is_suggestion": true
+    },
+    "triage": {
+     "state": "open",
+     "user_marked_false_positive": false,
+     "suppression_reason": null
+    },
+    "fingerprint": "sha256:865523744194511e12768b3dacb263809778eccb52d8df52717c73e899909f20",
+    "package": null,
+    "taint_path": []
+   },
+   {
+    "id": "zap-10109-9e210ee34127",
+    "title": "Modern Web Application",
+    "description": "The application appears to be a modern web application. If you need to explore it automatically then the Client Spider may well be more effective than the standard one.\n\nMethod: GET\nEvidence: <script src=\"//cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.1.0/cookieconsent.min.js\"></script>\nOther info: No links have been found while there are scripts, which is an indication that this is a modern web application.",
+    "location": {
+     "path": "",
+     "start_line": 0,
+     "end_line": 0,
+     "snippet": "",
+     "snippet_hash": "",
+     "route": "/assets/public/favicon_js.ico",
+     "host": "http://localhost:3300"
+    },
+    "taxonomy": {
+     "category": "dast",
+     "cwe": [],
+     "owasp_top_10_2021": [],
+     "cve": [],
+     "aliases": []
+    },
+    "scoring": {
+     "native_severity": {
+      "zap": "Informational (Medium)"
+     },
+     "normalized_severity": "INFO",
+     "cvss_v3_1": null,
+     "epss_score": null,
+     "in_cisa_kev": false,
+     "reachable": null,
+     "risk_score": 4,
+     "risk_factors": [
+      "Info severity",
+      "Flagged by 1 scanner, confidence 60%"
+     ],
+     "confidence": 0.6
+    },
+    "evidence": {
+     "reported_by": [
+      "zap-baseline"
+     ],
+     "agreement_count": 1,
+     "rule_ids": {
+      "zap-baseline": [
+       "10109"
+      ]
+     }
+    },
+    "remediation": {
+     "summary": "This is an informational alert and so no changes are required.",
+     "suggested_patch": null,
+     "references": [],
+     "generated_by": "static",
+     "is_suggestion": true
+    },
+    "triage": {
+     "state": "open",
+     "user_marked_false_positive": false,
+     "suppression_reason": null
+    },
+    "fingerprint": "sha256:decce74d0eebce18d8d1e97282e7a92af86b49b97ac719b97512098f3ed91acb",
+    "package": null,
+    "taint_path": []
+   },
+   {
+    "id": "zap-10109-afb65d2c4ede",
+    "title": "Modern Web Application",
+    "description": "The application appears to be a modern web application. If you need to explore it automatically then the Client Spider may well be more effective than the standard one.\n\nMethod: GET\nEvidence: <script src=\"//cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.1.0/cookieconsent.min.js\"></script>\nOther info: No links have been found while there are scripts, which is an indication that this is a modern web application.",
+    "location": {
+     "path": "",
+     "start_line": 0,
+     "end_line": 0,
+     "snippet": "",
+     "snippet_hash": "",
+     "route": "/ftp",
+     "host": "http://localhost:3300"
+    },
+    "taxonomy": {
+     "category": "dast",
+     "cwe": [],
+     "owasp_top_10_2021": [],
+     "cve": [],
+     "aliases": []
+    },
+    "scoring": {
+     "native_severity": {
+      "zap": "Informational (Medium)"
+     },
+     "normalized_severity": "INFO",
+     "cvss_v3_1": null,
+     "epss_score": null,
+     "in_cisa_kev": false,
+     "reachable": null,
+     "risk_score": 4,
+     "risk_factors": [
+      "Info severity",
+      "Flagged by 1 scanner, confidence 60%"
+     ],
+     "confidence": 0.6
+    },
+    "evidence": {
+     "reported_by": [
+      "zap-baseline"
+     ],
+     "agreement_count": 1,
+     "rule_ids": {
+      "zap-baseline": [
+       "10109"
+      ]
+     }
+    },
+    "remediation": {
+     "summary": "This is an informational alert and so no changes are required.",
+     "suggested_patch": null,
+     "references": [],
+     "generated_by": "static",
+     "is_suggestion": true
+    },
+    "triage": {
+     "state": "open",
+     "user_marked_false_positive": false,
+     "suppression_reason": null
+    },
+    "fingerprint": "sha256:2a676a573ebbdbab1a8878b406086f596001bc3edb1bd6f03e99050062fbd14e",
     "package": null,
     "taint_path": []
    }
@@ -12764,7 +11064,7 @@
     "host": "cfu.zaproxy.org",
     "port": 443,
     "protocol": "https",
-    "attempts": 29
+    "attempts": 25
    },
    {
     "host": "tel.zaproxy.org",

@@ -5,6 +5,12 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 
 ## [Unreleased]
 
+### Changed
+- **The site's Juice Shop recording is re-recorded** (2026-10-11) with repeats folded: code 154
+  reported, 124 findings (113 Issues); running app 47 alerts, 38 findings (38 Issues). Its caveats
+  now say why findings and Issues differ, and what an active campaign keeps from Nuclei. Fly's health
+  check is `/`, since `/about` redirects there.
+
 ### Fixed
 - **An active campaign whose Nuclei run times out keeps what Nuclei found.** It used to raise with
   nothing, so a run against a real app lost every finding. The findings are kept, the campaign ends

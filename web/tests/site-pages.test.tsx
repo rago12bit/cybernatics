@@ -138,8 +138,9 @@ describe("the recorded Juice Shop scan", () => {
 
   it("says what it does not show", () => {
     for (const gap of ["Dependencies", "Nuclei", "five URLs", "Express", "withheld"]) expect(out).toContain(gap);
-    expect(out).toContain(`have ${fingerprintCount(codeFindings)} and ${fingerprintCount(runtimeFindings)} distinct ones`);
-    expect(fingerprintCount(codeFindings)).toBeLessThan(codeScan.unique_findings); // why the line is there
+    expect(out).toContain(`the ${codeScan.unique_findings} code findings are ${fingerprintCount(codeFindings)} Issues`);
+    expect(out).toContain(`the ${runtimeScan.unique_findings} running-app findings are ${fingerprintCount(runtimeFindings)}`);
+    expect(out).not.toContain("kept nothing"); // Nuclei keeps what it found by its time limit now
   });
 
   it("is internally consistent", () => {
@@ -148,6 +149,9 @@ describe("the recorded Juice Shop scan", () => {
     expect(sev(runtimeScan)).toBe(runtimeScan.unique_findings);
     expect(runtimeFindings).toHaveLength(runtimeScan.unique_findings);
     expect(runtimeFindings.every((f) => f.location.path === "" && !!f.location.route)).toBe(true);
+    // One finding per id: a repeat at the same place is folded into one finding (core.correlation).
+    expect(new Set(codeFindings.map((f) => f.id)).size).toBe(codeFindings.length);
+    expect(new Set(runtimeFindings.map((f) => f.id)).size).toBe(runtimeFindings.length);
     expect(provenance.image).toMatch(/@sha256:[0-9a-f]{64}$/);
   });
 
