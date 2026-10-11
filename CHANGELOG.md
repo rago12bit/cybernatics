@@ -12,6 +12,13 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   check is `/`, since `/about` redirects there.
 
 ### Fixed
+- **Code on an Issue is highlighted in production.** Shiki's default engine is WebAssembly, which
+  the production CSP refuses (`wasm-eval`), so every snippet fell back to plain text; its HTML output
+  also carried `style` attributes the CSP strips. It now uses Shiki's JavaScript engine and renders
+  tokens as React elements, so the scanned code never goes in as HTML. `npm run e2e:csp` (new, in
+  CI) opens every page of the production build and fails on any CSP violation; `npm run e2e` runs
+  `next dev`, whose relaxed policy hid this. The suspected "inline styles the CSP blocks" in
+  components were not: React applies `style` props through the CSSOM, which CSP does not govern.
 - **An active campaign whose Nuclei run times out keeps what Nuclei found.** It used to raise with
   nothing, so a run against a real app lost every finding. The findings are kept, the campaign ends
   `partial` (closing nothing), and the timed-out container is killed instead of left running (ZAP's

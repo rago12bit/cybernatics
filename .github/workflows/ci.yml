@@ -157,6 +157,12 @@ jobs:
         run: npm run e2e
         env:
           E2E_PYTHON: python
+      # The production build under the production CSP: `npm run e2e` drives `next dev`, whose
+      # policy allows what production forbids (tests-e2e-csp/csp.spec.ts says why that matters).
+      - working-directory: web
+        run: npm run e2e:csp
+        env:
+          E2E_PYTHON: python
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: failure()
         with:

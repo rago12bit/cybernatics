@@ -13,6 +13,9 @@ export function proxy(request: NextRequest) {
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ""}`,
     // Dev only: Next's overlay injects inline styles. A nonce would make browsers ignore
     // 'unsafe-inline', so dev uses one or the other; production is nonce-only (no inline styles).
+    // That forbids style="" in HTML (server-rendered, or inserted with innerHTML), not a React
+    // `style` prop rendered on the client, which React sets through the CSSOM. `npm run e2e:csp`
+    // checks every page against this production policy.
     isDev ? "style-src 'self' 'unsafe-inline'" : `style-src 'self' 'nonce-${nonce}'`,
     "img-src 'self' data:",
     "font-src 'self'",
