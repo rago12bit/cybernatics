@@ -21,6 +21,12 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   second ([benchmarks/README.md](benchmarks/README.md)).
 
 ### Fixed
+- **The DAST egress proxy checks every plain HTTP request, not only a connection's first.** After
+  the first request it became a raw pipe: a client reusing the connection had its next request reach
+  the target unrewritten (Juice Shop answered with its app page, so Nuclei found 17 instead of 19)
+  and unchecked against the allow-list, and the client's Host header always went through. Now one
+  request per connection, Host set to the allowed target, `Connection: close` both ways. Nuclei
+  through the proxy finds the same 19 as direct.
 - **The rules engine fetched the same project once per candidate** (2,200 queries in a 500-event
   batch), found by the load test. It now holds them for the batch: about 310 to 520 events a second.
 - **An API error no longer reads as "Cannot reach the Bulwark API".** An unhandled error answered a

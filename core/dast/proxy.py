@@ -27,6 +27,12 @@ from dataclasses import dataclass
 
 DEFAULT_CONNECT_TIMEOUT = 10.0
 _MAX_HEADER_BYTES = 16 * 1024  # a request line this large is already not a sane DAST tool request
+_MAX_HEAD_BYTES = 64 * 1024  # a whole request or response head
+# Set by the proxy itself on a plain HTTP request, or hop-by-hop and so not the target's business.
+_REQUEST_HEADERS_REPLACED = frozenset({
+    b"host", b"connection", b"proxy-connection", b"keep-alive", b"proxy-authorization", b"te",
+    b"upgrade",
+})  # fmt: skip
 _START_TIMEOUT = 5.0
 # The header is not decoration. Nuclei's raw-request client (projectdiscovery/rawhttp 0.1.91) reads
 # the status line and then waits for 5 more bytes, to skip a repeated status line some devices send.
@@ -182,6 +188,17 @@ class AllowListProxy:
     async def _relay_plain_http(
         self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter, target: ProxyTarget
     ) -> None:
+        """One request per connection. The request goes upstream in origin form, with the Host
+        header set to the allowed target (whatever the client sent) and `Connection: close`; the
+        response comes back marked `Connection: close` too, so a client sends its next request on
+        a new connection, where it is parsed and checked like the first.
+
+        Before, the connection became a raw pipe after the first request line: a client reusing it
+        (HTTP keep-alive) had its next request reach the target unrewritten (`GET http://host/path`,
+        which Juice Shop answered with its app page, so Nuclei missed two findings) and unchecked
+        against the allow-list. The TCP connection was pinned to the allowed host either way, but a
+        Host header naming another site can be routed to it by a shared front end (a CDN, a virtual
+        host) -- a site ownership verification never covered."""
         from urllib.parse import urlsplit
 
         parsed = urlsplit(target.request_line.decode("ascii").split(" ")[1])
@@ -189,7 +206,24 @@ class AllowListProxy:
         if parsed.query:
             origin_form_path += f"?{parsed.query}"
         method = target.request_line.decode("ascii").split(" ")[0]
-        rewritten = f"{method} {origin_form_path} HTTP/1.1\r\n"
+        head = [f"{method} {origin_form_path} HTTP/1.1\r\n".encode("ascii")]
+        size = 0
+        while True:
+            header_line = await reader.readline()
+            size += len(header_line)
+            if size > _MAX_HEAD_BYTES:
+                writer.write(b"HTTP/1.1 431 Request Header Fields Too Large\r\n\r\n")
+                await writer.drain()
+                writer.close()
+                return
+            if header_line in (b"\r\n", b"\n", b""):
+                break
+            if header_line.split(b":", 1)[0].strip().lower() not in _REQUEST_HEADERS_REPLACED:
+                head.append(header_line)
+        host = f"[{target.host}]" if ":" in target.host else target.host
+        default_port = 443 if parsed.scheme == "https" else 80
+        authority = host if target.port == default_port else f"{host}:{target.port}"
+        head.append(f"Host: {authority}\r\nConnection: close\r\n\r\n".encode("ascii"))
         try:
             upstream_reader, upstream_writer = await asyncio.wait_for(
                 asyncio.open_connection(target.host, target.port), timeout=DEFAULT_CONNECT_TIMEOUT
@@ -199,16 +233,41 @@ class AllowListProxy:
             await writer.drain()
             writer.close()
             return
-        upstream_writer.write(rewritten.encode("ascii"))
-        while True:
-            header_line = await reader.readline()
-            upstream_writer.write(header_line)
-            if header_line in (b"\r\n", b""):
-                break
+        upstream_writer.write(b"".join(head))
         await upstream_writer.drain()
+        # The rest of what the client sends is this request's body. A further request on the same
+        # connection would ride along too, but the target must not act on anything after a request
+        # marked `Connection: close` (RFC 9112 section 9.6).
         await asyncio.gather(
-            _pump(reader, upstream_writer), _pump(upstream_reader, writer), return_exceptions=True
+            _pump(reader, upstream_writer),
+            _relay_response(upstream_reader, writer),
+            return_exceptions=True,
         )
+
+
+async def _relay_response(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+    """The response head with `Connection: close` in place of the target's own keep-alive headers,
+    then the rest as it comes."""
+    head: list[bytes] = []
+    size = 0
+    try:
+        while True:
+            line = await reader.readline()
+            size += len(line)
+            if not line or size > _MAX_HEAD_BYTES:
+                writer.write(b"".join(head))
+                break
+            if line in (b"\r\n", b"\n"):
+                writer.write(b"".join(head) + b"Connection: close\r\n" + line)
+                break
+            if head and line.split(b":", 1)[0].strip().lower() in (b"connection", b"keep-alive"):
+                continue
+            head.append(line)
+        await writer.drain()
+    except (ConnectionResetError, BrokenPipeError):
+        writer.close()
+        return
+    await _pump(reader, writer)
 
 
 async def _pump(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:

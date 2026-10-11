@@ -118,3 +118,94 @@ def test_a_real_connect_tunnel_to_a_real_external_allowed_host_succeeds() -> Non
         assert recorder.blocked == []
     finally:
         proxy.close()
+
+
+class _RecordingHandler(BaseHTTPRequestHandler):
+    """An HTTP/1.1 target that keeps connections alive unless told otherwise, and remembers the
+    request line and Host header of every request that reaches it."""
+
+    protocol_version = "HTTP/1.1"
+    seen: list[tuple[str, str]] = []
+
+    def do_GET(self) -> None:
+        type(self).seen.append((self.requestline, self.headers.get("Host", "")))
+        body = f"you asked for {self.path}".encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/plain")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def log_message(self, format: str, *args: object) -> None:  # noqa: A002
+        pass
+
+
+@pytest.fixture
+def recording_target() -> Iterator[tuple[int, list[tuple[str, str]]]]:
+    _RecordingHandler.seen = []
+    server = HTTPServer(("127.0.0.1", 0), _RecordingHandler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    yield server.server_address[1], _RecordingHandler.seen
+    server.shutdown()
+    thread.join(timeout=2)
+
+
+def test_each_plain_request_reaches_the_target_in_origin_form_with_its_own_host(
+    recording_target: tuple[int, list[tuple[str, str]]],
+    running_proxy: tuple[BackgroundProxy, _Recorder],
+) -> None:
+    """A client that keeps its connection to the proxy alive. The proxy used to relay only the
+    first request properly; the next went through raw, still `GET http://host/path`, which the
+    target answered as a different page (Juice Shop: its app page, so Nuclei missed two findings).
+    """
+    port, seen = recording_target
+    proxy, _ = running_proxy
+    conn = http.client.HTTPConnection("127.0.0.1", proxy.port, timeout=5)
+    bodies = []
+    for path in ("/robots.txt", "/.well-known/security.txt"):
+        conn.request("GET", f"http://127.0.0.1:{port}{path}")
+        resp = conn.getresponse()
+        assert resp.getheader("Connection") == "close"  # so the client opens a new connection
+        bodies.append(resp.read())
+    assert bodies == [b"you asked for /robots.txt", b"you asked for /.well-known/security.txt"]
+    assert seen == [
+        ("GET /robots.txt HTTP/1.1", f"127.0.0.1:{port}"),
+        ("GET /.well-known/security.txt HTTP/1.1", f"127.0.0.1:{port}"),
+    ]
+
+
+def test_a_second_request_pipelined_on_one_connection_never_reaches_the_target(
+    recording_target: tuple[int, list[tuple[str, str]]],
+    running_proxy: tuple[BackgroundProxy, _Recorder],
+) -> None:
+    """Sent without waiting, the second request is not parsed or checked by the proxy; the target
+    is told the first is the last on the connection, and acts on nothing after it."""
+    port, seen = recording_target
+    proxy, _ = running_proxy
+    with socket.create_connection(("127.0.0.1", proxy.port), timeout=5) as sock:
+        sock.sendall(
+            f"GET http://127.0.0.1:{port}/first HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n"
+            f"GET http://evil.example.net/second HTTP/1.1\r\nHost: evil.example.net\r\n\r\n".encode()
+        )
+        received = b""
+        while chunk := sock.recv(65536):
+            received += chunk
+    assert received.count(b"HTTP/1.1 200") == 1 and b"you asked for /first" in received
+    assert seen == [("GET /first HTTP/1.1", f"127.0.0.1:{port}")]
+
+
+def test_the_host_header_is_the_allowed_target_whatever_the_client_sends(
+    recording_target: tuple[int, list[tuple[str, str]]],
+    running_proxy: tuple[BackgroundProxy, _Recorder],
+) -> None:
+    """The connection goes to the allowed host either way, but a shared front end (a CDN, a
+    virtual host) routes by Host header: one naming another site must not reach it."""
+    port, seen = recording_target
+    proxy, _ = running_proxy
+    conn = http.client.HTTPConnection("127.0.0.1", proxy.port, timeout=5)
+    conn.putrequest("GET", f"http://127.0.0.1:{port}/x", skip_host=True)
+    conn.putheader("Host", "evil.example.net")
+    conn.endheaders()
+    assert conn.getresponse().status == 200
+    assert seen == [("GET /x HTTP/1.1", f"127.0.0.1:{port}")]

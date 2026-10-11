@@ -160,8 +160,19 @@ Measured against OWASP Juice Shop v17.3.0 with Nuclei v3.11.1:
   plain Docker network (16 findings, 98%, 28 minutes). The reply now carries a `Proxy-Agent`
   header. Through the proxy, Nuclei finished against Juice Shop in 101 s and 108 s (two runs), 17
   findings each; its attempts to reach `www.rdap.net` and `login.microsoftonline.com` were refused,
-  as they should be. Direct, it found 19. The gap is probably those third-party lookups, but that
-  is not checked.
+  as they should be. Direct, it found 19.
+- **The two missing findings were the proxy's, not the refusals (fixed 2026-10-12).** Diffed
+  against a direct run on the same target, the missing two were `robots-txt-endpoint` and
+  `security-txt`: plain GETs to the allowed host. The plain-HTTP relay rewrote only a connection's
+  first request and then piped raw, so a request reusing the connection (keep-alive) reached the
+  target still in absolute form (`GET http://host/robots.txt`), which Juice Shop answered with its
+  app page -- and it was never checked against the allow-list, and the client's Host header always
+  went through untouched. The TCP connection was pinned to the allowed host, but a shared front end
+  routes by Host header. Now one request per plain connection: origin form, Host set to the allowed
+  target, `Connection: close` both ways, so the next request comes on a new connection and is checked.
+  Through the proxy: 19 findings, the same 19 as direct, in 105 s; the proxy now also refuses
+  requests naming `oast.me`, `interact.sh`, `localhost` and random hosts that host-header and SSRF
+  templates send, which the raw pipe used to carry.
 
 ## What is NOT done
 
