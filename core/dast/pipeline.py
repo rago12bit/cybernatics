@@ -227,8 +227,8 @@ def _confirm_sast_findings_at_runtime(
     only ever adds a "confirmed at runtime" marker to an Issue that already exists from the linked
     source Asset's own SAST scans, never creates, removes, or changes anything else. Any failure
     here must not undo or fail a DAST campaign that otherwise completed successfully. A web Asset
-    with no `linked_source_asset_id` (the common case today -- nothing in the registration UI sets
-    it yet, only the API/CLI) simply has nothing to correlate against, silently."""
+    with no `linked_source_asset_id` (it is optional when registering a site, on screen, by API or
+    by CLI) simply has nothing to correlate against, silently."""
     try:
         with sessions() as s:
             web_asset = repo.get_asset(s, asset_id, org_id=org_id)

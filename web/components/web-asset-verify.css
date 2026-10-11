@@ -78,3 +78,13 @@
   margin-top: 0.5rem;
   color: var(--ds-danger);
 }
+
+.ds-wav-source {
+  margin-bottom: 1rem;
+  max-width: 65ch;
+}
+
+.ds-wav-source select {
+  max-width: 24rem;
+  width: 100%;
+}

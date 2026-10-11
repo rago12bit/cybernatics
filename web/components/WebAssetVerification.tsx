@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ApiError, getAssetVerification, registerWebAsset, verifyAsset } from "@/lib/api";
-import type { AssetVerification } from "@/lib/types";
+import { ApiError, getAssetVerification, listAssets, registerWebAsset, verifyAsset } from "@/lib/api";
+import type { AssetSummary, AssetVerification } from "@/lib/types";
 import { Button } from "@/design-system/primitives/Button";
 import "./web-asset-verify.css";
 
@@ -16,8 +16,19 @@ export function WebAssetVerification({ assetId }: { assetId?: string }) {
   const [verification, setVerification] = useState<AssetVerification | null>(null);
   const [domain, setDomain] = useState("");
   const [method, setMethod] = useState<"dns_txt" | "well_known">("dns_txt");
+  const [sources, setSources] = useState<AssetSummary[]>([]);
+  const [sourceId, setSourceId] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  // The projects this site's code could come from, for the optional link. If they don't load, the
+  // form still works: the link is optional.
+  useEffect(() => {
+    if (assetId) return;
+    listAssets()
+      .then((all) => setSources(all.filter((a) => a.source_type === "git" || a.source_type === "archive")))
+      .catch(() => setSources([]));
+  }, [assetId]);
 
   useEffect(() => {
     if (!assetId) return;
@@ -34,7 +45,7 @@ export function WebAssetVerification({ assetId }: { assetId?: string }) {
     setBusy(true);
     setError(null);
     try {
-      setVerification(await registerWebAsset(domain.trim(), method));
+      setVerification(await registerWebAsset(domain.trim(), method, sourceId || undefined));
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Could not register this target");
     } finally {
@@ -97,6 +108,26 @@ export function WebAssetVerification({ assetId }: { assetId?: string }) {
             .well-known file
           </label>
         </fieldset>
+        {sources.length > 0 && (
+          <div className="ds-wav-source">
+            <label className="ds-wav-label" htmlFor="wav-source">
+              Source code (optional)
+            </label>
+            <select id="wav-source" value={sourceId} onChange={(e) => setSourceId(e.target.value)}>
+              <option value="">Not linked</option>
+              {sources.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.label}
+                </option>
+              ))}
+            </select>
+            <p className="small muted">
+              The project this site runs. When a scan of the running site finds a problem on a route,
+              Bulwark looks for the same weakness in that route&apos;s code and marks the Issue
+              confirmed at runtime.
+            </p>
+          </div>
+        )}
         <Button variant="primary" onClick={register} disabled={busy}>
           {busy ? "Registering…" : "Register target"}
         </Button>

@@ -117,8 +117,8 @@ application's source (what a SAST scan runs against) are different rows with dif
 nothing in the existing schema connects "this live site" to "this repository." `assets.
 linked_source_asset_id` is that explicit, optional, same-org-enforced link. Without it, correlation
 has nothing to check against and does nothing, silently -- a missing confirmation is correct; a wrong
-one is not. The registration UI doesn't expose setting this link yet (API and CLI only) -- a
-disclosed scope cut.
+one is not. Week 49 left the link API and CLI only; the "Add web target" screen offers it since
+2026-10-12, listing the organization's git and archive projects.
 
 The "code intelligence" matching a DAST finding's route to source is a small `ast`-based extractor
 (`core/dast/routes.py`) recognizing the FastAPI/Flask decorator shape (`@app.get("/path")`,
@@ -181,8 +181,9 @@ Measured against OWASP Juice Shop v17.3.0 with Nuclei v3.11.1:
   that would make bypassing it a dropped packet rather than a policy violation has never been loaded
   into a real network namespace on any machine; Linux-only, the same disclosed boundary as Week 46's
   `core.fixagent.egress`.
-- Registering a web asset's link to its source project (`linked_source_asset_id`) is API/CLI-only;
-  the "Add web target" screen doesn't expose picking one yet.
+- A web asset's link to its source project (`linked_source_asset_id`) can only be set when the site
+  is registered (on the "Add web target" screen since 2026-10-12, or by API or CLI); there is no way
+  to add or change it afterwards without registering again, which resets verification.
 - Route extraction recognizes one decorator shape (FastAPI/Flask-style); Django's `urls.py` table,
   non-Python frameworks, and routes built from runtime strings are invisible to it -- a conservative
   miss, never a false match.

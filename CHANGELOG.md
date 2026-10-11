@@ -15,6 +15,9 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   check is `/`, since `/about` redirects there.
 
 ### Added
+- **Linking a web target to its source code on screen.** "Add web target" lists the organization's
+  git and archive projects to pick from (optional), so a finding on the running site can be confirmed
+  against the same weakness in that route's code. It was API and CLI only.
 - **A load test for the rules engine** (`scripts/bench-rules.py`, plan §60): a synthetic stream of
   Issue events at 50 to 1,000 a second through the real dispatcher on Postgres under RLS. Rule
   evaluation is about 20 ms at p95 at every rate; one dispatcher keeps up to about 500 events a

@@ -452,11 +452,13 @@ export const saveRetentionSettings = (retentionDays: number) =>
 
 // Web/DAST target ownership verification (plan §22.4): registering a target returns the proof-of-
 // control instructions; nothing can scan it until POST .../verify passes a live check.
-export const registerWebAsset = (domain: string, method: "dns_txt" | "well_known") =>
+/** `sourceAssetId`: the git or archive project whose code this site runs, so a DAST finding on a
+ * route can be confirmed against the SAST finding in its handler (plan §22.4). */
+export const registerWebAsset = (domain: string, method: "dns_txt" | "well_known", sourceAssetId?: string) =>
   request<AssetVerification>("/assets/web", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ domain, method }),
+    body: JSON.stringify({ domain, method, ...(sourceAssetId ? { source_asset_id: sourceAssetId } : {}) }),
   });
 
 export const getAssetVerification = (assetId: string) =>

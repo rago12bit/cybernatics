@@ -80,6 +80,74 @@ describe("WebAssetVerification", () => {
     expect(host.textContent).toContain("bulwark-site-verification=tok123");
   });
 
+  it("links the site to a git or archive project when one is picked", async () => {
+    let sent: Record<string, unknown> | null = null;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string, init?: RequestInit) => {
+        if (String(url).includes("/assets?")) {
+          return json([
+            { id: "src1", label: "github.com/acme/shop", source_type: "git" },
+            { id: "web1", label: "shop.example.com", source_type: "web" },
+            { id: "zip1", label: "shop.zip", source_type: "archive" },
+          ]);
+        }
+        if (String(url).endsWith("/assets/web")) {
+          sent = JSON.parse(init!.body as string);
+          return json(PENDING);
+        }
+        return json({});
+      }),
+    );
+    const host = await mount();
+    const select = host.querySelector("#wav-source") as HTMLSelectElement;
+    // Only code projects can be linked: a web target has no code to confirm against.
+    expect(Array.from(select.options).map((o) => o.textContent)).toEqual(["Not linked", "github.com/acme/shop", "shop.zip"]);
+    const input = host.querySelector("#wav-domain") as HTMLInputElement;
+    const setValue = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")!.set!;
+    await act(async () => {
+      setValue.call(input, "shop.example.com");
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      select.value = "src1";
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    const button = Array.from(host.querySelectorAll("button")).find((b) => b.textContent?.includes("Register"))!;
+    await act(async () => button.click());
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 20));
+    });
+    expect(sent).toEqual({ domain: "shop.example.com", method: "dns_txt", source_asset_id: "src1" });
+  });
+
+  it("registers without a link when no project is picked, or none could be listed", async () => {
+    let sent: Record<string, unknown> | null = null;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string, init?: RequestInit) => {
+        if (String(url).includes("/assets?")) return json({ detail: "boom" }, 500);
+        if (String(url).endsWith("/assets/web")) {
+          sent = JSON.parse(init!.body as string);
+          return json(PENDING);
+        }
+        return json({});
+      }),
+    );
+    const host = await mount();
+    expect(host.querySelector("#wav-source")).toBeNull();
+    const input = host.querySelector("#wav-domain") as HTMLInputElement;
+    const setValue = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")!.set!;
+    await act(async () => {
+      setValue.call(input, "example.com");
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    const button = Array.from(host.querySelectorAll("button")).find((b) => b.textContent?.includes("Register"))!;
+    await act(async () => button.click());
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 20));
+    });
+    expect(sent).toEqual({ domain: "example.com", method: "dns_txt" });
+  });
+
   it("loads an existing verification by assetId and shows its status", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => json(PENDING)));
     const host = await mount({ assetId: "a1" });
