@@ -114,9 +114,8 @@ export function Recording() {
             Dockerfile.
           </li>
           <li>
-            The active web tier. Nuclei is not in this recording. Run directly, it finishes against this target in about
-            two minutes; through the campaign&apos;s egress proxy it stalls before finishing, so an active campaign keeps
-            what Nuclei found by its time limit. The stall is being fixed.
+            The active web tier. Nuclei is not in this recording. Through the campaign&apos;s egress proxy it finishes
+            against this target in under two minutes.
           </li>
           <li>
             Every URL. ZAP lists at most five URLs for each kind of alert, and which five changes between runs, so the
