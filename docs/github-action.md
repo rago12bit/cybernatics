@@ -84,6 +84,8 @@ file). If the base commit cannot be fetched, nothing is ignored. On pushes the f
   images, HTML or `@mentions`.
 - The scanners run in sandboxed containers (see the threat model). The action builds their images on the runner
   (about 2 to 4 minutes on a cold runner) and pulls Gitleaks from Docker Hub.
+- It uses `actions/cache` v6 and `github/codeql-action` v4, which run on Node 24: a self-hosted runner needs
+  version 2.327.1 or later. GitHub-hosted runners already are.
 
 ## Not yet
 
