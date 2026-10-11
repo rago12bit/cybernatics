@@ -12,6 +12,15 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   check is `/`, since `/about` redirects there.
 
 ### Fixed
+- **The threat-model diagram is readable in production.** Mermaid's SVG needs inline styles, and it
+  inserts a copy into the page to measure text; the CSP refused both, so the diagram was black boxes
+  with invisible arrows. It is now drawn in a same-origin frame (`/diagram-frame`) whose own policy
+  allows inline styles but only this origin's scripts, and only this app may frame it; the app's
+  policy is unchanged. Mermaid uses its dark theme. `npm run e2e:csp` now saves a threat model and
+  checks the drawing is styled: before, the e2e API could not generate one, so that page only ever
+  showed an error and the check passed anyway.
+- **The Docker image serves `public/`**, so `/.well-known/security.txt` answers instead of 404. The
+  standalone server does not copy it; the Dockerfile now does.
 - **Code on an Issue is highlighted in production.** Shiki's default engine is WebAssembly, which
   the production CSP refuses (`wasm-eval`), so every snippet fell back to plain text; its HTML output
   also carried `style` attributes the CSP strips. It now uses Shiki's JavaScript engine and renders

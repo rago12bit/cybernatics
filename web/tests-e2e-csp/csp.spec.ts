@@ -7,6 +7,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { test, expect } from "@playwright/test";
+import { API_URL, E2E_TOKEN } from "../playwright.config";
 import { api, newProject } from "../tests-e2e/helpers";
 
 const APP = path.join(__dirname, "..", "app");
@@ -42,6 +43,14 @@ test("no page breaks the production CSP", async ({ page }) => {
   const withCode = items.find((f) => f.issue && f.location.snippet && !f.location.snippet.startsWith("[snippet withheld"));
   const issueId = withCode!.issue!.id;
   const latest: { id: string } = (await api(page).get("/scans?limit=1"))[0]; // the scan newProject just ran
+  // A threat model to draw. Generating one clones the real repository, which this API's fake scans
+  // don't have (it answers 500), so without this the page only ever showed an error and the check
+  // passed while the diagram was broken.
+  const saved = await page.request.put(`${API_URL}/assets/${id}/threat-model`, {
+    headers: { Authorization: `Bearer ${E2E_TOKEN}` },
+    data: { mermaid: "flowchart LR\n  user([User]) --> web[Web app]\n  web --> db[(Database)]", stride: [] },
+  });
+  expect(saved.ok()).toBe(true);
 
   const ids: Record<string, string> = { "[id]": id, "[issueId]": issueId };
   const visits = routes()
@@ -61,4 +70,19 @@ test("no page breaks the production CSP", async ({ page }) => {
   // And the Issue's code really is highlighted (it fell back to plain text when Shiki was refused).
   await page.goto(`/app/projects/${id}/issues/${issueId}`);
   await expect(page.locator(".ds-code-shiki .line").first()).toBeVisible({ timeout: 15_000 });
+
+  // And the threat model's diagram is drawn with Mermaid's styles (unstyled, it was black boxes with
+  // no visible arrows).
+  await page.goto(`/app/projects/${id}/threat-model`);
+  const drawing = page.frameLocator("iframe.ds-tm-frame").locator("svg");
+  await expect(drawing.locator(".node")).toHaveCount(3, { timeout: 15_000 });
+  const look = await drawing.evaluate((svg) => ({
+    nodeFill: getComputedStyle(svg.querySelector(".node rect, .node path")!).fill,
+    edgeStroke: getComputedStyle(svg.querySelector(".flowchart-link")!).stroke,
+  }));
+  expect(look.nodeFill).not.toBe("rgb(0, 0, 0)"); // what an unstyled shape falls back to
+  expect(look.edgeStroke).not.toBe("none");
+  const frameHeight = await page.locator("iframe.ds-tm-frame").evaluate((f) => f.getBoundingClientRect().height);
+  expect(frameHeight).toBeGreaterThan(40);
+  expect(violations).toEqual([]);
 });

@@ -114,7 +114,11 @@ per day, and results are cached by rule and snippet.
 ### T9 Stored XSS (Done)
 Scanner-derived text is rendered as React text nodes, never HTML; the UI runs under a per-request-nonce
 Content-Security-Policy with no inline styles or scripts; links are only built from validated ids and https
-URLs. The HTML export escapes every value and carries its own CSP that forbids scripts and network access;
+URLs. One exception, contained: the threat-model diagram is drawn by Mermaid, whose SVG needs inline styles,
+in a same-origin frame (`/diagram-frame`) whose policy allows inline styles but scripts only from this origin
+(Mermaid's build and the frame's own script), with no network access, framable only by the app. It takes
+the diagram source by `postMessage` from its parent only, and Mermaid sanitizes its own output
+(`securityLevel: "strict"`). The HTML export escapes every value and carries its own CSP that forbids scripts and network access;
 the API serves downloads with `nosniff` and a sandbox CSP; PDF text is escaped before layout. Regression tests
 inject hostile titles, paths, snippets and descriptions into each of them (`web/tests/xss.test.tsx`,
 `tests/unit/test_export.py`).

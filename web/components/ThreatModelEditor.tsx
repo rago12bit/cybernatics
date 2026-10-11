@@ -6,48 +6,63 @@ import type { StrideRow, ThreatModel } from "@/lib/types";
 import { Button } from "@/design-system/primitives/Button";
 import "./threat-model-editor.css";
 
-let mermaidPromise: Promise<typeof import("mermaid")> | null = null;
-function loadMermaid() {
-  if (!mermaidPromise) {
-    mermaidPromise = import("mermaid").then((m) => {
-      m.default.initialize({ startOnLoad: false, securityLevel: "strict" });
-      return m;
-    });
-  }
-  return mermaidPromise;
-}
+/* The diagram is drawn inside its own frame (app/diagram-frame), not in this page. Mermaid puts a
+ * <style> element and style="" attributes in its SVG, and inserts a copy into its document to measure
+ * text; the app's CSP (proxy.ts) refuses both, so in production the diagram was unstyled and
+ * unreadable. The frame has a policy that allows them; it draws whatever source this page posts it
+ * and replies with the drawing's size. */
+type FrameReply = { type: "bulwark-diagram"; request: number; ok: boolean; width?: number; height?: number };
 
 function DiagramView({ mermaidText }: { mermaidText: string }) {
-  const ref = useRef<HTMLDivElement>(null);
+  const frame = useRef<HTMLIFrameElement>(null);
+  const request = useRef(0);
+  const [frameReady, setFrameReady] = useState(false);
+  const [size, setSize] = useState<{ width: number; height: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    let cancelled = false;
-    setError(null);
-    loadMermaid()
-      .then((m) => m.default.render(`tm-${Math.random().toString(36).slice(2)}`, mermaidText))
-      .then(({ svg }) => {
-        if (!cancelled && ref.current) ref.current.innerHTML = svg;
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setError("Could not render this diagram -- showing the raw source instead.");
-        }
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [mermaidText]);
+    function onMessage(event: MessageEvent) {
+      const data = event.data as FrameReply | undefined;
+      if (event.origin !== window.location.origin || event.source !== frame.current?.contentWindow) return;
+      if (data?.type !== "bulwark-diagram" || data.request !== request.current) return; // an older draw
+      if (data.ok) {
+        setError(null);
+        setSize(data.width && data.height ? { width: data.width, height: data.height } : null);
+      } else {
+        setError("Could not render this diagram -- showing the raw source instead.");
+      }
+    }
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, []);
 
-  if (error) {
-    return (
-      <div>
-        <p className="ds-tm-error" role="alert">{error}</p>
-        <pre className="ds-tm-raw">{mermaidText}</pre>
-      </div>
-    );
-  }
-  return <div ref={ref} className="ds-tm-diagram" />;
+  useEffect(() => {
+    const target = frame.current?.contentWindow;
+    if (!frameReady || !target) return;
+    request.current += 1;
+    target.postMessage({ source: mermaidText, request: request.current }, window.location.origin);
+  }, [mermaidText, frameReady]);
+
+  return (
+    <div className="ds-tm-diagram">
+      {error && (
+        <>
+          <p className="ds-tm-error" role="alert">{error}</p>
+          <pre className="ds-tm-raw">{mermaidText}</pre>
+        </>
+      )}
+      <iframe
+        ref={frame}
+        src="/diagram-frame"
+        title="Threat model diagram"
+        className="ds-tm-frame"
+        hidden={error !== null}
+        // As wide as Mermaid drew it at most, at its aspect ratio (set through the CSSOM, which CSP allows).
+        style={size ? { maxWidth: `${Math.ceil(size.width)}px`, aspectRatio: `${size.width} / ${size.height}` } : undefined}
+        onLoad={() => setFrameReady(true)}
+      />
+    </div>
+  );
 }
 
 function StrideTable({

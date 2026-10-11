@@ -35,6 +35,23 @@ describe("proxy (Week 48 task 2, plan §22.3: headers a real ZAP baseline scan c
     expect(csp).toContain("object-src 'none'");
   });
 
+  it("gives only the threat-model diagram frame inline styles, with same-origin scripts and no framing by others", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    for (const path of ["/diagram-frame", "/diagram-frame/mermaid", "/diagram-frame/script"]) {
+      const csp = proxy(req(path)).headers.get("Content-Security-Policy") ?? "";
+      expect(csp).toContain("default-src 'none'");
+      expect(csp).toContain("script-src 'self'");
+      expect(csp).not.toMatch(/script-src[^;]*unsafe/);
+      expect(csp).toContain("style-src 'unsafe-inline'");
+      expect(csp).toContain("frame-ancestors 'self'");
+      expect(csp).not.toContain("connect-src");
+    }
+    // ...and nothing else does: not a page whose path merely starts the same way.
+    for (const path of ["/app/projects/x/threat-model", "/diagram-frames", "/"]) {
+      expect(proxy(req(path)).headers.get("Content-Security-Policy")).not.toContain("unsafe-inline");
+    }
+  });
+
   it("allows 'unsafe-eval' and inline styles only in development, for Next's own dev overlay", () => {
     vi.stubEnv("NODE_ENV", "development");
     const res = proxy(req());

@@ -8,7 +8,19 @@ export function proxy(request: NextRequest) {
   const demoOnly = process.env.NEXT_PUBLIC_DEMO_ONLY === "1";
   const api = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/$/, "");
   const ws = api.replace(/^http/, "ws");
-  const csp = [
+  // The threat-model diagram's frame (app/diagram-frame): Mermaid needs inline styles, which the app's
+  // own policy refuses. Scripts only from this origin (Mermaid's build and the frame's own script),
+  // and only this app may frame it.
+  const diagramFrame = [
+    "default-src 'none'",
+    "script-src 'self'",
+    "style-src 'unsafe-inline'",
+    "img-src data:",
+    "frame-ancestors 'self'",
+    "base-uri 'none'",
+    "form-action 'none'",
+  ].join("; ");
+  const appCsp = [
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ""}`,
     // Dev only: Next's overlay injects inline styles. A nonce would make browsers ignore
@@ -26,6 +38,8 @@ export function proxy(request: NextRequest) {
     "form-action 'self'",
     "frame-ancestors 'none'",
   ].join("; ");
+  const path = request.nextUrl.pathname;
+  const csp = path === "/diagram-frame" || path.startsWith("/diagram-frame/") ? diagramFrame : appCsp;
 
   const headers = new Headers(request.headers);
   headers.set("x-nonce", nonce);

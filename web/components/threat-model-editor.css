@@ -68,3 +68,9 @@
   display: flex;
   gap: 0.5rem;
 }
+
+.ds-tm-frame {
+  display: block;
+  width: 100%;
+  border: 0;
+}

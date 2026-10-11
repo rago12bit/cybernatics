@@ -7,12 +7,6 @@ import { ThreatModelEditor } from "../components/ThreatModelEditor";
 (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 let root: Root | null = null;
 
-vi.mock("mermaid", () => ({
-  default: {
-    initialize: vi.fn(),
-    render: vi.fn(async (_id: string, code: string) => ({ svg: `<svg data-code="${code}"></svg>` })),
-  },
-}));
 
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
@@ -56,7 +50,7 @@ describe("ThreatModelEditor", () => {
     expect(text).toContain("Version 1");
     expect(text).toContain("generated");
     expect(text).toContain("Can this actor be impersonated?");
-    expect(host.querySelector(".ds-tm-diagram")?.innerHTML).toContain("flowchart LR");
+    expect(host.querySelector<HTMLIFrameElement>(".ds-tm-diagram iframe")?.getAttribute("src")).toBe("/diagram-frame");
   });
 
   it("Edit reveals an editable Mermaid textarea and STRIDE inputs seeded from the current draft", async () => {
@@ -118,5 +112,48 @@ describe("ThreatModelEditor", () => {
       await new Promise((r) => setTimeout(r, 50));
     });
     expect(host.textContent).toContain("Version 3");
+  });
+
+  describe("the diagram frame", () => {
+    // The diagram is drawn in its own frame (app/diagram-frame), whose CSP allows Mermaid's inline
+    // styles; the page posts it the source and takes back the drawing's size or a failure.
+    async function framed() {
+      vi.stubGlobal("fetch", vi.fn(async () => json(MODEL)));
+      const host = await mount();
+      const iframe = host.querySelector<HTMLIFrameElement>(".ds-tm-diagram iframe")!;
+      const posted: unknown[] = [];
+      vi.spyOn(iframe.contentWindow!, "postMessage").mockImplementation((m: unknown) => void posted.push(m));
+      await act(async () => iframe.dispatchEvent(new Event("load")));
+      const reply = (data: object, source: Window | null = iframe.contentWindow) =>
+        act(async () => {
+          window.dispatchEvent(new MessageEvent("message", { data: { type: "bulwark-diagram", ...data }, origin: window.location.origin, source }));
+        });
+      return { host, iframe, posted, reply };
+    }
+
+    it("posts the source once the frame has loaded, and sizes the frame to the drawing", async () => {
+      const { iframe, posted, reply } = await framed();
+      expect(posted).toEqual([{ source: MODEL.mermaid, request: 1 }]);
+      await reply({ request: 1, ok: true, width: 400, height: 100 });
+      expect(iframe.style.maxWidth).toBe("400px");
+      expect(iframe.style.aspectRatio).toBe("400 / 100");
+      expect(iframe.hidden).toBe(false);
+    });
+
+    it("shows the raw source when the frame could not draw it", async () => {
+      const { host, iframe, reply } = await framed();
+      await reply({ request: 1, ok: false });
+      expect(host.querySelector('[role="alert"]')?.textContent).toContain("Could not render this diagram");
+      expect(host.querySelector(".ds-tm-raw")?.textContent).toBe(MODEL.mermaid);
+      expect(iframe.hidden).toBe(true);
+    });
+
+    it("ignores replies from anything but its own frame, and replies to an older draw", async () => {
+      const { host, iframe, reply } = await framed();
+      await reply({ request: 1, ok: false }, window); // not the frame
+      await reply({ request: 0, ok: false }); // not the latest request
+      expect(host.querySelector('[role="alert"]')).toBeNull();
+      expect(iframe.hidden).toBe(false);
+    });
   });
 });

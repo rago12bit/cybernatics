@@ -26,6 +26,10 @@ STRIDE table directly (`PUT`); their edit stays current until an explicit `POST 
 which discards it and rebuilds from the latest scan. `source` (`"generated"` | `"edited"`) and
 `version` (a plain incrementing counter, not full history) tell a client which state it's looking at.
 
+The web app draws the diagram in its own frame (`web/app/diagram-frame`): Mermaid's SVG needs inline
+styles, which the app's Content-Security-Policy forbids, and without them the diagram rendered as black
+boxes with invisible arrows. See T9 in [THREAT-MODEL.md](THREAT-MODEL.md).
+
 One current row per asset, RLS via `assets` -- verified live against a real disposable Postgres
 container that org-a and org-b are isolated on `threat_models`, connected as `bulwark_app` (not a
 superuser), the same standard held for every other RLS table in this project.

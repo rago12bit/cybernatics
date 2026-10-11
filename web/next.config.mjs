@@ -3,6 +3,11 @@ const nextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
   output: "standalone", // small self-contained server for the Docker image
+  // The threat-model diagram frame serves Mermaid's browser build by reading it from node_modules
+  // (lib/mermaid-bundle.ts), which file tracing cannot see.
+  outputFileTracingIncludes: {
+    "/diagram-frame/**": ["./node_modules/mermaid/package.json", "./node_modules/mermaid/dist/mermaid.min.js"],
+  },
   // Dev-server only (ignored in the production build above): Playwright's E2E config
   // (playwright.config.ts) drives the app via 127.0.0.1, which Next 16 otherwise blocks as a
   // cross-origin dev request by default.
