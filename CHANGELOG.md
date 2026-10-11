@@ -12,6 +12,11 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   check is `/`, since `/about` redirects there.
 
 ### Fixed
+- **An API error no longer reads as "Cannot reach the Bulwark API".** An unhandled error answered a
+  500 without CORS headers, which the browser cannot read, so the web app said the API was down. It
+  now answers a JSON 500 the app can show. And a threat model or attack-path request whose repository
+  can no longer be cloned (made private since the scan, host down) answers 422 with git's reason;
+  only a malformed URL was caught before, so the rest were 500s.
 - **The threat-model diagram is readable in production.** Mermaid's SVG needs inline styles, and it
   inserts a copy into the page to measure text; the CSP refused both, so the diagram was black boxes
   with invisible arrows. It is now drawn in a same-origin frame (`/diagram-frame`) whose own policy

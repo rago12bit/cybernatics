@@ -180,3 +180,23 @@ def test_git_url_error_returns_422(
     asset_id = _seed_asset_with_ssrf(sessions)
     r = client.get(f"/assets/{asset_id}/attack-paths", headers=AUTH)
     assert r.status_code == 422
+
+
+def test_a_failed_clone_returns_422_with_gits_reason(
+    sessions: sessionmaker[Session], tmp_path: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A repository that went private (or a host that is down) after it was scanned fails the clone
+    with IngestError, not GitUrlError; only the latter was caught, so this answered 500."""
+    from core.ingest import IngestError
+
+    def _private(source_ref: str, dest: Path, ref: str | None = None) -> Path:
+        raise IngestError(
+            "Couldn't clone this repository. Bulwark can only scan public repositories"
+        )
+
+    monkeypatch.setattr("core.attackpath.checkout.clone_repo", _private)
+    app_state = AppState(_settings(tmp_path), sessions, lambda sid, org: None, _FakeSubscriber())
+    client = TestClient(create_app(app_state))
+    r = client.get(f"/assets/{_seed_asset_with_ssrf(sessions)}/attack-paths", headers=AUTH)
+    assert r.status_code == 422
+    assert "can only scan public repositories" in r.json()["detail"]

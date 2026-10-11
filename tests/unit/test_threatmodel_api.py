@@ -183,3 +183,50 @@ def test_regenerate_discards_an_edit(
     assert body["version"] == 3
     assert "user([User])" in body["mermaid"]
     assert len(fake_clone) == 2
+
+
+def test_a_failed_clone_returns_422_and_saves_nothing(
+    sessions: sessionmaker[Session], tmp_path: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Generating clones the repository again. When that fails (made private since the scan, host
+    down), the reason is the user's to see: it used to escape as a 500 the browser could not read.
+    """
+    from core.ingest import IngestError
+
+    def _private(source_ref: str, dest: Path, ref: str | None = None) -> Path:
+        raise IngestError(
+            "Couldn't clone this repository. Bulwark can only scan public repositories"
+        )
+
+    monkeypatch.setattr("core.attackpath.checkout.clone_repo", _private)
+    client = _client(sessions, tmp_path)
+    asset_id = _asset(sessions)
+    for r in (
+        client.get(f"/assets/{asset_id}/threat-model", headers=AUTH),
+        client.post(f"/assets/{asset_id}/threat-model/regenerate", headers=AUTH),
+    ):
+        assert r.status_code == 422
+        assert r.json()["detail"].startswith("could not check out the repository: Couldn't clone")
+    with sessions() as s:
+        assert repo.get_threat_model(s, asset_id) is None
+
+
+def test_a_crash_answers_json_500_that_the_browser_can_read(
+    sessions: sessionmaker[Session], tmp_path: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """An unhandled error must still carry the CORS headers. Without them the browser cannot read
+    the response, and the web app said it "cannot reach the Bulwark API" when the API had answered.
+    """
+
+    def _crash(*a: Any, **kw: Any) -> None:
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(repo, "get_threat_model", _crash)
+    client = _client(sessions, tmp_path)
+    asset_id = _asset(sessions)
+    origin = "http://localhost:3000"  # Settings' default CORS origin
+    r = client.get(f"/assets/{asset_id}/threat-model", headers={**AUTH, "Origin": origin})
+    assert r.status_code == 500
+    assert r.headers["access-control-allow-origin"] == origin
+    assert r.json() == {"detail": "Something went wrong on the server. It has been logged."}
+    assert "boom" not in r.text

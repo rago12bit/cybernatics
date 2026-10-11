@@ -29,7 +29,7 @@ from fastapi import (
     WebSocket,
 )
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import Response
+from fastapi.responses import JSONResponse, Response
 from fastapi.websockets import WebSocketDisconnect
 from sqlalchemy import and_, func, select
 from sqlalchemy.orm import Session
@@ -342,6 +342,21 @@ def create_app(app_state: AppState) -> FastAPI:
         description="Unified security scanning: submit a scan, watch progress, read findings.",
     )
     app.state.bulwark = app_state
+
+    # Registered before CORSMiddleware, so it runs inside it: a route that crashes still gets the
+    # CORS headers. Without them the browser could not read the 500 at all, and the web app told the
+    # user it "cannot reach the Bulwark API" when the API had answered.
+    @app.middleware("http")
+    async def unhandled_error(request: Request, call_next: Any) -> Response:
+        try:
+            return await call_next(request)  # type: ignore[no-any-return]
+        except Exception:
+            log.exception("request crashed", extra={"method": request.method})
+            return JSONResponse(
+                status_code=500,
+                content={"detail": "Something went wrong on the server. It has been logged."},
+            )
+
     # Explicit origin allowlist (never "*"): only the configured UI origins may call the API.
     app.add_middleware(
         CORSMiddleware,
@@ -1434,6 +1449,19 @@ def create_app(app_state: AppState) -> FastAPI:
             source=row.source, updated_at=row.updated_at, updated_by=row.updated_by,
         )  # fmt: skip
 
+    def _checkout_graph(scan: Any) -> Any:
+        """Clone a scan's source again and analyze it (threat model, attack paths). Any clone
+        failure is the caller's to see -- a repository made private since it was scanned, a host
+        that is down -- not a server error: IngestError, not only GitUrlError (a bad URL), which
+        used to be all that was caught, so the rest answered 500."""
+        from core.attackpath.checkout import build_graph
+        from core.ingest import IngestError
+
+        try:
+            return build_graph(scan.source_ref, scan.ref)
+        except IngestError as exc:
+            raise HTTPException(422, f"could not check out the repository: {exc}") from exc
+
     def _regenerate_threat_model(s: Session, asset: Any, org: str) -> Any:
         scan = repo.latest_scan_for_asset(s, asset.id, org_id=org)
         if scan is None:
@@ -1443,16 +1471,10 @@ def create_app(app_state: AppState) -> FastAPI:
                 409, "the threat model needs a git source to check out the code from"
             )
 
-        from core.attackpath.checkout import build_graph
-        from core.gitfetch import GitUrlError
         from core.threatmodel.generate import generate_threat_model
 
         app_state.limiter.acquire()
-        try:
-            graph = build_graph(scan.source_ref, scan.ref)
-        except GitUrlError as exc:
-            raise HTTPException(422, f"could not check out the repository: {exc}") from exc
-        draft = generate_threat_model(graph)
+        draft = generate_threat_model(_checkout_graph(scan))
         stride_dicts = [
             {
                 "element": r.element, "element_kind": r.element_kind.value,
@@ -1787,16 +1809,11 @@ def create_app(app_state: AppState) -> FastAPI:
         if scan.source_type != "git":
             raise HTTPException(409, "attack paths need a git source to check out the code from")
 
-        from core.attackpath.checkout import build_graph
         from core.attackpath.narrative import generate as generate_narrative
         from core.attackpath.service import find_attack_paths
-        from core.gitfetch import GitUrlError
 
         app_state.limiter.acquire()
-        try:
-            graph = build_graph(scan.source_ref, scan.ref)
-        except GitUrlError as exc:
-            raise HTTPException(422, f"could not check out the repository: {exc}") from exc
+        graph = _checkout_graph(scan)
 
         paths = find_attack_paths(s, asset.id, scan.id, graph)
         client = app_state.llm_attack_path
