@@ -6,6 +6,9 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 ## [Unreleased]
 
 ### Changed
+- **@tanstack/react-table 9** (from 8), held back from Dependabot's web group because it is a new
+  API. The issues table now uses `useTable` with an empty feature set (the core row model is built
+  in; sorting, filtering and paging happen in the API), `columnHelper.columns`, and `getAllCells`.
 - **The site's Juice Shop recording is re-recorded** (2026-10-11) with repeats folded: code 154
   reported, 124 findings (113 Issues); running app 47 alerts, 38 findings (38 Issues). Its caveats
   now say why findings and Issues differ, and what an active campaign keeps from Nuclei. Fly's health

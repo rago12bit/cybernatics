@@ -1,6 +1,6 @@
 "use client";
 
-import { createColumnHelper, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
+import { createColumnHelper, flexRender, tableFeatures, useTable } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -25,7 +25,9 @@ function defaultQuery(): IssuesQuery {
   return { severity: [], category: "", triage: [], sla: [], priority: [], sort: "risk" };
 }
 
-const columnHelper = createColumnHelper<Finding>();
+// No table features (sorting, filtering and paging happen in the API); the core row model is built in.
+const features = tableFeatures({});
+const columnHelper = createColumnHelper<typeof features, Finding>();
 
 /** Plan §31: TanStack Table for the column model (selection, severity, title/location, triage,
  * rule id), TanStack Virtual for rendering only the rows on screen — real usage of both named
@@ -65,7 +67,7 @@ export function IssuesTable({ assetId }: { assetId: string }) {
   }, [assetId, items]);
 
   const columns = useMemo(
-    () => [
+    () => columnHelper.columns([
       columnHelper.display({
         id: "select",
         header: () => <span className="sr-only-ds">Select</span>,
@@ -138,11 +140,11 @@ export function IssuesTable({ assetId }: { assetId: string }) {
         cell: (ctx) => (mode === "expert" ? <code className="ds-issue-rule">{Object.values(ctx.row.original.evidence.rule_ids)[0]?.[0] ?? ""}</code> : null),
       }),
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    ],
+    ]),
     [selected, mode, assetId],
   );
 
-  const table = useReactTable({ data: items, columns, getCoreRowModel: getCoreRowModel() });
+  const table = useTable({ features, data: items, columns });
   const rows = table.getRowModel().rows;
   const rowHeight = mode === "expert" ? ROW_HEIGHT_COMPACT : ROW_HEIGHT_COMFORTABLE;
   const virtualizer = useVirtualizer({
@@ -307,7 +309,7 @@ export function IssuesTable({ assetId }: { assetId: string }) {
                     className={`ds-issue-row${mode === "expert" ? " compact" : ""}`}
                     style={{ position: "absolute", top: 0, left: 0, width: "100%", height: vi.size, transform: `translateY(${vi.start}px)` }}
                   >
-                    {row.getVisibleCells().map((cell) => (
+                    {row.getAllCells().map((cell) => (
                       <div key={cell.id} role="cell" className={`ds-issues-cell col-${cell.column.id}`}>
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </div>
