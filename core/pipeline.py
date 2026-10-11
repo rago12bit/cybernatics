@@ -16,7 +16,7 @@ from typing import Any
 from core import inventory
 from core.adapters import ToolAdapter
 from core.correlation import correlate
-from core.dast.routes import extract_routes_from_workspace
+from core.dast.routes import extract_routes_from_workspace, routes_from_graph
 from core.ingest import IngestError
 from core.integrations.dispatch import notify_scan_result
 from core.inventory.identity import from_purl
@@ -73,16 +73,19 @@ def _adapter_bound_executor(adapters: Mapping[str, ToolAdapter]) -> Any:
     return _run
 
 
-def _extract_route_map(workspace: Path) -> list[dict[str, Any]]:
+def _extract_route_map(workspace: Path, taint: Any) -> list[dict[str, Any]]:
     """Web-route handlers found in this scan's own source (Week 49 task 4, plan §22.4) -- what a
     later DAST campaign's `core.dast.correlate` needs to mark a static finding "confirmed at
-    runtime." Best-effort like the SBOM/Scorecard enrichment below: a workspace with no Python, or
-    one `ast` can't parse some of, must never fail the scan over a feature most scans never use."""
+    runtime." From the code graph's entrypoints (every framework code intelligence knows) when it
+    ran, else the FastAPI/Flask decorator extractor. Best-effort like the SBOM/Scorecard enrichment
+    below: it must never fail the scan over a feature most scans never use."""
     try:
-        return [
-            {"route": h.route, "path": h.path, "line": h.line}
-            for h in extract_routes_from_workspace(workspace)
-        ]
+        graph = getattr(taint, "graph", None)
+        if graph is not None:
+            handlers = routes_from_graph(graph)
+        else:
+            handlers = extract_routes_from_workspace(workspace)
+        return [{"route": h.route, "path": h.path, "line": h.line} for h in handlers]
     except Exception as exc:  # noqa: BLE001 - route extraction must never fail the whole scan
         log.warning("route extraction failed: %s", exc)
         return []
@@ -270,12 +273,12 @@ def _run_scan_job(
             with span("ingest", source_type=source_type):
                 workspace = stack.enter_context(materialize(source_ref, ref=ref))
                 ctx = detect_context(workspace)
-            with span("dast_routes"):
-                route_map = _extract_route_map(workspace)
             with span("reachability"):
                 reach = analyze_or_none(workspace)
             with span("taint"):
                 taint = taint_analyze_or_none(workspace)
+            with span("dast_routes"):
+                route_map = _extract_route_map(workspace, taint)
             runnable: list[str] = []
             outcomes: list[ToolOutcome] = []
             for name in tools:

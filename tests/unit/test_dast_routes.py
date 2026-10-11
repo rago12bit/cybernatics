@@ -1,4 +1,5 @@
-"""core.dast.routes's FastAPI/Flask-style decorator extraction (Week 49 task 4, plan §22.4)."""
+"""core.dast.routes: route extraction (code graph and decorators) and path normalization
+(Week 49 task 4, plan §22.4)."""
 
 from __future__ import annotations
 
@@ -118,3 +119,95 @@ def test_live_against_bulwark_s_own_api_main_finds_the_real_new_routes() -> None
     assert "/assets/*/verify" in routes
     assert "/assets/*/campaigns" in routes
     assert len(handlers) > 30  # this file has dozens of real routes
+
+
+def test_each_frameworks_path_parameters_normalize_to_one_wildcard() -> None:
+    assert normalize_route_pattern("/users/<int:user_id>/posts") == "/users/*/posts"  # Flask
+    assert normalize_route_pattern("users/<int:pk>/") == "/users/*"  # Django, no leading slash
+    assert normalize_route_pattern("/api/products/:id") == "/api/products/*"  # Express
+    assert normalize_route_pattern("/p/:id?/edit") == "/p/*/edit"  # Express, optional
+    assert normalize_route_pattern("/api/orders/[id]") == "/api/orders/*"  # Next.js
+    assert normalize_route_pattern("GET /items/{id}") == "/items/*"  # Go 1.22 net/http
+    # Parameters that span segments.
+    assert normalize_route_pattern("/docs/[...slug]") == "/docs/**"
+    assert normalize_route_pattern("/[[...all]]") == "/**"
+    assert normalize_route_pattern("/files/*") == "/files/**"
+
+
+def test_a_catch_all_matches_one_or_more_segments_and_a_parameter_exactly_one() -> None:
+    assert route_matches("/docs/**", "/docs/a/b/c") is True
+    assert route_matches("/docs/**", "/docs") is False
+    assert route_matches("/docs/*", "/docs/a/b") is False
+
+
+MULTI_FRAMEWORK = {
+    "shop/urls.py": (
+        "from django.urls import path, re_path\nfrom . import views\n\n"
+        "urlpatterns = [\n"
+        '    path("search/", views.search),\n'
+        '    re_path(r"^legacy/(?P<slug>[-\\w]+)/$", views.legacy),\n'
+        "]\n"
+    ),
+    "shop/views.py": (
+        "from django.db import connection\n\n"
+        "def search(request):\n"
+        '    q = request.GET["q"]\n'
+        "    connection.cursor().execute(\"SELECT * FROM t WHERE name = '%s'\" % q)\n\n"
+        "def legacy(request, slug):\n"
+        "    return None\n"
+    ),
+    "server.js": (
+        'const express = require("express");\nconst app = express();\n'
+        'app.get("/api/products/:id", (req, res) => { res.send(req.params.id); });\n'
+    ),
+    "app/api/orders/[id]/route.ts": "export async function GET(request: Request) { return Response.json({}); }\n",
+    "api.py": (
+        'from fastapi import FastAPI\napp = FastAPI()\n\n@app.get("/assets/{asset_id}")\n'
+        "def asset(asset_id: str):\n    return {}\n"
+    ),
+}
+
+
+def _workspace(root: Path) -> Path:
+    for rel, source in MULTI_FRAMEWORK.items():
+        (root / rel).parent.mkdir(parents=True, exist_ok=True)
+        (root / rel).write_text(source)
+    return root
+
+
+def test_routes_come_from_every_framework_code_intelligence_knows(tmp_path: Path) -> None:
+    """The decorator extractor sees only the FastAPI route here; the code graph sees all of them.
+    A Django route's handler is the view it names, in views.py, not its line in urls.py; a regex
+    route is skipped rather than guessed at."""
+    from core.codeintel import analyze
+    from core.dast.routes import RouteHandler, routes_from_graph
+
+    root = _workspace(tmp_path)
+    assert [h.route for h in extract_routes_from_workspace(root)] == ["/assets/*"]
+    assert routes_from_graph(analyze(root)) == [
+        RouteHandler("/api/orders/*", "app/api/orders/[id]/route.ts", 1),
+        RouteHandler("/api/products/*", "server.js", 3),
+        RouteHandler("/assets/*", "api.py", 5),
+        RouteHandler("/search", "shop/views.py", 3),
+    ]
+
+
+def test_a_django_views_sql_injection_is_confirmed_by_a_dast_finding_on_its_url(
+    tmp_path: Path,
+) -> None:
+    """End to end on real code intelligence: before, no Django route reached the route map, so this
+    could never be confirmed at runtime."""
+    from core.codeintel import analyze
+    from core.dast.correlate import correlate_dast_with_sast
+    from core.dast.routes import routes_from_graph
+    from core.models import Category, Finding, Location, Taxonomy
+
+    handlers = routes_from_graph(analyze(_workspace(tmp_path)))
+    dast = Finding(id="d1", title="SQL injection", description="",
+                   location=Location(path="", start_line=0, end_line=0, route="/search"),
+                   taxonomy=Taxonomy(category=Category.DAST, cwe=("CWE-89",)))  # fmt: skip
+    sast = Finding(id="s1", title="SQL built from a string", description="",
+                   location=Location(path="shop/views.py", start_line=5, end_line=5, route=""),
+                   taxonomy=Taxonomy(category=Category.SAST, cwe=("CWE-89",)))  # fmt: skip
+    [confirmed] = correlate_dast_with_sast([dast], [sast], handlers)
+    assert (confirmed.sast_finding_id, confirmed.route) == ("s1", "/search")

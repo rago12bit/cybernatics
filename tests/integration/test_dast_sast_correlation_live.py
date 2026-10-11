@@ -105,6 +105,8 @@ def org(sessions: sessionmaker[Session]) -> Iterator[str]:
             {"o": org_id},
         )
         s.execute(text("DELETE FROM assets WHERE org_id = :o"), {"o": org_id})
+        # Scans and campaigns announce their Issues in the outbox (plan §41.1), which this predates.
+        s.execute(text("DELETE FROM outbox_events WHERE org_id = :o"), {"o": org_id})
         s.commit()
     with sessions() as s:
         s.execute(text("DELETE FROM organizations WHERE id = :o"), {"o": org_id})

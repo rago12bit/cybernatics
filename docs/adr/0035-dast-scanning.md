@@ -184,9 +184,12 @@ Measured against OWASP Juice Shop v17.3.0 with Nuclei v3.11.1:
 - A web asset's link to its source project (`linked_source_asset_id`) can only be set when the site
   is registered (on the "Add web target" screen since 2026-10-12, or by API or CLI); there is no way
   to add or change it afterwards without registering again, which resets verification.
-- Route extraction recognizes one decorator shape (FastAPI/Flask-style); Django's `urls.py` table,
-  non-Python frameworks, and routes built from runtime strings are invisible to it -- a conservative
-  miss, never a false match.
+- Route extraction (since 2026-10-12) reads the HTTP entrypoints code intelligence finds for
+  FastAPI, Flask, Django (the view a urls.py entry names), Express, Next.js and Go's net/http, and
+  falls back to the FastAPI/Flask decorator shape when code analysis did not run. Still invisible: a
+  Django regex route, a route built from a runtime string, and the prefix an `include()` or a
+  mounted router adds -- such a route is matched by its app-relative part only, so a full URL misses
+  it. A conservative miss, never a false match.
 - Nuclei's own request concurrency could not reach a target through `host.docker.internal` on this
   Docker-Desktop-for-Mac machine -- reproduced directly, a host-networking limitation, not an adapter
   bug (`tests/integration/test_dast_adapters_live.py`'s own docstring has the detail).

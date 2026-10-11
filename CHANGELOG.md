@@ -15,6 +15,11 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   check is `/`, since `/about` redirects there.
 
 ### Added
+- **SAST/DAST correlation knows every framework code intelligence does.** A scan's route map came
+  from FastAPI/Flask decorators only; it now comes from the code graph's entrypoints: Django (the
+  view each urls.py entry names), Express, Next.js and Go's net/http too. Path parameters in each
+  framework's own notation (`<int:id>`, `:id`, `[id]`, `[...slug]`) are normalized, which also fixes
+  Flask's `<id>` routes, never matched before, and a manual finding's route match.
 - **Linking a web target to its source code on screen.** "Add web target" lists the organization's
   git and archive projects to pick from (optional), so a finding on the running site can be confirmed
   against the same weakness in that route's code. It was API and CLI only.
