@@ -3,6 +3,12 @@
 # process for its own, found during an ASVS self-review). Weekly, grouped, to avoid a flood of
 # individual PRs; scripts/gen-licenses.py's own policy check still runs on every PR regardless of
 # what triggered it.
+#
+# Only minor and patch updates are grouped. A major version comes as its own PR: in October 2026 one
+# grouped PR carried react-table 9 (a new API) with ten updates that were fine, and failed CI as a
+# whole. Type packages follow the runtime they describe, not the newest release: @types/node stays on
+# the Node major CI and the Dockerfiles run (22), and @types/vscode on the extension's
+# engines.vscode (1.90), which `vsce package` enforces. Move those by hand with the runtime.
 version: 2
 updates:
   - package-ecosystem: "pip"
@@ -12,6 +18,7 @@ updates:
     groups:
       python-dependencies:
         patterns: ["*"]
+        update-types: ["minor", "patch"]
 
   - package-ecosystem: "npm"
     directory: "/web"
@@ -20,6 +27,10 @@ updates:
     groups:
       web-dependencies:
         patterns: ["*"]
+        update-types: ["minor", "patch"]
+    ignore:
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: "npm"
     directory: "/extensions/vscode"
@@ -28,6 +39,12 @@ updates:
     groups:
       vscode-extension-dependencies:
         patterns: ["*"]
+        update-types: ["minor", "patch"]
+    ignore:
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/vscode"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
 
   - package-ecosystem: "github-actions"
     directory: "/"
