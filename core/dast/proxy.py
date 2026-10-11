@@ -28,6 +28,11 @@ from dataclasses import dataclass
 DEFAULT_CONNECT_TIMEOUT = 10.0
 _MAX_HEADER_BYTES = 16 * 1024  # a request line this large is already not a sane DAST tool request
 _START_TIMEOUT = 5.0
+# The header is not decoration. Nuclei's raw-request client (projectdiscovery/rawhttp 0.1.91) reads
+# the status line and then waits for 5 more bytes, to skip a repeated status line some devices send.
+# A bare "200 ...\r\n\r\n" leaves 2, and the target says nothing until the client speaks, so every
+# raw template hung there with no deadline: Nuclei through this proxy stalled at ~93% for good.
+_CONNECT_ESTABLISHED = b"HTTP/1.1 200 Connection Established\r\nProxy-Agent: bulwark\r\n\r\n"
 
 
 class ProxyError(Exception):
@@ -168,7 +173,7 @@ class AllowListProxy:
             await writer.drain()
             writer.close()
             return
-        writer.write(b"HTTP/1.1 200 Connection Established\r\n\r\n")
+        writer.write(_CONNECT_ESTABLISHED)
         await writer.drain()
         await asyncio.gather(
             _pump(reader, upstream_writer), _pump(upstream_reader, writer), return_exceptions=True

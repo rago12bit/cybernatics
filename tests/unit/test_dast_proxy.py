@@ -79,6 +79,36 @@ def test_allow_list_proxy_calls_on_blocked_for_a_disallowed_host() -> None:
     assert calls == []
 
 
+def test_a_tunnel_reply_gives_a_client_five_bytes_past_the_status_line() -> None:
+    """Nuclei's rawhttp reads the CONNECT reply's status line, then peeks 5 bytes before parsing
+    headers. With a bare "200\\r\\n\\r\\n" only 2 come, the silent target sends nothing more, and the
+    peek waits forever: that was the Nuclei-through-the-proxy stall. Read the reply the same way."""
+    import socket
+    import threading
+
+    from core.dast.proxy import BackgroundProxy
+
+    upstream = socket.create_server(("127.0.0.1", 0))
+    held: list[socket.socket] = []
+    threading.Thread(target=lambda: held.append(upstream.accept()[0]), daemon=True).start()
+    port = upstream.getsockname()[1]
+    try:
+        with BackgroundProxy(frozenset({"127.0.0.1"}), bind_host="127.0.0.1") as proxy:
+            client = socket.create_connection(("127.0.0.1", proxy.port), timeout=5)
+            client.sendall(f"CONNECT 127.0.0.1:{port} HTTP/1.1\r\n\r\n".encode())
+            reader = client.makefile("rb")
+            assert reader.readline().startswith(b"HTTP/1.1 200 ")
+            assert len(reader.peek(5)) >= 5  # the old reply left 2 here, and nothing more came
+            headers = iter(reader.readline, b"\r\n")
+            assert [h for h in headers if not h.endswith(b"\r\n")] == []
+            reader.close()
+            client.close()
+    finally:
+        upstream.close()
+        for s in held:
+            s.close()
+
+
 def test_closing_with_a_relay_still_open_leaves_nothing_pending(
     caplog: pytest.LogCaptureFixture,
 ) -> None:

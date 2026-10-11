@@ -149,10 +149,19 @@ Measured against OWASP Juice Shop v17.3.0 with Nuclei v3.11.1:
   ends `partial` (so it closes nothing), and the container is killed by name -- stopping the `docker`
   client alone left it running. ZAP's adapter kills its container the same way.
 
-Still open: through `BackgroundProxy`, Nuclei stops making progress after about five minutes (17
-findings, then 75-81 relays held open with no traffic for over 30 minutes); the same scan without the
-proxy finishes in 111 s with 19. The cause is not found yet, so an active campaign currently ends at
-its timeout as `partial`, with what Nuclei found by then.
+- **Nuclei stalled through the proxy (fixed 2026-10-12).** Through `BackgroundProxy` it stopped
+  making progress after about five minutes (17 findings, then 75-81 tunnels open with no traffic for
+  over 30 minutes), while the same scan without the proxy finished in 111 s. Every stuck goroutine
+  was in rawhttp 0.1.91's CONNECT dialer (raw/unsafe templates; the rest of Nuclei uses Go's own
+  client). That code reads the reply's status line and then peeks 5 bytes, to skip a repeated status
+  line some devices send. The proxy replied `HTTP/1.1 200 Connection Established\r\n\r\n`, which
+  leaves only 2. The target sends nothing until the client speaks, so the peek waited forever with
+  no deadline. It was not Docker Desktop: the same stall happened with the proxy in a container on a
+  plain Docker network (16 findings, 98%, 28 minutes). The reply now carries a `Proxy-Agent`
+  header. Through the proxy, Nuclei finished against Juice Shop in 101 s and 108 s (two runs), 17
+  findings each; its attempts to reach `www.rdap.net` and `login.microsoftonline.com` were refused,
+  as they should be. Direct, it found 19. The gap is probably those third-party lookups, but that
+  is not checked.
 
 ## What is NOT done
 

@@ -19,8 +19,12 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 - **Nuclei no longer reaches past the campaign's egress proxy.** A real run kept a connection open to
   `oast.me`, a public interactsh server, and downloaded ~86 MB of templates from GitHub on every
   run, both straight from the container. It now runs with `-ni` (no out-of-band templates) and
-  `-duc`, from `bulwark/nuclei:3.11.1` with templates v10.5.0 baked in (docker/nuclei). Through the
-  proxy it still stalls after about five minutes; that is not fixed yet (ADR-0035 amendment).
+  `-duc`, from `bulwark/nuclei:3.11.1` with templates v10.5.0 baked in (docker/nuclei).
+- **Nuclei no longer stalls behind the egress proxy.** Its raw-request client waits for 5 bytes
+  after the CONNECT reply's status line, and the proxy's bare `200` reply left 2, so every raw
+  template hung with no deadline and active campaigns ended at their timeout. The reply now carries a
+  header. Against Juice Shop, through the proxy, Nuclei finishes in 101-108 s instead of stalling for
+  30+ minutes (ADR-0035 amendment).
 - **The egress proxy shuts down cleanly with a relay still open**, instead of printing "Event loop is
   closed" on every campaign where a scanner kept a connection alive.
 - **A scan's "unique findings" no longer counts one report several times.** A tool that reported one
