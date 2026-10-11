@@ -1,0 +1,146 @@
+{
+  "date": "2026-10-12",
+  "machine": "macOS-26.5.1-arm64-arm-64bit",
+  "cpu": "arm",
+  "projects": 20,
+  "issues_per_project": 500,
+  "rules": 10,
+  "batch": 500,
+  "stage_seconds": 30.0,
+  "postgres": "16.15 (Debian 16.15-1.pgdg12+2)",
+  "stages": [
+    {
+      "target_rate_per_s": 50,
+      "events_written": 1480,
+      "written_per_s": 49.3,
+      "follow_up_events": 1191,
+      "dispatched_per_s": 87.5,
+      "drained_after_s": 0.5,
+      "rule_runs": 981,
+      "rule_evaluation_ms": {
+        "n": 918,
+        "p50": 13.5,
+        "p95": 14.3,
+        "p99": 16.6,
+        "max": 25.8
+      },
+      "candidates_per_evaluation": 7.2,
+      "batch_ms": {
+        "n": 94,
+        "p50": 324.1,
+        "p95": 386.1,
+        "p99": 463.1,
+        "max": 474.4
+      },
+      "events_per_batch": 28.4,
+      "event_delay_s": {
+        "n": 1480,
+        "p50": 0.49,
+        "p95": 0.68,
+        "p99": 0.74,
+        "max": 0.83
+      },
+      "backlog_max": 48
+    },
+    {
+      "target_rate_per_s": 200,
+      "events_written": 5940,
+      "written_per_s": 198.0,
+      "follow_up_events": 2281,
+      "dispatched_per_s": 267.1,
+      "drained_after_s": 0.8,
+      "rule_runs": 1509,
+      "rule_evaluation_ms": {
+        "n": 280,
+        "p50": 15.7,
+        "p95": 19.2,
+        "p99": 20.9,
+        "max": 26.7
+      },
+      "candidates_per_evaluation": 93.6,
+      "batch_ms": {
+        "n": 29,
+        "p50": 826.8,
+        "p95": 2015.8,
+        "p99": 2124.8,
+        "max": 2124.8
+      },
+      "events_per_batch": 283.5,
+      "event_delay_s": {
+        "n": 5940,
+        "p50": 2.73,
+        "p95": 4.51,
+        "p99": 4.82,
+        "max": 5.02
+      },
+      "backlog_max": 995
+    },
+    {
+      "target_rate_per_s": 500,
+      "events_written": 14800,
+      "written_per_s": 493.3,
+      "follow_up_events": 834,
+      "dispatched_per_s": 436.3,
+      "drained_after_s": 5.8,
+      "rule_runs": 1016,
+      "rule_evaluation_ms": {
+        "n": 330,
+        "p50": 18.0,
+        "p95": 22.1,
+        "p99": 26.9,
+        "max": 32.6
+      },
+      "candidates_per_evaluation": 196.0,
+      "batch_ms": {
+        "n": 34,
+        "p50": 1104.6,
+        "p95": 1271.9,
+        "p99": 1378.1,
+        "max": 1378.1
+      },
+      "events_per_batch": 459.8,
+      "event_delay_s": {
+        "n": 14800,
+        "p50": 4.92,
+        "p95": 6.17,
+        "p99": 6.35,
+        "max": 6.53
+      },
+      "backlog_max": 2694
+    },
+    {
+      "target_rate_per_s": 1000,
+      "events_written": 29500,
+      "written_per_s": 983.3,
+      "follow_up_events": 275,
+      "dispatched_per_s": 519.8,
+      "drained_after_s": 27.3,
+      "rule_runs": 720,
+      "rule_evaluation_ms": {
+        "n": 610,
+        "p50": 17.9,
+        "p95": 21.4,
+        "p99": 25.8,
+        "max": 51.4
+      },
+      "candidates_per_evaluation": 212.7,
+      "batch_ms": {
+        "n": 61,
+        "p50": 914.7,
+        "p95": 1179.2,
+        "p99": 1196.6,
+        "max": 1201.3
+      },
+      "events_per_batch": 488.1,
+      "event_delay_s": {
+        "n": 29500,
+        "p50": 15.51,
+        "p95": 26.1,
+        "p99": 27.08,
+        "max": 27.43
+      },
+      "backlog_max": 14627
+    }
+  ],
+  "rule_runs_total": 4226
+}

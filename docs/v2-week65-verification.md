@@ -84,6 +84,7 @@ A factual record of what was built, run and measured. The decision is
   tests and the browser run used.
 - **Request a verified fix** was tested with the agent's start replaced: Temporal was not running.
 - **Notify** was tested with Slack and Discord replaced; nothing was posted anywhere.
-- **Rule latency under sustained load** (plan §60) was not measured; the figures above are one batch.
+- **Rule latency under sustained load** (plan §60) was measured later, with a synthetic event
+  stream: [benchmarks/README.md](../benchmarks/README.md) (2026-10-12).
 - "Admin" is a token scope until roles exist (Week 75).
 - The rule editor, its template gallery, notification channels and ticket actions are Week 66.

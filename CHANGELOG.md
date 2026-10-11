@@ -14,7 +14,15 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   now say why findings and Issues differ, and what an active campaign keeps from Nuclei. Fly's health
   check is `/`, since `/about` redirects there.
 
+### Added
+- **A load test for the rules engine** (`scripts/bench-rules.py`, plan §60): a synthetic stream of
+  Issue events at 50 to 1,000 a second through the real dispatcher on Postgres under RLS. Rule
+  evaluation is about 20 ms at p95 at every rate; one dispatcher keeps up to about 500 events a
+  second ([benchmarks/README.md](benchmarks/README.md)).
+
 ### Fixed
+- **The rules engine fetched the same project once per candidate** (2,200 queries in a 500-event
+  batch), found by the load test. It now holds them for the batch: about 310 to 520 events a second.
 - **An API error no longer reads as "Cannot reach the Bulwark API".** An unhandled error answered a
   500 without CORS headers, which the browser cannot read, so the web app said the API was down. It
   now answers a JSON 500 the app can show. And a threat model or attack-path request whose repository

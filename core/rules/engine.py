@@ -161,7 +161,7 @@ def _issue_candidates(
         if issue_id not in docs:
             continue
         row, doc = docs[issue_id]
-        asset = b.s.get(Asset, row.asset_id)
+        asset = b.asset(row.asset_id)
         assert asset is not None
         project = b.project(asset)
         item: dict[str, Any] = {"issue": doc, "project": project}

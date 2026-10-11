@@ -94,6 +94,36 @@ behind a number. Budget: 300 ms at p95 for every widget.
 Full numbers: [`metrics/one-million-occurrences.json`](metrics/one-million-occurrences.json).
 What they mean, and what the first run caught: [ADR-0054](../docs/adr/0054-metrics-layer.md).
 
+## The rules engine under a synthetic event stream (plan §45, §60)
+
+`scripts/bench-rules.py` seeds 20 projects × 500 open Issues in Postgres and ten enabled rules (on
+new, returning and fixed Issues; some match often, some rarely, one never; their actions set
+priorities and tags, which announce follow-up events). As `bulwark_worker` under forced RLS, a
+producer writes Issue events at a fixed rate for 30 s while the real dispatcher drains the outbox
+continuously (batches of 500, every subscriber). Every `opa eval` is timed -- one per rule per
+batch, over every candidate in it -- and so is each event's delay from written to dispatched.
+
+| Rate | Rule evaluation p50 / p95 / p99 | Batch p95 | Event delay p50 / p95 | Backlog max | Overall |
+|---|---|---|---|---|---|
+| 50/s | 13.5 / 14.3 / 16.6 ms | 0.39 s | 0.5 / 0.7 s | 48 | keeps up |
+| 200/s | 15.7 / 19.2 / 20.9 ms | 2.0 s | 2.7 / 4.5 s | 995 | keeps up |
+| 500/s | 18.0 / 22.1 / 26.9 ms | 1.3 s | 4.9 / 6.2 s | 2,694 | drains 6 s after |
+| 1,000/s | 17.9 / 21.4 / 25.8 ms | 1.2 s | 15.5 / 26.1 s | 14,627 | ~520 events/s, falls behind |
+
+Apple M5, Postgres 16.15 in Docker, OPA 1.21.0. **Rule evaluation stays at about 20 ms at p95 at
+every rate**: an evaluation costs one `opa eval` however many candidates it covers, so a busier
+stream means bigger batches, not more evaluations. What limits throughput is the rules' own writes
+(tags, priority overrides, runs and their audit entries), at about 520 events a second for one
+dispatcher with rules this eager (a quarter of new Issues matched something). The worker drains
+every ten seconds, which adds up to ten seconds to every delay above.
+
+The first run found a fifth of each batch going to fetching the same project rows again, once per
+candidate (2,200 queries per 500 events): the session's identity map keeps rows only while
+something refers to them. The rules engine now holds them for the batch; throughput went from about
+310 to 520 events a second, and the delay at 500/s from 21.6 to 6.2 s at p95. Numbers:
+[`rules/synthetic-stream.json`](rules/synthetic-stream.json), and before the fix
+[`rules/synthetic-stream-before-asset-cache.json`](rules/synthetic-stream-before-asset-cache.json).
+
 ## The Issues list at 100,000 and 500,000 Issues (plan §56, §58, Week 73)
 
 `scripts/bench-issue-search.py` seeds P projects × I Issues in Postgres: a year of history, a third

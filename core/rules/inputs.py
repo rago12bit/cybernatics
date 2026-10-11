@@ -38,6 +38,7 @@ class Builder:
     def __init__(self, s: Session, org_id: str, now: datetime | None = None) -> None:
         self.s, self.org_id, self.now = s, org_id, now or _now()
         self._projects: dict[str, dict[str, Any]] = {}
+        self._assets: dict[str, Asset | None] = {}
         self._project_tags: dict[str, list[str]] = {}
         self._handles: dict[str, str] | None = None
 
@@ -54,6 +55,14 @@ class Builder:
         return self._handles
 
     # --- projects ---------------------------------------------------------------------------------
+
+    def asset(self, asset_id: str) -> Asset | None:
+        """Held for the batch: the session's identity map keeps rows only while something refers
+        to them, so without this every candidate fetched its project again (2,200 queries in one
+        500-event batch, a fifth of its time, in scripts/bench-rules.py)."""
+        if asset_id not in self._assets:
+            self._assets[asset_id] = self.s.get(Asset, asset_id)
+        return self._assets[asset_id]
 
     def project(self, asset: Asset) -> dict[str, Any]:
         if asset.id in self._projects:
@@ -109,7 +118,7 @@ class Builder:
         policies: dict[str, Any] = {}
         out: dict[str, tuple[IssueRow, dict[str, Any]]] = {}
         for row in rows:
-            asset = self.s.get(Asset, row.asset_id)
+            asset = self.asset(row.asset_id)
             assert asset is not None
             self.project(asset)
             if row.asset_id not in policies:
