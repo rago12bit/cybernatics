@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "types": ["node", "vscode"],
     "target": "ES2022",
     "module": "commonjs",
     "outDir": "out",
