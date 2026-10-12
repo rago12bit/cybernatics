@@ -15,6 +15,9 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    commit-message: # "build(deps): bump ..." -- the CI commitlint job wants Conventional Commits
+      prefix: "build"
+      include: "scope"
     groups:
       python-dependencies:
         patterns: ["*"]
@@ -24,6 +27,9 @@ updates:
     directory: "/web"
     schedule:
       interval: "weekly"
+    commit-message: # "build(deps): bump ..." -- the CI commitlint job wants Conventional Commits
+      prefix: "build"
+      include: "scope"
     groups:
       web-dependencies:
         patterns: ["*"]
@@ -36,6 +42,9 @@ updates:
     directory: "/extensions/vscode"
     schedule:
       interval: "weekly"
+    commit-message: # "build(deps): bump ..." -- the CI commitlint job wants Conventional Commits
+      prefix: "build"
+      include: "scope"
     groups:
       vscode-extension-dependencies:
         patterns: ["*"]
@@ -50,3 +59,6 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    commit-message: # "build(deps): bump ..." -- the CI commitlint job wants Conventional Commits
+      prefix: "build"
+      include: "scope"
