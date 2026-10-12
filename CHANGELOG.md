@@ -5,6 +5,14 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-10-13
+
+Code intelligence for more frameworks (route maps for Django, Express, Next.js and Go, with router
+mount prefixes), Firecracker for the fix agent's test runs, linking a web target to its code on
+screen, and the fixes that came from running CI and the GitHub Action on GitHub again after the
+move to the new repository: taint analysis that converges, a complete `pip install`, and an Action
+whose gate and cache work on Linux. Notes: [docs/release-notes-v3.1.0.md](docs/release-notes-v3.1.0.md).
+
 ### Changed
 - **@tanstack/react-table 9** (from 8), held back from Dependabot's web group because it is a new
   API. The issues table now uses `useTable` with an empty feature set (the core row model is built
