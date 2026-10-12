@@ -105,24 +105,41 @@ batch, over every candidate in it -- and so is each event's delay from written t
 
 | Rate | Rule evaluation p50 / p95 / p99 | Batch p95 | Event delay p50 / p95 | Backlog max | Overall |
 |---|---|---|---|---|---|
-| 50/s | 13.5 / 14.3 / 16.6 ms | 0.39 s | 0.5 / 0.7 s | 48 | keeps up |
-| 200/s | 15.7 / 19.2 / 20.9 ms | 2.0 s | 2.7 / 4.5 s | 995 | keeps up |
-| 500/s | 18.0 / 22.1 / 26.9 ms | 1.3 s | 4.9 / 6.2 s | 2,694 | drains 6 s after |
-| 1,000/s | 17.9 / 21.4 / 25.8 ms | 1.2 s | 15.5 / 26.1 s | 14,627 | ~520 events/s, falls behind |
+| 50/s | 13.4 / 15.0 / 17.3 ms | 0.34 s | 0.4 / 0.6 s | 40 | keeps up |
+| 200/s | 14.1 / 16.4 / 19.7 ms | 0.65 s | 0.6 / 1.2 s | 236 | keeps up |
+| 500/s | 15.6 / 18.1 / 25.6 ms | 0.61 s | 0.7 / 1.0 s | 353 | keeps up |
+| 1,000/s | 17.7 / 23.1 / 34.3 ms | 0.73 s | 3.4 / 4.0 s | 3,473 | ~880 events/s, drains 4 s after |
 
-Apple M5, Postgres 16.15 in Docker, OPA 1.21.0. **Rule evaluation stays at about 20 ms at p95 at
-every rate**: an evaluation costs one `opa eval` however many candidates it covers, so a busier
-stream means bigger batches, not more evaluations. What limits throughput is the rules' own writes
-(tags, priority overrides, runs and their audit entries), at about 520 events a second for one
-dispatcher with rules this eager (a quarter of new Issues matched something). The worker drains
+Apple M5, Postgres 16.15 in Docker, OPA 1.21.0, 2026-10-12. **Rule evaluation stays at about 20 ms
+at p95 at every rate**: an evaluation costs one `opa eval` however many candidates it covers, so a
+busier stream means bigger batches, not more evaluations. What limits throughput is the rules' own
+writes (tags, priority overrides, runs and their audit entries), at about 880 events a second for
+one dispatcher with rules this eager (a quarter of new Issues matched something). The worker drains
 every ten seconds, which adds up to ten seconds to every delay above.
 
-The first run found a fifth of each batch going to fetching the same project rows again, once per
-candidate (2,200 queries per 500 events): the session's identity map keeps rows only while
-something refers to them. The rules engine now holds them for the batch; throughput went from about
-310 to 520 events a second, and the delay at 500/s from 21.6 to 6.2 s at p95. Numbers:
-[`rules/synthetic-stream.json`](rules/synthetic-stream.json), and before the fix
-[`rules/synthetic-stream-before-asset-cache.json`](rules/synthetic-stream-before-asset-cache.json).
+Two rounds of fixes, each found by this test:
+
+- **Projects fetched once per candidate.** A fifth of each batch went to fetching the same project
+  rows again (2,200 queries per 500 events): the session's identity map keeps rows only while
+  something refers to them. The rules engine now holds them for the batch: about 310 to 520 events
+  a second. Numbers: [`rules/synthetic-stream-before-asset-cache.json`](rules/synthetic-stream-before-asset-cache.json).
+- **A commit per change.** Every action committed on its own, and so did its audit entry, which
+  first reads the chain's tip: about 6,000 statements per 500 events, each a round trip. Now the
+  Issue documents are built once per batch, not once per rule (a rule that acted rebuilds the ones
+  it changed, so the next rule still reads them as they are); a run's actions and audit entries
+  share one commit, each action in a savepoint so a failing one still undoes only itself; a
+  savepoint no longer re-applies the organization (the transaction around it already did); the
+  notifier loads a batch's Issues in one query, not one per event; and marking a batch dispatched
+  is one statement, not 500 (78 ms). About 3,700 statements per 500 events. Throughput went from
+  about 520 to 880 events a second, the delay at 500/s from 6.2 to 1.0 s at p95, and at 1,000/s
+  from 26 to 4 s. Numbers: [`rules/synthetic-stream.json`](rules/synthetic-stream.json), and before
+  them [`rules/synthetic-stream-before-one-commit.json`](rules/synthetic-stream-before-one-commit.json).
+
+What is left is mostly the ORM's own work per row (a flush per savepoint, the metrics hook on each)
+and a commit per run before it acts, which the engine keeps so a run is on record even if its
+actions fail. Organizations are dispatched in parallel (one dispatcher each, behind an advisory
+lock), but one organization's events go through one dispatcher, so about 900 a second is that
+organization's ceiling with rules this eager.
 
 ## The Issues list at 100,000 and 500,000 Issues (plan §56, §58, Week 73)
 

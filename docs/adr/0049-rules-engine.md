@@ -72,6 +72,13 @@ the event keys and each action's result. A run is committed before it acts, so a
 rolls back only its own work, never the record that the run happened. Deleting a rule keeps it and
 its runs, and dismisses its held runs.
 
+*Amended 2026-10-12 (load test).* A run whose actions only change Bulwark's own rows (assign,
+priority, tag, retest, group) applies them in one transaction with its audit entries and its result
+(`repo.audit_in_one_commit`), each action in a savepoint: a failing action still undoes only itself,
+and its audit entry goes with it. Before, every change and every audit entry was its own commit,
+which held one dispatcher to about 520 events a second; now about 880. A run with a ticket, a fix
+request or a notification still commits per action: those reach outside, or commit on their own.
+
 **OPA ships in the app image**, pinned to the release CI uses and checked against its published
 SHA-256 for amd64 and arm64.
 

@@ -238,15 +238,22 @@ def _match(rule: AutomationRule, cands: list[Candidate]) -> list[Candidate]:
 
 
 def _runs_for(s: Session, rule_id: str, cause: str) -> list[RuleRun]:
-    return list(s.scalars(select(RuleRun).where(RuleRun.rule_id == rule_id,
-                                                RuleRun.cause == cause)))  # fmt: skip
+    return _runs_by_cause(s, rule_id, [cause])[cause]
+
+
+def _runs_by_cause(s: Session, rule_id: str, causes: Sequence[str]) -> dict[str, list[RuleRun]]:
+    out: dict[str, list[RuleRun]] = {c: [] for c in causes}
+    q = select(RuleRun).where(RuleRun.rule_id == rule_id, RuleRun.cause.in_(list(out)))
+    for run in s.scalars(q.order_by(RuleRun.created_at)):
+        out[run.cause].append(run)
+    return out
 
 
 def _audit_run(s: Session, rule: AutomationRule, run: RuleRun, actor: str | None = None) -> None:
     summary: dict[str, int] = defaultdict(int)
     for r in run.results or []:
         summary[f"{r.get('action')}.{r.get('outcome')}"] += 1
-    repo.append_audit_entry(  # commits
+    repo.append_audit_entry(  # commits (or stages, in `_fire`'s one commit)
         s, actor=actor or f"rule:{rule.id}", action=f"rule.run.{run.status}",
         target=f"rule:{rule.id}",
         payload={"org_id": rule.org_id, "run_id": run.id, "version": run.rule_version,
@@ -266,8 +273,10 @@ def apply_actions(
     ctx = rule_actions.Context(s, org_id, rule, depth, reason=reason)
     results: list[dict[str, Any]] = []
     if subject == "issue":
+        ids = [c.subject_id for c in cands]
+        rows = {r.id: r for r in s.scalars(select(IssueRow).where(IssueRow.id.in_(ids)))}
         for c in cands:
-            issue = s.get(IssueRow, c.subject_id)
+            issue = rows.get(c.subject_id)
             if issue is None:
                 continue
             for spec in rule.actions:
@@ -288,8 +297,8 @@ def _fire(
     cause: str,
     cands: list[Candidate],
     out: Outcome,
+    existing: list[RuleRun],
 ) -> None:
-    existing = _runs_for(s, rule.id, cause)
     seen = {k for r in existing for k in (r.event_keys or [])}
     fresh: list[Candidate] = []
     for c in cands:
@@ -333,15 +342,17 @@ def _fire(
     s.add(run)
     s.commit()
     run_id = run.id
-    results = apply_actions(s, org_id, rule, fresh, depth)
-    run = s.get(RuleRun, run_id) or run
-    run.results, run.status = results, "applied"
-    if results and all(r["outcome"] == "failed" for r in results):
-        run.status, run.error = "failed", results[0].get("detail")
-    rule_row = s.get(AutomationRule, rule.id) or rule
-    rule_row.last_fired_at = _now()
-    s.flush()
-    _audit_run(s, rule_row, run)
+    one = all(a["type"] in rule_actions.IN_ONE_TRANSACTION for a in rule.actions)
+    with repo.audit_in_one_commit(s, enabled=one):
+        results = apply_actions(s, org_id, rule, fresh, depth)
+        run = s.get(RuleRun, run_id) or run
+        run.results, run.status = results, "applied"
+        if results and all(r["outcome"] == "failed" for r in results):
+            run.status, run.error = "failed", results[0].get("detail")
+        rule_row = s.get(AutomationRule, rule.id) or rule
+        rule_row.last_fired_at = _now()
+        s.flush()
+        _audit_run(s, rule_row, run)
     out.runs.append(run)
     if run.status == "failed":
         out.failed += 1
@@ -367,7 +378,12 @@ def _record(
 
 
 def _run_rule(
-    s: Session, org_id: str, rule: AutomationRule, cands: list[Candidate], out: Outcome
+    s: Session,
+    org_id: str,
+    rule: AutomationRule,
+    cands: list[Candidate],
+    out: Outcome,
+    b: Builder | None = None,
 ) -> None:
     if not cands:
         return
@@ -380,14 +396,18 @@ def _run_rule(
     by_cause: dict[str, list[Candidate]] = defaultdict(list)
     for c in matched:
         by_cause[c.cause].append(c)
+    runs = _runs_by_cause(s, rule.id, list(by_cause))
     for cause, group in by_cause.items():
         try:
-            _fire(s, org_id, rule, cause, group, out)
+            _fire(s, org_id, rule, cause, group, out, runs[cause])
         except Exception as exc:  # noqa: BLE001 - one rule failing must not stop the others
             s.rollback()
             log.warning("rule %s failed for %s", rule.id, cause, exc_info=True)
             if _record(s, org_id, rule, cause, "failed", f"{type(exc).__name__}: {exc}"):
                 out.failed += 1
+    if b is not None and TRIGGERS[rule.trigger].subject == "issue":
+        # The next rule reads these Issues as this one's actions left them.
+        b.forget(c.subject_id for c in matched)
 
 
 def on_events(s: Session, org_id: str, events: Sequence[Event]) -> Outcome:
@@ -404,7 +424,7 @@ def on_events(s: Session, org_id: str, events: Sequence[Event]) -> Outcome:
                        f"set off by a chain of {depth} rules; the limit is {MAX_DEPTH}",
                        depth=depth, event_id=event_id):  # fmt: skip
                 out.depth_limited += 1
-        _run_rule(s, org_id, rule, cands, out)
+        _run_rule(s, org_id, rule, cands, out, b)
     return out
 
 

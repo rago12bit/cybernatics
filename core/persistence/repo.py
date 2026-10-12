@@ -5,12 +5,13 @@ from __future__ import annotations
 import hashlib
 import logging
 import uuid
-from collections.abc import Collection, Sequence
+from collections.abc import Collection, Iterator, Sequence
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, cast
 
-from sqlalchemy import and_, case, delete, func, or_, select, text
+from sqlalchemy import and_, case, delete, func, or_, select, text, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.elements import ColumnElement
@@ -370,11 +371,13 @@ def pending_outbox_events(s: Session, org_id: str, *, limit: int = 100) -> list[
 
 
 def mark_outbox_dispatched(s: Session, org_id: str, event_ids: list[int]) -> None:
-    now = _now()
-    for event in s.scalars(
-        select(OutboxEvent).where(OutboxEvent.org_id == org_id, OutboxEvent.id.in_(event_ids))
-    ):
-        event.dispatched_at = now
+    """One statement: loading the batch's rows to set them one by one took 78 ms per 500."""
+    s.execute(
+        update(OutboxEvent)
+        .where(OutboxEvent.org_id == org_id, OutboxEvent.id.in_(event_ids))
+        .values(dispatched_at=_now())
+        .execution_options(synchronize_session=False)
+    )
     s.commit()
 
 
@@ -1958,16 +1961,24 @@ def append_audit_entry(
     target: str,
     payload: dict[str, Any],
     org_id: str | None = None,
-) -> AuditEntry:
+) -> AuditEntry | None:
     """A bounded optimistic-concurrency retry, not a database lock -- see `AuditEntry`'s docstring
     for why that's an accepted, documented simplification at this project's current scale (one API
     process, one worker), not a claim that a concurrent-write race is impossible.
 
     Writes a version-2 entry (`core.audit`). Its organization is `org_id`, else the one the session
     acts for (`core.tenancy.set_session_org`), else the payload's `org_id`; none for a
-    deployment-wide action (a CLI command, a GitHub installation)."""
+    deployment-wide action (a CLI command, a GitHub installation).
+
+    Inside `audit_in_one_commit`, the entry is only staged (and None returned): it is written, and
+    committed, with everything else the block changed."""
     org = org_id or session_org(s) or payload.get("org_id")
     org = str(org) if org else None
+    deferred = s.info.get(_DEFERRED_AUDIT)
+    if deferred is not None:
+        deferred.append({"actor": actor, "action": action, "target": target, "payload": payload,
+                         "org_id": org})  # fmt: skip
+        return None
     digest = audit.payload_digest(payload)
     for _ in range(5):
         last = s.scalar(select(AuditEntry).order_by(AuditEntry.seq.desc()).limit(1))
@@ -1993,11 +2004,56 @@ def append_audit_entry(
     raise RuntimeError("could not append an audit entry after 5 attempts (high write contention)")
 
 
-def stage_audit_entries(s: Session, entries: list[dict[str, Any]], *, org_id: str) -> None:
-    """Many entries of one organization, chained in order, staged in the session without
-    committing: a bulk change (core.search.bulk) commits them with the rows they describe, in one
-    transaction. Each dict has `actor`, `action`, `target` and `payload`. A concurrent append makes
-    the commit fail on `seq`; the caller rolls back and runs the whole change again."""
+_DEFERRED_AUDIT = "bulwark.audit_in_one_commit"
+
+
+@contextmanager
+def audit_in_one_commit(s: Session, *, enabled: bool = True) -> Iterator[None]:
+    """Everything the block changes, and every audit entry it appends, in one commit at its end --
+    rather than a commit (and a read of the chain's tip) per entry, which is most of what a rule
+    acting on many Issues costs (scripts/bench-rules.py). Code inside must commit only through
+    `append_audit_entry`. If the block raises, nothing is written and the session is left for the
+    caller to roll back. A concurrent append can take the next `seq` first; the entries are then
+    chained again on the new tip, in a savepoint, up to five times."""
+    if not enabled or _DEFERRED_AUDIT in s.info:
+        yield
+        return
+    entries: list[dict[str, Any]] = []
+    s.info[_DEFERRED_AUDIT] = entries
+    try:
+        yield
+    finally:
+        s.info.pop(_DEFERRED_AUDIT, None)
+    for _ in range(5):
+        try:
+            with s.begin_nested():
+                stage_audit_entries(s, entries)
+                s.flush()
+        except IntegrityError:
+            continue
+        s.commit()
+        return
+    raise RuntimeError("could not append audit entries after 5 attempts (high write contention)")
+
+
+def audit_deferred(s: Session) -> int | None:
+    """How many entries `audit_in_one_commit` holds so far, or None outside one."""
+    entries = s.info.get(_DEFERRED_AUDIT)
+    return None if entries is None else len(entries)
+
+
+def drop_deferred_audit(s: Session, keep: int) -> None:
+    """A savepoint inside `audit_in_one_commit` was rolled back: so are the entries it staged."""
+    del s.info[_DEFERRED_AUDIT][keep:]
+
+
+def stage_audit_entries(
+    s: Session, entries: list[dict[str, Any]], *, org_id: str | None = None
+) -> None:
+    """Many entries, chained in order, staged in the session without committing: a bulk change
+    (core.search.bulk) commits them with the rows they describe, in one transaction. Each dict has
+    `actor`, `action`, `target`, `payload` and, optionally, its own `org_id`. A concurrent append
+    makes the commit fail on `seq`; the caller rolls back and runs the whole change again."""
     if not entries:
         return
     last = s.scalar(select(AuditEntry).order_by(AuditEntry.seq.desc()).limit(1))
@@ -2007,15 +2063,16 @@ def stage_audit_entries(s: Session, entries: list[dict[str, Any]], *, org_id: st
     for e in entries:
         seq += 1
         digest = audit.payload_digest(e["payload"])
+        org = e.get("org_id", org_id)
         body = audit.body_digest(
-            timestamp=now, org_id=org_id, actor=e["actor"], action=e["action"], target=e["target"],
+            timestamp=now, org_id=org, actor=e["actor"], action=e["action"], target=e["target"],
             payload_digest=digest,
         )  # fmt: skip
         entry_hash = audit.compute_hash_v2(seq=seq, prev_hash=prev_hash, body_digest=body)
         s.add(AuditEntry(
             seq=seq, prev_hash=prev_hash, entry_hash=entry_hash, timestamp=now, actor=e["actor"],
             action=e["action"], target=e["target"], payload_digest=digest, version=2,
-            org_id=org_id, body_digest=body,
+            org_id=org, body_digest=body,
         ))  # fmt: skip
         prev_hash = entry_hash
 

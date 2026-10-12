@@ -82,7 +82,12 @@ def _reapply_org_on_every_transaction(
     two overlapping sessions for different orgs, the first one's next statement after a commit ran
     as the *second* org. Re-applying the org at the start of every transaction, scoped to that
     transaction, closes both halves: a session always runs as its own org, and an idle pooled
-    connection always has none (which RLS reads as "see nothing")."""
+    connection always has none (which RLS reads as "see nothing").
+
+    Not for a savepoint: it runs inside a transaction this already set up, and settings made before
+    a savepoint outlive it whatever becomes of it."""
+    if getattr(transaction, "nested", False):
+        return
     org_id = session.info.get(_ORG_INFO_KEY)
     if org_id is not None and connection.dialect.name == "postgresql":
         _apply_org(connection, org_id, session.info.get(_SCOPE_INFO_KEY, ALL_PROJECTS))

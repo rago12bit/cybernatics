@@ -33,7 +33,11 @@ def effective_band(issue: IssueRow) -> str | None:
 
 
 class Builder:
-    """Caches per-project documents and the organization's handles across one batch."""
+    """Caches per-project and per-Issue documents and the organization's handles across one batch.
+
+    Every rule a batch sets off reads the same Issues, so each Issue's document is built once, not
+    once per rule. A rule that acts on Issues calls `forget` with them, so the next rule reads them
+    as the actions left them -- as it did when every rule built its own."""
 
     def __init__(self, s: Session, org_id: str, now: datetime | None = None) -> None:
         self.s, self.org_id, self.now = s, org_id, now or _now()
@@ -41,6 +45,8 @@ class Builder:
         self._assets: dict[str, Asset | None] = {}
         self._project_tags: dict[str, list[str]] = {}
         self._handles: dict[str, str] | None = None
+        self._issues: dict[str, tuple[IssueRow, dict[str, Any]] | None] = {}
+        self._sla: dict[str, Any] = {}
 
     # --- people -----------------------------------------------------------------------------------
 
@@ -92,14 +98,23 @@ class Builder:
 
     # --- issues -----------------------------------------------------------------------------------
 
+    def forget(self, issue_ids: Iterable[str]) -> None:
+        for i in issue_ids:
+            self._issues.pop(i, None)
+
     def issues(self, issue_ids: Iterable[str]) -> dict[str, tuple[IssueRow, dict[str, Any]]]:
         """Issue id -> (row, `input.issue`). Ids of another organization, or gone, are absent."""
+        ids = list(dict.fromkeys(issue_ids))
+        missing = [i for i in ids if i not in self._issues]
+        if missing:
+            built = self._build(missing)
+            self._issues.update({i: built.get(i) for i in missing})
+        return {i: hit for i in ids if (hit := self._issues[i]) is not None}
+
+    def _build(self, ids: list[str]) -> dict[str, tuple[IssueRow, dict[str, Any]]]:
         from core.priority.service import latest_occurrences
         from core.sla.service import policy_for, status_of
 
-        ids = list(dict.fromkeys(issue_ids))
-        if not ids:
-            return {}
         rows = list(
             self.s.scalars(
                 select(IssueRow)
@@ -115,7 +130,7 @@ class Builder:
             )
         ):
             own_tags.setdefault(target_id, set()).add(name)
-        policies: dict[str, Any] = {}
+        policies = self._sla
         out: dict[str, tuple[IssueRow, dict[str, Any]]] = {}
         for row in rows:
             asset = self.asset(row.asset_id)

@@ -11,6 +11,7 @@ from typing import Any
 import pytest
 from sqlalchemy import select
 
+from core.audit import verify_chain
 from core.dispatch import dispatch, drain
 from core.models import Severity
 from core.persistence import repo
@@ -299,6 +300,28 @@ def test_a_failing_action_is_reported_not_fatal(env: Env, priya: dict[str, str])
     assert ("assign", "failed") in outcomes and ("request_retest", "changed") in outcomes
     assert run["status"] == "applied"
     assert issues(env)["Problem 1"].retest_status == "requested"
+    # The run's actions share one commit, each in a savepoint: the failed one left nothing behind,
+    # not even its audit entry, and the chain the run wrote in one go still verifies.
+    with env.sessions() as s:
+        entries = list(s.scalars(select(AuditEntry).order_by(AuditEntry.seq)))
+        actions = [e.action for e in entries]
+        assert "issue.retest.requested" in actions and "issue.assigned" not in actions
+        assert actions.index("issue.retest.requested") < actions.index("rule.run.applied")
+        assert verify_chain(entries).ok
+
+
+def test_a_later_rule_reads_what_an_earlier_one_just_did(env: Env, priya: dict[str, str]) -> None:
+    """Every rule in a batch shares the Issues' documents; one that acted rebuilds them."""
+    assert rule(env, name="Critical is P1", actions=[{"type": "set_priority", "band": "P1"}]
+                ).status_code == 201  # fmt: skip
+    assert rule(env, name="P1 is on call", condition='input.issue.priority_band == "P1"',
+                actions=[{"type": "tag", "tags": ["oncall"]}]).status_code == 201  # fmt: skip
+    scan(env, [finding(1, Severity.CRITICAL), finding(2, Severity.LOW)])
+    with env.sessions() as s:
+        assert dispatch(s, DEFAULT_ORG_ID) > 0  # one batch: both rules, the same events
+    crit = issues(env)["Problem 1"]
+    tags = env.client.get(f"/v2/issues/{crit.id}/tags", headers=AUTH).json()
+    assert crit.priority_override == "P1" and tags["own"] == ["oncall"]
 
 
 def test_a_rule_scoped_to_a_project_ignores_others(env: Env, priya: dict[str, str]) -> None:

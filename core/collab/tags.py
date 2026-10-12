@@ -57,8 +57,10 @@ def replace(
     target_id: str,
     names: list[str],
     actor: str,
+    before: list[str] | None = None,
 ) -> list[str]:
-    """Set the target's own tags to exactly `names`. Audit-logged when anything changed."""
+    """Set the target's own tags to exactly `names`. Audit-logged when anything changed. `before`
+    is the target's own tags (`own`), when the caller has just read them."""
     if target_type not in TARGETS:
         raise ValueError(target_type)
     wanted: list[str] = []
@@ -68,7 +70,7 @@ def replace(
             wanted.append(tag)
     if len(wanted) > MAX_TAGS:
         raise TagError(f"At most {MAX_TAGS} tags.")
-    before = own(s, target_type, target_id)
+    before = sorted(before) if before is not None else own(s, target_type, target_id)
     if sorted(wanted) == before:
         return before
     s.execute(delete(Tag).where(Tag.target_type == target_type, Tag.target_id == target_id))

@@ -25,7 +25,7 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   against the same weakness in that route's code. It was API and CLI only.
 - **A load test for the rules engine** (`scripts/bench-rules.py`, plan §60): a synthetic stream of
   Issue events at 50 to 1,000 a second through the real dispatcher on Postgres under RLS. Rule
-  evaluation is about 20 ms at p95 at every rate; one dispatcher keeps up to about 500 events a
+  evaluation is about 20 ms at p95 at every rate; one dispatcher keeps up to about 880 events a
   second ([benchmarks/README.md](benchmarks/README.md)).
 
 ### Fixed
@@ -37,6 +37,12 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   through the proxy finds the same 19 as direct.
 - **The rules engine fetched the same project once per candidate** (2,200 queries in a 500-event
   batch), found by the load test. It now holds them for the batch: about 310 to 520 events a second.
+- **One dispatcher handles about 880 rule events a second, from 520.** Each rule rebuilt every
+  Issue's document, and every change a rule made was its own commit with its own audit entry. Now
+  documents are built once per batch, and a run's actions and audit entries share one commit (each
+  action in a savepoint, so one failing still undoes only itself); the notifier loads a batch's
+  Issues in one query; marking a batch dispatched is one statement. At 500 events a second the delay
+  went from 6.2 to 1.0 s at p95.
 - **An API error no longer reads as "Cannot reach the Bulwark API".** An unhandled error answered a
   500 without CORS headers, which the browser cannot read, so the web app said the API was down. It
   now answers a JSON 500 the app can show. And a threat model or attack-path request whose repository

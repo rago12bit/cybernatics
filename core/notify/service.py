@@ -205,6 +205,15 @@ class _Ctx:
     def __init__(self, s: Session, org_id: str) -> None:
         self.s, self.org_id = s, org_id
         self._names: dict[str, str] = {}
+        self._issues: dict[str, IssueRow | None] = {}
+
+    def preload(self, events: Sequence[Any]) -> None:
+        """Every Issue a batch is about, in one query rather than one per event."""
+        ids = {str(e.payload["issue_id"]) for e in events if e.payload.get("issue_id")}
+        ids -= self._issues.keys()
+        if ids:
+            found = {r.id: r for r in self.s.scalars(select(IssueRow).where(IssueRow.id.in_(ids)))}
+            self._issues.update({i: found.get(i) for i in ids})
 
     def name(self, actor: str | None) -> str:
         if not actor:
@@ -221,7 +230,11 @@ class _Ctx:
         return self._names.get(actor, "A scan" if actor.startswith("the scan") else actor)
 
     def issue(self, issue_id: str | None) -> IssueRow | None:
-        return self.s.get(IssueRow, issue_id) if issue_id else None
+        if not issue_id:
+            return None
+        if issue_id not in self._issues:
+            self._issues[issue_id] = self.s.get(IssueRow, issue_id)
+        return self._issues[issue_id]
 
 
 def _project(s: Session, issue: IssueRow) -> str:
@@ -445,6 +458,7 @@ def _messages(c: _Ctx, etype: str, p: dict[str, Any]) -> list[Message]:  # noqa:
 def on_events(s: Session, org_id: str, events: Sequence[Any]) -> int:
     """The dispatcher's subscriber. Returns how many notifications it wrote."""
     c = _Ctx(s, org_id)
+    c.preload(events)
     cfg = mail.SmtpConfig.from_env()
     written = 0
     for ev in events:

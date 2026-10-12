@@ -19,7 +19,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, SessionTransaction
 
 from core.collab import tags as tag_service
 from core.collab.assign import AssignError, assign
@@ -30,6 +30,12 @@ from core.rules.catalog import DEFAULT_FIX_PER_DAY
 log = logging.getLogger(__name__)
 
 
+# Actions that only change Bulwark's own rows and commit only through their audit entry: a run of
+# rules with nothing else applies them all in one transaction (`repo.audit_in_one_commit`), each in
+# a savepoint so one failing still undoes only itself.
+IN_ONE_TRANSACTION = frozenset({"assign", "set_priority", "tag", "request_retest", "group"})
+
+
 @dataclass
 class Context:
     s: Session
@@ -38,6 +44,7 @@ class Context:
     depth: int  # the depth of the event that set this run off; what it announces is one deeper
     reason: str = ""  # for notify: what happened ("12 new issues from the scan of ...")
     fixes_this_run: int = 0
+    savepoint: SessionTransaction | None = None
 
     @property
     def actor(self) -> str:
@@ -45,6 +52,13 @@ class Context:
 
     def event_extra(self) -> dict[str, Any]:
         return {"rule": {"id": self.rule.id, "name": self.rule.name, "depth": self.depth + 1}}
+
+    def undo(self) -> None:
+        """An action failed: back out what it did (only it, inside its savepoint)."""
+        if self.savepoint is not None:
+            self.savepoint.rollback()
+        else:
+            self.s.rollback()
 
 
 def _result(action: str, subject: str, outcome: str, detail: str = "") -> dict[str, Any]:
@@ -55,6 +69,22 @@ def _result(action: str, subject: str, outcome: str, detail: str = "") -> dict[s
 
 
 def apply_to_issue(ctx: Context, spec: dict[str, Any], issue: IssueRow) -> dict[str, Any]:
+    staged = repo.audit_deferred(ctx.s)
+    if staged is None:
+        return _apply_to_issue(ctx, spec, issue)
+    ctx.savepoint = ctx.s.begin_nested()
+    try:
+        result = _apply_to_issue(ctx, spec, issue)
+        if ctx.savepoint.is_active:
+            ctx.savepoint.commit()
+        else:
+            repo.drop_deferred_audit(ctx.s, staged)
+        return result
+    finally:
+        ctx.savepoint = None
+
+
+def _apply_to_issue(ctx: Context, spec: dict[str, Any], issue: IssueRow) -> dict[str, Any]:
     kind = spec["type"]
     try:
         if kind == "assign":
@@ -70,18 +100,18 @@ def apply_to_issue(ctx: Context, spec: dict[str, Any], issue: IssueRow) -> dict[
             return _result(kind, issue.id, "changed" if changed else "unchanged", spec["band"])
         if kind == "tag":
             before = tag_service.own(ctx.s, "issue", issue.id)
-            wanted = before + [t for t in spec["tags"] if t not in before]
-            if wanted == before:
+            added = [t for t in dict.fromkeys(map(tag_service.normalize, spec["tags"]))
+                     if t not in before]  # fmt: skip
+            if not added:
                 return _result(kind, issue.id, "unchanged", ", ".join(spec["tags"]))
-            tag_service.replace(ctx.s, org_id=ctx.org_id, target_type="issue", target_id=issue.id,
-                                names=wanted, actor=ctx.actor)  # fmt: skip
+            # Announced first: the commit `replace` makes for its audit entry then includes it.
             repo.add_outbox_event(
                 ctx.s, org_id=ctx.org_id, event_type="issue.tagged",
-                payload={"issue_id": issue.id, "asset_id": issue.asset_id,
-                         "added": [t for t in spec["tags"] if t not in before],
+                payload={"issue_id": issue.id, "asset_id": issue.asset_id, "added": added,
                          "by": ctx.actor, **ctx.event_extra()},
             )  # fmt: skip
-            ctx.s.commit()
+            tag_service.replace(ctx.s, org_id=ctx.org_id, target_type="issue", target_id=issue.id,
+                                names=before + added, actor=ctx.actor, before=before)  # fmt: skip
             return _result(kind, issue.id, "changed", ", ".join(spec["tags"]))
         if kind == "request_retest":
             from core.retest.service import RetestError, act
@@ -111,10 +141,10 @@ def apply_to_issue(ctx: Context, spec: dict[str, Any], issue: IssueRow) -> dict[
                 return _result(kind, issue.id, "skipped", str(exc))
             return _result(kind, issue.id, "changed", links[0].external_id if links else "")
     except AssignError as exc:
-        ctx.s.rollback()
+        ctx.undo()
         return _result(kind, issue.id, "failed", str(exc))
     except Exception as exc:  # noqa: BLE001 - one action failing must not stop the others
-        ctx.s.rollback()
+        ctx.undo()
         log.warning("rule %s action %s failed on %s", ctx.rule.id, kind, issue.id, exc_info=True)
         return _result(kind, issue.id, "failed", f"{type(exc).__name__}: {exc}")
     return _result(kind, issue.id, "skipped", "not an action for an issue")
