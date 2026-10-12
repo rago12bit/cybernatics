@@ -323,8 +323,13 @@ class BackgroundProxy:
                     return
                 finally:
                     ready.set()
-                async with self._server:
+                try:
                     await self._stop_event.wait()
+                finally:
+                    # Stop accepting, but wait for the server to close only once the relays below
+                    # are gone: from Python 3.12.1, `wait_closed()` (and so `async with server`)
+                    # waits for every open connection, and a keep-alive relay never ends by itself.
+                    self._server.close()
                 # A scanner's own connection to the proxy and `close()` being called (once the
                 # campaign's `subprocess.run` for that scanner returns) can land in the same
                 # instant -- draining whatever relay tasks are still mid-flight here, instead of
@@ -341,6 +346,7 @@ class BackgroundProxy:
                     for task in still:
                         task.cancel()
                     await asyncio.gather(*still, return_exceptions=True)
+                await self._server.wait_closed()
 
             try:
                 self._loop.run_until_complete(_start())
