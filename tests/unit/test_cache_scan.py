@@ -160,3 +160,17 @@ def test_cached_outcomes_covers_every_requested_tool(
     cache = ResultCache(tmp_path / "cache")
     out = cached_outcomes(["bandit"], repo, detect_context(repo), cache)
     assert set(out) == {"bandit"} and out["bandit"].status == "ok"
+
+
+def test_a_cache_miss_subset_is_readable_by_the_scanners_own_user(repo: Path) -> None:
+    """The sandbox runs scanners as uid 10001, not this user. The subset used to be a bare
+    TemporaryDirectory (0700): on Linux semgrep reported "/target is not readable" and gitleaks
+    found no config, on every cache-miss run in the GitHub Action."""
+    (repo / "pkg").mkdir()
+    (repo / "pkg" / "c.py").write_text("z = 3\n")
+    (repo / "pkg" / "c.py").chmod(0o600)
+    with scan_mod._subset_dir(repo, [repo / "a.py", repo / "pkg" / "c.py"]) as subset:
+        assert subset.stat().st_mode & 0o777 == 0o755
+        assert (subset / "pkg").stat().st_mode & 0o777 == 0o755
+        assert (subset / "pkg" / "c.py").stat().st_mode & 0o777 == 0o644
+        assert (subset / "a.py").stat().st_mode & 0o777 == 0o644

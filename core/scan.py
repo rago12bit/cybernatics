@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import shutil
 import tempfile
 import time
@@ -298,6 +299,12 @@ def _subset_dir(target: Path, files: list[Path]) -> Iterator[Path]:
             dest = tmp_path / f.relative_to(target)
             dest.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(f, dest)
+            os.chmod(dest, 0o644)
+        # TemporaryDirectory is 0700 and owned by this process's user; the scanner runs as uid
+        # 10001, so on Linux it saw "/target is not readable" and every cache-miss run of semgrep
+        # and gitleaks in the GitHub Action failed. Readable like prepare_workspace's output.
+        for d in (tmp_path, *(p for p in tmp_path.rglob("*") if p.is_dir())):
+            os.chmod(d, 0o755)
         yield tmp_path
 
 
