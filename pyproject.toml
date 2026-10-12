@@ -56,6 +56,11 @@ include = ["core*", "cli*", "api*"]
 "core.engagements" = ["checklists/*.json"]
 "core.rag" = ["corpus/*.jsonl", "corpus/*.json", "corpus/*.md"]
 "core.llm" = ["prompts/*/*.md"]
+"core.taint" = ["catalogs/*.yaml"]
+"core.compliance" = ["frameworks/*.json"]
+"core.supplychain" = ["*.json"]
+"core.policy.starter" = ["*.rego"]
+"api" = ["*.json"]
 
 [tool.black]
 extend-exclude = "(migrations/versions|tests/fixtures)"
