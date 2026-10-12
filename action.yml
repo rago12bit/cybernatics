@@ -83,7 +83,15 @@ runs:
       shell: bash
       env:
         ACTION_PATH: ${{ github.action_path }}
-      run: pip install --quiet "$ACTION_PATH"
+      # From a copy: building in place leaves build/ and *.egg-info in the action's directory, which
+      # is the scanned checkout itself when a repository runs this action on itself (`uses: ./`) --
+      # a second copy of the code that the PR's base scan did not have, all of it "new".
+      run: |
+        set -euo pipefail
+        src="${RUNNER_TEMP:?}/bulwark-src"
+        mkdir "$src"
+        tar -C "$ACTION_PATH" --exclude=./.git -cf - . | tar -C "$src" -xf -
+        pip install --quiet "$src"
 
     - name: Build scanner images
       shell: bash
