@@ -144,6 +144,17 @@ class AssetVerificationView(BaseModel):
     verified_at: datetime | None
     last_checked_at: datetime | None
     last_error: str | None
+    source_asset_id: str | None = Field(
+        default=None, description="The code project this site runs, if linked."
+    )
+    source_label: str | None = None
+
+
+class SetWebAssetSourceRequest(BaseModel):
+    """Link a web target to its code project, change the link, or (null) remove it. Its ownership
+    verification is untouched."""
+
+    source_asset_id: str | None
 
 
 class ScannedTool(BaseModel):

@@ -108,6 +108,7 @@ from api.schemas import (
     ScanSummary,
     ScanView,
     SetPluginAllowedRequest,
+    SetWebAssetSourceRequest,
     StartConversationRequest,
     StartDastCampaignRequest,
     StrideRowView,
@@ -729,7 +730,14 @@ def create_app(app_state: AppState) -> FastAPI:
             latest_scan_finished_at=latest.finished_at,
         )
 
-    def _verification_view(asset: Any, verification: Any) -> AssetVerificationView:
+    def _verification_view(
+        asset: Any, verification: Any, s: Session | None = None, org: str | None = None
+    ) -> AssetVerificationView:
+        source = (
+            repo.get_asset(s, asset.linked_source_asset_id, org_id=org)
+            if s is not None and asset.linked_source_asset_id
+            else None
+        )
         record_name = record_value = well_known_url = file_content = None
         if verification.method == "dns_txt":
             record_name = ownership.dns_record_name(asset.key)
@@ -750,6 +758,8 @@ def create_app(app_state: AppState) -> FastAPI:
             verified_at=verification.verified_at,
             last_checked_at=verification.last_checked_at,
             last_error=verification.last_error,
+            source_asset_id=asset.linked_source_asset_id,
+            source_label=source.label if source is not None else None,
         )
 
     @app.post(
@@ -771,7 +781,32 @@ def create_app(app_state: AppState) -> FastAPI:
             )  # fmt: skip
         except ValueError as exc:
             raise HTTPException(422, str(exc)) from exc
-        return _verification_view(asset, verification)
+        return _verification_view(asset, verification, s, org)
+
+    @app.put(
+        "/assets/{asset_id}/source",
+        response_model=AssetVerificationView,
+        dependencies=[Depends(require_scope("scans:write"))],
+    )
+    def set_web_asset_source(
+        asset_id: str,
+        body: SetWebAssetSourceRequest,
+        auth: AuthContext = Depends(require_auth),
+        s: Session = Depends(db),
+        org: str = Depends(current_org),
+    ) -> AssetVerificationView:
+        """Link a registered web target to its code project, change the link, or remove it (plan
+        §22.4): a later DAST finding on a route is then checked against that route's code. Unlike
+        registering again, this keeps the target's ownership verification."""
+        asset = _get_asset(s, asset_id, org)
+        try:
+            repo.set_web_asset_source(s, asset, body.source_asset_id, org_id=org, actor=auth.actor)
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from exc
+        verification = repo.get_asset_verification(s, asset.id, org_id=org)
+        if verification is None:
+            raise HTTPException(404, "this asset has no ownership verification on record")
+        return _verification_view(asset, verification, s, org)
 
     @app.get(
         "/assets/{asset_id}/verification",
@@ -785,7 +820,7 @@ def create_app(app_state: AppState) -> FastAPI:
         verification = repo.get_asset_verification(s, asset.id, org_id=org)
         if verification is None:
             raise HTTPException(404, "this asset has no ownership verification on record")
-        return _verification_view(asset, verification)
+        return _verification_view(asset, verification, s, org)
 
     @app.post(
         "/assets/{asset_id}/verify",
@@ -811,7 +846,7 @@ def create_app(app_state: AppState) -> FastAPI:
         verification = repo.record_verification_check(
             s, verification, ok=outcome.ok, error=outcome.error
         )
-        return _verification_view(asset, verification)
+        return _verification_view(asset, verification, s, org)
 
     @app.post(
         "/assets/{asset_id}/campaigns",

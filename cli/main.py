@@ -1071,6 +1071,38 @@ def asset_add_web(
         typer.echo(json.dumps(_verification_dict(asset, verification), indent=2))
 
 
+@asset_app.command("link-source")
+def asset_link_source(
+    asset_id: str = typer.Argument(..., help="The web target's asset id."),
+    source_asset_id: str = typer.Option(
+        None, "--source-asset-id", help="The git/archive project this site runs."
+    ),
+    clear: bool = typer.Option(False, "--clear", help="Remove the link instead."),
+    org: str = typer.Option(DEFAULT_ORG_ID, help="Organization the asset belongs to."),
+) -> None:
+    """Link a registered web target to its code project, change the link, or remove it, keeping
+    its ownership verification (registering again would reset it)."""
+    from core.persistence import repo
+    from core.persistence.db import get_session_factory
+    from core.tenancy import set_session_org
+
+    if clear == (source_asset_id is not None):
+        typer.echo("error: give --source-asset-id or --clear (one of them)", err=True)
+        raise typer.Exit(1)
+    with get_session_factory()() as s:
+        set_session_org(s, org)
+        asset = repo.get_asset(s, asset_id, org_id=org)
+        if asset is None:
+            typer.echo(f"error: no asset {asset_id!r} in this organization", err=True)
+            raise typer.Exit(1)
+        try:
+            repo.set_web_asset_source(s, asset, source_asset_id, org_id=org, actor="cli")
+        except ValueError as exc:
+            typer.echo(f"error: {exc}", err=True)
+            raise typer.Exit(1) from exc
+        typer.echo(json.dumps({"asset_id": asset.id, "source_asset_id": source_asset_id}))
+
+
 @asset_app.command("verify")
 def asset_verify(
     asset_id: str = typer.Argument(...),

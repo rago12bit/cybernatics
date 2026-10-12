@@ -40,6 +40,12 @@ Get Asset Overview
 Register Web Asset
 
 
+## `PUT /assets/{asset_id}/source`
+
+Set Web Asset Source
+
+- `asset_id` (path, required)
+
 ## `GET /assets/{asset_id}/verification`
 
 Get Asset Verification

@@ -181,9 +181,10 @@ Measured against OWASP Juice Shop v17.3.0 with Nuclei v3.11.1:
   that would make bypassing it a dropped packet rather than a policy violation has never been loaded
   into a real network namespace on any machine; Linux-only, the same disclosed boundary as Week 46's
   `core.fixagent.egress`.
-- A web asset's link to its source project (`linked_source_asset_id`) can only be set when the site
-  is registered (on the "Add web target" screen since 2026-10-12, or by API or CLI); there is no way
-  to add or change it afterwards without registering again, which resets verification.
+- A web asset's link to its source project (`linked_source_asset_id`) is set when the site is
+  registered, or later on its verification page, by `PUT /assets/{id}/source` or by
+  `bulwark asset link-source` (since 2026-10-12), which keep its verification; each change is an
+  audit entry. The source must be a git or archive project of the same organization, not a site.
 - Route extraction (since 2026-10-12) reads the HTTP entrypoints code intelligence finds for
   FastAPI, Flask, Django (the view a urls.py entry names), Express, Next.js and Go's net/http, and
   falls back to the FastAPI/Flask decorator shape when code analysis did not run. A route carries

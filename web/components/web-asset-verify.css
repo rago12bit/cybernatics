@@ -88,3 +88,11 @@
   max-width: 24rem;
   width: 100%;
 }
+
+.ds-wav-source-linked {
+  margin-top: 1.25rem;
+}
+
+.ds-wav-source-linked .ds-wav-row {
+  margin-bottom: 0.4rem;
+}

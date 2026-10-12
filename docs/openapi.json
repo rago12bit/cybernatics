@@ -294,6 +294,61 @@
         ]
       }
     },
+    "/assets/{asset_id}/source": {
+      "put": {
+        "summary": "Set Web Asset Source",
+        "description": "Link a registered web target to its code project, change the link, or remove it (plan\n\u00a722.4): a later DAST finding on a route is then checked against that route's code. Unlike\nregistering again, this keeps the target's ownership verification.",
+        "operationId": "set_web_asset_source_assets__asset_id__source_put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Asset Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetWebAssetSourceRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetVerificationView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/assets/{asset_id}/verification": {
       "get": {
         "summary": "Get Asset Verification",
@@ -14100,6 +14155,29 @@
               }
             ],
             "title": "Last Error"
+          },
+          "source_asset_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Asset Id",
+            "description": "The code project this site runs, if linked."
+          },
+          "source_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Label"
           }
         },
         "type": "object",
@@ -22306,6 +22384,27 @@
         },
         "type": "object",
         "title": "SetPluginAllowedRequest"
+      },
+      "SetWebAssetSourceRequest": {
+        "properties": {
+          "source_asset_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Asset Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source_asset_id"
+        ],
+        "title": "SetWebAssetSourceRequest",
+        "description": "Link a web target to its code project, change the link, or (null) remove it. Its ownership\nverification is untouched."
       },
       "SlaOverview": {
         "properties": {

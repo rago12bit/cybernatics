@@ -676,6 +676,9 @@ export interface AssetVerification {
   verified_at: string | null;
   last_checked_at: string | null;
   last_error: string | null;
+  /** The code project this site runs, if linked (plan §22.4). */
+  source_asset_id?: string | null;
+  source_label?: string | null;
 }
 
 // --- Importing reports (Week 54, plan §42.1, ADR-0040) -------------------------------------------

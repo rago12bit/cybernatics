@@ -597,9 +597,9 @@ def register_web_asset(
     `source_asset_id` (Week 49 task 4, plan §22.4): optionally links this web target to the git/
     archive Asset whose SAST scans provide the route map DAST correlation needs. Must already exist
     in the SAME org -- raises `ValueError` otherwise, rather than silently either ignoring it or
-    linking across a tenant boundary."""
-    if source_asset_id is not None and get_asset(s, source_asset_id, org_id=org_id) is None:
-        raise ValueError(f"source_asset_id {source_asset_id!r} not found in this organization")
+    linking across a tenant boundary. `set_web_asset_source` changes it later."""
+    if source_asset_id is not None:
+        _source_project(s, source_asset_id, org_id)
     asset = get_or_create_asset(s, source_type="web", source_label=domain, org_id=org_id)
     if source_asset_id is not None:
         asset.linked_source_asset_id = source_asset_id
@@ -612,6 +612,41 @@ def register_web_asset(
     merged = s.merge(verification)
     s.commit()
     return asset, merged
+
+
+def _source_project(s: Session, source_asset_id: str, org_id: str) -> Asset:
+    """A project a web target's code can come from: in the same organization, and code (a git
+    repository or an archive), not another site."""
+    source = get_asset(s, source_asset_id, org_id=org_id)
+    if source is None:
+        raise ValueError(f"source_asset_id {source_asset_id!r} not found in this organization")
+    if source.source_type == "web":
+        raise ValueError("a web target's source is a code project (git or archive), not a site")
+    return source
+
+
+def set_web_asset_source(
+    s: Session, asset: Asset, source_asset_id: str | None, *, org_id: str, actor: str
+) -> Asset:
+    """Link a web target to the project its code is in, change the link, or (None) remove it --
+    after registration, without registering again, so its verification is untouched. Audit-logged
+    when it changes (commits). Raises `ValueError` for a target that is not a site or a source that
+    is not a code project of the same organization."""
+    if asset.source_type != "web":
+        raise ValueError("only a web target links to source code")
+    if source_asset_id is not None:
+        _source_project(s, source_asset_id, org_id)
+    previous = asset.linked_source_asset_id
+    if previous == source_asset_id:
+        return asset
+    asset.linked_source_asset_id = source_asset_id
+    s.flush()
+    action = "asset.source.linked" if source_asset_id else "asset.source.unlinked"
+    append_audit_entry(  # commits
+        s, actor=actor, action=action, target=asset.id,
+        payload={"org_id": org_id, "source_asset_id": source_asset_id, "previous": previous},
+    )  # fmt: skip
+    return asset
 
 
 def get_asset_verification(

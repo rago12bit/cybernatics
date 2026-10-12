@@ -2,7 +2,14 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ApiError, getAssetVerification, listAssets, registerWebAsset, verifyAsset } from "@/lib/api";
+import {
+  ApiError,
+  getAssetVerification,
+  listAssets,
+  registerWebAsset,
+  setWebAssetSource,
+  verifyAsset,
+} from "@/lib/api";
 import type { AssetSummary, AssetVerification } from "@/lib/types";
 import { Button } from "@/design-system/primitives/Button";
 import "./web-asset-verify.css";
@@ -20,15 +27,16 @@ export function WebAssetVerification({ assetId }: { assetId?: string }) {
   const [sourceId, setSourceId] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [linkTo, setLinkTo] = useState("");
+  const [linkNote, setLinkNote] = useState<string | null>(null);
 
   // The projects this site's code could come from, for the optional link. If they don't load, the
   // form still works: the link is optional.
   useEffect(() => {
-    if (assetId) return;
     listAssets()
       .then((all) => setSources(all.filter((a) => a.source_type === "git" || a.source_type === "archive")))
       .catch(() => setSources([]));
-  }, [assetId]);
+  }, []);
 
   useEffect(() => {
     if (!assetId) return;
@@ -36,6 +44,27 @@ export function WebAssetVerification({ assetId }: { assetId?: string }) {
       setError(e instanceof ApiError ? e.message : "Failed to load"),
     );
   }, [assetId]);
+
+  // The picker on a registered site starts at its current link.
+  useEffect(() => {
+    setLinkTo(verification?.source_asset_id ?? "");
+  }, [verification?.source_asset_id]);
+
+  async function saveLink() {
+    if (!verification) return;
+    setBusy(true);
+    setError(null);
+    setLinkNote(null);
+    try {
+      const next = await setWebAssetSource(verification.asset_id, linkTo || null);
+      setVerification(next);
+      setLinkNote(next.source_label ? `Linked to ${next.source_label}.` : "No longer linked.");
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Could not change the link");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function register() {
     if (!domain.trim()) {
@@ -177,6 +206,18 @@ export function WebAssetVerification({ assetId }: { assetId?: string }) {
       {verification.last_error && verification.status !== "verified" && (
         <p className="ds-wav-last-error">{verification.last_error}</p>
       )}
+      <SourceLink
+        verification={verification}
+        sources={sources}
+        value={linkTo}
+        onChange={(v) => {
+          setLinkTo(v);
+          setLinkNote(null);
+        }}
+        onSave={saveLink}
+        busy={busy}
+        note={linkNote}
+      />
       {verification.status === "verified" && (
         <p className="small muted" style={{ marginTop: "0.75rem" }}>
           This re-checks the moment any DAST campaign starts, so a passing check here
@@ -184,6 +225,61 @@ export function WebAssetVerification({ assetId }: { assetId?: string }) {
           <Link href={`/app/projects/${verification.asset_id}/campaigns`}>
             Start a DAST campaign →
           </Link>
+        </p>
+      )}
+    </div>
+  );
+}
+
+/** A registered site's link to its code project: shown, changed or removed in place. Changing it
+ * keeps the site's verification (registering again would reset it). */
+function SourceLink({
+  verification,
+  sources,
+  value,
+  onChange,
+  onSave,
+  busy,
+  note,
+}: {
+  verification: AssetVerification;
+  sources: AssetSummary[];
+  value: string;
+  onChange: (v: string) => void;
+  onSave: () => void;
+  busy: boolean;
+  note: string | null;
+}) {
+  const current = verification.source_asset_id ?? "";
+  // The linked project stays choosable even if the list did not load or no longer includes it.
+  const options =
+    current && !sources.some((a) => a.id === current)
+      ? [{ id: current, label: verification.source_label ?? current }, ...sources]
+      : sources;
+  if (options.length === 0) return null;
+  return (
+    <div className="ds-wav-source ds-wav-source-linked">
+      <label className="ds-wav-label" htmlFor="wav-linked-source">
+        Source code
+      </label>
+      <div className="ds-wav-row">
+        <select id="wav-linked-source" value={value} onChange={(e) => onChange(e.target.value)}>
+          <option value="">Not linked</option>
+          {options.map((a) => (
+            <option key={a.id} value={a.id}>
+              {a.label}
+            </option>
+          ))}
+        </select>
+        <Button onClick={onSave} disabled={busy || value === current}>
+          Save link
+        </Button>
+      </div>
+      {note ? (
+        <p className="small muted" role="status">{note}</p>
+      ) : (
+        <p className="small muted">
+          A finding on a route of this site is checked against that route&apos;s code in this project.
         </p>
       )}
     </div>

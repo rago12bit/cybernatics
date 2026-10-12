@@ -142,3 +142,54 @@ def test_register_web_asset_rejects_unknown_method(
         "/assets/web", headers=AUTH, json={"domain": "example.com", "method": "carrier_pigeon"}
     )
     assert r.status_code == 422
+
+
+def test_a_web_targets_source_link_changes_without_resetting_verification(
+    sessions: sessionmaker[Session], tmp_path: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from sqlalchemy import select
+
+    from core.persistence import repo
+    from core.persistence.models import AuditEntry
+    from core.tenancy import DEFAULT_ORG_ID
+
+    monkeypatch.setattr(ownership, "verify", lambda *a, **kw: ownership.VerificationOutcome(ok=True))
+    client = _client(sessions, tmp_path)
+    site = client.post("/assets/web", headers=AUTH,
+                       json={"domain": "example.com", "method": "dns_txt"}).json()  # fmt: skip
+    assert site["source_asset_id"] is None
+    assert client.post(f"/assets/{site['asset_id']}/verify", headers=AUTH).status_code == 200
+    with sessions() as s:
+        code = repo.get_or_create_asset(s, source_type="git", source_label="https://github.com/a/b",
+                                        org_id=DEFAULT_ORG_ID)  # fmt: skip
+        other = repo.get_or_create_asset(s, source_type="archive", source_label="b.zip",
+                                         org_id=DEFAULT_ORG_ID)  # fmt: skip
+        elsewhere = repo.get_or_create_asset(s, source_type="git", source_label="https://x/y",
+                                             org_id="another-org")  # fmt: skip
+        s.commit()
+        code_id, other_id, elsewhere_id = code.id, other.id, elsewhere.id
+    url = f"/assets/{site['asset_id']}/source"
+
+    r = client.put(url, headers=AUTH, json={"source_asset_id": code_id})
+    assert r.status_code == 200, r.text
+    assert (r.json()["source_asset_id"], r.json()["source_label"]) == (code_id, "https://github.com/a/b")
+    assert r.json()["status"] == "verified"  # registering again would have reset this
+    r = client.put(url, headers=AUTH, json={"source_asset_id": other_id})
+    assert r.json()["source_label"] == "b.zip"
+    got = client.get(f"/assets/{site['asset_id']}/verification", headers=AUTH).json()
+    assert (got["source_asset_id"], got["status"]) == (other_id, "verified")
+    r = client.put(url, headers=AUTH, json={"source_asset_id": None})
+    assert (r.json()["source_asset_id"], r.json()["source_label"]) == (None, None)
+
+    for bad, why in ((elsewhere_id, "not found"), (site["asset_id"], "code project"),
+                     ("nope", "not found")):  # fmt: skip
+        r = client.put(url, headers=AUTH, json={"source_asset_id": bad})
+        assert r.status_code == 422 and why in r.json()["detail"], r.text
+    r = client.put(f"/assets/{code_id}/source", headers=AUTH, json={"source_asset_id": other_id})
+    assert r.status_code == 422 and "only a web target" in r.json()["detail"]
+    assert client.put(url, json={"source_asset_id": code_id}).status_code == 401
+
+    with sessions() as s:
+        actions = list(s.scalars(select(AuditEntry.action).where(
+            AuditEntry.target == site["asset_id"]).order_by(AuditEntry.seq)))  # fmt: skip
+    assert actions == ["asset.source.linked", "asset.source.linked", "asset.source.unlinked"]

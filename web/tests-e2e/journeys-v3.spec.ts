@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { test, expect } from "@playwright/test";
 import { API_URL, E2E_TOKEN } from "../playwright.config";
-import { expectAccessible, newProject, signIn } from "./helpers";
+import { expectAccessible, newProject, signIn, uniqueRepoUrl } from "./helpers";
 
 /**
  * Journeys J6-J10 (plan §53.1, Week 74), against the real app and the real API -- see
@@ -205,5 +205,54 @@ test.describe("J10 — the monthly report", () => {
     await expect(page.getByText(/; next on /)).toBeVisible();
     await expect(page.getByLabel("How often")).toHaveValue("monthly");
     await expect(page.getByLabel("Recipients, one email address per line")).toHaveValue("security-lead@acme.example");
+  });
+});
+
+test.describe("A web target's link to its code", () => {
+  test("register a site linked to one project, relink it to another later, then unlink it", async ({ page }) => {
+    const shop = await newProject(page, "shop");
+    const adminUrl = uniqueRepoUrl("shop-admin"); // a second project, already signed in
+    await page.goto("/app");
+    await page.getByLabel("Repository URL").fill(adminUrl);
+    await page.getByRole("button", { name: "Start scan" }).click();
+    await expect(page.getByText("Unique findings")).toBeVisible({ timeout: 10_000 });
+    const domain = `shop-${crypto.randomUUID().slice(0, 8)}.example.com`;
+
+    await page.goto("/app/projects/new-web");
+    await page.getByLabel("Domain").fill(domain);
+    await page.getByLabel("Source code (optional)").selectOption({ label: shop.url });
+    await page.getByRole("button", { name: "Register target" }).click();
+    await expect(page.getByText("Not yet verified")).toBeVisible();
+    const linked = page.getByLabel("Source code", { exact: true });
+    await expect(linked).toHaveValue(shop.id);
+
+    const assets: { id: string; label: string }[] = await (
+      await page.request.get(`${API_URL}/assets`, { headers: { Authorization: `Bearer ${E2E_TOKEN}` } })
+    ).json();
+    const site = assets.find((a) => a.label === domain)!;
+    const admin = { id: assets.find((a) => a.label === adminUrl)!.id, url: adminUrl };
+    const before = await (
+      await page.request.get(`${API_URL}/assets/${site.id}/verification`, { headers: { Authorization: `Bearer ${E2E_TOKEN}` } })
+    ).json();
+
+    // Later, on the site's own page: relink without registering again.
+    await page.goto(`/app/projects/${site.id}/verify`);
+    await expect(linked).toHaveValue(shop.id);
+    await expect(page.getByRole("button", { name: "Save link" })).toBeDisabled();
+    await linked.selectOption({ label: admin.url });
+    await page.getByRole("button", { name: "Save link" }).click();
+    await expect(page.getByRole("status").filter({ hasText: "Linked to" })).toHaveText(`Linked to ${admin.url}.`);
+    await expectAccessible(page, "a web target with its source link");
+
+    await page.reload();
+    await expect(linked).toHaveValue(admin.id);
+    const after = await (
+      await page.request.get(`${API_URL}/assets/${site.id}/verification`, { headers: { Authorization: `Bearer ${E2E_TOKEN}` } })
+    ).json();
+    expect(after.record_value).toBe(before.record_value); // the same token: verification untouched
+
+    await linked.selectOption({ label: "Not linked" });
+    await page.getByRole("button", { name: "Save link" }).click();
+    await expect(page.getByRole("status").filter({ hasText: "linked" })).toHaveText("No longer linked.");
   });
 });

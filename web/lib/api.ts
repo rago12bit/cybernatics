@@ -461,6 +461,15 @@ export const registerWebAsset = (domain: string, method: "dns_txt" | "well_known
     body: JSON.stringify({ domain, method, ...(sourceAssetId ? { source_asset_id: sourceAssetId } : {}) }),
   });
 
+/** Link a registered site to its code project, change the link, or (null) remove it; its
+ * ownership verification is kept. */
+export const setWebAssetSource = (assetId: string, sourceAssetId: string | null) =>
+  request<AssetVerification>(`/assets/${encodeURIComponent(assetId)}/source`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ source_asset_id: sourceAssetId }),
+  });
+
 export const getAssetVerification = (assetId: string) =>
   request<AssetVerification>(`/assets/${encodeURIComponent(assetId)}/verification`);
 

@@ -148,6 +148,69 @@ describe("WebAssetVerification", () => {
     expect(sent).toEqual({ domain: "example.com", method: "dns_txt" });
   });
 
+  it("changes a registered site's source link in place, keeping its verification", async () => {
+    const calls: { url: string; method: string; body: unknown }[] = [];
+    const VERIFIED = { ...PENDING, status: "verified", source_asset_id: "src1", source_label: "github.com/acme/shop" };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string, init?: RequestInit) => {
+        const u = String(url);
+        if (u.includes("/assets?")) {
+          return json([
+            { id: "src1", label: "github.com/acme/shop", source_type: "git" },
+            { id: "zip1", label: "shop.zip", source_type: "archive" },
+            { id: "web1", label: "shop.example.com", source_type: "web" },
+          ]);
+        }
+        if (u.endsWith("/assets/a1/source")) {
+          const body = JSON.parse(init!.body as string);
+          calls.push({ url: u, method: init!.method!, body });
+          const label = body.source_asset_id === "zip1" ? "shop.zip" : null;
+          return json({ ...VERIFIED, source_asset_id: body.source_asset_id, source_label: label });
+        }
+        return json(VERIFIED);
+      }),
+    );
+    const host = await mount({ assetId: "a1" });
+    const select = host.querySelector("#wav-linked-source") as HTMLSelectElement;
+    expect(select.value).toBe("src1");
+    expect(Array.from(select.options).map((o) => o.textContent)).toEqual(["Not linked", "github.com/acme/shop", "shop.zip"]);
+    const save = () => Array.from(host.querySelectorAll("button")).find((b) => b.textContent === "Save link")!;
+    expect(save().disabled).toBe(true); // nothing changed yet
+
+    for (const [value, said] of [["zip1", "Linked to shop.zip."], ["", "No longer linked."]] as const) {
+      await act(async () => {
+        select.value = value;
+        select.dispatchEvent(new Event("change", { bubbles: true }));
+      });
+      await act(async () => save().click());
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 20));
+      });
+      expect(host.querySelector('[role="status"]')?.textContent).toBe(said);
+    }
+    expect(calls).toEqual([
+      { url: expect.stringContaining("/assets/a1/source"), method: "PUT", body: { source_asset_id: "zip1" } },
+      { url: expect.stringContaining("/assets/a1/source"), method: "PUT", body: { source_asset_id: null } },
+    ]);
+    expect(host.textContent).toContain("Verified"); // the link never touched verification
+  });
+
+  it("keeps a linked project choosable when the project list cannot load", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string) =>
+        String(url).includes("/assets?")
+          ? json({ detail: "boom" }, 500)
+          : json({ ...PENDING, source_asset_id: "src1", source_label: "github.com/acme/shop" }),
+      ),
+    );
+    const host = await mount({ assetId: "a1" });
+    const select = host.querySelector("#wav-linked-source") as HTMLSelectElement;
+    expect(Array.from(select.options).map((o) => o.textContent)).toEqual(["Not linked", "github.com/acme/shop"]);
+    expect(select.value).toBe("src1");
+  });
+
   it("loads an existing verification by assetId and shows its status", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => json(PENDING)));
     const host = await mount({ assetId: "a1" });
