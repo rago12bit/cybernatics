@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: Rag2102/cyberimp@main   # pin a release tag or commit SHA once one is published
+      - uses: rago12bit/cybernatics@main   # pin a release tag or commit SHA once one is published
         with:
           fail-on: high
 ```

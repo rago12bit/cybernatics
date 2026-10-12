@@ -39,9 +39,9 @@ safe: unresolved falls back to the taint-preserving default). It is the opposite
 case: resolution is *confident* (exactly one candidate) but *wrong* (the true callee -- a stdlib or
 framework method like `dict.get`/`QueryDict.get` -- was never a candidate at all, because
 `core.codeintel` has no notion of it). Fixed in all three flow analyzers
-([`core/taint/python_flow.py`](https://github.com/Rag2102/cyberimp/blob/main/core/taint/python_flow.py),
-[`core/taint/js_flow.py`](https://github.com/Rag2102/cyberimp/blob/main/core/taint/js_flow.py),
-[`core/taint/go_flow.py`](https://github.com/Rag2102/cyberimp/blob/main/core/taint/go_flow.py)) by unioning the resolved-summary result with
+([`core/taint/python_flow.py`](https://github.com/rago12bit/cybernatics/blob/main/core/taint/python_flow.py),
+[`core/taint/js_flow.py`](https://github.com/rago12bit/cybernatics/blob/main/core/taint/js_flow.py),
+[`core/taint/go_flow.py`](https://github.com/rago12bit/cybernatics/blob/main/core/taint/go_flow.py)) by unioning the resolved-summary result with
 the same conservative fallback (`result | arg_taint | receiver_taint`) rather than trusting the
 summary alone -- a resolved call can now only ever add taint beyond the fallback, never remove it,
 consistent with ADR-0021's own stated "over-approximate on purpose, a reviewable false positive
@@ -53,7 +53,7 @@ costs far less than a silently missed real one" design.
 were both missed for this reason alone -- the catalog's `popen` entry matches `os.popen` by name,
 and `Popen` (capital P, `subprocess.Popen`, the far more common real-world shape) is a different
 identifier. Added `Popen` as its own sink entry in
-[`core/taint/catalogs/python.yaml`](https://github.com/Rag2102/cyberimp/blob/main/core/taint/catalogs/python.yaml), category
+[`core/taint/catalogs/python.yaml`](https://github.com/rago12bit/cybernatics/blob/main/core/taint/catalogs/python.yaml), category
 `command_injection`, next to the existing `popen`.
 
 Both fixes verified: full unit suite (1803 passed, 1 skipped) green after each, `ruff`/`black`/`mypy`

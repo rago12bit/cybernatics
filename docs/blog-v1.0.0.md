@@ -30,7 +30,7 @@ because the whole point is to point untrusted third-party scanners at code you d
 - **SBOMs (CycloneDX 1.6) and signed attestations** (in-toto provenance, cosign).
 - **Observability**: structured logs, OpenTelemetry tracing, Prometheus metrics.
 
-All of it is in the [CHANGELOG](https://github.com/Rag2102/cyberimp/blob/main/CHANGELOG.md); the architecture is in [docs/adr](https://github.com/Rag2102/cyberimp/tree/main/docs/adr).
+All of it is in the [CHANGELOG](https://github.com/rago12bit/cybernatics/blob/main/CHANGELOG.md); the architecture is in [docs/adr](https://github.com/rago12bit/cybernatics/tree/main/docs/adr).
 
 ## What I actually measured
 
@@ -87,10 +87,10 @@ exits 0, so a CPU-starved run can lose most of its findings with no error. Bulwa
 ## Try it
 
 ```bash
-git clone https://github.com/Rag2102/cyberimp
+git clone https://github.com/rago12bit/cybernatics
 cd cyberimp && ./scripts/init-env.sh
 docker compose --profile scanners build && docker compose up -d
 # http://localhost:3000 — the first page is a real sample report, no sign-in needed
 ```
 
-Source, docs and the full evaluation writeups: <https://github.com/Rag2102/cyberimp>.
+Source, docs and the full evaluation writeups: <https://github.com/rago12bit/cybernatics>.

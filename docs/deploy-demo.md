@@ -53,7 +53,7 @@ first visit after idle. Fly terminates TLS and redirects http to https.
 **App name:** `app` in `fly.toml` must be unique across Fly. It is set to `bulwark-scan-demo`; if that is taken,
 `fly launch` says so and you pick another. I could not check availability from here (no `flyctl`, no account).
 
-**Footer links:** the site shows a "Source code" and a "Contact" link only if you set them. Both are already set in `web/fly.toml` under `[build.args]` (repository: github.com/Rag2102/cyberimp). To change them, edit
+**Footer links:** the site shows a "Source code" and a "Contact" link only if you set them. Both are already set in `web/fly.toml` under `[build.args]` (repository: github.com/rago12bit/cybernatics). To change them, edit
 (`NEXT_PUBLIC_REPO_URL`, `NEXT_PUBLIC_CONTACT_URL`), or pass them as `--build-arg` to `docker build`. Other
 schemes are ignored. They are baked in at build time and visible to everyone, so use an address you are happy
 to publish.

@@ -88,7 +88,7 @@ three. Metrics that read per project and day honour project and portfolio tags o
 It then runs `VACUUM ANALYZE`, refreshes every project as the worker would, and times every metric
 20 times (after a warm-up) under five filter variants, plus the first page of Issues behind a
 number. The results are in
-[`benchmarks/metrics/one-million-occurrences.json`](https://github.com/Rag2102/cyberimp/blob/main/benchmarks/metrics/one-million-occurrences.json).
+[`benchmarks/metrics/one-million-occurrences.json`](https://github.com/rago12bit/cybernatics/blob/main/benchmarks/metrics/one-million-occurrences.json).
 They were measured on an Apple M5 with 16 GB, against Postgres 16.15 in Docker, connected as
 `bulwark_worker` under forced RLS.
 

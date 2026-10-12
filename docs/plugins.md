@@ -5,7 +5,7 @@ open-source one Bulwark doesn't carry -- the Plugin SDK lets you add it as an or
 versioned, pip-installable Python package. No fork, no change to Bulwark's own source.
 
 A complete, real, installable example lives in the repository at
-[`examples/bulwark-plugin-demo`](https://github.com/Rag2102/cyberimp/tree/main/examples/bulwark-plugin-demo)
+[`examples/bulwark-plugin-demo`](https://github.com/rago12bit/cybernatics/tree/main/examples/bulwark-plugin-demo)
 -- every code sample on this page is adapted from it, and its own README is explicit about which
 parts are a deliberate simplification for an example you can `pip install -e` with no CI pipeline of
 your own, versus what a real plugin needs to do differently (mainly: publish and sign its own image,

@@ -1,8 +1,8 @@
 # Bulwark
 
-Source: <https://github.com/Rag2102/cyberimp>
+Source: <https://github.com/rago12bit/cybernatics>
 
-[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/Rag2102/cyberimp/badge)](https://securityscorecards.dev/viewer/?uri=github.com/Rag2102/cyberimp)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/rago12bit/cybernatics/badge)](https://securityscorecards.dev/viewer/?uri=github.com/rago12bit/cybernatics)
 <!-- Week 48 task 4, plan §22.3: this badge resolves once .github/workflows/scorecard.yml has run at
      least once for real -- it has not yet, as of this commit (see docs/v2-week48-verification.md). -->
 

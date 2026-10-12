@@ -55,6 +55,6 @@ in Trivy *and* OSV-Scanner, each with its own severity. Bulwark treats the pile 
 LLM-backed fix suggestions, reachability, a VS Code extension and GitHub Action, SBOMs and signed
 attestations -- and a second, larger plan (multi-tenancy, a plugin SDK, DAST, attack-path modeling,
 and more) is in progress on top of it. Not ready for untrusted multi-user hosting yet: see
-[Limits](https://github.com/Rag2102/cyberimp#limits) in the project README.
+[Limits](https://github.com/rago12bit/cybernatics#limits) in the project README.
 
-Source: <https://github.com/Rag2102/cyberimp>. License: Apache-2.0.
+Source: <https://github.com/rago12bit/cybernatics>. License: Apache-2.0.

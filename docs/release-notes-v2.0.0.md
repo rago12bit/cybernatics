@@ -4,7 +4,7 @@ Weeks 27-52 of the plan, Milestone M11: "v2.0 public launch." v1.0.0 was a sandb
 pipeline that found, correlated and ranked vulnerabilities. v2.0.0 turns that into a platform: stable
 issue identity across scans, multi-tenancy, an LLM-backed analysis layer that proposes and verifies
 real fixes, hardened-by-default infrastructure, authorized DAST, and a plugin/integrations ecosystem
-around it. Full detail for every line below is in [CHANGELOG.md](https://github.com/Rag2102/cyberimp/blob/main/CHANGELOG.md); the honest numbers
+around it. Full detail for every line below is in [CHANGELOG.md](https://github.com/rago12bit/cybernatics/blob/main/CHANGELOG.md); the honest numbers
 are in [docs/evaluation-v2.md](evaluation-v2.md).
 
 ## Platform foundations (Phase 7, weeks 27-30 -> `v1.1.0`)
@@ -97,5 +97,5 @@ are in [docs/evaluation-v2.md](evaluation-v2.md).
 
 No breaking API changes from `v1.x` to `v2.0.0`'s `/v1` surface; the `/v2` endpoints added since Week
 28 are additive. Database migrations run automatically (`alembic upgrade head` in the `migrate` job
-for Helm, or on worker start for Compose). See [helm/bulwark/README.md](https://github.com/Rag2102/cyberimp/blob/main/helm/bulwark/README.md) or
+for Helm, or on worker start for Compose). See [helm/bulwark/README.md](https://github.com/rago12bit/cybernatics/blob/main/helm/bulwark/README.md) or
 the [Quickstart](quickstart.md) for either deployment path.

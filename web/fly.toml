@@ -9,7 +9,7 @@ primary_region = "fra"
   [build.args]
     NEXT_PUBLIC_DEMO_ONLY = "1"
     # Shown in the site footer when set (https URL, or mailto: for contact). Leave empty to show nothing.
-    NEXT_PUBLIC_REPO_URL = "https://github.com/Rag2102/cyberimp"
+    NEXT_PUBLIC_REPO_URL = "https://github.com/rago12bit/cybernatics"
     NEXT_PUBLIC_CONTACT_URL = "mailto:ragh.gupta22@gmail.com"
 
 [http_service]

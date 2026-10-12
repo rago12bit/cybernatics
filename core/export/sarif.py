@@ -15,7 +15,7 @@ SCHEMA = "https://json.schemastore.org/sarif-2.1.0.json"
 LEVEL = {"CRITICAL": "error", "HIGH": "error", "MEDIUM": "warning", "LOW": "note", "INFO": "note"}
 # GitHub buckets security-severity as >=9 critical, 7-8.9 high, 4-6.9 medium, 0.1-3.9 low.
 SECURITY_SEVERITY = {"CRITICAL": 9.5, "HIGH": 8.0, "MEDIUM": 5.5, "LOW": 3.0, "INFO": 0.5}
-TOOL_URI = "https://github.com/Rag2102/cyberimp"
+TOOL_URI = "https://github.com/rago12bit/cybernatics"
 
 
 def _rule_id(f: dict[str, Any]) -> str:

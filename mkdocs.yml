@@ -1,8 +1,8 @@
 site_name: Bulwark
 site_description: Unified security scanning -- one scan, one deduplicated list of findings.
-site_url: https://rag2102.github.io/cyberimp/
-repo_url: https://github.com/Rag2102/cyberimp
-repo_name: Rag2102/cyberimp
+site_url: https://rago12bit.github.io/cybernatics/
+repo_url: https://github.com/rago12bit/cybernatics
+repo_name: rago12bit/cybernatics
 edit_uri: edit/main/docs/
 docs_dir: docs
 

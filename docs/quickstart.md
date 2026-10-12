@@ -55,7 +55,7 @@ bulwark precommit install          # writes .git/hooks/pre-commit in the current
 
 Or, if your repository already uses the [`pre-commit`](https://pre-commit.com) framework, add this
 project's `.pre-commit-hooks.yaml` entry to your `.pre-commit-config.yaml` instead -- see
-[`bulwark precommit --help`](https://github.com/Rag2102/cyberimp/blob/main/.pre-commit-hooks.yaml)
+[`bulwark precommit --help`](https://github.com/rago12bit/cybernatics/blob/main/.pre-commit-hooks.yaml)
 for both.
 
 ## Next

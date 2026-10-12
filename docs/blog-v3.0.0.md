@@ -99,7 +99,7 @@ testers). Each is "not measured" in the table, with the reason, rather than left
 ## Try it
 
 ```bash
-git clone https://github.com/Rag2102/cyberimp
+git clone https://github.com/rago12bit/cybernatics
 cd cyberimp && ./scripts/init-env.sh
 docker compose --profile scanners build && docker compose up -d
 # http://localhost:3000

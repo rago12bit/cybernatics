@@ -51,13 +51,13 @@ The repository root already holds `action.yml`, which is what the Marketplace re
    enable two-factor authentication.
 2. **Releases > Draft a new release**, choose the tag you want to publish (`v1.0.0` or later), tick **Publish this Action to the GitHub Marketplace**,
    pick a category (Security) and publish.
-3. Also move a floating major tag so `uses: Rag2102/cyberimp@v0` works:
+3. Also move a floating major tag so `uses: rago12bit/cybernatics@v0` works:
 
 ```bash
 git tag -f v0 v1.0.0 && git push -f origin v0
 ```
 
-4. Users then write `uses: Rag2102/cyberimp@v0` (or pin the commit SHA, which is safer).
+4. Users then write `uses: rago12bit/cybernatics@v0` (or pin the commit SHA, which is safer).
 
 Known limitations to state in the listing: the action has not been run on GitHub before its first release; it
 rebuilds the scanner images on every run (2 to 4 minutes); fork pull requests cannot receive comments or SARIF.

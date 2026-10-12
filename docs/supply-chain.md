@@ -40,7 +40,9 @@ bulwark attest provenance scan.json --scan scan.json --key cosign.key \
 ```
 
 Produces `scan.json.provenance.bundle`: a signed **in-toto** statement (cosign emits Statement v0.1) whose subject
-is the file and whose predicate (`https://github.com/Rag2102/cyberimp/attestations/scan/v1`) records:
+is the file and whose predicate (`https://github.com/Rag2102/cyberimp/attestations/scan/v1` -- the project's
+first repository name, kept as is: it identifies the predicate format, and changing it would make every
+attestation made so far stop matching) records:
 
 - the Bulwark version and, per scanner, its image reference, **local image id** (content hash) and status;
 - the source label and commit you gave;

@@ -117,12 +117,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Rag2102/cyberimp.git",
+    "url": "https://github.com/rago12bit/cybernatics.git",
     "directory": "extensions/vscode"
   },
-  "homepage": "https://github.com/Rag2102/cyberimp#vs-code-extension-early",
+  "homepage": "https://github.com/rago12bit/cybernatics#vs-code-extension-early",
   "bugs": {
-    "url": "https://github.com/Rag2102/cyberimp/issues"
+    "url": "https://github.com/rago12bit/cybernatics/issues"
   },
   "keywords": [
     "security",

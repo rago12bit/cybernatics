@@ -81,12 +81,12 @@ The honest gaps, stated the same way v1.0.0's were:
 ## Try it
 
 ```bash
-git clone https://github.com/Rag2102/cyberimp
+git clone https://github.com/rago12bit/cybernatics
 cd cyberimp && ./scripts/init-env.sh
 docker compose --profile scanners build && docker compose up -d
 # http://localhost:3000 -- the first screen is now a replay of a real scan of OWASP Juice Shop
 ```
 
-Source, docs, and the full evaluation writeups: <https://github.com/Rag2102/cyberimp>. A technical
+Source, docs, and the full evaluation writeups: <https://github.com/rago12bit/cybernatics>. A technical
 report on correlation, taint-based ranking, and verified fixes, written for people who want the method
 rather than the pitch, is at [docs/technical-report-v2.md](technical-report-v2.md).

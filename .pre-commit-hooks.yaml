@@ -3,7 +3,7 @@
 # native .git/hooks/pre-commit (plan §23, Week 51 task 4):
 #
 #   repos:
-#     - repo: https://github.com/Rag2102/cyberimp
+#     - repo: https://github.com/rago12bit/cybernatics
 #       rev: v1.0.0  # pin a tag; see CHANGELOG.md
 #       hooks:
 #         - id: bulwark-precommit
