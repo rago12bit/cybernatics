@@ -175,5 +175,5 @@ against via a stolen cookie.
 | HSTS not set for most production deployments (V9) | Medium | **Fixed**: opt-in via `BULWARK_FORCE_HTTPS=1` |
 | No CVE scanning of Bulwark's own dependencies (V10) | Medium | **Fixed**: `dependency-audit` CI job + Dependabot |
 | No archive path-depth limit despite SECURITY.md claiming one (V12) | Low, and a documentation-accuracy issue | **Fixed**: `Limits.max_depth`, tested |
-| gVisor/Firecracker isolation layer never actually executed (V10) | Already disclosed (ADR-0031) | Unchanged; needs a real Linux host, tracked separately |
+| gVisor/Firecracker isolation layer never actually executed (V10) | Already disclosed (ADR-0031) | Firecracker built for the fix agent's test runs (2026-10-12) and its guest side booted under QEMU; neither runtime has run on a KVM/`runsc` host yet |
 | Interactive API docs live by default (V13) | Low | Disclosed, left as a deployment-time decision |

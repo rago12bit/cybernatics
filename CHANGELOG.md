@@ -15,6 +15,13 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   check is `/`, since `/about` redirects there.
 
 ### Added
+- **Firecracker for the fix agent's test runs** (`core/sandbox/firecracker.py`, plan M10). With
+  `BULWARK_TEST_SANDBOX=firecracker` on a Linux host with KVM, a project's own tests run in a
+  microVM: the Docker image becomes its root disk, the checkout a second disk, with no network at
+  all; init reports the exit code after killing everything else. Every step needs no root on the
+  host, and the image is unpacked so nothing can be written outside its directory. The guest side
+  was booted for real (QEMU, no KVM on the Mac); Firecracker itself has not run yet:
+  `tests/integration/test_firecracker_live.py` does on a KVM host.
 - **SAST/DAST correlation knows every framework code intelligence does.** A scan's route map came
   from FastAPI/Flask decorators only; it now comes from the code graph's entrypoints: Django (the
   view each urls.py entry names), Express, Next.js and Go's net/http too. Path parameters in each

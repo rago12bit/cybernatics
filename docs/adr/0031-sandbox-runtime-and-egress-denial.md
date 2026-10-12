@@ -112,6 +112,13 @@ have solved.
 - **No seccomp profile is applied.** The hook exists; it always returns `None`.
 - **Firecracker does not exist in this codebase at all** -- not even as an unused stub. Building one
   without being able to verify it was judged worse than not building it.
+
+  *Amended 2026-10-12:* built (`core.sandbox.firecracker`), for the fix agent's test runs only,
+  because most of it could be verified after all. The checkout is baked in per run, as a second ext4
+  disk; the guest has no network; init reports the exit code on the serial console after killing
+  every other process. The guest side was booted for real -- under QEMU's software emulation, with
+  disks this module built from a real image -- and behaved as designed. Firecracker itself still
+  needs a KVM host: `tests/integration/test_firecracker_live.py` runs there and skips here.
 - **No Linux host exists yet.** Nothing here was run anywhere but this macOS dev machine's Docker
   Desktop (a real Linux VM under the hood, which is what makes the egress-denial live testing
   meaningful -- but it is not a host this project controls, has gvisor installed, or can be wired

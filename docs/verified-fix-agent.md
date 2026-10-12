@@ -76,8 +76,9 @@ verified-fix still runs, just without a test-execution step. This runs in a **mo
 sandbox than every scanner (`core/fixagent/sandbox.py`): network enabled (to install dependencies),
 a writable checkout, default Docker capabilities rather than the scanner sandbox's
 `--cap-drop=ALL`/read-only/no-network. This is the plan's own "hardened Docker runner, for now" —
-ADR-0015 already named Firecracker (Phase 11, not yet built) as the properly-isolated version of
-this.
+ADR-0015 named Firecracker as the properly-isolated version of this: on a Linux host with KVM,
+`BULWARK_TEST_SANDBOX=firecracker` runs the tests in a microVM with no network at all, so the image
+must already hold the dependencies ([sandbox-runtimes.md](sandbox-runtimes.md)).
 
 ## Limits (ADR-0015)
 

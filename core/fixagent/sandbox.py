@@ -19,8 +19,8 @@ defaults to, at minimum) a locked-down scanner never does, and picking the exact
 set for arbitrary language ecosystems' build tooling is real, ecosystem-specific work this pass
 doesn't attempt -- default Docker capabilities (not `--privileged`, still namespaced, still not
 `--cap-drop=ALL`'s opposite) is the honest, disclosed floor here, not a guessed-at middle ground.
-This is exactly the gap ADR-0015/ADR-0027 point at Firecracker (Phase 11, not yet built) to close
-properly; this function is the plan's own "hardened Docker runner, for now."
+This is exactly the gap ADR-0015/ADR-0027 point at Firecracker to close properly; on a host with
+KVM, `BULWARK_TEST_SANDBOX=firecracker` does (`core.sandbox.firecracker`, below).
 
 Week 46 task 3 (plan §22.1) adds network-layer egress denial, on by default
 (`TestRunSpec.deny_internal_egress`): the target container is started detached and held behind a
@@ -35,6 +35,8 @@ project's own default posture is deny, not that fallback.
 
 from __future__ import annotations
 
+import math
+import os
 import subprocess
 import tempfile
 import uuid
@@ -107,10 +109,37 @@ def run_tests(checkout: Path, spec: TestRunSpec) -> VerificationStep:
     (`VerificationStep(passed=False, ...)`), the same contract `core.runner.run_tool` already has
     for scanners. Raises `SandboxError` for an environment problem: no `docker` binary, or --
     when `spec.deny_internal_egress` is True -- a failure to apply the egress policy itself, which
-    must never be silently skipped in favor of running the target unprotected."""
+    must never be silently skipped in favor of running the target unprotected.
+
+    `BULWARK_TEST_SANDBOX=firecracker` runs it in a microVM instead (`core.sandbox.firecracker`):
+    its own kernel, and no network at all, so the image must already hold the dependencies. A host
+    that cannot run one raises `SandboxError` rather than falling back to Docker."""
+    if os.environ.get("BULWARK_TEST_SANDBOX", "docker") == "firecracker":
+        return _run_tests_in_microvm(checkout, spec)
     if not spec.deny_internal_egress:
         return _run_tests_without_egress_policy(checkout, spec)
     return _run_tests_with_egress_policy(checkout, spec)
+
+
+def _run_tests_in_microvm(checkout: Path, spec: TestRunSpec) -> VerificationStep:
+    from core.sandbox import firecracker as fc
+
+    try:
+        result = fc.run_in_microvm(
+            fc.FirecrackerConfig.from_env(), checkout, spec.image, spec.command,
+            vcpus=max(1, math.ceil(spec.cpus)), mem_mib=fc.memory_mib(spec.memory),
+            timeout_s=spec.timeout_s,
+        )  # fmt: skip
+    except fc.FirecrackerError as exc:
+        raise SandboxError(f"cannot run the tests in a microVM: {exc}") from exc
+    if result.timed_out:
+        return VerificationStep("run_tests", False, f"timed out after {spec.timeout_s}s")
+    if result.exit_code == 0:
+        return VerificationStep("run_tests", True, "tests passed (microVM)")
+    tail = result.console[-2000:]
+    if result.exit_code is None:
+        return VerificationStep("run_tests", False, f"the microVM stopped without a result: {tail}")
+    return VerificationStep("run_tests", False, f"exit code {result.exit_code}: {tail}")
 
 
 def _run_tests_without_egress_policy(checkout: Path, spec: TestRunSpec) -> VerificationStep:
