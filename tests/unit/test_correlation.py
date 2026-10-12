@@ -289,7 +289,9 @@ def test_the_recorded_juice_shop_scans_have_one_finding_per_issue_place() -> Non
     139 unique code findings with 124 distinct ids, and 49 runtime findings for 39 Issues."""
     from core.models.finding import finding_from_dict
 
-    data = json.loads(Path("tests/fixtures/correlation/juiceshop-2026-10-07-findings.json").read_text())
+    data = json.loads(
+        Path("tests/fixtures/correlation/juiceshop-2026-10-07-findings.json").read_text()
+    )
     for raw, unique, issues in ((data["code"], 124, 113), (data["runtime"], 39, 39)):
         merged, stats = correlate([finding_from_dict(f) for f in raw])
         assert stats.unique == len(merged) == unique

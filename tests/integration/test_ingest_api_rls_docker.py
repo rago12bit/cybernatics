@@ -170,10 +170,24 @@ def test_import_reimport_and_revert_over_http_with_sandboxed_parsing_under_rls(r
     a = rig.org_a
     first = rig.import_and_get(a, SARIF)
     assert first["status"] == "applied", first
-    assert first["counts"] == {"new": 3, "unchanged": 0, "reopened": 0, "closed": 0, "detached": 0, "held": 0}
+    assert first["counts"] == {
+        "new": 3,
+        "unchanged": 0,
+        "reopened": 0,
+        "closed": 0,
+        "detached": 0,
+        "held": 0,
+    }
 
     second = rig.import_and_get(a, sarif_without_last_result())
-    assert second["counts"] == {"new": 0, "unchanged": 2, "reopened": 0, "closed": 1, "detached": 0, "held": 0}
+    assert second["counts"] == {
+        "new": 0,
+        "unchanged": 2,
+        "reopened": 0,
+        "closed": 1,
+        "detached": 0,
+        "held": 0,
+    }
 
     dup = rig.post(a, sarif_without_last_result())
     assert dup.status_code == 200 and dup.json()["duplicate"] is True  # nothing queued

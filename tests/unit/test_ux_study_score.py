@@ -90,6 +90,6 @@ def test_the_page_matches_the_recorded_sessions() -> None:
     if not rows:
         assert "_No sessions recorded yet._" in page
     else:
-        assert score.render(rows, score.read_sus(data / "sus.csv")) in page, (
-            "run scripts/ux-study-score.py"
-        )
+        assert (
+            score.render(rows, score.read_sus(data / "sus.csv")) in page
+        ), "run scripts/ux-study-score.py"

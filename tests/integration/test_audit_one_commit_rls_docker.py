@@ -56,7 +56,9 @@ def test_a_concurrent_append_makes_the_block_chain_again_on_the_new_tip(
         assert verify_chain(everything).ok
 
 
-def test_nothing_is_written_when_the_block_raises(sessions: sessionmaker[Session]) -> None:  # noqa: F811
+def test_nothing_is_written_when_the_block_raises(
+    sessions: sessionmaker[Session],
+) -> None:  # noqa: F811
     tag = uuid.uuid4().hex[:8]
     with sessions() as s:
         with pytest.raises(RuntimeError), repo.audit_in_one_commit(s):

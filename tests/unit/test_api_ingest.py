@@ -130,7 +130,14 @@ def test_an_uploaded_report_is_queued_then_applied_with_counts(env: Env) -> None
     assert view["status"] == "applied" and view["error"] is None
     # Four SARIF results, three Issues: two Semgrep rules fired on one line for one weakness, which
     # correlation merges into a single defect exactly as it does for a native scan.
-    assert view["counts"] == {"new": 3, "unchanged": 0, "reopened": 0, "closed": 0, "detached": 0, "held": 0}
+    assert view["counts"] == {
+        "new": 3,
+        "unchanged": 0,
+        "reopened": 0,
+        "closed": 0,
+        "detached": 0,
+        "held": 0,
+    }
     assert view["dedup_complete"] is True and view["close_missing"] is True
     assert issue_states(env) == ["new"] * 3
     assert uploads_left(env) == []  # the stored upload is gone once applied
@@ -161,7 +168,14 @@ def test_the_same_file_twice_is_a_no_op_that_returns_the_original(env: Env) -> N
 def test_a_changed_file_reimports_against_the_previous_one(env: Env) -> None:
     env.import_and_get(SARIF)
     second = env.import_and_get(sarif_without_last_result())
-    assert second["counts"] == {"new": 0, "unchanged": 2, "reopened": 0, "closed": 1, "detached": 0, "held": 0}
+    assert second["counts"] == {
+        "new": 0,
+        "unchanged": 2,
+        "reopened": 0,
+        "closed": 1,
+        "detached": 0,
+        "held": 0,
+    }
     assert len(second["closed_issue_ids"]) == 1
     assert (
         issue_states(env) == ["fixed", "new", "new", "new"] or issue_states(env).count("fixed") == 1

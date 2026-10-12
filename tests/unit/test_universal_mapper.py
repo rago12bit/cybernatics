@@ -193,7 +193,12 @@ def test_no_records_at_the_records_path_is_said_out_loud() -> None:
         ),
         ({"format": "csv", "source": "acme-csv", "fields": {"title": "Title"}}, b"Title,File\n"),
         (
-            {"format": "xml", "source": "acme-xml", "records": "r/issue", "fields": {"title": "name"}},
+            {
+                "format": "xml",
+                "source": "acme-xml",
+                "records": "r/issue",
+                "fields": {"title": "name"},
+            },
             b"<r><finding><name>x</name></finding></r>",
         ),
     ],

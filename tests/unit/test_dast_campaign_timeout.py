@@ -46,7 +46,9 @@ def _campaign(s: Session, asset_id: str, mode: str) -> str:
 def test_a_nuclei_timeout_keeps_its_findings_and_closes_nothing(
     monkeypatch: pytest.MonkeyPatch, sessions: sessionmaker[Session]
 ) -> None:
-    monkeypatch.setattr(ownership, "verify", lambda *a, **kw: ownership.VerificationOutcome(ok=True))
+    monkeypatch.setattr(
+        ownership, "verify", lambda *a, **kw: ownership.VerificationOutcome(ok=True)
+    )
     zap_finds: list[Finding] = []
     monkeypatch.setattr(pipeline, "run_zap_baseline", lambda *a, **kw: list(zap_finds))
 
@@ -81,6 +83,8 @@ def test_a_nuclei_timeout_keeps_its_findings_and_closes_nothing(
         run = s.scalars(
             select(ToolRun).where(ToolRun.scan_id == second, ToolRun.tool == "nuclei")
         ).one()
-        assert (run.status, run.findings_count) == ("timeout", 1) and "kept the 1" in (run.error or "")
+        assert (run.status, run.findings_count) == ("timeout", 1) and "kept the 1" in (
+            run.error or ""
+        )
         states = {i.state for i in s.scalars(select(IssueRow).where(IssueRow.asset_id == asset.id))}
     assert "fixed" not in states  # /a was not shown fixed by a run that didn't finish

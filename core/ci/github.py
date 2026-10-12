@@ -26,7 +26,9 @@ def http_transport(
 ) -> tuple[int, Any]:
     req = urllib.request.Request(url, data=body, headers=headers, method=method)
     try:
-        with urllib.request.urlopen(req, timeout=30) as resp:  # noqa: S310 - https only, checked by caller
+        with urllib.request.urlopen(
+            req, timeout=30
+        ) as resp:  # noqa: S310 - https only, checked by caller
             raw = resp.read(8 * 1024 * 1024)
             return resp.status, json.loads(raw) if raw else None
     except urllib.error.HTTPError as exc:

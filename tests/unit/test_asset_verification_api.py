@@ -153,7 +153,9 @@ def test_a_web_targets_source_link_changes_without_resetting_verification(
     from core.persistence.models import AuditEntry
     from core.tenancy import DEFAULT_ORG_ID
 
-    monkeypatch.setattr(ownership, "verify", lambda *a, **kw: ownership.VerificationOutcome(ok=True))
+    monkeypatch.setattr(
+        ownership, "verify", lambda *a, **kw: ownership.VerificationOutcome(ok=True)
+    )
     client = _client(sessions, tmp_path)
     site = client.post("/assets/web", headers=AUTH,
                        json={"domain": "example.com", "method": "dns_txt"}).json()  # fmt: skip
@@ -172,7 +174,10 @@ def test_a_web_targets_source_link_changes_without_resetting_verification(
 
     r = client.put(url, headers=AUTH, json={"source_asset_id": code_id})
     assert r.status_code == 200, r.text
-    assert (r.json()["source_asset_id"], r.json()["source_label"]) == (code_id, "https://github.com/a/b")
+    assert (r.json()["source_asset_id"], r.json()["source_label"]) == (
+        code_id,
+        "https://github.com/a/b",
+    )
     assert r.json()["status"] == "verified"  # registering again would have reset this
     r = client.put(url, headers=AUTH, json={"source_asset_id": other_id})
     assert r.json()["source_label"] == "b.zip"

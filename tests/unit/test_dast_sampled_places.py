@@ -198,7 +198,12 @@ def test_a_held_issue_is_closed_by_a_later_import_that_shows_the_rule_gone(
         assert len(preview.to_dict()["held_issue_ids"]) == 5
 
         two = _import(s, t["ZAP"], {"10038": sample_2, "10020": ["/x"]}, 2)
-        assert (two.new_count, two.unchanged_count, two.closed_count, two.held_count) == (5, 1, 0, 5)
+        assert (two.new_count, two.unchanged_count, two.closed_count, two.held_count) == (
+            5,
+            1,
+            0,
+            5,
+        )
 
         three = _import(s, t["ZAP"], {"10020": ["/x"]}, 3)  # the CSP header was set
         assert (three.closed_count, three.held_count) == (10, 0)  # both samples, held ones too

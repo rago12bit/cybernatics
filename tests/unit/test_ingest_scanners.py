@@ -297,7 +297,9 @@ def test_real_exports_without_a_final_line_break_still_import_but_close_nothing(
 def test_openvas_xml_gives_one_finding_per_result() -> None:
     r = run("openvas", OPENVAS_XML)
     assert r.complete and r.can_close_missing
-    assert len(r.findings) == len(ET.fromstring(OPENVAS_XML).findall(".//result")) == 44  # noqa: S314
+    assert (
+        len(r.findings) == len(ET.fromstring(OPENVAS_XML).findall(".//result")) == 44
+    )  # noqa: S314
 
 
 def test_openvas_xml_and_csv_agree_on_the_same_result() -> None:

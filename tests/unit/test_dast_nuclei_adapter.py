@@ -178,7 +178,7 @@ def test_a_run_that_times_out_keeps_what_it_found_and_kills_its_container(monkey
                    "matched-at": "http://t/"})  # fmt: skip
     script = (
         f"import sys, time; sys.stdout.write({(one + chr(10) + two + chr(10))!r}); "
-        "sys.stdout.write('{\"template-id\": \"cut'); sys.stdout.flush(); time.sleep(60)"
+        'sys.stdout.write(\'{"template-id": "cut\'); sys.stdout.flush(); time.sleep(60)'
     )
     started: dict[str, list[str]] = {}
     killed: list[list[str]] = []
