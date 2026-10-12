@@ -32,6 +32,7 @@ SCAN_BUDGET_SECONDS = 2.0
 # call -- see git_staged.py's own docstring for that exact regression) without being sensitive to
 # CI-runner variance the way the tight scan-only budget above is.
 WALL_BUDGET_SECONDS = 4.0
+FILES_STAGED = 240
 
 
 def _git(repo: Path, *args: str) -> subprocess.CompletedProcess[bytes]:
@@ -53,7 +54,10 @@ def test_scanning_this_projects_entire_core_tree_stays_under_the_time_budget(
     _git(tmp_path, "init", "-q")
     _git(tmp_path, "config", "user.email", "t@example.com")
     _git(tmp_path, "config", "user.name", "Test")
-    _git(tmp_path, "add", "-A")
+    # A fixed number of files, not all of core/ (239 when the budget was set, 400+ since): the
+    # budget is for a commit of this size, and must not shrink every time the project grows.
+    files = sorted(str(f.relative_to(tmp_path)) for f in dest.rglob("*") if f.is_file())
+    _git(tmp_path, "add", "--", *files[:FILES_STAGED])
 
     staged = subprocess.run(
         ["git", "-C", str(tmp_path), "diff", "--cached", "--name-only"],
