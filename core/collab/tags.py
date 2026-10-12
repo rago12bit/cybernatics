@@ -92,11 +92,14 @@ def for_project(s: Session, asset: Asset) -> dict[str, Any]:
     portfolio = s.get(Portfolio, asset.portfolio_id) if asset.portfolio_id else None
     inherited = own(s, "portfolio", portfolio.id) if portfolio else []
     mine = own(s, "project", asset.id)
+    source = portfolio.name if portfolio else ""
+    from_portfolio = [
+        {"name": n, "from": "portfolio", "source": source} for n in inherited if n not in mine
+    ]
     return {
         "own": mine,
-        "inherited": [{"name": n, "from": "portfolio", "source": portfolio.name}
-                      for n in inherited if n not in mine] if portfolio else [],  # fmt: skip
-         "portfolio": {"id": portfolio.id, "name": portfolio.name} if portfolio else None,
+        "inherited": from_portfolio,
+        "portfolio": {"id": portfolio.id, "name": portfolio.name} if portfolio else None,
     }
 
 
