@@ -82,13 +82,12 @@ def markdown_comment(
             "instead of only the new ones."
         )
     failing = [
-        s for s, v in cmp.head.tool_status.items() if v.get("status") not in ("ok", "skipped")
+        (s, v) for s, v in cmp.head.tool_status.items() if v.get("status") not in ("ok", "skipped")
     ]
     if failing:
-        lines.append(
-            f"> Scanner(s) that did not complete: {', '.join(md(t, 40) for t in failing)}. "
-            "Results may be incomplete."
-        )
+        # Each with its status and error: a bare name left no way to tell why from the PR itself.
+        why = ", ".join(md(t, 40) + f" ({md(_failure_reason(v), 160)})" for t, v in failing)
+        lines.append(f"> Scanner(s) that did not complete: {why}. Results may be incomplete.")
     if cmp.head.ignored:
         lines.append(f"{cmp.head.ignored} finding(s) hidden by `.bulwarkignore`.")
     if fail_on != "none":
@@ -138,3 +137,9 @@ def report_data(scan_label: str, cmp: Comparison) -> ReportData:
         severity_counts=dict(counts),
         findings=h.findings,
     )
+
+
+def _failure_reason(status: dict[str, Any]) -> str:
+    reason = str(status.get("status", "unknown"))
+    error = " ".join(str(status.get("error") or "").split())
+    return f"{reason}: {error}" if error else reason

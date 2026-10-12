@@ -147,6 +147,20 @@ def test_comment_warns_about_incomplete_scanners() -> None:
     )
 
 
+def test_comment_says_why_each_scanner_did_not_complete() -> None:
+    scan = scan_of(finding("a"))
+    scan.tool_status = {
+        "semgrep": {"status": "timeout"},
+        "gitleaks": {"status": "error", "error": "exit 2:\n<b>bad</b> @someone [x](http://e)"},
+        "bandit": {"status": "ok"},
+    }
+    body = markdown_comment(compare(scan, None), "none", False)
+    line = next(ln for ln in body.splitlines() if "did not complete" in ln)
+    assert "semgrep (timeout)" in line and "gitleaks (error: exit 2:" in line
+    assert "bandit" not in line
+    assert "<b>" not in line and "](http" not in line and "@someone" not in line  # escaped
+
+
 def test_comment_caps_the_list_and_total_size() -> None:
     many = [finding(str(i), title="x" * 500) for i in range(300)]
     body = markdown_comment(compare(scan_of(*many), scan_of()), "none", False)
