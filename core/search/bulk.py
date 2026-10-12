@@ -321,8 +321,8 @@ def _set_triage(i: IssueRow, values: dict[str, Any]) -> None:
         setattr(i, f, _dt(values.get(f)) if f.endswith("_at") else values.get(f))
 
 
-def _tag_creators(s: Session, ids: list[str], tag: str) -> dict[str, str]:
-    out: dict[str, str] = {}
+def _tag_creators(s: Session, ids: list[str], tag: str) -> dict[str, str | None]:
+    out: dict[str, str | None] = {}
     for k in range(0, len(ids), 1000):
         chunk = ids[k : k + 1000]
         found = s.execute(select(Tag.target_id, Tag.created_by).where(
@@ -340,7 +340,7 @@ def _drop_tags(s: Session, ids: list[str], tag: str) -> None:
 
 def _apply_one(
     s: Session, org_id: str, p: Plan, i: IssueRow, actor: str, now: datetime, batch: str,
-    creators: dict[str, str],
+    creators: dict[str, str | None],
 ) -> tuple[dict[str, Any], dict[str, Any]]:  # fmt: skip
     """Change one Issue; return its previous values and its audit entry."""
     if p.action == "assign":

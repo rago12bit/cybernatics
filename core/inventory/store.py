@@ -110,11 +110,14 @@ def _library_ids(s: Session, org_id: str, libs: dict[str, Ident]) -> tuple[dict[
     ids: dict[str, str] = {}
     for chunk in _chunks(keys):
         ids.update(
-            s.execute(
-                select(Library.key, Library.id).where(
-                    Library.org_id == org_id, Library.key.in_(chunk)
+            {
+                key: lid
+                for key, lid in s.execute(
+                    select(Library.key, Library.id).where(
+                        Library.org_id == org_id, Library.key.in_(chunk)
+                    )
                 )
-            ).all()  # type: ignore[arg-type]
+            }
         )
     missing = [k for k in keys if k not in ids]
     now = _now()
@@ -135,11 +138,14 @@ def _library_ids(s: Session, org_id: str, libs: dict[str, Ident]) -> tuple[dict[
             s.execute(stmt.on_conflict_do_nothing(index_elements=["org_id", "key"]))
         for chunk in _chunks(missing):
             ids.update(
-                s.execute(
-                    select(Library.key, Library.id).where(
-                        Library.org_id == org_id, Library.key.in_(chunk)
+                {
+                    key: lid
+                    for key, lid in s.execute(
+                        select(Library.key, Library.id).where(
+                            Library.org_id == org_id, Library.key.in_(chunk)
+                        )
                     )
-                ).all()  # type: ignore[arg-type]
+                }
             )
     seen = [ids[k] for k in keys if k not in missing]
     for chunk in _chunks(seen):

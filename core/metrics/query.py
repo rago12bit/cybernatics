@@ -388,7 +388,7 @@ def mttr(s: Session, org_id: str, f: Filters, sc: Scope, now: datetime) -> dict[
         .group_by(MetricIssueDay.band)
     ).all()
     order = {b: i for i, b in enumerate(BANDS)}
-    rows = [
+    rows: list[dict[str, Any]] = [
         {
             "key": b,
             "fixed": int(n),
@@ -454,7 +454,7 @@ def new_vs_fixed(s: Session, org_id: str, f: Filters, sc: Scope, now: datetime) 
 
 def scan_coverage(s: Session, org_id: str, f: Filters, sc: Scope, now: datetime) -> dict[str, Any]:
     cut = now - timedelta(days=COVERAGE_DAYS)
-    rows = []
+    rows: list[dict[str, Any]] = []
     for st, label, portfolio in s.execute(
         select(MetricAssetStatus, Asset.label, Portfolio.name)
         .join(Asset, Asset.id == MetricAssetStatus.asset_id)
@@ -791,7 +791,7 @@ def issues(
     ids = list(s.scalars(q.limit(limit + 1)))
     more = len(ids) > limit
     ids = ids[:limit]
-    rows = []
+    rows: list[dict[str, Any]] = []
     cols = (IssueRow.id, IssueRow.asset_id, IssueRow.title, IssueRow.severity,
             IssueRow.priority_override, IssueRow.priority_band, IssueRow.state,
             IssueRow.first_seen_at, IssueRow.fixed_at, IssueRow.assignee)  # fmt: skip

@@ -269,7 +269,8 @@ def tests(s: Session, e: Engagement) -> list[dict[str, Any]]:
                 FindingRow.scan_id.in_(list(scan_test)), FindingRow.issue_id.is_not(None)
             )
         ):
-            issues[scan_test[scan_id]].add(issue_id)
+            if issue_id is not None:  # filtered in SQL; this only tells the type checker
+                issues[scan_test[scan_id]].add(issue_id)
     return [
         {
             "id": t.id,
@@ -297,7 +298,8 @@ def findings(s: Session, e: Engagement) -> list[dict[str, Any]]:
             FindingRow.scan_id.in_(list(own_scans)), FindingRow.issue_id.is_not(None)
         )
     ):
-        test_of.setdefault(issue_id, name_of[own_scans[scan_id]])
+        if issue_id is not None:  # filtered in SQL; this only tells the type checker
+            test_of.setdefault(issue_id, name_of[own_scans[scan_id]])
     rows = {i.id: i for i in s.scalars(select(IssueRow).where(IssueRow.id.in_(list(test_of))))}
     # Who else reports each Issue: scanners (their tool names), other Tests (their names).
     also: dict[str, set[str]] = defaultdict(set)
@@ -306,6 +308,8 @@ def findings(s: Session, e: Engagement) -> list[dict[str, Any]]:
         .join(Scan, Scan.id == FindingRow.scan_id)
         .where(FindingRow.issue_id.in_(list(rows)), FindingRow.scan_id.notin_(list(own_scans)))
     ):
+        if issue_id is None:  # IN never matches NULL; this only tells the type checker
+            continue
         if source_type == "import":  # another Test: its name ("Nessus: scan.xml" -> "Nessus")
             also[issue_id].add(str(label).split(": ", 1)[0])
         else:

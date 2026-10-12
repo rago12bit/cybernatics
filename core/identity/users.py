@@ -265,5 +265,6 @@ def access_for(s: Session, u: User, token_scopes: frozenset[str] | None = None) 
     if portfolios:
         for aid, pid in s.execute(select(Asset.id, Asset.portfolio_id).where(
                 Asset.org_id == u.org_id, Asset.portfolio_id.in_(list(portfolios)))):  # fmt: skip
-            in_portfolios[aid] = portfolios[pid]
+            if pid is not None:  # IN never matches NULL; this only tells the type checker
+                in_portfolios[aid] = portfolios[pid]
     return Access(u.id, u.role, portfolios, projects, in_portfolios, token_scopes)

@@ -184,10 +184,11 @@ def listing(
                     CveRecord.id.in_(no_score[i : i + 500]), CveRecord.cvss.is_not(None)
                 )
             )
+            if score is not None
         )
     needle = q.strip().lower()
     named = _library_matches(s, org_id, needle) if needle else set()
-    rows = []
+    rows: list[dict[str, Any]] = []
     for vk in keys:
         recs = records.get(vk) or []
         if not recs:
