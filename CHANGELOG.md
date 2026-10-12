@@ -20,6 +20,15 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   view each urls.py entry names), Express, Next.js and Go's net/http too. Path parameters in each
   framework's own notation (`<int:id>`, `:id`, `[id]`, `[...slug]`) are normalized, which also fixes
   Flask's `<id>` routes, never matched before, and a manual finding's route match.
+- **A route's path includes where its router is mounted.** Code intelligence now reads Django
+  `include()` (of a module or a list in place), FastAPI `include_router` and `APIRouter(prefix=)`,
+  Flask `register_blueprint` and `Blueprint(url_prefix=)`, and Express `use(path, router)` with
+  `require` or `import`, across files and chained, so `/api/users/{id}` is that, not `/{id}`. A
+  prefix written as a constant (`prefix=settings.API_V1_STR`) is its value when one is found by that
+  name. The route map, the attack surface, taint paths, attack paths and the threat model all show
+  the whole path. Django regex routes are read when they are a plain path with capture groups. On
+  nine real apps in the evaluation corpus, 73 of 265 routes changed, every one checked by hand
+  (full-stack-fastapi-template's are all under `/api/v1`, dvna's app routes under `/app`).
 - **Linking a web target to its source code on screen.** "Add web target" lists the organization's
   git and archive projects to pick from (optional), so a finding on the running site can be confirmed
   against the same weakness in that route's code. It was API and CLI only.

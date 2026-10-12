@@ -186,10 +186,16 @@ Measured against OWASP Juice Shop v17.3.0 with Nuclei v3.11.1:
   to add or change it afterwards without registering again, which resets verification.
 - Route extraction (since 2026-10-12) reads the HTTP entrypoints code intelligence finds for
   FastAPI, Flask, Django (the view a urls.py entry names), Express, Next.js and Go's net/http, and
-  falls back to the FastAPI/Flask decorator shape when code analysis did not run. Still invisible: a
-  Django regex route, a route built from a runtime string, and the prefix an `include()` or a
-  mounted router adds -- such a route is matched by its app-relative part only, so a full URL misses
-  it. A conservative miss, never a false match.
+  falls back to the FastAPI/Flask decorator shape when code analysis did not run. A route carries
+  the prefixes its router is mounted under, across files and chained (Django `include()`, also of a
+  list in place; FastAPI `include_router` and `APIRouter(prefix=)`; Flask `register_blueprint` and
+  `Blueprint(url_prefix=)`; Express `use(path, router)` with `require` or `import`; a prefix
+  written as a constant, when exactly one value is found by that name), and a Django regex route is
+  read when it is a plain path with capture groups. Still invisible: a route built
+  from a runtime string, a regex route with optional parts or alternation, a mount whose router is
+  passed through a variable or function the extractor does not follow, Go's `StripPrefix` and
+  router libraries' `Mount`, and Next.js's `basePath`. Such a route is matched by the part written
+  where it is registered, so a full URL misses it. A conservative miss, never a false match.
 - Nuclei's own request concurrency could not reach a target through `host.docker.internal` on this
   Docker-Desktop-for-Mac machine -- reproduced directly, a host-networking limitation, not an adapter
   bug (`tests/integration/test_dast_adapters_live.py`'s own docstring has the detail).

@@ -18,6 +18,21 @@ def symbol_id(path: str, qualified_name: str, start_line: int) -> str:
     return f"{path}:{qualified_name}:{start_line}"
 
 
+def join_route(prefix: str, route: str) -> str:
+    """A route under a mount's prefix, in each framework's own notation: "/api" + "/users/{id}",
+    Django's "api/" + "users/<int:pk>/", or a regex include's "^api/" + "^users/(?P<pk>\\d+)/$" (the
+    inner "^" goes: Django matches the included pattern against what the prefix left)."""
+    if not prefix:
+        return route
+    head = prefix.rstrip("$").rstrip("/")
+    tail = route.lstrip("^").lstrip("/")
+    if head in ("", "^"):
+        return head + ("/" if prefix.startswith("/") else "") + tail
+    if tail:
+        return f"{head}/{tail}"
+    return head + ("/" if prefix.endswith("/") or route.endswith("/") else "")
+
+
 @dataclass(frozen=True)
 class Symbol:
     id: str
@@ -51,6 +66,29 @@ class Entrypoint:
     # `_route_entrypoint`/`_express_entrypoint` already use for the route itself), not a guarantee
     # that a name here actually enforces authorization or that its absence means it doesn't.
     auth_markers: tuple[str, ...] = ()
+    # What the route is registered on, by name: `router` for `@router.get(...)` or
+    # `router.get(...)`, "urlpatterns" for Django; "" when nothing (Next.js, Go). A `Mount` of that
+    # router adds its prefix to `path` (`resolve.apply_mounts`).
+    router: str = ""
+
+
+@dataclass(frozen=True)
+class Mount:
+    """`parent`, a router in `file`, serves the router `child` of `module` under `prefix`: Django's
+    `path("api/", include("shop.urls"))`, FastAPI's `include_router(users.router, prefix="/u")`,
+    Flask's `register_blueprint(bp, url_prefix="/u")`, Express's `app.use("/u", users)`.
+
+    `module` is a dotted Python module ("shop.urls", already absolute for a relative import) or, for
+    JavaScript, the imported file's path without extension ("routes/users"); "" means `file`
+    itself. `child` "*" means every router in it (an Express module exports one, unnamed here)."""
+
+    file: str
+    parent: str
+    prefix: str
+    module: str
+    child: str
+    replaces: bool = False  # Flask: a url_prefix given when registering replaces the blueprint's
+    prefix_name: str = ""  # the prefix is this constant's value (`prefix=settings.API_V1_STR`)
 
 
 @dataclass
@@ -64,6 +102,14 @@ class FileUnit:
     calls: list[tuple[str, str, int]] = field(default_factory=list)
     entrypoints: list[Entrypoint] = field(default_factory=list)
     parsed: bool = True
+    mounts: list[Mount] = field(default_factory=list)
+    # A router's own prefix, by its name: `APIRouter(prefix="/u")`, `Blueprint(url_prefix="/u")`;
+    # or the constant it names, when it is not written out (`APIRouter(prefix=PREFIX)`).
+    prefixes: dict[str, str] = field(default_factory=dict)
+    prefix_names: dict[str, str] = field(default_factory=dict)
+    # Module- and class-level string constants (`API_V1_STR: str = "/api/v1"`), which a prefix
+    # written as a name resolves to when exactly one value is found by that name.
+    constants: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass

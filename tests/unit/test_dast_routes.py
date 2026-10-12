@@ -178,7 +178,7 @@ def _workspace(root: Path) -> Path:
 def test_routes_come_from_every_framework_code_intelligence_knows(tmp_path: Path) -> None:
     """The decorator extractor sees only the FastAPI route here; the code graph sees all of them.
     A Django route's handler is the view it names, in views.py, not its line in urls.py; a regex
-    route is skipped rather than guessed at."""
+    route that is a plain path with a capture group is read as one."""
     from core.codeintel import analyze
     from core.dast.routes import RouteHandler, routes_from_graph
 
@@ -188,6 +188,7 @@ def test_routes_come_from_every_framework_code_intelligence_knows(tmp_path: Path
         RouteHandler("/api/orders/*", "app/api/orders/[id]/route.ts", 1),
         RouteHandler("/api/products/*", "server.js", 3),
         RouteHandler("/assets/*", "api.py", 5),
+        RouteHandler("/legacy/*", "shop/views.py", 7),
         RouteHandler("/search", "shop/views.py", 3),
     ]
 
@@ -211,3 +212,116 @@ def test_a_django_views_sql_injection_is_confirmed_by_a_dast_finding_on_its_url(
                    taxonomy=Taxonomy(category=Category.SAST, cwe=("CWE-89",)))  # fmt: skip
     [confirmed] = correlate_dast_with_sast([dast], [sast], handlers)
     assert (confirmed.sast_finding_id, confirmed.route) == ("s1", "/search")
+
+
+MOUNTED = {
+    # Django: a string include, a regex include, an include of a list in place, a regex leaf.
+    "project/urls.py": (
+        "from django.urls import include, path, re_path\nfrom shop import views\n\n"
+        "urlpatterns = [\n"
+        '    path("shop/", include("shop.urls")),\n'
+        '    re_path(r"^api/", include("api.urls", namespace="api")),\n'
+        '    path("v2/", include([path("ping/", views.ping)])),\n'
+        "]\n"
+    ),
+    "shop/urls.py": (
+        "from django.urls import path, re_path\nfrom . import views\n\n"
+        "urlpatterns = [\n"
+        '    path("search/", views.search),\n'
+        '    re_path(r"^legacy/(?P<slug>[-\\w]+)/$", views.legacy),\n'
+        "]\n"
+        'urlpatterns += [path("cart/<int:pk>/", views.cart)]\n'
+    ),
+    "shop/views.py": (
+        "def search(request):\n    return None\n\n"
+        "def legacy(request, slug):\n    return None\n\n"
+        "def cart(request, pk):\n    return None\n\n"
+        "def ping(request):\n    return None\n"
+    ),
+    "api/urls.py": (
+        "from django.urls import path\nfrom api import views as v\n\n"
+        'urlpatterns = [path("users/<int:pk>/", v.user)]\n'
+    ),
+    "api/views.py": "def user(request, pk):\n    return None\n",
+    # FastAPI: a module's router under a prefix, an imported router with its own prefix.
+    "svc/main.py": (
+        "from fastapi import FastAPI\nfrom svc.routers import users\n"
+        "from .routers.items import router as items_router\nfrom svc.config import settings\n\n"
+        "app = FastAPI()\n"
+        'app.include_router(users.router, prefix="/users")\n'
+        "app.include_router(items_router, prefix=settings.API_V1)\n"
+    ),
+    "svc/config.py": 'class Settings:\n    API_V1: str = "/v1"\n\nsettings = Settings()\n',
+    "svc/routers/users.py": (
+        "from fastapi import APIRouter\nrouter = APIRouter()\n\n"
+        '@router.get("/{user_id}")\ndef get_user(user_id: int):\n    return {}\n'
+    ),
+    "svc/routers/items.py": (
+        'from fastapi import APIRouter\nrouter = APIRouter(prefix="/items")\n\n'
+        '@router.get("/{item_id}")\ndef get_item(item_id: int):\n    return {}\n'
+    ),
+    # Flask: a url_prefix given at registration replaces the blueprint's own.
+    "web/app.py": (
+        "from flask import Flask\nfrom web.admin import bp\n\n"
+        "def create_app():\n    app = Flask(__name__)\n"
+        '    app.register_blueprint(bp, url_prefix="/admin")\n    return app\n'
+    ),
+    "web/admin.py": (
+        'from flask import Blueprint\nbp = Blueprint("admin", __name__, url_prefix="/ignored")\n\n'
+        '@bp.route("/stats")\ndef stats():\n    return ""\n'
+    ),
+    # Express: a router required under a prefix, which mounts another; an ES module import.
+    "server.js": (
+        'const express = require("express");\nconst api = require("./routes/api");\n'
+        'import orders from "./routes/orders.js";\nconst app = express();\n'
+        'app.use(express.json());\napp.use("/api", api);\napp.use("/orders", orders);\n'
+        'app.use("/legacy", require("./routes/legacy")(app));\n'
+    ),
+    "routes/legacy.js": (
+        'const router = require("express").Router();\n'
+        "module.exports = function (app) {\n"
+        '  router.get("/old", (req, res) => res.send("old"));\n  return router;\n};\n'
+    ),
+    "routes/api.js": (
+        'const router = require("express").Router();\nconst users = require("./users");\n'
+        'router.use("/users", users);\n'
+        'router.get("/health", (req, res) => res.send("ok"));\nmodule.exports = router;\n'
+    ),
+    "routes/users.js": (
+        'const router = require("express").Router();\n'
+        'router.get("/:id", (req, res) => res.send(req.params.id));\nmodule.exports = router;\n'
+    ),
+    "routes/orders.js": (
+        'import { Router } from "express";\nconst r = Router();\n'
+        'r.post("/", (req, res) => res.send("made"));\nexport default r;\n'
+    ),
+}
+
+
+def test_a_route_carries_the_prefix_its_router_is_mounted_under(tmp_path: Path) -> None:
+    """Django `include()`, FastAPI `include_router`, Flask `register_blueprint`, Express `use`:
+    each route's pattern is the whole URL, so a finding on it matches. Before, every one of these
+    was the app-relative part alone (or, for a regex route, skipped). A prefix written as a constant
+    is that constant's value; a module that exports a function building its router is followed."""
+    from core.codeintel import analyze
+    from core.dast.routes import routes_from_graph
+
+    for rel, source in MOUNTED.items():
+        (tmp_path / rel).parent.mkdir(parents=True, exist_ok=True)
+        (tmp_path / rel).write_text(source)
+    got = {(h.route, h.path) for h in routes_from_graph(analyze(tmp_path))}
+    assert got == {
+        ("/shop/search", "shop/views.py"),
+        ("/shop/legacy/*", "shop/views.py"),
+        ("/shop/cart/*", "shop/views.py"),
+        ("/v2/ping", "shop/views.py"),
+        ("/api/users/*", "api/views.py"),
+        ("/users/*", "svc/routers/users.py"),
+        ("/v1/items/*", "svc/routers/items.py"),
+        ("/admin/stats", "web/admin.py"),
+        ("/api/health", "routes/api.js"),
+        ("/api/users/*", "routes/users.js"),
+        ("/orders", "routes/orders.js"),
+        ("/legacy/old", "routes/legacy.js"),
+    }
+    assert route_matches("/shop/cart/*", "/shop/cart/7")

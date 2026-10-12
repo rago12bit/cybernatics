@@ -14,15 +14,17 @@ closure literal.
 
 from __future__ import annotations
 
+import posixpath
 import re
 from pathlib import PurePosixPath
 
-from core.codeintel.models import Entrypoint, FileUnit, Symbol, symbol_id
+from core.codeintel.models import Entrypoint, FileUnit, Mount, Symbol, symbol_id
 
 _HTTP_METHODS = frozenset({"get", "post", "put", "delete", "patch", "options", "head"})
 _EXPRESS_METHODS = _HTTP_METHODS | {"all"}  # Express also routes generically on `.all(...)`
 _NEXT_APP_ROUTE = re.compile(r"(^|/)app/(.*)/route\.(t|j)sx?$")
 _NEXT_PAGES_API = re.compile(r"(^|/)pages/api/(.*)\.(t|j)sx?$")
+_SCRIPT_EXT = re.compile(r"\.(?:[cm]?[jt]s|[jt]sx)$")
 
 
 def _parser(typescript: bool):  # type: ignore[no-untyped-def]
@@ -75,6 +77,29 @@ def _next_route_path(rel_path: str) -> tuple[str, str] | None:
     return None
 
 
+def _module_path(importer: str, spec: str) -> str | None:
+    """`require("./routes/users")` in "src/app.js" -> "src/routes/users" (extension dropped: the
+    file may be users.js, users.ts or users/index.js). Packages ("express") are not this repo's."""
+    if not spec.startswith("."):
+        return None
+    joined = posixpath.normpath(posixpath.join(posixpath.dirname(importer), spec))
+    return _SCRIPT_EXT.sub("", joined)
+
+
+def _required(node) -> str | None:  # type: ignore[no-untyped-def]
+    """The module of `require("./x")`, or of `require("./x")(...)` (a module exporting a function
+    that builds its router, as dvna's do), else None."""
+    if node is None or node.type != "call_expression":
+        return None
+    fn = node.child_by_field_name("function")
+    if fn is not None and fn.type == "call_expression":
+        return _required(fn)
+    args = node.child_by_field_name("arguments")
+    if fn is None or _text(fn) != "require" or args is None or not args.named_children:
+        return None
+    return _string_literal(args.named_children[0])
+
+
 class _Extractor:
     def __init__(self, path: str, language: str) -> None:
         self.path = path
@@ -87,6 +112,9 @@ class _Extractor:
         # (e.g. an inline route handler) so the generic recursion in visit() doesn't process the
         # same node a second time with the wrong (or no) caller context.
         self._handled: set[tuple[int, int]] = set()
+        self._imports: dict[str, str] = {}  # local name -> module path (`_module_path`)
+        # (parent, prefix, router argument) of each `.use(...)`, resolved once every import is seen
+        self._uses: list[tuple[str, str, object]] = []
 
     def _qualified_name(self, name: str) -> str:
         return ".".join((*(n for n, _ in self._scope), name)) if self._scope else name
@@ -126,6 +154,11 @@ class _Extractor:
             return
         prop = fn.child_by_field_name("property")
         verb = _text(prop).lower() if prop is not None else ""
+        obj = fn.child_by_field_name("object")
+        router = _text(obj) if obj is not None and obj.type == "identifier" else ""
+        if verb == "use" and router:
+            self._express_use(router, call_node)
+            return
         if verb not in _EXPRESS_METHODS:
             return
         args = call_node.child_by_field_name("arguments")
@@ -156,7 +189,9 @@ class _Extractor:
             # the generic recursion below doesn't re-visit it with the wrong caller.
             self._anon_count += 1
             sid = self._add_symbol(f"<route-handler-{self._anon_count}>", handler, exported=False)
-            self.unit.entrypoints.append(Entrypoint(sid, "express", verb.upper(), path, markers))
+            self.unit.entrypoints.append(
+                Entrypoint(sid, "express", verb.upper(), path, markers, router)
+            )
             body = handler.child_by_field_name("body")
             if body is not None:
                 self._walk_function_body(sid, body)
@@ -181,8 +216,65 @@ class _Extractor:
                     call_node.start_point[0] + 1, call_node.start_point[0] + 1, self.unit.language,
                 )  # fmt: skip
             )
-            self.unit.entrypoints.append(Entrypoint(sid, "express", verb.upper(), path, markers))
+            self.unit.entrypoints.append(
+                Entrypoint(sid, "express", verb.upper(), path, markers, router)
+            )
             self.unit.calls.append((sid, name, handler.start_point[0] + 1))
+
+    def _express_use(self, parent: str, call_node) -> None:  # type: ignore[no-untyped-def]
+        """`app.use("/api", users)`, `router.use("/v1", require("./v1"))`, `app.use(api)`: each
+        router argument is mounted under the path (none: "")."""
+        args = call_node.child_by_field_name("arguments")
+        if args is None or not args.named_children:
+            return
+        first = args.named_children[0]
+        prefix = _string_literal(first)
+        for arg in args.named_children[1:] if prefix is not None else args.named_children:
+            self._uses.append((parent, prefix or "", arg))
+
+    def _import(self, node) -> None:  # type: ignore[no-untyped-def]
+        """`const users = require("./users")` and `import users from "./users"` (or `{ router as
+        users }`, or `* as users`): what a later `.use(...)` may name."""
+        if node.type == "variable_declarator":
+            name = node.child_by_field_name("name")
+            spec = _required(node.child_by_field_name("value"))
+            if name is not None and name.type == "identifier" and spec:
+                if (module := _module_path(self.path, spec)) is not None:
+                    self._imports[_text(name)] = module
+            return
+        source = _string_literal(node.child_by_field_name("source"))
+        module = _module_path(self.path, source) if source else None
+        if module is None:
+            return
+        for clause in (c for c in node.named_children if c.type == "import_clause"):
+            for part in clause.named_children:
+                if part.type == "identifier":
+                    self._imports[_text(part)] = module
+                elif part.type == "namespace_import":
+                    for n in part.named_children:
+                        if n.type == "identifier":
+                            self._imports[_text(n)] = module
+                elif part.type == "named_imports":
+                    for spec_node in part.named_children:
+                        alias = spec_node.child_by_field_name("alias")
+                        name = alias or spec_node.child_by_field_name("name")
+                        if name is not None:
+                            self._imports[_text(name)] = module
+
+    def finish(self) -> FileUnit:
+        for parent, prefix, arg in self._uses:
+            module: str | None
+            if arg.type == "identifier":  # type: ignore[attr-defined]
+                local = _text(arg)
+                module = self._imports.get(local)
+                child = "*" if module is not None else local
+            else:
+                spec = _required(arg)
+                module, child = (_module_path(self.path, spec) if spec else None), "*"
+                if module is None:
+                    continue
+            self.unit.mounts.append(Mount(self.path, parent, prefix, module or "", child))
+        return self.unit
 
     def visit(self, node) -> None:  # type: ignore[no-untyped-def]
         if (node.start_byte, node.end_byte) in self._handled:
@@ -254,6 +346,10 @@ class _Extractor:
                 self.visit(c)
             self._scope.pop()
             return
+        if t == "import_statement":
+            self._import(node)
+        if t == "variable_declarator":
+            self._import(node)
         if t == "call_expression":
             self._express_entrypoint(node)
             fn = node.child_by_field_name("function")
@@ -275,4 +371,4 @@ def extract(path: str, source: bytes, typescript: bool = False) -> FileUnit:
     ext.visit(tree.root_node)
     if tree.root_node.has_error:
         ext.unit.parsed = False
-    return ext.unit
+    return ext.finish()

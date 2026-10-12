@@ -3,7 +3,7 @@ resolution (plan §20.2) -- and its documented unsoundness."""
 
 from __future__ import annotations
 
-from core.codeintel.models import FileUnit, Symbol
+from core.codeintel.models import Entrypoint, FileUnit, Mount, Symbol
 from core.codeintel.resolve import resolve
 
 
@@ -108,3 +108,42 @@ def test_callers_of_and_calls_from_walk_the_resolved_graph() -> None:
     graph = resolve([a, b])
     assert graph.callers_of("b.py:helper:1") == ["a.py:caller:1"]
     assert [e.callee_id for e in graph.calls_from("a.py:caller:1")] == ["b.py:helper:1"]
+
+
+def _route(path: str, route: str, router: str = "router") -> Entrypoint:
+    return Entrypoint(f"{path}:h:1", "fastapi", "GET", route, (), router)
+
+
+def test_a_router_mounted_twice_serves_its_routes_at_both_paths() -> None:
+    main = FileUnit("main.py", "python", mounts=[
+        Mount("main.py", "app", "/v1", "users", "router"),
+        Mount("main.py", "app", "/v2", "users", "router"),
+    ])  # fmt: skip
+    users = FileUnit("users.py", "python", entrypoints=[_route("users.py", "/{id}")])
+    assert sorted(e.path for e in resolve([main, users]).entrypoints) == ["/v1/{id}", "/v2/{id}"]
+
+
+def test_mounts_that_form_a_cycle_end() -> None:
+    a = FileUnit("a.py", "python", mounts=[Mount("a.py", "router", "/a", "b", "router")],
+                 entrypoints=[_route("a.py", "/x")])  # fmt: skip
+    b = FileUnit("b.py", "python", mounts=[Mount("b.py", "router", "/b", "a", "router")])
+    paths = [e.path for e in resolve([a, b]).entrypoints]
+    assert paths and all(p.endswith("/x") for p in paths)
+
+
+def test_a_mount_that_names_nothing_here_or_two_things_alike_adds_nothing() -> None:
+    main = FileUnit("main.py", "python", mounts=[
+        Mount("main.py", "app", "/ext", "some_package.routes", "router"),
+        Mount("main.py", "app", "/u", "users", "router"),
+    ])  # fmt: skip
+    one = FileUnit("x/users.py", "python", entrypoints=[_route("x/users.py", "/a")])
+    two = FileUnit("y/users.py", "python", entrypoints=[_route("y/users.py", "/b")])
+    assert sorted(e.path for e in resolve([main, one, two]).entrypoints) == ["/a", "/b"]
+
+
+def test_the_nearer_of_two_modules_is_the_one_mounted() -> None:
+    main = FileUnit("svc/main.py", "python",
+                    mounts=[Mount("svc/main.py", "app", "/u", "users", "router")])  # fmt: skip
+    near = FileUnit("svc/users.py", "python", entrypoints=[_route("svc/users.py", "/a")])
+    far = FileUnit("other/users.py", "python", entrypoints=[_route("other/users.py", "/b")])
+    assert sorted(e.path for e in resolve([main, near, far]).entrypoints) == ["/b", "/u/a"]

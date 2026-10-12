@@ -9,10 +9,12 @@ shape (`@app.get("/x")`, `@app.route("/x")`), with nothing but Python's `ast`; t
 when code intelligence did not run. Both normalize each framework's way of writing a path
 parameter to one wildcard.
 
-Still not seen: a route built from a runtime string, a Django regex route (`re_path`), and the
-prefix an `include()` or a mounted router adds (the pattern is then the app-relative part, which a
-full URL will not match). A route this misses just never gets a runtime confirmation -- a
-conservative miss, not a false claim.
+A route from the graph already carries the prefixes its router is mounted under (`include()`,
+`include_router`, `register_blueprint`, Express `use`; `core.codeintel.resolve.apply_mounts`). A
+Django regex route is read when it is a plain path with capture groups (`regex_route_pattern`).
+Still not seen: a route built from a runtime string, a regex with optional parts or alternation,
+and mounts the extractors do not follow (docs/adr/0035). A route this misses just never gets a
+runtime confirmation -- a conservative miss, not a false claim.
 """
 
 from __future__ import annotations
@@ -32,6 +34,10 @@ _PATH_PARAM = re.compile(r"\{[^/{}]+\}|<[^/<>]+>|:[A-Za-z_][\w]*\??|\[[^/\[\].]+
 _CATCH_ALL = re.compile(r"\[\[?\.\.\.[^/\]]+\]\]?|(?<=/)\*(?=/|$)")
 _GO_METHOD = re.compile(r"^(?:GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)\s+")
 _REGEX_ROUTE = re.compile(r"[\^$()?+|\\]")
+# A Django regex route's capture group, named or not, not itself optional or repeated.
+_REGEX_GROUP = re.compile(r"\((?:\?P<\w+>)?((?:[^()\\]|\\.)*)\)(?![?*+{])")
+_REGEX_ESCAPE = re.compile(r"\\([./\-_~])")
+_REGEX_LEFT = re.compile(r"[\^$()?+*|\\\[\]{}]")
 
 
 @dataclass(frozen=True)
@@ -52,6 +58,30 @@ def normalize_route_pattern(route: str) -> str:
     if not normalized.startswith("/"):
         normalized = "/" + normalized
     return normalized.rstrip("/") or "/"
+
+
+def regex_route_pattern(regex: str) -> str | None:
+    """A Django regex route as a pattern `route_matches` reads, when it is a plain path with
+    capture groups: r"^users/(?P<pk>[0-9]+)/$" -> "/users/*". A group that cannot hold a "/" is one
+    segment ("*"); one with a bare "." in it (".+", ".*") may be several ("**"). Anything else
+    left -- an optional part, an alternation, a character class outside a group -- is None: not
+    guessed at."""
+    body = regex.strip()
+    body = body[1:] if body.startswith("^") else body
+    body = body[:-1] if body.endswith("$") and not body.endswith("\\$") else body
+    body = body[:-2] if body.endswith("\\Z") else body
+
+    def group(m: re.Match[str]) -> str:
+        if m.group(1).startswith("?") or "|" in m.group(1):
+            return m.group(0)  # (?:...), a lookahead, an alternation: left, so refused below
+        inner = re.sub(r"\[[^\]]*\]", "", m.group(1))  # a class like [^/] says nothing of "."
+        return "\x01" if "." in inner.replace("\\.", "") else "\x00"
+
+    body = _REGEX_ESCAPE.sub(r"\1", _REGEX_GROUP.sub(group, body))
+    if _REGEX_LEFT.search(body):
+        return None
+    # Wildcards go in last: normalizing reads a lone "*" segment as Express's catch-all.
+    return normalize_route_pattern(body).replace("\x01", "**").replace("\x00", "*")
 
 
 def route_matches(pattern: str, concrete_path: str) -> bool:
@@ -118,7 +148,7 @@ def routes_from_graph(graph: CodeGraph) -> list[RouteHandler]:
     route is registered in urls.py and handled by the view it names: the graph keeps the
     registration as a small symbol whose one call is to that view, so the handler is that call's
     target (an unresolved view gives no handler: there is no location to match a SAST finding
-    against). Regex routes are skipped rather than guessed at."""
+    against). A regex route that is not a plain path is skipped rather than guessed at."""
     targets: dict[str, list[str]] = {}
     for edge in graph.edges:
         if edge.callee_id is not None:
@@ -128,13 +158,16 @@ def routes_from_graph(graph: CodeGraph) -> list[RouteHandler]:
         symbol = graph.symbols.get(entry.symbol_id)
         if symbol is None or not entry.path:
             continue
+        route = normalize_route_pattern(entry.path)
         if entry.framework == "django":
             if _REGEX_ROUTE.search(entry.path):
-                continue
+                regex = regex_route_pattern(entry.path)
+                if regex is None:
+                    continue
+                route = regex
             views = [graph.symbols[t] for t in targets.get(symbol.id, []) if t in graph.symbols]
             if not views:
                 continue
             symbol = views[0]
-        handlers.append(RouteHandler(normalize_route_pattern(entry.path), symbol.path,
-                                     symbol.start_line))  # fmt: skip
+        handlers.append(RouteHandler(route, symbol.path, symbol.start_line))
     return sorted(set(handlers), key=lambda h: (h.route, h.path, h.line))

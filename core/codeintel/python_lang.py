@@ -6,7 +6,14 @@ from __future__ import annotations
 
 import ast
 
-from core.codeintel.models import Entrypoint, FileUnit, Symbol, symbol_id
+from core.codeintel.models import (
+    Entrypoint,
+    FileUnit,
+    Mount,
+    Symbol,
+    join_route,
+    symbol_id,
+)
 
 _HTTP_METHODS = frozenset({"get", "post", "put", "delete", "patch", "options", "head"})
 
@@ -45,10 +52,11 @@ def _route_entrypoint(fn: ast.FunctionDef | ast.AsyncFunctionDef, sid: str) -> E
     whatever it's actually called, not filtered to a known auth allowlist here (that judgement is
     `core.hypotheses.facts`'s, kept out of extraction so the two stay independently testable)."""
     route_index: int | None = None
-    framework = method = path = ""
+    framework = method = path = router = ""
     for i, dec in enumerate(fn.decorator_list):
         if not (isinstance(dec, ast.Call) and isinstance(dec.func, ast.Attribute)):
             continue
+        router = dec.func.value.id if isinstance(dec.func.value, ast.Name) else ""
         verb = dec.func.attr.lower()
         p = _string_const(dec.args[0]) if dec.args else None
         if p is None:
@@ -72,7 +80,34 @@ def _route_entrypoint(fn: ast.FunctionDef | ast.AsyncFunctionDef, sid: str) -> E
         for i, dec in enumerate(fn.decorator_list)
         if i != route_index and (name := _decorator_name(dec))
     )
-    return Entrypoint(sid, framework, method, path, markers)
+    return Entrypoint(sid, framework, method, path, markers, router)
+
+
+def _package(path: str) -> list[str]:
+    """The dotted package a file is in, from its path: "app/api/main.py" -> ["app", "api"]."""
+    return path.split("/")[:-1]
+
+
+def _kw(call: ast.Call, name: str) -> str | None:
+    return next((_string_const(k.value) for k in call.keywords if k.arg == name), None)
+
+
+def _kw_name(call: ast.Call, name: str) -> str:
+    """The constant a keyword argument names, when it is not a literal: `prefix=API_PREFIX` or
+    `prefix=settings.API_V1_STR` -> the last name; "" otherwise."""
+    value = next((k.value for k in call.keywords if k.arg == name), None)
+    return _attr_chain_name(value) or "" if isinstance(value, (ast.Name, ast.Attribute)) else ""
+
+
+def _attr_parts(node: ast.expr) -> list[str] | None:
+    """`a.b.c` -> ["a", "b", "c"]; None for anything but names and attributes."""
+    parts: list[str] = []
+    while isinstance(node, ast.Attribute):
+        parts.append(node.attr)
+        node = node.value
+    if not isinstance(node, ast.Name):
+        return None
+    return [node.id, *reversed(parts)]
 
 
 class _Extractor(ast.NodeVisitor):
@@ -81,6 +116,87 @@ class _Extractor(ast.NodeVisitor):
         self.unit = FileUnit(path=path, language="python")
         self._scope: list[tuple[str, bool]] = []  # (name, is_class), outermost first
         self._callers: list[str] = []  # symbol ids of enclosing functions, for call edges
+        # A name this file imported -> (module, attribute or ""): `from shop import urls` binds
+        # "urls" to ("shop", "urls"); `import shop.urls as u` binds "u" to ("shop.urls", "").
+        self._imports: dict[str, tuple[str, str]] = {}
+
+    # --- imports and mounts (prefixes `resolve.apply_mounts` adds to routes) ----------------------
+
+    def _absolute(self, module: str | None, level: int) -> str:
+        if not level:
+            return module or ""
+        base = _package(self.path)
+        base = base[: len(base) - (level - 1)] if level > 1 else base
+        return ".".join([*base, *([module] if module else [])])
+
+    def visit_Import(self, node: ast.Import) -> None:  # noqa: N802
+        for alias in node.names:
+            if alias.asname:
+                self._imports[alias.asname] = (alias.name, "")
+            else:
+                head = alias.name.split(".")[0]
+                self._imports[head] = (head, "")
+
+    def visit_ImportFrom(self, node: ast.ImportFrom) -> None:  # noqa: N802
+        module = self._absolute(node.module, node.level)
+        for alias in node.names:
+            self._imports[alias.asname or alias.name] = (module, alias.name)
+
+    def _target(self, node: ast.expr, *, urls_module: bool = False) -> tuple[str, str] | None:
+        """What `include_router(...)`/`register_blueprint(...)` names, as (module, router):
+        `users.router` -> ("app.users", "router"), an imported `router` -> its module and name, a
+        router of this file -> ("", name). Django's `include(...)` names a whole urls module
+        (`urls_module`), by a dotted string or an imported module: (module, "urlpatterns")."""
+        if (dotted := _string_const(node)) is not None:
+            return (dotted, "urlpatterns") if urls_module else None
+        parts = _attr_parts(node)
+        if not parts or parts[0] not in self._imports:
+            return ("", parts[0]) if parts and len(parts) == 1 and not urls_module else None
+        module, attr = self._imports[parts[0]]
+        full = [p for p in (module, attr, *parts[1:]) if p]
+        if urls_module:
+            return ".".join(full), "urlpatterns"
+        return ".".join(full[:-1]), full[-1]
+
+    def _mount(self, node: ast.Call) -> None:
+        if not (isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name)):
+            return
+        how = node.func.attr
+        if how not in ("include_router", "register_blueprint") or not node.args:
+            return
+        target = self._target(node.args[0])
+        if target is None:
+            return
+        key = "prefix" if how == "include_router" else "url_prefix"
+        prefix, named = _kw(node, key), _kw_name(node, key)
+        replaces = how == "register_blueprint" and (prefix is not None or bool(named))
+        self.unit.mounts.append(Mount(self.path, node.func.value.id, prefix or "", *target,
+                                      replaces=replaces, prefix_name=named))  # fmt: skip
+
+    def _router_prefix(self, node: ast.Assign) -> None:
+        """`router = APIRouter(prefix="/u")`, `bp = Blueprint("u", __name__, url_prefix="/u")`."""
+        call = node.value
+        if not (isinstance(call, ast.Call) and len(node.targets) == 1):
+            return
+        target = node.targets[0]
+        kind = _attr_chain_name(call.func)
+        key = {"APIRouter": "prefix", "Blueprint": "url_prefix"}.get(kind or "")
+        if not key or not isinstance(target, ast.Name):
+            return
+        if prefix := _kw(call, key):
+            self.unit.prefixes[target.id] = prefix
+        elif named := _kw_name(call, key):
+            self.unit.prefix_names[target.id] = named
+
+    def _constant(self, target: ast.expr, value: ast.expr | None) -> None:
+        """`NAME = "..."` or `NAME: str = "..."` outside any function (a module or a class body)."""
+        if not self._callers and isinstance(target, ast.Name):
+            if (literal := _string_const(value)) is not None:
+                self.unit.constants.setdefault(target.id, literal)
+
+    def visit_AnnAssign(self, node: ast.AnnAssign) -> None:  # noqa: N802
+        self._constant(node.target, node.value)
+        self.generic_visit(node)
 
     def _qualified_name(self, name: str) -> str:
         return ".".join((*(n for n, _ in self._scope), name)) if self._scope else name
@@ -127,28 +243,51 @@ class _Extractor(ast.NodeVisitor):
             name = _attr_chain_name(node.func)
             if name:
                 self.unit.calls.append((self._callers[-1], name, node.lineno))
+        self._mount(node)
         self.generic_visit(node)
 
     def visit_Assign(self, node: ast.Assign) -> None:  # noqa: N802
-        self._django_urlpatterns(node)
+        if any(isinstance(t, ast.Name) and t.id == "urlpatterns" for t in node.targets):
+            self._django_urlpatterns(node.value)
+        self._router_prefix(node)
+        if len(node.targets) == 1:
+            self._constant(node.targets[0], node.value)
         self.generic_visit(node)
 
-    def _django_urlpatterns(self, node: ast.Assign) -> None:
+    def visit_AugAssign(self, node: ast.AugAssign) -> None:  # noqa: N802
+        if isinstance(node.target, ast.Name) and node.target.id == "urlpatterns":
+            self._django_urlpatterns(node.value)  # `urlpatterns += [...]`
+        self.generic_visit(node)
+
+    def _django_urlpatterns(self, value: ast.expr, prefix: str = "") -> None:
         """`urlpatterns = [path("route/", view), re_path(r"^route/$", view), ...]` -- Django names
         no HTTP verb in urls.py itself (a view decides which methods it accepts), so `method` is
-        left blank rather than guessed."""
-        if not any(isinstance(t, ast.Name) and t.id == "urlpatterns" for t in node.targets):
+        left blank rather than guessed. `path("api/", include("shop.urls"))` mounts another urls
+        module under "api/"; `include([...])`, a list in place, is read here, under its prefix."""
+        if not isinstance(value, ast.List):
             return
-        if not isinstance(node.value, ast.List):
-            return
-        for elt in node.value.elts:
+        for elt in value.elts:
             if not (isinstance(elt, ast.Call) and isinstance(elt.func, ast.Name)):
                 continue
             if elt.func.id not in ("path", "re_path", "url") or not elt.args:
                 continue
             route = _string_const(elt.args[0])
-            view_name = _attr_chain_name(elt.args[1]) if len(elt.args) > 1 else None
-            if route is None or not view_name:
+            if route is None:
+                continue
+            arg = elt.args[1] if len(elt.args) > 1 else None
+            if isinstance(arg, ast.Call) and _attr_chain_name(arg.func) == "include" and arg.args:
+                included = arg.args[0]
+                if isinstance(included, ast.Tuple) and included.elts:  # include((patterns, "app"))
+                    included = included.elts[0]
+                if isinstance(included, ast.List):
+                    self._django_urlpatterns(included, join_route(prefix, route))
+                elif (target := self._target(included, urls_module=True)) is not None:
+                    self.unit.mounts.append(Mount(self.path, "urlpatterns",
+                                                  join_route(prefix, route), *target))  # fmt: skip
+                continue
+            route = join_route(prefix, route)
+            view_name = _attr_chain_name(arg) if arg is not None else None
+            if not view_name:
                 continue
             # No symbol to attach this route to yet (the view is defined elsewhere, possibly in
             # another file) -- represent the registration itself as a tiny synthetic function
@@ -166,7 +305,7 @@ class _Extractor(ast.NodeVisitor):
                     elt.lineno, elt.lineno, "python",
                 )  # fmt: skip
             )
-            self.unit.entrypoints.append(Entrypoint(sid, "django", "", route))
+            self.unit.entrypoints.append(Entrypoint(sid, "django", "", route, (), "urlpatterns"))
             self.unit.calls.append((sid, view_name, elt.lineno))
 
 
