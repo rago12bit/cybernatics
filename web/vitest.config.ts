@@ -5,6 +5,10 @@ export default defineConfig({
   resolve: { alias: { "@": fileURLToPath(new URL(".", import.meta.url)) } },
   test: {
     include: ["tests/**/*.test.{ts,tsx}"],
+    setupFiles: ["tests/setup.ts"],
+    // After-hooks in the order they were defined, so setup.ts unmounts every root before a test
+    // file's own afterEach empties document.body (reversed, React then removed portals already gone).
+    sequence: { hooks: "list" },
     // GitHub Actions' hosted runners cap the actual cgroup CPU quota far below what Node's
     // os.cpus() reports for the underlying host (confirmed on this exact runner: a Docker
     // invocation in the same CI run hit "range of CPUs is from 0.01 to 2.00, as there are only
