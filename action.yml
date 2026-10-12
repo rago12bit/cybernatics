@@ -209,6 +209,8 @@ runs:
 
     - name: Comment on the pull request
       if: ${{ always() && github.event_name == 'pull_request' && inputs.comment == 'true' && steps.compare.outputs.sarif-file != '' }}
+      # Forks and Dependabot get a read-only token: the comment is lost, the gate below still decides.
+      continue-on-error: true
       shell: bash
       env:
         GITHUB_TOKEN: ${{ inputs.github-token }}
