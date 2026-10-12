@@ -79,6 +79,17 @@ session and exactly why.
 - **No Atheris run has ever executed**, on this machine or in CI. The fuzz harness and nightly
   workflow are written and reviewed, never fired. The empty `tests/fuzz_regressions/` directory
   reflects that honestly -- it is not evidence that fuzzing would find nothing.
+
+  *Amended 2026-10-12:* the nightly workflow's steps have now run, every matrix entry, in a
+  `python:3.12` linux/amd64 container (Docker Desktop's emulation on Apple Silicon, standing in for
+  `ubuntu-latest`): `pip install -e ".[dev]" atheris`, `scripts/seed-fuzz-corpus.sh`, then each of
+  the 9 adapters and 18 report parsers for the workflow's 120 seconds. The first run found the
+  report-parser job broken: `fuzz_ingest_parser.py` imported `tests.fuzz.mappings`, which is not
+  importable when the file runs as a script, so all 18 entries stopped before fuzzing anything.
+  Fixed; then all 27 ran their full time with no crash, timeout (10 s) or memory cap (2 GB) hit,
+  from 2,809 inputs (burp, the slowest parser) to 441,616 (the sample analysis). Under emulation an
+  input runs slower than on a real runner, so this is less fuzzing than CI would do in the same
+  time. It has still not run on GitHub itself.
 - **`.github/workflows/scorecard.yml` has never run.** The OpenSSF Scorecard score this week claims
   to improve towards 8+ is not yet measured; the README badge will not resolve to a real number
   until the workflow fires for the first time (on the next push to `main`, or the next Saturday

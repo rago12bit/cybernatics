@@ -14,9 +14,8 @@ the whole scan job for that tool is exactly the robustness gap this harness exis
 Requires `atheris`, which needs a real Clang+libFuzzer build and does not install on macOS (Apple's
 shipped Clang deliberately omits libFuzzer -- confirmed by trying, not assumed: `pip install
 atheris` fails at build time with "Failed to find libFuzzer; you may be building using Apple
-Clang"). This harness has only ever run in CI (.github/workflows/fuzz.yml, Ubuntu, where atheris
-ships a prebuilt wheel), never executed on this project's own macOS dev machine -- see
-docs/v2-week48-verification.md for exactly what that does and doesn't prove.
+Clang"). It runs in CI (.github/workflows/fuzz.yml, Ubuntu, where atheris ships a prebuilt wheel)
+or a Linux container, never on macOS -- see docs/v2-week48-verification.md for what has run.
 
 Any crash atheris finds is written by libFuzzer as `crash-<hash>` inside `corpus-dir`. Copying that
 file into `tests/fuzz_regressions/<adapter-name>/` makes `test_fuzz_regressions.py` replay it

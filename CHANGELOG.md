@@ -42,6 +42,10 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   second ([benchmarks/README.md](benchmarks/README.md)).
 
 ### Fixed
+- **The nightly fuzzing of uploaded-report parsers would have stopped before fuzzing anything.**
+  Its harness imported `tests.fuzz.mappings`, which a script run cannot import, so all 18 parser
+  jobs failed at start. Found by running the workflow's steps, every matrix entry, in a Linux
+  container; fixed, all 27 jobs (9 adapters, 18 parsers) then ran their full 120 s with no crash.
 - **The DAST egress proxy checks every plain HTTP request, not only a connection's first.** After
   the first request it became a raw pipe: a client reusing the connection had its next request reach
   the target unrewritten (Juice Shop answered with its app page, so Nuclei found 17 instead of 19)

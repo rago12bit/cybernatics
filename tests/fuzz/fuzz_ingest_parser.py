@@ -21,8 +21,14 @@ from __future__ import annotations
 
 import io
 import sys
+from pathlib import Path
 
 import atheris
+
+# Run as a script, Python puts this file's directory on the path, not the repository's: without
+# this, `tests.fuzz.mappings` below is not importable and every run stops before fuzzing anything
+# (found the first time the nightly job's steps were run, in a Linux container).
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 with atheris.instrument_imports():
     from core.imports.parsers import PARSERS, get_parser, run_parser_on_bytes
