@@ -131,7 +131,7 @@ jobs:
           docker run --rm -v "$RUNNER_TEMP/zap:/zap/wrk:rw" --network host
           ghcr.io/zaproxy/zaproxy:stable zap-baseline.py
           -t http://localhost:3000 -r zap-report.html -J zap-report.json -I
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: zap-baseline-report
@@ -169,7 +169,7 @@ jobs:
         run: npm run e2e:csp
         env:
           E2E_PYTHON: python
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: failure()
         with:
           name: playwright-report
@@ -274,7 +274,7 @@ jobs:
       - run: pip install -e ".[llm,otel]"
       - run: python scripts/gen-licenses.py --check
       - run: python scripts/gen-licenses.py --out "$RUNNER_TEMP/THIRD_PARTY_LICENSES.md"
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: third-party-licenses
           path: ${{ runner.temp }}/THIRD_PARTY_LICENSES.md
