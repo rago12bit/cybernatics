@@ -16,5 +16,9 @@ export default defineConfig({
     // Vitest 4+ option -- the older `poolOptions.forks.maxForks` was removed and is silently
     // a no-op on this project's Vitest 5.)
     maxWorkers: process.env.CI ? 2 : undefined,
+    // The suite takes about a minute in CI, but a runner can be several times slower: one took
+    // 8 minutes (Oct 2026) and axe audits and multi-step screen tests ran past the 5 s default,
+    // failing code that passed everywhere else. The local default stays 5 s so slow tests show.
+    testTimeout: process.env.CI ? 30_000 : undefined,
   },
 });
