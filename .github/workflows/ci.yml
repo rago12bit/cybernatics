@@ -1,7 +1,15 @@
 name: CI
 on:
+  # Pushes to main only: a pull request's branch is tested by its pull_request run, and running
+  # both for every Dependabot PR doubled the jobs queued for the account's limited runners.
   push:
+    branches: [main]
   pull_request:
+
+# A PR's newer commit supersedes the run on its older one; main keeps every run.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 # Least-privilege default (Week 48 task 4, plan §22.3, OpenSSF Scorecard's Token-Permissions check):
 # no job here pushes commits, creates releases, or comments on anything -- read-only is sufficient
