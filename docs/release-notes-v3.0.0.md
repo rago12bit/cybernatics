@@ -6,7 +6,7 @@ Released 2026-10-08, with 2.5.0 the same day.
 > whose study needs five security leads or pen testers; it has not run
 > ([ux-study.md](ux-study.md)), and both tags were cut at the owner's decision without it. The tag
 > also starts the release workflow, which publishes signed images; no run of it has been observed
-> from here. Every change since 2.4.0 is in [CHANGELOG.md](../CHANGELOG.md), under 2.5.0 and 3.0.0.
+> from here. Every change since 2.4.0 is in [CHANGELOG.md](https://github.com/Rag2102/cyberimp/blob/main/CHANGELOG.md), under 2.5.0 and 3.0.0.
 
 Version 2 found vulnerabilities, ranked them and helped fix them. Version 3 (Weeks 53–78) manages
 them, alongside the tools a team already uses. The write-up is [blog-v3.0.0.md](blog-v3.0.0.md); the

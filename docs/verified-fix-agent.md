@@ -39,7 +39,7 @@ a human reviews the patch and the verification record
 Implemented as a Temporal workflow (`core/fixagent/workflow.py`) — the first one in this codebase;
 everything else uses Celery. It survives a worker restart (validated live: killed the worker
 mid-run, a fresh worker resumed it correctly) and waits for the human decision as a signal, with no
-timeout counted against it while it waits (see [Limits](#limits)).
+timeout counted against it while it waits (see [Limits](#limits-adr-0015)).
 
 ## Turning it on
 

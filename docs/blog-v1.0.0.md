@@ -30,7 +30,7 @@ because the whole point is to point untrusted third-party scanners at code you d
 - **SBOMs (CycloneDX 1.6) and signed attestations** (in-toto provenance, cosign).
 - **Observability**: structured logs, OpenTelemetry tracing, Prometheus metrics.
 
-All of it is in the [CHANGELOG](../CHANGELOG.md); the architecture is in [docs/adr](adr/).
+All of it is in the [CHANGELOG](https://github.com/Rag2102/cyberimp/blob/main/CHANGELOG.md); the architecture is in [docs/adr](https://github.com/Rag2102/cyberimp/tree/main/docs/adr).
 
 ## What I actually measured
 

@@ -75,12 +75,10 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -e ".[docs]"
-      # Not --strict: a few of the many pre-Week-51 docs under docs/ (ASVS self-assessment, the
-      # v1.0.0 blog post, the threat-model draft) link to repo-root files like ../SECURITY.md that
-      # don't exist inside mkdocs's own docs_dir sandbox -- pre-existing and not part of the site's
-      # nav (mkdocs.yml). This still fails on anything that actually breaks the build: a bad plugin
-      # config, a missing nav target, a template error.
-      - run: mkdocs build
+      # --strict: a link from docs/ to a file outside it (../SECURITY.md, ../benchmarks/...) works on
+      # GitHub but 404s on the published site, so such links are absolute GitHub URLs and any new one
+      # fails here, as does a missing anchor.
+      - run: mkdocs build --strict
       - run: python -m pytest tests/unit/test_api_docs_freshness.py --no-cov
 
   zap-baseline:

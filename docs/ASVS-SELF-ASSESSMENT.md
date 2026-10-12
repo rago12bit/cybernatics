@@ -20,9 +20,9 @@ fixed as part of it, not just written down: see the "Fixed during this review" n
 | Control | Status | Evidence |
 |---|---|---|
 | A documented, current threat model exists | Met | [docs/THREAT-MODEL.md](THREAT-MODEL.md) — STRIDE-based, per-threat status, last reviewed 2026-09-25 |
-| Security decisions are recorded with rationale, not just implemented silently | Met | 33 ADRs in [docs/adr/](adr/), each with a Status line; e.g. ADR-002 (Docker isolation), ADR-0013 (tenancy/RLS), ADR-0019 (audit log), ADR-0032/0033 (encryption, mTLS) |
+| Security decisions are recorded with rationale, not just implemented silently | Met | 33 ADRs in [docs/adr/](https://github.com/Rag2102/cyberimp/tree/main/docs/adr), each with a Status line; e.g. ADR-002 (Docker isolation), ADR-0013 (tenancy/RLS), ADR-0019 (audit log), ADR-0032/0033 (encryption, mTLS) |
 | High-value components (auth, tenancy, sandboxing) are componentized, not scattered | Met | `core/tokens.py` (auth), `core/tenancy.py` (isolation), `core/sandbox/` (sandboxing) are each single-purpose modules other code depends on, not reimplemented per call site |
-| Known limitations are disclosed, not silently assumed away | Met | [SECURITY.md](../SECURITY.md)'s "Known limits" section; `core/tenancy.py:29-35`'s own docstring on the shared-token org-claiming limitation |
+| Known limitations are disclosed, not silently assumed away | Met | [SECURITY.md](https://github.com/Rag2102/cyberimp/blob/main/SECURITY.md)'s "Known limits" section; `core/tenancy.py:29-35`'s own docstring on the shared-token org-claiming limitation |
 
 ## V2 — Authentication
 
@@ -144,7 +144,7 @@ against via a stolen cookie.
 | Uploaded archives are protected against zip-slip / path traversal | Met | `core/ingest.py:28-35` — `_safe_dest` rejects absolute paths, null bytes, and traversal via `.resolve()` + parent-containment check |
 | Uploaded archives are protected against decompression bombs | Met | `core/ingest.py:38-46` — compressed size, uncompressed size, file count, and compression-ratio limits, checked against both metadata *and* actual streamed bytes |
 | Symlinks and special files inside an archive are rejected | Met | `core/ingest.py:73-74` (zip), `93-94` (tar) |
-| Pathologically deep directory structures inside an archive are rejected | **Fixed during this review** | Previously: [SECURITY.md](../SECURITY.md) claimed "depth limits" but no such check existed in `core/ingest.py` — an inaccurate claim, found and corrected by actually checking the code rather than trusting the doc. Fixed: `Limits.max_depth` (default 64 path components), enforced in `_safe_dest`, tested (`tests/unit/test_ingest.py`'s new depth-limit tests). SECURITY.md's claim is now accurate rather than aspirational |
+| Pathologically deep directory structures inside an archive are rejected | **Fixed during this review** | Previously: [SECURITY.md](https://github.com/Rag2102/cyberimp/blob/main/SECURITY.md) claimed "depth limits" but no such check existed in `core/ingest.py` — an inaccurate claim, found and corrected by actually checking the code rather than trusting the doc. Fixed: `Limits.max_depth` (default 64 path components), enforced in `_safe_dest`, tested (`tests/unit/test_ingest.py`'s new depth-limit tests). SECURITY.md's claim is now accurate rather than aspirational |
 
 ## V13 — API and Web Service
 

@@ -5,7 +5,7 @@ for this project -- explicitly a starting point for a person's own review, never
 Design reasoning in [ADR-0030](adr/0030-attack-paths-threat-model-and-red-team.md); the honest
 verification record is in [v2-week45-verification.md](v2-week45-verification.md).
 
-Not to be confused with [docs/THREAT-MODEL.md](../THREAT-MODEL.md), Bulwark's own security threat
+Not to be confused with [docs/THREAT-MODEL.md](THREAT-MODEL.md), Bulwark's own security threat
 model for itself as a tool running untrusted code -- a naming coincidence, unrelated infrastructure.
 
 ## How it's built -- no model call

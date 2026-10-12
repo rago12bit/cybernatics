@@ -42,6 +42,10 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   second ([benchmarks/README.md](benchmarks/README.md)).
 
 ### Fixed
+- **The documentation site has no broken links.** About twenty links from docs/ pointed at files
+  outside it (SECURITY.md, CHANGELOG.md, benchmarks, code): fine on GitHub, 404 on the published
+  site. They are GitHub links now, and CI builds the site with `--strict`, so a new one fails. Two
+  were broken on GitHub too (a threat-model link one directory too high, a missing anchor).
 - **The nightly fuzzing of uploaded-report parsers would have stopped before fuzzing anything.**
   Its harness imported `tests.fuzz.mappings`, which a script run cannot import, so all 18 parser
   jobs failed at start. Found by running the workflow's steps, every matrix entry, in a Linux

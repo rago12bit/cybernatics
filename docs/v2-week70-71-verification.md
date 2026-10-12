@@ -17,7 +17,7 @@ and 2026-10-07. The design and the measurements are in
    - API: `/v2/metrics`, `/v2/metrics/{id}`, and `/v2/metrics/issues` (the Issues behind a number).
 2. **One million Occurrences.**
    - Every widget is under 300 ms at p95 on Postgres under RLS. The slowest metric is 99 ms and
-     the slowest request 124 ms ([results](../benchmarks/metrics/one-million-occurrences.json)).
+     the slowest request 124 ms ([results](https://github.com/Rag2102/cyberimp/blob/main/benchmarks/metrics/one-million-occurrences.json)).
 3. **Dashboard builder** (`/app/dashboards`, migration 0043).
    - A catalogue of 12 widgets, each with its own filters.
    - Drag and resize with react-grid-layout 2.2.4.
