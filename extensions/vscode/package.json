@@ -109,7 +109,7 @@
     "package": "vsce package --no-dependencies --out bulwark-vscode.vsix"
   },
   "devDependencies": {
-    "@types/node": "^22.0.0",
+    "@types/node": "^22.20.5",
     "@types/vscode": "~1.90.0",
     "@vscode/vsce": "^4.0.0",
     "typescript": "^7.0.2",
