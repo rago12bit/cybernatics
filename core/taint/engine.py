@@ -31,7 +31,7 @@ from core.codeintel.models import CodeGraph, Entrypoint
 from core.codeintel.resolve import build_name_index, resolve_one
 from core.taint import go_flow, js_flow, python_flow
 from core.taint.catalog import Catalog
-from core.taint.models import SOURCE, FunctionSummary, TaintFinding, TaintHop, TaintSet
+from core.taint.models import SOURCE, FunctionSummary, SinkHit, TaintFinding, TaintHop, TaintSet
 
 MAX_WORKLIST_PASSES = 50
 
@@ -61,6 +61,24 @@ def _resolver(
     return lambda name: resolve_one(path, name, by_file_and_name, by_name)
 
 
+def _distinct_sinks(sinks: list[SinkHit]) -> tuple[SinkHit, ...]:
+    """One hit per distinct sink (same tags reaching the same call), keeping the shortest chain.
+    Keeping every chain made a summary grow with the number of call *paths* -- and, around a call
+    cycle, by one more hop on every worklist pass, so it never settled: scanning this project's own
+    code grew past 20 GB. find_taint_paths reports one finding per sink anyway."""
+    best: dict[tuple[TaintSet, str, int, str, str], SinkHit] = {}
+    for hit in sinks:
+        key = (hit.params, hit.path, hit.line, hit.sink_name, hit.category)
+        kept = best.get(key)
+        if kept is None or _chain_order(hit) < _chain_order(kept):
+            best[key] = hit
+    return tuple(best.values())
+
+
+def _chain_order(hit: SinkHit) -> tuple[int, tuple[tuple[str, str, int], ...]]:
+    return len(hit.hops), tuple((h.symbol_id, h.path, h.line) for h in hit.hops)
+
+
 def compute_summaries(
     graph: CodeGraph,
     functions: dict[str, ParsedFunction],
@@ -85,7 +103,7 @@ def compute_summaries(
             summaries,
             catalog,
         )
-        return FunctionSummary(symbol_id, tuple(sinks), returns, tuple(params))
+        return FunctionSummary(symbol_id, _distinct_sinks(sinks), returns, tuple(params))
 
     pending = set(functions)
     passes = 0
