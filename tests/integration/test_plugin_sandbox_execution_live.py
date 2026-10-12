@@ -31,6 +31,7 @@ from core.plugins.registry import resolve_adapters
 from core.plugins.signing import PluginSignatureError
 from core.scan import ADAPTERS, execute_tool
 from core.tenancy import DEFAULT_ORG_ID
+from core.workspace import prepare_workspace
 
 
 def _docker_available() -> bool:
@@ -72,12 +73,15 @@ pytestmark = pytest.mark.skipif(
 def test_a_third_party_packages_adapter_runs_through_the_real_sandbox(tmp_path: Path) -> None:
     from bulwark_plugin_demo.adapter import DemoAdapter
 
-    (tmp_path / "app.py").write_text(
+    src = tmp_path / "src"
+    src.mkdir()
+    (src / "app.py").write_text(
         'import subprocess\npassword = "hunter2"\nsubprocess.call("ls", shell=True)\n'
     )
-    outcome = execute_tool(
-        "demo-bandit-plugin", tmp_path, adapters={"demo-bandit-plugin": DemoAdapter()}
-    )
+    # Through a workspace, as a real scan is: on Linux pytest's tmp_path is 0700 and owned by the
+    # runner, so a scanner running as uid 10001 would see an empty directory and find nothing.
+    ws = prepare_workspace(src, tmp_path / "ws")
+    outcome = execute_tool("demo-bandit-plugin", ws, adapters={"demo-bandit-plugin": DemoAdapter()})
     assert outcome.status == "ok"
     titles = {f.title for f in outcome.findings}
     assert any("hardcoded password" in t.lower() for t in titles)
