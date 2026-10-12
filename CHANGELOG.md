@@ -13,6 +13,15 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   reported, 124 findings (113 Issues); running app 47 alerts, 38 findings (38 Issues). Its caveats
   now say why findings and Issues differ, and what an active campaign keeps from Nuclei. Fly's health
   check is `/`, since `/about` redirects there.
+- **The project lives at github.com/rago12bit/cybernatics**, where its documentation site is
+  published; its own links point there.
+- **ruff, black and mypy are pinned exactly** (0.17.0, 26.10.1, 2.4.0). CI installed the newest of
+  each, so a release of one could fail main with no code change: black 26.10 reformatted 13 files,
+  and mypy with SQLAlchemy 2.1 found 28 new Optional types. Dependabot proposes linter bumps in a PR
+  of their own.
+- **Dependencies:** actions/checkout 7, setup-node 7, setup-python 7, upload-artifact 7.0.2,
+  codeql-action 4.38.3; Next.js 16.4, Playwright 1.64, axe-core 4.14, Radix and Vite updates; the
+  VS Code extension's `@types/node`. Dependabot's commits are Conventional Commits.
 
 ### Added
 - **Firecracker for the fix agent's test runs** (`core/sandbox/firecracker.py`, plan M10). With
@@ -47,6 +56,8 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   Issue events at 50 to 1,000 a second through the real dispatcher on Postgres under RLS. Rule
   evaluation is about 20 ms at p95 at every rate; one dispatcher keeps up to about 880 events a
   second ([benchmarks/README.md](benchmarks/README.md)).
+- **A pull request's scan summary says why each scanner did not complete**, with its status and
+  error, instead of only naming it.
 
 ### Fixed
 - **The documentation site has no broken links.** About twenty links from docs/ pointed at files
@@ -128,6 +139,38 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   or field a universal-mapper mapping reads, the next import found no findings and reimport read
   that as "everything was fixed". A mapped import that yields no findings now closes nothing and
   says so; a known format's empty report still closes, since it does say nothing was found.
+- **Taint analysis no longer grows without bound.** A function's summary kept every call chain to
+  every sink, and around a call cycle each pass added one more hop, so it never settled: scanning
+  this project's own code passed 20 GB of memory. It now keeps the shortest chain per distinct sink
+  (one finding per sink was already what it reported): 219 MB and 6 s for the same scan.
+- **A `pip install` (not editable) ships every data file the code reads**: the taint catalogs,
+  compliance frameworks, typosquat list, starter gate policy and API log config were missing, so the
+  GitHub Action logged a traceback and skipped taint analysis on every run. A test fails on any data
+  file left out.
+- **On Linux, Semgrep and Gitleaks ran on nothing when the result cache was on** (the Action's
+  default). Cache misses were copied to a private temporary directory the scanner's own user could
+  not read: Semgrep failed, Gitleaks found no config, and the PR gate discarded its baseline. Docker
+  Desktop on macOS ignores the mode, so it never showed locally.
+- **A cached file's findings are reported at the path of the file that matched.** Entries are keyed
+  by content, so a copy, a move or an identical file got the findings with the first file's path:
+  duplicates that changed other findings' fingerprints (a one-line PR showed 353 "new" findings). A
+  moved lockfile is now a different repo-wide entry.
+- **The GitHub Action's gate works on a breach and on read-only tokens.** `bulwark ci compare`
+  exiting 1 (threshold breached) ended the step before its result was recorded, so the upload,
+  comment and enforce steps never ran; a PR comment refused by a read-only token (forks, Dependabot)
+  failed a passing scan; and Bulwark built in the scanned checkout, so a repository scanning itself
+  saw a second copy of its code. A run with no base commit says so, instead of "the base branch could
+  not be scanned cleanly".
+- **Release images are signed.** v3.0.0's image and provenance were published but its signing step
+  failed: only the build job had logged in to the registry cosign pushes the signature to.
+- **The DAST proxy shuts down on Python 3.12.1+**, where waiting for the server also waits for a
+  scanner's keep-alive relay, so shutdown hung until its timeout.
+- **Two buttons' accessible names contain their visible text** (WCAG 2.5.3): the command palette's
+  "⌘K" and the findings table's "Export JSON", found by axe-core 4.14.
+- **Type-checks under SQLAlchemy 2.1 as well as 2.0.**
+
+### Security
+- **sharp 0.35.5 and katex 0.19.0** in the web app, for two new advisories.
 
 ## [3.0.0] - 2026-10-08
 
