@@ -19,7 +19,7 @@ from core.precommit.secrets_scan import scan_secrets
         ("PCS003", "token = 'ghp_" + "a" * 36 + "'"),
         ("PCS004", "token = 'github_pat_" + "b" * 82 + "'"),
         ("PCS005", "token = 'ghs_" + "c" * 36 + "'"),
-        ("PCS006", "SLACK_TOKEN = 'xoxb-1234567890-1234567890123-abcdefghijklmnop'"),
+        ("PCS006", "SLACK_TOKEN = 'xoxb-" + "1234567890-1234567890123-abcdefghijklmnop'"),
         (
             "PCS007",
             "WEBHOOK = 'https://hooks.slack.com/services/T00000000/B00000000/"

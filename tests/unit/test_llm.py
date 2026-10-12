@@ -118,7 +118,7 @@ def _regions(user: str, nonce: str) -> list[tuple[int, int]]:
 
 
 @pytest.mark.parametrize("secret", [
-    "AKIAIOSFODNN7EXAMPLE", "ghp_abcdefghijklmnopqrstuvwxyz0123456789AB", "xoxb-123456789012-abcdefghij",
+    "AKIAIOSFODNN7EXAMPLE", "ghp_abcdefghijklmnopqrstuvwxyz0123456789AB", "xoxb-" + "123456789012-abcdefghij",
     "sk-ant-api03-abcdefghijklmnopqrstuvwxyz", "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NSJ9.abcdefghijk",
     "-----BEGIN RSA PRIVATE KEY-----\nMIIabc\n-----END RSA PRIVATE KEY-----",
 ])  # fmt: skip
