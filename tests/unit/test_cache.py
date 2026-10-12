@@ -91,3 +91,14 @@ def test_hash_files_is_order_independent(tmp_path: Path) -> None:
     b.write_text("3")
     assert hash_files([a, b]) != before  # a content change is a different combined hash
     assert hash_files([a, b]) != hash_files([a])  # dropping a file changes it too
+
+
+def test_a_moved_lockfile_is_a_different_repo_wide_key_under_a_root(tmp_path: Path) -> None:
+    """Repo-wide results carry the lockfile's path; keyed by bare name, moving web/package-lock.json
+    to app/ served the old findings at web/."""
+    for d in ("web", "app"):
+        (tmp_path / d).mkdir()
+        (tmp_path / d / "package-lock.json").write_text("{}")
+    web, app = tmp_path / "web" / "package-lock.json", tmp_path / "app" / "package-lock.json"
+    assert hash_files([web]) == hash_files([app])  # by name alone, as before
+    assert hash_files([web], tmp_path) != hash_files([app], tmp_path)

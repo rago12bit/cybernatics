@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 import logging
 import os
 import shutil
@@ -308,6 +309,28 @@ def _subset_dir(target: Path, files: list[Path]) -> Iterator[Path]:
         yield tmp_path
 
 
+def _moved_to(findings: list[Finding], rel: str) -> list[Finding]:
+    """A file-local entry is keyed by content alone, and the same bytes can sit at another path: a
+    copy, a renamed or moved file, every empty __init__.py. Its findings carry the path of the file
+    that produced them; serve them at the file that matched now. Before this, a second copy of a
+    file reported its findings again at the first one's path -- duplicates that regrouped that
+    file's real findings and changed their fingerprints, so a PR gate saw them as new."""
+    out: list[Finding] = []
+    for f in findings:
+        old = f.location.path
+        if old == rel:
+            out.append(f)
+            continue
+        out.append(
+            dataclasses.replace(
+                f,
+                id=f.id.replace(old, rel),
+                location=dataclasses.replace(f.location, path=rel),
+            )
+        )
+    return out
+
+
 def _cached_file_local(
     name: str, target: Path, ctx: RepoContext, cache: ResultCache
 ) -> ToolOutcome:
@@ -320,7 +343,7 @@ def _cached_file_local(
         if cached is None:
             misses.append(f)
         else:
-            hit_findings.extend(cached)
+            hit_findings.extend(_moved_to(cached, f.relative_to(target).as_posix()))
     if not misses:
         return ToolOutcome(name, "ok", hit_findings, 0, 0.0)
     with _subset_dir(target, misses) as subset:
@@ -345,7 +368,9 @@ def _cached_repo_wide(name: str, target: Path, ctx: RepoContext, cache: ResultCa
     files = _repo_wide_files(name, target, ctx)
     if not files:  # nothing to key on (shouldn't happen: applies_to() already gated this tool in)
         return execute_tool(name, target, ctx)
-    key = CacheKey(name, _tool_version(name), ADAPTERS[name].ruleset_id(ctx), hash_files(files))
+    key = CacheKey(
+        name, _tool_version(name), ADAPTERS[name].ruleset_id(ctx), hash_files(files, target)
+    )
     cached = cache.get(key)
     if cached is not None:
         return ToolOutcome(name, "ok", cached, 0, 0.0)

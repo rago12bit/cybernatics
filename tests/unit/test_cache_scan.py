@@ -174,3 +174,27 @@ def test_a_cache_miss_subset_is_readable_by_the_scanners_own_user(repo: Path) ->
         assert (subset / "pkg").stat().st_mode & 0o777 == 0o755
         assert (subset / "pkg" / "c.py").stat().st_mode & 0o777 == 0o644
         assert (subset / "a.py").stat().st_mode & 0o777 == 0o644
+
+
+def test_a_cached_file_copied_or_moved_elsewhere_reports_at_its_own_path(
+    repo: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The cache is keyed by content, so a copy of a cached file is a hit. Its findings used to keep
+    the first file's path: the copy's findings landed on the original a second time (in CI, a
+    build/lib copy of the package made a one-line PR look like 353 new findings)."""
+
+    def fake_execute(name: str, target: Path, ctx: object = None) -> ToolOutcome:
+        files = sorted(p.relative_to(target).as_posix() for p in target.rglob("*.py"))
+        return ToolOutcome(name, "ok", [fake_finding(name, f) for f in files])
+
+    monkeypatch.setattr(scan_mod, "execute_tool", fake_execute)
+    cache = ResultCache(tmp_path / "cache")
+    scan(repo, ["bandit"], cache=cache)  # caches a.py's content
+
+    (repo / "build" / "lib").mkdir(parents=True)
+    (repo / "build" / "lib" / "a.py").write_text((repo / "a.py").read_text())  # a hit, elsewhere
+    found = scan(repo, ["bandit"], cache=cache).findings
+    paths = sorted(f.location.path for f in found)
+    assert paths == ["a.py", "b.py", "build/lib/a.py"]  # once each, each at its own place
+    copy = next(f for f in found if f.location.path == "build/lib/a.py")
+    assert copy.id == "bandit:build/lib/a.py"

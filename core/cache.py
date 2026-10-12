@@ -54,11 +54,16 @@ def hash_file(path: Path) -> str:
     return h.hexdigest()
 
 
-def hash_files(paths: list[Path]) -> str:
-    """Combined identity of several files (a repo-wide tool's inputs). Sorted by name, not
-    encounter order, so an unrelated reordering of the same files never manufactures a cache
-    miss."""
-    parts = sorted(f"{p.name}:{hash_file(p)}" for p in paths if p.is_file())
+def hash_files(paths: list[Path], root: Path | None = None) -> str:
+    """Combined identity of several files (a repo-wide tool's inputs). Sorted, not in encounter
+    order, so an unrelated reordering of the same files never manufactures a cache miss. With
+    `root`, each file counts by its path under it rather than its bare name: the cached findings
+    carry those paths, so a lockfile moved to another directory must not be served the old ones."""
+
+    def label(p: Path) -> str:
+        return p.relative_to(root).as_posix() if root is not None else p.name
+
+    parts = sorted(f"{label(p)}:{hash_file(p)}" for p in paths if p.is_file())
     return hashlib.sha256("|".join(parts).encode("utf-8")).hexdigest()
 
 
