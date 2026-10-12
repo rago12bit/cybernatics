@@ -190,8 +190,10 @@ runs:
         # SBOM_FILE (plan §20.5) is only set when `sbom: true` -- it joins each finding's real
         # package license onto it, so a --policy checking issue.license works with no extra input.
         [ -n "$SBOM_FILE" ] && args+=(--sbom "$SBOM_FILE")
-        bulwark "${args[@]}"
-        rc=$?
+        # The step's shell is `bash -e`, so a bare call returning 1 (threshold breached) would end
+        # the script here, before the gate-exit below that the later steps act on.
+        rc=0
+        bulwark "${args[@]}" || rc=$?
         echo "gate-exit=$rc" >> "$GITHUB_OUTPUT"
         echo "sarif-file=$RUNNER_TEMP/bulwark.sarif" >> "$GITHUB_OUTPUT"
         # 1 means "threshold or policy breached" (both are folded into the same exit code by
