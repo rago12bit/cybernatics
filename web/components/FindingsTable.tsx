@@ -148,7 +148,7 @@ export function FindingsTable({ scan, version, fetchFindings = getFindings, guid
             <h2 id="findings-h" className="h1">{page ? page.total : "…"} <span className="muted">{filtered ? "match" : "to review"}</span></h2>
             <div className="head-actions">
               {filtered && <button type="button" className="btn sm" onClick={reset}>Reset filters</button>}
-              <button type="button" className="btn sm" onClick={exportAll} disabled={exporting || !page || page.total === 0} aria-label={`Export ${page?.total ?? 0} findings as JSON`}>{exporting ? "Exporting…" : "Export JSON"}</button>
+              <button type="button" className="btn sm" onClick={exportAll} disabled={exporting || !page || page.total === 0} aria-label={exporting ? undefined : `Export JSON, ${page?.total ?? 0} findings`}>{exporting ? "Exporting…" : "Export JSON"}</button>
             </div>
           </div>
         </div>

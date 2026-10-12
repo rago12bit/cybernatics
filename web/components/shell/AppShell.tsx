@@ -68,7 +68,10 @@ export function AppShell({ crumbs, title, eyebrow, children }: { crumbs: Crumb[]
           </nav>
           <div className="ds-shell-tools">
             <ProjectSwitcher assets={assets} onNavigate={(id) => router.push(`/app/projects/${id}`)} />
-            <Button onClick={() => setPaletteOpen(true)} aria-label="Open command palette">
+            {/* Named by its hidden text, not aria-label: axe 4.14 requires an aria-label to contain the
+                visible text, and "⌘K" is a shortcut hint, not a name. */}
+            <Button onClick={() => setPaletteOpen(true)} aria-keyshortcuts="Meta+K Control+K">
+              <span className="sr-only">Open command palette</span>
               <span aria-hidden="true">⌘K</span>
             </Button>
             <Button onClick={() => setShortcutsOpen(true)} aria-label="Show keyboard shortcuts">?</Button>
