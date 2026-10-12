@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 570" role="img" aria-labelledby="ti de">
+<title id="ti">Bulwark architecture</title>
+<desc id="de">A client submits a Git URL or archive to the FastAPI service, which queues a job in Redis and records it in Postgres. A Celery worker runs five scanners (Bandit, Semgrep, Gitleaks, Trivy, OSV-Scanner) in isolated containers and stores raw output in an S3 store. Adapters normalise results into a canonical finding, correlation merges duplicates, CWE and OWASP mapping and secret redaction follow, and findings are stored in Postgres.</desc>
+<defs><marker id="h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#7fd6c2"/></marker></defs>
+<style>
+text{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.bg{fill:#131310} .n{fill:#1c1c18;stroke:#4a4b42;stroke-width:1.2} .g{fill:#17302b;stroke:#7fd6c2;stroke-width:1.4}
+.t{fill:#e8e8df;font-size:14px} .s{fill:#9b9c8f;font-size:11px} .l{fill:#9b9c8f;font-size:11px;letter-spacing:.08em}
+.z{fill:none;stroke:#4a4b42;stroke-dasharray:5 4} .z2{fill:#161613;stroke:#7fd6c2;stroke-dasharray:5 4}
+.a{stroke:#7fd6c2;stroke-width:1.5;fill:none}
+</style>
+<rect class="bg" width="1200" height="570"/>
+<text x="20" y="34" class="l" text-anchor="start">BULWARK ARCHITECTURE</text>
+<rect x="240" y="60" width="920" height="440" rx="6" class="z"/>
+<text x="258" y="84" class="l" text-anchor="start">YOUR MACHINE  ·  docker compose</text>
+<rect x="560" y="110" width="250" height="370" rx="6" class="z2"/>
+<text x="576" y="134" class="l" text-anchor="start">SANDBOXES  ·  one per scanner</text>
+<rect x="20" y="240" width="190" height="80" rx="4" class="g"/>
+<text x="115.0" y="276.0" class="t" text-anchor="middle">Web UI · CLI · API</text>
+<text x="115.0" y="293.0" class="s" text-anchor="middle">Git URL or archive</text>
+<rect x="270" y="240" width="120" height="80" rx="4" class="n"/>
+<text x="330.0" y="276.0" class="t" text-anchor="middle">FastAPI</text>
+<text x="330.0" y="293.0" class="s" text-anchor="middle">auth · validation</text>
+<rect x="430" y="150" width="100" height="52" rx="4" class="n"/>
+<text x="480.0" y="172.0" class="t" text-anchor="middle">Redis</text>
+<text x="480.0" y="189.0" class="s" text-anchor="middle">job queue</text>
+<rect x="430" y="240" width="100" height="80" rx="4" class="n"/>
+<text x="480.0" y="276.0" class="t" text-anchor="middle">Worker</text>
+<text x="480.0" y="293.0" class="s" text-anchor="middle">Celery</text>
+<rect x="430" y="380" width="100" height="52" rx="4" class="n"/>
+<text x="480.0" y="402.0" class="t" text-anchor="middle">S3 store</text>
+<text x="480.0" y="419.0" class="s" text-anchor="middle">raw output</text>
+<rect x="270" y="380" width="120" height="52" rx="4" class="n"/>
+<text x="330.0" y="402.0" class="t" text-anchor="middle">Postgres</text>
+<text x="330.0" y="419.0" class="s" text-anchor="middle">findings</text>
+<rect x="585" y="158" width="200" height="48" rx="4" class="n"/>
+<text x="685.0" y="187.0" class="t" text-anchor="middle">Bandit</text>
+<rect x="585" y="220" width="200" height="48" rx="4" class="n"/>
+<text x="685.0" y="249.0" class="t" text-anchor="middle">Semgrep CE</text>
+<rect x="585" y="282" width="200" height="48" rx="4" class="n"/>
+<text x="685.0" y="311.0" class="t" text-anchor="middle">Gitleaks</text>
+<rect x="585" y="344" width="200" height="48" rx="4" class="n"/>
+<text x="685.0" y="373.0" class="t" text-anchor="middle">Trivy</text>
+<rect x="585" y="406" width="200" height="48" rx="4" class="n"/>
+<text x="685.0" y="435.0" class="t" text-anchor="middle">OSV-Scanner</text>
+<rect x="860" y="158" width="270" height="48" rx="4" class="n"/>
+<text x="995.0" y="187.0" class="t" text-anchor="middle">Adapters → canonical Finding</text>
+<rect x="860" y="232" width="270" height="48" rx="4" class="n"/>
+<text x="995.0" y="261.0" class="t" text-anchor="middle">Correlation + dedup (ADR-004)</text>
+<rect x="860" y="306" width="270" height="48" rx="4" class="n"/>
+<text x="995.0" y="335.0" class="t" text-anchor="middle">CWE / OWASP mapping</text>
+<rect x="860" y="380" width="270" height="48" rx="4" class="n"/>
+<text x="995.0" y="409.0" class="t" text-anchor="middle">Secret redaction</text>
+<text x="995" y="458" class="l" text-anchor="middle">then stored in Postgres, served by the API</text>
+<path d="M210 280 L270 280" class="a" marker-end="url(#h)"/>
+<path d="M390 262 L410 262 L410 176 L430 176" class="a" marker-end="url(#h)"/>
+<path d="M480 202 L480 240" class="a" marker-end="url(#h)"/>
+<path d="M330 320 L330 380" class="a" marker-end="url(#h)"/>
+<path d="M480 320 L480 380" class="a" marker-end="url(#h)"/>
+<path d="M530 280 L585 282" class="a" marker-end="url(#h)"/>
+<path d="M785 182 L835 182" class="a"/>
+<path d="M785 244 L835 244" class="a"/>
+<path d="M785 306 L835 306" class="a"/>
+<path d="M785 368 L835 368" class="a"/>
+<path d="M785 430 L835 430" class="a"/>
+<path d="M835 182 L835 406" class="a"/>
+<path d="M835 182 L860 182" class="a" marker-end="url(#h)"/>
+<path d="M995 206 L995 232" class="a" marker-end="url(#h)"/>
+<path d="M995 280 L995 306" class="a" marker-end="url(#h)"/>
+<path d="M995 354 L995 380" class="a" marker-end="url(#h)"/>
+<text x="20" y="540" class="l" text-anchor="start">Scanners run with no network, a read-only filesystem, all capabilities dropped and the target mounted read-only.</text>
+</svg>

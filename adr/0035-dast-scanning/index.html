@@ -1,0 +1,1142 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Unified security scanning -- one scan, one deduplicated list of findings.">
+      
+      
+      
+        <link rel="canonical" href="https://rag2102.github.io/cyberimp/adr/0035-dast-scanning/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>ADR-0035: DAST -- ownership verification, scope-enforcing egress, safe scanning tiers, SAST/DAST correlation - Bulwark</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#adr-0035-dast-ownership-verification-scope-enforcing-egress-safe-scanning-tiers-sastdast-correlation" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Bulwark" class="md-header__button md-logo" aria-label="Bulwark" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Bulwark
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              ADR-0035: DAST -- ownership verification, scope-enforcing egress, safe scanning tiers, SAST/DAST correlation
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Rag2102/cyberimp" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Rag2102/cyberimp
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Bulwark" class="md-nav__button md-logo" aria-label="Bulwark" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Bulwark
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Rag2102/cyberimp" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Rag2102/cyberimp
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quickstart
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../risk-score/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Risk scoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../taxonomy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Taxonomy (CWE / OWASP)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reachability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reachability
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../vex/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    VEX
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../compliance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compliance and evidence packs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Metrics and dashboards
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reports/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reports
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../issue-search/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Finding Issues
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../identity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sign-in, people and access
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../plugins/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Writing a plugin
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../policy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Policy cookbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ingest-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Importing reports
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decisions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decisions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decisions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ownership-verification-is-a-live-gate-never-a-cached-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ownership verification is a live gate, never a cached status
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scope-enforcement-is-two-independent-layers-one-is-now-in-the-loop-the-other-is-still-a-disclosed-gap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scope enforcement is two independent layers: one is now in the loop, the other is still a disclosed gap
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#safe-by-default-scanning-tiers-passive-always-active-is-opt-in-and-rate-limited" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Safe-by-default scanning tiers: passive always, active is opt-in and rate-limited
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sastdast-correlation-needs-an-explicit-link-between-a-live-site-and-its-source-because-nothing-else-provides-one" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SAST/DAST correlation needs an explicit link between a live site and its source, because nothing else provides one
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#amendment-2026-10-08-nucleis-egress-templates-and-timeouts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Amendment (2026-10-08): Nuclei's egress, templates and timeouts
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-is-not-done" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What is NOT done
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/Rag2102/cyberimp/edit/main/docs/adr/0035-dast-scanning.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="adr-0035-dast-ownership-verification-scope-enforcing-egress-safe-scanning-tiers-sastdast-correlation">ADR-0035: DAST -- ownership verification, scope-enforcing egress, safe scanning tiers, SAST/DAST correlation<a class="headerlink" href="#adr-0035-dast-ownership-verification-scope-enforcing-egress-safe-scanning-tiers-sastdast-correlation" title="Permanent link">&para;</a></h1>
+<p>Status: Implemented (2026-10-01), Week 49 (plan §22.4); egress-proxy wiring completed in a Week 49b
+follow-up (2026-10-01), a standalone task inserted before tagging <code>v1.5.0</code> specifically because the
+plan's own M10 milestone claims "scope enforced at the network layer" and that wasn't true yet.</p>
+<h2 id="context">Context<a class="headerlink" href="#context" title="Permanent link">&para;</a></h2>
+<p>Everything Bulwark has scanned through Week 48 is something the user handed it directly -- a git
+URL, an uploaded archive. A web target is different: it's someone's live, internet-reachable site,
+and nothing about possessing a domain name proves the person asking Bulwark to scan it actually
+controls it. Scanning it without permission is not a scanning feature, it's an attack. Week 49 is
+the whole DAST feature, built around that constraint from the start rather than bolted on after.</p>
+<h2 id="decisions">Decisions<a class="headerlink" href="#decisions" title="Permanent link">&para;</a></h2>
+<h3 id="ownership-verification-is-a-live-gate-never-a-cached-status">Ownership verification is a live gate, never a cached status<a class="headerlink" href="#ownership-verification-is-a-live-gate-never-a-cached-status" title="Permanent link">&para;</a></h3>
+<p><code>core/dast/ownership.py</code> supports two standard proof-of-control methods -- a DNS TXT record at
+<code>_bulwark-challenge.&lt;domain&gt;</code>, or a fixed file at <code>/.well-known/bulwark-verification.txt</code> -- the
+same mechanisms CDNs and cert issuers use for the same reason. The critical design choice: a
+"verified" status stored in <code>asset_verifications</code> is never trusted on its own. Every place that
+gates on it -- <code>POST /assets/{id}/campaigns</code>, the CLI's <code>campaign-start</code>, and the worker's own
+<code>core.dast.pipeline.run_dast_campaign_job</code> -- re-runs the real DNS/HTTP check at that exact moment.
+A domain can be reassigned, a DNS record removed, five minutes after it last passed; a campaign
+starting on stale trust is the exact failure mode this is designed to prevent. Verified live: real
+DNS/HTTPS lookups against <code>example.com</code> (confirmed failing, since no such record exists there), and
+the full browser → Next.js → FastAPI → Postgres → DNS path in a real browser session.</p>
+<h3 id="scope-enforcement-is-two-independent-layers-one-is-now-in-the-loop-the-other-is-still-a-disclosed-gap">Scope enforcement is two independent layers: one is now in the loop, the other is still a disclosed gap<a class="headerlink" href="#scope-enforcement-is-two-independent-layers-one-is-now-in-the-loop-the-other-is-still-a-disclosed-gap" title="Permanent link">&para;</a></h3>
+<p><code>core/dast/proxy.py</code> is a real allow-list forward proxy (CONNECT tunneling for HTTPS, plain HTTP
+relaying) -- exact-host-match only, reporting every refused attempt as structured JSON.
+<code>core/dast/egress.py</code> denies all direct 80/443 in a runner's network namespace except to that proxy,
+via the same nftables-sidecar mechanism <code>core.fixagent.egress</code> already uses for Week 46's
+fix-verification sandbox. Week 49 built and verified both independently but wired neither into an
+actual campaign; Week 49b (below) wires the proxy in. The nftables half remains exactly as it was:
+unit-tested only, never loaded into a real namespace, Linux-only.</p>
+<p><strong>Week 49b: the proxy is now in the campaign runner's actual path.</strong> <code>core.dast.pipeline.
+run_dast_campaign_job</code> starts a <code>core.dast.proxy.BackgroundProxy</code> -- a real <code>AllowListProxy</code> on a
+background thread, scoped to exactly the campaign's one verified host -- before invoking either
+adapter, and tears it down after, on every exit path including a tool error (<code>core/dast/proxy.py</code>'s
+<code>BackgroundProxy</code> is a context manager for exactly this). <code>core.dast.adapters.zap.run_zap_baseline</code>
+and <code>nuclei.run_nuclei</code> both gained a <code>proxy: ProxyConfig | None</code> parameter: ZAP is pointed at it via
+<code>-z "-config network.connection.httpProxy.enabled=true -config network.connection.httpProxy.host=...
+-config network.connection.httpProxy.port=..."</code>, and Nuclei via its native <code>-proxy</code> flag; both
+containers get <code>--add-host host.docker.internal:host-gateway</code> so the hostname resolves identically
+on macOS Docker Desktop and real Linux (Docker Engine &gt;= 20.10).</p>
+<p>Two real findings came out of making this actually work, not just compile:</p>
+<ul>
+<li><strong>ZAP's config keys had moved.</strong> The legacy <code>network.connectionParam.proxyChain*</code> keys (what most
+  ZAP documentation and forum answers still reference) are silently ignored by the Network add-on
+  this image ships; a real <code>zap-baseline.py</code> run with those keys showed zero traffic reaching a real
+  running proxy. Inspecting the add-on's own compiled <code>ConnectionOptions.class</code> inside the shipped
+  <code>network-beta-*.zap</code> file found the keys it actually reads: <code>network.connection.httpProxy.
+  {enabled,host,port}</code>. A second live run with the corrected keys showed the real scan's CONNECT to
+  the target succeed through the proxy, and ZAP's own background "check for updates"/telemetry calls
+  (<code>news.zaproxy.org</code>, <code>cfu.zaproxy.org</code>, <code>tel.zaproxy.org</code>) correctly refused with 403 -- proof the
+  enforcement is real, not just a passthrough, and that the scan completes and reports findings
+  normally regardless.</li>
+<li><strong>Nuclei's default templates legitimately contact third parties that are not the target.</strong> A real
+  run (before the proxy was scoped down) showed <code>dns</code>-type templates querying whatever DNS resolver
+  the container uses, and an <code>http</code>-type template (<code>rdap-whois</code>) calling <code>rdap.verisign.com</code> to look
+  up the target's WHOIS record -- by design, not a bug, and not covered by the <code>dos</code>/<code>fuzz</code>/
+  <code>intrusive</code>/<code>bruteforce</code> tag exclusions Week 49 already had. A single-host allow-list can't permit
+  this without widening the scope past the one host ownership verification actually covers, so
+  <code>core.dast.adapters.nuclei.ALLOWED_PROTOCOL_TYPES = ("http",)</code> now restricts every campaign run to
+  <code>-pt http</code> unconditionally, the same kind of non-negotiable restriction as <code>EXCLUDED_TAGS</code>. This is
+  arguably a correction to Week 49's own curation, caught only once egress was actually constrained
+  enough to expose it.</li>
+</ul>
+<p>Both fixes are proven by <code>tests/integration/test_dast_pipeline_egress_proxy_live.py</code> (new): the real
+<code>run_dast_campaign_job</code>, against real Postgres, running a real <code>zap-baseline.py</code> through a real
+<code>BackgroundProxy</code> against a real local HTTP target, asserting the campaign completes with real
+findings <em>and</em> that the blocked call-home attempts land as both a <code>tool_runs</code> row (<code>"egress-proxy"</code>)
+and an audit-log entry (<code>dast.campaign.egress_blocked</code>) -- Task 4 of this follow-up, so a blocked
+attempt during a real campaign is visible to an operator instead of only appearing in a log line
+nobody reads.</p>
+<p><strong>What is still NOT done.</strong> This wiring is cooperative, not a kernel-level backstop: it works because
+ZAP and Nuclei were configured to use the proxy and chose to honor that configuration. Nothing at the
+network-namespace level yet stops a scanner container that ignored its proxy settings entirely (a
+compromised scanner, a future adapter that doesn't take a <code>proxy</code> argument, a template with its own
+raw-socket logic) from reaching the internet directly -- that backstop is exactly what <code>core.dast.
+egress</code>'s nftables ruleset is for, and it has still never been loaded into a real network namespace,
+on any machine, for this feature. Linux-only, the same disclosed boundary as Week 46's own egress
+work; closing it needs a real Linux host or CI runner, not this (macOS) dev machine.</p>
+<h3 id="safe-by-default-scanning-tiers-passive-always-active-is-opt-in-and-rate-limited">Safe-by-default scanning tiers: passive always, active is opt-in and rate-limited<a class="headerlink" href="#safe-by-default-scanning-tiers-passive-always-active-is-opt-in-and-rate-limited" title="Permanent link">&para;</a></h3>
+<p>A DAST campaign is a <code>Scan</code> row with <code>source_type="web"</code> and a new <code>dast_mode</code> column
+("passive"/"active") -- no new table, because <code>scans</code>/<code>tool_runs</code>/<code>findings</code> already hold everything
+a campaign's result is. Passive mode runs ZAP baseline only -- it spiders and observes, never sends
+an attack payload. Active mode adds curated Nuclei, with <code>dos</code>/<code>fuzz</code>/<code>intrusive</code>/<code>bruteforce</code>
+template tags excluded unconditionally in the adapter itself (<code>core.dast.adapters.nuclei.
+EXCLUDED_TAGS</code>), not as a caller-controlled option -- "active" authorizes probing more thoroughly,
+not authorizing degrading the target. Active campaigns are limited to one per asset per 24h
+(<code>core.dast.campaign.check_active_scan_rate_limit</code>), checked both at campaign creation (API/CLI) and
+again by the worker itself before running (defense in depth against two requests racing past the
+first check).</p>
+<p>Live-verified extensively, with three real bugs found and fixed: ZAP's rule 90004 reporting three
+alerts under one shared <code>pluginid</code> (fixed the finding-id derivation); Nuclei reporting the same
+template against the same URL more than once (fixed by hashing the whole raw record); and the
+worker's own rate-limit re-check comparing timestamps in a way that would have made every active
+campaign instantly rate-limit itself under SQLite's naive-datetime behavior (fixed by excluding the
+current scan by id instead of by timestamp equality). The full pipeline -- live ownership re-check,
+rate limiting, real ZAP+Nuclei execution, correlation, persistence, issue sync, audit logging -- was
+run end to end against real Postgres with RLS.</p>
+<h3 id="sastdast-correlation-needs-an-explicit-link-between-a-live-site-and-its-source-because-nothing-else-provides-one">SAST/DAST correlation needs an explicit link between a live site and its source, because nothing else provides one<a class="headerlink" href="#sastdast-correlation-needs-an-explicit-link-between-a-live-site-and-its-source-because-nothing-else-provides-one" title="Permanent link">&para;</a></h3>
+<p>A <code>web</code> Asset (what a DAST campaign runs against) and the git/archive Asset for the same
+application's source (what a SAST scan runs against) are different rows with different identities --
+nothing in the existing schema connects "this live site" to "this repository." <code>assets.
+linked_source_asset_id</code> is that explicit, optional, same-org-enforced link. Without it, correlation
+has nothing to check against and does nothing, silently -- a missing confirmation is correct; a wrong
+one is not. Week 49 left the link API and CLI only; the "Add web target" screen offers it since
+2026-10-12, listing the organization's git and archive projects.</p>
+<p>The "code intelligence" matching a DAST finding's route to source is a small <code>ast</code>-based extractor
+(<code>core/dast/routes.py</code>) recognizing the FastAPI/Flask decorator shape (<code>@app.get("/path")</code>,
+<code>@app.route(...)</code>) -- verified live against this project's own 1700+ line <code>api/main.py</code> (44 real
+routes found, including every route this week's own work added). It runs as part of every ordinary
+SAST scan (<code>core.pipeline._extract_route_map</code>, best-effort, never fails a scan) and the route map is
+persisted on the <code>Scan</code> row, since nothing else keeps a scan's source around afterward.
+<code>core/dast/correlate.py</code> matches a DAST finding's route (via the route map) and CWE (via
+<code>core.correlation.engine.cwe_family</code>, the same grouping the ordinary cross-tool correlator already
+uses) against existing SAST findings near that route's handler, marking the matching <code>Issue</code>
+<code>confirmed_at_runtime</code>. Verified live end to end: a real bandit scan of a real vulnerable Flask app
+(CWE-78 command injection) produced a real route map in real Postgres, and a DAST finding on the
+same route/CWE correctly confirmed the right Issue.</p>
+<h3 id="amendment-2026-10-08-nucleis-egress-templates-and-timeouts">Amendment (2026-10-08): Nuclei's egress, templates and timeouts<a class="headerlink" href="#amendment-2026-10-08-nucleis-egress-templates-and-timeouts" title="Permanent link">&para;</a></h3>
+<p>Measured against OWASP Juice Shop v17.3.0 with Nuclei v3.11.1:</p>
+<ul>
+<li><strong>Interactsh went around the proxy.</strong> By default Nuclei registers with a public interactsh server
+  and plants its URLs in payloads; a run held an open connection to <code>oast.me</code> (178.128.209.14)
+  straight from the container. That is a third party, and the target is asked to call it. Every run
+  now passes <code>-ni</code>; the OAST templates are excluded with it, so blind out-of-band issues are not found.</li>
+<li><strong>Templates came from GitHub on every run, also around the proxy.</strong> The upstream image ships none
+  (about 86 MB, 14,036 files, fetched each time). <code>bulwark/nuclei:3.11.1</code> (docker/nuclei) bakes in
+  templates v10.5.0 and runs with <code>-duc</code>; it lists 11,278 HTTP templates with networking off.</li>
+<li>
+<p><strong>A timeout lost everything.</strong> <code>run_nuclei</code> now reads output as it comes; a run that hits its
+  deadline raises <code>NucleiTimeout</code> carrying the findings reported so far, the campaign keeps them and
+  ends <code>partial</code> (so it closes nothing), and the container is killed by name -- stopping the <code>docker</code>
+  client alone left it running. ZAP's adapter kills its container the same way.</p>
+</li>
+<li>
+<p><strong>Nuclei stalled through the proxy (fixed 2026-10-12).</strong> Through <code>BackgroundProxy</code> it stopped
+  making progress after about five minutes (17 findings, then 75-81 tunnels open with no traffic for
+  over 30 minutes), while the same scan without the proxy finished in 111 s. Every stuck goroutine
+  was in rawhttp 0.1.91's CONNECT dialer (raw/unsafe templates; the rest of Nuclei uses Go's own
+  client). That code reads the reply's status line and then peeks 5 bytes, to skip a repeated status
+  line some devices send. The proxy replied <code>HTTP/1.1 200 Connection Established\r\n\r\n</code>, which
+  leaves only 2. The target sends nothing until the client speaks, so the peek waited forever with
+  no deadline. It was not Docker Desktop: the same stall happened with the proxy in a container on a
+  plain Docker network (16 findings, 98%, 28 minutes). The reply now carries a <code>Proxy-Agent</code>
+  header. Through the proxy, Nuclei finished against Juice Shop in 101 s and 108 s (two runs), 17
+  findings each; its attempts to reach <code>www.rdap.net</code> and <code>login.microsoftonline.com</code> were refused,
+  as they should be. Direct, it found 19.</p>
+</li>
+<li><strong>The two missing findings were the proxy's, not the refusals (fixed 2026-10-12).</strong> Diffed
+  against a direct run on the same target, the missing two were <code>robots-txt-endpoint</code> and
+  <code>security-txt</code>: plain GETs to the allowed host. The plain-HTTP relay rewrote only a connection's
+  first request and then piped raw, so a request reusing the connection (keep-alive) reached the
+  target still in absolute form (<code>GET http://host/robots.txt</code>), which Juice Shop answered with its
+  app page -- and it was never checked against the allow-list, and the client's Host header always
+  went through untouched. The TCP connection was pinned to the allowed host, but a shared front end
+  routes by Host header. Now one request per plain connection: origin form, Host set to the allowed
+  target, <code>Connection: close</code> both ways, so the next request comes on a new connection and is checked.
+  Through the proxy: 19 findings, the same 19 as direct, in 105 s; the proxy now also refuses
+  requests naming <code>oast.me</code>, <code>interact.sh</code>, <code>localhost</code> and random hosts that host-header and SSRF
+  templates send, which the raw pipe used to carry.</li>
+</ul>
+<h2 id="what-is-not-done">What is NOT done<a class="headerlink" href="#what-is-not-done" title="Permanent link">&para;</a></h2>
+<ul>
+<li>The egress proxy is now wired into the campaign runner (Week 49b), but only at the application
+  layer -- a scanner's own cooperation, not a network-namespace-level guarantee. The nftables policy
+  that would make bypassing it a dropped packet rather than a policy violation has never been loaded
+  into a real network namespace on any machine; Linux-only, the same disclosed boundary as Week 46's
+  <code>core.fixagent.egress</code>.</li>
+<li>A web asset's link to its source project (<code>linked_source_asset_id</code>) is set when the site is
+  registered, or later on its verification page, by <code>PUT /assets/{id}/source</code> or by
+  <code>bulwark asset link-source</code> (since 2026-10-12), which keep its verification; each change is an
+  audit entry. The source must be a git or archive project of the same organization, not a site.</li>
+<li>Route extraction (since 2026-10-12) reads the HTTP entrypoints code intelligence finds for
+  FastAPI, Flask, Django (the view a urls.py entry names), Express, Next.js and Go's net/http, and
+  falls back to the FastAPI/Flask decorator shape when code analysis did not run. A route carries
+  the prefixes its router is mounted under, across files and chained (Django <code>include()</code>, also of a
+  list in place; FastAPI <code>include_router</code> and <code>APIRouter(prefix=)</code>; Flask <code>register_blueprint</code> and
+  <code>Blueprint(url_prefix=)</code>; Express <code>use(path, router)</code> with <code>require</code> or <code>import</code>; a prefix
+  written as a constant, when exactly one value is found by that name), and a Django regex route is
+  read when it is a plain path with capture groups. Still invisible: a route built
+  from a runtime string, a regex route with optional parts or alternation, a mount whose router is
+  passed through a variable or function the extractor does not follow, Go's <code>StripPrefix</code> and
+  router libraries' <code>Mount</code>, and Next.js's <code>basePath</code>. Such a route is matched by the part written
+  where it is registered, so a full URL misses it. A conservative miss, never a false match.</li>
+<li>Nuclei's own request concurrency could not reach a target through <code>host.docker.internal</code> on this
+  Docker-Desktop-for-Mac machine -- reproduced directly, a host-networking limitation, not an adapter
+  bug (<code>tests/integration/test_dast_adapters_live.py</code>'s own docstring has the detail).</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.top", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

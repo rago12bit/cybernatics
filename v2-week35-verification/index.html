@@ -1,0 +1,1113 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Unified security scanning -- one scan, one deduplicated list of findings.">
+      
+      
+      
+        <link rel="canonical" href="https://rag2102.github.io/cyberimp/v2-week35-verification/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Week 35 verification — onboarding, states, accessibility, validation (plan §28.2, §30.3, §31) - Bulwark</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#week-35-verification-onboarding-states-accessibility-validation-plan-282-303-31" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Bulwark" class="md-header__button md-logo" aria-label="Bulwark" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Bulwark
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Week 35 verification — onboarding, states, accessibility, validation (plan §28.2, §30.3, §31)
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Rag2102/cyberimp" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Rag2102/cyberimp
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Bulwark" class="md-nav__button md-logo" aria-label="Bulwark" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Bulwark
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Rag2102/cyberimp" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Rag2102/cyberimp
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quickstart
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../risk-score/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Risk scoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../taxonomy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Taxonomy (CWE / OWASP)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reachability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reachability
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../vex/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    VEX
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../compliance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compliance and evidence packs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Metrics and dashboards
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reports/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reports
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../issue-search/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Finding Issues
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../identity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sign-in, people and access
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../plugins/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Writing a plugin
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../policy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Policy cookbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ingest-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Importing reports
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#live-scan-screen-282" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Live scan screen (§28.2)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#state-copy-audit-303" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        State copy audit (§30.3)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#accessibility-pass" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Accessibility pass
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#playwright-end-to-end-tests-visual-regression-31" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Playwright end-to-end tests + visual regression (§31)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#follow-up-usability-study-deferred" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Follow-up usability study — deferred
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verification
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/Rag2102/cyberimp/edit/main/docs/v2-week35-verification.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="week-35-verification-onboarding-states-accessibility-validation-plan-282-303-31">Week 35 verification — onboarding, states, accessibility, validation (plan §28.2, §30.3, §31)<a class="headerlink" href="#week-35-verification-onboarding-states-accessibility-validation-plan-282-303-31" title="Permanent link">&para;</a></h1>
+<p>Honest record of what was built, run, and clicked through — for Week 35: the live scan screen,
+every empty/partial/error/loading state's copy, an accessibility pass, and Playwright end-to-end
+tests with visual regression for journeys J1 and J3.</p>
+<h2 id="live-scan-screen-282">Live scan screen (§28.2)<a class="headerlink" href="#live-scan-screen-282" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>A real elapsed-time header</strong> (<code>components/ElapsedTime.tsx</code>) while a scan is queued or running,
+  hydration-safe like <code>LocalTime</code>.</li>
+<li><strong>A real, honestly-scoped "progress so far" line</strong>: <code>N of M scanners reported in, R raw findings
+  so far</code>, using the live <code>tool_status[tool].findings</code> counts that already stream over the
+  WebSocket/polling path.</li>
+<li><strong>What this deliberately does <em>not</em> claim</strong>: the plan's own wireframe shows "2 critical issues
+  found so far. You can start reviewing now. [Review]" while a scan is still running. Checked
+  against the real backend and confirmed this isn't honestly buildable in one week without a much
+  larger, riskier change: <code>core/pipeline.py</code> correlates and persists every <code>Finding</code>/<code>Issue</code> row
+  in <strong>one atomic step after every tool finishes</strong> (<code>_run_scan_job</code>'s <code>correlate()</code> → <code>finalize()</code>
+  → <code>add_findings()</code>), because cross-tool deduplication needs to see every tool's output at once to
+  decide what's a duplicate — exactly the class of correctness problem Week 34's correlation-identity
+  fix was about. Persisting per-tool findings incrementally and re-correlating live is real, valuable
+  future work, not something to rush right after that fix. The progress line is explicit that its
+  count is "raw" and not yet deduplicated, so it doesn't overclaim what's live.</li>
+<li><strong>Named, actionable failure copy</strong>: a failed/timed-out scanner is now named directly ("trivy timed
+  out, so its results may be incomplete") with a link to start a new scan — replacing a generic
+  "some scanners failed or timed out" message. "Retry" in the wireframe is deliberately <strong>not</strong> a
+  single-tool re-run: the backend has no such endpoint, and <code>ScanView</code> doesn't expose a reusable
+  source URL/reference for uploads. "Start a new scan" is the same action stated honestly, not a
+  fabricated one-click retry.</li>
+<li><strong>"No findings" now names how many scanners actually ran</strong> ("5 scanners found no issues"),
+  instead of a bare "No findings." — still not the wireframe's coverage-gap sentence ("Terraform
+  files weren't scanned…"), which needs real gap detection this codebase doesn't have yet (Week 33's
+  own verification doc already noted this honestly).</li>
+</ul>
+<h2 id="state-copy-audit-303">State copy audit (§30.3)<a class="headerlink" href="#state-copy-audit-303" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Loading states are real skeletons now, not spinners on a blank page</strong>: <code>ProjectsList</code>,
+  <code>ProjectOverview</code>, <code>IssueDetail</code>, and <code>ScanPage</code> all showed bare "Loading…" text before this week;
+  all four now render skeleton rows shaped like their final layout, reusing the existing <code>.sk</code>
+  shimmer primitives from <code>app/globals.css</code> (already used elsewhere — <code>FindingGuidance</code>,
+  <code>RecentScans</code>, <code>TokenGate</code>, <code>app/loading.tsx</code>).</li>
+<li><strong>"No projects yet"</strong> copy tightened toward the plan's own wording ("Run your first scan to see
+  it here. It takes about two minutes.") — not the literal "Connect a repository… [Connect GitHub]"
+  text, since there's no GitHub-App-connect UI to link to yet (no per-user GitHub sign-in exists;
+  same honest gap earlier weeks' verification docs already recorded).</li>
+<li><strong>Git-clone errors now lead with a plain-word summary</strong>, not a raw git stderr string
+  (<code>core/gitfetch.py</code>'s new <code>_friendly_clone_error()</code>): "Couldn't find this repository. Check the
+  URL is correct." / "Couldn't clone this repository. Bulwark can only scan public repositories
+  right now — make sure this one is public." The raw detail stays attached in parentheses, so
+  nothing is hidden, just led with what happened and what to do next (§30.3's own stated principle).
+  Two new backend tests reproduce both cases directly.</li>
+<li><strong>AI-unavailable copy</strong>: already real before this week (<code>FindingGuidance.tsx</code>) — off entirely
+  ("AI suggestions are off on this server…"), a degraded/failed call shown with its reason, and a
+  rate-limit hit shown with "Reference guidance above still applies." The plan's example is a
+  monthly <em>budget</em>; this codebase has a real per-minute/per-day rate limiter
+  (<code>core/llm/limits.py</code>) instead of billing/budget tracking, so that's the honest equivalent
+  actually implemented, not a gap this week introduced or fixed.</li>
+</ul>
+<h2 id="accessibility-pass">Accessibility pass<a class="headerlink" href="#accessibility-pass" title="Permanent link">&para;</a></h2>
+<p><strong>axe-core was already wired into <code>npm test</code></strong> (<code>tests/a11y.test.tsx</code>, <code>axe-core</code> in
+<code>package.json</code>) from an earlier week — already effectively "in CI" via the <code>web</code> job's existing
+<code>npm test</code> step, not a new thing this week added. What Week 35 did add: <strong>axe coverage for every
+screen built in Weeks 33-34 that had none</strong> — <code>AppShell</code>'s screens weren't a gap (Week 33 verified
+those live), but <code>ProjectsList</code>, <code>ProjectOverview</code>, <code>IssuesTable</code>, <code>IssueDetail</code> (including its
+triage dialogs, opened, not just the closed state), and <code>ScanReport</code>'s new running/partial states
+had zero automated a11y coverage before this week. That coverage <strong>found two real bugs</strong>, both fixed:</p>
+<ol>
+<li><strong>The triage reason/expiry inputs had only placeholder text, no <code>&lt;label&gt;</code></strong> — a real WCAG
+   failure (placeholder text is not a reliable accessible name), only caught because the new test
+   opens the dialog rather than checking the closed state. Fixed in both <code>IssueDetail.tsx</code> and
+   <code>IssuesTable.tsx</code>'s (bulk) triage dialogs.</li>
+<li><strong>The new virtualized Issues table had zero table/grid ARIA semantics</strong> — a <code>&lt;div&gt;</code>-based
+   virtualized grid (real <code>@tanstack/react-virtual</code>, can't use a native <code>&lt;table&gt;</code> with
+   absolute-positioned rows) with no <code>role="table"/"row"/"cell"/"columnheader"</code> at all, invisible to
+   a screen reader as tabular data. Fixed with the standard ARIA grid pattern.</li>
+</ol>
+<p><strong>A real, manual keyboard-only walkthrough</strong> (not just automated checks) against a disposable local
+server, driven by hand in the built-in browser — sign-in, submitting a scan, opening a finding, and
+closing it — found and fixed two more real issues:</p>
+<ol>
+<li><strong>Checkboxes had no visible focus indicator at all.</strong> <code>app/globals.css</code>'s
+   <code>input:focus-visible, select:focus-visible { outline: none; border-color: var(--teal); }</code> is a
+   fine treatment for a bordered text input (the border-color change is the focus indicator) but a
+   <strong>native checkbox has no CSS border box for that to repaint</strong> — removing its native outline left
+   nothing in its place. Confirmed via <code>getComputedStyle</code> before (<code>outlineStyle: "none"</code>) and after
+   (<code>outlineStyle: "solid"</code>, <code>matches(':focus-visible')</code>). This affects every checkbox in the app:
+   the old scan report's scanner-selection checkboxes and the new Issues table's row-select
+   checkboxes both share this one global rule.</li>
+<li><strong>The issue detail page had no heading at all</strong> — the title was a <code>&lt;span&gt;</code>, not an <code>&lt;h1&gt;</code>, so a
+   screen-reader user navigating by headings (a standard pattern) had nothing to land on. Fixed by
+   making it a real <code>&lt;h1&gt;</code> (CSS specificity meant no visual change was needed).</li>
+</ol>
+<p><strong>What this doesn't claim</strong>: no VoiceOver (or any real screen reader) testing — no such tool is
+available in this environment, and simulating one honestly isn't possible; axe-core plus a real
+keyboard walkthrough catches a meaningful, real subset of the same issue class (as items 1-4 above
+show), but isn't the same thing. Flagged here explicitly rather than silently skipped, the same
+pattern used for this project's other real capability gaps.</p>
+<h2 id="playwright-end-to-end-tests-visual-regression-31">Playwright end-to-end tests + visual regression (§31)<a class="headerlink" href="#playwright-end-to-end-tests-visual-regression-31" title="Permanent link">&para;</a></h2>
+<p>No Playwright setup existed before this week. Built from scratch:</p>
+<ul>
+<li><strong><code>scripts/e2e_server.py</code></strong> (new): a disposable, self-seeding Bulwark API server for CI, since the
+  <code>web</code>/<code>e2e</code> jobs have no Docker, Postgres, or Redis. Runs the <strong>real</strong> <code>api.main.create_app</code> and
+  <strong>real</strong> <code>core.persistence.repo</code> functions against a real file-backed SQLite database (WAL mode —
+  see below for why not in-memory), so every HTTP request Playwright makes runs real application
+  code. Only two things a scanner-less, worker-less job genuinely can't do are faked, both marked
+  in the module's own docstring: running actual scanner containers (a fake "worker" thread marks
+  the scan running, then completed, writing real <code>Finding</code> rows through the same
+  <code>sync_issues_for_scan</code>/<code>add_findings</code>/<code>finish_scan</code> calls the real pipeline uses — the frontend
+  cannot tell the difference), and Redis pub/sub for live WebSocket updates (an empty subscriber, so
+  the frontend correctly falls back to its own real polling path).</li>
+<li><strong>A real bug found building this fixture, not a hypothetical</strong>: the first version used
+  <code>sqlite://</code> in-memory with <code>StaticPool</code> (matching <code>tests/conftest.py</code>'s pattern) — fine for
+  pytest's single-threaded-per-test usage, but this server genuinely serves concurrent requests
+  (uvicorn's thread pool plus the fake worker's own background threads), and <code>StaticPool</code>'s one
+  shared raw connection can't safely interleave transactions from more than one of them. Surfaced as
+  <code>sqlite3.OperationalError: cannot commit transaction - SQL statements in progress</code> — but only
+  under <strong>real parallelism</strong> (multiple Playwright workers in a Linux container; serial runs on this
+  Mac never hit it). Fixed by switching to a real file-backed database with WAL mode and a busy
+  timeout, SQLite's own documented answer to concurrent access.</li>
+<li><strong><code>playwright.config.ts</code></strong>: two <code>webServer</code> entries (the Python API on port 8811, <code>next dev</code> on
+  3911 — both deliberately far from any port the real dev stack uses), <code>NEXT_PUBLIC_API_URL</code> wired
+  to the fake API.</li>
+<li><strong><code>web/next.config.mjs</code></strong>: added <code>allowedDevOrigins: ["127.0.0.1", "localhost"]</code> — Next 16 blocks
+  cross-origin dev-server requests by default, and Playwright drives the app via <code>127.0.0.1</code>.</li>
+<li><strong><code>tests-e2e/journeys.spec.ts</code></strong>: J1 (sign in → submit a scan → live status transitions → a real
+  verdict) and J3 (filter, open an issue, mark not-a-risk with a reason, j/k between issues, accept
+  risk with an expiry, reopen) — all against real HTTP, real SQLite persistence, real
+  triage/audit-log writes. <strong>J2 is not covered</strong>: its literal target ("review the verified fix, open
+  a pull request") depends on a verified-fix/PR-creation feature that doesn't exist anywhere in this
+  codebase yet (confirmed by searching for it) — Phase 9/10 territory, not something to fake a test
+  for. Plan §26.2's time targets (J1 under 2 minutes, J3 100 issues in 30 minutes) describe a
+  person's pace, which a scripted test can't assert; these tests assert the flow completes with no
+  unnecessary step and no dead end instead.</li>
+<li><strong>A real test-isolation bug found and fixed</strong>: the first version of these tests reused one fixed
+  repo URL across every test. <code>sync_issues_for_scan</code>'s fallback-key matching (Week 34's correlation
+  work) correctly recognized the <em>same</em> finding recurring across scans of the same asset and reused
+  its existing Issue — triage state included — which is exactly what it's supposed to do. The bug
+  was the test's assumption that each test got an independent, untouched issue queue. Fixed with a
+  distinct fake repo path per test (<code>journeys.spec.ts</code>'s <code>uniqueRepoUrl()</code>), giving each test its
+  own asset for real, not a coincidence of run order.</li>
+<li><strong><code>tests-e2e/visual.spec.ts</code></strong>: full-page screenshots of the project overview, issues table, and
+  issue detail screens. <strong>Linux baselines, not the ones this Mac's browser would generate</strong>:
+  Playwright encodes the OS into the snapshot filename on purpose (font rendering differs), and CI
+  runs <code>ubuntu-latest</code>, so macOS-generated baselines would fail on the very first real CI run.
+  Generated and — critically — <strong>independently re-verified against</strong>, not just written by, the
+  official <code>mcr.microsoft.com/playwright:v1.63.0-jammy</code> Docker image (matching the installed
+  Playwright version exactly), run fully self-contained (its own <code>npm ci</code> and <code>pip install</code>, so
+  nothing from this Mac's compiled native modules leaks in). Two more real flakiness sources found
+  by actually re-running the comparison after generating a baseline, not assumed stable:</li>
+<li>The per-test unique repo URL (needed for isolation, see above) is <em>rendered on screen</em> as the
+    project's label, so different <code>Date.now()</code>-based text between the baseline run and any later
+    run guaranteed a diff. Fixed for the visual spec specifically with fixed, deterministic labels
+    (one literal per test — test isolation doesn't need to survive re-running the whole suite the
+    way journey-test isolation does).</li>
+<li>Three dates (<code>triage_expires_at</code>, <code>first_seen_at</code>, and each history entry's timestamp in
+    <code>IssueDetail.tsx</code>) were rendered as plain text, not <code>&lt;time&gt;</code> elements, so they weren't covered
+    by the existing <code>mask: [page.locator("time")]</code>. Fixed by making them real <code>&lt;time
+    dateTime=...&gt;</code> elements — a genuine semantic/accessibility improvement on its own, and it means
+    the existing mask now covers them for free. (The finding id in the topline — a real, freshly
+    generated UUID every scan — is masked directly by selector instead, since it's supposed to
+    differ every run.)</li>
+<li>Confirmed stable across three independent full re-runs against the committed baselines,
+    including one exactly matching how CI actually invokes it (<code>CI=true</code>, default parallel workers).</li>
+<li><strong><code>.github/workflows/ci.yml</code></strong>: new <code>e2e</code> job (Python + Node, no scanner images) running
+  <code>npm run e2e</code>; uploads the Playwright HTML report as an artifact on failure.</li>
+</ul>
+<h2 id="follow-up-usability-study-deferred">Follow-up usability study — deferred<a class="headerlink" href="#follow-up-usability-study-deferred" title="Permanent link">&para;</a></h2>
+<p>Plan §32's Week 35 line item is a follow-up study with five <em>new</em> participants on the redesign,
+publishing before-and-after SUS results against Week 31's baseline. <strong>Week 31's baseline study
+itself was never run</strong> (still deferred pending real participant recruitment, as that week's own
+verification doc already recorded) — there is no "before" to compare a "after" against yet, so a
+before-and-after publication is doubly not possible right now, not just deferred once. Recruiting
+and running a real study with real people isn't something to fabricate or simulate; both studies
+remain a real, separate task for when participant recruitment is actually in scope.</p>
+<h2 id="verification">Verification<a class="headerlink" href="#verification" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Backend: <code>ruff check .</code>, <code>black --check .</code>, <code>mypy</code> clean. Full suite: <strong>871 passed, 2 skipped</strong>
+  (869 + 2 new <code>core/gitfetch.py</code> regression tests for the friendlier clone-error copy).</li>
+<li>Web: <code>npm run typecheck</code>, <code>npm test</code> (<strong>145 passed</strong>, up from 137 — the new <code>ElapsedTime</code>/
+  <code>ScanReport</code> tests and 14 new/extended a11y tests), <code>npm run build</code>, <code>npm run build-storybook</code> —
+  all clean from the actual CI commands.</li>
+<li><code>npm run e2e</code>: <strong>7 passed</strong> (4 journeys + 3 visual regression), verified independently in the
+  official Linux Playwright Docker image, including a run shaped exactly like the new CI job
+  (<code>CI=true</code>, parallel workers).</li>
+<li>A real, manual keyboard-only walkthrough in the built-in browser (not just automated checks),
+  documented above under Accessibility, found and fixed two real bugs beyond what axe-core alone
+  caught.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.top", "content.code.copy", "content.action.edit"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

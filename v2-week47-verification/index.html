@@ -1,0 +1,1039 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Unified security scanning -- one scan, one deduplicated list of findings.">
+      
+      
+      
+        <link rel="canonical" href="https://rag2102.github.io/cyberimp/v2-week47-verification/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Week 47 verification -- envelope encryption, crypto-shredding, mTLS, secrets (plan §22.2) - Bulwark</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#week-47-verification-envelope-encryption-crypto-shredding-mtls-secrets-plan-222" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Bulwark" class="md-header__button md-logo" aria-label="Bulwark" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Bulwark
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Week 47 verification -- envelope encryption, crypto-shredding, mTLS, secrets (plan §22.2)
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Rag2102/cyberimp" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Rag2102/cyberimp
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Bulwark" class="md-nav__button md-logo" aria-label="Bulwark" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Bulwark
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Rag2102/cyberimp" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Rag2102/cyberimp
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quickstart
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../risk-score/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Risk scoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../taxonomy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Taxonomy (CWE / OWASP)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reachability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reachability
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../vex/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    VEX
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../compliance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compliance and evidence packs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Metrics and dashboards
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reports/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reports
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../issue-search/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Finding Issues
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../identity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sign-in, people and access
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../plugins/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Writing a plugin
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../policy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Policy cookbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ingest-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Importing reports
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-was-built" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What was built
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#validated-against-real-live-things-not-mocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Validated against real, live things -- not mocks
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verified" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verified
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-this-does-not-prove-read-before-relying-on-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What this does NOT prove (read before relying on it)
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/Rag2102/cyberimp/edit/main/docs/v2-week47-verification.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="week-47-verification-envelope-encryption-crypto-shredding-mtls-secrets-plan-222">Week 47 verification -- envelope encryption, crypto-shredding, mTLS, secrets (plan §22.2)<a class="headerlink" href="#week-47-verification-envelope-encryption-crypto-shredding-mtls-secrets-plan-222" title="Permanent link">&para;</a></h1>
+<p>Honest record of what was built, run, and measured. See <a href="../adr/0032-envelope-encryption-and-crypto-shredding/">ADR-0032</a>
+(tasks 1-2) and <a href="../adr/0033-mtls-and-secrets-management/">ADR-0033</a> (tasks 3-4) for the design
+decisions, including several real bugs found and fixed by live testing rather than caught later.</p>
+<h2 id="what-was-built">What was built<a class="headerlink" href="#what-was-built" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>core/secrets/openbao.py</code>, <code>core/secrets/envelope.py</code> (task 1): a Transit client minting/unwrapping
+  per-org data keys, and AES-256-GCM encryption bound to each object's own storage key as AEAD
+  associated data. New <code>scan_data_keys</code> table (migration 0018). <code>core.persistence.storage.
+  EncryptingObjectStore</code>/<code>build_object_store</code> wire this into the real production path
+  (<code>core.tasks.run_scan_task</code>), off by default.</li>
+<li><code>core/retention.py</code> (task 2): an hourly Celery-beat sweep destroying a scan's data key once its
+  org's retention window passes (default 7 days). New <code>data_retention_policies</code> table (migration
+  0019), a <code>GET</code>/<code>PUT /settings/retention</code> API, and a settings screen at <code>/app/settings</code>.</li>
+<li><code>docker/postgres/pg_hba.conf</code>, <code>docker-entrypoint-wrapper.sh</code>, <code>init-temporal-role.sh</code> (task 3): a
+  rebuilt Postgres image requiring a client certificate matching the connecting role for every
+  network connection. New <code>bulwark_api</code>/<code>bulwark_worker</code>/<code>bulwark_fixagent</code> roles (migration 0020),
+  each inheriting <code>bulwark_app</code>'s grants via role membership; <code>bulwark_app</code> itself set <code>NOLOGIN</code>.
+  <code>scripts/gen-mtls-certs.sh</code> generates the dev CA and per-service certificates.</li>
+<li><code>core/secrets/resolve.py</code>, <code>bulwark secrets migrate-env</code> (task 4): four plaintext secrets (GitHub
+  App private key, its webhook secret, the API token, the LLM API key) now prefer a value from
+  OpenBao's KV store, falling back to their environment variable unconditionally when OpenBao isn't
+  configured or doesn't have them yet.</li>
+<li><code>docs/adr/0032-*.md</code>, <code>docs/adr/0033-*.md</code>, <code>docs/data-protection.md</code>.</li>
+</ul>
+<h2 id="validated-against-real-live-things-not-mocks">Validated against real, live things -- not mocks<a class="headerlink" href="#validated-against-real-live-things-not-mocks" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>The full OpenBao Transit round-trip, against a real <code>openbao/openbao:2.1</code> container</strong>: mount the
+  engine, create an org key (confirmed idempotent), mint a data key, unwrap it back to the identical
+  plaintext, and two rejections confirmed live rather than assumed -- an undecodable ciphertext
+  (HTTP 400) and unwrapping under the wrong org's key (HTTP 400, "encryption key not found").</li>
+<li><strong><code>EncryptingObjectStore</code>'s AEAD binding, with a real key-swap attack attempted and blocked.</strong> A
+  ciphertext written under one storage key, then read back under a different key string, fails
+  closed (<code>DecryptionError</code>) rather than silently decrypting into the wrong scan's data.</li>
+<li><strong><code>scan_data_keys</code>' and <code>data_retention_policies</code>' RLS, and their <code>ON DELETE</code>/cascade behavior,
+  against real Postgres as the actual <code>bulwark_worker</code> role</strong> (not a superuser): one organization's
+  data key and retention setting are both invisible to another organization, even when a call
+  explicitly passes the other organization's id as an argument -- RLS is what actually enforces it,
+  not application-level filtering alone. <code>ON DELETE CASCADE</code> from <code>scans</code> to <code>scan_data_keys</code> was
+  confirmed only on real Postgres: SQLite (every unit test) does not enforce foreign keys by default,
+  so this specific guarantee has no SQLite-backed test at all, by necessity.</li>
+<li><strong><code>shred_expired_scans</code>, twice caught doing the wrong thing before it shipped.</strong> First, comparing a
+  SQLite-stored naive timestamp against a timezone-aware cutoff inside the SQL <code>WHERE</code> clause itself
+  silently matched nothing; fixed by moving the comparison into Python against <code>_aware()</code>-normalized
+  values, mirroring a fix <code>core.maintenance.reap_stale_scans</code> already needed. Second, discovering a
+  cross-organization query run through the RLS-enforced <code>bulwark_app</code>-family connection would see
+  <em>zero</em> rows for every organization, not every organization's own rows -- fixed by iterating
+  organizations one at a time with <code>set_session_org</code> explicitly set for each.</li>
+<li><strong>The entire mTLS mechanism, against a real image built from <code>docker/postgres</code>, not designed from
+  documentation alone.</strong> In order: the exact ownership/permission Postgres requires for a
+  bind-mounted private key (a plain bind mount is owned by the host user, which Postgres refuses
+  outright as "group or world access"); <code>verify-full</code>'s server-hostname check, confirmed to reject a
+  mismatched hostname and accept a matching one; a certificate's CN correctly authenticating as its
+  matching role and being rejected for any other role, including a validly CA-signed certificate for
+  an unrelated identity; a connection with no certificate at all rejected with a distinct, clear
+  error. <code>tests/integration/test_postgres_mtls_docker.py</code> builds the real image and runs all of this
+  automatically now, not just once by hand.</li>
+<li><strong>The full migration 0020 up/down/up cycle, against real Postgres</strong>, confirming <code>bulwark_app</code>
+  regains <code>LOGIN</code> on downgrade and the three service roles are recreated cleanly on re-upgrade.</li>
+<li><strong>Role-membership inheritance, proven functionally, not just by reading the grant.</strong> A freshly
+  created role made a member of another via <code>GRANT ... TO ...</code>, with no direct table grants of its
+  own, successfully inserted into and read from a real application table (<code>organizations</code>) through
+  its inherited privileges alone.</li>
+<li><strong>The real <code>docker-compose.yml</code>, not a hand-reconstructed equivalent.</strong> The actual <code>migrate</code>
+  service, using its actual environment-variable-interpolated <code>BULWARK_DATABASE_URL</code> (with the mTLS
+  query parameters) and its actual certificate volume mount, ran the full migration chain --
+  including migration 0020 -- to completion with no modifications to the compose file for the test.
+  Also confirmed, incidentally: the new mTLS-enabled image starts correctly against an
+  <strong>already-initialized</strong> data directory from before this week's changes, not only a fresh one.</li>
+<li><strong>Temporal's <code>temporal_svc</code> carve-out, against the same real image.</strong> Password authentication with
+  no client certificate succeeds for <code>temporal_svc</code> specifically; a wrong password is rejected; and
+  <code>bulwark</code> (Bulwark's own owner role) is confirmed to still require a certificate even when given
+  its correct password, proving the carve-out is scoped to exactly one role, not a general weakening.</li>
+<li><strong>CI's <code>tenancy-rls</code> job, re-verified end to end against the exact scenario it will actually run</strong>:
+  a plain <code>pgvector/pgvector:pg16</code> image with no custom mTLS configuration, migrated as the owner
+  role, then the RLS test suite run connected as <code>bulwark_worker</code> over a plain password -- confirmed
+  necessary and sufficient after discovering <code>bulwark_app</code>'s new <code>NOLOGIN</code> state would otherwise have
+  broken this job outright.</li>
+<li><strong>The full OpenBao KV v2 path, against a real container</strong>: enabling the engine (confirmed
+  already-mounted in dev mode, and idempotent to call again), writing a secret, reading it back,
+  rotating it, and confirming both a missing path and a missing field within an existing path return
+  <code>None</code> rather than raising.</li>
+<li><strong><code>Settings</code>/<code>LLMConfig</code> actually preferring OpenBao's value over a stale environment variable</strong>,
+  live: a secret written to OpenBao is what <code>Settings.from_env()</code>/<code>LLMConfig.from_env()</code> return, with
+  a deliberately different, stale value left in the environment variable to prove which source won;
+  removing <code>BULWARK_OPENBAO_ADDR</code> afterward confirmed the fallback to the environment variable still
+  works.</li>
+<li><strong><code>bulwark secrets migrate-env</code>, run against a real OpenBao container via the actual installed CLI
+  entry point</strong> (not <code>python -m cli.main</code>, which -- a pre-existing quirk of this file's structure,
+  not something this week introduced -- only sees commands defined before its mid-file <code>if __name__
+  == "__main__"</code> guard): migrated secrets confirmed present in OpenBao afterward by reading them
+  back independently, and the missing-configuration guard confirmed to error cleanly.</li>
+</ul>
+<h2 id="verified">Verified<a class="headerlink" href="#verified" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>test_secrets_envelope.py</code> (8 tests), <code>test_secrets_openbao.py</code> (10), <code>test_persistence_storage.py</code>
+  (9), <code>test_persistence_scan_data_keys.py</code> (5), <code>test_retention.py</code> (7), <code>test_persistence_retention_settings.py</code>
+  (4), <code>test_retention_settings_api.py</code> (6), <code>test_secrets_resolve.py</code> (5), <code>test_secrets_cli.py</code> (3).
+  <code>tests/integration/test_secrets_openbao_docker.py</code> (4), <code>test_postgres_mtls_docker.py</code> (5),
+  <code>test_data_protection_rls_docker.py</code> (5, extended from task 1's 3). Full suite re-run clean after
+  every task: 1475 unit tests passed. <code>black --check .</code>, <code>ruff check .</code>, <code>mypy</code> (project scope --
+  <code>cli/</code> is outside <code>pyproject.toml</code>'s configured mypy <code>files</code>, unchanged by this week) all clean.</li>
+<li>Frontend: <code>retention-settings.test.tsx</code> (4 tests), full existing suite (191 tests) re-run clean,
+  <code>tsc --noEmit</code> clean, the new <code>/app/settings</code> route confirmed to compile and render correctly in a
+  real browser preview (falling through to the same sign-in gate every other page uses, with no
+  server errors).</li>
+<li>Live Docker/Postgres/OpenBao runs, above -- covering every mechanism this week added, not just the
+  application-level logic around them.</li>
+</ul>
+<h2 id="what-this-does-not-prove-read-before-relying-on-it">What this does NOT prove (read before relying on it)<a class="headerlink" href="#what-this-does-not-prove-read-before-relying-on-it" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Database grants are not actually least-privilege per service.</strong> <code>bulwark_api</code>/<code>bulwark_worker</code>/
+  <code>bulwark_fixagent</code> each inherit the exact same privileges <code>bulwark_app</code> always had. Distinct,
+  individually-revocable <em>identities</em> is the real, verified improvement; narrower <em>permissions</em> per
+  service needs a function-by-function audit of <code>core.persistence.repo</code>'s call sites this pass did
+  not attempt (ADR-0033).</li>
+<li><strong>No automated certificate rotation, and no real CA.</strong> <code>scripts/gen-mtls-certs.sh</code> is dev/self-signed
+  only; a real deployment needs its own CA and issuance process.</li>
+<li><strong>Crypto-shredding never touches the underlying ciphertext object.</strong> Deleting a scan's data key
+  makes that scan's data permanently unreadable, but the encrypted bytes themselves remain in object
+  storage indefinitely, an intentional simplification (the plan's "backups included" framing implies
+  exactly this: unrecoverable, not un-stored) rather than a real cleanup mechanism.</li>
+<li><strong>A concurrent first-use race for a scan's data key is unhandled.</strong> Not triggered by the current
+  sequential call pattern, but not structurally prevented either.</li>
+<li><strong>Only four secrets route through OpenBao.</strong> Database passwords, Redis/S3 credentials, and the
+  OpenBao token itself all remain plain environment variables -- protected at the connection layer by
+  this week's mTLS work where applicable (Postgres), not moved into a secrets store.</li>
+<li><strong>Temporal's own database credential is password-only</strong>, a disclosed, deliberate carve-out in an
+  otherwise unconditional certificate requirement -- not a gap anyone should assume is closed.</li>
+<li><strong>The pre-existing <code>core.maintenance.reap_stale_scans</code> likely has the identical unscoped-RLS-query
+  bug <code>shred_expired_scans</code> was caught and fixed for here</strong>, discovered incidentally while building
+  this week's work. It was not fixed as part of Week 47 -- it predates this week and is out of scope
+  for it -- and was flagged separately instead.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.top", "content.code.copy", "content.action.edit"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

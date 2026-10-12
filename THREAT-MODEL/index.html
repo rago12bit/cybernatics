@@ -1,0 +1,1511 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Unified security scanning -- one scan, one deduplicated list of findings.">
+      
+      
+      
+        <link rel="canonical" href="https://rag2102.github.io/cyberimp/THREAT-MODEL/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Threat model - Bulwark</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#threat-model" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Bulwark" class="md-header__button md-logo" aria-label="Bulwark" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Bulwark
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Threat model
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Rag2102/cyberimp" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Rag2102/cyberimp
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Bulwark" class="md-nav__button md-logo" aria-label="Bulwark" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Bulwark
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Rag2102/cyberimp" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Rag2102/cyberimp
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quickstart
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../risk-score/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Risk scoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../taxonomy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Taxonomy (CWE / OWASP)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reachability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reachability
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../vex/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    VEX
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../compliance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compliance and evidence packs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Metrics and dashboards
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reports/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reports
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../issue-search/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Finding Issues
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../identity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sign-in, people and access
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../plugins/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Writing a plugin
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../policy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Policy cookbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ingest-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Importing reports
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#assets-and-trust-boundaries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Assets and trust boundaries
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stride-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        STRIDE summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#detail" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Detail
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Detail">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#t1-container-escape-rce-partial" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T1 Container escape / RCE (Partial)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t2-code-execution-during-dependency-install-done" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T2 Code execution during dependency install (Done)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t3-decompression-bomb-done" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T3 Decompression bomb (Done)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t4-zip-slip-path-traversal-done" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T4 Zip-slip / path traversal (Done)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t5-ssrf-via-git-url-done" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T5 SSRF via Git URL (Done)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t6-resource-exhaustion-partial" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T6 Resource exhaustion (Partial)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t7-secret-leakage-partial" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T7 Secret leakage (Partial)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t8-prompt-injection-partial" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T8 Prompt injection (Partial)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t9-stored-xss-done" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T9 Stored XSS (Done)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t10-malicious-scanner-image-open" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T10 Malicious scanner image (Open)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t11-unauthorized-api-access-partial" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T11 Unauthorized API access (Partial)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t12-workers-docker-access-partial" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T12 Worker's Docker access (Partial)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t13-poisoned-or-unavailable-exploit-data-feeds-partial" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T13 Poisoned or unavailable exploit-data feeds (Partial)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t14-reachability-analysis-parses-untrusted-source-outside-the-sandbox" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T14: reachability analysis parses untrusted source outside the sandbox
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t15-scan-results-can-be-altered-after-the-fact" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T15: scan results can be altered after the fact
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t16-a-wrong-vex-claim-week-69-adr-0053" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T16: a wrong VEX claim (Week 69, ADR-0053)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t17-evidence-packs-week-69-adr-0053" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T17: evidence packs (Week 69, ADR-0053)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t18-sign-in-sessions-and-access-week-75-plan-threat-t30-adr-0058" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T18: sign-in, sessions and access (Week 75, plan threat T30, ADR-0058)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t19-agents-and-pull-request-comments-week-76-plan-threat-t29-adr-0059" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T19: agents and pull request comments (Week 76, plan threat T29, ADR-0059)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#observability-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Observability endpoints
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#out-of-scope" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Out of scope
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#before-a-public-deployment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Before a public deployment
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/Rag2102/cyberimp/edit/main/docs/THREAT-MODEL.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="threat-model">Threat model<a class="headerlink" href="#threat-model" title="Permanent link">&para;</a></h1>
+<p>Bulwark downloads or accepts untrusted code and runs third-party tools over it, then renders what those
+tools say. That is an attack surface. This document lists what we defend against, what actually exists in
+the code today, and what does not. Status is stated per threat so it can be checked, not assumed.</p>
+<p>Status key: <strong>Done</strong> (implemented and tested), <strong>Partial</strong> (some of the mitigation exists), <strong>Open</strong> (not
+implemented), <strong>N/A yet</strong> (the feature that creates the threat is not built).</p>
+<p>Last reviewed: 2026-10-07 (Week 75: sign-in, sessions and access, T11 and T18). Review again before any deployment that accepts scans from people you
+do not trust.</p>
+<h2 id="assets-and-trust-boundaries">Assets and trust boundaries<a class="headerlink" href="#assets-and-trust-boundaries" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Asset</th>
+<th>Why it matters</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>The host running the worker and Docker</td>
+<td>The worst outcome is code from a scanned repo running on it</td>
+</tr>
+<tr>
+<td>Source code and secrets inside scanned repos</td>
+<td>Users upload private code; findings can echo secrets</td>
+</tr>
+<tr>
+<td>The API tokens and sign-in sessions</td>
+<td>Tokens act as their organization or person; a session is a signed-in person (T11, T18)</td>
+</tr>
+<tr>
+<td>Report consumers (browsers, GitHub, PDF readers)</td>
+<td>They render text that came from an attacker-controlled repo</td>
+</tr>
+</tbody>
+</table>
+<p>Boundaries: (1) the scanned repository is <strong>untrusted</strong> input to everything; (2) scanner containers are
+<strong>untrusted</strong> processes; (3) the worker, API and database are trusted; (4) the browser is trusted only to
+render text, never to run scan-derived markup.</p>
+<h2 id="stride-summary">STRIDE summary<a class="headerlink" href="#stride-summary" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Threat</th>
+<th>Category</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>T1</td>
+<td>Container escape / RCE via a scanner parser bug</td>
+<td>Elevation of privilege</td>
+<td>Partial</td>
+</tr>
+<tr>
+<td>T2</td>
+<td>Code execution during dependency install</td>
+<td>Elevation of privilege</td>
+<td>Done</td>
+</tr>
+<tr>
+<td>T3</td>
+<td>Decompression bomb</td>
+<td>Denial of service</td>
+<td>Done</td>
+</tr>
+<tr>
+<td>T4</td>
+<td>Zip-slip / path traversal</td>
+<td>Tampering</td>
+<td>Done</td>
+</tr>
+<tr>
+<td>T5</td>
+<td>SSRF via Git URL</td>
+<td>Information disclosure</td>
+<td>Done</td>
+</tr>
+<tr>
+<td>T6</td>
+<td>Resource exhaustion</td>
+<td>Denial of service</td>
+<td>Partial</td>
+</tr>
+<tr>
+<td>T7</td>
+<td>Secret leakage via findings</td>
+<td>Information disclosure</td>
+<td>Partial</td>
+</tr>
+<tr>
+<td>T8</td>
+<td>Prompt injection into remediation LLM</td>
+<td>Tampering</td>
+<td>Partial</td>
+</tr>
+<tr>
+<td>T9</td>
+<td>Stored XSS in the report UI and exports</td>
+<td>Tampering / Elevation</td>
+<td>Done</td>
+</tr>
+<tr>
+<td>T10</td>
+<td>Malicious or compromised scanner image</td>
+<td>Tampering</td>
+<td>Open</td>
+</tr>
+<tr>
+<td>T11</td>
+<td>Unauthorized API access</td>
+<td>Spoofing</td>
+<td>Partial</td>
+</tr>
+<tr>
+<td>T12</td>
+<td>Worker's Docker access abused</td>
+<td>Elevation of privilege</td>
+<td>Partial</td>
+</tr>
+<tr>
+<td>T13</td>
+<td>Poisoned or unavailable exploit-data feeds</td>
+<td>Tampering</td>
+<td>Partial</td>
+</tr>
+<tr>
+<td>T15</td>
+<td>Forged or tampered scan results, reports or SBOM in transit</td>
+<td>Tampering / Repudiation</td>
+<td>Partial</td>
+</tr>
+<tr>
+<td>T14</td>
+<td>Parser bug or resource exhaustion while analysing scanned source for reachability</td>
+<td>Denial of service / Elevation</td>
+<td>Partial</td>
+</tr>
+<tr>
+<td>T16</td>
+<td>A wrong VEX claim tells customers they are not affected</td>
+<td>Repudiation / Information integrity</td>
+<td>Partial</td>
+</tr>
+<tr>
+<td>T17</td>
+<td>An evidence pack discloses another organization's activity, or is forged</td>
+<td>Information disclosure / Tampering</td>
+<td>Partial</td>
+</tr>
+<tr>
+<td>T18</td>
+<td>Sign-in, sessions and access</td>
+<td>Spoofing / Elevation of privilege</td>
+<td>Partial</td>
+</tr>
+<tr>
+<td>T19</td>
+<td>Untrusted text steering an agent through MCP; <code>/fix</code> run by the wrong person or on a fork</td>
+<td>Tampering / Elevation of privilege</td>
+<td>Partial</td>
+</tr>
+</tbody>
+</table>
+<h2 id="detail">Detail<a class="headerlink" href="#detail" title="Permanent link">&para;</a></h2>
+<h3 id="t1-container-escape-rce-partial">T1 Container escape / RCE (Partial)<a class="headerlink" href="#t1-container-escape-rce-partial" title="Permanent link">&para;</a></h3>
+<p>A crafted repo exploits a bug in Bandit, Semgrep, Trivy, OSV-Scanner or Gitleaks.
+- <strong>Done:</strong> every scanner runs with <code>--network=none --read-only --cap-drop=ALL --security-opt=no-new-privileges</code>,
+  non-root UID 10001, <code>--memory=2g --cpus=1.0 --pids-limit=256</code>, a <code>noexec</code> 64 MB tmpfs, and the target mounted
+  read-only (<code>core/runner.py</code>, <a href="../adr/0002-docker-isolation-strategy/">ADR-002</a>). Docker's default seccomp
+  profile applies. Integration tests run the real containers.
+- <strong>Open:</strong> rootless Docker or gVisor. The default runtime shares the host kernel, so a kernel or runtime
+  exploit is not contained. Required before hosting for strangers.</p>
+<h3 id="t2-code-execution-during-dependency-install-done">T2 Code execution during dependency install (Done)<a class="headerlink" href="#t2-code-execution-during-dependency-install-done" title="Permanent link">&para;</a></h3>
+<p>Dependencies are never installed. Trivy and OSV-Scanner read lockfiles offline; vulnerability databases are
+baked into the images at build time.</p>
+<h3 id="t3-decompression-bomb-done">T3 Decompression bomb (Done)<a class="headerlink" href="#t3-decompression-bomb-done" title="Permanent link">&para;</a></h3>
+<p>Before extraction: maximum compressed size (100 MB), uncompressed size (500 MB), file count (20,000) and
+compression ratio (100:1) (<code>core/ingest.py</code>). Git clones are size-watched and killed past the limit.</p>
+<h3 id="t4-zip-slip-path-traversal-done">T4 Zip-slip / path traversal (Done)<a class="headerlink" href="#t4-zip-slip-path-traversal-done" title="Permanent link">&para;</a></h3>
+<p>Every archive entry is resolved against the extraction root; escaping entries, absolute paths, dot-segments
+and symlinks are rejected. Covered by unit tests.</p>
+<h3 id="t5-ssrf-via-git-url-done">T5 SSRF via Git URL (Done)<a class="headerlink" href="#t5-ssrf-via-git-url-done" title="Permanent link">&para;</a></h3>
+<p>Strict URL grammar, https only, host allowlist (github.com, gitlab.com, bitbucket.org), DNS resolved and every
+address required to be public, the resolved IP pinned for the clone, no redirects, no submodules, hooks
+disabled (<code>core/gitfetch.py</code>). The API never scans server-side paths: only Git URLs and uploads.</p>
+<h3 id="t6-resource-exhaustion-partial">T6 Resource exhaustion (Partial)<a class="headerlink" href="#t6-resource-exhaustion-partial" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Done:</strong> per-container memory, CPU, PID and wall-clock limits; upload size cap; scans stuck past 30 minutes
+  are reaped; orphaned containers and scratch directories are cleaned every 5 minutes.</li>
+<li><strong>Open:</strong> no disk quota on the scan workspace beyond the ingestion size limits, and <strong>no limit on how many
+  scans one caller may queue</strong>. With a single shared token this is an availability risk to whoever holds it.</li>
+</ul>
+<h3 id="t7-secret-leakage-partial">T7 Secret leakage (Partial)<a class="headerlink" href="#t7-secret-leakage-partial" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Done:</strong> Gitleaks runs with <code>--redact</code>; snippets become <code>[secret redacted]</code> and the finding id is a hash of
+  rule, path and line, never of the secret. Bandit's hard-coded-password messages are scrubbed. A cross-tool
+  pass redacts snippets and quoted literals near a detected secret (correlation runs first so distinct
+  defects are not merged). Raw scanner output is <strong>not stored</strong> when secrets were found. Exports (SARIF, HTML,
+  PDF, JSON) are built from the already-redacted findings.</li>
+<li><strong>Open:</strong> findings are <strong>not encrypted at rest</strong> (Postgres and the object store hold plaintext, minus the
+  redactions above). Rely on disk or volume encryption for now.</li>
+<li><strong>Note:</strong> redaction before any LLM call applies when the LLM features exist (see T8).</li>
+</ul>
+<h3 id="t8-prompt-injection-partial">T8 Prompt injection (Partial)<a class="headerlink" href="#t8-prompt-injection-partial" title="Permanent link">&para;</a></h3>
+<p>The remediation layer (Week 12, <a href="../llm-remediation/">docs/llm-remediation.md</a>, <a href="../adr/0010-llm-remediation-design/">ADR-010</a>)
+is <strong>off by default</strong> and, once enabled, runs only when a user clicks "Generate AI suggestion" on a finding
+(<code>POST /scans/{id}/suggestion</code>); reading guidance never contacts a model. Model calls are capped per minute and
+per day, and results are cached by rule and snippet.
+- <strong>Done and tested:</strong> instructions only in the system message; repository text in random-nonce fenced data
+  blocks with the task reminder after them; strict schema validation of the reply (extra keys, dismissal
+  language, control/bidi characters and patches outside the finding's file are rejected whole); the model has
+  no way to change severity, triage or taxonomy and the <code>Finding</code> object is never modified; any failure degrades
+  to static CWE/cheat-sheet text; secrets findings send no code, other code is scrubbed first; the retrieval
+  query never uses the code snippet; injection-like text in a repository is reported to the user. Tested with 20
+  hostile payloads across four placements and with simulated hijacked models (135 tests).
+- <strong>Open:</strong> no real model has been run against these defences, so real-world resistance is <strong>unmeasured</strong> (Week
+  14). A well-formed reply can still be a wrong or misleading fix; patches are labelled and never applied. The
+  secret scrubber is pattern-based and can miss unusual formats. The dismissal filter is phrase-based.
+- <strong>Privacy:</strong> enabling the feature sends finding text and the scanner's code snippet to the configured provider
+  (the CLI can add +/-20 lines). Cache entries are shared across scans on a server.
+- <strong>Cost abuse:</strong> the per-process spend limit bounds a shared-token holder's spend but resets on restart and is
+  not per user (there are no users yet).</p>
+<h3 id="t9-stored-xss-done">T9 Stored XSS (Done)<a class="headerlink" href="#t9-stored-xss-done" title="Permanent link">&para;</a></h3>
+<p>Scanner-derived text is rendered as React text nodes, never HTML; the UI runs under a per-request-nonce
+Content-Security-Policy with no inline styles or scripts; links are only built from validated ids and https
+URLs. One exception, contained: the threat-model diagram is drawn by Mermaid, whose SVG needs inline styles,
+in a same-origin frame (<code>/diagram-frame</code>) whose policy allows inline styles but scripts only from this origin
+(Mermaid's build and the frame's own script), with no network access, framable only by the app. It takes
+the diagram source by <code>postMessage</code> from its parent only, and Mermaid sanitizes its own output
+(<code>securityLevel: "strict"</code>). The HTML export escapes every value and carries its own CSP that forbids scripts and network access;
+the API serves downloads with <code>nosniff</code> and a sandbox CSP; PDF text is escaped before layout. Regression tests
+inject hostile titles, paths, snippets and descriptions into each of them (<code>web/tests/xss.test.tsx</code>,
+<code>tests/unit/test_export.py</code>).</p>
+<h3 id="t10-malicious-scanner-image-open">T10 Malicious scanner image (Open)<a class="headerlink" href="#t10-malicious-scanner-image-open" title="Permanent link">&para;</a></h3>
+<p>Images are pinned by <strong>tag</strong>, not SHA-256 digest (<code>bulwark/*:1.7.10</code> etc., <code>zricethezav/gitleaks:v8.21.0</code>), and
+the compose file uses <code>:latest</code> for the object store and the Docker socket proxy. Signatures are not verified.
+A compromised upstream tag would be pulled and run (still inside the sandbox flags). Fix: pin digests in
+production, verify signatures where publishers provide them.</p>
+<h3 id="t11-unauthorized-api-access-partial">T11 Unauthorized API access (Partial)<a class="headerlink" href="#t11-unauthorized-api-access-partial" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Done:</strong> every endpoint except <code>/healthz</code> needs a bearer token; comparison is constant-time; the API refuses
+  to start with a weak token (under 16 characters); CORS is an explicit allowlist; the WebSocket authenticates
+  in its first message so the token is never in a URL.</li>
+<li><strong>Done since (Weeks 29 and 75):</strong> scoped, expiring, revocable tokens per organization (ADR-0018); user
+  accounts that sign in through the organization's identity provider, with roles per organization,
+  business unit and project, and tokens that act as their person and die with them (T18, ADR-0058).</li>
+<li><strong>Open:</strong> the shared <code>BULWARK_API_TOKEN</code> still exists for the operator and has every scope; there is no
+  rate limiting, so a token can be guessed at online (they are 160 random bits). Keep the shared token for
+  automation you control, and do not expose the API to the internet without a reverse proxy that limits rates.</li>
+</ul>
+<h3 id="t12-workers-docker-access-partial">T12 Worker's Docker access (Partial)<a class="headerlink" href="#t12-workers-docker-access-partial" title="Permanent link">&para;</a></h3>
+<p>The worker starts scanner containers through <code>docker-socket-proxy</code>, which allows only container
+create/start/kill, image inspect and volumes, not the raw socket. Residual risk (also in ADR-002): a
+compromised worker can still ask for containers with arbitrary host bind mounts. Production should use a
+dedicated runner on an isolated host, or rootless Docker or gVisor, with the worker holding no Docker access.</p>
+<h3 id="t13-poisoned-or-unavailable-exploit-data-feeds-partial">T13 Poisoned or unavailable exploit-data feeds (Partial)<a class="headerlink" href="#t13-poisoned-or-unavailable-exploit-data-feeds-partial" title="Permanent link">&para;</a></h3>
+<p>EPSS and CISA KEV are fetched from two fixed https URLs by the API/worker side only (scanners still have no
+network). Downloads are size-capped, structurally validated with minimum-size sanity floors, and replace the
+cache atomically; a bad file leaves the previous one in place; a missing feed degrades scores to "unknown"
+rather than failing scans. <strong>Open:</strong> the files are trusted on TLS alone; there is no signature to verify. A
+compromised feed could distort ranking, not execute code.</p>
+<p>Since Week 68 (ADR-0052) the advisory engine also fetches OSV's per-ecosystem data, CISA KEV and NVD's
+CVE API, on the worker, from three fixed HTTPS hosts only (any other URL is refused), certificates
+verified against certifi's bundle. Sizes are capped (1 GiB per dump, 2 MiB per record), records are
+parsed as data, a KEV file with fewer than 100 entries never replaces the catalog, and an
+advisory's reference links are kept only if they are <code>http(s)</code> addresses; its text is shown as
+text, never rendered. <strong>Open:</strong> as above, a compromised source could add or hide advisories (false
+alarms or missed ones); it cannot run code. Fetching sends nothing about an organization: the
+requests are plain GETs of public files, unlike osv-scanner's online mode, which posts package
+lists to api.osv.dev.</p>
+<h3 id="t14-reachability-analysis-parses-untrusted-source-outside-the-sandbox">T14: reachability analysis parses untrusted source outside the sandbox<a class="headerlink" href="#t14-reachability-analysis-parses-untrusted-source-outside-the-sandbox" title="Permanent link">&para;</a></h3>
+<p>Unlike the scanners, <code>core/reachability</code> runs in the API/worker process. It never executes scanned code:
+Python is parsed with the standard <code>ast</code> module and JavaScript/TypeScript with tree-sitter (native code).
+Mitigations: symlinks are not followed and dependency/build directories are skipped, at most 20,000 files and
+1 MB per file are read, parse errors (including <code>RecursionError</code>/<code>MemoryError</code>) mark the file unparsed instead of
+failing the scan, and any failure of the whole analysis leaves findings without reachability rather than failing the
+scan. <strong>Residual:</strong> a memory-safety bug in tree-sitter or CPython's parser triggered by a hostile file would run in
+the worker, which is the one component with (proxied) Docker access. Moving the analysis into a sandboxed container
+is the fix and is not done. Status: Partial.</p>
+<h3 id="t15-scan-results-can-be-altered-after-the-fact">T15: scan results can be altered after the fact<a class="headerlink" href="#t15-scan-results-can-be-altered-after-the-fact" title="Permanent link">&para;</a></h3>
+<p><code>bulwark attest sign</code> and <code>bulwark attest provenance</code> sign a report, SARIF or SBOM with a cosign key pair and record
+which Bulwark and which scanner images (by content hash) produced it, with the result counts. cosign runs in a
+container with no network and a read-only root filesystem; the key is mounted read-only and its password is passed
+by environment-variable name, never on a command line. <strong>Residual:</strong> signatures are key-based with no transparency
+log, so they prove who held the key but not when the signature was made; a stolen key forges results; keyless
+(OIDC) signing is not implemented; nothing yet stops an attacker with the key from attesting a scan they did not
+run, and the attestation says nothing about whether the findings are correct. Status: Partial.</p>
+<h3 id="t16-a-wrong-vex-claim-week-69-adr-0053">T16: a wrong VEX claim (Week 69, ADR-0053)<a class="headerlink" href="#t16-a-wrong-vex-claim-week-69-adr-0053" title="Permanent link">&para;</a></h3>
+<p>A <code>not_affected</code> statement published to customers that is not true hides a real exposure from them.
+<strong>Done:</strong> Bulwark only proposes; a person confirms each statement with a personal token (the shared
+token is refused), and the confirmation, the evidence and its limits are in the statement and the
+audit log. Evidence errs towards "used" (names matched loosely, an unknown import name means "can't
+tell"); nothing is proposed for malicious packages, uncertain versions or unscanned projects. A
+confirmed statement a later scan contradicts is exported as <code>under_investigation</code>, and reopening its
+Issue withdraws it. <strong>Residual:</strong> the evidence does not see calls made inside other dependencies, by
+reflection or through function values; a reviewer who confirms without reading can still publish a
+wrong claim; the proposals' precision has not been measured. Status: Partial.</p>
+<h3 id="t17-evidence-packs-week-69-adr-0053">T17: evidence packs (Week 69, ADR-0053)<a class="headerlink" href="#t17-evidence-packs-week-69-adr-0053" title="Permanent link">&para;</a></h3>
+<p>A pack holds an organization's SLA history, risk acceptances, issue counts and audit-log extract.
+<strong>Done:</strong> packs are stored under forced RLS and served only to their organization; the audit extract
+shows other organizations' entries as hashes only, which still lets every link be recomputed
+(version-2 entries put the organization inside the hash); payloads are never in the log, only their
+digests. <code>verify.py</code> checks the files and the chain without Bulwark; the manifest is signed with
+cosign when a key is configured, and a pack is never produced unsigned after signing failed.
+Checkpoints can be verified against Rekor offline. <strong>Residual:</strong> the number and timing of other
+organizations' audit entries are visible in an extract; entries from before migration 0041 can be
+checked by link only; whoever holds the signing key can sign a fabricated pack (the chain and Rekor
+checkpoints still have to agree); a pack is only as current as its last checkpoint. Status: Partial.</p>
+<h3 id="t18-sign-in-sessions-and-access-week-75-plan-threat-t30-adr-0058">T18: sign-in, sessions and access (Week 75, plan threat T30, ADR-0058)<a class="headerlink" href="#t18-sign-in-sessions-and-access-week-75-plan-threat-t30-adr-0058" title="Permanent link">&para;</a></h3>
+<p><strong>Done:</strong> OIDC with PKCE and strict checks of the ID token: asymmetric signatures only (never <code>none</code> or
+an HMAC "signed" with the public key), exact issuer, our audience (and <code>azp</code> when there are several),
+expiry, and the nonce of this sign-in; one-time <code>state</code>; HTTPS to the provider. SAML only through
+pysaml2 with xmlsec1, assertions required to be signed, no unsolicited responses, audience and
+destination checked; tests forge an unsigned assertion, another key's signature, a tampered one, three
+kinds of signature wrapping, a comment inside the NameID, another service's response, an expired one, a
+replayed one and an unsolicited one, and each is refused for its own reason. A person is bound to the
+provider's stable subject, so a second account with the same email cannot take theirs. Sessions are
+HttpOnly, SameSite=Lax, Secure cookies holding a secret whose SHA-256 alone is stored, at most 12 hours
+and 2 idle; every change made with one needs its CSRF token. SCIM deprovisioning (and turning someone
+off by hand) ends their sessions and revokes their tokens in the same request. A person limited to some
+projects runs as the <code>bulwark_guest</code> database role, whose restrictive RLS policies hide every other
+project's rows in every table that names one; the two-project test proves it on Postgres. Evidence files
+are served with <code>Content-Security-Policy: sandbox</code>, so a file that runs script cannot use the session.
+<strong>Residual:</strong> Google, Entra ID and Okta are covered by standard OIDC but were exercised only through a
+local Keycloak; the shared token and pre-account tokens are nobody in particular and keep their scopes;
+a provider administrator can sign in as anyone the provider vouches for. Status: Partial.</p>
+<h3 id="t19-agents-and-pull-request-comments-week-76-plan-threat-t29-adr-0059">T19: agents and pull request comments (Week 76, plan threat T29, ADR-0059)<a class="headerlink" href="#t19-agents-and-pull-request-comments-week-76-plan-threat-t29-adr-0059" title="Permanent link">&para;</a></h3>
+<p><strong>MCP server.</strong> <code>bulwark mcp</code> calls the API with the person's own token, so scopes, roles, project
+limits and RLS apply unchanged; the shared token is refused; ids are checked before a request;
+redirects are not followed and a remote API must be https. Read-only by default (<code>run_scan</code> needs
+<code>--allow-scans</code> and a token that may write scans); no tool changes a status. Every value Bulwark
+does not set itself is wrapped as <code>{"untrusted_text": ...}</code>, default-deny: a trusted key must also
+hold a value that looks like one. Hidden and reordering characters are shown as <code>&lt;U+XXXX&gt;</code>; long
+text is cut. Tested with a Hypothesis property (no unwrapped string escapes) and live: a planted
+injection in a scanned file came back wrapped, with its bidi override shown as a code, to the SDK's
+own stdio client. <strong>Residual:</strong> a label informs an agent, it cannot stop one from following the text;
+the agent's own permissions are the real limit.</p>
+<p><strong><code>/fix</code>.</strong> Only from a GitHub owner, member or collaborator (<code>author_association</code>) whose login an
+admin linked to an active person with the Member role or higher on that project; never for a pull
+request from a fork (its code must not run with the base repository's credentials, the
+<code>pull_request_target</code> lesson); only a new comment's first line is a command, never an edit; a bot is
+ignored; the organization comes from the App installation, and a comment never creates one. A
+preview shows the findings and the token cap and spends nothing; the confirm repeats every check and
+is refused when the pull request has new commits since the preview, the code has expired (24 h) or
+been used, the monthly budget cannot cover the cap, or the organization is at its concurrency limit.
+The agent stops at the cap (checked before each model call) and every token is charged to the
+organization's budget. Results are posted as comments; Bulwark never pushes to the branch. Tested on
+SQLite, on Postgres (RLS, a project-limited guest), and live with the real worker on Temporal.
+<strong>Residual:</strong> not exercised with a real GitHub App or a real model; a scan of the head commit is
+matched by the commit the webhook named, so a push in the seconds between the webhook and the clone
+could make the scan describe a newer commit. Status: Partial.</p>
+<h3 id="observability-endpoints">Observability endpoints<a class="headerlink" href="#observability-endpoints" title="Permanent link">&para;</a></h3>
+<p>The worker's <code>/metrics</code> (port 9101) has no authentication and is not published to the host; only the compose network
+reaches it. Grafana's default admin password (<code>admin</code>) and anonymous viewer access are for localhost use only (the
+port is bound to 127.0.0.1); change the password and remove anonymous access before exposing it anywhere. Logs are
+scrubbed of credentials by pattern, which is best effort, and traces carry tool names, statuses and counts but never
+code or findings.</p>
+<h2 id="out-of-scope">Out of scope<a class="headerlink" href="#out-of-scope" title="Permanent link">&para;</a></h2>
+<p>DAST (<a href="../adr/0003-no-dast-in-v1/">ADR-003</a>); the security of the upstream scanners themselves; multi-tenant
+isolation is covered by RLS (ADR-0013) and, between projects, by T18; physical and cloud-account security of wherever it runs.</p>
+<h2 id="before-a-public-deployment">Before a public deployment<a class="headerlink" href="#before-a-public-deployment" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Resolve the Semgrep rules licence (<a href="../adr/0006-semgrep-rules-licensing/">ADR-006</a>).</li>
+<li>Run scanners under gVisor or rootless Docker on a host that holds nothing else (T1, T12).</li>
+<li>Per-user authentication, rate limiting and a scan queue cap (T6, T11).</li>
+<li>Pin image digests (T10); encrypt storage at rest (T7).</li>
+</ol>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.top", "content.code.copy", "content.action.edit"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

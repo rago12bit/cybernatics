@@ -1,0 +1,1273 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Unified security scanning -- one scan, one deduplicated list of findings.">
+      
+      
+      
+        <link rel="canonical" href="https://rag2102.github.io/cyberimp/technical-report-v2/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Cross-Tool Correlation, Taint-Confirmed Reachability Ranking, and Mechanically Verified Fixes in an Open-Source Security Scanning Pipeline - Bulwark</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#cross-tool-correlation-taint-confirmed-reachability-ranking-and-mechanically-verified-fixes-in-an-open-source-security-scanning-pipeline" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Bulwark" class="md-header__button md-logo" aria-label="Bulwark" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Bulwark
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Cross-Tool Correlation, Taint-Confirmed Reachability Ranking, and Mechanically Verified Fixes in an Open-Source Security Scanning Pipeline
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Rag2102/cyberimp" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Rag2102/cyberimp
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Bulwark" class="md-nav__button md-logo" aria-label="Bulwark" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Bulwark
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Rag2102/cyberimp" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Rag2102/cyberimp
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quickstart
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../risk-score/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Risk scoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../taxonomy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Taxonomy (CWE / OWASP)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reachability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reachability
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../vex/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    VEX
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../compliance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compliance and evidence packs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Metrics and dashboards
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reports/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reports
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../issue-search/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Finding Issues
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../identity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sign-in, people and access
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../plugins/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Writing a plugin
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../policy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Policy cookbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ingest-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Importing reports
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#abstract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Abstract
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-introduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Introduction
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-system-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. System Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-correlation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Correlation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Correlation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-method" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 Method
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 Results
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-taint-confirmed-reachability-ranking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Taint-Confirmed Reachability Ranking
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Taint-Confirmed Reachability Ranking">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-method" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 Method
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 Results
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-mechanically-verified-fix-generation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Mechanically Verified Fix Generation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Mechanically Verified Fix Generation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-method" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 Method
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-results-and-a-disclosed-limitation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 Results and a disclosed limitation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-limitations-and-threats-to-validity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Limitations and Threats to Validity
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-related-work" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Related Work
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-conclusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Conclusion
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reproducibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reproducibility
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/Rag2102/cyberimp/edit/main/docs/technical-report-v2.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="cross-tool-correlation-taint-confirmed-reachability-ranking-and-mechanically-verified-fixes-in-an-open-source-security-scanning-pipeline">Cross-Tool Correlation, Taint-Confirmed Reachability Ranking, and Mechanically Verified Fixes in an Open-Source Security Scanning Pipeline<a class="headerlink" href="#cross-tool-correlation-taint-confirmed-reachability-ranking-and-mechanically-verified-fixes-in-an-open-source-security-scanning-pipeline" title="Permanent link">&para;</a></h1>
+<p><em>Bulwark v2.0.0 technical report. Source and reproduction instructions:
+<a href="https://github.com/Rag2102/cyberimp">https://github.com/Rag2102/cyberimp</a>. An informal, plain-language companion post is at
+<a href="../blog-v2.0.0/">blog-v2.0.0.md</a>.</em></p>
+<h2 id="abstract">Abstract<a class="headerlink" href="#abstract" title="Permanent link">&para;</a></h2>
+<p>Running several open-source static analysis tools against one codebase produces a union of findings
+with substantial redundancy and no shared notion of severity. We describe three mechanisms in Bulwark,
+an open-source scanning platform, that address this: (1) cross-tool <strong>correlation</strong>, which merges
+findings describing the same underlying defect using a composite fingerprint rather than relying on
+any single tool's own identifiers; (2) <strong>taint-confirmed reachability ranking</strong>, which augments a
+severity-and-exploitability risk score with a binary signal derived from static data-flow analysis —
+whether a reported sink is demonstrably reached from an HTTP entrypoint — rather than treating every
+static-analysis finding as equally actionable; and (3) a <strong>verified-fix</strong> pipeline in which a
+model-proposed patch is accepted only after it is shown, mechanically, not to regress the finding, the
+originating tool, the full scanner suite, or the project's own test suite. We report measurements
+against the OWASP Benchmark, the Juliet Test Suite, a 25-repository corpus, and a hand-verified
+spot-check against real deliberately-vulnerable applications, and we are explicit about which claims
+remain unmeasured because they require a live, costly model call this evaluation environment does not
+have provisioned.</p>
+<h2 id="1-introduction">1. Introduction<a class="headerlink" href="#1-introduction" title="Permanent link">&para;</a></h2>
+<p>A developer running Bandit, Semgrep, Gitleaks, Trivy and OSV-Scanner against one repository receives
+five reports in five formats with five severity vocabularies. The same SQL injection may appear as a
+Bandit finding and a Semgrep finding; the same vulnerable dependency may appear in both Trivy and
+OSV-Scanner's output. The engineering problem we address is not detection — that is delegated to
+mature, independently maintained tools — but <strong>normalization, correlation, and prioritization</strong> over
+their combined output.</p>
+<p>Two further problems compound this. First, a reported weakness (e.g., "this function may be callable
+with attacker-controlled input") is not the same claim as "this function <em>is</em> callable with
+attacker-controlled input from a concrete, traceable entrypoint" — the former is what most SAST tools
+report; the latter requires data-flow analysis most of them do not perform. Second, once a true
+positive is identified and prioritized, nothing in a conventional pipeline closes the loop: a suggested
+fix, if offered at all, is typically unverified prose or an unapplied diff.</p>
+<p>This report describes how Bulwark v2.0.0 addresses all three.</p>
+<h2 id="2-system-overview">2. System Overview<a class="headerlink" href="#2-system-overview" title="Permanent link">&para;</a></h2>
+<p>Each configured scanner executes in an isolated container (<code>--network=none --read-only
+--cap-drop=ALL</code>, non-root, resource-limited) against a read-only mount of the target. Raw tool output
+is parsed into a canonical <code>Finding</code> record (location, taxonomy, native and normalized severity,
+evidence). This canonical representation is the substrate correlation, ranking, and the fix pipeline
+all operate on.</p>
+<h2 id="3-correlation">3. Correlation<a class="headerlink" href="#3-correlation" title="Permanent link">&para;</a></h2>
+<h3 id="31-method">3.1 Method<a class="headerlink" href="#31-method" title="Permanent link">&para;</a></h3>
+<p>Two findings are considered the same underlying defect if they satisfy one of two identity rules: (a)
+<strong>dependency identity</strong> — same package name/ecosystem and a shared vulnerability advisory identifier
+(CVE/GHSA/etc.), independent of which SCA tool reported it; or (b) <strong>code identity</strong> — same file, a
+configurable line-proximity window, and either a shared CWE or sufficient snippet token overlap,
+independent of each tool's own internal rule identifier. Rule (b) exists because no two SAST tools
+share a rule-naming scheme; relying on rule-id equality would merge nothing across tools.</p>
+<p>Every contributing tool's evidence is retained on the merged record; the highest normalized severity
+among contributors is kept, never averaged or discarded.</p>
+<h3 id="32-results">3.2 Results<a class="headerlink" href="#32-results" title="Permanent link">&para;</a></h3>
+<p>Measured on a 25-repository corpus (12 deliberately vulnerable applications, 13 ordinary open-source
+projects), all five default scanners, one run per repository on an otherwise-idle machine:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th style="text-align: right;">Deliberately vulnerable apps</th>
+<th style="text-align: right;">Ordinary repositories</th>
+<th style="text-align: right;">Pooled</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Dedup rate</td>
+<td style="text-align: right;">19.9%</td>
+<td style="text-align: right;">1.3%</td>
+<td style="text-align: right;">8.9%</td>
+</tr>
+<tr>
+<td>Tool-run failures</td>
+<td style="text-align: right;">0 / 94</td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;"></td>
+</tr>
+</tbody>
+</table>
+<p>The pooled figure is not independently meaningful: deliberately vulnerable test applications
+concentrate the kind of dependency overlap (two SCA tools reporting the same advisory) that drives
+most of the merging; ordinary repositories' findings rarely overlap at all. We report both strata
+rather than the pooled number alone for this reason.</p>
+<h2 id="4-taint-confirmed-reachability-ranking">4. Taint-Confirmed Reachability Ranking<a class="headerlink" href="#4-taint-confirmed-reachability-ranking" title="Permanent link">&para;</a></h2>
+<h3 id="41-method">4.1 Method<a class="headerlink" href="#41-method" title="Permanent link">&para;</a></h3>
+<p>The taint engine performs intraprocedural and limited interprocedural data-flow analysis (tree-sitter
+parse trees; language-specific source/sink/sanitizer catalogs for Python, JavaScript and Go) to
+determine whether a declared <em>sink</em> (e.g., <code>eval</code>, a raw SQL <code>query</code> call, <code>child_process.exec</code>) is
+reached by data originating at a declared <em>source</em> (an HTTP framework's request object). Deliberately,
+<strong>the engine does not emit new findings</strong>: it only annotates an existing SAST finding from another
+tool, at the same file and line, with a confirmed reachability signal. A finding with no corresponding
+taint-sink match is left annotated <code>reachable: null</code> — "unknown," never a fabricated "not reachable" —
+the same discipline this platform's existing package-level dependency-reachability analysis already
+applies.</p>
+<p>A confirmed reachable finding's <code>scoring.confidence</code> is set to a fixed high value (0.9), which this
+platform's existing risk-scoring formula already treats as the dominant likelihood term for any finding
+category without CVE/EPSS/KEV data (SAST, secrets, IaC). This reuses an existing, already-reviewed
+scoring path rather than introducing a second, parallel rule that would need to be kept consistent
+with it.</p>
+<h3 id="42-results">4.2 Results<a class="headerlink" href="#42-results" title="Permanent link">&para;</a></h3>
+<p><strong>Reachability confirmation (spot-check).</strong> We ran the full pipeline (Bandit, Semgrep) against two
+real, deliberately vulnerable JavaScript applications (NodeGoat, nodejs-goof) already present in our
+corpus, then manually inspected every confirmed-reachable finding against the underlying source. All
+three confirmations (NodeGoat, <code>app/routes/contributions.js:32-34</code>, data from an Express request body
+flowing to <code>eval</code>) were verified true positives by inspection — the target file's own source comment
+reads "Insecure use of eval() to parse inputs," with a safe alternative commented out directly below
+it. Notably, the originating report (Semgrep's <code>eval-detected</code> rule) is a syntactic pattern match with
+no data-flow component; the taint engine's contribution is specifically the <em>flows-from-request</em>
+claim, which the pattern rule alone cannot make. This is a small, hand-verified sample (N=3) and does
+not constitute a corpus-scale precision/recall study; we report it as such rather than extrapolating.</p>
+<p><strong>Ranking.</strong> We evaluate whether ordering findings by the full risk score (severity combined with
+EPSS, CISA KEV status, and reachability) yields better top-K precision than ordering by severity alone,
+using the OWASP Benchmark (2,894 Semgrep findings, 1,395 true positives by the Benchmark's own ground
+truth) with expected-value tie-breaking:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">Top-K</th>
+<th style="text-align: right;">Risk score</th>
+<th style="text-align: right;">Severity only</th>
+<th style="text-align: right;">Random</th>
+<th style="text-align: right;">Difference (95% CI)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">69.2%</td>
+<td style="text-align: right;">52.4%</td>
+<td style="text-align: right;">48.2%</td>
+<td style="text-align: right;">+16.8 pp (−10.7, +40.3)</td>
+</tr>
+<tr>
+<td style="text-align: right;">20</td>
+<td style="text-align: right;">63.3%</td>
+<td style="text-align: right;">52.4%</td>
+<td style="text-align: right;">48.2%</td>
+<td style="text-align: right;">+10.9 pp (−6.4, +28.3)</td>
+</tr>
+<tr>
+<td style="text-align: right;">50</td>
+<td style="text-align: right;">56.8%</td>
+<td style="text-align: right;">52.4%</td>
+<td style="text-align: right;">48.2%</td>
+<td style="text-align: right;">+4.4 pp (−2.0, +10.8)</td>
+</tr>
+<tr>
+<td style="text-align: right;">100</td>
+<td style="text-align: right;">54.6%</td>
+<td style="text-align: right;">52.4%</td>
+<td style="text-align: right;">48.2%</td>
+<td style="text-align: right;">+2.2 pp (−0.6, +5.3)</td>
+</tr>
+</tbody>
+</table>
+<p>The risk score leads at every K, with the largest margin at the smallest K, but every confidence
+interval includes zero: <strong>this dataset does not demonstrate a statistically significant improvement</strong>
+over severity-only ranking. We attribute this in part to the dataset's low score cardinality (only one
+Java-capable scanner contributes, yielding 7 distinct risk scores and 2 distinct severities across the
+whole corpus) and to the complete absence of exploitation ground truth for the dependency-specific
+signals (EPSS, KEV) in any benchmark available to us — the OWASP Benchmark contains no dependency
+findings at all. We report this as a negative result rather than omit it.</p>
+<h2 id="5-mechanically-verified-fix-generation">5. Mechanically Verified Fix Generation<a class="headerlink" href="#5-mechanically-verified-fix-generation" title="Permanent link">&para;</a></h2>
+<h3 id="51-method">5.1 Method<a class="headerlink" href="#51-method" title="Permanent link">&para;</a></h3>
+<p>Given a finding, a model proposes a patch. Rather than presenting this patch directly, the system
+executes a four-stage verification loop before any human sees it as "ready for review": (1) apply the
+patch in an isolated, network-denied sandbox; (2) re-run the specific rule that produced the original
+finding, confirming it no longer fires; (3) re-run the full configured scanner suite over the patched
+code, confirming no new finding is introduced; (4) run the project's own test suite, confirming no
+regression. Only a patch that survives all four stages is offered for human approval as a pull
+request; a patch that fails any stage is discarded, not shown with a caveat. The system deliberately
+does not attempt to automatically merge a verified patch — human approval remains mandatory.</p>
+<h3 id="52-results-and-a-disclosed-limitation">5.2 Results and a disclosed limitation<a class="headerlink" href="#52-results-and-a-disclosed-limitation" title="Permanent link">&para;</a></h3>
+<p>The contract, prompt construction, verification-loop control flow, and PR-creation mechanics are
+implemented and unit-tested against the real control-flow paths (valid model reply, a malformed reply
+repaired once, exhausted retries) using fake model clients covering each path. <strong>The acceptance rate of
+verified fixes, and blind human review of proposed patches, require a live model and ongoing per-run
+cost; this evaluation environment is not provisioned with one, and we report this gap explicitly
+rather than substitute a smaller, unrepresentative number.</strong> The mechanism's correctness under
+adversarial input (a planted prompt-injection payload attempting to redirect the patch outside the
+finding's own file, or to claim a real finding is a false positive) is separately verified: 60 payload
+x contract combinations across the full LLM-consuming surface (this fix pipeline, the triage assistant,
+the attack-path narrator) were tested, and all 60 were correctly rejected by the parsing contract
+regardless of what the (simulated) model returned.</p>
+<h2 id="6-limitations-and-threats-to-validity">6. Limitations and Threats to Validity<a class="headerlink" href="#6-limitations-and-threats-to-validity" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Single-analyzer coverage for Java.</strong> Both the OWASP Benchmark and Juliet results are Semgrep's
+  alone; no claim here generalizes to an ensemble of Java analyzers, which we do not have.</li>
+<li><strong>The taint-engine result is a spot-check, not a corpus study</strong>, and does not evaluate recall against
+  vulnerability classes outside the three sink categories exercised (JavaScript <code>eval</code>/<code>exec</code>/<code>query</code>).</li>
+<li><strong>Scale measurements (p95 latency, autoscaling behavior) were taken on a single developer machine</strong>
+  and a local <code>kind</code> cluster, not a provisioned production environment; relative findings (a bottleneck
+  exists, a fix resolves it) are more robust than the absolute millisecond figures.</li>
+<li><strong>No independent replication.</strong> All measurements in this report were produced by the same team that
+  built the system under test, on infrastructure that team controls. We mitigate this only by
+  publishing method, raw result files, and reproduction commands alongside every number.</li>
+</ul>
+<h2 id="7-related-work">7. Related Work<a class="headerlink" href="#7-related-work" title="Permanent link">&para;</a></h2>
+<p>Cross-tool SAST aggregation is the explicit design goal of DefectDojo (OWASP), which this project's
+third development phase (not covered in this report) is explicitly modeled on for ingest and
+vulnerability-management workflow, while deliberately not reusing its name or branding. Taint analysis
+for web application vulnerability detection is long-studied (e.g., Livshits and Lam, 2005, for Java);
+our contribution is narrower and more modest — using taint analysis purely as a <em>confirmation</em> signal
+over findings other tools already produced, rather than as an independent detector, to keep the
+analysis tractable within a multi-language, multi-tool pipeline. LLM-assisted vulnerability
+remediation has seen substantial recent interest; our verified-fix design's distinguishing property is
+that acceptance is gated on reproducible, mechanical verification (rule re-check, full scanner re-run,
+test suite) rather than on the model's own confidence or a single rerun of the triggering check alone.</p>
+<h2 id="8-conclusion">8. Conclusion<a class="headerlink" href="#8-conclusion" title="Permanent link">&para;</a></h2>
+<p>Correlation, taint-confirmed reachability, and mechanically verified fixes are three independent
+mechanisms addressing three distinct failure modes of a naive multi-scanner pipeline: redundant
+reports, undifferentiated severity, and unverified remediation. We report real measurements for all
+three, including a negative result (ranking improvement not statistically demonstrated on available
+data) and an explicit, unfilled gap (verified-fix acceptance rate, which needs a live model this
+evaluation was not provisioned with). We consider the explicit reporting of what is not yet measured to
+be as much a contribution of this work as the mechanisms themselves.</p>
+<h2 id="reproducibility">Reproducibility<a class="headerlink" href="#reproducibility" title="Permanent link">&para;</a></h2>
+<p>All result files referenced are committed at <code>benchmarks/results/</code> in the source repository. Commands
+to reproduce every number in this report are in <a href="../evaluation-v2/">evaluation-v2.md</a>,
+<a href="../evaluation-owasp/">evaluation-owasp.md</a>, <a href="../evaluation-juliet-corpus/">evaluation-juliet-corpus.md</a>,
+and <code>benchmarks/README.md</code>.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.top", "content.code.copy", "content.action.edit"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

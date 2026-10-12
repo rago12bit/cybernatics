@@ -1,0 +1,1166 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Unified security scanning -- one scan, one deduplicated list of findings.">
+      
+      
+      
+        <link rel="canonical" href="https://rag2102.github.io/cyberimp/adr/0027-verified-fix-agent/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>ADR-0027: Verified-fix agent - Bulwark</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#adr-0027-verified-fix-agent" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Bulwark" class="md-header__button md-logo" aria-label="Bulwark" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Bulwark
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              ADR-0027: Verified-fix agent
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Rag2102/cyberimp" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Rag2102/cyberimp
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Bulwark" class="md-nav__button md-logo" aria-label="Bulwark" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Bulwark
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Rag2102/cyberimp" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Rag2102/cyberimp
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quickstart
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../risk-score/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Risk scoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../taxonomy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Taxonomy (CWE / OWASP)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reachability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reachability
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../vex/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    VEX
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../compliance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compliance and evidence packs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Metrics and dashboards
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reports/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reports
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../issue-search/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Finding Issues
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../identity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sign-in, people and access
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../plugins/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Writing a plugin
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../policy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Policy cookbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ingest-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Importing reports
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decisions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decisions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decisions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#temporal-stood-up-and-validated-live-not-stubbed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Temporal, stood up and validated live, not stubbed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-five-allowlisted-tools-four-are-real-one-is-deliberately-not-a-tool" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The five allowlisted tools: four are real, one is deliberately not a tool
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tool-calling-is-new-infrastructure-hosted-only-and-extends-clientpy-rather-than-replacing-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tool-calling is new infrastructure, hosted-only, and extends client.py rather than replacing it
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verification-reuses-corescanscan-wholesale-changed-files-is-a-filter-not-new-scan-scope" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verification reuses core.scan.scan() wholesale; "changed files" is a filter, not new scan scope
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-second-more-permissive-sandbox-for-tests-not-a-mode-of-the-scanner-sandbox" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A second, more permissive sandbox for tests — not a mode of the scanner sandbox
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#github-pr-creation-via-the-contents-api-not-local-git" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GitHub PR creation via the Contents API, not local git
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#persistence-a-new-table-not-an-overload-of-issuerowtriage_status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Persistence: a new table, not an overload of IssueRow.triage_status
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-0015s-three-numbers-picked-and-documented-corefixagentlimitspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-0015's three numbers, picked and documented (core/fixagent/limits.py)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-fix-review-screen-matches-the-plans-own-mockup-284-with-one-named-cut" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The fix-review screen matches the plan's own mockup (§28.4), with one named cut
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/Rag2102/cyberimp/edit/main/docs/adr/0027-verified-fix-agent.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="adr-0027-verified-fix-agent">ADR-0027: Verified-fix agent<a class="headerlink" href="#adr-0027-verified-fix-agent" title="Permanent link">&para;</a></h1>
+<p>Status: Implemented (2026-09-30), Week 42 (plan §21.2) — "the flagship v2 feature." Builds on
+ADR-0015 (workflow safety limits, design-only), ADR-0017 (GitHub App), ADR-0020/0021 (call graph,
+taint analysis), and Week 41's model gateway (ADR-0026).</p>
+<h2 id="context">Context<a class="headerlink" href="#context" title="Permanent link">&para;</a></h2>
+<p>The plan describes a loop: propose a patch for one Issue, verify it for real (rerun the rule, rerun
+every scanner, optionally the project's own tests), and only then ask a human to approve opening a
+pull request — never auto-merged. It asks for this to be implemented as a Temporal workflow
+specifically, the first one in a codebase that has used Celery for scan fan-out since v1.0. Nothing
+of this existed before this week: no <code>core/agent/</code>-style module, no PR-creation code anywhere
+(confirmed before writing this — <code>core/github_app.py</code> only mints tokens and posts PR comments), and
+ADR-0015 (Week 28) had deliberately fixed only the <em>shape</em> of the safety limits, leaving concrete
+numbers to whichever week built the real thing.</p>
+<h2 id="decisions">Decisions<a class="headerlink" href="#decisions" title="Permanent link">&para;</a></h2>
+<h3 id="temporal-stood-up-and-validated-live-not-stubbed">Temporal, stood up and validated live, not stubbed<a class="headerlink" href="#temporal-stood-up-and-validated-live-not-stubbed" title="Permanent link">&para;</a></h3>
+<p>The user chose the full option over deferring Temporal to plain Celery orchestration. <code>temporalio</code>
+is a new dependency (<code>fixagent</code> extra, plus <code>dev</code>). Every claim below about Temporal's behavior was
+checked against a real local Temporal server (<code>temporal server start-dev</code>, then
+<code>temporalio.testing.WorkflowEnvironment</code> for the test suite) before being relied on:</p>
+<ul>
+<li><strong>Worker-restart durability</strong> (the plan's own stated reason for choosing Temporal): started a
+  workflow, killed the worker process mid-run, started a brand-new worker with no shared memory,
+  and it resumed and completed correctly from Temporal's own event history — not assumed from
+  Temporal's documentation, actually done.</li>
+<li><strong>The three ADR-0015 scenarios that don't need real wall-clock minutes to test</strong> (approve, reject,
+  max-attempts-exhausted, overall-timeout) run against <code>WorkflowEnvironment.start_time_skipping()</code>,
+  a real (disposable) Temporal server whose clock fast-forwards through workflow timers —
+  <code>tests/unit/test_fixagent_workflow.py</code> exercises the actual <code>VerifiedFixWorkflow.run()</code> code, not
+  a reimplementation of its control flow. The fourth (a genuinely hung <em>activity</em> exceeding its own
+  <code>start_to_close_timeout</code>) is covered by Temporal's own documented <code>ActivityError</code> semantics and
+  code review, not a live timing test — that one proved awkward to script reliably in this
+  environment; see docs/v2-week42-verification.md.</li>
+<li><strong>Two real integration mistakes were caught building this</strong>, not assumed away: a workflow file
+  containing top-level side-effecting code gets re-executed by Temporal's workflow sandbox on
+  import (a first throwaway script called <code>asyncio.run()</code> at module scope and broke); and a
+  workflow/activity file needs its heavy, non-deterministic imports (<code>anthropic</code>, <code>sqlalchemy</code>,
+  <code>subprocess</code>) kept OUT of module-level imports and lazily imported inside each <code>@activity.defn</code>
+  function instead, or the sandbox's determinism checks complain about the workflow module itself.</li>
+</ul>
+<p><code>docker-compose.yml</code> gets <code>temporal</code>/<code>temporal-ui</code>/<code>fixagent-worker</code>, all behind a new
+<code>--profile fixagent</code>, pointing Temporal's own Postgres storage at the SAME Postgres instance
+<code>bulwark</code> already runs (separate databases, auto-created) rather than a second Postgres container.</p>
+<h3 id="the-five-allowlisted-tools-four-are-real-one-is-deliberately-not-a-tool">The five allowlisted tools: four are real, one is deliberately not a tool<a class="headerlink" href="#the-five-allowlisted-tools-four-are-real-one-is-deliberately-not-a-tool" title="Permanent link">&para;</a></h3>
+<p><code>read_file</code>, <code>search_code</code>, <code>get_call_path</code> are real, path-contained functions
+(<code>core/fixagent/tools.py</code>) the model can call freely while composing a patch — validated live
+against real, on-disk Python source, including confirming path-containment rejects <code>../</code> escapes,
+absolute paths, and empty input. <code>propose_patch</code> is the terminal call that ends the turn.</p>
+<p><code>run_verification</code> — the fifth tool the plan names — is <strong>not</strong> exposed as something the model can
+call mid-turn. Verification means applying an untrusted patch to a real checkout and executing
+scanners (and optionally the project's own tests) against it: a materially heavier, more
+security-sensitive operation than reading text. The workflow (<code>core/fixagent/workflow.py</code>), not the
+model, decides deterministically when that happens — after a turn ends, always, every attempt —
+rather than leaving "when do we mutate and execute a sandboxed checkout" to model discretion. This
+is a real interpretation choice, not an oversight: the plan's flow diagram shows verification as
+workflow-level control flow (loop-back arrows into "propose patch" carrying feedback), consistent
+with this reading.</p>
+<h3 id="tool-calling-is-new-infrastructure-hosted-only-and-extends-clientpy-rather-than-replacing-it">Tool-calling is new infrastructure, hosted-only, and extends <code>client.py</code> rather than replacing it<a class="headerlink" href="#tool-calling-is-new-infrastructure-hosted-only-and-extends-clientpy-rather-than-replacing-it" title="Permanent link">&para;</a></h3>
+<p>No tool-calling code existed anywhere in this repository before this week (confirmed: <code>LLMClient
+.complete</code> is single-shot text in, text out). <code>AnthropicClient.complete_with_tools</code> is new but
+additive — every existing caller of <code>complete()</code> (Week 12/13's remediation feature, Week 41's
+gateway) is untouched. Only the hosted (Anthropic) backend implements it: native tool-calling is a
+provider-specific protocol, and building it against the local Ollama backend too would have doubled
+this week's newest, least-proven surface for a capability privacy mode doesn't strictly need (a
+verified-fix run already touches a live GitHub App and the public internet via a PR; "the code never
+leaves the machine" isn't the promise verified-fix makes in the first place). Consequence: verified
+-fix does not currently work as a <em>local-only</em> pipeline the way Week 41's remediation suggestions
+now can.</p>
+<p>Every tool result the model sees is scrubbed for secrets (<code>core.llm.scrub</code>) and redacted for PII
+(<code>core.llm.pii</code>) before being sent — the same two layers Week 41 built, reused rather than
+duplicated. The system prompt states, in the same plain terms <code>prompts/fix/v1.md</code> already uses, that
+tool output is data from an untrusted repository, never instructions. A repair-style retry exists at
+the contract level (an invalid <code>propose_patch</code> call is told "rejected: <reason>" as its own tool
+result and the model gets to try again within the same turn budget) but the <strong>rejected reply is
+never itself echoed back</strong>, for the same reason Week 41's one-repair-attempt design avoids it: a
+rejected reply already failed validation, so feeding it back would open a second-order injection
+channel.</p>
+<h3 id="verification-reuses-corescanscan-wholesale-changed-files-is-a-filter-not-new-scan-scope">Verification reuses <code>core.scan.scan()</code> wholesale; "changed files" is a filter, not new scan scope<a class="headerlink" href="#verification-reuses-corescanscan-wholesale-changed-files-is-a-filter-not-new-scan-scope" title="Permanent link">&para;</a></h3>
+<p>Nothing in this codebase can scope a scan to a subset of files (confirmed: <code>ToolAdapter.applies_to</code>
+filters by language, not by file list). Rather than build that, <code>rerun_rule</code>/<code>rerun_scanners</code>
+(<code>core/fixagent/verify.py</code>) run a full <code>core.scan.scan()</code> of the whole patched checkout and filter
+the result: <code>rerun_rule</code> checks whether the finding's own fingerprint still turns up when only the
+originating tool runs again; <code>rerun_scanners</code> checks whether any finding on the <em>changed</em> file(s) has
+a fingerprint that wasn't already present in the pre-patch baseline. A real, non-obvious fact
+surfaced while testing this: <code>core.scan.scan()</code> always recomputes <code>Finding.fingerprint</code> via
+<code>correlate()</code>, even for a single, unmerged finding — a fingerprint hand-assigned on a fake <code>Finding</code>
+in a test is silently discarded and replaced with the correlator's own value, so verifying "the same
+defect is gone" only works when the rescanned content actually hashes the same way (same path,
+snippet, CWE, rule ids) as the original. This is real, useful discipline, not a workaround: it means
+the check is honestly tied to what a real rescan would report, not to a label a test (or, worse, a
+future caller) could set arbitrarily.</p>
+<h3 id="a-second-more-permissive-sandbox-for-tests-not-a-mode-of-the-scanner-sandbox">A second, more permissive sandbox for tests — not a mode of the scanner sandbox<a class="headerlink" href="#a-second-more-permissive-sandbox-for-tests-not-a-mode-of-the-scanner-sandbox" title="Permanent link">&para;</a></h3>
+<p><code>core/runner.py</code>'s scanner sandbox is <code>--network=none</code>, read-only, non-root, all capabilities
+dropped: correct for reading code, useless for installing a project's own dependencies and running
+its test suite. <code>core/fixagent/sandbox.py</code> is a deliberately separate, more permissive function
+(network on, writable tree, default Docker capabilities rather than <code>--cap-drop=ALL</code>) rather than a
+runtime branch inside the existing one — validated live against a real <code>python:3.12-slim</code> container
+(<code>pip install pytest</code>, a real passing run, then a real failing one, both with real captured pytest
+output). This is explicitly the plan's own "hardened Docker runner, for now": ADR-0015 already
+named Firecracker (Phase 11, not yet built) as the eventual, properly-isolated execution environment
+for this; picking a precise minimal capability set for arbitrary language ecosystems' build tooling
+is real, ecosystem-specific work this pass does not attempt, and the gap is disclosed rather than
+papered over with a guessed-at middle ground.</p>
+<p>Gated by two independent conditions, both required: the caller opts in (<code>run_tests: true</code> plus an
+image and command), and the asset is "verified owner" — defined as <code>Scan.github_installation_id is
+not None</code>, i.e. it was scanned via an installed GitHub App, which is GitHub's own proof that the
+installer has admin rights on that repository. No new ownership-verification column was added; this
+reuses data that already exists for exactly the reason the plan's wording implies (<code>hardened Docker
+runner... verified-owner repositories only</code>). Asking for <code>run_tests</code> on a non-verified asset is a
+normal request, silently downgraded to "no tests," never a 4xx — the same shape decision Week 40's
+Dependencies screen made for an unopted-in <code>syft</code>.</p>
+<h3 id="github-pr-creation-via-the-contents-api-not-local-git">GitHub PR creation via the Contents API, not local git<a class="headerlink" href="#github-pr-creation-via-the-contents-api-not-local-git" title="Permanent link">&para;</a></h3>
+<p><code>core.gitfetch.clone_repo</code> deletes <code>.git</code> from every checkout it makes (an existing, unrelated
+isolation choice) — there is no local git history a verified-fix checkout could commit from. Since
+every patch this feature ever produces touches exactly one file (<code>core.llm.contract.validate_patch</code>
+already enforces that, reused as-is), the GitHub REST Contents API (<code>create/update a file</code> in one
+call, given its current sha) is sufficient and far simpler than the lower-level git-data blob/tree/
+commit API a multi-file change would need. <code>core/fixagent/github_pr.py</code>'s five-call sequence (read
+the default branch, read its head sha, create a branch ref from it, read the target file's current
+sha on that branch, update it, open the PR) was built by reading GitHub's documented, long-stable
+REST v3 contract, and is unit-tested against a fake, sequenced <code>Transport</code> (the same injection
+pattern <code>core.ci.github.upsert_comment</code> already uses) — but <strong>not validated against a real, live
+GitHub App installation</strong>: this environment has no App credentials to test against. This is an
+honest, disclosed gap, not a hidden one; see docs/v2-week42-verification.md.</p>
+<h3 id="persistence-a-new-table-not-an-overload-of-issuerowtriage_status">Persistence: a new table, not an overload of <code>IssueRow.triage_status</code><a class="headerlink" href="#persistence-a-new-table-not-an-overload-of-issuerowtriage_status" title="Permanent link">&para;</a></h3>
+<p><code>IssueRow.triage_status</code>'s own docstring already says it is "a human decision layered on top of
+[scan-derived] state" — conflating "an automated agent is mid-attempt, or awaiting human approval"
+with that would blur two concepts this schema has deliberately kept separate since Week 34. A new
+<code>verified_fix_runs</code> table (migration <code>0012</code>) carries <code>org_id</code> directly and gets the same
+<code>tenant_isolation</code> RLS policy <code>assets</code>/<code>scans</code>/<code>llm_usage</code> already have (validated live against a
+real Postgres container: inserted a row as one org, confirmed a different <code>app.current_org</code> sees
+zero rows, then confirmed the migration's down/up cycle is clean). <code>latest_patch</code>/
+<code>verification_record</code> are JSON blobs, matching <code>FindingRow.data</code>/<code>RemediationCache.payload</code>'s
+established "keep the full document" pattern — the fix-review screen renders one run's whole record
+at once, nothing here needs server-side filtering.</p>
+<h3 id="adr-0015s-three-numbers-picked-and-documented-corefixagentlimitspy">ADR-0015's three numbers, picked and documented (<code>core/fixagent/limits.py</code>)<a class="headerlink" href="#adr-0015s-three-numbers-picked-and-documented-corefixagentlimitspy" title="Permanent link">&para;</a></h3>
+<p>Per-attempt: 10 minutes. Overall: 30 minutes, <strong>excluding</strong> the human-approval wait (started as its
+own, separately-timed phase in the workflow, so a reviewer taking an hour doesn't itself trigger
+<code>inconclusive</code> — the plan's own worked example, in fact: "took 2 attempts," a normal, unhurried
+review). Concurrency: 3 per organization, enforced by <code>core.fixagent.store.count_running_for_org</code>
+before starting a new run — checked, not merely asserted, since the whole point of a cap is refusing
+the (n+1)th request, not just counting. A fourth, pragmatic (not an ADR-0015 limit) 7-day approval
+timeout exists so a run nobody ever reviews doesn't live in Temporal forever; it resolves to
+<code>inconclusive</code> with its own distinct <code>ended_reason</code> (<code>approval_timeout</code>), never folded into the
+other three.</p>
+<h3 id="the-fix-review-screen-matches-the-plans-own-mockup-284-with-one-named-cut">The fix-review screen matches the plan's own mockup (§28.4), with one named cut<a class="headerlink" href="#the-fix-review-screen-matches-the-plans-own-mockup-284-with-one-named-cut" title="Permanent link">&para;</a></h3>
+<p>Verification record before the diff ("trust before content," the plan's own words) — implemented
+exactly that way in <code>VerifiedFixPanel.tsx</code>. Failed attempts are shown, not hidden (<code>attemptSummary</code>
+surfaces the first failed attempt's own feedback). The action that opens a pull request is labelled
+"Open pull request," not "Approve," matching the plan's UI copy exactly, even though the API call
+underneath is the same <code>/approve</code> signal. <strong>"Edit" (revising the patch by hand before submitting) was
+not built</strong> — the plan's mockup shows three actions (<code>[Reject] [Edit] [Open pull request]</code>); this
+ships two. Editing a pending patch would need a new mutate-in-place endpoint and workflow signal this
+pass didn't build, and reasoning about a human-edited-then-verified patch (was the <em>edited</em> version
+actually reverified, or only the AI's original?) is a real design question of its own, not a small
+addition — deliberately deferred, not silently dropped.</p>
+<h2 id="consequences">Consequences<a class="headerlink" href="#consequences" title="Permanent link">&para;</a></h2>
+<ul>
+<li>The verified-fix agent is real, hosted-only, and gated behind a compose profile — a base
+  deployment is completely unaffected until an operator opts into <code>--profile fixagent</code> and sets a
+  hosted LLM key.</li>
+<li>Local/privacy-mode users get Week 41's remediation <em>suggestions</em> but not verified-fix, since
+  tool-calling is hosted-only this pass.</li>
+<li>The next real gaps, if this feature area grows further: MLX/local tool-calling (mirrors ADR-0026's
+  own Ollama-only cut), a precise capability set for the test-execution sandbox (mirrors ADR-0015's
+  own Firecracker deferral), an "Edit" action on a pending patch, and end-to-end validation against a
+  real GitHub App installation once one is available to test against.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.top", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

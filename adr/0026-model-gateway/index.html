@@ -1,0 +1,1140 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Unified security scanning -- one scan, one deduplicated list of findings.">
+      
+      
+      
+        <link rel="canonical" href="https://rag2102.github.io/cyberimp/adr/0026-model-gateway/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>ADR-0026: Model gateway and LLMOps - Bulwark</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#adr-0026-model-gateway-and-llmops" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Bulwark" class="md-header__button md-logo" aria-label="Bulwark" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Bulwark
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              ADR-0026: Model gateway and LLMOps
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Rag2102/cyberimp" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Rag2102/cyberimp
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Bulwark" class="md-nav__button md-logo" aria-label="Bulwark" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Bulwark
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Rag2102/cyberimp" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Rag2102/cyberimp
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quickstart
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../risk-score/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Risk scoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../taxonomy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Taxonomy (CWE / OWASP)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reachability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reachability
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../vex/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    VEX
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../compliance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compliance and evidence packs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Metrics and dashboards
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reports/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reports
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../issue-search/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Finding Issues
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../identity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sign-in, people and access
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../plugins/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Writing a plugin
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../policy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Policy cookbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ingest-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Importing reports
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decisions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decisions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decisions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a-gateway-layer-on-top-of-clientpy-not-a-rewrite-of-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A gateway layer on top of client.py, not a rewrite of it
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#local-backend-ollama-not-mlx" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Local backend: Ollama, not MLX
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#privacy-mode-forces-local-and-refuses-never-silently-falls-back-to-hosted" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Privacy mode forces local and refuses, never silently falls back to hosted
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#token-budgets-two-tables-not-one-because-they-have-different-lifetimes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Token budgets: two tables, not one, because they have different lifetimes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#redaction-presidio-as-a-second-best-effort-layer-after-scrub_secrets-path-denylist-as-a-third" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Redaction: Presidio as a second, best-effort layer after scrub_secrets, path denylist as a third
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#structured-output-validation-keep-the-hand-rolled-contract-add-the-repair-attempt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Structured-output validation: keep the hand-rolled contract, add the repair attempt
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prompt-registry-a-real-versioned-file-moved-under-corellm-not-repo-root-prompts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prompt registry: a real versioned file, moved under core/llm/, not repo-root prompts/
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#evaluation-promptfoo-driven-through-the-real-gateway-gated-by-the-real-contract-validator" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Evaluation: promptfoo, driven through the real gateway, gated by the real contract validator
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/Rag2102/cyberimp/edit/main/docs/adr/0026-model-gateway.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="adr-0026-model-gateway-and-llmops">ADR-0026: Model gateway and LLMOps<a class="headerlink" href="#adr-0026-model-gateway-and-llmops" title="Permanent link">&para;</a></h1>
+<p>Status: Implemented (2026-09-30), Week 41 (plan §21.1), building on Week 12/13's LLM remediation
+feature (ADR-0010) rather than replacing it.</p>
+<h2 id="context">Context<a class="headerlink" href="#context" title="Permanent link">&para;</a></h2>
+<p>Week 12/13 built one hardcoded provider (<code>core.llm.client.AnthropicClient</code>) behind an <code>LLMClient</code>
+Protocol the rest of the code already depended on only through that interface (ADR-0010 §3 stated
+provider-agnosticism as an intent, without a second provider to prove it). Nothing routed by task,
+nothing tracked spend in tokens (only call <em>counts</em>, process-local), nothing removed personal data
+before sending text off the machine, and there was no way to guarantee "this specific call never
+leaves my machine" beyond simply not setting an API key. Week 41 closes those gaps: a real second
+backend, per-task routing, token budgets, PII redaction, a path denylist, one schema-repair attempt,
+and a versioned prompt with an evaluation suite gating changes to it.</p>
+<h2 id="decisions">Decisions<a class="headerlink" href="#decisions" title="Permanent link">&para;</a></h2>
+<h3 id="a-gateway-layer-on-top-of-clientpy-not-a-rewrite-of-it">A gateway layer on top of <code>client.py</code>, not a rewrite of it<a class="headerlink" href="#a-gateway-layer-on-top-of-clientpy-not-a-rewrite-of-it" title="Permanent link">&para;</a></h3>
+<p><code>core/llm/gateway.py</code> is the new single choke point for "which backend does this task use," sitting
+above the existing <code>make_client()</code> (hosted) and the new <code>make_ollama_client()</code> (local,
+<code>core/llm/ollama_client.py</code>) rather than merging them into one class. <code>client.py</code>'s existing
+<code>AnthropicClient</code>/<code>LLMConfig</code> are untouched apart from the <code>Completion</code> return type below — every
+existing call site that only ever used one hardcoded provider still works exactly as before if it
+calls <code>make_client()</code> directly; only the two production call sites (the API's <code>build_default_app</code>,
+the CLI's <code>llm suggest</code>) were moved onto the gateway.</p>
+<p><code>Task</code> is a real enum keyed by name (<code>Task.FIX</code>, the only member), not a hardcoded string, so Week
+43's triage assistant and Week 44's copilot register their own routes later without changing this
+module. The plan names "explanations" and "triage" as candidate per-task routes; neither has a
+model-calling consumer yet, so no route was fabricated for either — inventing configuration for a
+task nothing calls would be dead weight, not a real per-task routing story.</p>
+<h3 id="local-backend-ollama-not-mlx">Local backend: Ollama, not MLX<a class="headerlink" href="#local-backend-ollama-not-mlx" title="Permanent link">&para;</a></h3>
+<p>The plan says "Ollama or MLX." Ollama exposes a plain JSON HTTP API (<code>/api/chat</code>), needs no new
+dependency (<code>core/llm/ollama_client.py</code> reuses the same <code>urllib.request</code> approach
+<code>core.risk.feeds.http_get</code> already uses elsewhere in this codebase), and runs identically on any
+platform with Docker. MLX is an Apple-Silicon-only in-process Python inference library with no
+network surface at all — supporting it would mean a second, structurally different client
+implementation (loading model weights in-process, not calling a server) for a platform-specific
+gain the plan's own goal ("a local model, so the code never leaves the machine") doesn't need MLX
+specifically to achieve. Validated against a real, live <code>ollama/ollama</code> container during
+development (a real <code>qwen2.5:0.5b</code> pull, real HTTP calls, real token counts back) — this is real
+prior art for a second backend if MLX is wanted later, not a stub.</p>
+<h3 id="privacy-mode-forces-local-and-refuses-never-silently-falls-back-to-hosted">Privacy mode forces local and refuses, never silently falls back to hosted<a class="headerlink" href="#privacy-mode-forces-local-and-refuses-never-silently-falls-back-to-hosted" title="Permanent link">&para;</a></h3>
+<p><code>BULWARK_LLM_PRIVACY_MODE=1</code> (or <code>bulwark llm suggest --privacy</code>) overrides every task's route to
+<code>Backend.LOCAL</code>, and <code>make_gateway_client</code> raises <code>PrivacyModeViolation</code> — loudly, at the call site,
+never returning a hosted client instead — when no local backend is ready. A silent fallback would
+quietly defeat the one guarantee privacy mode exists to make. Validated live: with a real (working)
+hosted API key configured AND privacy mode on, the gateway still refuses rather than using the key.</p>
+<h3 id="token-budgets-two-tables-not-one-because-they-have-different-lifetimes">Token budgets: two tables, not one, because they have different lifetimes<a class="headerlink" href="#token-budgets-two-tables-not-one-because-they-have-different-lifetimes" title="Permanent link">&para;</a></h3>
+<p><code>Scan.llm_tokens_used</code> (migration <code>0011</code>, a plain integer column, same "counter on the row it
+describes" shape as <code>sbom_summary</code> in migration <code>0010</code>) tracks one scan's own spend. A new
+<code>LlmUsage</code> table, keyed by <code>(org_id, period)</code>, tracks an organization's spend across every scan in a
+calendar month — there is no single <code>Scan</code> row a month-spanning total could live on. <code>llm_usage</code>
+gets <code>org_id</code> and Postgres RLS exactly like <code>assets</code>/<code>scans</code> (migration 0005), unlike <code>api_tokens</code>
+(migration 0007), which deliberately has none: org context here is already known (a scan's own
+<code>org_id</code>) before any read or write happens, unlike a token lookup, which is what <em>resolves</em> org
+context in the first place.</p>
+<p>Enforcement is check-before / record-after: <code>core.llm.budget.check()</code> refuses before a call if
+either cap is already at or past its limit; <code>record()</code> adds the <em>real</em> token cost (from the
+provider's own usage field, now on <code>LLMClient.complete</code>'s <code>Completion</code> return type) after a genuine,
+non-cached call. This can overshoot by at most one call's worth of tokens under concurrent requests
+— the same class of imprecision <code>UsageLimiter</code> (call-rate limiting, ADR-0010) and
+<code>RemediationCache.hits</code>'s own non-atomic increment already accept elsewhere in this codebase. A
+cache hit is free: <code>core.llm.cache._store</code> strips <code>tokens_used</code> from what gets cached, so replaying
+a cached answer never re-reports (or re-charges) a token cost it didn't actually incur this time.</p>
+<h3 id="redaction-presidio-as-a-second-best-effort-layer-after-scrub_secrets-path-denylist-as-a-third">Redaction: Presidio as a second, best-effort layer after <code>scrub_secrets</code>, path denylist as a third<a class="headerlink" href="#redaction-presidio-as-a-second-best-effort-layer-after-scrub_secrets-path-denylist-as-a-third" title="Permanent link">&para;</a></h3>
+<p><code>core/llm/pii.py</code> wraps Microsoft Presidio (<code>pip install 'bulwark-scan[pii]'</code>, plus a separate
+<code>python -m spacy download en_core_web_sm</code> no pip extra can express) to catch free-text personal
+data — names, emails, phone numbers — that <code>scrub_secrets</code>'s pattern-based scrubbing was never meant
+to catch. It runs strictly after <code>scrub_secrets</code>, never before, so Presidio's NER models never see
+raw key material. It is optional and lazy exactly like <code>AnthropicClient</code>: absent, or its language
+model not downloaded, or any internal failure, all degrade to a no-op rather than blocking a
+suggestion or crashing <code>suggest()</code> — confirmed by explicitly wiring <code>en_core_web_sm</code> rather than
+trusting Presidio's own default, which downloads <code>en_core_web_lg</code> (~400MB) the first time it runs
+with no config at all; that surprise was caught by actually running <code>AnalyzerEngine()</code> during this
+feature's own development, not assumed.</p>
+<p><code>core/llm/pathguard.py</code> adds a third, independent layer: a small denylist (<code>.env</code>, <code>*.pem</code>,
+<code>id_rsa*</code>, ...) checked against a finding's path before any code from it is even considered for
+scrubbing or redaction — the same "withhold entirely" treatment <code>secrets</code>-category findings already
+get, extended to any file whose <em>path</em> alone is reason enough, regardless of what a scanner's
+category happened to label it.</p>
+<h3 id="structured-output-validation-keep-the-hand-rolled-contract-add-the-repair-attempt">Structured-output validation: keep the hand-rolled contract, add the repair attempt<a class="headerlink" href="#structured-output-validation-keep-the-hand-rolled-contract-add-the-repair-attempt" title="Permanent link">&para;</a></h3>
+<p>The plan says "Structured outputs validated with Pydantic: one repair attempt, then fall back to
+static text." <code>core/llm/contract.py</code>'s existing hand-rolled validator already does everything a
+generic Pydantic model would (required keys, types, lengths) <em>plus</em> hostile-input protections a
+plain schema wouldn't express on its own (bidi-override rejection, control-character rejection, a
+dismissal-language filter, unified-diff structural validation) — all covered by 568 lines of
+existing tests, including a 20-payload hostile-input battery. Rewriting a security-hardened,
+thoroughly tested validator to Pydantic purely to match the plan's wording would risk regressing
+exactly the protections that matter here, for no behavioral gain. The genuinely new, valuable half
+of that plan line — "one repair attempt" — is what got built: <code>core.llm.service.suggest</code> now makes
+one additional call with a <strong>fixed, generic</strong> repair note
+(<code>"Reply again with exactly the single JSON object..."</code>) on a <code>ContractError</code>, before falling back
+to static text.</p>
+<p>The repair note never echoes the rejected reply or the rejection reason back into the next prompt.
+Both could carry model- or attacker-influenced text — the reply already failed validation, which is
+exactly the trust boundary <code>prompt.py</code>'s nonce-fencing exists to police — so feeding either back in
+would open a second-order injection channel the rest of this feature was built to avoid. Cost:
+tokens from a failed contract check now count twice (original + repair) toward budgets, which
+<code>core.llm.budget</code> accounts for by summing every real call's usage, not just the last one.</p>
+<h3 id="prompt-registry-a-real-versioned-file-moved-under-corellm-not-repo-root-prompts">Prompt registry: a real versioned file, moved under <code>core/llm/</code>, not repo-root <code>prompts/</code><a class="headerlink" href="#prompt-registry-a-real-versioned-file-moved-under-corellm-not-repo-root-prompts" title="Permanent link">&para;</a></h3>
+<p>The plan's own example path is <code>prompts/fix/v3.md</code> (repo root). <code>pyproject.toml</code> only packages
+<code>core*</code>/<code>cli*</code>/<code>api*</code> (<code>[tool.setuptools.packages.find]</code>) for a real <code>pip install</code> — a repo-root
+<code>prompts/</code> directory would silently not exist outside a git checkout. <code>core/llm/prompts/fix/v1.md</code>
+instead, declared in <code>[tool.setuptools.package-data]</code> exactly like <code>core.rag</code>'s own bundled corpus
+(<code>core/rag/corpus/*.jsonl</code>), for the identical reason. <code>core/llm/prompt.py</code> now loads <code>SYSTEM</code> from
+that file (<code>core.llm.prompt.load_prompt</code>) instead of an inline string constant; <code>PROMPT_VERSION</code>
+still hashes the <em>loaded content</em>, not the "v1" label, so a cache-busting version change never
+depends on someone remembering to bump a filename.</p>
+<h3 id="evaluation-promptfoo-driven-through-the-real-gateway-gated-by-the-real-contract-validator">Evaluation: promptfoo, driven through the real gateway, gated by the real contract validator<a class="headerlink" href="#evaluation-promptfoo-driven-through-the-real-gateway-gated-by-the-real-contract-validator" title="Permanent link">&para;</a></h3>
+<p><code>core/llm/prompts/fix/promptfooconfig.yaml</code> is a real, runnable <code>promptfoo eval</code> suite — validated
+during development against a live local Ollama container, not just written and assumed to work; two
+real bugs were caught doing that (below). Its custom Python provider
+(<code>promptfoo_provider.py</code>) calls <code>core.llm.gateway.make_gateway_client</code> directly, so an eval run
+exercises the exact backend-selection code production uses. Its assertion
+(<code>promptfoo_assert.py</code>) calls the real <code>core.llm.contract.parse_response</code> — the same validator
+<code>suggest()</code> uses — rather than a second, divergence-prone reimplementation of the same rules, matching
+the plan's own framing: "correctness is always decided by deterministic checks," not an LLM judge.
+Fixtures (<code>fixtures/*.txt</code>) are pre-rendered <em>real</em> <code>build_prompt()</code> output
+(<code>scripts/gen-promptfoo-fixtures.py</code> regenerates them), not hand-written approximations that could
+drift from the real prompt format.</p>
+<p>Two real integration bugs surfaced only by actually running this against a live model, not by
+inspection:
+- promptfoo's Python provider runs as a <strong>persistent worker process</strong>; an env var exported in the
+  invoking shell <em>after</em> that worker starts does not reliably reach it. The provider's backend
+  choice is therefore driven entirely by its own YAML <code>config:</code> block, not ambient <code>BULWARK_LLM_*</code>
+  env vars, so an eval run is reproducible regardless of that.
+- promptfoo itself reserves the provider config key <code>timeout</code> (milliseconds, its own per-call
+  worker timeout) — a first draft that also used <code>timeout</code> for Ollama's own request timeout (seconds)
+  silently fed a seconds-based number in as a millisecond cap, timing out every call after 90ms. The
+  Ollama-side setting is <code>request_timeout_s</code> instead, with a comment at the collision site.</p>
+<p>Running the suite against a real (small, local) model during development produced two real
+contract-validator failures — the model wrapped its JSON in a fenced block in a shape the validator
+correctly rejected — which is itself the intended outcome: the suite is a real gate that can fail a
+real model's real output, not a suite that always trivially passes. Per <code>docs/llm-remediation.md</code>,
+fix quality against a real model remains formally unmeasured (Week 14's evaluation pipeline,
+unchanged by this ADR); this suite is a schema-conformance gate for prompt <em>changes</em>, not that
+measurement.</p>
+<h2 id="consequences">Consequences<a class="headerlink" href="#consequences" title="Permanent link">&para;</a></h2>
+<ul>
+<li>A hosted deployment is unaffected by default: <code>GatewayConfig.default_backend</code> is <code>hosted</code>, so
+  behavior is identical to before this week unless an operator opts into local routing or privacy
+  mode.</li>
+<li>Token budgets are best-effort, not byte-exact, under concurrency — documented, not hidden, and the
+  same tolerance this codebase already accepted for call-count limiting.</li>
+<li>Presidio is optional; a deployment that never installs <code>bulwark-scan[pii]</code> (or never runs <code>python
+  -m spacy download en_core_web_sm</code>) gets exactly Week 12's original secret-only scrubbing, silently
+  — this is by design (best-effort, not a hard requirement to send text) but worth knowing before
+  assuming PII redaction is active.</li>
+<li>MLX support, if ever wanted, has no code to build on here beyond the <code>Backend</code> enum itself — it
+  would be a structurally different, in-process client, not an extension of <code>OllamaClient</code>.</li>
+<li>The Dependencies-screen-style "full hosted integration" question doesn't apply the same way here:
+  this ships as backend/CLI plumbing only. No new frontend screen was built this week — the plan
+  lists no screen deliverable for Week 41 (unlike, e.g., Week 39's policy editor or Week 40's
+  Dependencies screen) — the existing "Generate AI suggestion" UI already surfaces whatever error
+  message a 429 (rate or budget) carries; it isn't budget-aware beyond that.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.top", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,1082 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Unified security scanning -- one scan, one deduplicated list of findings.">
+      
+      
+      
+        <link rel="canonical" href="https://rag2102.github.io/cyberimp/v2-week54-verification/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Weeks 54-56 verification -- Ingest and reimport (plan Phase 13, §41.1/§42, Milestone M12) - Bulwark</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#weeks-54-56-verification-ingest-and-reimport-plan-phase-13-41142-milestone-m12" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Bulwark" class="md-header__button md-logo" aria-label="Bulwark" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Bulwark
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Weeks 54-56 verification -- Ingest and reimport (plan Phase 13, §41.1/§42, Milestone M12)
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Rag2102/cyberimp" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Rag2102/cyberimp
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Bulwark" class="md-nav__button md-logo" aria-label="Bulwark" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Bulwark
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Rag2102/cyberimp" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Rag2102/cyberimp
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quickstart
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../risk-score/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Risk scoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../taxonomy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Taxonomy (CWE / OWASP)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reachability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reachability
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../vex/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    VEX
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../compliance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compliance and evidence packs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Metrics and dashboards
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reports/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reports
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../issue-search/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Finding Issues
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../identity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sign-in, people and access
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../plugins/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Writing a plugin
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../policy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Policy cookbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ingest-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Importing reports
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-was-built" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What was built
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bugs-found-and-fixed-along-the-way" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bugs found and fixed along the way
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#validated-against-real-live-things-not-mocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Validated against real, live things -- not mocks
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-this-does-not-prove-read-before-relying-on-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What this does NOT prove (read before relying on it)
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/Rag2102/cyberimp/edit/main/docs/v2-week54-verification.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="weeks-54-56-verification-ingest-and-reimport-plan-phase-13-41142-milestone-m12">Weeks 54-56 verification -- Ingest and reimport (plan Phase 13, §41.1/§42, Milestone M12)<a class="headerlink" href="#weeks-54-56-verification-ingest-and-reimport-plan-phase-13-41142-milestone-m12" title="Permanent link">&para;</a></h1>
+<p>Honest record of what was built, run, and measured. Weeks 54 (ingest endpoint and reimport), 55
+(standard parsers) and 56 (import screen and fuzzing) were done as one body of work in eight tasks,
+because each depends on the one before. The design decisions are in
+<a href="../adr/0040-one-ingest-path/">ADR-0040</a>; the user-facing description is
+<a href="../ingest-api/">docs/ingest-api.md</a>.</p>
+<h2 id="what-was-built">What was built<a class="headerlink" href="#what-was-built" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Task</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Schema and ADR-0040</td>
+<td><code>engagement_tests</code>, <code>import_records</code>, <code>outbox_events</code> (migration 0027); amends ADR-0039</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Repo layer and RLS</td>
+<td>helpers plus a two-tenant leak test for all three tables</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Reimport engine</td>
+<td><code>core.imports.reimport.plan_reimport</code>: new / unchanged / reopened / closed (+ <code>detached</code>)</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Ingest service</td>
+<td>preview, apply (idempotent, row-locked), revert; native scans moved onto the same decision</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Parser framework and SARIF</td>
+<td><code>IngestParser</code>, registry, sandboxed parsing (<code>docker/ingest-parser</code>)</td>
+</tr>
+<tr>
+<td>6</td>
+<td>CycloneDX, SPDX, OSV; fuzzing</td>
+<td>three more parsers, an XXE corpus, an Atheris harness</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Ingest API</td>
+<td><code>POST /v2/ingest</code> and six more endpoints, worker job, scopes, migration 0028</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Import screen and close-out</td>
+<td>the §55.1 screen, docs, this record</td>
+</tr>
+</tbody>
+</table>
+<h2 id="bugs-found-and-fixed-along-the-way">Bugs found and fixed along the way<a class="headerlink" href="#bugs-found-and-fixed-along-the-way" title="Permanent link">&para;</a></h2>
+<p>Most of these were found by running things for real, not by reading code. Several would have shipped
+green on SQLite and mocks.</p>
+<ol>
+<li><strong>A cross-tenant leak that predates this work</strong> (the serious one). A database session could run as
+   <em>another organization</em> after a commit. Row-Level Security reads <code>app.current_org</code> from the
+   <em>connection</em>, but a session hands its connection back to the pool on every commit and takes
+   whichever is free next, and the org had been set once per session at session level -- so it landed
+   on a connection the session might never see again and stayed there for the next session to
+   inherit. Reproduced on real Postgres with two overlapping sessions: the first one's next statement
+   after a commit ran as the second org (it could read, and write into, the other tenant). It needs
+   concurrent requests from different organizations, which is why every single-session test missed it;
+   single-org self-hosting was never exposed. Fixed in <code>core/tenancy.py</code> (the org is re-applied,
+   transaction-local, at the start of every transaction); five regression tests interleave sessions on
+   a two-connection pool, one reads back real rows, and <strong>all five fail without the fix</strong>. See the
+   changelog entry.</li>
+<li><strong>A whole report collapsed into one Issue.</strong> Parsed findings have no fingerprint until
+   <code>correlate()</code> runs; reimport matches by fingerprint, so four findings all matched the empty one.
+   Found by the first end-to-end API test (my unit-test helper correlated, hiding it). Now an explicit
+   step, <code>core.imports.prepare</code>; removing it fails 7 tests.</li>
+<li><strong>Uploaded secrets would have been stored.</strong> A scan's Gitleaks redacts at the source; an uploaded
+   file carries no such guarantee. <code>redact_secret_findings</code> now runs before correlation, so no function
+   of a secret is fingerprinted either. Removing it fails 3 tests.</li>
+<li><strong>Every applied upload leaked onto disk</strong>: <code>apply_import</code> clears the path the job then needed to
+   delete. Found by an assertion that the upload directory is empty afterwards.</li>
+<li><strong>Findings were inserted before the Issues they reference.</strong> SQLite does not enforce foreign keys
+   and never noticed; Postgres refused. Found only by running against real Postgres.</li>
+<li><strong>The parser sandbox's input directory had to be the shared scratch path</strong>, because in the worker
+   container the Docker daemon is on the host (as <code>run_tool</code> already does for its output).</li>
+<li><strong>JSON and XML disagreed on a real file</strong>: XML lost every finding's file path, and counted the
+   document's own subject as a component. Found by comparing the two on a real Grype file; they are
+   now byte-identical.</li>
+<li><strong>The periodic scratch cleanup would have deleted a previewed upload while a person was deciding.</strong>
+   It removes anything under the uploads directory after two hours, and a preview keeps its file until
+   confirmed. Ingest uploads now live in their own directory with a lifetime tied to the import's status
+   (<code>core.maintenance.expire_stale_imports</code>: a preview nobody confirms in 24 h is cancelled and its file
+   deleted; an import a worker never finished is failed rather than left "in progress"; finished imports
+   are never touched). Found by reading what else touched that directory, not by a failing test.</li>
+<li>Smaller: <code>google-re2</code> has no <code>IGNORECASE</code> constant (caught at import by the tests); a maintenance
+   RLS test asserted on the whole database and failed on rows other tests left; the shared SARIF
+   mapper dropped region-less results and missed lower-case CWE tags.</li>
+</ol>
+<h2 id="validated-against-real-live-things-not-mocks">Validated against real, live things -- not mocks<a class="headerlink" href="#validated-against-real-live-things-not-mocks" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Real files from real tools.</strong> Syft (CycloneDX JSON and XML, SPDX 2.3), Grype (CycloneDX 1.7 with a
+  <code>vulnerabilities</code> section, as JSON and XML), Semgrep (SARIF) and OSV-Scanner, generated by the
+  project's own images (<code>tests/golden/ingest/README.md</code>). Grype's JSON and XML give identical findings
+  (19 each). A real Semgrep SARIF imports to exactly what the native path reads from it, and OSV-Scanner
+  output through the new parser equals the native adapter's.</li>
+<li><strong>Real Postgres under Row-Level Security</strong> as the non-superuser <code>bulwark_worker</code>: 53 integration
+  tests pass together. They cover the three new tables (another org cannot read, enumerate, dispatch or
+  forge rows), the whole ingest flow over HTTP, another org getting 404 on every import endpoint, two
+  orgs importing interleaved, and <strong>two simultaneous uploads of one file applying exactly once</strong> (it
+  fails 3 of 3 times if the row lock is removed).</li>
+<li><strong>The real sandbox container.</strong> Parsing runs in <code>bulwark/ingest-parser</code>: same findings as in-process;
+  hostile, oversized and truncated files refused inside the container; a container that cannot start
+  reads as an error, never an empty report; and from inside it the network, DNS, <code>/app</code> and <code>/etc</code> are
+  all unreachable, the user is non-root, and the database layer is not in the image.</li>
+<li><strong>XML attacks</strong>: external entity (file and network), external DTD, parameter entity, billion laughs,
+  quadratic blowup and a harmless internal entity are all refused in under 2 s, nothing from
+  <code>/etc/passwd</code> surfaces, no connection is attempted -- in-process and inside the container.</li>
+<li><strong>Ground-truth property tests</strong> for the reimport decision: Hypothesis replays random import sequences
+  into two Tests and compares every count against an independent set-arithmetic oracle; no strict
+  prefix of any real report ever reads as complete; mutated real reports and arbitrary bytes never raise.</li>
+<li><strong>Mutation checks.</strong> Each deliberate regression makes the tests fail: ignoring other sources, ignoring
+  <code>close_missing</code>, widening the close scope, stdlib XML, swallowing truncation errors, letting an SBOM
+  close issues, dropping redaction, dropping correlation, removing the row lock, and (in the screen)
+  changing the confirmation wording, saving on upload, and showing counts before the format is confirmed.</li>
+<li><strong>Fuzzing, for real (but briefly).</strong> Atheris was built from source in a Linux container
+  (<code>scripts/fuzz-ingest-docker.sh</code>) and run for 90 s per parser seeded from the real files: <strong>1.80 million
+  executions</strong> (SARIF 901,207; CycloneDX 168,919; SPDX 670,743; OSV 62,759), <strong>no crash or hang</strong>, each
+  corpus growing (65-232 entries).</li>
+<li><strong>A real browser against the real stack.</strong> The import screen was driven in a browser against the real
+  API on the real Postgres with the real parser container: a Semgrep SARIF previewed as "3 new" and was
+  imported ("Imported: 3 new, 0 reopened, 0 closed"); a second report previewed as "0 new, 2 unchanged,
+  0 reopened, 1 closed", imported with the same numbers, and the database showed 1 fixed / 2 open;
+  Undo restored all three; an unrecognised file asked which format it was and showed no counts; a
+  truncated file failed with a readable message and an Import button never appeared.</li>
+<li>Backend: <code>ruff</code>, <code>black</code>, <code>mypy</code> (234 source files) clean; 1942 unit tests pass (1803 at the start of
+  Week 54), 2 skipped. Web: 236 tests (+16), <code>tsc</code> clean, <code>npm run build</code> clean.</li>
+</ul>
+<h2 id="what-this-does-not-prove-read-before-relying-on-it">What this does NOT prove (read before relying on it)<a class="headerlink" href="#what-this-does-not-prove-read-before-relying-on-it" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>The fuzzing is a smoke run, not a campaign.</strong> 90 s per parser found nothing, which is weak evidence.
+  The nightly CI job (<code>fuzz-ingest</code>) is written and the harness is proven to run, but that job has never
+  executed on a CI runner; the real depth comes from it running for weeks.</li>
+<li><strong>Each format is exercised against the producers I could run.</strong> CycloneDX and SPDX: Syft and Grype
+  only (other generators, e.g. cdxgen or Trivy, may use features not seen). SARIF: real Semgrep output
+  plus a hand-written file <em>shaped like</em> CodeQL's (results before rules, <code>ruleIndex</code>, lower-case CWE
+  tags, <code>security-severity</code>); no real CodeQL file was tested. OSV: OSV-Scanner results only -- a bare
+  OSV advisory record is deliberately not importable.</li>
+<li><strong>SPDX imports no findings, by design</strong>, and reads only SPDX 2.x JSON (not tag-value, RDF or 3.0). An
+  SBOM becomes useful as a component inventory in a later week; until then it is recognised, validated,
+  and cannot close anything.</li>
+<li><strong>"Your own runners switch to the same ingest path" is true at the decision-and-writer level, not the
+  HTTP level.</strong> Native scans now call the same <code>plan_reimport</code> and the same Issue writer (and emit the
+  same outbox events), but a scan does not POST to <code>/v2/ingest</code>. The plan's wording could mean either;
+  this is the version that removes the duplicated logic without routing every scan through an upload.</li>
+<li><strong>The outbox has no consumer.</strong> Events (<code>issue.created</code>, <code>issue.reopened</code>, <code>issue.closed</code>,
+  <code>scan.completed</code>, <code>import.reverted</code>) are written in the same transaction as the change, which is the
+  property that matters, but nothing dispatches or prunes them yet; the first consumers are the SLA,
+  rules and notification weeks. Until then the table only grows.</li>
+<li><strong>Per-source deduplication (plan §42.3) is not built</strong> (Week 58). <code>wait_for_dedup</code> is accepted and
+  <code>dedup_complete</code> is always true; every source matches by the same project-level fingerprints, and the
+  screen's Matching row is read-only text for that reason. <code>source</code> only accepts <code>upload</code>.</li>
+<li><strong>The screen is thinner than the wireframe in two places.</strong> Issues are listed by the first eight
+  characters of their id (there is no human-friendly <code>ISS-311</code> numbering yet), and "Into [Change]" edits
+  a Test name and a choice of engagement type rather than browsing existing engagements (that list
+  arrives with Week 64). It was verified in a real browser once and by 15 jsdom tests with axe; there is
+  no Playwright journey (Week 74).</li>
+<li><strong>Issue identity is still project-level and fingerprint-based</strong>, so two tools describing one defect in
+  different words import as two Issues until the matching work in Week 58.</li>
+<li><strong><code>detached</code> is not shown as a fifth big number</strong> on the screen (it appears as a sentence), because the
+  plan's wireframe has four.</li>
+<li><strong>The §39.5 gate item that needs a live model is still open</strong> (the fix agent's verification record on a
+  real pull request), unchanged from Week 53.</li>
+<li><strong>Preview expiry is 24 hours, fixed.</strong> It is a constant in the maintenance task, not a setting, and
+  the sweep is covered by unit tests but has not run under a live Celery beat.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.top", "content.code.copy", "content.action.edit"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>
