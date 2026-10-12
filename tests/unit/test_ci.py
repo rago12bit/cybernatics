@@ -136,9 +136,11 @@ def test_comment_says_when_nothing_is_new_and_when_no_baseline() -> None:
     assert "No new findings introduced" in markdown_comment(
         compare(scan_of(finding("a")), scan_of(finding("a"))), "high", False
     )
-    assert "could not be scanned cleanly" in markdown_comment(
+    assert "No base commit to compare with" in markdown_comment(
         compare(scan_of(finding("a")), None), "none", False
     )
+    incomplete_base = compare(scan_of(finding("a")), scan_of(finding("a"), status="timeout"))
+    assert "could not be scanned cleanly" in markdown_comment(incomplete_base, "none", False)
 
 
 def test_comment_warns_about_incomplete_scanners() -> None:

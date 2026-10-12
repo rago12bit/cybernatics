@@ -31,6 +31,7 @@ class Comparison:
     existing: int = 0
     fixed: int = 0
     baseline_available: bool = False
+    baseline_incomplete: bool = False  # a base scan was given but a scanner failed in it
 
     def gate_set(self) -> list[dict[str, Any]]:
         """Findings the failure threshold applies to: what the change introduced, or everything if
@@ -69,7 +70,7 @@ def compare(head: Scan, base: Scan | None) -> Comparison:
         return Comparison(head=head)
     if _incomplete(base):
         # A baseline where a scanner failed would make its findings look "new". Do not trust it.
-        return Comparison(head=head)
+        return Comparison(head=head, baseline_incomplete=True)
     base_keys = {_key(f) for f in base.findings}
     head_keys = {_key(f) for f in head.findings}
     new = [f for f in head.findings if _key(f) not in base_keys]

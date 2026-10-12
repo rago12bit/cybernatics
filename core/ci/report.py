@@ -76,11 +76,13 @@ def markdown_comment(
         lines.append(
             f"{cmp.existing} existing finding(s) were already present and {cmp.fixed} were fixed."
         )
-    else:
+    elif cmp.baseline_incomplete:
         lines.append(
             "> The base branch could not be scanned cleanly, so every finding is listed "
             "instead of only the new ones."
         )
+    else:  # a push, or any run without a base commit: nothing to compare with, not a failure
+        lines.append("> No base commit to compare with, so every finding is listed.")
     failing = [
         (s, v) for s, v in cmp.head.tool_status.items() if v.get("status") not in ("ok", "skipped")
     ]
