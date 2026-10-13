@@ -41,7 +41,7 @@ const SLA_TEXT: Record<string, string> = { breached: "Past SLA", due_soon: "Due 
 
 function cell(c: Column, r: IssueRow) {
   switch (c) {
-    case "project": return r.project;
+    case "project": return <span className="iss-project" title={r.project}>{r.project.replace(/^https?:\/\//, "")}</span>;
     case "priority": return r.band ? <span className={`iss-band iss-band-${r.band}`}>{r.band}{r.score != null && <span className="iss-muted"> {r.score}</span>}</span> : "—";
     case "severity": return <span className="iss-sev"><SeverityIcon severity={r.severity as "critical"} size={14} /> {valueLabel(r.severity)}</span>;
     case "status": return STATUS_TEXT[r.status] ?? r.status;

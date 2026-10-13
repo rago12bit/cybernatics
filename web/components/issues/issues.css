@@ -182,3 +182,6 @@
 .iss-table thead th { background: var(--ds-raised); }
 .iss-toolbar select { width: auto; font-size: var(--ds-text-2); padding: 0.4rem 0.55rem; }
 .iss-toolbar .iss-label { margin: 0; }
+
+/* A project is often a full repository URL; cut it rather than widen the table past the screen. */
+.iss-project { display: block; max-width: 18rem; overflow: hidden; text-overflow: ellipsis; }

@@ -60,7 +60,7 @@ export function SubmitForm() {
 
       <fieldset>
         <legend>Scanners</legend>
-        <div className="checks">
+        <div className="checks columns">
           {[...TOOLS, ...OPTIONAL_TOOLS].map((t) => (
             <label key={t} className="check">
               <input type="checkbox" checked={tools.includes(t)} onChange={(e) => setTools((cur) => (e.target.checked ? [...cur, t] : cur.filter((x) => x !== t)))} />
@@ -73,7 +73,7 @@ export function SubmitForm() {
       <fieldset>
         <legend>Supply-chain risk</legend>
         <div className="checks">
-          <label className="check">
+          <label className="check long">
             <input type="checkbox" checked={tools.includes("syft")} onChange={(e) => setTools((cur) => (e.target.checked ? [...cur, "syft"] : cur.filter((x) => x !== "syft")))} />
             syft — SBOM, typosquat detection, and OpenSSF Scorecard for direct dependencies (populates the Dependencies screen)
           </label>

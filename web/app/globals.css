@@ -613,3 +613,19 @@ kbd { font: 500 0.6875rem/1 var(--mono); border: 1px solid var(--line-strong); p
 
 .settings-links { list-style: none; padding: 0; margin: 0 0 1.5rem; display: grid; gap: 0.5rem; }
 .settings-links a { color: var(--teal); }
+
+/* Findings table: first and last columns line up with the page's own gutter (the filters and
+   heading above use it), and a finding's New/Reintroduced badges sit beside its title, not on its
+   text baseline. */
+.findings-table th:first-child, .findings-table td:first-child { padding-left: clamp(1.25rem, 3vw, 2.5rem); }
+.findings-table th:last-child, .findings-table td:last-child { padding-right: clamp(1.25rem, 3vw, 2.5rem); }
+.title-line { display: flex; align-items: flex-start; gap: 0.5rem; }
+.title-line .row-title { min-width: 0; }
+.title-line .tag { flex: none; margin: 0.05rem 0 0; }
+
+/* Scanner checkboxes in even columns, so a wrapped row lines up under the first. */
+.checks.columns { display: grid; grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr)); gap: 0.4rem 1.25rem; }
+.checks.columns .check { margin: 0; }
+/* A label longer than a line: the box beside its first line, the text readable when it wraps. */
+.check.long { align-items: flex-start; line-height: 1.45; }
+.check.long input { flex: none; margin-top: 0.2rem; }
