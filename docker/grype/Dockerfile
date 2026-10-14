@@ -1,8 +1,8 @@
 # Grype: SCA. The vulnerability database is baked in at build time (the sandbox has no network at run time).
 # Rebuild the image to refresh it, as with Trivy.
-FROM anchore/grype:v0.119.0@sha256:8c2c9234a345577a6d321a4753aa3ee1276d8975c8452d2344a56b57733ecad3 AS grype
+FROM anchore/grype:v0.120.1@sha256:e4a44ef45d285b829ce6efe2642980329661bd2d18eab5fc539138d4adaebbbe AS grype
 
-FROM alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc
+FROM alpine:3.24@sha256:294b683cb724975bec92580e1e685676bd4b50bda910ddb8c51d4cabeaec77e6
 COPY --from=grype /grype /usr/local/bin/grype
 RUN adduser -D -u 10001 scanner && mkdir /db && chown scanner /db
 USER 10001

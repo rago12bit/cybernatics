@@ -11,7 +11,7 @@
 # to Sell the Software", where "Sell" is defined to include offering it as a hosted service) --
 # the exact same restriction this image exists to get away from. Rules live in
 # docker/opengrep/rules/, authored for this project (see docker/opengrep/rules/LICENSE).
-FROM alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc
+FROM alpine:3.24@sha256:294b683cb724975bec92580e1e685676bd4b50bda910ddb8c51d4cabeaec77e6
 ARG OPENGREP_VERSION=1.30.0
 ARG TARGETARCH
 
