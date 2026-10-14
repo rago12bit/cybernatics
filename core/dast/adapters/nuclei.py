@@ -29,6 +29,7 @@ also around the proxy. `bulwark/nuclei` (docker/nuclei) bakes in a pinned templa
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import threading
 import uuid
@@ -45,6 +46,8 @@ EXCLUDED_TAGS = ("dos", "fuzz", "intrusive", "bruteforce")
 
 # Never run anything but an HTTP(S) request to the target itself -- see the module docstring.
 ALLOWED_PROTOCOL_TYPES = ("http",)
+
+_ANSI = re.compile(r"\x1b\[[0-9;]*m")  # Nuclei colours its log lines, even into a pipe
 
 
 class NucleiError(Exception):
@@ -73,7 +76,14 @@ def run_nuclei(
 
     Output is read as Nuclei prints it, so a run that hits `timeout_s` still returns what it found
     (as `NucleiTimeout.findings`) instead of nothing, and its container is killed rather than left
-    running: stopping the `docker` client alone does not stop the container."""
+    running: stopping the `docker` client alone does not stop the container.
+
+    A run that exits non-zero raises `NucleiError` with the reason it gave: Nuclei's own errors exit
+    1 ("no templates provided for scan" for a template id that no longer exists), Docker's 125 (an
+    image that is not there). Until 2026-10-14 the exit code was ignored and stderr discarded, so a
+    failed run read as a clean one: a campaign "with no findings", and a targeted retest that
+    concluded the Issue was fixed. A target that does not answer is not an error to Nuclei (it exits
+    0 with no results), so it cannot be told apart from a clean scan here."""
     name = f"bulwark-nuclei-{uuid.uuid4().hex[:8]}"
     argv = ["docker", "run", "--rm", "--name", name]
     if proxy is not None:
@@ -96,13 +106,16 @@ def run_nuclei(
     if template_ids:
         argv += ["-id", ",".join(template_ids)]
     try:
-        proc = subprocess.Popen(argv, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+        proc = subprocess.Popen(argv, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     except FileNotFoundError as exc:
         raise NucleiError("docker is not available") from exc
-    assert proc.stdout is not None
+    assert proc.stdout is not None and proc.stderr is not None
     lines: list[str] = []
+    errors: list[str] = []  # -silent leaves only real errors here
     reader = threading.Thread(target=_read_lines, args=(proc.stdout, lines), daemon=True)
+    err_reader = threading.Thread(target=_read_lines, args=(proc.stderr, errors), daemon=True)
     reader.start()
+    err_reader.start()
     try:
         proc.wait(timeout=timeout_s)
     except subprocess.TimeoutExpired:
@@ -117,6 +130,13 @@ def run_nuclei(
             found,
         ) from None
     reader.join()
+    err_reader.join(timeout=10)
+    if proc.returncode != 0:
+        reason = _ANSI.sub("", "".join(errors)).strip().splitlines()[-3:]
+        raise NucleiError(
+            f"nuclei exited with code {proc.returncode}: "
+            + (" / ".join(reason)[-500:] or "no error output")
+        )
     return _parse_jsonl("".join(lines))
 
 

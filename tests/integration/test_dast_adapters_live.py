@@ -23,7 +23,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 
 import pytest
 
-from core.dast.adapters.nuclei import run_nuclei
+from core.dast.adapters.nuclei import NucleiError, run_nuclei
 from core.dast.adapters.zap import run_zap_baseline
 from core.models import Category
 
@@ -87,6 +87,31 @@ def test_a_real_zap_baseline_scan_finds_real_missing_security_headers(local_targ
 
 
 def test_a_real_nuclei_scan_against_a_real_external_host_produces_real_findings() -> None:
-    findings = run_nuclei("https://example.com/", timeout_s=180)
+    findings = run_nuclei("https://example.com/", timeout_s=300)
+    # Until 2026-10-14 this asked for no findings at all, so a Nuclei that never ran (no image,
+    # which run_nuclei read as a clean scan) passed it. What example.com yields varies between runs
+    # (23 findings in one run that day, 3 in the next), so only "something" is asked of it; the
+    # local test below checks exact findings.
+    assert findings
     assert all(f.taxonomy.category is Category.DAST for f in findings)
     assert len({f.id for f in findings}) == len(findings)
+
+
+def test_a_real_nuclei_scan_reports_the_headers_a_local_page_does_not_send(
+    local_target: int,
+) -> None:
+    host = _host_seen_from_a_container()
+    findings = run_nuclei(f"http://{host}:{local_target}/",
+                          template_ids=("http-missing-security-headers",), timeout_s=120)  # fmt: skip
+    rules = {f.evidence.rule_ids["nuclei"][0] for f in findings}
+    assert {"http-missing-security-headers:x-frame-options",
+            "http-missing-security-headers:content-security-policy"} <= rules, rules  # fmt: skip
+
+
+def test_a_real_nuclei_failure_is_an_error_not_an_empty_scan() -> None:
+    """A template id the pinned templates do not have: real Nuclei exits 1, and that must not read
+    as "no findings" -- a targeted retest would take it for the Issue being fixed."""
+    with pytest.raises(NucleiError, match="code 1: .*no templates provided for scan"):
+        run_nuclei(
+            "https://example.com/", template_ids=("no-such-template-bulwark",), timeout_s=120
+        )

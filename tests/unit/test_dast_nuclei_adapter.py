@@ -9,10 +9,13 @@ import sys
 import time
 from typing import Any
 
+import pytest
+
 from core.dast.adapters import nuclei
 from core.dast.adapters.nuclei import (
     ALLOWED_PROTOCOL_TYPES,
     EXCLUDED_TAGS,
+    NucleiError,
     NucleiTimeout,
     _parse_jsonl,
 )
@@ -205,3 +208,56 @@ def test_a_run_that_times_out_keeps_what_it_found_and_kills_its_container(monkey
     assert time.monotonic() - t0 < 15
     name = started["argv"][started["argv"].index("--name") + 1]
     assert name.startswith("bulwark-nuclei-") and killed == [["docker", "kill", name]]
+
+
+# Nuclei's own fatal line, coloured as it prints it even into a pipe (seen 2026-10-14 from
+# bulwark/nuclei:3.11.1 given `-id` of a template that does not exist).
+FTL = "[\x1b[1;31mFTL\x1b[0m] Could not run nuclei: no templates provided for scan\n"
+
+
+_REAL_POPEN = subprocess.Popen  # taken once: a second patch must not wrap the first
+
+
+def _nuclei_that_exits(monkeypatch: Any, code: int, *, stdout: str = "", stderr: str = "") -> None:
+    script = (f"import sys; sys.stdout.write({stdout!r}); sys.stderr.write({stderr!r}); "
+              f"sys.exit({code})")  # fmt: skip
+    monkeypatch.setattr(nuclei.subprocess, "Popen",
+                        lambda argv, **kw: _REAL_POPEN([sys.executable, "-c", script], **kw))  # fmt: skip
+
+
+def test_a_run_that_fails_raises_with_nucleis_reason_instead_of_finding_nothing(
+    monkeypatch: Any,
+) -> None:
+    """Until 2026-10-14 the exit code was ignored and stderr discarded: this returned [], a clean
+    scan, and a targeted retest read it as the Issue being fixed."""
+    _nuclei_that_exits(monkeypatch, 1, stderr=FTL)
+    with pytest.raises(NucleiError) as exc:
+        nuclei.run_nuclei("https://example.com/", template_ids=("a-renamed-template",))
+    assert str(exc.value) == (
+        "nuclei exited with code 1: [FTL] Could not run nuclei: no templates provided for scan"
+    )
+
+
+def test_an_image_that_is_not_there_raises(monkeypatch: Any) -> None:
+    _nuclei_that_exits(monkeypatch, 125, stderr=(
+        "docker: Error response from daemon: No such image: bulwark/nuclei:3.11.1\n"))  # fmt: skip
+    with pytest.raises(NucleiError, match="code 125: docker: Error response from daemon: No such"):
+        nuclei.run_nuclei("https://example.com/")
+
+
+def test_a_failure_with_findings_before_it_still_raises(monkeypatch: Any) -> None:
+    line = _line(**{"template-id": "swagger-api", "info": {"name": "S", "severity": "info"},
+                    "matched-at": "http://t/api-docs"})  # fmt: skip
+    _nuclei_that_exits(monkeypatch, 2, stdout=line + "\n")
+    with pytest.raises(NucleiError, match="code 2: no error output"):
+        nuclei.run_nuclei("http://t/")
+
+
+def test_a_clean_run_is_still_its_findings(monkeypatch: Any) -> None:
+    line = _line(**{"template-id": "swagger-api", "info": {"name": "S", "severity": "info"},
+                    "matched-at": "http://t/api-docs"})  # fmt: skip
+    _nuclei_that_exits(monkeypatch, 0, stdout=line + "\n")
+    assert [f.evidence.rule_ids["nuclei"] for f in nuclei.run_nuclei("http://t/")] == [
+        ["swagger-api"]]  # fmt: skip
+    _nuclei_that_exits(monkeypatch, 0)
+    assert nuclei.run_nuclei("http://t/") == []

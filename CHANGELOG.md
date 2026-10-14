@@ -6,6 +6,14 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 ## [Unreleased]
 
 ### Fixed
+- **A failed Nuclei run no longer reads as a clean scan, or as a fixed Issue.** `run_nuclei`
+  ignored Nuclei's exit code and discarded its errors, so a run that failed -- a template renamed
+  in a template update ("no templates provided for scan", exit 1), an image that is not there
+  (Docker's 125), a crash -- returned no findings. A campaign then completed "with no findings", and
+  a targeted DAST retest decided the Issue was fixed. It now raises with Nuclei's own reason: the
+  campaign records Nuclei as an error and is partial, and the retest fails instead of passing. A
+  target that does not answer is still not an error to Nuclei itself (it exits 0 with no results).
+  CI's `test` job now builds `bulwark/nuclei`, which its live Nuclei test had been passing without.
 - **Two first scans of the same repository at once no longer fail.** Both looked for the project,
   found none and created it; the second hit the unique constraint and the scan failed. The loser
   now uses the project the other created. The same for two first uploads into the same Test.

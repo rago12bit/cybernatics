@@ -381,3 +381,50 @@ def test_a_confirmed_fix_leaves_the_project_overview_queue(env: Env) -> None:
     after = env.client.get(f"/assets/{env.asset_id}/overview", headers=AUTH).json()
     assert [f["title"] for f in after["fix_first"]] == ["Problem 2"]
     assert after["more_at_lower_risk"] == 0
+
+
+def test_a_dast_retest_whose_scanner_fails_does_not_read_as_fixed(
+    env: Env, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Until 2026-10-14 `run_nuclei` ignored Nuclei's exit code: a template renamed in a template
+    update ("no templates provided for scan", exit 1), a missing image or a crash returned no
+    findings, and this retest decided the Issue was fixed. Now the run fails and the Issue stays."""
+    import subprocess
+    import sys
+
+    from core.dast.adapters import nuclei
+    from core.models import Category, Evidence, Finding, Location, Scoring, Taxonomy
+
+    with env.sessions() as s:
+        web, _ = repo.register_web_asset(s, domain="shop.example", method="dns_txt")
+        sc = repo.create_scan(s, source_type="web", source_ref="https://shop.example",
+                              source_label="shop.example", tools=["nuclei"])  # fmt: skip
+        sc.asset_id, sc.dast_mode = web.id, "active"
+        s.commit()
+        f = Finding(
+            id="nuclei:x", title="Exposed .git", description="d",
+            location=Location("", 0, 0, route="/.git/config", host="shop.example"),
+            taxonomy=Taxonomy(Category.DAST), scoring=Scoring(normalized_severity=Severity.HIGH),
+            evidence=Evidence(reported_by=["nuclei"], rule_ids={"nuclei": ["git-config"]}),
+            fingerprint="dast-1",
+        )  # fmt: skip
+        sync = repo.sync_issues_for_scan(s, sc.id, [f])
+        repo.add_findings(s, sc.id, [f], sync.updates)
+        repo.finish_scan(s, sc.id, "completed")
+        issue = s.scalars(select(IssueRow).where(IssueRow.asset_id == web.id)).one()
+
+        failing = ("import sys; sys.stderr.write('[FTL] Could not run nuclei: no templates "
+                   "provided for scan'); sys.exit(1)")  # fmt: skip
+        real_popen = subprocess.Popen
+        monkeypatch.setattr(nuclei.subprocess, "Popen",
+                            lambda argv, **kw: real_popen([sys.executable, "-c", failing], **kw))  # fmt: skip
+
+        class Verified:
+            ok, error = True, None
+
+        run = targeted.start(s, issue, actor="t")
+        done = targeted.run(s, run.id, verify=lambda *a, **k: Verified(),
+                            dast=lambda url, t: nuclei.run_nuclei(url, template_ids=(t.rule,)))  # fmt: skip
+        assert done is not None and (done.status, done.result) == ("failed", None)
+        assert "no templates provided for scan" in (done.detail or "")
+        assert s.get(IssueRow, issue.id).retest_status != "passed"  # type: ignore[union-attr]
