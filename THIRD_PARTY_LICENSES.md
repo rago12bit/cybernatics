@@ -19,6 +19,7 @@ inventory, not legal advice: check licenses that matter to you at the source.
 | grype | Apache-2.0 | <https://github.com/anchore/grype> | runs in a container |
 | ingest-parser | Apache-2.0 (Bulwark's own code; ijson BSD-3-Clause/ISC, google-re2 BSD-3-Clause, defusedxml PSF-2.0) | <https://pypi.org/project/ijson/> | Bulwark's own image (docker/ingest-parser, Week 54 §42.2): parses uploaded reports inside the scanner sandbox. Three permissive Python libraries, pip-installed into the image: ijson (streaming JSON), google-re2 (linear-time regular expressions) and defusedxml (XML without entity expansion) |
 | jaeger | Apache-2.0 | <https://github.com/jaegertracing/jaeger> | optional compose profile |
+| nuclei | MIT | <https://github.com/projectdiscovery/nuclei> | active DAST tier, runs in a container; templates from projectdiscovery/nuclei-templates (MIT) baked into the image at build time |
 | opengrep | LGPL-2.1-only (engine) | <https://github.com/opengrep/opengrep> | hosted mode's SAST tool (ADR-0038); runs in a container, binary pinned by sha256 -- never bundles opengrep-rules (Commons Clause), uses docker/opengrep/rules/ instead, originally written for this project under its own Apache-2.0 license |
 | osv-scanner | Apache-2.0 | <https://github.com/google/osv-scanner> | runs in a container |
 | pgvector | PostgreSQL License | <https://github.com/pgvector/pgvector> | built into the database image |
@@ -197,15 +198,19 @@ Bulwark is not affiliated with or endorsed by DefectDojo, Inc.
 | websockets | 16.1.1 | BSD-3-Clause |
 | xmlschema | 2.5.1 | MIT |
 
-## npm dependencies: web app (270 runtime, 330 development)
+## npm dependencies: web app (277 runtime, 319 development)
 
-Runtime license summary: MIT 191, ISC 35, Apache-2.0 17, LGPL-3.0-or-later 10, BSD-3-Clause 7, Apache-2.0 AND LGPL-3.0-or-later 3, OFL-1.1 2, Apache-2.0 AND LGPL-3.0-or-later AND MIT 1, CC-BY-4.0 1, (MPL-2.0 OR Apache-2.0) 1, Unlicense 1, 0BSD 1
+Runtime license summary: MIT 193, ISC 35, Apache-2.0 21, LGPL-3.0-or-later 10, BSD-3-Clause 7, Apache-2.0 AND LGPL-3.0-or-later 3, OFL-1.1 2, Apache-2.0 AND LGPL-3.0-or-later AND MIT 1, CC-BY-4.0 1, (MPL-2.0 OR Apache-2.0) 1, EPL-2.0 1, Unlicense 1, 0BSD 1
 
 | Package | Version | License |
 |---|---|---|
 | @antfu/install-pkg | 2.1.0 | MIT |
 | @braintree/sanitize-url | 7.1.2 | MIT |
-| @chevrotain/types | 11.1.2 | Apache-2.0 |
+| @chevrotain/cst-dts-gen | 13.2.0 | Apache-2.0 |
+| @chevrotain/gast | 13.2.0 | Apache-2.0 |
+| @chevrotain/regexp-to-ast | 13.2.0 | Apache-2.0 |
+| @chevrotain/types | 13.2.0 | Apache-2.0 |
+| @chevrotain/utils | 13.2.0 | Apache-2.0 |
 | @emnapi/runtime | 1.11.3 | MIT |
 | @floating-ui/core | 1.8.0 | MIT |
 | @floating-ui/dom | 1.8.0 | MIT |
@@ -216,85 +221,87 @@ Runtime license summary: MIT 191, ISC 35, Apache-2.0 17, LGPL-3.0-or-later 10, B
 | @iconify/types | 2.0.0 | MIT |
 | @iconify/utils | 3.1.7 | MIT |
 | @img/colour | 1.1.0 | MIT |
-| @img/sharp-darwin-arm64 | 0.35.4 | Apache-2.0 |
-| @img/sharp-darwin-x64 | 0.35.4 | Apache-2.0 |
-| @img/sharp-freebsd-wasm32 | 0.35.4 | Apache-2.0 |
-| @img/sharp-libvips-darwin-arm64 | 1.3.3 | LGPL-3.0-or-later |
-| @img/sharp-libvips-darwin-x64 | 1.3.3 | LGPL-3.0-or-later |
-| @img/sharp-libvips-linux-arm | 1.3.3 | LGPL-3.0-or-later |
-| @img/sharp-libvips-linux-arm64 | 1.3.3 | LGPL-3.0-or-later |
-| @img/sharp-libvips-linux-ppc64 | 1.3.3 | LGPL-3.0-or-later |
-| @img/sharp-libvips-linux-riscv64 | 1.3.3 | LGPL-3.0-or-later |
-| @img/sharp-libvips-linux-s390x | 1.3.3 | LGPL-3.0-or-later |
-| @img/sharp-libvips-linux-x64 | 1.3.3 | LGPL-3.0-or-later |
-| @img/sharp-libvips-linuxmusl-arm64 | 1.3.3 | LGPL-3.0-or-later |
-| @img/sharp-libvips-linuxmusl-x64 | 1.3.3 | LGPL-3.0-or-later |
-| @img/sharp-linux-arm | 0.35.4 | Apache-2.0 |
-| @img/sharp-linux-arm64 | 0.35.4 | Apache-2.0 |
-| @img/sharp-linux-ppc64 | 0.35.4 | Apache-2.0 |
-| @img/sharp-linux-riscv64 | 0.35.4 | Apache-2.0 |
-| @img/sharp-linux-s390x | 0.35.4 | Apache-2.0 |
-| @img/sharp-linux-x64 | 0.35.4 | Apache-2.0 |
-| @img/sharp-linuxmusl-arm64 | 0.35.4 | Apache-2.0 |
-| @img/sharp-linuxmusl-x64 | 0.35.4 | Apache-2.0 |
-| @img/sharp-wasm32 | 0.35.4 | Apache-2.0 AND LGPL-3.0-or-later AND MIT |
-| @img/sharp-webcontainers-wasm32 | 0.35.4 | Apache-2.0 |
-| @img/sharp-win32-arm64 | 0.35.4 | Apache-2.0 AND LGPL-3.0-or-later |
-| @img/sharp-win32-ia32 | 0.35.4 | Apache-2.0 AND LGPL-3.0-or-later |
-| @img/sharp-win32-x64 | 0.35.4 | Apache-2.0 AND LGPL-3.0-or-later |
-| @mermaid-js/parser | 1.2.1 | MIT |
-| @next/env | 16.3.6 | MIT |
-| @next/swc-darwin-arm64 | 16.3.6 | MIT |
-| @next/swc-darwin-x64 | 16.3.6 | MIT |
-| @next/swc-linux-arm64-gnu | 16.3.6 | MIT |
-| @next/swc-linux-arm64-musl | 16.3.6 | MIT |
-| @next/swc-linux-x64-gnu | 16.3.6 | MIT |
-| @next/swc-linux-x64-musl | 16.3.6 | MIT |
-| @next/swc-win32-arm64-msvc | 16.3.6 | MIT |
-| @next/swc-win32-x64-msvc | 16.3.6 | MIT |
+| @img/sharp-darwin-arm64 | 0.35.5 | Apache-2.0 |
+| @img/sharp-darwin-x64 | 0.35.5 | Apache-2.0 |
+| @img/sharp-freebsd-wasm32 | 0.35.5 | Apache-2.0 |
+| @img/sharp-libvips-darwin-arm64 | 1.3.4 | LGPL-3.0-or-later |
+| @img/sharp-libvips-darwin-x64 | 1.3.4 | LGPL-3.0-or-later |
+| @img/sharp-libvips-linux-arm | 1.3.4 | LGPL-3.0-or-later |
+| @img/sharp-libvips-linux-arm64 | 1.3.4 | LGPL-3.0-or-later |
+| @img/sharp-libvips-linux-ppc64 | 1.3.4 | LGPL-3.0-or-later |
+| @img/sharp-libvips-linux-riscv64 | 1.3.4 | LGPL-3.0-or-later |
+| @img/sharp-libvips-linux-s390x | 1.3.4 | LGPL-3.0-or-later |
+| @img/sharp-libvips-linux-x64 | 1.3.4 | LGPL-3.0-or-later |
+| @img/sharp-libvips-linuxmusl-arm64 | 1.3.4 | LGPL-3.0-or-later |
+| @img/sharp-libvips-linuxmusl-x64 | 1.3.4 | LGPL-3.0-or-later |
+| @img/sharp-linux-arm | 0.35.5 | Apache-2.0 |
+| @img/sharp-linux-arm64 | 0.35.5 | Apache-2.0 |
+| @img/sharp-linux-ppc64 | 0.35.5 | Apache-2.0 |
+| @img/sharp-linux-riscv64 | 0.35.5 | Apache-2.0 |
+| @img/sharp-linux-s390x | 0.35.5 | Apache-2.0 |
+| @img/sharp-linux-x64 | 0.35.5 | Apache-2.0 |
+| @img/sharp-linuxmusl-arm64 | 0.35.5 | Apache-2.0 |
+| @img/sharp-linuxmusl-x64 | 0.35.5 | Apache-2.0 |
+| @img/sharp-wasm32 | 0.35.5 | Apache-2.0 AND LGPL-3.0-or-later AND MIT |
+| @img/sharp-webcontainers-wasm32 | 0.35.5 | Apache-2.0 |
+| @img/sharp-win32-arm64 | 0.35.5 | Apache-2.0 AND LGPL-3.0-or-later |
+| @img/sharp-win32-ia32 | 0.35.5 | Apache-2.0 AND LGPL-3.0-or-later |
+| @img/sharp-win32-x64 | 0.35.5 | Apache-2.0 AND LGPL-3.0-or-later |
+| @mermaid-js/parser | 2.0.1 | MIT |
+| @next/env | 16.4.0 | MIT |
+| @next/swc-darwin-arm64 | 16.4.0 | MIT |
+| @next/swc-darwin-x64 | 16.4.0 | MIT |
+| @next/swc-linux-arm64-gnu | 16.4.0 | MIT |
+| @next/swc-linux-arm64-musl | 16.4.0 | MIT |
+| @next/swc-linux-x64-gnu | 16.4.0 | MIT |
+| @next/swc-linux-x64-musl | 16.4.0 | MIT |
+| @next/swc-win32-arm64-msvc | 16.4.0 | MIT |
+| @next/swc-win32-x64-msvc | 16.4.0 | MIT |
 | @radix-ui/primitive | 1.1.7 | MIT |
-| @radix-ui/react-arrow | 1.1.15 | MIT |
-| @radix-ui/react-collection | 1.1.15 | MIT |
+| @radix-ui/react-arrow | 1.1.16 | MIT |
+| @radix-ui/react-collection | 1.1.16 | MIT |
 | @radix-ui/react-compose-refs | 1.1.5 | MIT |
 | @radix-ui/react-context | 1.2.2 | MIT |
-| @radix-ui/react-dialog | 1.1.23 | MIT |
-| @radix-ui/react-direction | 1.1.4 | MIT |
-| @radix-ui/react-dismissable-layer | 1.1.19 | MIT |
-| @radix-ui/react-dropdown-menu | 2.1.24 | MIT |
+| @radix-ui/react-dialog | 1.2.0 | MIT |
+| @radix-ui/react-direction | 1.1.5 | MIT |
+| @radix-ui/react-dismissable-layer | 1.1.20 | MIT |
+| @radix-ui/react-dropdown-menu | 2.1.25 | MIT |
 | @radix-ui/react-focus-guards | 1.1.6 | MIT |
-| @radix-ui/react-focus-scope | 1.1.16 | MIT |
+| @radix-ui/react-focus-scope | 1.2.0 | MIT |
 | @radix-ui/react-id | 1.1.4 | MIT |
-| @radix-ui/react-menu | 2.1.24 | MIT |
-| @radix-ui/react-popper | 1.3.7 | MIT |
-| @radix-ui/react-portal | 1.1.17 | MIT |
-| @radix-ui/react-presence | 1.1.10 | MIT |
-| @radix-ui/react-primitive | 2.1.10 | MIT |
-| @radix-ui/react-roving-focus | 1.1.19 | MIT |
-| @radix-ui/react-slot | 1.3.3 | MIT |
-| @radix-ui/react-tabs | 1.1.21 | MIT |
-| @radix-ui/react-tooltip | 1.2.16 | MIT |
+| @radix-ui/react-menu | 2.1.25 | MIT |
+| @radix-ui/react-popper | 1.3.8 | MIT |
+| @radix-ui/react-portal | 1.1.18 | MIT |
+| @radix-ui/react-presence | 1.1.11 | MIT |
+| @radix-ui/react-primitive | 2.1.11 | MIT |
+| @radix-ui/react-roving-focus | 1.1.20 | MIT |
+| @radix-ui/react-slot | 1.4.0 | MIT |
+| @radix-ui/react-tabs | 1.1.22 | MIT |
+| @radix-ui/react-tooltip | 1.3.0 | MIT |
 | @radix-ui/react-use-callback-ref | 1.1.4 | MIT |
 | @radix-ui/react-use-controllable-state | 1.2.6 | MIT |
 | @radix-ui/react-use-effect-event | 0.0.5 | MIT |
 | @radix-ui/react-use-is-hydrated | 0.1.3 | MIT |
 | @radix-ui/react-use-layout-effect | 1.1.4 | MIT |
 | @radix-ui/react-use-rect | 1.1.4 | MIT |
-| @radix-ui/react-use-size | 1.1.4 | MIT |
-| @radix-ui/react-visually-hidden | 1.2.11 | MIT |
+| @radix-ui/react-use-size | 1.1.5 | MIT |
+| @radix-ui/react-visually-hidden | 1.2.12 | MIT |
 | @radix-ui/rect | 1.1.3 | MIT |
-| @shikijs/core | 4.4.3 | MIT |
-| @shikijs/engine-javascript | 4.4.3 | MIT |
-| @shikijs/engine-oniguruma | 4.4.3 | MIT |
-| @shikijs/langs | 4.4.3 | MIT |
-| @shikijs/primitive | 4.4.3 | MIT |
-| @shikijs/themes | 4.4.3 | MIT |
-| @shikijs/types | 4.4.3 | MIT |
+| @shikijs/core | 4.5.0 | MIT |
+| @shikijs/engine-javascript | 4.5.0 | MIT |
+| @shikijs/engine-oniguruma | 4.5.0 | MIT |
+| @shikijs/langs | 4.5.0 | MIT |
+| @shikijs/primitive | 4.5.0 | MIT |
+| @shikijs/themes | 4.5.0 | MIT |
+| @shikijs/types | 4.5.0 | MIT |
 | @shikijs/vscode-textmate | 10.0.2 | MIT |
 | @swc/helpers | 0.5.23 | Apache-2.0 |
-| @tanstack/react-table | 8.21.3 | MIT |
-| @tanstack/react-virtual | 3.14.13 | MIT |
-| @tanstack/table-core | 8.21.3 | MIT |
-| @tanstack/virtual-core | 3.17.11 | MIT |
+| @tanstack/react-store | 0.11.2 | MIT |
+| @tanstack/react-table | 9.2.8 | MIT |
+| @tanstack/react-virtual | 3.14.14 | MIT |
+| @tanstack/store | 0.11.2 | MIT |
+| @tanstack/table-core | 9.2.8 | MIT |
+| @tanstack/virtual-core | 3.18.0 | MIT |
 | @types/d3 | 7.4.3 | MIT |
 | @types/d3-array | 3.2.2 | MIT |
 | @types/d3-axis | 3.0.6 | MIT |
@@ -335,15 +342,16 @@ Runtime license summary: MIT 191, ISC 35, Apache-2.0 17, LGPL-3.0-or-later 10, B
 | @upsetjs/venn.js | 2.0.0 | MIT |
 | aria-hidden | 1.2.6 | MIT |
 | baseline-browser-mapping | 2.11.26 | Apache-2.0 |
-| caniuse-lite | 1.0.30001812 | CC-BY-4.0 |
+| caniuse-lite | 1.0.30001815 | CC-BY-4.0 |
 | ccount | 2.0.1 | MIT |
 | character-entities-html4 | 2.1.0 | MIT |
 | character-entities-legacy | 3.0.0 | MIT |
+| chevrotain | 13.2.0 | Apache-2.0 |
 | client-only | 0.0.1 | MIT |
 | clsx | 2.1.1 | MIT |
 | comma-separated-tokens | 2.0.3 | MIT |
+| commander | 15.0.0 | MIT |
 | commander | 7.2.0 | MIT |
-| commander | 8.3.0 | MIT |
 | cose-base | 1.0.3 | MIT |
 | cose-base | 2.2.0 | MIT |
 | cytoscape | 3.34.3 | MIT |
@@ -388,13 +396,12 @@ Runtime license summary: MIT 191, ISC 35, Apache-2.0 17, LGPL-3.0-or-later 10, B
 | dayjs | 1.11.23 | MIT |
 | delaunator | 5.1.0 | ISC |
 | dequal | 2.0.3 | MIT |
-| detect-libc | 2.1.2 | Apache-2.0 |
 | detect-node-es | 1.1.0 | MIT |
 | devlop | 1.1.0 | MIT |
 | dompurify | 3.4.16 | (MPL-2.0 OR Apache-2.0) |
+| elkjs | 0.9.3 | EPL-2.0 |
 | es-toolkit | 1.52.0 | MIT |
 | fast-equals | 4.0.3 | MIT |
-| fastdom | 1.0.12 | MIT |
 | get-nonce | 1.0.1 | MIT |
 | hachure-fill | 0.5.2 | MIT |
 | hast-util-to-html | 9.0.5 | MIT |
@@ -405,22 +412,23 @@ Runtime license summary: MIT 191, ISC 35, Apache-2.0 17, LGPL-3.0-or-later 10, B
 | internmap | 1.0.1 | ISC |
 | internmap | 2.0.3 | ISC |
 | js-tokens | 4.0.0 | MIT |
-| katex | 0.16.47 | MIT |
+| katex | 0.19.0 | MIT |
 | khroma | 2.1.0 | MIT |
 | layout-base | 1.0.2 | MIT |
 | layout-base | 2.0.1 | MIT |
+| lenis | 1.3.26 | MIT |
 | lodash-es | 4.18.1 | MIT |
 | loose-envify | 1.4.0 | MIT |
 | marked | 16.4.2 | MIT |
 | mdast-util-to-hast | 13.2.1 | MIT |
-| mermaid | 11.17.2 | MIT |
+| mermaid | 12.1.0 | MIT |
 | micromark-util-character | 2.1.1 | MIT |
 | micromark-util-encode | 2.0.1 | MIT |
 | micromark-util-sanitize-uri | 2.0.1 | MIT |
 | micromark-util-symbol | 2.0.1 | MIT |
 | micromark-util-types | 2.0.3 | MIT |
 | nanoid | 3.3.19 | MIT |
-| next | 16.3.6 | MIT |
+| next | 16.4.0 | MIT |
 | object-assign | 4.1.1 | MIT |
 | oniguruma-parser | 0.12.2 | MIT |
 | oniguruma-to-es | 4.3.6 | MIT |
@@ -435,7 +443,7 @@ Runtime license summary: MIT 191, ISC 35, Apache-2.0 17, LGPL-3.0-or-later 10, B
 | react | 19.3.0 | MIT |
 | react-dom | 19.3.0 | MIT |
 | react-draggable | 4.7.2 | MIT |
-| react-grid-layout | 2.2.4 | MIT |
+| react-grid-layout | 2.3.0 | MIT |
 | react-is | 16.13.1 | MIT |
 | react-remove-scroll | 2.7.2 | MIT |
 | react-remove-scroll-bar | 2.3.8 | MIT |
@@ -450,11 +458,10 @@ Runtime license summary: MIT 191, ISC 35, Apache-2.0 17, LGPL-3.0-or-later 10, B
 | rw | 1.3.3 | BSD-3-Clause |
 | safer-buffer | 2.1.2 | MIT |
 | scheduler | 0.28.0 | MIT |
-| sharp | 0.35.4 | Apache-2.0 |
-| shiki | 4.4.3 | MIT |
-| source-map-js | 1.2.1 | BSD-3-Clause |
+| sharp | 0.35.5 | Apache-2.0 |
+| shiki | 4.5.0 | MIT |
+| source-map-js | 1.2.2 | BSD-3-Clause |
 | space-separated-tokens | 2.0.2 | MIT |
-| strictdom | 1.0.1 | MIT |
 | stringify-entities | 4.0.4 | MIT |
 | styled-jsx | 5.1.6 | MIT |
 | stylis | 4.4.0 | MIT |
@@ -469,12 +476,13 @@ Runtime license summary: MIT 191, ISC 35, Apache-2.0 17, LGPL-3.0-or-later 10, B
 | unist-util-visit-parents | 6.0.2 | MIT |
 | use-callback-ref | 1.3.3 | MIT |
 | use-sidecar | 1.1.3 | MIT |
+| use-sync-external-store | 1.7.0 | MIT |
 | uuid | 14.0.2 | MIT |
 | vfile | 6.0.3 | MIT |
 | vfile-message | 4.0.3 | MIT |
 | zwitch | 2.0.4 | MIT |
 
-## npm dependencies: VS Code extension (0 runtime, 203 development)
+## npm dependencies: VS Code extension (0 runtime, 214 development)
 
 Runtime license summary: 
 
@@ -502,5 +510,6 @@ Allowed, listed so the obligations are visible (dynamic linking or use as an unm
 - certifi: MPL-2.0
 - cvss: LGPLv3+
 - dompurify: (MPL-2.0 OR Apache-2.0)
+- elkjs: EPL-2.0
 - psycopg: LGPL-3.0-only
 - psycopg-binary: LGPL-3.0-only

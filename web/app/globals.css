@@ -38,6 +38,9 @@
 
 * { box-sizing: border-box; }
 html { color-scheme: dark; font-size: 100%; scroll-behavior: smooth; }
+/* While Lenis eases the public site's scrolling (components/site/SmoothScroll.tsx), the browser must not
+   animate each of its steps again. */
+html.lenis { scroll-behavior: auto; }
 body {
   margin: 0; background: var(--bg); color: var(--text);
   font: 400 1rem/1.55 var(--sans); font-optical-sizing: auto; letter-spacing: 0;

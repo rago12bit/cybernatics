@@ -7,6 +7,7 @@ import { StackSection } from "./StackSection";
 import { Recording } from "./Recording";
 import { Scanners } from "./Scanners";
 import { SiteFooter } from "./SiteFooter";
+import { SmoothScroll } from "./SmoothScroll";
 import { CountUp, Glow, Reveal, RiseText, ScrollProgress } from "./Motion";
 
 const pct = (n: number, d = 1) => `${(n * 100).toFixed(d)}%`;
@@ -18,6 +19,7 @@ export function Landing() {
   const catalogue = counts(); // from the code's own registries (lib/integrations.json)
   return (
     <div className="page">
+      <SmoothScroll />
       <ScrollProgress />
       {/* ---- Hero ---- */}
       <StackSection index={0}>

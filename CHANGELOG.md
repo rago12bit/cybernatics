@@ -55,6 +55,11 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   asserts the target was asked for `/`.
 
 ### Added
+- **Smooth scrolling on the public site.** The home page and the site pages ease wheel scrolling, in
+  the style of antigravity.google, with [Lenis](https://github.com/darkroomengineering/lenis) (MIT):
+  about half a second to settle. It moves the page's own scroll position rather than a transformed
+  wrapper, so the home page's sticky section stack still pins. Touch scrolling stays native, it is
+  off for reduced motion, in-page links land below the header, and `/app` keeps native scrolling.
 - **CI runs on a pinned runner image.** All 19 jobs in the five workflows run on `ubuntu-24.04`
   instead of `ubuntu-latest`, which GitHub moves to Ubuntu 26 from 2026-10-19 -- a change to apt
   packages, Docker and Python under an unchanged commit. A test fails on any `-latest` runner.
