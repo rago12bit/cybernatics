@@ -80,7 +80,7 @@ def _imported(sessions: sessionmaker[Session], org: str) -> str:
         set_session_org(s, org)
         asset = repo.get_or_create_asset(s, source_type="git", source_label="a/b", org_id=org)
         eng = repo.create_engagement(
-            s, org_id=org, asset_id=asset.id, name="Q", engagement_type="import"
+            s, org_id=org, asset_id=asset.id, name="Q", engagement_type="assessment"
         )
         test = repo.get_or_create_engagement_test(
             s, org_id=org, engagement_id=eng.id, name="Semgrep"

@@ -80,24 +80,43 @@ def _now() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def _add_unless_taken(s: Session, row: Any, found: Any) -> Any:
+    """Add `row`, unless another transaction committed the same one first: two scans of a new
+    repository, or two uploads to a project with no import engagement yet, can both find nothing
+    and both insert. The second insert then breaks a unique index (Postgres makes it wait for the
+    first to commit), and the row `found` selects -- the one that won -- is returned instead."""
+    s.flush()  # an error in earlier pending changes is not this race
+    try:
+        with s.begin_nested():
+            s.add(row)
+    except IntegrityError:
+        taken = s.scalars(found).first()
+        if taken is None:
+            raise
+        return taken
+    return row
+
+
 def get_or_create_asset(
     s: Session, *, source_type: str, source_label: str, org_id: str = DEFAULT_ORG_ID
 ) -> Asset:
     """The row a repeated scan is matched against (ADR-0012). Identity is `core.assets.asset_key`
     scoped to one organization (ADR-0013) — two orgs scanning the same public repo get separate
     Assets, so neither sees the other's Issue history. The label is refreshed to the most recent
-    scan's, since that's what a person actually reads."""
+    scan's, since that's what a person actually reads. Two first scans at once share one Asset."""
     key = asset_key(source_type, source_label)
-    asset = s.scalars(
-        select(Asset).where(
-            Asset.org_id == org_id, Asset.source_type == source_type, Asset.key == key
-        )
-    ).one_or_none()
+    found = select(Asset).where(
+        Asset.org_id == org_id, Asset.source_type == source_type, Asset.key == key
+    )
+    asset = s.scalars(found).one_or_none()
     if asset is None:
-        asset = Asset(org_id=org_id, source_type=source_type, key=key, label=source_label)
-        s.add(asset)
-    else:
-        asset.label, asset.last_scanned_at = source_label, _now()
+        new = Asset(org_id=org_id, source_type=source_type, key=key, label=source_label)
+        asset = cast(Asset, _add_unless_taken(s, new, found))
+        if asset is new:
+            s.commit()
+            return asset
+    # it existed, or another scan created it a moment ago
+    asset.label, asset.last_scanned_at = source_label, _now()
     s.commit()
     return asset
 
@@ -106,23 +125,9 @@ def get_or_create_ci_engagement(s: Session, *, asset_id: str, org_id: str) -> En
     """Every Asset's one standing "ci" Engagement (plan §40 change C11, Week 53, ADR-0039) --
     created lazily on an asset's first ToolRun, the same way migration 0026 backfilled one for every
     pre-existing Asset, so a project created before or after this feature shipped always has exactly
-    one. Idempotent: a second call for the same asset returns the same row, never a duplicate."""
-    existing = s.scalars(
-        select(Engagement).where(
-            Engagement.asset_id == asset_id, Engagement.org_id == org_id,
-            Engagement.engagement_type == "ci",
-        )
-    ).first()  # fmt: skip
-    if existing is not None:
-        return existing
-    asset = s.get(Asset, asset_id)
-    label = asset.label if asset is not None else asset_id
-    engagement = Engagement(
-        org_id=org_id, asset_id=asset_id, name=f"{label} CI", engagement_type="ci", status="active"
-    )
-    s.add(engagement)
-    s.commit()
-    return engagement
+    one. Idempotent: a second call for the same asset returns the same row, never a duplicate --
+    even from two transactions at once (a unique index, migration 0052)."""
+    return _standing_engagement(s, asset_id=asset_id, org_id=org_id, kind="ci", suffix="CI")
 
 
 def get_or_create_import_engagement(s: Session, *, asset_id: str, org_id: str) -> Engagement:
@@ -130,21 +135,26 @@ def get_or_create_import_engagement(s: Session, *, asset_id: str, org_id: str) -
     uploaded without naming an engagement, created lazily the way the "ci" one is. A pen test or
     audit that needs its own scope, dates and lead is a separate "assessment" engagement a person
     creates explicitly (`create_engagement`); this one is just "reports from tools we don't run"."""
-    existing = s.scalars(
-        select(Engagement).where(
-            Engagement.asset_id == asset_id,
-            Engagement.org_id == org_id,
-            Engagement.engagement_type == "import",
-        )
-    ).first()
+    return _standing_engagement(
+        s, asset_id=asset_id, org_id=org_id, kind="import", suffix="imports"
+    )
+
+
+def _standing_engagement(
+    s: Session, *, asset_id: str, org_id: str, kind: str, suffix: str
+) -> Engagement:
+    found = select(Engagement).where(
+        Engagement.asset_id == asset_id, Engagement.org_id == org_id,
+        Engagement.engagement_type == kind,
+    )  # fmt: skip
+    existing = s.scalars(found).first()
     if existing is not None:
         return existing
     asset = s.get(Asset, asset_id)
     label = asset.label if asset is not None else asset_id
-    engagement = Engagement(
-        org_id=org_id, asset_id=asset_id, name=f"{label} imports", engagement_type="import"
-    )
-    s.add(engagement)
+    new = Engagement(org_id=org_id, asset_id=asset_id, name=f"{label} {suffix}",
+                     engagement_type=kind, status="active")  # fmt: skip
+    engagement: Engagement = _add_unless_taken(s, new, found)
     s.commit()
     return engagement
 
@@ -183,9 +193,11 @@ def create_engagement(
     """A person-created Engagement -- "pentest"/"audit"/"adhoc" (plan §40 change C11): distinct from
     `get_or_create_ci_engagement`'s own lazily-created, singleton "ci" one, and never that type
     itself (a second "ci" engagement for the same asset would split its ToolRun history across two
-    rows, defeating the one-standing-engagement invariant that function maintains)."""
-    if engagement_type == "ci":
-        raise ValueError('engagement_type "ci" is reserved for get_or_create_ci_engagement')
+    rows, defeating the one-standing-engagement invariant that function maintains). "import" is
+    likewise `get_or_create_import_engagement`'s."""
+    if engagement_type in ("ci", "import"):
+        raise ValueError(f'engagement_type "{engagement_type}" is reserved for '
+                         f"get_or_create_{engagement_type}_engagement")  # fmt: skip
     engagement = Engagement(
         org_id=org_id, asset_id=asset_id, portfolio_id=portfolio_id, name=name,
         engagement_type=engagement_type, target_end_at=target_end_at,
@@ -239,17 +251,16 @@ def get_or_create_engagement_test(
     "import" alongside the "ci" one `get_or_create_ci_engagement` owns."""
     if get_engagement(s, engagement_id, org_id) is None:
         raise ValueError(f"engagement {engagement_id} not found")
-    existing = s.scalars(
-        select(EngagementTest).where(
-            EngagementTest.engagement_id == engagement_id,
-            EngagementTest.org_id == org_id,
-            EngagementTest.name == name,
-        )
-    ).one_or_none()
+    found = select(EngagementTest).where(
+        EngagementTest.engagement_id == engagement_id,
+        EngagementTest.org_id == org_id,
+        EngagementTest.name == name,
+    )
+    existing = s.scalars(found).one_or_none()
     if existing is not None:
         return existing
-    test = EngagementTest(org_id=org_id, engagement_id=engagement_id, name=name, parser=parser)
-    s.add(test)
+    new = EngagementTest(org_id=org_id, engagement_id=engagement_id, name=name, parser=parser)
+    test: EngagementTest = _add_unless_taken(s, new, found)  # two first uploads at once
     s.commit()
     return test
 

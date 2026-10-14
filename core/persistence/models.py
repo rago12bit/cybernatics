@@ -284,6 +284,16 @@ class Engagement(Base):
 
     asset: Mapped[Asset] = relationship()
 
+    # One standing "ci" and one "import" engagement per asset, even when two transactions create
+    # them at once (migration 0052); assessments are unlimited.
+    __table_args__ = (
+        Index(
+            "uq_engagements_standing", "asset_id", "engagement_type", unique=True,
+            postgresql_where=text("engagement_type IN ('ci', 'import')"),
+            sqlite_where=text("engagement_type IN ('ci', 'import')"),
+        ),
+    )  # fmt: skip
+
 
 class EngagementChecklistItem(Base):
     """One checklist entry's result in an assessment (plan §43.1): only entries someone touched have

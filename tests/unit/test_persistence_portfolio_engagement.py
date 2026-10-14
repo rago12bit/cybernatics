@@ -42,16 +42,19 @@ def test_get_or_create_ci_engagement_is_idempotent(sessions: sessionmaker[Sessio
         assert len(all_engagements) == 1
 
 
-def test_create_engagement_refuses_the_reserved_ci_type(sessions: sessionmaker[Session]) -> None:
+def test_create_engagement_refuses_the_reserved_standing_types(
+    sessions: sessionmaker[Session],
+) -> None:
     with sessions() as s:
         asset_id = _seed_asset(s)
-        try:
-            repo.create_engagement(
-                s, org_id=DEFAULT_ORG_ID, asset_id=asset_id, name="x", engagement_type="ci"
-            )
-            raise AssertionError("expected ValueError")
-        except ValueError as exc:
-            assert "reserved" in str(exc)
+        for kind in ("ci", "import"):
+            try:
+                repo.create_engagement(
+                    s, org_id=DEFAULT_ORG_ID, asset_id=asset_id, name="x", engagement_type=kind
+                )
+                raise AssertionError("expected ValueError")
+            except ValueError as exc:
+                assert "reserved" in str(exc)
 
 
 def test_create_engagement_allows_pentest_and_audit_alongside_the_ci_one(

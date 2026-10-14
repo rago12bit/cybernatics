@@ -25,7 +25,7 @@ def _seed(s: Session) -> str:
         s, source_type="git", source_label="a/b", org_id=DEFAULT_ORG_ID
     )
     return repo.create_engagement(
-        s, org_id=DEFAULT_ORG_ID, asset_id=asset.id, name="Q3 pentest", engagement_type="import"
+        s, org_id=DEFAULT_ORG_ID, asset_id=asset.id, name="Q3 pentest", engagement_type="assessment"
     ).id
 
 

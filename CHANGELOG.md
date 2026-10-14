@@ -5,6 +5,17 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 
 ## [Unreleased]
 
+### Fixed
+- **Two first scans of the same repository at once no longer fail.** Both looked for the project,
+  found none and created it; the second hit the unique constraint and the scan failed. The loser
+  now uses the project the other created. The same for two first uploads into the same Test.
+- **One standing "ci" and one "import" engagement per project.** Two transactions creating one at
+  the same moment each made their own, splitting the project's tool runs or imports between them.
+  A partial unique index prevents it (migration 0052), and duplicates made before are merged into
+  the oldest: tool runs and Tests move to it, and a Test whose name it already has is kept under
+  "<name> (merged …)" rather than folded in. `repo.create_engagement` refuses "import" as it
+  already refused "ci". Proved with six threads at once on Postgres under row-level security.
+
 ## [3.1.0] - 2026-10-13
 
 Code intelligence for more frameworks (route maps for Django, Express, Next.js and Go, with router

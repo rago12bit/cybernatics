@@ -81,9 +81,7 @@ def _test_for(sessions: sessionmaker[Session], org: str) -> str:
     with sessions() as s:
         set_session_org(s, org)
         asset = repo.get_or_create_asset(s, source_type="git", source_label="a/b", org_id=org)
-        eng = repo.create_engagement(
-            s, org_id=org, asset_id=asset.id, name="Q3", engagement_type="import"
-        )
+        eng = repo.get_or_create_import_engagement(s, asset_id=asset.id, org_id=org)
         return repo.get_or_create_engagement_test(
             s, org_id=org, engagement_id=eng.id, name="Nessus"
         ).id

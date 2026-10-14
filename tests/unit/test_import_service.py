@@ -31,9 +31,7 @@ def setup(s: Session, *tests: str) -> tuple[str, dict[str, str]]:
     s.add(Organization(id=ORG, name="default"))
     s.commit()
     asset = repo.get_or_create_asset(s, source_type="git", source_label="a/b", org_id=ORG)
-    eng = repo.create_engagement(
-        s, org_id=ORG, asset_id=asset.id, name="Q3", engagement_type="import"
-    )
+    eng = repo.get_or_create_import_engagement(s, asset_id=asset.id, org_id=ORG)
     ids = {
         name: repo.get_or_create_engagement_test(s, org_id=ORG, engagement_id=eng.id, name=name).id
         for name in tests
