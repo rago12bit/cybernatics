@@ -99,6 +99,9 @@ updates:
       compose-images:
         patterns: ["*"]
     ignore:
+      # Built here from docker/ and never published: asking Docker Hub about them fails the run
+      # (it answers 401 for a repository that does not exist).
+      - dependency-name: "bulwark/*"
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
       - dependency-name: "redis"
