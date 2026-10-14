@@ -1,6 +1,6 @@
 """core.secrets.openbao against a REAL OpenBao dev-mode container, not mocked HTTP (Week 47 task 1,
 plan §22.2). Manages its own container (start, wait for readiness, tear down) rather than requiring
-an already-running instance, since a fixed `openbao/openbao:2.1` dev-mode boot is cheap and fast.
+an already-running instance, since a fixed `openbao/openbao:2.1` dev-mode boot (pinned by digest) is cheap and fast.
 Skips everywhere Docker isn't available, the same way the scanner integration tests do.
 """
 
@@ -17,7 +17,7 @@ import pytest
 from core.secrets import envelope
 from core.secrets.openbao import OpenBaoClient, OpenBaoError
 
-_IMAGE = "openbao/openbao:2.1"
+_IMAGE = "openbao/openbao:2.1@sha256:af40ca17625ec44aa1ffe3698f85162d71d9cc97adc9e97821ef393ac94b6e42"  # as docker-compose.yml
 _TOKEN = "test-root-token"
 
 
@@ -90,7 +90,9 @@ def test_a_wrapped_key_cannot_be_unwrapped_under_a_different_org(
     openbao_client.ensure_org_key("org-c")
     openbao_client.ensure_org_key("org-d")
     dk = openbao_client.generate_data_key("org-c")
-    with pytest.raises(OpenBaoError):
+    # Refused by OpenBao's own decryption, not by anything else: "could not reach OpenBao" is an
+    # OpenBaoError too, and passed this test until 2026-10-14.
+    with pytest.raises(OpenBaoError, match=r"HTTP 400: .*cipher: message authentication failed"):
         openbao_client.unwrap_data_key("org-d", dk.wrapped)
 
 

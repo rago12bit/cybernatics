@@ -131,5 +131,7 @@ def test_attestation_binds_predicate_subject_and_type(
         other = tmp_path / "other.json"
         other.write_text("different")
         verify_attestation(other, PREDICATE_TYPE, keys["a.pub"], bundle)
-    with pytest.raises(AttestError):
+    # cosign v3.1.3's own refusal (seen 2026-10-14). Any AttestError passed here before -- a missing
+    # key file, docker failing, a timeout -- none of which shows the signature check works.
+    with pytest.raises(AttestError, match="accepted signatures do not match threshold, Found: 0"):
         verify_attestation(f, PREDICATE_TYPE, keys["b.pub"], bundle)
