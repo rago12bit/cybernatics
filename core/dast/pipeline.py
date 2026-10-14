@@ -183,6 +183,14 @@ def run_dast_campaign_job(
                 target=scan_id, payload={"asset_id": asset_id, "attempts": blocked_attempts},
             )  # fmt: skip
 
+    # Before anything is read from the findings: a target that never answered (down, or not
+    # reachable from here) still gets "findings" -- ZAP reports on the proxy's own 502 pages -- and
+    # a completed campaign would then close every Issue it did not see again.
+    unreached = proxy.target_unreached()
+    if unreached is not None:
+        return fail(f"{unreached}; no Issue was changed",
+                    action="dast.campaign.target_unreachable")  # fmt: skip
+
     if not findings and tool_errors:
         return fail("; ".join(tool_errors), action="dast.campaign.tools_failed")
 

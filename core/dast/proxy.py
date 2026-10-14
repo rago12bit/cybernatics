@@ -130,6 +130,11 @@ class AllowListProxy:
     def __init__(self, allowed_hosts: frozenset[str], *, on_blocked: OnBlocked | None = None):
         self._allowed_hosts = frozenset(h.lower() for h in allowed_hosts)
         self._on_blocked = on_blocked or JsonLinesReporter()
+        # Connections to the allowed target that opened, and that did not (answered 502). A scan in
+        # which none opened never saw the target: a scanner still reports something -- ZAP flags
+        # the proxy's own 502 pages -- so its findings must not be read as the target's.
+        self.reached = 0
+        self.unreachable = 0
 
     def is_allowed(self, host: str) -> bool:
         return host.lower() in self._allowed_hosts
@@ -175,10 +180,12 @@ class AllowListProxy:
                 asyncio.open_connection(target.host, target.port), timeout=DEFAULT_CONNECT_TIMEOUT
             )
         except (OSError, asyncio.TimeoutError, TimeoutError):
+            self.unreachable += 1
             writer.write(b"HTTP/1.1 502 Bad Gateway\r\n\r\n")
             await writer.drain()
             writer.close()
             return
+        self.reached += 1
         writer.write(_CONNECT_ESTABLISHED)
         await writer.drain()
         await asyncio.gather(
@@ -229,10 +236,12 @@ class AllowListProxy:
                 asyncio.open_connection(target.host, target.port), timeout=DEFAULT_CONNECT_TIMEOUT
             )
         except (OSError, asyncio.TimeoutError, TimeoutError):
+            self.unreachable += 1
             writer.write(b"HTTP/1.1 502 Bad Gateway\r\n\r\n")
             await writer.drain()
             writer.close()
             return
+        self.reached += 1
         upstream_writer.write(b"".join(head))
         await upstream_writer.drain()
         # The rest of what the client sends is this request's body. A further request on the same
@@ -364,6 +373,24 @@ class BackgroundProxy:
     def port(self) -> int:
         assert self._server is not None
         return int(self._server.sockets[0].getsockname()[1])
+
+    @property
+    def reached(self) -> int:
+        """Connections to the allowed target that opened (`AllowListProxy.reached`)."""
+        return self._proxy.reached
+
+    @property
+    def unreachable(self) -> int:
+        return self._proxy.unreachable
+
+    def target_unreached(self) -> str | None:
+        """Why a scan through this proxy never saw its target, or None if it did."""
+        if self.reached:
+            return None
+        if self.unreachable:
+            return (f"the target did not answer: all {self.unreachable} connection(s) to it "
+                    "failed, so finding nothing there says nothing about it")  # fmt: skip
+        return "no request reached the target through the egress proxy"
 
     def __enter__(self) -> BackgroundProxy:
         return self

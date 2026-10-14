@@ -83,7 +83,8 @@ def run_nuclei(
     image that is not there). Until 2026-10-14 the exit code was ignored and stderr discarded, so a
     failed run read as a clean one: a campaign "with no findings", and a targeted retest that
     concluded the Issue was fixed. A target that does not answer is not an error to Nuclei (it exits
-    0 with no results), so it cannot be told apart from a clean scan here."""
+    0 with no results); the campaign's egress proxy tells that apart instead
+    (`BackgroundProxy.target_unreached`)."""
     name = f"bulwark-nuclei-{uuid.uuid4().hex[:8]}"
     argv = ["docker", "run", "--rm", "--name", name]
     if proxy is not None:

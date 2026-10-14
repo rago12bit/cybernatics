@@ -201,8 +201,14 @@ def _default_dast(url: str, t: Target) -> list[Any]:
     with BackgroundProxy(frozenset({host})) as proxy:
         cfg = ProxyConfig(host="host.docker.internal", port=proxy.port)
         if t.tool == "nuclei":
-            return run_nuclei(url, proxy=cfg, template_ids=(t.rule,))
-        return run_zap_baseline(url, proxy=cfg)
+            found = run_nuclei(url, proxy=cfg, template_ids=(t.rule,))
+        else:
+            found = run_zap_baseline(url, proxy=cfg)
+    # Nothing found on a target that never answered is not a fix (the run then fails).
+    unreached = proxy.target_unreached()
+    if unreached is not None:
+        raise RuntimeError(unreached)
+    return found
 
 
 def _dast_check(

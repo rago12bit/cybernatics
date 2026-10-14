@@ -77,6 +77,7 @@ def test_an_allowed_plain_http_request_is_relayed_to_the_real_local_target(
     assert resp.status == 200
     assert body == b"hello from the allowed target"
     assert recorder.blocked == []
+    assert (proxy.reached, proxy.unreachable, proxy.target_unreached()) == (1, 0, None)
 
 
 def test_a_disallowed_host_is_refused_with_403_and_reported(
@@ -88,6 +89,27 @@ def test_a_disallowed_host_is_refused_with_403_and_reported(
     resp = conn.getresponse()
     assert resp.status == 403
     assert recorder.blocked == [("evil.example.net", 80, False)]
+    # a refused host is not the target: it neither reached it nor failed to
+    assert proxy.target_unreached() == "no request reached the target through the egress proxy"
+
+
+def test_an_allowed_target_that_does_not_answer_is_counted_and_said(
+    running_proxy: tuple[BackgroundProxy, _Recorder],
+) -> None:
+    """A scanner gets the proxy's 502 and reports on that page, so a campaign or retest must know
+    the target never answered (core.dast.pipeline, core.retest.targeted)."""
+    proxy, _ = running_proxy
+    with socket.socket() as probe:  # a port that was free a moment ago: nothing listens on it
+        probe.bind(("127.0.0.1", 0))
+        closed = probe.getsockname()[1]
+    conn = http.client.HTTPConnection("127.0.0.1", proxy.port, timeout=15)
+    conn.request("GET", f"http://127.0.0.1:{closed}/")
+    assert conn.getresponse().status == 502
+    assert (proxy.reached, proxy.unreachable) == (0, 1)
+    assert proxy.target_unreached() == (
+        "the target did not answer: all 1 connection(s) to it failed, so finding nothing there "
+        "says nothing about it"
+    )
 
 
 def test_a_real_connect_tunnel_to_a_real_external_allowed_host_succeeds() -> None:

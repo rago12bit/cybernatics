@@ -428,3 +428,49 @@ def test_a_dast_retest_whose_scanner_fails_does_not_read_as_fixed(
         assert done is not None and (done.status, done.result) == ("failed", None)
         assert "no templates provided for scan" in (done.detail or "")
         assert s.get(IssueRow, issue.id).retest_status != "passed"  # type: ignore[union-attr]
+
+
+def test_a_dast_retest_against_a_target_that_is_down_does_not_read_as_fixed(
+    env: Env, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Nuclei exits 0 with no results when the target does not answer. The retest's own runner
+    (its real egress proxy) now sees that no connection to the target opened, and the run fails."""
+    import socket
+
+    from core.dast.adapters import nuclei
+    from core.models import Category, Evidence, Finding, Location, Scoring, Taxonomy
+
+    with env.sessions() as s:
+        web, _ = repo.register_web_asset(s, domain="shop.invalid", method="dns_txt")
+        sc = repo.create_scan(s, source_type="web", source_ref="https://shop.invalid",
+                              source_label="shop.invalid", tools=["nuclei"])  # fmt: skip
+        sc.asset_id, sc.dast_mode = web.id, "active"
+        s.commit()
+        f = Finding(
+            id="nuclei:x", title="Exposed .git", description="d",
+            location=Location("", 0, 0, route="/.git/config", host="shop.invalid"),
+            taxonomy=Taxonomy(Category.DAST), scoring=Scoring(normalized_severity=Severity.HIGH),
+            evidence=Evidence(reported_by=["nuclei"], rule_ids={"nuclei": ["git-config"]}),
+            fingerprint="dast-1",
+        )  # fmt: skip
+        sync = repo.sync_issues_for_scan(s, sc.id, [f])
+        repo.add_findings(s, sc.id, [f], sync.updates)
+        repo.finish_scan(s, sc.id, "completed")
+        issue = s.scalars(select(IssueRow).where(IssueRow.asset_id == web.id)).one()
+
+        def nuclei_on_a_dead_target(url: str, *, proxy: Any, **kw: Any) -> list[Any]:
+            with socket.create_connection(("127.0.0.1", proxy.port), timeout=10) as c:
+                c.sendall(f"GET {url.replace('https:', 'http:')} HTTP/1.1\r\n\r\n".encode())
+                assert c.recv(4096).startswith(b"HTTP/1.1 502")
+            return []  # what real Nuclei reports: no results, exit 0
+
+        monkeypatch.setattr(nuclei, "run_nuclei", nuclei_on_a_dead_target)
+
+        class Verified:
+            ok, error = True, None
+
+        run = targeted.start(s, issue, actor="t")
+        done = targeted.run(s, run.id, verify=lambda *a, **k: Verified())  # the default runner
+        assert done is not None and (done.status, done.result) == ("failed", None)
+        assert "the target did not answer" in (done.detail or "")
+        assert s.get(IssueRow, issue.id).retest_status != "passed"  # type: ignore[union-attr]

@@ -11,9 +11,14 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   in a template update ("no templates provided for scan", exit 1), an image that is not there
   (Docker's 125), a crash -- returned no findings. A campaign then completed "with no findings", and
   a targeted DAST retest decided the Issue was fixed. It now raises with Nuclei's own reason: the
-  campaign records Nuclei as an error and is partial, and the retest fails instead of passing. A
-  target that does not answer is still not an error to Nuclei itself (it exits 0 with no results).
+  campaign records Nuclei as an error and is partial, and the retest fails instead of passing.
   CI's `test` job now builds `bulwark/nuclei`, which its live Nuclei test had been passing without.
+- **A DAST campaign or retest against a target that is down no longer closes its Issues.** When
+  the target did not answer, the egress proxy answered each request with a 502, ZAP reported
+  findings about that page, and the campaign "completed" -- closing every Issue it did not see
+  again. Nuclei just exits 0 with no results, so a retest decided the Issue was fixed. The proxy now
+  counts the connections to the target that opened and that failed; a campaign or retest in which
+  none opened fails ("the target did not answer"), and no Issue changes.
 - **Two first scans of the same repository at once no longer fail.** Both looked for the project,
   found none and created it; the second hit the unique constraint and the scan failed. The loser
   now uses the project the other created. The same for two first uploads into the same Test.
