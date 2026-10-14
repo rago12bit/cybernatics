@@ -117,7 +117,10 @@ def test_every_image_ci_runs_is_pinned_by_digest() -> None:
     text = "\n".join(p.read_text() for p in (ROOT / ".github" / "workflows").glob("*.yml"))
     refs = re.findall(r"(?m)^\s+image:\s+([^\s$]\S*)", text)
     refs += re.findall(r"docker pull\s+(?:--\S+\s+)*(\S+)", text)
-    refs += re.findall(r"(\S*zaproxy/zaproxy\S*)", text)
+    # and any registry image named elsewhere, e.g. in a `docker run` (ZAP, Keycloak)
+    refs += re.findall(
+        r"\b(?:[a-z0-9-]+\.)+(?:io|com|dev)/[\w./-]+:[\w.-]+(?:@sha256:[0-9a-f]+)?", text
+    )
     assert refs
     for ref in refs:
         assert "@sha256:" in ref, ref

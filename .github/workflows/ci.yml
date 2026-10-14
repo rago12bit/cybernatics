@@ -312,6 +312,49 @@ jobs:
             exit 1
           fi
 
+  keycloak-live:
+    # Sign-in against a real identity provider (Week 75, ADR-0058): OIDC with PKCE and SAML with
+    # signed assertions, through Keycloak's own sign-in page, end with a Bulwark session; a wrong
+    # password signs nobody in. Until 2026-10-14 this ran only by hand. Keycloak is a throwaway on
+    # this runner (bound to localhost; its admin password exists nowhere else), started with
+    # `docker run` because a service container cannot be given `start-dev`. A skip fails the job.
+    runs-on: ubuntu-latest
+    env:
+      KC_ADMIN_PASSWORD: ci-only-keycloak-admin
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends xmlsec1
+      - run: pip install -e ".[dev]"
+      - name: Start Keycloak 26.3
+        run: |
+          docker run -d --name keycloak -p 127.0.0.1:8180:8080 \
+            -e KC_BOOTSTRAP_ADMIN_USERNAME=admin -e KC_BOOTSTRAP_ADMIN_PASSWORD="$KC_ADMIN_PASSWORD" \
+            -e KC_HOSTNAME=http://localhost:8180 \
+            quay.io/keycloak/keycloak:26.3@sha256:357829ec7c4693397533035092ad13b0644bcc95ded311f33a3738c4d9e9bdba \
+            start-dev
+          for i in $(seq 1 90); do
+            curl -sf http://localhost:8180/realms/master >/dev/null && exit 0
+            sleep 2
+          done
+          docker logs keycloak | tail -50
+          echo "Keycloak never came up" >&2
+          exit 1
+      - name: Sign-in tests against Keycloak (a skip fails the job)
+        env:
+          BULWARK_KEYCLOAK_URL: http://localhost:8180
+          BULWARK_KEYCLOAK_ADMIN_PASSWORD: ${{ env.KC_ADMIN_PASSWORD }}
+        shell: bash
+        run: |
+          pytest tests/integration/test_sso_keycloak_live.py --no-cov -rs \
+            | tee "$RUNNER_TEMP/keycloak-live.txt"
+          if grep -q SKIPPED "$RUNNER_TEMP/keycloak-live.txt"; then
+            echo "a Keycloak test was skipped, so it proved nothing" >&2
+            exit 1
+          fi
+
   licenses:
     # Regenerates THIRD_PARTY_LICENSES.md (kept as an artifact) and fails on an unknown or denied license.
     runs-on: ubuntu-latest

@@ -55,6 +55,10 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   asserts the target was asked for `/`.
 
 ### Added
+- **CI signs in through a real Keycloak** (`keycloak-live`): OIDC with PKCE and SAML with signed
+  assertions end with a Bulwark session, and a wrong password signs nobody in, against Keycloak 26.3
+  (pinned by digest) started on the runner. These ran only by hand since Week 75. A skipped test
+  fails the job.
 - **CI runs the two DAST live tests** (`dast-live`): SAST findings confirmed at runtime with a real
   bandit scan, and a campaign with a real ZAP baseline through the egress proxy, on Postgres as
   `bulwark_worker`. A skipped test fails the job. They ran only by hand before.
