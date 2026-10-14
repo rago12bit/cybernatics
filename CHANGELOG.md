@@ -15,6 +15,16 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   the oldest: tool runs and Tests move to it, and a Test whose name it already has is kept under
   "<name> (merged …)" rather than folded in. `repo.create_engagement` refuses "import" as it
   already refused "ci". Proved with six threads at once on Postgres under row-level security.
+- **The DAST egress-proxy test now scans its target.** It named the target `host.docker.internal`,
+  which the proxy, running outside a container, cannot resolve: every request got the proxy's error,
+  ZAP reported findings about those error pages, and the test passed with the target never reached.
+  The target is now `dast-target.test`, resolved to this machine for the proxy only, and the test
+  asserts the target was asked for `/`.
+
+### Added
+- **CI runs the two DAST live tests** (`dast-live`): SAST findings confirmed at runtime with a real
+  bandit scan, and a campaign with a real ZAP baseline through the egress proxy, on Postgres as
+  `bulwark_worker`. A skipped test fails the job. They ran only by hand before.
 
 ## [3.1.0] - 2026-10-13
 

@@ -9,6 +9,13 @@ campaign row, the rate-limit check, a real `BackgroundProxy`, a real `zap-baseli
 real local HTTP server through that proxy, real persistence, and a real audit-log entry for the
 egress attempts the proxy actually refused.
 
+The target is named `dast-target.test`, and only that name is resolved to this machine, for the
+proxy, which runs here. ZAP, in its container, sends every request through the proxy and never
+resolves it. Until 2026-10-14 the target was `host.docker.internal`, which the proxy cannot resolve
+outside a container: the proxy answered every request with an error, ZAP reported findings about
+those error pages, and the test passed without one request reaching the target. It now asserts
+that the target was reached.
+
 Needs `BULWARK_RLS_TEST_DATABASE_URL` pointed at a real Postgres already migrated to head (same
 convention as this repo's other Docker-dependent integration tests) and a working Docker daemon.
 """
@@ -17,6 +24,7 @@ from __future__ import annotations
 
 import os
 import shutil
+import socket
 import subprocess
 import threading
 import uuid
@@ -68,8 +76,14 @@ pytestmark = [
 ]
 
 
+TARGET = "dast-target.test"
+
+
 class _Handler(BaseHTTPRequestHandler):
+    paths: list[str] = []  # what the target was asked for
+
     def do_GET(self) -> None:
+        self.paths.append(self.path)
         self.send_response(200)
         self.send_header("Content-Type", "text/html")
         self.end_headers()
@@ -80,8 +94,15 @@ class _Handler(BaseHTTPRequestHandler):
 
 
 @pytest.fixture
-def local_target() -> Iterator[int]:
-    server = HTTPServer(("0.0.0.0", 0), _Handler)
+def local_target(monkeypatch: pytest.MonkeyPatch) -> Iterator[int]:
+    real = socket.getaddrinfo
+
+    def resolve(host: object, *args: object, **kwargs: object) -> object:
+        return real("127.0.0.1" if host == TARGET else host, *args, **kwargs)  # type: ignore[arg-type]
+
+    monkeypatch.setattr(socket, "getaddrinfo", resolve)  # this one name, for this test only
+    _Handler.paths = []
+    server = HTTPServer(("127.0.0.1", 0), _Handler)
     port = server.server_address[1]
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
@@ -160,17 +181,15 @@ def test_a_real_campaign_scans_through_the_real_egress_proxy_and_records_blocked
         ownership, "verify", lambda *a, **kw: ownership.VerificationOutcome(ok=True)
     )
 
-    target_url = f"http://host.docker.internal:{local_target}/"
+    target_url = f"http://{TARGET}:{local_target}/"
     with sessions() as s:
         set_session_org(s, org)
-        web_asset, _ = repo.register_web_asset(
-            s, domain="host.docker.internal", method="well_known", org_id=org
-        )
+        web_asset, _ = repo.register_web_asset(s, domain=TARGET, method="well_known", org_id=org)
         scan = Scan(
             org_id=org,
             source_type="web",
             source_ref=target_url,
-            source_label="host.docker.internal",
+            source_label=TARGET,
             tools=["zap-baseline"],
             asset_id=web_asset.id,
             dast_mode="passive",
@@ -182,6 +201,7 @@ def test_a_real_campaign_scans_through_the_real_egress_proxy_and_records_blocked
     status = run_dast_campaign_job(scan_id, _scoped_factory(sessions, org), _NullBus(), org_id=org)
 
     assert status == "completed"
+    assert "/" in _Handler.paths, "ZAP's requests reached the target through the proxy"
     with sessions() as s:
         set_session_org(s, org)
         scan_row = repo.get_scan(s, scan_id, org_id=org)
