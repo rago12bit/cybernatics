@@ -132,7 +132,7 @@ jobs:
       - name: ZAP baseline scan
         run: >-
           docker run --rm -v "$RUNNER_TEMP/zap:/zap/wrk:rw" --network host
-          ghcr.io/zaproxy/zaproxy:stable zap-baseline.py
+          ghcr.io/zaproxy/zaproxy:2.17.0@sha256:7aaa659b0d43078febd82e29bad112285c370727e86ab8340444220e17d9f0d2 zap-baseline.py
           -t http://localhost:3000 -r zap-report.html -J zap-report.json -I
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
@@ -222,7 +222,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: pgvector/pgvector:pg16
+        image: pgvector/pgvector:pg16@sha256:7b822b0aac60967beb1ea5e576b8602c94c300a157d187f385ae3e0da199b90a
         env:
           POSTGRES_USER: bulwark
           POSTGRES_PASSWORD: ci-owner-password
@@ -275,7 +275,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: pgvector/pgvector:pg16
+        image: pgvector/pgvector:pg16@sha256:7b822b0aac60967beb1ea5e576b8602c94c300a157d187f385ae3e0da199b90a
         env:
           POSTGRES_USER: bulwark
           POSTGRES_PASSWORD: ci-owner-password
@@ -293,7 +293,7 @@ jobs:
           python-version: "3.12"
       - run: pip install -e ".[dev]"
       - run: docker build -t bulwark/bandit:1.7.10 docker/bandit
-      - run: docker pull ghcr.io/zaproxy/zaproxy:stable
+      - run: docker pull ghcr.io/zaproxy/zaproxy:2.17.0@sha256:7aaa659b0d43078febd82e29bad112285c370727e86ab8340444220e17d9f0d2
       - name: Migrate as the table-owning role
         env:
           BULWARK_DATABASE_URL: postgresql://bulwark:ci-owner-password@localhost:5432/bulwark

@@ -28,7 +28,10 @@ from core.dast.mapping import zap_alert_findings
 from core.dast.proxy import ProxyConfig
 from core.models import Finding
 
-ZAP_IMAGE = "ghcr.io/zaproxy/zaproxy:stable"
+ZAP_IMAGE = (  # 2.17.0, what `stable` pointed to on 2026-10-14
+    "ghcr.io/zaproxy/zaproxy:2.17.0"
+    "@sha256:7aaa659b0d43078febd82e29bad112285c370727e86ab8340444220e17d9f0d2"
+)
 
 
 class ZapError(Exception):

@@ -135,11 +135,15 @@ inject hostile titles, paths, snippets and descriptions into each of them (`web/
   pinned by digest. A plugin's image runs by the digest its publisher's signature covers (the signed
   payload's `docker-manifest-digest`, `core.plugins.signing.pinned_reference`), so a tag moved between the
   signature check and the run cannot swap it.
-- **Open:** the `bulwark/*` images are built `FROM` upstream images pinned by tag (`python:3.12-slim`,
-  `aquasec/trivy:0.55.2`, ...; only syft's base is pinned by digest), so a rebuild takes whatever a tag
-  points to then. ZAP runs from `ghcr.io/zaproxy/zaproxy:stable`, a moving tag. Compose uses `:latest` for
-  the object store and the Docker socket proxy. Signatures of upstream scanner images are not verified.
-  Fix: pin base images and ZAP by digest.
+- **Done (2026-10-14):** every other image is pinned by digest too: the 22 `FROM` lines the `bulwark/*`
+  and web images are built from, the 9 images compose pulls (the two `:latest` ones as the versions they
+  pointed to, `rustfs/rustfs:1.0.1` and `tecnativa/docker-socket-proxy:v0.5.0`), ZAP (`2.17.0`, which
+  `stable` pointed to) and CI's Postgres. A rebuild or a pull gets exactly the image pinned; tests fail
+  on any image added by tag. Dependabot moves the digests weekly as pull requests (a rebuilt base image's
+  security fixes included), majors and Redis 7.4+ (ADR-0011) excluded, so a pin does not quietly go stale.
+- **Open:** signatures of upstream images are not verified: a digest proves the image is the one
+  pinned, not who built it or that it is safe. Docker Official Images and cosign-signed upstreams could be checked with
+  `cosign verify` at build time, as plugin images are at run time.
 
 ### T11 Unauthorized API access (Partial)
 - **Done:** every endpoint except `/healthz` needs a bearer token; comparison is constant-time; the API refuses

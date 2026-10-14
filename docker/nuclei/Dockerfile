@@ -3,7 +3,7 @@
 # campaign's egress proxy. (The upstream image ships no templates; it fetched ~86 MB from GitHub on
 # every run, outside the proxy.) Rebuild with a newer TEMPLATES to refresh it, as with Grype's
 # database. Run with -duc (no update check) and -ni (no interactsh): core/dast/adapters/nuclei.py.
-FROM projectdiscovery/nuclei:v3.11.1
+FROM projectdiscovery/nuclei:v3.11.1@sha256:582d5546902e67052097cb2d07296c642d50a1afc5e44623cb038845df9a32eb
 
 ARG TEMPLATES=v10.5.0
 RUN apk add --no-cache git \

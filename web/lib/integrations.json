@@ -166,7 +166,7 @@
     "dast"
    ],
    "languages": [],
-   "version": "stable",
+   "version": "2.17.0",
    "mode": "passive",
    "how": "Spiders and passively checks a verified web target. Egress only to the target, through Bulwark's proxy."
   },

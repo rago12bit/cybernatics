@@ -66,3 +66,40 @@ updates:
     commit-message: # "build(deps): bump ..." -- the CI commitlint job wants Conventional Commits
       prefix: "build"
       include: "scope"
+
+  # Base images and compose images are pinned by digest (docs/THREAT-MODEL.md T10). A digest never
+  # changes, so without these the images would never get their own security fixes: Dependabot moves
+  # a digest when its tag is rebuilt (a patched python:3.12-slim) as well as a version. Major versions
+  # come only by hand (Postgres 16 holds the data; Node 22 is what CI runs), as do Python minors (CI
+  # tests 3.12), and Redis stays on 7.2, the last BSD-licensed line (docs/adr/0011-redis-license.md).
+  - package-ecosystem: "docker"
+    directories: ["/docker/*", "/web"]
+    schedule:
+      interval: "weekly"
+    commit-message: # "build(deps): bump ..." -- the CI commitlint job wants Conventional Commits
+      prefix: "build"
+      include: "scope"
+    groups:
+      docker-images:
+        patterns: ["*"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "python"
+        update-types: ["version-update:semver-minor"]
+
+  - package-ecosystem: "docker-compose"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message: # "build(deps): bump ..." -- the CI commitlint job wants Conventional Commits
+      prefix: "build"
+      include: "scope"
+    groups:
+      compose-images:
+        patterns: ["*"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "redis"
+        versions: [">=7.4"]

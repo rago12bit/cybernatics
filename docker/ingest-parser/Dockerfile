@@ -5,7 +5,7 @@
 # credentials -- so a bug triggered by a hostile report has nothing to reach. tests/integration/
 # test_ingest_sandbox_docker.py builds this image and runs a real file through it, which fails if a
 # parser starts importing something that is not copied here.
-FROM python:3.12-slim
+FROM python:3.12-slim@sha256:a6e34c598f2467ed0e9a8d349809fcd8b5c603269512df273a0bb1784edc11b1
 RUN pip install --no-cache-dir ijson==3.5.1 google-re2==1.1.20251105 defusedxml==0.7.1 \
     && useradd -m -u 10001 parser
 ENV PYTHONPATH=/app PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1

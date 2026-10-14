@@ -13,6 +13,13 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   "No such image" error) and compose builds them with `pull_policy: build`, so `docker compose pull`
   cannot fetch them either. Gitleaks, run from its author's image, is pinned by digest. THREAT-MODEL T10 is
   now Partial; base images and ZAP by tag remain open.
+- **Every image is pinned by digest.** The base images of every image Bulwark builds (22 `FROM` lines), the
+  images compose pulls (the two `:latest` as the versions they were: `rustfs/rustfs:1.0.1`,
+  `tecnativa/docker-socket-proxy:v0.5.0`), ZAP (`2.17.0`, from `:stable`) and CI's Postgres now name the
+  exact image, so a moved tag cannot change what is built or run. Pinned to what each tag pointed to on
+  2026-10-14: the cached local builds came out identical. Dependabot now proposes digest and version
+  updates for Dockerfiles and compose weekly (no majors; Redis held below 7.4 for its licence), and a test
+  fails on any image added by tag. THREAT-MODEL T10: only signature checks on upstream images remain.
 - **A plugin runs the image its signature was checked on.** Its image was verified by tag and then run by
   the same tag, so a tag moved in between would have run an image nobody verified. It now runs by the
   digest the signature covers (from cosign's signed payload); signatures naming no digest, or different

@@ -1,7 +1,7 @@
 # One image for the API, the Celery worker and migrations.
-FROM docker:27-cli AS dockercli
+FROM docker:27-cli@sha256:851f91d241214e7c6db86513b270d58776379aacc5eb9c4a87e5b47115e3065c AS dockercli
 
-FROM python:3.12-slim
+FROM python:3.12-slim@sha256:a6e34c598f2467ed0e9a8d349809fcd8b5c603269512df273a0bb1784edc11b1
 # xmlsec1: SAML signature checks (Week 75, core.identity.saml, via pysaml2).
 RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates xmlsec1 \
  && rm -rf /var/lib/apt/lists/*
