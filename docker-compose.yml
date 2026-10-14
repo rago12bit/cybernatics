@@ -58,6 +58,9 @@ x-app-env: &app-env
 x-app: &app
   build: { context: ., dockerfile: docker/app/Dockerfile }
   image: bulwark/app:dev
+  # Built here, never pulled: no one else's image can arrive as bulwark/* from Docker Hub,
+  # where Bulwark does not own the namespace (also `docker compose pull`). Same on every bulwark/*.
+  pull_policy: build
   environment: *app-env
   restart: unless-stopped
 
@@ -65,6 +68,7 @@ services:
   postgres:
     build: docker/postgres
     image: bulwark/postgres:16-pgvector
+    pull_policy: build
     # Default max_connections (100) couldn't cover 4 api replicas plus the worker and beat each
     # opening their own connection pool -- found live under k6 (plan §23, Week 50), as "FATAL: sorry,
     # too many clients already" on the majority of concurrent requests. See core/persistence/db.py's
@@ -275,6 +279,7 @@ services:
       args:
         NEXT_PUBLIC_API_URL: ${BULWARK_PUBLIC_API_URL:-http://localhost:8000}
     image: bulwark/web:dev
+    pull_policy: build
     # 3000 is taken by an unrelated local process on this machine; published on 3010 instead.
     ports: ["127.0.0.1:3010:3000"]
     depends_on:
@@ -286,16 +291,19 @@ services:
     profiles: [scanners]
     build: docker/bandit
     image: bulwark/bandit:1.7.10
+    pull_policy: build
   scanner-semgrep:
     profiles: [scanners]
     build: docker/semgrep
     image: bulwark/semgrep:1.90.0
+    pull_policy: build
   scanner-opengrep:
     # Hosted mode's Semgrep replacement (ADR-0038) -- built here too, so a developer testing
     # BULWARK_HOSTED_MODE=1 locally doesn't need a separate build step.
     profiles: [scanners]
     build: docker/opengrep
     image: bulwark/opengrep:1.30.0
+    pull_policy: build
   ingest-parser:
     # Parses uploaded reports in the same locked-down sandbox as the scanners (plan §42.2, ADR-0040).
     # Built from the repository root: it copies in just the parser modules, never the API or DB layer.
@@ -304,42 +312,52 @@ services:
       context: .
       dockerfile: docker/ingest-parser/Dockerfile
     image: bulwark/ingest-parser:1
+    pull_policy: build
   scanner-trivy:
     profiles: [scanners]
     build: docker/trivy
     image: bulwark/trivy:0.55.2
+    pull_policy: build
   scanner-osv:
     profiles: [scanners]
     build: docker/osv-scanner
     image: bulwark/osv-scanner:2.6.0
+    pull_policy: build
   scanner-grype:
     profiles: [scanners]
     build: docker/grype
     image: bulwark/grype:0.119.0
+    pull_policy: build
   scanner-nuclei:
     profiles: [scanners]
     build: docker/nuclei
     image: bulwark/nuclei:3.11.1
+    pull_policy: build
   scanner-checkov:
     profiles: [scanners]
     build: docker/checkov
     image: bulwark/checkov:3.3.19
+    pull_policy: build
   scanner-gosec:
     profiles: [scanners]
     build: docker/gosec
     image: bulwark/gosec:2.29.0
+    pull_policy: build
   scanner-dockle:
     profiles: [scanners]
     build: docker/dockle
     image: bulwark/dockle:0.4.15
+    pull_policy: build
   scanner-syft:
     profiles: [scanners]
     build: docker/syft
     image: bulwark/syft:1.52.0
+    pull_policy: build
   egress-sidecar:
     profiles: [scanners]
     build: docker/egress-sidecar
     image: bulwark/egress-sidecar:1
+    pull_policy: build
 
   # ---- optional: metrics, dashboard and traces (docker compose --profile observability up -d) ----
   prometheus:

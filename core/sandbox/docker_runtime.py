@@ -24,6 +24,24 @@ from core.adapters.base import RepoContext, ToolAdapter
 CONTAINER_TARGET = "/target"
 CONTAINER_OUT = "/out"
 
+#: Images Bulwark builds from this repository (docker/<tool>/Dockerfile) and never publishes.
+LOCAL_NAMESPACE = "bulwark/"
+
+
+def image_tag(image: str) -> str:
+    """The tag, also of an image pinned by digest: "repo:v8.21.0@sha256:..." -> "v8.21.0"."""
+    return image.split("@", 1)[0].rsplit(":", 1)[-1]
+
+
+def pull_policy(image: str) -> list[str]:
+    """`--pull=never` for an image Bulwark builds itself: with Docker's default (`missing`), an
+    image not built here is fetched as `docker.io/bulwark/<tool>` -- a Docker Hub namespace
+    Bulwark does not own, so whoever registers it would have their image run as a scanner. Never
+    pulling makes it a "No such image" error instead. Other images keep the default: those pinned
+    by digest (cosign, the PDF renderer) cannot change, and a plugin's image is pulled after its
+    publisher's signature is checked (core.plugins.signing)."""
+    return ["--pull=never"] if image.startswith(LOCAL_NAMESPACE) else []
+
 
 def build_docker_argv(
     adapter: ToolAdapter,
@@ -65,6 +83,7 @@ def build_docker_argv(
         f"{target.resolve()}:{CONTAINER_TARGET}:ro",
         "-v",
         f"{out_dir.resolve()}:{CONTAINER_OUT}",
+        *pull_policy(spec.image),
         spec.image,
         *tool_cmd,
     ]

@@ -71,6 +71,7 @@ def scanners() -> list[dict[str, Any]]:
     from core.dast.adapters.nuclei import NUCLEI_IMAGE
     from core.dast.adapters.zap import ZAP_IMAGE
     from core.dast.campaign import TOOLS_FOR_MODE
+    from core.sandbox.docker_runtime import image_tag
     from core.scan import ADAPTERS, DEFAULT_TOOLS, HOSTED_DEFAULT_TOOLS
 
     out = []
@@ -89,7 +90,7 @@ def scanners() -> list[dict[str, Any]]:
                 "kind": "scanner",
                 "categories": _cats(spec.categories),
                 "languages": _cats(spec.languages),
-                "version": spec.image.rsplit(":", 1)[-1],
+                "version": image_tag(spec.image),
                 "mode": mode,
                 "how": "Runs in a sandboxed container: no network, read-only, capabilities dropped.",
             }
@@ -104,7 +105,7 @@ def scanners() -> list[dict[str, Any]]:
                 "kind": "scanner",
                 "categories": ["dast"],
                 "languages": [],
-                "version": images[tool].rsplit(":", 1)[-1],
+                "version": image_tag(images[tool]),
                 "mode": "passive" if tool in TOOLS_FOR_MODE["passive"] else "active",
                 "how": how + " Egress only to the target, through Bulwark's proxy.",
             }

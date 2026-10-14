@@ -28,6 +28,8 @@ from __future__ import annotations
 import subprocess
 from collections.abc import Sequence
 
+from core.sandbox.docker_runtime import pull_policy
+
 EGRESS_SIDECAR_IMAGE = "bulwark/egress-sidecar:1"
 
 # Every major cloud's metadata service lives in link-local space (169.254.169.254) -- the same SSRF
@@ -87,6 +89,7 @@ def apply_egress_policy(
         f"--network=container:{container_name}",
         "--cap-add=NET_ADMIN",
         "--label=bulwark.managed=1",
+        *pull_policy(EGRESS_SIDECAR_IMAGE),
         EGRESS_SIDECAR_IMAGE,
         "-f",
         "-",

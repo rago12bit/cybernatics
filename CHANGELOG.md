@@ -5,6 +5,15 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 
 ## [Unreleased]
 
+### Security
+- **Images Bulwark builds are never pulled.** Every `bulwark/*` image (the scanners, the import parser,
+  Nuclei, the egress sidecar) was run with Docker's default pull policy, so one not built locally was
+  fetched as `docker.io/bulwark/<tool>` -- a Docker Hub namespace Bulwark does not own, where anyone could
+  publish an image to be run as a scanner. They now run with `--pull=never` (a missing image is the tool's
+  "No such image" error) and compose builds them with `pull_policy: build`, so `docker compose pull`
+  cannot fetch them either. Gitleaks, run from its author's image, is pinned by digest. THREAT-MODEL T10 is
+  now Partial; base images, ZAP and plugin images by tag remain open.
+
 ### Fixed
 - **A failed Nuclei run no longer reads as a clean scan, or as a fixed Issue.** `run_nuclei`
   ignored Nuclei's exit code and discarded its errors, so a run that failed -- a template renamed

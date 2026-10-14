@@ -12,4 +12,4 @@ build bulwark/semgrep:1.90.0 semgrep
 build bulwark/trivy:0.55.2 trivy
 build bulwark/osv-scanner:2.6.0 osv-scanner
 build bulwark/syft:1.52.0 syft
-docker pull --quiet zricethezav/gitleaks:v8.21.0 >/dev/null && echo "pulled gitleaks"
+docker pull --quiet zricethezav/gitleaks:v8.21.0@sha256:5a6d3338fe0e85fb63c079e0880dc10ee0bc6be54b75a2cf089964fbba7e9bd6 >/dev/null && echo "pulled gitleaks"

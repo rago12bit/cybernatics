@@ -36,6 +36,7 @@ from core.observability import metrics as obs
 from core.postprocess import finalize
 from core.reachability import analyze_or_none
 from core.runner import RunnerError, run_tool
+from core.sandbox.docker_runtime import image_tag
 from core.sbom.syft import SyftAdapter
 from core.taint import analyze_or_none as taint_analyze_or_none
 
@@ -245,7 +246,7 @@ CACHEABLE_REPO_WIDE: frozenset[str] = frozenset({"trivy", "osv-scanner"})
 
 
 def _tool_version(name: str) -> str:
-    return ADAPTERS[name].spec.image.rsplit(":", 1)[-1]
+    return image_tag(ADAPTERS[name].spec.image)
 
 
 def _relevant_files(name: str, target: Path, ctx: RepoContext) -> list[Path]:

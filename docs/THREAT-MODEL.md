@@ -123,11 +123,23 @@ the API serves downloads with `nosniff` and a sandbox CSP; PDF text is escaped b
 inject hostile titles, paths, snippets and descriptions into each of them (`web/tests/xss.test.tsx`,
 `tests/unit/test_export.py`).
 
-### T10 Malicious scanner image (Open)
-Images are pinned by **tag**, not SHA-256 digest (`bulwark/*:1.7.10` etc., `zricethezav/gitleaks:v8.21.0`), and
-the compose file uses `:latest` for the object store and the Docker socket proxy. Signatures are not verified.
-A compromised upstream tag would be pulled and run (still inside the sandbox flags). Fix: pin digests in
-production, verify signatures where publishers provide them.
+### T10 Malicious scanner image (Partial)
+- **Done (2026-10-14):** the images Bulwark builds itself (`bulwark/*`: every scanner but gitleaks, the
+  import parser, Nuclei, the egress sidecar) are run with `--pull=never` (`core.sandbox.docker_runtime.
+  pull_policy`) and built, never pulled, by compose (`pull_policy: build`). Before, an image not built
+  locally was fetched as `docker.io/bulwark/<tool>`, a Docker Hub namespace Bulwark does not own (no public
+  repository there on 2026-10-14): whoever registered it would have had their image run as a scanner, and
+  `docker compose pull` would have fetched it over a local build. A missing image is now "No such image",
+  reported as that tool's error. Gitleaks, the one scanner run from its author's image, is pinned by digest,
+  as cosign and the PDF renderer already were; a test requires every built-in image to be built here or
+  pinned by digest.
+- **Open:** the `bulwark/*` images are built `FROM` upstream images pinned by tag (`python:3.12-slim`,
+  `aquasec/trivy:0.55.2`, ...; only syft's base is pinned by digest), so a rebuild takes whatever a tag
+  points to then. ZAP runs from `ghcr.io/zaproxy/zaproxy:stable`, a moving tag. Compose uses `:latest` for
+  the object store and the Docker socket proxy. A plugin's image is checked by its publisher's signature and
+  then run by reference, so a tag moved between the check and the run is not caught. Signatures of upstream
+  scanner images are not verified. Fix: pin base images and ZAP by digest; run a plugin by the digest that
+  was verified.
 
 ### T11 Unauthorized API access (Partial)
 - **Done:** every endpoint except `/healthz` needs a bearer token; comparison is constant-time; the API refuses

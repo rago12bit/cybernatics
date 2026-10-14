@@ -70,6 +70,7 @@ def test_apply_egress_policy_runs_the_sidecar_against_the_targets_netns(
     assert "--network=container:target-container" in seen["argv"]
     assert "--cap-add=NET_ADMIN" in seen["argv"]
     assert seen["argv"][-3] == EGRESS_SIDECAR_IMAGE
+    assert seen["argv"][-4] == "--pull=never"  # built here, never fetched from Docker Hub
     assert b"table inet bulwark_egress" in seen["input"]
 
 

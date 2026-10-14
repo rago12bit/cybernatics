@@ -38,6 +38,7 @@ from typing import IO, Any
 from core.dast.mapping import nuclei_finding
 from core.dast.proxy import ProxyConfig
 from core.models import Finding
+from core.sandbox.docker_runtime import pull_policy
 
 NUCLEI_IMAGE = "bulwark/nuclei:3.11.1"  # docker/nuclei: engine v3.11.1, templates v10.5.0 baked in
 
@@ -93,6 +94,7 @@ def run_nuclei(
         # here means the same argv works on both, which is what a worker actually needs.
         argv += ["--add-host", "host.docker.internal:host-gateway"]
     argv += [
+        *pull_policy(NUCLEI_IMAGE),
         NUCLEI_IMAGE,
         "-u", target_url,
         "-etags", ",".join(EXCLUDED_TAGS),
