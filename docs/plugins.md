@@ -112,6 +112,10 @@ built by *that* CI pipeline, not merely uploaded by whoever holds registry push 
 image, or one signed by a different identity than the manifest declares, fails verification and the
 plugin simply won't run -- there's no partial-trust state.
 
+The image then runs by the digest that signature covers (`ghcr.io/you/my-scanner:1.0.0@sha256:...`),
+not by its tag again, so a tag moved between the check and the run cannot put an unverified image in
+the sandbox. If your manifest already names a digest, the signature must be over that one.
+
 ## 5. Get allowlisted
 
 Being installed and discovered is necessary but never sufficient: an organization must explicitly

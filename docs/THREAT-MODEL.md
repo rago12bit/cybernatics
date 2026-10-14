@@ -132,14 +132,14 @@ inject hostile titles, paths, snippets and descriptions into each of them (`web/
   `docker compose pull` would have fetched it over a local build. A missing image is now "No such image",
   reported as that tool's error. Gitleaks, the one scanner run from its author's image, is pinned by digest,
   as cosign and the PDF renderer already were; a test requires every built-in image to be built here or
-  pinned by digest.
+  pinned by digest. A plugin's image runs by the digest its publisher's signature covers (the signed
+  payload's `docker-manifest-digest`, `core.plugins.signing.pinned_reference`), so a tag moved between the
+  signature check and the run cannot swap it.
 - **Open:** the `bulwark/*` images are built `FROM` upstream images pinned by tag (`python:3.12-slim`,
   `aquasec/trivy:0.55.2`, ...; only syft's base is pinned by digest), so a rebuild takes whatever a tag
   points to then. ZAP runs from `ghcr.io/zaproxy/zaproxy:stable`, a moving tag. Compose uses `:latest` for
-  the object store and the Docker socket proxy. A plugin's image is checked by its publisher's signature and
-  then run by reference, so a tag moved between the check and the run is not caught. Signatures of upstream
-  scanner images are not verified. Fix: pin base images and ZAP by digest; run a plugin by the digest that
-  was verified.
+  the object store and the Docker socket proxy. Signatures of upstream scanner images are not verified.
+  Fix: pin base images and ZAP by digest.
 
 ### T11 Unauthorized API access (Partial)
 - **Done:** every endpoint except `/healthz` needs a bearer token; comparison is constant-time; the API refuses

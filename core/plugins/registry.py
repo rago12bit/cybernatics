@@ -20,6 +20,8 @@ run, and a signature is checked at the moment of use, not cached from whenever i
 
 from __future__ import annotations
 
+import copy
+import dataclasses
 import logging
 from collections.abc import Mapping
 from importlib.metadata import EntryPoint, entry_points
@@ -28,7 +30,7 @@ from typing import TYPE_CHECKING
 from core.adapters import ToolAdapter
 from core.persistence import repo
 from core.plugins.manifest import PluginManifest
-from core.plugins.signing import verify_plugin_image
+from core.plugins.signing import pinned_reference, verify_plugin_image
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session
@@ -113,10 +115,14 @@ def resolve_adapters(
             raise PluginNotFoundError(f"no built-in or installed plugin tool named {name!r}")
         if org_id is None or s is None or not repo.is_plugin_allowed(s, org_id, name):
             raise PluginNotAllowedError(f"plugin {name!r} is not allowlisted for this organization")
-        verify_plugin_image(
-            manifest.adapter.spec.image,
-            manifest.certificate_identity,
-            manifest.certificate_oidc_issuer,
+        image = manifest.adapter.spec.image
+        signatures = verify_plugin_image(
+            image, manifest.certificate_identity, manifest.certificate_oidc_issuer
         )
-        out[name] = manifest.adapter
+        # Run exactly what was verified: the image by its signed digest, not by its tag again.
+        adapter = copy.copy(manifest.adapter)
+        adapter.spec = dataclasses.replace(
+            manifest.adapter.spec, image=pinned_reference(image, signatures)
+        )
+        out[name] = adapter
     return out

@@ -12,7 +12,11 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   publish an image to be run as a scanner. They now run with `--pull=never` (a missing image is the tool's
   "No such image" error) and compose builds them with `pull_policy: build`, so `docker compose pull`
   cannot fetch them either. Gitleaks, run from its author's image, is pinned by digest. THREAT-MODEL T10 is
-  now Partial; base images, ZAP and plugin images by tag remain open.
+  now Partial; base images and ZAP by tag remain open.
+- **A plugin runs the image its signature was checked on.** Its image was verified by tag and then run by
+  the same tag, so a tag moved in between would have run an image nobody verified. It now runs by the
+  digest the signature covers (from cosign's signed payload); signatures naming no digest, or different
+  ones, or a digest other than the one the manifest names, stop the plugin from running.
 
 ### Fixed
 - **A failed Nuclei run no longer reads as a clean scan, or as a fixed Issue.** `run_nuclei`

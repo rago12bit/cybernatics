@@ -41,6 +41,34 @@ class VerifiedSignature:
     certificate_identity: str
     certificate_oidc_issuer: str
     log_index: int | None
+    # What was signed: the image manifest's digest, from the signed payload itself
+    # (`critical.image.docker-manifest-digest`), not from the tag the caller named.
+    image_digest: str = ""
+
+
+_DIGEST = re.compile(r"^sha256:[0-9a-f]{64}$")
+
+
+def pinned_reference(image: str, signatures: list[VerifiedSignature]) -> str:
+    """`image` pinned to the digest its signatures were verified over, for running it.
+
+    `verify_plugin_image` checks whatever the tag points to at that moment; running the image by
+    the same tag afterwards would run whatever it points to then -- a tag moved in between (or a
+    registry answering differently the second time) would put an unverified image in the sandbox.
+    Pinned, Docker refuses anything but the verified manifest. Raises PluginSignatureError when the
+    signatures name no digest, disagree, or contradict a digest `image` already carries."""
+    digests = {s.image_digest for s in signatures}
+    if len(digests) != 1:
+        raise PluginSignatureError(
+            f"{image}: the verified signatures name {len(digests)} image digests, not one"
+        )
+    (digest,) = digests
+    if not _DIGEST.match(digest):
+        raise PluginSignatureError(f"{image}: the verified signature names no image digest")
+    name, _, pinned = image.partition("@")
+    if pinned and pinned != digest:
+        raise PluginSignatureError(f"{image}: signed digest {digest} is not the one named")
+    return f"{name}@{digest}"
 
 
 def verify_plugin_image(
@@ -95,11 +123,13 @@ def _parse_verify_output(stdout: bytes, image: str) -> list[VerifiedSignature]:
     for rec in records:
         optional = rec.get("optional") or {}
         payload = (optional.get("Bundle") or {}).get("Payload") or {}
+        signed_image = ((rec.get("critical") or {}).get("image")) or {}
         out.append(
             VerifiedSignature(
                 certificate_identity=str(optional.get("Subject", "")),
                 certificate_oidc_issuer=str(optional.get("Issuer", "")),
                 log_index=payload.get("logIndex"),
+                image_digest=str(signed_image.get("docker-manifest-digest", "")),
             )
         )
     return out

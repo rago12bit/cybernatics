@@ -27,7 +27,8 @@ from core.plugins.registry import (
     discover_plugins,
     resolve_adapters,
 )
-from core.plugins.signing import PluginSignatureError
+from core.plugins.signing import PluginSignatureError, VerifiedSignature
+from core.sandbox.docker_runtime import build_docker_argv
 from core.tenancy import DEFAULT_ORG_ID
 
 
@@ -147,14 +148,31 @@ def test_resolve_adapters_rejects_a_plugin_not_allowlisted_for_this_org(
 def test_resolve_adapters_returns_the_adapter_once_allowed_and_verified(
     sessions: sessionmaker[Session], monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """It runs by the digest its signature was verified over, so a tag moved after the check cannot
+    swap the image; everything else about the plugin's adapter is its own."""
+    digest = "sha256:" + "ab" * 32
     _patch_entry_points(monkeypatch, [_FakeEntryPoint("x", _MANIFEST)])
-    monkeypatch.setattr(registry, "verify_plugin_image", lambda *a, **kw: [])
+    checked: list[str] = []
+
+    def verify(image: str, *a: Any) -> list[VerifiedSignature]:
+        checked.append(image)
+        return [VerifiedSignature("id", "iss", 1, image_digest=digest)]
+
+    monkeypatch.setattr(registry, "verify_plugin_image", verify)
     with sessions() as s:
         s.add(Organization(id=DEFAULT_ORG_ID, name="default"))
         s.commit()
         repo.set_plugin_allowed(s, DEFAULT_ORG_ID, "fake-plugin", enabled=True, allowed_by="t")
         out = resolve_adapters(["fake-plugin"], {}, DEFAULT_ORG_ID, s)
-    assert out["fake-plugin"] is _MANIFEST.adapter
+    adapter = out["fake-plugin"]
+    assert checked == ["example/fake:1"]
+    assert (
+        adapter.spec.image == f"example/fake:1@{digest}"
+    )  # the tag stays for people; Docker uses the digest
+    assert adapter.spec.name == "fake-plugin" and type(adapter) is type(_MANIFEST.adapter)
+    assert _MANIFEST.adapter.spec.image == "example/fake:1"  # the installed plugin is unchanged
+    argv = build_docker_argv(adapter, Path("/tmp/t"), Path("/tmp/o"), "c")
+    assert f"example/fake:1@{digest}" in argv and "example/fake:1" not in argv
 
 
 def test_resolve_adapters_re_verifies_signature_even_though_already_allowlisted(

@@ -16,13 +16,14 @@ tests/integration/test_dast_adapters_live.py.
 
 from __future__ import annotations
 
+import re
 import shutil
 import socket
 import subprocess
 
 import pytest
 
-from core.plugins.signing import PluginSignatureError, verify_plugin_image
+from core.plugins.signing import PluginSignatureError, pinned_reference, verify_plugin_image
 
 IMAGE = "ghcr.io/stefanprodan/podinfo:6.4.0"
 REAL_IDENTITY = (
@@ -60,6 +61,12 @@ def test_verify_plugin_image_succeeds_against_a_real_signed_public_image() -> No
     assert sigs[0].certificate_identity == REAL_IDENTITY
     assert sigs[0].certificate_oidc_issuer == ISSUER
     assert sigs[0].log_index is not None and sigs[0].log_index > 0
+    # What was signed is a manifest digest in cosign's own output, and running by it verifies too:
+    # this is the reference a plugin is run by (core.plugins.registry), not its tag.
+    pinned = pinned_reference(IMAGE, sigs)
+    assert re.fullmatch(r"ghcr\.io/stefanprodan/podinfo:6\.4\.0@sha256:[0-9a-f]{64}", pinned)
+    again = verify_plugin_image(pinned, REAL_IDENTITY, ISSUER)
+    assert {s.image_digest for s in again} == {s.image_digest for s in sigs}
 
 
 def test_verify_plugin_image_fails_closed_for_the_wrong_declared_identity() -> None:
