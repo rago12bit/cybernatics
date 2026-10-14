@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { APP_HREF, DEMO_ONLY } from "@/lib/site";
 import { ScanReport } from "@/components/ScanReport";
+import { ScrollReveal } from "@/components/site/ScrollReveal";
 import { PAGE_SIZE, severityRank } from "@/lib/format";
 import { codeFindings, codeScan, provenance, runtimeFindings, runtimeScan } from "@/lib/recording";
 import type { Finding, FindingsPage, FindingsQuery, ScanView, ToolStatus } from "@/lib/types";
@@ -93,6 +94,7 @@ export function LiveJuiceShopDemo() {
   const code = half === "code";
   return (
     <div className="page">
+      <ScrollReveal selector=".summary > *, section.findings" />
       <div className="demo-banner">
         <div>
           <span className="eyebrow plain">Recorded scan</span>

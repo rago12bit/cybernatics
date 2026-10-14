@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ScrollReveal } from "@/components/site/ScrollReveal";
 import { SmoothScroll } from "@/components/site/SmoothScroll";
 import { CONTACT_URL, REPO_URL } from "@/lib/site";
 
@@ -12,6 +13,7 @@ export default function SelfHost() {
   return (
     <div className="page">
       <SmoothScroll />
+      <ScrollReveal selector=".state-page > *" />
       <div className="state-page">
         <span className="eyebrow">Run it yourself</span>
         <h1>Scanning happens on your machine.</h1>

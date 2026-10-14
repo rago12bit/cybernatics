@@ -26,6 +26,11 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   ones, or a digest other than the one the manifest names, stop the plugin from running.
 
 ### Fixed
+- **The compare table and the fact cards no longer run off the page.** The DefectDojo comparison
+  ran edge to edge with its topic column flush against the window, and the cards on the community,
+  security and compare pages left empty cells and hairlines to the window's edge. The table now sits
+  in the page's margins with fixed columns (long paths wrap in their cell), marks Bulwark's column,
+  and becomes one card per row on a phone; the cards are one to three columns with no empty slot.
 - **A failed Nuclei run no longer reads as a clean scan, or as a fixed Issue.** `run_nuclei`
   ignored Nuclei's exit code and discarded its errors, so a run that failed -- a template renamed
   in a template update ("no templates provided for scan", exit 1), an image that is not there
@@ -55,6 +60,15 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   asserts the target was asked for `/`.
 
 ### Added
+- **Scan a GitHub repository from the home page.** A new section under the hero takes `owner/repo` or
+  any link into a repository, sends you to sign in if you are not (keeping what you typed, and
+  bringing you back to it), then starts a scan with the five default scanners and opens it. Other
+  hosts, bare user names and malformed paths are explained in place rather than sent to the API. On
+  the sample site, which has no API, it points to running Bulwark yourself.
+- **Public pages reveal as you scroll.** Section headings, fact cards, comparison rows, steps and
+  integration cards rise into view one after another as they are scrolled to, on every public page
+  and the recorded scan; each page's heading rises in on load. Nothing on screen at load is hidden,
+  and it is all off for reduced motion.
 - **Smooth scrolling on the public site.** The home page and the site pages ease wheel scrolling, in
   the style of antigravity.google, with [Lenis](https://github.com/darkroomengineering/lenis) (MIT):
   about half a second to settle. It moves the page's own scroll position rather than a transformed

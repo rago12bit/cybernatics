@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { SiteFooter } from "./SiteFooter";
+import { ScrollReveal } from "./ScrollReveal";
 import { SmoothScroll } from "./SmoothScroll";
 import "./site-pages.css";
 
@@ -20,6 +21,7 @@ export function SitePage({
   return (
     <div className="page">
       <SmoothScroll />
+      <ScrollReveal />
       <header className="site-head">
         <span className="eyebrow">{eyebrow}</span>
         <h1>{title}</h1>

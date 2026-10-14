@@ -5,10 +5,18 @@ import { APP_CTA, APP_HREF, DEMO_ONLY, DOCS_HREF } from "@/lib/site";
 import { Blueprint, DedupChart, DedupDiagram, PipelineDiagram, StepChart, Stripes } from "./graphics";
 import { StackSection } from "./StackSection";
 import { Recording } from "./Recording";
+import { RepoScan } from "./RepoScan";
 import { Scanners } from "./Scanners";
 import { SiteFooter } from "./SiteFooter";
+import { ScrollReveal } from "./ScrollReveal";
 import { SmoothScroll } from "./SmoothScroll";
 import { CountUp, Glow, Reveal, RiseText, ScrollProgress } from "./Motion";
+
+// Blocks on the home page that rise into view (the feature cells have their own Reveal).
+const HOME_REVEAL = [
+  ".reveal-me", ".rec-head", ".rec-half", ".feature-grid .code-cell > *", ".metric-main > *", ".metric-side > *",
+  ".ingredients > *", ".stackrow .cell > *", ".cta-copy > *",
+].join(", ");
 
 const pct = (n: number, d = 1) => `${(n * 100).toFixed(d)}%`;
 const fmt = (n: number) => n.toLocaleString("en-US");
@@ -21,6 +29,7 @@ export function Landing() {
     <div className="page">
       <SmoothScroll />
       <ScrollProgress />
+      <ScrollReveal selector={HOME_REVEAL} />
       {/* ---- Hero ---- */}
       <StackSection index={0}>
       <section className="section hero" id="product">
@@ -58,13 +67,18 @@ export function Landing() {
       </section>
       </StackSection>
 
-      {/* ---- The recorded scan (Week 77) ---- */}
+      {/* ---- Scan a GitHub repository, after signing in ---- */}
       <StackSection index={1}>
+        <RepoScan />
+      </StackSection>
+
+      {/* ---- The recorded scan (Week 77) ---- */}
+      <StackSection index={2}>
         <Recording />
       </StackSection>
 
       {/* ---- Feature grid ---- */}
-      <StackSection index={2}>
+      <StackSection index={3}>
         <section className="section" aria-labelledby="more-h">
           <div className="sec-head">
             <h2 id="more-h">Do more with Bulwark</h2>
@@ -101,7 +115,7 @@ export function Landing() {
       </StackSection>
 
       {/* ---- Results ---- */}
-      <StackSection index={3}>
+      <StackSection index={4}>
         <section className="section metrics" id="results" aria-labelledby="results-h">
           <div className="metric-main">
             <div className="rule"><span className="eyebrow plain">Findings after merging</span></div>
@@ -142,7 +156,7 @@ export function Landing() {
       </StackSection>
 
       {/* ---- Scanners + pipeline ---- */}
-      <StackSection index={4}>
+      <StackSection index={5}>
         <section className="section ingredients" id="scanners" aria-labelledby="scan-h">
           <div className="cell stack">
             <span className="eyebrow">The default scanners [05]</span>
@@ -161,7 +175,7 @@ export function Landing() {
       </StackSection>
 
       {/* ---- Shipped / roadmap ---- */}
-      <StackSection index={5}>
+      <StackSection index={6}>
         <section className="section stackrow" aria-label="Status">
           <div className="cell stack">
             <span className="eyebrow">What ships today</span>
@@ -191,7 +205,7 @@ export function Landing() {
       </StackSection>
 
       {/* ---- CTA + footer (the last panel slides over everything) ---- */}
-      <StackSection index={6}>
+      <StackSection index={7}>
       <section className="cta" aria-label="Get started">
         <Stripes seed={7} groups={16} rows={2} />
         <div className="cta-copy">
