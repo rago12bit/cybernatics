@@ -55,6 +55,9 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   asserts the target was asked for `/`.
 
 ### Added
+- **CI runs on a pinned runner image.** All 19 jobs in the five workflows run on `ubuntu-24.04`
+  instead of `ubuntu-latest`, which GitHub moves to Ubuntu 26 from 2026-10-19 -- a change to apt
+  packages, Docker and Python under an unchanged commit. A test fails on any `-latest` runner.
 - **CI signs in through a real Keycloak** (`keycloak-live`): OIDC with PKCE and SAML with signed
   assertions end with a Bulwark session, and a wrong password signs nobody in, against Keycloak 26.3
   (pinned by digest) started on the runner. These ran only by hand since Week 75. A skipped test

@@ -129,3 +129,14 @@ def test_every_image_ci_runs_is_pinned_by_digest() -> None:
 def test_the_images_the_code_pulls_are_pinned_by_digest() -> None:
     for ref in (ZAP_IMAGE, COSIGN_IMAGE, PDF_IMAGE):
         assert "@sha256:" in ref, ref
+
+
+def test_every_ci_job_runs_on_a_pinned_runner_image() -> None:
+    """`ubuntu-latest` moves (to Ubuntu 26 from 2026-10-19): apt packages, Docker and Python can
+    change under an unchanged commit. A new runner image is a change made on purpose."""
+    runners = []
+    for p in (ROOT / ".github" / "workflows").glob("*.yml"):
+        runners += [(p.name, r) for r in re.findall(r"(?m)^\s+runs-on:\s+(\S+)", p.read_text())]
+    assert len(runners) >= 19
+    for name, runner in runners:
+        assert not runner.endswith("-latest"), f"{name}: runs-on {runner}"

@@ -26,7 +26,7 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       packages: write # push to GHCR
@@ -68,7 +68,7 @@ jobs:
 
   sign:
     needs: [build]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       packages: write
       id-token: write # cosign's keyless OIDC signing -- no stored private key anywhere

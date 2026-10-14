@@ -7,8 +7,8 @@ name: Nightly fuzzing
 #
 # Atheris needs a real Clang+libFuzzer build; Apple's shipped Clang deliberately omits libFuzzer, so
 # this cannot run on macOS at all (confirmed by trying: `pip install atheris` fails at build time).
-# ubuntu-latest is used here specifically because atheris ships a prebuilt manylinux wheel for
-# Linux. First run on GitHub (scheduled, 2026-10-13): all 27 matrix entries fuzzed their full budget
+# Linux (ubuntu-24.04, pinned like every job) is used here specifically because atheris ships a
+# prebuilt manylinux wheel for Linux. First run on GitHub (scheduled, 2026-10-13): all 27 matrix entries fuzzed their full budget
 # with no crash, hang or memory blow-up. Before that, every entry ran in a python:3.12 linux/amd64
 # container (2026-10-12) -- see docs/v2-week48-verification.md.
 
@@ -25,7 +25,7 @@ permissions:
 
 jobs:
   fuzz:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -55,7 +55,7 @@ jobs:
     # The uploaded-report parsers (Week 54 task 6, plan §42.2/§22.3): same budget, same seeding
     # from real files, with libFuzzer's timeout and memory caps on too -- a parse that hangs or
     # balloons on a hostile report is a bug even if it never raises.
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:

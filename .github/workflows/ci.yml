@@ -17,9 +17,12 @@ concurrency:
 permissions:
   contents: read
 
+# Every job, here and in the other workflows, runs on ubuntu-24.04, not ubuntu-latest: GitHub moves
+# `latest` to Ubuntu 26 from 2026-10-19, which can change apt packages (xmlsec1), Docker and Python
+# under an unchanged commit. Move to a new image on purpose, all workflows at once.
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         python-version: ["3.10", "3.12"]
@@ -61,7 +64,7 @@ jobs:
       - run: pytest
 
   web:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: web
@@ -79,7 +82,7 @@ jobs:
       - run: npm run build-storybook
 
   docs:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
@@ -102,7 +105,7 @@ jobs:
     # before being written here: 0 FAIL, 4 disclosed WARN categories, all scoped to /_next/static
     # assets that intentionally skip per-request middleware for performance (proxy.ts's own
     # matcher), not unaddressed gaps on any real page.
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -146,7 +149,7 @@ jobs:
     # module docstring for the one thing that's stubbed -- actual scanner containers -- and why),
     # not mocked HTTP. Needs both toolchains: Python for scripts/e2e_server.py, Node for Playwright
     # itself and the app it drives.
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
@@ -180,7 +183,7 @@ jobs:
           retention-days: 14
 
   vscode-extension:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: extensions/vscode
@@ -198,7 +201,7 @@ jobs:
 
   tier2-adapters:
     # Heavier scanner images (Grype bakes in its vulnerability database): built separately from the main job.
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
@@ -219,7 +222,7 @@ jobs:
     # (Week 29 backfill): real Postgres, real Row-Level Security -- the `test` job's SQLite tests
     # only cover application-level filtering, which is belt-and-suspenders, not the real guarantee.
     # pgvector's image, not plain postgres: migration 0002 needs the `vector` extension to exist.
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     services:
       postgres:
         image: pgvector/pgvector:pg16@sha256:7b822b0aac60967beb1ea5e576b8602c94c300a157d187f385ae3e0da199b90a
@@ -272,7 +275,7 @@ jobs:
     # whole campaign, with a real ZAP baseline through the real egress proxy. They ran only by hand
     # until 2026-10-14, which is how a cleanup that no longer worked (outbox_events) and a target
     # ZAP never reached went unnoticed. A job of its own, so ZAP's image does not slow tenancy-rls.
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     services:
       postgres:
         image: pgvector/pgvector:pg16@sha256:7b822b0aac60967beb1ea5e576b8602c94c300a157d187f385ae3e0da199b90a
@@ -318,7 +321,7 @@ jobs:
     # password signs nobody in. Until 2026-10-14 this ran only by hand. Keycloak is a throwaway on
     # this runner (bound to localhost; its admin password exists nowhere else), started with
     # `docker run` because a service container cannot be given `start-dev`. A skip fails the job.
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       KC_ADMIN_PASSWORD: ci-only-keycloak-admin
     steps:
@@ -357,7 +360,7 @@ jobs:
 
   licenses:
     # Regenerates THIRD_PARTY_LICENSES.md (kept as an artifact) and fails on an unknown or denied license.
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
@@ -380,7 +383,7 @@ jobs:
     # bundled pip/setuptools, not a real project dependency -- confirmed by upgrading them and
     # re-running (0 findings), so that upgrade is an explicit step here rather than trusting
     # whatever pip version happens to ship with actions/setup-python. `--desc off` keeps output short.
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
@@ -403,7 +406,7 @@ jobs:
   commitlint:
     # Conventional Commits (design doc §11.2): the CHANGELOG and versioning are generated from these.
     if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
