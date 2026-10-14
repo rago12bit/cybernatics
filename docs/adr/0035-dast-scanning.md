@@ -79,6 +79,13 @@ and an audit-log entry (`dast.campaign.egress_blocked`) -- Task 4 of this follow
 attempt during a real campaign is visible to an operator instead of only appearing in a log line
 nobody reads.
 
+*Correction (2026-10-14):* that test proved the proxy is in ZAP's path and that blocked attempts are
+recorded, but until 2026-10-14 its target (`host.docker.internal`) could not be resolved by the
+proxy, so no request reached it and the findings were about the proxy's error pages. It now uses a
+target the proxy can reach, asserts the target was scanned, and runs in CI (`dast-live`). The ZAP
+proxy keys were shown working separately, by a manual run against `https://example.com/` (Week 49b
+verification); the Nuclei `-pt http` restriction was shown by manual Nuclei runs, not by this test.
+
 **What is still NOT done.** This wiring is cooperative, not a kernel-level backstop: it works because
 ZAP and Nuclei were configured to use the proxy and chose to honor that configuration. Nothing at the
 network-namespace level yet stops a scanner container that ignored its proxy settings entirely (a

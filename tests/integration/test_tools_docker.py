@@ -1,11 +1,13 @@
 import shutil
 import subprocess
+import uuid
 from pathlib import Path
 from typing import Any
 
 import pytest
 
-from core.scan import scan
+from core.sandbox.docker_runtime import build_docker_argv
+from core.scan import ADAPTERS, scan
 
 FIXTURE = Path(__file__).parent.parent / "fixtures" / "vuln-py"
 
@@ -92,18 +94,24 @@ def test_sca_iac_and_container_tools_end_to_end() -> None:
 
 
 @pytest.mark.skipif(not _docker_ready(), reason="docker not available")
-def test_sandbox_has_no_network_and_readonly_rootfs() -> None:
-    def sh(cmd: str) -> subprocess.CompletedProcess[str]:
-        return subprocess.run(
-            ["docker", "run", "--rm", "--network=none", "--read-only", "--cap-drop=ALL",
-             "--user=10001:10001", "--entrypoint", "sh", "bulwark/bandit:1.7.10", "-c", cmd],
-            capture_output=True, text=True,
-        )  # fmt: skip
-
-    assert (
-        sh(
-            "python -c \"import urllib.request as u; u.urlopen('http://1.1.1.1', timeout=3)\""
-        ).returncode
-        != 0
+def test_sandbox_has_no_network_and_readonly_rootfs(tmp_path: Path) -> None:
+    """A shell run with the exact flags the runner gives every scanner (`build_docker_argv`), not
+    flags written here, so dropping one there fails this. Each attempt must fail for the reason
+    being tested: "Network is unreachable", and "Read-only file system" in the scanner's own home
+    directory, which it could otherwise write. (Until 2026-10-14 this wrote its own flags and only
+    checked for a failure: `/etc` refuses user 10001 with "Permission denied" whatever the flags,
+    and a container that cannot start fails too.)"""
+    argv = build_docker_argv(
+        ADAPTERS["bandit"], FIXTURE, tmp_path, f"bulwark-t-{uuid.uuid4().hex[:8]}"
     )
-    assert sh("touch /etc/pwned").returncode != 0
+    image = argv.index(ADAPTERS["bandit"].spec.image)
+
+    def sh(cmd: str) -> subprocess.CompletedProcess[str]:
+        return subprocess.run([*argv[:image], "--entrypoint", "sh", argv[image], "-c", cmd],
+                              capture_output=True, text=True)  # fmt: skip
+
+    net = sh("python -c \"import urllib.request as u; u.urlopen('http://1.1.1.1', timeout=3)\"")
+    assert net.returncode != 0 and "Network is unreachable" in net.stderr, net.stderr
+    disk = sh('touch "$HOME/pwned"')
+    assert disk.returncode != 0 and "Read-only file system" in disk.stderr, disk.stderr
+    assert sh("touch /tmp/scratch").returncode == 0  # the one writable place, its tmpfs, still is

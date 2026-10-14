@@ -6,7 +6,9 @@ is the one Week 51 task that needs no Docker, database or third-party account to
 from __future__ import annotations
 
 import json
+import os
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -18,7 +20,11 @@ runner = CliRunner()
 
 
 def _git(repo: Path, *args: str) -> subprocess.CompletedProcess[bytes]:
-    return subprocess.run(["git", "-C", str(repo), *args], capture_output=True)
+    # The hook runs `bulwark` from PATH: put this interpreter's own scripts first, so the test does
+    # not depend on whether the shell that started pytest had the virtualenv activated.
+    bin_dir = str(Path(sys.executable).parent)
+    env = {**os.environ, "PATH": bin_dir + os.pathsep + os.environ.get("PATH", "")}
+    return subprocess.run(["git", "-C", str(repo), *args], capture_output=True, env=env)
 
 
 @pytest.fixture
@@ -103,14 +109,13 @@ def test_install_writes_an_executable_hook_that_a_real_commit_exercises(repo: Pa
     assert r.exit_code == 0, r.output
     hook = repo / ".git" / "hooks" / "pre-commit"
     assert hook.is_file()
-    import os
-
     assert os.access(hook, os.X_OK)
 
     (repo / "creds.py").write_text("aws_key = 'AKIAABCDEFGHIJKLMNOP'\n")
     _git(repo, "add", "creds.py")
     commit = _git(repo, "commit", "-m", "add creds")
-    assert commit.returncode != 0  # the real hook, invoked by real `git commit`, blocked it
+    assert commit.returncode != 0  # the real hook, invoked by real `git commit`, blocked it --
+    assert b"[BLOCK]" in commit.stdout + commit.stderr  # for the secret, not for a missing command
 
     (repo / "creds.py").write_text("# clean\n")
     _git(repo, "add", "creds.py")

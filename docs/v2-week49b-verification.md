@@ -57,6 +57,18 @@ was not actually wired into campaign execution -- so that claim wasn't true yet.
   `audit_entries` row for the campaign's own blocked egress attempts (ZAP's background telemetry
   calls, exactly as seen in the adapter-level test above). The campaign completed with real findings
   every run.
+
+  **Correction (2026-10-14): until then this test never reached its target.** It named the target
+  `host.docker.internal`, which the proxy -- running on the host, not in a container -- cannot
+  resolve. Every request ZAP sent through the proxy failed there (4 failed lookups, 0 requests at
+  the target, measured on 2026-10-14), and the "real findings" were about the proxy's error pages.
+  What the test did prove is unchanged: ZAP's traffic goes through the proxy, and the blocked
+  call-home attempts are recorded as a `tool_runs` row and an audit entry. What it did not prove
+  until 2026-10-14 is a campaign scanning its target through the proxy. The test now names the target
+  `dast-target.test`, resolved to this machine for the proxy only, and asserts the target was asked
+  for `/` (4 requests reach it); it runs in CI as the `dast-live` job, which passed on its first run.
+  The manual ZAP run against `https://example.com/` above (an allowed `CONNECT` and 11 findings) was
+  real and is not affected.
 - **Shutdown correctness.** The first live run surfaced a real `asyncio` cleanup bug: closing a
   `BackgroundProxy` while a scanner's connection was still mid-relay abandoned that connection's task
   when the background thread's event loop was torn down, producing a `Task was destroyed but it is
