@@ -20,7 +20,7 @@ postgres:
   # helm/bulwark/README.md. BULWARK_DATABASE_URL's format is identical either way (it's an ordinary
   # connection string, sslmode and all); pointing `postgres.image` and `databaseUrlOverride` at a
   # real mTLS-fronted Postgres is a values-only change once that mechanism exists.
-  image: pgvector/pgvector:pg16
+  image: pgvector/pgvector:pg16@sha256:7b822b0aac60967beb1ea5e576b8602c94c300a157d187f385ae3e0da199b90a
   user: bulwark
   password: dev-postgres-password
   database: bulwark
@@ -28,10 +28,10 @@ postgres:
   storageClassName: ""
 
 redis:
-  image: redis:7.2-alpine # see docs/adr/0011-redis-license.md -- pinned for its BSD license
+  image: redis:7.2-alpine@sha256:29e8589c3f9ba699b5f7aa4b3c7733c58852a3626439e619aa0ee78de08c6ca0 # see docs/adr/0011-redis-license.md -- pinned for its BSD license
 
 objectstore:
-  image: rustfs/rustfs:latest
+  image: rustfs/rustfs:1.0.1@sha256:1803faef57627e2d9c2e7d89d655d712ddded5389040054987163043fecb6a3c
   accessKey: bulwark-dev-access
   secretKey: dev-objectstore-secret
   storage: 2Gi
@@ -41,7 +41,7 @@ openbao:
   # Dev-mode only, exactly like docker-compose.yml's own openbao service: auto-unseals with a fixed
   # root token, nothing survives a restart. A real deployment points BULWARK_OPENBAO_ADDR at a real,
   # unsealed, persistent OpenBao instead of enabling this one.
-  image: openbao/openbao:2.1
+  image: openbao/openbao:2.1@sha256:af40ca17625ec44aa1ffe3698f85162d71d9cc97adc9e97821ef393ac94b6e42
   devRootToken: dev-openbao-token
 
 # Shared scratch space for uploaded archives: the API writes an uploaded file here and the worker
@@ -94,7 +94,7 @@ worker:
   # host socket inside the worker's own container) -- see helm/bulwark/README.md.
   dind:
     enabled: true
-    image: docker:27-dind
+    image: docker:27-dind@sha256:aa3df78ecf320f5fafdce71c659f1629e96e9de0968305fe1de670e0ca9176ce
     resources:
       requests: { cpu: 200m, memory: 512Mi }
       limits: { cpu: "2", memory: 2Gi }

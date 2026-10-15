@@ -217,6 +217,19 @@ jobs:
       - run: docker build -t bulwark/osv-scanner:2.6.0 docker/osv-scanner
       - run: pytest tests/unit/test_tier2_adapters.py tests/integration/test_tier2_docker.py --no-cov
 
+  image-signatures:
+    # THREAT-MODEL T10: every pinned image whose publisher signs it is checked against the signer
+    # recorded in docker/image-signers.json (cosign, keyless), at the exact digest pinned -- so a
+    # Dependabot digest bump is checked too. The scanner images built from signed release files
+    # check those signatures in their own builds (tier2-adapters, test).
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - run: python scripts/verify-image-signatures.py
+
   tenancy-rls:
     # The automated cross-tenant leak test ADR-0013 committed to running on every pull request
     # (Week 29 backfill): real Postgres, real Row-Level Security -- the `test` job's SQLite tests

@@ -4,15 +4,20 @@
 #
 # No official Docker image exists upstream (opengrep ships platform binaries via GitHub Releases,
 # signed, not a container) -- https://github.com/opengrep/opengrep/releases. Pinned by sha256, one
-# binary per architecture; `docker buildx` sets TARGETARCH automatically for either.
+# binary per architecture; `docker buildx` sets TARGETARCH automatically for either. The build also
+# checks each binary's cosign signature against opengrep's release workflow (THREAT-MODEL T10).
 #
 # Deliberately does NOT bundle github.com/opengrep/opengrep-rules: that ruleset carries a
 # "Commons Clause" condition on top of its own LGPL-2.1 ("the License does not grant ... the right
 # to Sell the Software", where "Sell" is defined to include offering it as a hosted service) --
 # the exact same restriction this image exists to get away from. Rules live in
 # docker/opengrep/rules/, authored for this project (see docker/opengrep/rules/LICENSE).
+FROM ghcr.io/sigstore/cosign/cosign:v3.1.3@sha256:9e5c2f2edc34351160407ca3416c61855bdf9403c3c5936e0f0be7fc261611b8 AS cosign
+
 FROM alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc
 ARG OPENGREP_VERSION=1.30.0
+# Who signs opengrep's release binaries (the certificate on each one's .sig), THREAT-MODEL T10.
+ARG SIGNER=https://github.com/opengrep/opengrep/.github/workflows/rolling-release.yml@refs/heads/main
 ARG TARGETARCH
 
 # sha256 of opengrep_musllinux_{x86,aarch64} for v1.30.0 (github.com/opengrep/opengrep/releases) --
@@ -20,7 +25,9 @@ ARG TARGETARCH
 ARG SHA256_AMD64=ee21fa70714531e1eccbcb50993a871e198fb0f4ade254ef7636c433304fe4bd
 ARG SHA256_ARM64=937d0f35fc05af8877f5f34e04465f2466a8da3c33c2a0d510b8a896383354ef
 
-RUN apk add --no-cache curl && \
+# cosign is mounted for this step only, so it is not left in a layer of the scanner image.
+RUN --mount=type=bind,from=cosign,source=/ko-app/cosign,target=/tmp/cosign \
+    apk add --no-cache curl && \
     if [ "$TARGETARCH" = "arm64" ]; then \
       URL="https://github.com/opengrep/opengrep/releases/download/v${OPENGREP_VERSION}/opengrep_musllinux_aarch64"; \
       SHA256="$SHA256_ARM64"; \
@@ -28,9 +35,14 @@ RUN apk add --no-cache curl && \
       URL="https://github.com/opengrep/opengrep/releases/download/v${OPENGREP_VERSION}/opengrep_musllinux_x86"; \
       SHA256="$SHA256_AMD64"; \
     fi && \
-    curl -sSL -o /usr/local/bin/opengrep "$URL" && \
+    curl -fsSL -o /usr/local/bin/opengrep "$URL" && \
+    curl -fsSL -o /tmp/opengrep.sig "$URL.sig" && curl -fsSL -o /tmp/opengrep.cert "$URL.cert" && \
+    /tmp/cosign verify-blob --certificate /tmp/opengrep.cert --signature /tmp/opengrep.sig \
+      --certificate-identity "$SIGNER" --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+      /usr/local/bin/opengrep && \
     echo "$SHA256  /usr/local/bin/opengrep" | sha256sum -c - && \
     chmod +x /usr/local/bin/opengrep && \
+    rm /tmp/opengrep.sig /tmp/opengrep.cert && \
     apk del curl
 
 COPY rules /rules

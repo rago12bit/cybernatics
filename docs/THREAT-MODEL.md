@@ -141,9 +141,27 @@ inject hostile titles, paths, snippets and descriptions into each of them (`web/
   `stable` pointed to) and CI's Postgres. A rebuild or a pull gets exactly the image pinned; tests fail
   on any image added by tag. Dependabot moves the digests weekly as pull requests (a rebuilt base image's
   security fixes included), majors and Redis 7.4+ (ADR-0011) excluded, so a pin does not quietly go stale.
-- **Open:** signatures of upstream images are not verified: a digest proves the image is the one
-  pinned, not who built it or that it is safe. Docker Official Images and cosign-signed upstreams could be checked with
-  `cosign verify` at build time, as plugin images are at run time.
+- **Done (2026-10-15):** the Helm chart's images are pinned by digest too (they were by tag, one of them
+  `rustfs/rustfs:latest`, now `1.0.1` as in compose); a test covers the chart.
+- **Done (2026-10-15):** signatures are checked wherever a publisher signs. A survey of all 28 pinned
+  images (`cosign tree`, tag-based and OCI-referrer signatures, and GitHub's attestation API) found
+  three signed images: cosign (Sigstore's release account), Trivy and OpenBao (their release
+  workflows). CI's `image-signatures` job runs `cosign verify` on every pinned digest of them against
+  that exact signer (`docker/image-signers.json`, `scripts/verify-image-signatures.py`), so a Dependabot
+  digest bump is checked too; a wrong signer is refused. Five scanners whose images are unsigned but
+  whose releases are signed are now built from the release, checked in their own build, which fails
+  otherwise: Grype and Syft (cosign signature on the checksum file, Anchore's release workflow, then
+  the archive's checksum), Opengrep (cosign signature on the binary, as well as its sha256 pin),
+  OSV-Scanner (SLSA build provenance, `slsa-verifier`, from google/osv-scanner at the release tag) and
+  Checkov (its PyPI provenance, published by bridgecrewio/checkov's workflow; its dependencies are not
+  covered). A test fails on a pinned image that is neither signed by a recorded publisher nor recorded
+  as unsigned with the reason, and on a scanner Dockerfile that drops its check.
+- **Open:** 25 pinned images have nothing to verify -- their publishers sign neither the image nor the
+  release: the nine Docker Official Images used (their SBOM and provenance attestations are unsigned),
+  Semgrep, Gitleaks, Nuclei, Dockle, ZAP, the PDF renderer, Keycloak, pgvector and the compose services
+  (`docker/image-signers.json` lists each with why). For these the digest pin is the guarantee: the
+  image cannot change, but who built it is not proven. The trust anchors that remain are the pinned
+  digest of cosign and the sha256 of slsa-verifier.
 
 ### T11 Unauthorized API access (Partial)
 - **Done:** every endpoint except `/healthz` needs a bearer token; comparison is constant-time; the API refuses
@@ -289,4 +307,4 @@ isolation is covered by RLS (ADR-0013) and, between projects, by T18; physical a
 1. Resolve the Semgrep rules licence ([ADR-006](adr/0006-semgrep-rules-licensing.md)).
 2. Run scanners under gVisor or rootless Docker on a host that holds nothing else (T1, T12).
 3. Per-user authentication, rate limiting and a scan queue cap (T6, T11).
-4. Verify upstream image signatures (T10; digests are already pinned); encrypt storage at rest (T7).
+4. Accept or replace the upstream images nobody signs (T10; the signed ones are verified, all are digest-pinned); encrypt storage at rest (T7).

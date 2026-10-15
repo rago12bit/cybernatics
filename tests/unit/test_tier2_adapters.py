@@ -45,8 +45,25 @@ def test_every_image_is_pinned_and_has_a_dockerfile() -> None:
 def test_dockerfile_versions_match_the_adapters() -> None:
     expect = {"grype": "v0.119.0", "gosec": "v2.29.0", "checkov": "3.3.19", "dockle": "v0.4.15"}
     for tool, ver in expect.items():
-        assert ver in (ROOT / "docker" / tool / "Dockerfile").read_text(), tool
+        # grype is built from its release (THREAT-MODEL T10): `ARG GRYPE_VERSION=0.119.0`
+        assert ver.lstrip("v") in (ROOT / "docker" / tool / "Dockerfile").read_text(), tool
         assert ver.lstrip("v") in ADAPTERS[tool].spec.image
+
+
+def test_scanners_built_from_releases_build_the_version_their_adapter_runs() -> None:
+    """Dependabot cannot bump these (they are release files, not images), so a version is changed
+    by hand: the Dockerfile's ARG and the image tag the adapter runs must move together."""
+    from core.sbom.syft import SYFT_IMAGE
+
+    for tool, arg, image in [
+        ("grype", "GRYPE_VERSION", ADAPTERS["grype"].spec.image),
+        ("osv-scanner", "OSV_VERSION", ADAPTERS["osv-scanner"].spec.image),
+        ("syft", "SYFT_VERSION", SYFT_IMAGE),
+        ("checkov", "CHECKOV_VERSION", ADAPTERS["checkov"].spec.image),
+    ]:
+        text = (ROOT / "docker" / tool / "Dockerfile").read_text()
+        versions = set(re.findall(rf"(?m)^ARG {arg}=(\S+)$", text))
+        assert versions == {image.rsplit(":", 1)[1]}, (tool, versions, image)
 
 
 # ---- the "about forty lines" claim, as a guard --------------------------------------------------

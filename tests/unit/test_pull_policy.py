@@ -140,3 +140,15 @@ def test_every_ci_job_runs_on_a_pinned_runner_image() -> None:
     assert len(runners) >= 19
     for name, runner in runners:
         assert not runner.endswith("-latest"), f"{name}: runs-on {runner}"
+
+
+def test_every_helm_chart_image_is_pinned_by_digest() -> None:
+    """The chart's images were by tag (one `:latest`) until 2026-10-15; the app's own images come
+    from `.Values.image.*`, which the operator sets to what they built."""
+    refs = []
+    for p in (ROOT / "helm").rglob("*"):
+        if p.suffix in (".yaml", ".tpl"):
+            refs += re.findall(r"(?m)^[ \t]+image:[ \t]+([^\s\"{]\S*)", p.read_text())
+    assert len(refs) >= 6
+    for ref in refs:
+        assert "@sha256:" in ref, ref

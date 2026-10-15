@@ -6,6 +6,17 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 ## [Unreleased]
 
 ### Security
+- **Upstream images are checked by signature wherever the publisher signs (THREAT-MODEL T10).** A
+  survey of all 28 pinned images found three signed ones -- cosign, Trivy, OpenBao -- and a new CI job
+  (`image-signatures`) runs `cosign verify` on every pinned digest of them against the exact signer
+  recorded in `docker/image-signers.json`; a wrong signer is refused. Grype, Syft and OSV-Scanner are
+  now built from their publishers' signed releases instead of their unsigned images, and Opengrep's
+  and Checkov's builds check signatures too (cosign on Anchore's and Opengrep's release files, SLSA
+  provenance for OSV-Scanner, PyPI provenance for Checkov); each build fails if its check does. The
+  other 25 images have no signature anywhere and stay digest-pinned, each listed with why; a test fails
+  on a pinned image in neither list. The Helm chart's images, still by tag (one `:latest`), are pinned
+  by digest. Trade-off: Dependabot no longer proposes Grype, Syft and OSV-Scanner updates (they are no
+  longer images it can follow); their versions are build arguments, bumped by hand.
 - **Images Bulwark builds are never pulled.** Every `bulwark/*` image (the scanners, the import parser,
   Nuclei, the egress sidecar) was run with Docker's default pull policy, so one not built locally was
   fetched as `docker.io/bulwark/<tool>` -- a Docker Hub namespace Bulwark does not own, where anyone could
