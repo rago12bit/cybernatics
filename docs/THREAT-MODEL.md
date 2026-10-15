@@ -36,7 +36,7 @@ render text, never to run scan-derived markup.
 | T7 | Secret leakage via findings | Information disclosure | Partial |
 | T8 | Prompt injection into remediation LLM | Tampering | Partial |
 | T9 | Stored XSS in the report UI and exports | Tampering / Elevation | Done |
-| T10 | Malicious or compromised scanner image | Tampering | Open |
+| T10 | Malicious or compromised scanner image | Tampering | Partial |
 | T11 | Unauthorized API access | Spoofing | Partial |
 | T12 | Worker's Docker access abused | Elevation of privilege | Partial |
 | T13 | Poisoned or unavailable exploit-data feeds | Tampering | Partial |
@@ -289,4 +289,4 @@ isolation is covered by RLS (ADR-0013) and, between projects, by T18; physical a
 1. Resolve the Semgrep rules licence ([ADR-006](adr/0006-semgrep-rules-licensing.md)).
 2. Run scanners under gVisor or rootless Docker on a host that holds nothing else (T1, T12).
 3. Per-user authentication, rate limiting and a scan queue cap (T6, T11).
-4. Pin image digests (T10); encrypt storage at rest (T7).
+4. Verify upstream image signatures (T10; digests are already pinned); encrypt storage at rest (T7).
