@@ -81,8 +81,10 @@ export function AdvisoriesScreen() {
         <label className="ds-adv-check">
           <input type="checkbox" checked={kev} onChange={(e) => setKev(e.target.checked)} /> Known exploited only
         </label>
-        <label htmlFor={`${fid}-q`} className="ds-adv-meta">Search</label>
-        <input id={`${fid}-q`} className="ds-adv-q" value={q} placeholder="CVE, library or words" onChange={(e) => setQ(e.target.value)} />
+        <div className="ds-adv-search">
+          <label htmlFor={`${fid}-q`} className="ds-adv-meta">Search</label>
+          <input id={`${fid}-q`} className="ds-adv-q" type="search" value={q} placeholder="CVE, library or words" onChange={(e) => setQ(e.target.value)} />
+        </div>
       </div>
       {error && <p role="alert" className="ds-adv-error">{error}</p>}
       {rows && rows.length === 0 && (

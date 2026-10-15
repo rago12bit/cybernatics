@@ -25,6 +25,10 @@ export default defineConfig({
   use: {
     baseURL: WEB_URL,
     trace: "on-first-retry",
+    // The journeys, accessibility scans and snapshots check the settled page, not motion: with
+    // motion on, axe measured text still fading in (ScrollReveal, heading rise-in) as low contrast,
+    // and full-page snapshots caught blocks waiting below the fold. The motion is unit-tested.
+    reducedMotion: "reduce",
   },
   // A real GitHub Actions run of these tests (not just this repo's own local Docker
   // verification, run on Apple Silicon through virtualization -- a different CPU architecture

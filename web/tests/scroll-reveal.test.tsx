@@ -22,11 +22,11 @@ const motion = (ok: boolean) => vi.stubGlobal("matchMedia", (q: string) => ({ ma
 let page: HTMLDivElement;
 let root: Root;
 
-function fact(top: number) {
+function fact(top: number, parent: HTMLElement = page, className = "fact") {
   const el = document.createElement("div");
-  el.className = "fact";
+  el.className = className;
   el.getBoundingClientRect = () => ({ top, left: 0, bottom: top + 100, right: 100, width: 100, height: 100, x: 0, y: top, toJSON() {} });
-  page.append(el);
+  parent.append(el);
   return el;
 }
 
@@ -84,5 +84,30 @@ describe("scroll reveal on the public pages", () => {
     expect(below.dataset.reveal).toBe("armed");
     await act(async () => root2.unmount()); // leaving the page: nothing stays hidden
     expect(below.dataset.reveal).toBeUndefined();
+  });
+
+  it("moves something inside a block that is rising in with that block, not twice", async () => {
+    motion(true);
+    const block = fact(1000, page, "reveal-me");
+    const inner = fact(1050, block);
+    await act(async () => root.render(<ScrollReveal />));
+    expect(block.dataset.reveal).toBe("armed");
+    expect(inner.dataset.reveal).toBe("shown");
+    expect(observed).toEqual([block]);
+  });
+
+  it("hands an element back to its own styles once it has arrived", async () => {
+    vi.useFakeTimers();
+    try {
+      motion(true);
+      const below = fact(900);
+      await act(async () => root.render(<ScrollReveal />));
+      fire([below]);
+      expect(below.dataset.reveal).toBe("in");
+      vi.advanceTimersByTime(1300);
+      expect(below.dataset.reveal).toBe("done"); // no transform or transition of ours left on it
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

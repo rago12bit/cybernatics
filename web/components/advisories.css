@@ -227,3 +227,23 @@
 .ds-adv-vex-item p { margin: 0.4rem 0; overflow-wrap: anywhere; }
 .ds-adv-vex-item ul { margin: 0.25rem 0 0.5rem 1.1rem; padding: 0; }
 .ds-adv-vex-kind { font-size: 0.85em; }
+
+/* The filter bar: one framed row, each control with its label above it; "Show" is a segmented
+   control (the radios stay in the DOM for keyboard and screen readers), and search takes the rest. */
+.ds-adv-filters { align-items: flex-end; gap: 0.9rem 1.5rem; padding: 0.9rem 1rem 1rem; border: 1px solid var(--ds-rule); background: var(--ds-raised); }
+.ds-adv-filters .ds-adv-meta { font: 400 0.6875rem/1 var(--ds-font-mono, var(--mono)); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ds-muted); }
+.ds-adv-tabs { gap: 0; }
+.ds-adv-tabs legend { float: left; width: 100%; padding: 0 0 0.5rem; }
+.ds-adv-tabs label { position: relative; padding: 0.5rem 0.8rem; border: 1px solid var(--ds-rule-strong); margin-left: -1px; font: 400 0.75rem/1 var(--ds-font-mono, var(--mono)); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ds-muted); cursor: pointer; transition: background-color 120ms linear, color 120ms linear; }
+.ds-adv-tabs label:first-of-type { margin-left: 0; }
+.ds-adv-tabs label:hover { color: var(--ds-ink); }
+.ds-adv-tabs input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+.ds-adv-tabs label:has(input:focus-visible) { outline: 1px solid var(--ds-brand); outline-offset: 2px; z-index: 2; }
+.ds-adv-tabs label.ds-adv-tab-on { z-index: 1; color: var(--ds-brand); border-color: var(--ds-brand); background: var(--ds-brand-wash); }
+.ds-adv-check { padding: 0.45rem 0.8rem; border: 1px solid var(--ds-rule-strong); font-size: 0.8125rem; cursor: pointer; }
+.ds-adv-check input { accent-color: var(--ds-brand); }
+.ds-adv-check:has(input:checked) { border-color: var(--ds-brand); color: var(--ds-brand); background: var(--ds-brand-wash); }
+.ds-adv-search { display: grid; gap: 0.5rem; flex: 1 1 16rem; min-width: 0; }
+.ds-adv-search .ds-adv-q { width: 100%; max-width: none; }
+.ds-adv-tabs label, .ds-adv-check { min-height: 2.25rem; box-sizing: border-box; }
+.ds-adv-search .ds-adv-q { height: 2.25rem; box-sizing: border-box; }

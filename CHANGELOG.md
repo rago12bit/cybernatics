@@ -31,6 +31,9 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   security and compare pages left empty cells and hairlines to the window's edge. The table now sits
   in the page's margins with fixed columns (long paths wrap in their cell), marks Bulwark's column,
   and becomes one card per row on a phone; the cards are one to three columns with no empty slot.
+- **The advisories filter bar is readable.** Its label, radio buttons, checkbox and search ran
+  together on one line; they are now labelled controls in one framed row ("Show" as a segmented
+  control, search taking the remaining width).
 - **A failed Nuclei run no longer reads as a clean scan, or as a fixed Issue.** `run_nuclei`
   ignored Nuclei's exit code and discarded its errors, so a run that failed -- a template renamed
   in a template update ("no templates provided for scan", exit 1), an image that is not there
@@ -60,6 +63,15 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   asserts the target was asked for `/`.
 
 ### Added
+- **The app's More menu, redone.** Its ten pages are grouped (Work, Inventory, Set up) in two
+  columns, each with a line saying what is there; the current page is marked, the chevron turns as
+  it opens, and the panel always sits above the page (it was `z-index: auto`, so page text could
+  paint over it). A footer points to the ⌘K / Ctrl+K project switcher.
+- **The app reveals as you scroll, too.** Page titles rise in on load and the panels and cards a
+  screen is made of rise into view as they are scrolled to -- never rows inside a table or list.
+  An element is handed back to its own styles once it has arrived. The end-to-end tests run with
+  reduced motion, so their accessibility scans and snapshots check the settled page (with motion on,
+  axe measured text still fading in as low contrast).
 - **Scan a GitHub repository from the home page.** A new section under the hero takes `owner/repo` or
   any link into a repository, sends you to sign in if you are not (keeping what you typed, and
   bringing you back to it), then starts a scan with the five default scanners and opens it. Other
