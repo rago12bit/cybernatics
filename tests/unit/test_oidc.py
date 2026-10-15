@@ -357,3 +357,77 @@ def test_pkce_values() -> None:
         .rstrip(b"=")
         .decode()
     )  # noqa: E501
+
+
+def test_one_provider_for_every_domain_signs_in_only_people_already_added(
+    env: Env, idp: FakeIdP  # noqa: F811
+) -> None:
+    """`*`: e.g. Google for any Google account -- Gmail, a university, a company on Google --
+    but only for people an admin has added; never a new account for a stranger."""
+    pid = idp.provider["id"]  # type: ignore[attr-defined]
+    # Every domain, with first sign-ins creating accounts, would let anyone in: refused.
+    r = env.client.patch(f"/v2/sso/providers/{pid}", headers=AUTH, json={"email_domains": ["*"]})
+    assert r.status_code == 422 and r.json()["detail"]["field"] == "auto_create"
+    r = env.client.patch(f"/v2/sso/providers/{pid}", headers=AUTH,
+                         json={"email_domains": ["*", "acme.test"]})  # fmt: skip
+    assert r.status_code == 422 and r.json()["detail"]["field"] == "email_domains"
+    r = env.client.patch(f"/v2/sso/providers/{pid}", headers=AUTH,
+                         json={"email_domains": ["*"], "auto_create": False})  # fmt: skip
+    assert r.status_code == 200, r.text
+    # ...and it cannot be turned back on while the provider signs in every domain.
+    r = env.client.patch(f"/v2/sso/providers/{pid}", headers=AUTH, json={"auto_create": True})
+    assert r.status_code == 422 and r.json()["detail"]["field"] == "auto_create"
+
+    # Any domain finds it on the sign-in page.
+    for email in ("someone@gmail.com", "raghav@college.ac.in"):
+        found = env.client.get("/auth/sso/discover", params={"email": email}).json()
+        assert found == {"providers": [{"id": pid, "name": "Acme SSO", "kind": "oidc"}]}
+
+    # A stranger with a verified Google account is refused, and no account is made.
+    idp.claims = {"email": "stranger@gmail.com", "sub": "sub-stranger"}
+    assert sign_in(env, idp).headers["location"].endswith("error=no_account")
+    with env.sessions() as s:
+        set_session_org(s, ORG)
+        assert svc.by_email(s, ORG, "stranger@gmail.com") is None
+        svc.create(s, ORG, "t", email="raghav@college.ac.in", role="member")
+        s.commit()
+    # Someone an admin added signs in, whatever their domain.
+    idp.claims = {"email": "raghav@college.ac.in", "sub": "sub-raghav"}
+    r = sign_in(env, idp)
+    me = env.client.get("/v2/me", headers={"Cookie": cookie_of(r)}).json()["user"]
+    assert me["email"] == "raghav@college.ac.in"
+    # An unverified email is still refused.
+    idp.claims = {"email": "raghav@college.ac.in", "sub": "sub-raghav", "email_verified": False}
+    assert sign_in(env, idp).headers["location"].endswith("error=invalid")
+
+
+def test_a_domains_own_provider_comes_before_the_one_for_every_domain(
+    env: Env, idp: FakeIdP  # noqa: F811
+) -> None:
+    pid = idp.provider["id"]  # type: ignore[attr-defined]
+    env.client.patch(f"/v2/sso/providers/{pid}", headers=AUTH,
+                     json={"email_domains": ["*"], "auto_create": False})  # fmt: skip
+    r = env.client.post("/v2/sso/providers", headers=AUTH, json={
+        "kind": "oidc", "name": "Acme's own", "issuer": ISSUER, "client_id": CLIENT,
+        "email_domains": ["acme.test"]})  # fmt: skip
+    assert r.status_code == 201, r.text
+    own = env.client.get("/auth/sso/discover", params={"email": "a@acme.test"}).json()
+    assert own["providers"][0]["id"] == r.json()["id"]
+    other = env.client.get("/auth/sso/discover", params={"email": "a@gmail.com"}).json()
+    assert other["providers"][0]["id"] == pid
+    # Only one provider can sign in every domain.
+    r = env.client.post("/v2/sso/providers", headers=AUTH, json={
+        "kind": "oidc", "name": "Another", "issuer": ISSUER, "client_id": CLIENT,
+        "email_domains": ["*"], "auto_create": False})  # fmt: skip
+    assert r.status_code == 409
+
+
+def test_every_domain_is_refused_in_hosted_mode(env: Env, idp: FakeIdP) -> None:  # noqa: F811
+    from core.identity import sso
+
+    pid = idp.provider["id"]  # type: ignore[attr-defined]
+    hosted = env.settings.__class__(**{**env.settings.__dict__, "hosted_mode": True})
+    with env.sessions() as s, pytest.raises(sso.SsoError) as err:
+        set_session_org(s, ORG)
+        sso.save(s, ORG, "t", {"email_domains": ["*"], "auto_create": False}, hosted, pid)
+    assert err.value.field == "email_domains" and "hosted mode" in err.value.message

@@ -82,6 +82,12 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   asserts the target was asked for `/`.
 
 ### Added
+- **Sign in with any Google account.** An identity provider can sign in every email domain (`*`): with
+  Google, any Google account -- Gmail, or a school or company on Google -- but only for people an
+  admin has added; an email nobody added is refused and no account is created. The server refuses
+  `*` with automatic accounts, and in hosted mode; a domain with its own provider still uses it. The
+  settings screen explains `*` and turns automatic accounts off for it. Setup steps for Google are
+  in docs/identity.md.
 - **The app's More menu, redone.** Its ten pages are grouped (Work, Inventory, Set up) in two
   columns, each with a line saying what is there; the current page is marked, the chevron turns as
   it opens, and the panel always sits above the page (it was `z-index: auto`, so page text could

@@ -79,7 +79,7 @@ export function SignInSettings() {
                 </div>
               </div>
               {tests[p.id] && <p role="status" className={tests[p.id]!.ok ? "idn-ok" : "idn-error"}>{tests[p.id]!.message}</p>}
-              <p className="idn-muted">Signs in {p.email_domains.join(", ")}. {p.auto_create ? `A first sign-in creates the account, as ${p.default_role}.` : "Only people already added (or provisioned) can sign in."}
+              <p className="idn-muted">{p.email_domains.includes("*") ? "Signs in every email domain (people already added only)." : `Signs in ${p.email_domains.join(", ")}.`} {p.auto_create ? `A first sign-in creates the account, as ${p.default_role}.` : "Only people already added (or provisioned) can sign in."}
                 {p.kind === "oidc" && p.secret_store === "database" && " The client secret is stored in the database, not encrypted: set up OpenBao to keep it there."}</p>
               {p.oidc && <Copy label="Redirect URI (give this to the provider)" value={p.oidc.redirect_uri} />}
               {p.saml && <>
@@ -108,6 +108,9 @@ function ProviderForm({ current, kind, onClose, onSaved }: {
     trust_email: current?.oidc?.trust_email ?? false, idp_entity_id: current?.saml?.idp_entity_id ?? "", sso_url: current?.saml?.sso_url ?? "",
   }));
   const [domains, setDomains] = useState((current?.email_domains ?? []).join(", "));
+  // `*`: every domain, e.g. Google for any Google account. It signs in only people already added,
+  // so the server refuses it with automatic accounts; the form says so before you try.
+  const everyDomain = domains.split(/[\s,]+/).filter(Boolean).includes("*");
   const [error, setError] = useState<{ field?: string; message: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const set = (patch: SsoProviderInput) => setF((cur) => ({ ...cur, ...patch }));
@@ -115,6 +118,7 @@ function ProviderForm({ current, kind, onClose, onSaved }: {
     e.preventDefault();
     setBusy(true); setError(null);
     const body: SsoProviderInput = { ...f, kind, email_domains: domains.split(/[\s,]+/).filter(Boolean) };
+    if (everyDomain) body.auto_create = false;
     if (kind === "saml") { delete body.issuer; delete body.client_id; delete body.trust_email; }
     else { delete body.idp_entity_id; delete body.sso_url; }
     for (const k of ["client_secret", "idp_cert", "idp_metadata_xml"] as const) if (!body[k]) delete body[k];
@@ -151,9 +155,14 @@ function ProviderForm({ current, kind, onClose, onSaved }: {
           <textarea id={`${id}-cert`} rows={3} value={f.idp_cert ?? ""} onChange={(e) => set({ idp_cert: e.target.value })} aria-invalid={error?.field === "idp_cert" || undefined} />
         </>}
         <label htmlFor={`${id}-dom`}>Email domains it signs in</label>
-        <input id={`${id}-dom`} value={domains} onChange={(e) => setDomains(e.target.value)} placeholder="acme.com, acme.co.uk" aria-invalid={error?.field === "email_domains" || undefined} />
-        <label className="idn-check"><input type="checkbox" checked={Boolean(f.auto_create)} onChange={(e) => set({ auto_create: e.target.checked })} />A first sign-in creates the account</label>
-        {f.auto_create && <>
+        <input id={`${id}-dom`} value={domains} onChange={(e) => setDomains(e.target.value)} placeholder="acme.com, acme.co.uk" aria-invalid={error?.field === "email_domains" || undefined} aria-describedby={`${id}-dom-h`} />
+        <p id={`${id}-dom-h`} className="idn-muted idn-small">
+          {everyDomain
+            ? "Every email domain: anyone with an account at this provider (with Google, any Google account) can use it, but only people you have added in People and access get in."
+            : "Or * for every domain, e.g. Google sign-in for any Google account; it then signs in only people you have added."}
+        </p>
+        <label className="idn-check"><input type="checkbox" checked={Boolean(f.auto_create) && !everyDomain} disabled={everyDomain} aria-invalid={error?.field === "auto_create" || undefined} onChange={(e) => set({ auto_create: e.target.checked })} />A first sign-in creates the account{everyDomain && " (not with every domain)"}</label>
+        {f.auto_create && !everyDomain && <>
           <label htmlFor={`${id}-role`}>New accounts are</label>
           <select id={`${id}-role`} value={f.default_role} onChange={(e) => set({ default_role: e.target.value as OverrideRole })}>
             {OVERRIDE_ROLES.map(([r, l]) => <option key={r} value={r}>{l}</option>)}

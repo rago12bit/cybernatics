@@ -5,6 +5,10 @@ signed-in person (Week 75, plan §51).
 (core.identity.saml), says which email domains it vouches for, and whether a first sign-in creates
 the account (with which role) or the person must exist already (added by an admin, or by SCIM). A
 domain belongs to one provider: the sign-in page asks for an email and sends the person to it.
+One provider may instead sign in every domain (`*`, e.g. Google for any Google account): it only
+signs in people already added, never creates an account, and is the fallback for an email whose
+domain has no provider of its own. It is refused in hosted mode, where it would catch the sign-ins
+of every other organization's people.
 The client secret goes to OpenBao when it is configured, else into the row, and the settings
 screen says which.
 
@@ -126,9 +130,17 @@ def get_secret(p: IdentityProvider, settings: Settings) -> str | None:
 # --- providers -----------------------------------------------------------------------------------
 
 
+ANY_DOMAIN = "*"
+
+
 def _domains(raw: Any) -> list[str]:
     if not isinstance(raw, list) or not raw:
         raise SsoError("invalid", "Name at least one email domain.", field="email_domains")
+    if [str(d).strip() for d in raw] == [ANY_DOMAIN]:
+        return [ANY_DOMAIN]
+    if any(str(d).strip() == ANY_DOMAIN for d in raw):
+        raise SsoError("invalid", "Use * on its own: it already means every domain.",
+                       field="email_domains")  # fmt: skip
     out = []
     for d in raw:
         d = str(d).strip().lower().lstrip("@")
@@ -234,7 +246,15 @@ def save(
         p.auto_create = bool(raw["auto_create"])
     if "email_domains" in raw or not p.email_domains:
         p.email_domains = _domains(raw.get("email_domains"))
+        if ANY_DOMAIN in p.email_domains and settings.hosted_mode:
+            raise SsoError("invalid", "Every domain (*) is not available in hosted mode: it "
+                           "would catch other organizations' sign-ins.",
+                           field="email_domains")  # fmt: skip
         _claim_domains(s, p, p.email_domains)
+    if ANY_DOMAIN in (p.email_domains or []) and p.auto_create:
+        raise SsoError("invalid", "A provider for every domain (*) signs in only people already "
+                       "added: turn off 'A first sign-in creates the account'.",
+                       field="auto_create")  # fmt: skip
     p.updated_at, p.updated_by = now, actor
     s.flush()
     repo.append_audit_entry(
@@ -260,10 +280,13 @@ def remove(s: Session, org_id: str, actor: str, provider_id: str) -> None:
 
 
 def providers_for_email(s: Session, email: str) -> list[dict[str, str]]:
-    """The provider an email signs in with, if its domain has one. Says nothing else: an unknown
-    domain and a disabled provider both give an empty list."""
+    """The provider an email signs in with: its domain's own, else the one for every domain (`*`)
+    if there is one. Says nothing else: an unknown domain and a disabled provider both give an
+    empty list."""
     domain = email.strip().lower().rsplit("@", 1)[-1]
-    row = s.get(SsoDomain, domain) if _DOMAIN.match(domain) else None
+    if not _DOMAIN.match(domain):
+        return []
+    row = s.get(SsoDomain, domain) or s.get(SsoDomain, ANY_DOMAIN)
     if row is None:
         return []
     set_session_org(s, row.org_id)
@@ -371,7 +394,9 @@ def complete(
         email = people.clean_email(email)
     except people.UserError as exc:
         raise SsoError("invalid", "The provider did not give an email address.") from exc
-    if email.rsplit("@", 1)[1] not in (p.email_domains or []):
+    domains = p.email_domains or []
+    any_domain = ANY_DOMAIN in domains
+    if not any_domain and email.rsplit("@", 1)[1] not in domains:
         raise SsoError("domain", f"This provider does not sign in {email.rsplit('@', 1)[1]}.")
     linked = s.scalar(select(UserIdentity).where(UserIdentity.provider_id == p.id,
                                                  UserIdentity.subject == subject))  # fmt: skip
@@ -384,7 +409,7 @@ def complete(
                                                         UserIdentity.user_id == u.id))  # fmt: skip
             if other is not None:
                 raise SsoError("invalid", "This email belongs to another account at the provider.")
-        elif p.auto_create:
+        elif p.auto_create and not any_domain:  # every-domain providers never create accounts
             u = people.create(s, p.org_id, f"sso:{p.id}", email=email, name=name,
                               role=p.default_role, source=source)  # fmt: skip
         else:

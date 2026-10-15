@@ -220,6 +220,39 @@ describe("sign-in settings", () => {
     await act(async () => button(host, "I have copied it").click());
     expect(host.textContent).not.toContain("bulwark_secret_once");
   });
+
+  it("signs in any Google account with *, but never with automatic accounts", async () => {
+    sessionStorage.setItem("bulwark.token", "t".repeat(24));
+    const google = { id: "g1", kind: "oidc", name: "Google", enabled: true, email_domains: ["*"], auto_create: false,
+      default_role: "member", secret_store: "database", has_secret: true, updated_at: "", updated_by: "",
+      oidc: { issuer: "https://accounts.google.com", client_id: "123.apps.googleusercontent.com", trust_email: false, redirect_uri: "http://localhost:8000/auth/oidc/callback" } };
+    let providers: unknown[] = [];
+    const calls = api({
+      "GET /v2/sso/providers": () => json(providers),
+      "POST /v2/sso/providers": () => { providers = [google]; return json(google, 201); },
+      "GET /v2/scim/tokens": () => json({ base_url: "", tokens: [] }),
+    });
+    const host = await mount(<SignInSettings />);
+    await act(async () => button(host, "Add an OIDC provider").click());
+    const dialog = document.querySelector<HTMLElement>('[role="dialog"]')!;
+    await type(byLabel(dialog, "Name people see"), "Google");
+    await type(byLabel(dialog, "Issuer"), "https://accounts.google.com");
+    await type(byLabel(dialog, "Client ID"), "123.apps.googleusercontent.com");
+    const auto = [...dialog.querySelectorAll("label")].find((l) => l.textContent?.startsWith("A first sign-in creates the account"))!.querySelector("input")!;
+    await act(async () => auto.click()); // ticked first...
+    expect(auto.checked).toBe(true);
+    await type(byLabel(dialog, "Email domains"), "*");
+    expect(auto.checked).toBe(false); // ...then * turns it off, and says why
+    expect(auto.disabled).toBe(true);
+    expect(dialog.textContent).toContain("only people you have added");
+    expect(dialog.querySelector("select")).toBeNull(); // no "new accounts are" role to pick
+    expect((await axe.run(dialog, AXE)).violations).toEqual([]);
+    await act(async () => button(dialog, "Save").click());
+    await flush();
+    expect(calls.find((c) => c.method === "POST" && c.path === "/v2/sso/providers")!.body).toMatchObject({
+      email_domains: ["*"], auto_create: false });
+    expect(host.textContent).toContain("Signs in every email domain (people already added only).");
+  });
 });
 
 describe("my API tokens", () => {

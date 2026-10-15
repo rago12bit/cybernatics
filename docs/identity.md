@@ -61,6 +61,26 @@ you save, and refuses one that names a different issuer.
 Every sign-in uses PKCE. The provider's ID token is checked strictly -- its signature, issuer,
 audience, expiry and the nonce of that sign-in -- and anything else is refused.
 
+### Google for any Google account
+
+A provider can sign in **every** email domain: give `*` as its only domain. With Google that means
+any Google account -- Gmail, or a school or company whose mail is on Google -- but **only for people
+you have added** in **Settings → People and access**: an email nobody added is refused, and no
+account is ever created for it, so *A first sign-in creates the account* cannot be ticked with `*`.
+A domain that has its own provider still signs in with that one; `*` is only for the rest. Only one
+provider can be `*`, and not in hosted mode, where it would catch other organizations' sign-ins.
+
+At Google (Google Cloud console, with your own Google account):
+
+1. **APIs & Services → OAuth consent screen**: user type **External**; the scopes `openid`, `email`
+   and `profile` need no review. While it is **Testing**, only the test users you list can sign in;
+   choose **Publish app** to let any Google account through to Bulwark's own check.
+2. **Credentials → Create credentials → OAuth client ID**: type **Web application**; under
+   **Authorized redirect URIs** add the redirect URI the Bulwark screen shows
+   (`http://localhost:8000/auth/oidc/callback` locally: Google accepts plain HTTP for `localhost`).
+3. In Bulwark: **Add an OIDC provider**, issuer `https://accounts.google.com`, the client ID and
+   secret Google showed, email domains `*`.
+
 ## Single sign-on with SAML
 
 Choose **Add a SAML provider** and paste your provider's metadata (or its entity ID, sign-in URL and
