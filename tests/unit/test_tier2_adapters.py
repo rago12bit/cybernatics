@@ -51,8 +51,9 @@ def test_dockerfile_versions_match_the_adapters() -> None:
 
 
 def test_scanners_built_from_releases_build_the_version_their_adapter_runs() -> None:
-    """Dependabot cannot bump these (they are release files, not images), so a version is changed
+    """Dependabot cannot bump these (release files or Go source, not images), so a version is changed
     by hand: the Dockerfile's ARG and the image tag the adapter runs must move together."""
+    from core.dast.adapters.nuclei import NUCLEI_IMAGE
     from core.sbom.syft import SYFT_IMAGE
 
     for tool, arg, image in [
@@ -60,10 +61,13 @@ def test_scanners_built_from_releases_build_the_version_their_adapter_runs() -> 
         ("osv-scanner", "OSV_VERSION", ADAPTERS["osv-scanner"].spec.image),
         ("syft", "SYFT_VERSION", SYFT_IMAGE),
         ("checkov", "CHECKOV_VERSION", ADAPTERS["checkov"].spec.image),
+        ("gitleaks", "GITLEAKS_VERSION", ADAPTERS["gitleaks"].spec.image),
+        ("dockle", "DOCKLE_VERSION", ADAPTERS["dockle"].spec.image),
+        ("nuclei", "NUCLEI_VERSION", NUCLEI_IMAGE),
     ]:
         text = (ROOT / "docker" / tool / "Dockerfile").read_text()
         versions = set(re.findall(rf"(?m)^ARG {arg}=(\S+)$", text))
-        assert versions == {image.rsplit(":", 1)[1]}, (tool, versions, image)
+        assert versions == {image.rsplit(":", 1)[1].lstrip("v")}, (tool, versions, image)
 
 
 # ---- the "about forty lines" claim, as a guard --------------------------------------------------

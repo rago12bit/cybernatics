@@ -31,9 +31,9 @@ log = logging.getLogger(__name__)
 class GitleaksAdapter(ToolAdapter):
     spec = ToolSpec(
         name="gitleaks",
-        # Upstream's own image, pinned to the multi-platform index v8.21.0 pointed to on 2026-10-14:
-        # a tag can be moved, a digest cannot (core.sandbox.docker_runtime.pull_policy).
-        image="zricethezav/gitleaks:v8.21.0@sha256:5a6d3338fe0e85fb63c079e0880dc10ee0bc6be54b75a2cf089964fbba7e9bd6",
+        # Built here from source checked against Go's checksum database (docker/gitleaks,
+        # THREAT-MODEL T10), so never pulled (core.sandbox.docker_runtime.pull_policy).
+        image="bulwark/gitleaks:v8.21.0",
         categories=frozenset({"secrets"}),
         languages=frozenset(),
         timeout_seconds=300,

@@ -36,7 +36,7 @@ render text, never to run scan-derived markup.
 | T7 | Secret leakage via findings | Information disclosure | Partial |
 | T8 | Prompt injection into remediation LLM | Tampering | Partial |
 | T9 | Stored XSS in the report UI and exports | Tampering / Elevation | Done |
-| T10 | Malicious or compromised scanner image | Tampering | Partial |
+| T10 | Malicious or compromised scanner image | Tampering | Done (residual accepted) |
 | T11 | Unauthorized API access | Spoofing | Partial |
 | T12 | Worker's Docker access abused | Elevation of privilege | Partial |
 | T13 | Poisoned or unavailable exploit-data feeds | Tampering | Partial |
@@ -123,9 +123,9 @@ the API serves downloads with `nosniff` and a sandbox CSP; PDF text is escaped b
 inject hostile titles, paths, snippets and descriptions into each of them (`web/tests/xss.test.tsx`,
 `tests/unit/test_export.py`).
 
-### T10 Malicious scanner image (Partial)
-- **Done (2026-10-14):** the images Bulwark builds itself (`bulwark/*`: every scanner but gitleaks, the
-  import parser, Nuclei, the egress sidecar) are run with `--pull=never` (`core.sandbox.docker_runtime.
+### T10 Malicious scanner image (Done, residual accepted 2026-10-15)
+- **Done (2026-10-14):** the images Bulwark builds itself (`bulwark/*`: every scanner -- gitleaks too since
+  2026-10-15 -- the import parser, Nuclei, the egress sidecar) are run with `--pull=never` (`core.sandbox.docker_runtime.
   pull_policy`) and built, never pulled, by compose (`pull_policy: build`). Before, an image not built
   locally was fetched as `docker.io/bulwark/<tool>`, a Docker Hub namespace Bulwark does not own (no public
   repository there on 2026-10-14): whoever registered it would have had their image run as a scanner, and
@@ -156,12 +156,25 @@ inject hostile titles, paths, snippets and descriptions into each of them (`web/
   Checkov (its PyPI provenance, published by bridgecrewio/checkov's workflow; its dependencies are not
   covered). A test fails on a pinned image that is neither signed by a recorded publisher nor recorded
   as unsigned with the reason, and on a scanner Dockerfile that drops its check.
-- **Open:** 25 pinned images have nothing to verify -- their publishers sign neither the image nor the
-  release: the nine Docker Official Images used (their SBOM and provenance attestations are unsigned),
-  Semgrep, Gitleaks, Nuclei, Dockle, ZAP, the PDF renderer, Keycloak, pgvector and the compose services
-  (`docker/image-signers.json` lists each with why). For these the digest pin is the guarantee: the
-  image cannot change, but who built it is not proven. The trust anchors that remain are the pinned
-  digest of cosign and the sha256 of slsa-verifier.
+- **Done (2026-10-15):** the three scanners whose publishers sign nothing -- Gitleaks, Nuclei, Dockle -- are
+  built here from Go source rather than run from their authors' unsigned images (`docker/gitleaks`,
+  `docker/nuclei`, `docker/dockle`). `go install mod@version` checks every module it fetches against
+  sum.golang.org, the public append-only log of each module version's hash, so the code compiled is the
+  code anyone else gets for that version and a change to it would be visible in the log; a test fails if
+  a Dockerfile turns that check off. Every scanner image is now built here: none is pulled.
+- **Residual (accepted 2026-10-15):** 23 pinned images, from 21 upstream repositories, have no signature to verify and no signed source
+  (each listed with why in `docker/image-signers.json`): the Docker Official Images the scanners and the app
+  are built on (Docker retired Content Trust signing for them in August 2025; their SBOM and provenance
+  attestations are unsigned), Semgrep (no PyPI provenance), ZAP, the PDF renderer, Keycloak (CI only),
+  pgvector and the compose services. For these the digest pin is the guarantee: the image cannot change
+  under a commit, but who built it is not proven. Accepted because (a) every scanner and parser runs in
+  the T1 sandbox (no network, read-only, no capabilities), which bounds what a bad image can do to
+  misreporting and the host-kernel exposure T1 already names; (b) Dependabot proposes each digest change
+  as a reviewable pull request; (c) the alternatives are worse for a self-hosted tool: Docker Hardened
+  Images are signed but need a Docker account to pull, which every operator building Bulwark would then
+  need. The trust anchors that remain are the pinned digests of cosign and the golang images, and the
+  sha256 of slsa-verifier. **Re-open when** a publisher starts signing (move it to `signed`), Docker signs
+  its Official Images again, or a deployment can require a Docker login (switch to Hardened Images).
 
 ### T11 Unauthorized API access (Partial)
 - **Done:** every endpoint except `/healthz` needs a bearer token; comparison is constant-time; the API refuses
@@ -307,4 +320,4 @@ isolation is covered by RLS (ADR-0013) and, between projects, by T18; physical a
 1. Resolve the Semgrep rules licence ([ADR-006](adr/0006-semgrep-rules-licensing.md)).
 2. Run scanners under gVisor or rootless Docker on a host that holds nothing else (T1, T12).
 3. Per-user authentication, rate limiting and a scan queue cap (T6, T11).
-4. Accept or replace the upstream images nobody signs (T10; the signed ones are verified, all are digest-pinned); encrypt storage at rest (T7).
+4. Encrypt storage at rest (T7). (T10's unsigned upstream images are an accepted residual: re-check the re-open conditions there.)

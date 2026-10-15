@@ -136,3 +136,31 @@ def test_scanners_are_built_from_signature_checked_releases(tool: str) -> None:
     assert "--certificate-identity-regexp" not in flat  # release files name one exact workflow
     for upstream in ("anchore/grype", "anchore/syft", "ghcr.io/google/osv-scanner"):
         assert f"FROM {upstream}" not in text  # not the unsigned upstream image any more
+
+
+# Scanners whose publishers sign nothing, built from Go source checked against Go's checksum database.
+BUILT_FROM_GO_SOURCE = {
+    "gitleaks": "github.com/zricethezav/gitleaks/v8@v${GITLEAKS_VERSION}",
+    "nuclei": "github.com/projectdiscovery/nuclei/v3/cmd/nuclei@v${NUCLEI_VERSION}",
+    "dockle": "github.com/goodwithtech/dockle/cmd/dockle@v${DOCKLE_VERSION}",
+}
+
+
+@pytest.mark.parametrize("tool", sorted(BUILT_FROM_GO_SOURCE))
+def test_scanners_nobody_signs_are_built_from_source_checked_against_the_go_checksum_db(
+    tool: str,
+) -> None:
+    """`go install mod@version` checks every module's hash against sum.golang.org unless told not
+    to; these settings make sure nothing tells it not to."""
+    text = (ROOT / "docker" / tool / "Dockerfile").read_text()
+    flat = re.sub(r"\\\n\s*", "", text)
+    assert "go install" in flat and BUILT_FROM_GO_SOURCE[tool] in flat, tool
+    env = re.search(r"(?m)^ENV (.*)$", text)
+    assert env, tool
+    settings = dict(kv.split("=", 1) for kv in env.group(1).split())
+    assert settings["GOSUMDB"] == "sum.golang.org"
+    assert settings["GOPROXY"] == "https://proxy.golang.org"
+    assert settings["GONOSUMDB"] == settings["GOPRIVATE"] == settings["GOINSECURE"] == ""
+    assert "-insecure" not in settings.get("GOFLAGS", "")
+    for upstream in ("zricethezav/gitleaks", "projectdiscovery/nuclei", "goodwithtech/dockle"):
+        assert f"FROM {upstream}" not in text

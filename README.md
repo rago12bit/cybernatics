@@ -91,8 +91,10 @@ on Temporal. Every design decision is an [ADR](docs/adr/).
   locked-down container; XML entity tricks, oversized and truncated files are refused. Parsers are
   fuzzed nightly.
 - **Supply chain:** every image is built here or pinned by digest and kept current by Dependabot;
-  Bulwark's own images are never pulled; plugins run only the image whose Sigstore signature was
-  verified; GitHub Actions are pinned by SHA.
+  every scanner is built here, from signature-checked releases or from Go source checked against Go's
+  checksum database, and upstream images whose publishers sign are verified in CI; Bulwark's own
+  images are never pulled; plugins run only the image whose Sigstore signature was verified; GitHub
+  Actions are pinned by SHA.
 - **Secrets:** raw scanner output is envelope-encrypted per organization and can be crypto-shredded;
   service connections to Postgres use client certificates.
 

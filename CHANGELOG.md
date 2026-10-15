@@ -6,6 +6,14 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 ## [Unreleased]
 
 ### Security
+- **Every scanner is now built here; T10 closed with an accepted residual.** Gitleaks, Nuclei and Dockle,
+  whose publishers sign nothing, are built from Go source that `go install` checks against
+  sum.golang.org (the public log of every module version's hash) instead of run from their authors'
+  unsigned images -- Gitleaks was pulled before, now it is built like the rest (`bulwark/gitleaks`,
+  never pulled; the Action and compose build it). Nuclei 3.11.1 needs Go 1.26, pinned by digest for its
+  build. The 23 remaining unsigned images (Docker Official Images, whose Content Trust signing Docker
+  retired in August 2025; Semgrep; ZAP; the PDF renderer; Keycloak; pgvector; the compose services) are
+  an accepted residual in the threat model, with the reasons and the conditions that re-open it.
 - **Upstream images are checked by signature wherever the publisher signs (THREAT-MODEL T10).** A
   survey of all 28 pinned images found three signed ones -- cosign, Trivy, OpenBao -- and a new CI job
   (`image-signatures`) runs `cosign verify` on every pinned digest of them against the exact signer

@@ -18,6 +18,8 @@ Fallback order: arm64-native alternative -> `--platform linux/amd64` under Roset
 | OSV-Scanner (custom image, offline DBs) | `docker/osv-scanner/Dockerfile` on osv-scanner:v2.6.0 | yes | verified 2026-09-24 (built and run) |
 | RustFS (object store) | rustfs/rustfs | yes | verified 2026-09-24 (ADR-007) |
 | docker-socket-proxy | tecnativa/docker-socket-proxy | yes | verified 2026-09-24 (ran on arm64) |
+| Gitleaks, Nuclei, Dockle (built from Go source, `docker/<tool>`) | golang:1.25-alpine -> alpine:3.20 | yes | verified 2026-10-15 (built and run; THREAT-MODEL T10) |
+| Grype, Syft, OSV-Scanner (built from signed releases, `docker/<tool>`) | alpine:3.20 | yes | verified 2026-10-15 (built and run; THREAT-MODEL T10) |
 | Bandit | built locally from `python:3.12-slim` (`docker/bandit/Dockerfile`) | yes | base image is multi-arch |
 
 No Tier-1 tool needs the Rosetta fallback. Tier-2 (Grype, Checkov, gosec, Dockle) shipped in Week 22 and, checked

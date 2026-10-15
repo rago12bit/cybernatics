@@ -3,7 +3,19 @@
 # campaign's egress proxy. (The upstream image ships no templates; it fetched ~86 MB from GitHub on
 # every run, outside the proxy.) Rebuild with a newer TEMPLATES to refresh it, as with Grype's
 # database. Run with -duc (no update check) and -ni (no interactsh): core/dast/adapters/nuclei.py.
-FROM projectdiscovery/nuclei:v3.11.1@sha256:582d5546902e67052097cb2d07296c642d50a1afc5e44623cb038845df9a32eb
+#
+# The engine is built here from source rather than taken from projectdiscovery's image (THREAT-MODEL
+# T10): the image and the release checksums are unsigned, but Go fetches the source from the module
+# proxy and checks it against sum.golang.org, the public append-only log of every module version's
+# hash. What still has to be trusted: the golang image (digest-pinned, unsigned) and the source.
+# Go 1.26: nuclei v3.11.1 requires it. The image keeps upstream's layout (alpine, /usr/local/bin/nuclei, templates under /root).
+FROM golang:1.26-alpine@sha256:3082400e369fa24d5fc60bca20edab3f6d604e0c5a690ec66b295eff4dd87ade AS build
+ENV CGO_ENABLED=0 GOTOOLCHAIN=local GOPROXY=https://proxy.golang.org GOSUMDB=sum.golang.org GONOSUMDB= GOPRIVATE= GOINSECURE= GOFLAGS=-trimpath
+ARG NUCLEI_VERSION=3.11.1
+RUN go install -ldflags "-s -w" "github.com/projectdiscovery/nuclei/v3/cmd/nuclei@v${NUCLEI_VERSION}"
+
+FROM alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc
+COPY --from=build /go/bin/nuclei /usr/local/bin/nuclei
 
 ARG TEMPLATES=v10.5.0
 RUN apk add --no-cache git \

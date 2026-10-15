@@ -1,5 +1,5 @@
 {
-  "_about": "THREAT-MODEL T10. Every image this repository pins by digest (scripts/image_pins.py) is listed here by repository: under `signed` with who must have signed it -- CI runs `cosign verify` on every pinned digest of it (scripts/verify-image-signatures.py) -- or under `unsigned` with why there is nothing to check. tests/unit/test_image_signers.py fails on an image that is in neither. Surveyed 2026-10-15 with `cosign tree` (tag-based and OCI-referrer signatures) and GitHub's attestation API. Scanner images whose publisher signs release files rather than images are built from those files instead (docker/grype, syft, osv-scanner, opengrep, checkov).",
+  "_about": "THREAT-MODEL T10. Every image this repository pins by digest (scripts/image_pins.py) is listed here by repository: under `signed` with who must have signed it -- CI runs `cosign verify` on every pinned digest of it (scripts/verify-image-signatures.py) -- or under `unsigned` with why there is nothing to check. tests/unit/test_image_signers.py fails on an image that is in neither. Surveyed 2026-10-15 with `cosign tree` (tag-based and OCI-referrer signatures) and GitHub's attestation API. Scanner images whose publisher signs release files rather than images are built from those files instead (docker/grype, syft, osv-scanner, opengrep, checkov); Gitleaks, Nuclei and Dockle, whose publishers sign nothing, are built from Go source checked against sum.golang.org (docker/gitleaks, nuclei, dockle).",
   "signed": {
     "ghcr.io/sigstore/cosign/cosign": {
       "identity": "keyless@projectsigstore.iam.gserviceaccount.com",
@@ -26,10 +26,7 @@
     "python": "Docker Official Image: unsigned SBOM and provenance attestations only.",
     "redis": "Docker Official Image: unsigned SBOM and provenance attestations only.",
     "ghcr.io/zaproxy/zaproxy": "No image signature or GitHub attestation; ZAP's release files carry checksums only.",
-    "goodwithtech/dockle": "No image signature; its release checksums are unsigned.",
-    "projectdiscovery/nuclei": "No image signature; its release checksums are unsigned.",
     "semgrep/semgrep": "No image signature; its PyPI release has no provenance.",
-    "zricethezav/gitleaks": "No image signature; its release checksums are unsigned.",
     "mcr.microsoft.com/playwright": "No image signature (the PDF renderer).",
     "quay.io/keycloak/keycloak": "No image signature (CI's sign-in test only).",
     "pgvector/pgvector": "No image signature (CI's Postgres and the Helm default).",

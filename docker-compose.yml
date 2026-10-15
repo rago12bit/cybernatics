@@ -297,6 +297,11 @@ services:
     build: docker/semgrep
     image: bulwark/semgrep:1.90.0
     pull_policy: build
+  scanner-gitleaks:
+    profiles: [scanners]
+    build: docker/gitleaks
+    image: bulwark/gitleaks:v8.21.0
+    pull_policy: build
   scanner-opengrep:
     # Hosted mode's Semgrep replacement (ADR-0038) -- built here too, so a developer testing
     # BULWARK_HOSTED_MODE=1 locally doesn't need a separate build step.

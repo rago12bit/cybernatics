@@ -35,8 +35,9 @@ def _argv(adapter: Any) -> list[str]:
     ids=lambda a: a.spec.name,
 )
 def test_every_built_in_image_is_built_here_or_pinned_by_digest(adapter: Any) -> None:
-    """Built here: never pulled. Anyone else's (gitleaks, from its author): pinned by digest, so a
-    moved tag cannot change what runs. A new built-in tool must be one or the other."""
+    """Built here: never pulled. Anyone else's: pinned by digest, so a moved tag cannot change what
+    runs (since 2026-10-15 every scanner is built here, gitleaks included). A new built-in tool must
+    be one or the other."""
     image = adapter.spec.image
     argv = _argv(adapter)
     if image.startswith(LOCAL_NAMESPACE):
