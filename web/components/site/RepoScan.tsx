@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useId, useState, type FormEvent } from "react";
+import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { ApiError, createGitScan, getSession, getToken, onAuthChange, type WebSession } from "@/lib/api";
 import { githubRepo } from "@/lib/github";
 import { goTo } from "@/lib/navigate";
@@ -27,11 +27,13 @@ export function RepoScan() {
   const [who, setWho] = useState<Who>(DEMO_ONLY ? { kind: "out" } : { kind: "checking" });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const field = useRef<HTMLInputElement>(null);
   const repo = githubRepo(value);
   const ok = repo !== null && "url" in repo ? repo : null;
 
   useEffect(() => {
-    const pending = recall();
+    // Typed before the page finished loading: the box shows it, but no change event reached us.
+    const pending = recall() ?? field.current?.value;
     if (pending) setValue(pending);
     // Back from signing in (/#scan-repo): the browser's own jump to the anchor happens before the
     // home page's sections are laid out, so land here once they are.
@@ -53,7 +55,9 @@ export function RepoScan() {
     e.preventDefault();
     if (!ok) return;
     if (DEMO_ONLY) return goTo("/self-host");
-    if (who.kind === "out") {
+    // Pressed before the sign-in check came back: wait for it rather than greying the button out.
+    const out = who.kind === "out" || (who.kind === "checking" && !getToken() && !(await getSession()));
+    if (out) {
       remember(ok.slug);
       return goTo(`/signin?next=${encodeURIComponent("/#scan-repo")}`);
     }
@@ -101,7 +105,7 @@ export function RepoScan() {
           <label htmlFor={`${id}-repo`}>GitHub repository</label>
           <div className="repo-field">
             {!/^\s*(https?:\/\/|(www\.)?[a-z0-9-]+\.[a-z]{2,}\/)/i.test(value) && <span className="prefix" aria-hidden="true">github.com/</span>}
-            <input id={`${id}-repo`} name="repo" type="text" inputMode="url" autoComplete="off" autoCapitalize="off" spellCheck={false}
+            <input ref={field} id={`${id}-repo`} name="repo" type="text" inputMode="url" autoComplete="off" autoCapitalize="off" spellCheck={false}
               placeholder="owner/repository" value={value} onChange={(e) => { setValue(e.target.value); setError(null); }}
               aria-invalid={hint ? true : undefined} aria-describedby={`${id}-help`} />
           </div>
@@ -113,9 +117,15 @@ export function RepoScan() {
           )}
           {error && <p className="error small" role="alert">{error}</p>}
           <div className="repo-actions">
-            <button className="btn primary" disabled={!ok || busy || who.kind === "checking"}>{action}</button>
+            <button className="btn primary" disabled={!ok || busy} aria-describedby={`${id}-why`}>{action}</button>
             {!DEMO_ONLY && <Link href="/app/scan" className="small muted">Upload an archive or choose scanners</Link>}
           </div>
+          <p id={`${id}-why`} className="small muted repo-why">
+            {!ok ? (hint ? "Fix the repository above to scan it." : "Type a repository above to scan it.")
+              : DEMO_ONLY ? "Scanning needs Bulwark running on your own machine."
+              : signedIn ? "Starts with the five default scanners."
+              : "You sign in first. The scan starts as soon as you are back here."}
+          </p>
         </form>
       </div>
     </section>

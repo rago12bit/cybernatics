@@ -130,6 +130,7 @@
 .repo-who { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 1rem; padding: 0.7rem 0.9rem; border: 1px solid var(--line); background: var(--panel); font-size: 0.875rem; color: var(--text-2); }
 .repo-who b { font-weight: 500; color: var(--text); }
 .repo-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1rem; }
+.repo-why { margin: -0.25rem 0 0; }
 @media (max-width: 860px) {
   .repo-scan { grid-template-columns: minmax(0, 1fr); }
   .repo-scan > * + * { border-left: 0; border-top: 1px solid var(--line); }

@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { APP_HREF, DEMO_ONLY } from "@/lib/site";
 import { ScanReport } from "@/components/ScanReport";
 import { ScrollReveal } from "@/components/site/ScrollReveal";
 import { PAGE_SIZE, severityRank } from "@/lib/format";
+import { MOTION_QUERY } from "@/lib/motion";
 import { codeFindings, codeScan, provenance, runtimeFindings, runtimeScan } from "@/lib/recording";
 import type { Finding, FindingsPage, FindingsQuery, ScanView, ToolStatus } from "@/lib/types";
 import "./site/site-pages.css";
@@ -67,15 +68,21 @@ export function LiveJuiceShopDemo() {
   const [startedAt, setStartedAt] = useState(() => new Date().toISOString());
   const done = elapsed >= REPLAY_MS;
 
+  const timer = useRef(0);
+  const finish = () => { clearInterval(timer.current); setElapsed(REPLAY_MS); };
+
   useEffect(() => {
-    setElapsed(0);
     setStartedAt(new Date().toISOString());
+    // Under reduced motion the first visit opens on the finished report; "Watch it again" still replays.
+    if (runId === 0 && window.matchMedia?.(MOTION_QUERY).matches !== true) return setElapsed(REPLAY_MS);
+    setElapsed(0);
     const start = Date.now();
-    const id = setInterval(() => {
+    timer.current = window.setInterval(() => {
       const now = Date.now() - start;
-      setElapsed(now >= REPLAY_MS ? REPLAY_MS : now);
+      if (now >= REPLAY_MS) finish();
+      else setElapsed(now);
     }, 100);
-    return () => clearInterval(id);
+    return () => clearInterval(timer.current);
   }, [runId]);
 
   const scan: ScanView = useMemo(() => {
@@ -102,7 +109,7 @@ export function LiveJuiceShopDemo() {
             A real scan of the public <a href="https://github.com/juice-shop/juice-shop">OWASP Juice Shop</a>{" "}
             {provenance.version}, recorded {provenance.recorded_on} --
             {code
-              ? done ? " replay finished; rerun it below." : " replaying how it happened, fastest scanner first."
+              ? done ? " replay finished; rerun it below." : " replaying how it happened, fastest scanner first, in a few seconds."
               : " the running container, scanned by a passive web campaign (ZAP baseline)."}
           </p>
         </div>
@@ -110,6 +117,11 @@ export function LiveJuiceShopDemo() {
           {code && done && (
             <button type="button" className="btn sm" onClick={() => setRunId((n) => n + 1)}>
               ↻ Watch it again
+            </button>
+          )}
+          {code && !done && (
+            <button type="button" className="btn sm" onClick={finish}>
+              Skip to the results
             </button>
           )}
           <Link href={APP_HREF} className="btn primary sm">{DEMO_ONLY ? "Run it yourself →" : "Scan your own →"}</Link>

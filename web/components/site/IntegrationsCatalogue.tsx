@@ -9,6 +9,7 @@ import {
   KINDS,
   MODE_LABELS,
   filterIntegrations,
+  groupCount,
   type Integration,
   type Kind,
 } from "@/lib/catalogue";
@@ -70,7 +71,7 @@ export function IntegrationsCatalogue() {
       </p>
       {groups.map((g) => (
         <section key={g.kind} className="cat-group" aria-labelledby={`cat-${g.kind}`}>
-          <h2 id={`cat-${g.kind}`}>{KIND_LABELS[g.kind]} <span className="muted">· {g.items.length}</span></h2>
+          <h2 id={`cat-${g.kind}`}>{KIND_LABELS[g.kind]} <span className="muted">· {groupCount(g.kind, g.items)}</span></h2>
           <ul className="cards">{g.items.map((i) => <Card key={i.id} i={i} />)}</ul>
         </section>
       ))}

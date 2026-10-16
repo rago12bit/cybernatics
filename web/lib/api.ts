@@ -69,9 +69,12 @@ let sessionChecked: Promise<WebSession | null> | null = null;
 const UNSAFE = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
 /** The browser's sign-in session, if it has one (asked once, then remembered for the tab). */
+export const SESSION_TIMEOUT_MS = 10_000;
 export function getSession(refresh = false): Promise<WebSession | null> {
   if (!sessionChecked || refresh) {
-    sessionChecked = fetch(`${API_URL}/auth/session`, { credentials: "include" }).then(
+    // An API that accepts the connection but never answers would otherwise leave "Connecting" up forever.
+    const signal = typeof AbortSignal !== "undefined" && "timeout" in AbortSignal ? AbortSignal.timeout(SESSION_TIMEOUT_MS) : undefined;
+    sessionChecked = fetch(`${API_URL}/auth/session`, { credentials: "include", signal }).then(
       async (r) => {
         const body = r.ok ? ((await r.json()) as Partial<WebSession> | null) : null;
         return body && typeof body.csrf === "string" && body.user ? (body as WebSession) : null;

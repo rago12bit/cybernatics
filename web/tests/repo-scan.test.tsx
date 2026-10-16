@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 // The home page's "scan a GitHub repository": what it accepts, and signing in on the way to a scan.
 import { act } from "react";
-import { createRoot, type Root } from "react-dom/client";
+import { createRoot, hydrateRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const goTo = vi.fn();
@@ -97,6 +97,49 @@ describe("scanning a repository from the home page", () => {
       tools: ["bandit", "semgrep", "gitleaks", "trivy", "osv-scanner"],
     });
     expect(goTo).toHaveBeenCalledWith("/scans/scan-1");
+  });
+
+  it("says why the button cannot scan yet, and that signing in comes first", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => json(null, 401)));
+    await mount();
+    expect(button().disabled).toBe(true);
+    expect(button().getAttribute("aria-describedby")).toBeTruthy();
+    const why = () => host.querySelector(`#${CSS.escape(button().getAttribute("aria-describedby")!)}`)!.textContent;
+    expect(why()).toMatch(/type a repository/i);
+    await type("OWASP");
+    expect(why()).toMatch(/fix the repository/i);
+    await type("OWASP/NodeGoat");
+    expect(why()).toMatch(/you sign in first/i);
+  });
+
+  it("keeps what was typed before the page finished loading", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => json(null, 401)));
+    const { renderToString } = await import("react-dom/server");
+    await act(async () => root.unmount());
+    host.remove();
+    host = document.createElement("div");
+    document.body.append(host);
+    host.innerHTML = renderToString(<RepoScan />);
+    input().value = "OWASP/NodeGoat"; // typed into the server-rendered box, before React took over
+    await act(async () => { root = hydrateRoot(host, <RepoScan />); });
+    await act(async () => {});
+    expect(input().value).toBe("OWASP/NodeGoat");
+    expect(host.textContent).toContain("Will scan https://github.com/OWASP/NodeGoat");
+    expect(button().disabled).toBe(false);
+  });
+
+  it("does not grey the button out while the sign-in check is still out; a press waits for it", async () => {
+    vi.resetModules(); // a fresh session cache, so the check really is still out
+    const { RepoScan: Fresh } = await import("../components/site/RepoScan");
+    let answer!: (r: Response) => void;
+    vi.stubGlobal("fetch", vi.fn(() => new Promise<Response>((r) => { answer = r; })));
+    await act(async () => root.render(<Fresh />));
+    await type("OWASP/NodeGoat");
+    expect(button().disabled).toBe(false);
+    await act(async () => button().click());
+    expect(goTo).not.toHaveBeenCalled();
+    await act(async () => answer(json(null, 401)));
+    expect(goTo).toHaveBeenCalledWith("/signin?next=%2F%23scan-repo");
   });
 
   it("shows the API's refusal instead of moving on", async () => {

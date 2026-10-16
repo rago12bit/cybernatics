@@ -16,12 +16,20 @@ async function mount() {
   return host;
 }
 
-beforeEach(() => vi.useFakeTimers());
+const motion = (ok: boolean) => vi.stubGlobal("matchMedia", (q: string) => ({ matches: ok, media: q }));
+const buttonNamed = (host: HTMLElement, name: string) =>
+  [...host.querySelectorAll("button")].find((b) => b.textContent?.includes(name));
+
+beforeEach(() => {
+  vi.useFakeTimers();
+  motion(true);
+});
 afterEach(async () => {
   await act(async () => root?.unmount());
   root = null;
   document.body.innerHTML = "";
   vi.useRealTimers();
+  vi.unstubAllGlobals();
 });
 
 describe("the launch landing page's live Juice Shop replay (plan §33, Week 52)", () => {
@@ -59,6 +67,28 @@ describe("the launch landing page's live Juice Shop replay (plan §33, Week 52)"
     });
     expect(host.textContent).toContain("replay finished");
     expect(host.querySelector("button")?.textContent).toContain("Watch it again");
+  });
+
+  it("lets a visitor skip the replay straight to the finished report", async () => {
+    const host = await mount();
+    expect(host.textContent).not.toContain("Unique findings");
+    await act(async () => buttonNamed(host, "Skip to the results")!.click());
+    expect(host.textContent).toContain("Unique findings");
+    expect(host.textContent).toContain(String(data.scan.unique_findings));
+    expect(buttonNamed(host, "Skip to the results")).toBeUndefined();
+    await act(async () => { vi.advanceTimersByTime(6000); }); // the stopped clock never rewinds it
+    expect(host.textContent).toContain("replay finished");
+  });
+
+  it("opens on the finished report under reduced motion, and still replays when asked", async () => {
+    motion(false);
+    const host = await mount();
+    expect(host.textContent).toContain("Unique findings");
+    expect(host.textContent).toContain("replay finished");
+    await act(async () => buttonNamed(host, "Watch it again")!.click());
+    expect(host.textContent).toContain("replaying how it happened");
+    await act(async () => { vi.advanceTimersByTime(6000); });
+    expect(host.textContent).toContain("replay finished");
   });
 
   it("links to the Juice Shop repo and to what the recording leaves out, not to itself", async () => {

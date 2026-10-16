@@ -18,7 +18,8 @@ class FakeIO {
   disconnect() { observed = []; }
 }
 
-const motion = (ok: boolean) => vi.stubGlobal("matchMedia", (q: string) => ({ matches: ok, media: q }));
+const motion = (ok: boolean, phone = false) =>
+  vi.stubGlobal("matchMedia", (q: string) => ({ matches: q.includes("max-width") ? phone : ok, media: q }));
 let page: HTMLDivElement;
 let root: Root;
 
@@ -62,6 +63,21 @@ describe("scroll reveal on the public pages", () => {
     expect(below[1]!.style.getPropertyValue("--reveal-delay")).toBe("80ms");
     expect(below[2]!.dataset.reveal).toBe("armed");
     expect(observed).toEqual([below[2]]); // each arrives once
+  });
+
+  it("waits less on a phone, where a screen holds fewer things", async () => {
+    vi.useFakeTimers();
+    try {
+      motion(true, true);
+      const below = [fact(900), fact(1000), fact(1100), fact(1200), fact(1300), fact(1400)];
+      await act(async () => root.render(<ScrollReveal />));
+      fire(below);
+      expect(below.map((e) => e.style.getPropertyValue("--reveal-delay"))).toEqual(["0ms", "40ms", "80ms", "120ms", "160ms", "160ms"]);
+      vi.advanceTimersByTime(160 + 700);
+      expect(below.every((e) => e.dataset.reveal === "done")).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("picks up content that renders later, such as a list that loads", async () => {

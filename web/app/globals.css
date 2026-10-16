@@ -377,6 +377,21 @@ a.chip { color: var(--teal); border-color: var(--teal-deep); } a.chip:hover { ba
   .rise > span:nth-child(4) .rv > span { animation-delay: 180ms; } .rise > span:nth-child(5) .rv > span { animation-delay: 240ms; }
   .rise > span:nth-child(6) .rv > span { animation-delay: 300ms; } .rise > span:nth-child(7) .rv > span { animation-delay: 360ms; }
   .rise > span:nth-child(n + 8) .rv > span { animation-delay: 420ms; }
+  /* Phones: the heading is the whole first screen, so it must never sit blank. Shorter, smaller moves,
+     and headline words fade up whole instead of rising out of a mask (no half-drawn letters). */
+  @media (max-width: 640px) {
+    .site-head > *, .ds-page-head > *, .app-head > * { animation-duration: 450ms; animation-name: head-in-sm; }
+    .site-head > :nth-child(2), .ds-page-head > :nth-child(2), .app-head > :nth-child(2) { animation-delay: 30ms; }
+    .site-head > :nth-child(3), .ds-page-head > :nth-child(3), .app-head > :nth-child(3) { animation-delay: 60ms; }
+    .site-head > :nth-child(n + 4), .ds-page-head > :nth-child(n + 4), .app-head > :nth-child(n + 4) { animation-delay: 90ms; }
+    @keyframes head-in-sm { from { opacity: 0.2; transform: translateY(10px); } }
+    .rv { overflow: visible; }
+    .rv > span { animation-name: rise-sm; animation-duration: 450ms; }
+    @keyframes rise-sm { from { opacity: 0.2; transform: translateY(0.2em); } }
+    .rise > span:nth-child(n) .rv > span { animation-delay: 0ms; }
+    [data-reveal="armed"] { transform: translateY(20px); }
+    [data-reveal="in"] { transition-duration: 500ms, 600ms, 120ms, 160ms; }
+  }
   /* Pointer spotlight (position comes from --mx/--my set by Glow) */
   .glow-box { position: relative; }
   .glow-box::after { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 240ms linear;

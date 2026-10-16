@@ -18,7 +18,7 @@ import { Recording } from "../components/site/Recording";
 import { SiteFooter } from "../components/site/SiteFooter";
 import { SiteHeader } from "../components/site/SiteHeader";
 import { LiveJuiceShopDemo } from "../components/LiveJuiceShopDemo";
-import { INTEGRATIONS, counts, filterIntegrations } from "../lib/catalogue";
+import { INTEGRATIONS, counts, filterIntegrations, groupCount } from "../lib/catalogue";
 import { codeFindings, codeScan, fingerprintCount, provenance, refusedTotal, runtimeFindings, runtimeScan, widthClass } from "../lib/recording";
 
 vi.mock("next/navigation", () => ({ usePathname: () => "/", useRouter: () => ({ push: vi.fn() }) }));
@@ -92,6 +92,18 @@ describe("the public site's pages (Week 77)", () => {
     const c = counts();
     expect(c.parsers).toBe(14); // core/imports/parsers/registry.py; update with the registry
     expect(c.scanners).toBeGreaterThanOrEqual(c.defaultScanners);
+  });
+
+  it("counts import formats the same on the integrations page as on the home page", () => {
+    const c = counts();
+    const out = renderToStaticMarkup(<IntegrationsCatalogue />);
+    // The heading said "· 15" (it counted "any other report") while the home page said 14 formats.
+    expect(out).toContain(`· ${c.parsers} formats + any other report`);
+    expect(out).not.toContain(`· ${c.parsers + 1}<`);
+    const imports = INTEGRATIONS.filter((i) => i.kind === "import");
+    expect(groupCount("import", imports.filter((i) => i.id === "import:universal"))).toBe("any other report");
+    expect(groupCount("import", imports.filter((i) => i.id === "import:sarif"))).toBe("1 format");
+    expect(groupCount("connector", INTEGRATIONS.filter((i) => i.kind === "connector"))).toBe(String(c.connectors));
   });
 
   it("filters the catalogue by kind, category and words", () => {

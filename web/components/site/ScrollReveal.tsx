@@ -7,6 +7,9 @@ import { REVEAL_SELECTOR } from "@/lib/reveal";
 const STEP_MS = 80; // between elements that come into view together
 const MAX_MS = 400;
 const SETTLE_MS = 1200; // the longest transition (globals.css), then the element is left alone
+// Phones (globals.css shortens the transitions to match): a screen holds fewer things, so less waiting.
+const PHONE_QUERY = "(max-width: 640px)";
+const PHONE = { step: 40, max: 160, settle: 700 };
 
 /**
  * Elements below the fold fade and rise into place as they scroll into view, one after another
@@ -19,6 +22,8 @@ const SETTLE_MS = 1200; // the longest transition (globals.css), then the elemen
 export function ScrollReveal({ selector = REVEAL_SELECTOR }: { selector?: string }) {
   useEffect(() => {
     if (window.matchMedia?.(MOTION_QUERY).matches !== true || typeof IntersectionObserver === "undefined") return;
+    const phone = window.matchMedia(PHONE_QUERY).matches;
+    const step = phone ? PHONE.step : STEP_MS, max = phone ? PHONE.max : MAX_MS, settle = phone ? PHONE.settle : SETTLE_MS;
     const seen = new Set<HTMLElement>();
     const timers = new Set<number>();
     const top = (el: Element) => el.getBoundingClientRect();
@@ -30,12 +35,12 @@ export function ScrollReveal({ selector = REVEAL_SELECTOR }: { selector?: string
           .sort((a, b) => top(a).top - top(b).top || top(a).left - top(b).left);
         arriving.forEach((el, i) => {
           io.unobserve(el);
-          const delay = Math.min(i * STEP_MS, MAX_MS);
+          const delay = Math.min(i * step, max);
           el.style.setProperty("--reveal-delay", `${delay}ms`);
           el.dataset.reveal = "in";
           // Once it has arrived, hand the element back to its own styles (its own transitions, and
           // no transform that would trap a position:fixed descendant such as a side sheet).
-          const t = window.setTimeout(() => { timers.delete(t); if (el.dataset.reveal === "in") el.dataset.reveal = "done"; }, delay + SETTLE_MS);
+          const t = window.setTimeout(() => { timers.delete(t); if (el.dataset.reveal === "in") el.dataset.reveal = "done"; }, delay + settle);
           timers.add(t);
         });
       },

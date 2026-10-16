@@ -39,14 +39,27 @@ export function byKind(kind: Kind, items: Integration[] = INTEGRATIONS): Integra
   return items.filter((i) => i.kind === kind);
 }
 
+// "Any other report" is a mapping you set up, not a format, so it is never counted as one.
+export const UNIVERSAL_IMPORT = "import:universal";
+const isFormat = (i: Integration) => i.kind === "import" && i.id !== UNIVERSAL_IMPORT;
+
 export function counts(items: Integration[] = INTEGRATIONS) {
   const scanners = byKind("scanner", items);
   return {
     scanners: scanners.length,
     defaultScanners: scanners.filter((s) => s.mode === "default").length,
-    parsers: byKind("import", items).filter((i) => i.id !== "import:universal").length,
+    parsers: items.filter(isFormat).length,
     connectors: byKind("connector", items).length,
   };
+}
+
+/** A group heading's count, worded as the home page counts: "14 formats + any other report", not 15. */
+export function groupCount(kind: Kind, items: Integration[]): string {
+  if (kind !== "import") return String(items.length);
+  const formats = items.filter(isFormat).length;
+  const universal = items.some((i) => i.id === UNIVERSAL_IMPORT);
+  if (!formats) return universal ? "any other report" : "0";
+  return `${formats} format${formats === 1 ? "" : "s"}${universal ? " + any other report" : ""}`;
 }
 
 /** Filter by kind (or all), category and a free-text query over the name and the details. */
