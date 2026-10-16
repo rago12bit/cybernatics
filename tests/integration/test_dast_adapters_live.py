@@ -7,9 +7,9 @@ this (macOS, Docker Desktop) dev machine -- reproduced directly (`docker run ...
 docker.internal:PORT/` reported "i/o timeout" against both a plain `http.server` and the real
 `bulwark-web-1` dev container, every time), a Docker-Desktop-for-Mac host-networking limitation under
 load, not a bug in `core.dast.adapters.nuclei`: the same command against a real external host
-(`https://example.com/`) works every time. The Nuclei test here therefore scans a real external site
-rather than a local one; ZAP's lighter, non-concurrent baseline mode has no such problem and scans a
-real local target instead.
+(`https://example.com/`) works every time. The full-template Nuclei test therefore scans a real
+external site rather than a local one (single-template ones scan both); ZAP's lighter, non-concurrent
+baseline mode has no such problem and scans a real local target instead.
 """
 
 from __future__ import annotations
@@ -86,13 +86,27 @@ def test_a_real_zap_baseline_scan_finds_real_missing_security_headers(local_targ
     assert "/admin" in routes  # proves the spider actually followed the real link
 
 
-def test_a_real_nuclei_scan_against_a_real_external_host_produces_real_findings() -> None:
+def test_a_real_nuclei_scan_of_a_real_external_host_reports_exactly_what_it_lacks() -> None:
+    """One template, one request, a known answer: example.com (behind Cloudflare) sends none of
+    these headers -- the same ten findings in three runs on 2026-10-16. Only three are asked for,
+    so example.com adding some other header does not break it."""
+    findings = run_nuclei("https://example.com/",
+                          template_ids=("http-missing-security-headers",), timeout_s=120)  # fmt: skip
+    rules = {f.evidence.rule_ids["nuclei"][0] for f in findings}
+    assert {"http-missing-security-headers:content-security-policy",
+            "http-missing-security-headers:x-frame-options",
+            "http-missing-security-headers:x-content-type-options"} <= rules, rules  # fmt: skip
+    assert all(f.taxonomy.category is Category.DAST for f in findings)
+    assert {f.location.host for f in findings} == {"https://example.com"}, findings
+
+
+def test_a_real_full_default_nuclei_scan_of_an_external_host_completes() -> None:
+    """The whole default template set, as a campaign runs it, against a real host. It used to ask
+    for at least one finding, but what example.com yields to thousands of requests varies (23, 3,
+    then none on 2026-10-15), so that flaked; the exact findings are asserted above. It still
+    cannot pass by not running: a missing image or any failed run raises NucleiError (since
+    2026-10-14) instead of reading as an empty scan."""
     findings = run_nuclei("https://example.com/", timeout_s=300)
-    # Until 2026-10-14 this asked for no findings at all, so a Nuclei that never ran (no image,
-    # which run_nuclei read as a clean scan) passed it. What example.com yields varies between runs
-    # (23 findings in one run that day, 3 in the next), so only "something" is asked of it; the
-    # local test below checks exact findings.
-    assert findings
     assert all(f.taxonomy.category is Category.DAST for f in findings)
     assert len({f.id for f in findings}) == len(findings)
 

@@ -45,6 +45,11 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   ones, or a digest other than the one the manifest names, stop the plugin from running.
 
 ### Fixed
+- **The live Nuclei test no longer flakes.** It asked a full scan of example.com for "at least one
+  finding", and what example.com yields to thousands of requests varies (23, 3, then none). It is now
+  two tests: the missing-security-headers template against example.com must report exactly the
+  headers it lacks (the same ten findings in three runs), and the full default scan must complete
+  cleanly -- which a Nuclei that never ran cannot, since a failed run raises.
 - **The compare table and the fact cards no longer run off the page.** The DefectDojo comparison
   ran edge to edge with its topic column flush against the window, and the cards on the community,
   security and compare pages left empty cells and hairlines to the window's edge. The table now sits
