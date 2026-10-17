@@ -20,8 +20,8 @@ export function Stripes({ seed = 1, groups = 12, rows = 4, className = "" }: { s
       if (!color) continue;
       const h = rowH - 4 - Math.floor(r() * 3) * 6;
       for (let b = 0; b < barsPerGroup; b++) {
-        const blink = r() < 0.08 ? ` blink d${1 + Math.floor(r() * 4)}` : "";
-        bars.push(<rect key={`${row}-${g}-${b}`} className={`${color}${blink}`} x={g * groupW + b * step} y={row * rowH} width={5} height={h} />);
+        // Static: single bars blinking at random read as a rendering glitch, not as motion.
+        bars.push(<rect key={`${row}-${g}-${b}`} className={color} x={g * groupW + b * step} y={row * rowH} width={5} height={h} />);
       }
     }
   }

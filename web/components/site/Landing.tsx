@@ -15,7 +15,9 @@ import { CountUp, Glow, Reveal, RiseText, ScrollProgress } from "./Motion";
 // Blocks on the home page that rise into view (the feature cells have their own Reveal).
 const HOME_REVEAL = [
   ".reveal-me", ".rec-head", ".rec-half", ".feature-grid .code-cell > *", ".metric-main > *", ".metric-side > *",
-  ".ingredients > *", ".stackrow .cell > *", ".cta-copy > *",
+  ".ingredients > *",
+  // Not the status row or the closing panel: each slides up over the one before, so its text must already be
+  // in place. Fading it in as well left the panel arriving empty and the words popping in afterwards.
 ].join(", ");
 
 const pct = (n: number, d = 1) => `${(n * 100).toFixed(d)}%`;
