@@ -49,6 +49,7 @@ from api.deps import (
     EventSubscriber,
     current_org,
     db,
+    read_capped_body,
     require_auth,
     require_scope,
     state,
@@ -509,7 +510,7 @@ def create_app(app_state: AppState) -> FastAPI:
         """
         if not st.settings.github_webhook_secret:
             raise HTTPException(404, "the GitHub App integration is not configured on this server")
-        body = await request.body()
+        body = await read_capped_body(request)
         if not verify_signature(
             body, request.headers.get("X-Hub-Signature-256"), st.settings.github_webhook_secret
         ):
@@ -1744,12 +1745,12 @@ def create_app(app_state: AppState) -> FastAPI:
         separate from the GitHub *App* webhook (`/integrations/github/webhook`) and its deployment-
         wide secret, since this integration needs no App installation at all (see
         `core.integrations.github_issues`'s own docstring)."""
-        body = await request.body()
         with st.sessions() as s:
             set_session_org(s, org_id)
             settings = repo.get_integration_settings(s, org_id)
             if settings is None or not settings.github_webhook_secret:
                 raise HTTPException(404, "not configured")
+            body = await read_capped_body(request)  # only once there is a secret to check it with
             if not verify_signature(
                 body, request.headers.get("X-Hub-Signature-256"), settings.github_webhook_secret
             ):
@@ -1802,9 +1803,11 @@ def create_app(app_state: AppState) -> FastAPI:
             settings = repo.get_integration_settings(s, org_id)
             if settings is None or not settings.jira_webhook_secret:
                 raise HTTPException(404, "not configured")
-            if not hmac.compare_digest(secret, settings.jira_webhook_secret):
+            # Bytes, not str: compare_digest raises on a str with non-ASCII characters, and the
+            # secret comes from the URL, which anyone can send.
+            if not hmac.compare_digest(secret.encode(), settings.jira_webhook_secret.encode()):
                 raise HTTPException(401, "invalid secret")
-            body = await request.body()
+            body = await read_capped_body(request)
             try:
                 payload = json.loads(body)
             except json.JSONDecodeError as exc:

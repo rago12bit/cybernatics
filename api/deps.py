@@ -71,6 +71,26 @@ def state(request: Request) -> AppState:
     return st
 
 
+#: The most a webhook body may be. GitHub caps its own payloads at 25 MB; Jira's are far smaller.
+WEBHOOK_MAX_BYTES = 25 * 1024 * 1024
+
+
+async def read_capped_body(request: Request, limit: int | None = None) -> bytes:
+    """The request body, refused with 413 once it passes `limit`. For the routes anyone can reach
+    (webhooks), which read the body before they can check who sent it: uvicorn sets no limit, so
+    `await request.body()` would hold whatever an anonymous caller sends."""
+    limit = WEBHOOK_MAX_BYTES if limit is None else limit
+    declared = request.headers.get("content-length")
+    if declared is not None and declared.isdigit() and int(declared) > limit:
+        raise HTTPException(413, f"request body over {limit} bytes")
+    body = bytearray()
+    async for chunk in request.stream():
+        body += chunk
+        if len(body) > limit:
+            raise HTTPException(413, f"request body over {limit} bytes")
+    return bytes(body)
+
+
 def token_ok(supplied: str | None, expected: str) -> bool:
     return bool(supplied) and hmac.compare_digest(supplied.encode(), expected.encode())  # type: ignore[union-attr]
 

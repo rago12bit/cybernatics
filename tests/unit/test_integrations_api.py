@@ -280,12 +280,78 @@ def test_a_token_that_may_only_run_scans_cannot_redirect_where_findings_go(
     with sessions() as s:
         _, member = repo.create_api_token(s, org_id=DEFAULT_ORG_ID, name="ci",
                                           scopes=["scans:read", "scans:write"])  # fmt: skip
-        _, admin = repo.create_api_token(s, org_id=DEFAULT_ORG_ID, name="admin", scopes=["org:admin"])
+        _, admin = repo.create_api_token(
+            s, org_id=DEFAULT_ORG_ID, name="admin", scopes=["org:admin"]
+        )
     client = _client(sessions, tmp_path)
     body = {"github_token": "ghp_x", "github_issues_repo": "attacker/inbox"}
-    r = client.put("/settings/integrations", headers={"Authorization": f"Bearer {member}"}, json=body)
+    r = client.put(
+        "/settings/integrations", headers={"Authorization": f"Bearer {member}"}, json=body
+    )
     assert r.status_code == 403
     assert "org:admin" in r.json()["detail"]
-    r = client.put("/settings/integrations", headers={"Authorization": f"Bearer {admin}"}, json=body)
+    r = client.put(
+        "/settings/integrations", headers={"Authorization": f"Bearer {admin}"}, json=body
+    )
     assert r.status_code == 200
     assert r.json()["github_issues_repo"] == "attacker/inbox"
+
+
+# A webhook is the one kind of route anyone can reach, and it must read its body before it can
+# check who sent it. uvicorn sets no body limit, so without one an anonymous caller decided how
+# much an API worker held in memory.
+
+
+def test_a_webhook_body_over_the_limit_is_refused_by_its_declared_length(
+    sessions: sessionmaker[Session], tmp_path: Any, monkeypatch: Any
+) -> None:
+    import api.deps
+
+    monkeypatch.setattr(api.deps, "WEBHOOK_MAX_BYTES", 1000)
+    _seed_github_link(sessions)
+    body = b"x" * 1001
+    r = _client(sessions, tmp_path).post(
+        f"/integrations/github-issues/webhook/{DEFAULT_ORG_ID}", content=body,
+        headers={"X-GitHub-Event": "issues", "X-Hub-Signature-256": _github_signed(body, "whsec")},
+    )  # fmt: skip
+    assert r.status_code == 413
+
+
+def test_a_chunked_webhook_body_with_no_length_is_cut_off_at_the_limit(
+    sessions: sessionmaker[Session], tmp_path: Any, monkeypatch: Any
+) -> None:
+    import api.deps
+
+    monkeypatch.setattr(api.deps, "WEBHOOK_MAX_BYTES", 1000)
+    _seed_jira_link(sessions)
+
+    def chunks() -> Any:  # no Content-Length: the server only learns the size by reading
+        for _ in range(50):
+            yield b"y" * 400
+
+    r = _client(sessions, tmp_path).post(
+        f"/integrations/jira/webhook/{DEFAULT_ORG_ID}/jsecret", content=chunks()
+    )
+    assert r.status_code == 413
+
+
+def test_the_github_issues_webhook_says_not_configured_before_reading_a_body(
+    sessions: sessionmaker[Session], tmp_path: Any
+) -> None:
+    """An organization with no secret answers 404 whatever it is sent: there is nothing to check a
+    signature against, so there is no reason to read even a declared 1 GB body."""
+    r = _client(sessions, tmp_path).post(
+        f"/integrations/github-issues/webhook/{DEFAULT_ORG_ID}", content=b"{}",
+        headers={"X-GitHub-Event": "issues", "Content-Length": str(1024**3)},
+    )  # fmt: skip
+    assert r.status_code == 404
+
+
+def test_a_jira_secret_with_non_ascii_characters_is_a_401_not_a_crash(
+    sessions: sessionmaker[Session], tmp_path: Any
+) -> None:
+    _seed_jira_link(sessions)
+    r = _client(sessions, tmp_path).post(
+        f"/integrations/jira/webhook/{DEFAULT_ORG_ID}/s%C3%A9cret", json={"webhookEvent": "x"}
+    )
+    assert r.status_code == 401

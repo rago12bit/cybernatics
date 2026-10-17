@@ -101,7 +101,10 @@ def test_a_token_that_may_only_run_scans_cannot_shorten_retention(
                    json={"retention_days": 1})  # fmt: skip
     assert r.status_code == 403
     assert "org:admin" in r.json()["detail"]
-    assert client.get("/settings/retention", headers=AUTH).json()["retention_days"] == DEFAULT_RETENTION_DAYS
+    assert (
+        client.get("/settings/retention", headers=AUTH).json()["retention_days"]
+        == DEFAULT_RETENTION_DAYS
+    )
 
 
 def test_an_admin_changes_retention_and_the_change_is_in_the_audit_log(
@@ -112,6 +115,10 @@ def test_an_admin_changes_retention_and_the_change_is_in_the_audit_log(
                    json={"retention_days": 3})  # fmt: skip
     assert r.status_code == 200
     with sessions() as s:
-        entry = s.scalars(select(AuditEntry).where(AuditEntry.action == "settings.retention_changed")).one()
+        entry = s.scalars(
+            select(AuditEntry).where(AuditEntry.action == "settings.retention_changed")
+        ).one()
     assert entry.target == DEFAULT_ORG_ID
-    assert entry.actor.startswith("token:")  # who did it; the log keeps a digest of the payload only
+    assert entry.actor.startswith(
+        "token:"
+    )  # who did it; the log keeps a digest of the payload only
