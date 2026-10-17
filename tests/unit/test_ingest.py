@@ -102,3 +102,81 @@ def test_unsupported_type(tmp_path: Path) -> None:
     f.write_bytes(b"not an archive")
     with pytest.raises(IngestError, match="unsupported"):
         extract_archive(f, tmp_path / "o")
+
+
+# The entry count is checked before the entries are read into memory (2026-10-17 audit): a small
+# upload can hold millions of empty entries, and getmembers() / ZipFile() read every one first.
+
+
+def _empty_tar(path: Path, n: int) -> Path:
+    with tarfile.open(path, "w:gz") as tf:
+        for i in range(n):
+            tf.addfile(tarfile.TarInfo(f"f{i}"), io.BytesIO(b""))
+    return path
+
+
+def test_a_tar_with_too_many_entries_stops_at_the_limit_not_after_reading_all(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    archive = _empty_tar(tmp_path / "many.tar.gz", 500)
+    read: list[int] = []
+    real_next = tarfile.TarFile.next
+
+    def counting_next(self: tarfile.TarFile) -> tarfile.TarInfo | None:
+        read.append(1)
+        return real_next(self)
+
+    monkeypatch.setattr(tarfile.TarFile, "next", counting_next)
+    with pytest.raises(IngestError, match="max file count"):
+        extract_archive(archive, tmp_path / "out", Limits(max_files=10))
+    # The 11th header is refused (tarfile reads one or two more just to detect the format); the
+    # other ~490 are never read.
+    assert len(read) < 20
+
+
+def _empty_zip(path: Path, n: int, prefix: bytes = b"") -> Path:
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as zf:
+        for i in range(n):
+            zf.writestr(f"f{i}", b"")
+    path.write_bytes(prefix + buf.getvalue())
+    return path
+
+
+@pytest.mark.parametrize(
+    "prefix", [b"", b"#!/bin/sh\nexit 0\n" * 64], ids=["plain", "data-in-front"]
+)
+def test_a_zip_with_too_many_entries_is_refused_before_zipfile_reads_them(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, prefix: bytes
+) -> None:
+    """Data in front of the archive (a self-extracting zip) must not throw the count off: the
+    central directory is found from the end record, as zipfile finds it."""
+    archive = _empty_zip(tmp_path / "many.zip", 500, prefix)
+
+    def no_zipfile(*a: object, **kw: object) -> None:
+        raise AssertionError("ZipFile() opened an archive over the entry limit")
+
+    monkeypatch.setattr(zipfile, "ZipFile", no_zipfile)
+    with pytest.raises(IngestError, match="max file count"):
+        extract_archive(archive, tmp_path / "out", Limits(max_files=10))
+
+
+def test_a_zip64_archive_is_counted_too(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Past 65,535 entries the end record says 0xFFFF and the real count is in the zip64 record."""
+    archive = _empty_zip(tmp_path / "zip64.zip", 65_600)
+
+    def no_zipfile(*a: object, **kw: object) -> None:
+        raise AssertionError("ZipFile() opened an archive over the entry limit")
+
+    monkeypatch.setattr(zipfile, "ZipFile", no_zipfile)
+    with pytest.raises(IngestError, match="max file count"):
+        extract_archive(archive, tmp_path / "out", Limits(max_files=1000, max_ratio=1e9))
+
+
+def test_archives_under_the_limit_still_extract(tmp_path: Path) -> None:
+    for archive in (
+        _empty_zip(tmp_path / "ok.zip", 10, b"#!/bin/sh\n"),
+        _empty_tar(tmp_path / "ok.tgz", 10),
+    ):
+        out = extract_archive(archive, tmp_path / archive.stem, Limits(max_files=10))
+        assert len(list(out.iterdir())) == 10

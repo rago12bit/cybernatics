@@ -1,12 +1,14 @@
 """Archive ingestion hardening (threats T3 decompression bomb, T4 zip slip).
 
 Every limit is checked from archive metadata BEFORE anything is written, and again against the
-bytes actually written, because metadata can lie.
+bytes actually written, because metadata can lie. The entry count is checked before the entries
+are read into memory: a small upload can hold millions of empty entries.
 """
 
 from __future__ import annotations
 
 import stat
+import struct
 import tarfile
 import zipfile
 from dataclasses import dataclass
@@ -67,7 +69,67 @@ def extract_archive(archive: Path, dest: Path, limits: Limits | None = None) -> 
     return dest
 
 
+_EOCD = b"PK\x05\x06"
+_ZIP64_LOCATOR = b"PK\x06\x07"
+_ZIP64_END = b"PK\x06\x06"
+_CENTRAL = b"PK\x01\x02"
+
+
+def _central_directory(archive: Path) -> tuple[int, int] | None:
+    """(start, size) of a zip's central directory, found the way zipfile finds it (from the end
+    record, so data prepended to the archive does not move it), or None when there is no end
+    record in the last 64 KB, where zipfile looks for it too."""
+    with open(archive, "rb") as f:
+        f.seek(0, 2)
+        end = f.tell()
+        tail_len = min(end, 65535 + 22)
+        f.seek(end - tail_len)
+        tail = f.read()
+        at = tail.rfind(_EOCD)
+        if at < 0 or len(tail) < at + 22:
+            return None
+        eocd_pos = end - tail_len + at
+        size = struct.unpack("<I", tail[at + 12 : at + 16])[0]
+        if at >= 20 and tail[at - 20 : at - 16] == _ZIP64_LOCATOR:
+            # Like zipfile: with a zip64 locator, the zip64 end record (just before it) is the one
+            # to read, whatever the plain record says -- it holds the real count and size, and the
+            # central directory ends where it starts.
+            # An unreadable zip64 record is ignored, as zipfile ignores it.
+            rec_pos = eocd_pos - 20 - 56
+            f.seek(max(rec_pos, 0))
+            rec = f.read(56)
+            if rec_pos >= 0 and rec[:4] == _ZIP64_END:
+                size = struct.unpack("<Q", rec[40:48])[0]
+                eocd_pos = rec_pos
+        return eocd_pos - size, size
+
+
+def _count_zip_entries(archive: Path, limit: int) -> None:
+    """Refuse a zip with more than `limit` entries before zipfile reads them: ZipFile() turns the
+    whole central directory into objects at once, about 2 million for a 100 MB upload. Walks the
+    46-byte headers without keeping them."""
+    found = _central_directory(archive)
+    if found is None:
+        raise IngestError("archive has no zip end record")
+    start, size = found
+    count, pos = 0, start
+    with open(archive, "rb") as f:
+        while pos < start + size:
+            f.seek(pos)
+            head = f.read(46)
+            if len(head) < 46 or head[:4] != _CENTRAL:
+                # zipfile refuses this too ("bad magic number"); stopping here instead of handing
+                # it over uncounted keeps a malformed directory from skipping the count.
+                raise IngestError("archive's central directory is malformed")
+            count += 1
+            if count > limit:
+                raise IngestError("archive exceeds max file count")
+            name_len, extra_len, comment_len = struct.unpack("<HHH", head[28:34])
+            pos += 46 + name_len + extra_len + comment_len
+
+
 def _extract_zip(archive: Path, root: Path, compressed: int, limits: Limits) -> None:
+    _count_zip_entries(archive, limits.max_files)
     with zipfile.ZipFile(archive) as zf:
         infos = zf.infolist()
         _check_totals(compressed, sum(i.file_size for i in infos), len(infos), limits)
@@ -90,8 +152,14 @@ def _extract_zip(archive: Path, root: Path, compressed: int, limits: Limits) -> 
 
 def _extract_tar(archive: Path, root: Path, compressed: int, limits: Limits) -> None:
     with tarfile.open(archive) as tf:
-        members = tf.getmembers()
-        _check_totals(compressed, sum(m.size for m in members), len(members), limits)
+        # One header at a time, stopping at the first limit: getmembers() would read every header
+        # into memory first, and a small tar.gz can hold millions of empty entries.
+        declared, count = 0, 0
+        for m in tf:
+            count += 1
+            declared += m.size
+            _check_totals(compressed, declared, count, limits)
+        members = tf.getmembers()  # the ones just read, at most max_files
         written = 0
         for m in members:
             if m.issym() or m.islnk() or m.isdev() or m.isfifo():
