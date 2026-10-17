@@ -8,6 +8,7 @@ import urllib.error
 import urllib.request
 from collections.abc import Callable
 from typing import Any
+from urllib.parse import urlsplit
 
 from core.ci.report import COMMENT_MARKER
 
@@ -21,14 +22,30 @@ class CommentError(RuntimeError):
     pass
 
 
+class _SameHostRedirects(urllib.request.HTTPRedirectHandler):
+    """Follow a redirect only within the same scheme, host and port. urllib follows any redirect
+    and keeps the Authorization header, so a Jira address (or a webhook's) that answered 302 to
+    another host would be sent the credentials, and one that answered with an internal address
+    would be fetched from inside the network, past the address check made when it was saved.
+    GitHub's own redirects (a renamed repository) stay on its host and still work. A refused
+    redirect is returned to the caller as its 3xx status, like any other unexpected answer."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):  # type: ignore[no-untyped-def]
+        old, new = urlsplit(req.full_url), urlsplit(newurl)
+        if (new.scheme, new.hostname, new.port) != (old.scheme, old.hostname, old.port):
+            return None
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+_OPENER = urllib.request.build_opener(_SameHostRedirects)
+
+
 def http_transport(
     method: str, url: str, headers: dict[str, str], body: bytes | None
 ) -> tuple[int, Any]:
     req = urllib.request.Request(url, data=body, headers=headers, method=method)
     try:
-        with urllib.request.urlopen(
-            req, timeout=30
-        ) as resp:  # noqa: S310 - https only, checked by caller
+        with _OPENER.open(req, timeout=30) as resp:  # noqa: S310 - https only, checked by caller
             raw = resp.read(8 * 1024 * 1024)
             return resp.status, json.loads(raw) if raw else None
     except urllib.error.HTTPError as exc:

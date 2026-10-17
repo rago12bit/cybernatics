@@ -19,14 +19,18 @@ from sqlalchemy.orm import Session
 from core.integrations import discord, github_issues, jira, slack
 from core.integrations.github_issues import GithubIssueError
 from core.integrations.jira import JiraError
+from core.integrations.ssrf import validate_webhook_url
 from core.integrations.webhooks import deliver_signed
 from core.issues import SyncResult
 from core.models import Finding
+from core.netsafety import Resolver, default_resolver
 from core.notify import team
 from core.persistence import repo
 from core.persistence.models import IntegrationSettingsRow
 
 log = logging.getLogger(__name__)
+# Swapped by tests for a fixed resolver, as in core.tickets.sync.
+RESOLVER: Resolver = default_resolver
 
 
 def notify_scan_result(
@@ -159,6 +163,9 @@ def _sync_jira(
         settings.jira_project_key,
     )  # fmt: skip
     assert base and email and token and project
+    # Checked again now, not only when it was saved: the name can point somewhere else since
+    # (core.tickets.sync does the same before each use).
+    base = validate_webhook_url(base, RESOLVER).url
     for update in sync.updates:
         if not update.is_new_issue or update.issue_id is None:
             continue

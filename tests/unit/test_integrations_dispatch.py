@@ -197,6 +197,7 @@ def test_jira_sync_creates_a_ticket_for_a_new_issue_and_links_it(
         return CreatedTicket(key="SEC-9", url=f"{base}/browse/SEC-9")
 
     monkeypatch.setattr(dispatch.jira, "create_ticket", fake_create_ticket)
+    monkeypatch.setattr(dispatch, "RESOLVER", lambda host: ["104.192.141.1"])
     with sessions() as s:
         issue_id = _setup_issue(s)
         repo.set_integration_settings(
@@ -230,4 +231,28 @@ def test_jira_sync_requires_all_four_jira_fields_to_be_set(
         )
         sync = SyncResult(updates=[update], new_count=1)
         dispatch.notify_scan_result(s, DEFAULT_ORG_ID, "acme/app", "s1", sync, {f.id: f})
+    assert calls == []
+
+
+def test_a_jira_address_that_now_points_inside_the_network_files_nothing(
+    sessions: sessionmaker[Session], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The address was checked when it was saved, but a name can point elsewhere since: it is
+    checked again before the credentials are sent to it."""
+    calls: list[str] = []
+    monkeypatch.setattr(dispatch.jira, "create_ticket", lambda *a, **kw: calls.append("x"))
+    monkeypatch.setattr(dispatch, "RESOLVER", lambda host: ["169.254.169.254"])
+    with sessions() as s:
+        issue_id = _setup_issue(s)
+        repo.set_integration_settings(
+            s, DEFAULT_ORG_ID, actor="a", jira_base_url="https://acme.atlassian.net",
+            jira_email="ops@acme.com", jira_api_token="tok", jira_project_key="SEC",
+        )  # fmt: skip
+        f = _finding("bandit:a.py:1")
+        update = IssueUpdate(
+            finding_id=f.id, issue_id=issue_id, state="new", is_new_issue=True, fingerprint="f1"
+        )
+        sync = SyncResult(updates=[update], new_count=1)
+        dispatch.notify_scan_result(s, DEFAULT_ORG_ID, "acme/app", "s1", sync, {f.id: f})
+        assert repo.get_external_link(s, issue_id, "jira") is None
     assert calls == []
