@@ -1586,17 +1586,25 @@ def create_app(app_state: AppState) -> FastAPI:
         has never set its own, never a 404."""
         return RetentionSettingsView(org_id=org, retention_days=repo.get_retention_days(s, org))
 
+    # An administrator's setting: a shorter retention makes the nightly sweep destroy the data keys
+    # of every older scan, which cannot be undone, so it is not for anyone who may only run scans.
     @app.put(
         "/settings/retention",
         response_model=RetentionSettingsView,
-        dependencies=[Depends(require_scope("scans:write"))],
+        dependencies=[Depends(require_scope("org:admin"))],
     )
     def save_retention_settings_endpoint(
         body: SaveRetentionSettingsRequest,
         s: Session = Depends(db),
         org: str = Depends(current_org),
+        auth: AuthContext = Depends(require_auth),
     ) -> RetentionSettingsView:
+        before = repo.get_retention_days(s, org)
         row = repo.set_retention_days(s, org, body.retention_days)
+        repo.append_audit_entry(
+            s, actor=auth.actor, action="settings.retention_changed", target=org,
+            payload={"from_days": before, "to_days": row.retention_days},
+        )  # fmt: skip
         return RetentionSettingsView(org_id=row.org_id, retention_days=row.retention_days)
 
     def _plugin_view(manifest: Any, allowed: bool) -> PluginView:
@@ -1697,10 +1705,12 @@ def create_app(app_state: AppState) -> FastAPI:
         `GET /settings/retention` already has."""
         return _integration_settings_view(org, repo.get_integration_settings(s, org))
 
+    # An administrator's setting: it decides where this organization's findings and tickets go,
+    # and holds the credentials that send them.
     @app.put(
         "/settings/integrations",
         response_model=IntegrationSettingsView,
-        dependencies=[Depends(require_scope("scans:write"))],
+        dependencies=[Depends(require_scope("org:admin"))],
     )
     def save_integration_settings_endpoint(
         body: SaveIntegrationSettingsRequest,

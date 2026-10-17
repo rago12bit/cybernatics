@@ -6,12 +6,15 @@ from collections.abc import AsyncIterator
 from typing import Any
 
 from fastapi.testclient import TestClient
+from sqlalchemy import select
 from sqlalchemy.orm import Session, sessionmaker
 
 from api.deps import AppState
 from api.main import create_app
 from core.config import Settings
-from core.persistence.models import DEFAULT_RETENTION_DAYS
+from core.persistence import repo
+from core.persistence.models import DEFAULT_RETENTION_DAYS, AuditEntry
+from core.tenancy import DEFAULT_ORG_ID
 
 TOKEN = "t" * 32
 AUTH = {"Authorization": f"Bearer {TOKEN}"}
@@ -80,3 +83,35 @@ def test_get_requires_auth(sessions: sessionmaker[Session], tmp_path: Any) -> No
 def test_put_requires_auth(sessions: sessionmaker[Session], tmp_path: Any) -> None:
     r = _client(sessions, tmp_path).put("/settings/retention", json={"retention_days": 7})
     assert r.status_code == 401
+
+
+def _token(sessions: sessionmaker[Session], *scopes: str) -> dict[str, str]:
+    with sessions() as s:
+        _, raw = repo.create_api_token(s, org_id=DEFAULT_ORG_ID, name="t", scopes=list(scopes))
+    return {"Authorization": f"Bearer {raw}"}
+
+
+def test_a_token_that_may_only_run_scans_cannot_shorten_retention(
+    sessions: sessionmaker[Session], tmp_path: Any
+) -> None:
+    """A day's retention makes the nightly sweep destroy every older scan's data key, which
+    cannot be undone: a CI token (scans:write) or a Member must not be able to set it."""
+    client = _client(sessions, tmp_path)
+    r = client.put("/settings/retention", headers=_token(sessions, "scans:read", "scans:write"),
+                   json={"retention_days": 1})  # fmt: skip
+    assert r.status_code == 403
+    assert "org:admin" in r.json()["detail"]
+    assert client.get("/settings/retention", headers=AUTH).json()["retention_days"] == DEFAULT_RETENTION_DAYS
+
+
+def test_an_admin_changes_retention_and_the_change_is_in_the_audit_log(
+    sessions: sessionmaker[Session], tmp_path: Any
+) -> None:
+    client = _client(sessions, tmp_path)
+    r = client.put("/settings/retention", headers=_token(sessions, "org:admin"),
+                   json={"retention_days": 3})  # fmt: skip
+    assert r.status_code == 200
+    with sessions() as s:
+        entry = s.scalars(select(AuditEntry).where(AuditEntry.action == "settings.retention_changed")).one()
+    assert entry.target == DEFAULT_ORG_ID
+    assert entry.actor.startswith("token:")  # who did it; the log keeps a digest of the payload only

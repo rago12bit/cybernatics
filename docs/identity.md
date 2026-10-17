@@ -9,7 +9,7 @@ units or projects when they need them. Scripts and CI use API tokens. Design and
 
 | Role | May |
 |---|---|
-| Admin | everything a member may, and run the organization: people and roles, sign-in, SCIM, rules |
+| Admin | everything a member may, and run the organization: people and roles, sign-in, SCIM, rules, integrations (where findings and tickets go) and data retention |
 | Member | scan, triage, import reports, request fixes and risk acceptances |
 | Viewer | read |
 | Only granted projects | see nothing but the business units and projects given to them |

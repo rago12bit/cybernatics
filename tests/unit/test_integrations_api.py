@@ -270,3 +270,22 @@ def test_jira_webhook_ignores_a_non_issue_updated_event(
         f"/integrations/jira/webhook/{DEFAULT_ORG_ID}/jsecret", json=payload
     )
     assert r.status_code == 200 and r.json()["status"] == "ignored"
+
+
+def test_a_token_that_may_only_run_scans_cannot_redirect_where_findings_go(
+    sessions: sessionmaker[Session], tmp_path: Any
+) -> None:
+    """These settings decide where every scan's findings and tickets are sent: a CI token
+    (scans:write) or a Member must not be able to point them at an address of their own."""
+    with sessions() as s:
+        _, member = repo.create_api_token(s, org_id=DEFAULT_ORG_ID, name="ci",
+                                          scopes=["scans:read", "scans:write"])  # fmt: skip
+        _, admin = repo.create_api_token(s, org_id=DEFAULT_ORG_ID, name="admin", scopes=["org:admin"])
+    client = _client(sessions, tmp_path)
+    body = {"github_token": "ghp_x", "github_issues_repo": "attacker/inbox"}
+    r = client.put("/settings/integrations", headers={"Authorization": f"Bearer {member}"}, json=body)
+    assert r.status_code == 403
+    assert "org:admin" in r.json()["detail"]
+    r = client.put("/settings/integrations", headers={"Authorization": f"Bearer {admin}"}, json=body)
+    assert r.status_code == 200
+    assert r.json()["github_issues_repo"] == "attacker/inbox"
