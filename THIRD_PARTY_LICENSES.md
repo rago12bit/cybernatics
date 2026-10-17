@@ -416,7 +416,6 @@ Runtime license summary: MIT 193, ISC 35, Apache-2.0 21, LGPL-3.0-or-later 10, B
 | khroma | 2.1.0 | MIT |
 | layout-base | 1.0.2 | MIT |
 | layout-base | 2.0.1 | MIT |
-| lenis | 1.3.26 | MIT |
 | lodash-es | 4.18.1 | MIT |
 | loose-envify | 1.4.0 | MIT |
 | marked | 16.4.2 | MIT |

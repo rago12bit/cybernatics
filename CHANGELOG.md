@@ -45,6 +45,10 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   ones, or a digest other than the one the manifest names, stop the plugin from running.
 
 ### Fixed
+- **The public site scrolls natively again.** The eased wheel scrolling (Lenis) made every scroll trail
+  behind the wheel, which read as lag; it is removed, with the `lenis` dependency. The home page's
+  closing panel no longer flickers either: its stripe bars are static, and its text is in place before
+  the panel slides in.
 - **The live Nuclei test no longer flakes.** It asked a full scan of example.com for "at least one
   finding", and what example.com yields to thousands of requests varies (23, 3, then none). It is now
   two tests: the missing-security-headers template against example.com must report exactly the

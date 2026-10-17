@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { SiteFooter } from "./SiteFooter";
 import { ScrollReveal } from "./ScrollReveal";
-import { SmoothScroll } from "./SmoothScroll";
 import "./site-pages.css";
 
 // The frame every public page shares: a heading block, the page's sections, the footer.
@@ -20,7 +19,6 @@ export function SitePage({
 }) {
   return (
     <div className="page">
-      <SmoothScroll />
       <ScrollReveal />
       <header className="site-head">
         <span className="eyebrow">{eyebrow}</span>

@@ -9,7 +9,6 @@ import { RepoScan } from "./RepoScan";
 import { Scanners } from "./Scanners";
 import { SiteFooter } from "./SiteFooter";
 import { ScrollReveal } from "./ScrollReveal";
-import { SmoothScroll } from "./SmoothScroll";
 import { CountUp, Glow, Reveal, RiseText, ScrollProgress } from "./Motion";
 
 // Blocks on the home page that rise into view (the feature cells have their own Reveal).
@@ -29,7 +28,6 @@ export function Landing() {
   const catalogue = counts(); // from the code's own registries (lib/integrations.json)
   return (
     <div className="page">
-      <SmoothScroll />
       <ScrollProgress />
       <ScrollReveal selector={HOME_REVEAL} />
       {/* ---- Hero ---- */}
