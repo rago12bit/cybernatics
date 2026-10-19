@@ -3,7 +3,7 @@
 # google/osv-scanner build. slsa-verifier checks the binary against it -- built from that repository,
 # at this release's tag -- and the build fails otherwise. slsa-verifier itself is pinned by sha256
 # (downloaded and hashed on 2026-10-15; its own provenance can only be checked by itself).
-FROM alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc AS verify
+FROM alpine:3.24@sha256:294b683cb724975bec92580e1e685676bd4b50bda910ddb8c51d4cabeaec77e6 AS verify
 ARG OSV_VERSION=2.6.0
 ARG SLSA_VERIFIER_VERSION=2.7.1
 ARG SLSA_VERIFIER_SHA256_AMD64=946dbec729094195e88ef78e1734324a27869f03e2c6bd2f61cbc06bd5350339
@@ -22,7 +22,7 @@ RUN apk add --no-cache curl \
       --source-uri github.com/google/osv-scanner --source-tag "v${OSV_VERSION}" \
  && install -m 0755 "osv-scanner_linux_$arch" /osv-scanner
 
-FROM alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc
+FROM alpine:3.24@sha256:294b683cb724975bec92580e1e685676bd4b50bda910ddb8c51d4cabeaec77e6
 COPY --from=verify /osv-scanner /osv-scanner
 # Offline OSV databases are baked in for the ecosystems in seed/ (PyPI, npm, Go): the sandbox has no
 # network at run time. Add a seed lockfile to add an ecosystem; rebuild to refresh.

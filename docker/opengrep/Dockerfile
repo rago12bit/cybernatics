@@ -14,7 +14,7 @@
 # docker/opengrep/rules/, authored for this project (see docker/opengrep/rules/LICENSE).
 FROM ghcr.io/sigstore/cosign/cosign:v3.1.3@sha256:9e5c2f2edc34351160407ca3416c61855bdf9403c3c5936e0f0be7fc261611b8 AS cosign
 
-FROM alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc
+FROM alpine:3.24@sha256:294b683cb724975bec92580e1e685676bd4b50bda910ddb8c51d4cabeaec77e6
 ARG OPENGREP_VERSION=1.30.0
 # Who signs opengrep's release binaries (the certificate on each one's .sig), THREAT-MODEL T10.
 ARG SIGNER=https://github.com/opengrep/opengrep/.github/workflows/rolling-release.yml@refs/heads/main
