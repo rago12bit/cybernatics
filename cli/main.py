@@ -826,12 +826,14 @@ secrets_app = typer.Typer(
 app.add_typer(secrets_app, name="secrets")
 
 # core.secrets.resolve.resolve_secret's own kv_path for each -- kept in sync by hand since there are
-# only four call sites (core/config.py x3, core/llm/client.py x1), not worth a shared registry yet.
+# only five call sites (core/config.py x3, core/llm/client.py, core/secrets/fields.py), not worth a
+# shared registry yet.
 _MIGRATABLE_SECRETS = {
     "bulwark/api-token": "BULWARK_API_TOKEN",
     "bulwark/github-webhook-secret": "BULWARK_GITHUB_WEBHOOK_SECRET",
     "bulwark/github-app-private-key": "BULWARK_GITHUB_APP_PRIVATE_KEY",
     "bulwark/llm-api-key": "BULWARK_LLM_API_KEY",
+    "bulwark/secrets-key": "BULWARK_SECRETS_KEY",
 }
 
 
@@ -872,6 +874,32 @@ def secrets_migrate_env() -> None:
     if skipped:
         typer.echo(f"Skipped (not set in this environment): {', '.join(skipped)}")
     typer.echo("You can now remove these from .env / your deployment's plain environment config.")
+
+
+@secrets_app.command("encrypt-stored")
+def secrets_encrypt_stored() -> None:
+    """Encrypt the integration secrets (webhook URLs, GitHub and Jira tokens, webhook secrets) that
+    were saved before BULWARK_SECRETS_KEY was set. Safe to run again: encrypted values are
+    re-encrypted, plain ones are encrypted."""
+    from sqlalchemy import select
+
+    from core.persistence import repo
+    from core.persistence.db import get_session_factory
+    from core.persistence.models import Organization
+    from core.secrets.fields import ENV_VAR, key_configured
+    from core.tenancy import set_session_org
+
+    if not key_configured():
+        typer.echo(f"error: {ENV_VAR} is not set (generate one: openssl rand -hex 32)", err=True)
+        raise typer.Exit(1)
+    with get_session_factory()() as s:
+        orgs = list(s.scalars(select(Organization.id)))
+    total = 0
+    for org_id in orgs:
+        with get_session_factory()() as s:
+            set_session_org(s, org_id)
+            total += repo.reencrypt_integration_secrets(s, org_id)
+    typer.echo(f"Encrypted {total} stored secret(s) across {len(orgs)} organization(s).")
 
 
 audit_app = typer.Typer(help="Tamper-evident audit log (Week 30 backfill, ADR-0019).")

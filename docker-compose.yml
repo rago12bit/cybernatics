@@ -24,6 +24,9 @@ x-app-env: &app-env
   BULWARK_S3_ACCESS_KEY: ${S3_ACCESS_KEY:?run scripts/init-env.sh}
   BULWARK_S3_SECRET_KEY: ${S3_SECRET_KEY:?run scripts/init-env.sh}
   BULWARK_API_TOKEN: ${BULWARK_API_TOKEN:?run scripts/init-env.sh}
+  # Encrypts integration secrets at rest. Optional so older .env files still start: unset, they are
+  # stored in plain text as before (add one, then run `bulwark secrets encrypt-stored`).
+  BULWARK_SECRETS_KEY: ${BULWARK_SECRETS_KEY:-}
   BULWARK_WORKDIR: ${BULWARK_WORKDIR:?run scripts/init-env.sh}
   # Structured JSON logs carry scan_id. Traces are exported only if you set an OTLP endpoint (see docs/observability.md).
   BULWARK_LOG_FORMAT: ${BULWARK_LOG_FORMAT:-json}

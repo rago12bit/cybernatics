@@ -29,6 +29,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from core.persistence.utc_type import UtcDateTime
 from core.persistence.vector_type import Vector
 from core.rag.embed import DIM as _EMBED_DIM
+from core.secrets.fields import EncryptedText
 from core.tenancy import DEFAULT_ORG_ID
 
 JsonType = JSON().with_variant(JSONB(), "postgresql")
@@ -832,39 +833,53 @@ class PluginAllowlistRow(Base):
     allowed_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
 
 
+def _secret(column: str) -> EncryptedText:
+    return EncryptedText(f"integration_settings.{column}")
+
+
 class IntegrationSettingsRow(Base):
     """One organization's notification/ticketing integration config (Week 51 task 2, plan §23).
     Lazily created like DataRetentionPolicyRow: no row means every integration is off, not a
     default-enabled one -- "off means off" (core/secrets/resolve.py's own stated convention),
     applied here too.
 
-    All of these are plaintext columns. That's a real, disclosed gap, not an oversight: the Slack/
-    Discord webhook URLs, the GitHub PAT, and the Jira API token are each themselves a bearer
-    credential, and unlike a scan's object-storage data (`ScanDataKeyRow`, envelope-encrypted via
-    OpenBao Transit), nothing here is wrapped at rest. Doing the same OpenBao-envelope treatment for
-    these is real future work -- see docs/v2-week51-verification.md for why it wasn't done this
-    task, and `core/secrets/openbao.py`'s `OpenBaoClient` for the primitives it would reuse
-    (`ensure_org_key`/`generate_data_key`/`unwrap_data_key`, one durable per-org key rather than a
-    fresh one per scan)."""
+    The webhook URLs, the GitHub token, the Jira API token and the webhook secrets are each a bearer
+    credential, so they are `EncryptedText` (core/secrets/fields.py): AES-256-GCM at rest under
+    BULWARK_SECRETS_KEY, plain text only while no key is configured. The repository, Jira URL,
+    email and project key are not secrets and stay readable."""
 
     __tablename__ = "integration_settings"
 
     org_id: Mapped[str] = mapped_column(
         ForeignKey("organizations.id", ondelete="CASCADE"), primary_key=True
     )
-    slack_webhook_url: Mapped[str | None] = mapped_column(Text, nullable=True)
-    discord_webhook_url: Mapped[str | None] = mapped_column(Text, nullable=True)
-    outbound_webhook_url: Mapped[str | None] = mapped_column(Text, nullable=True)
-    outbound_webhook_secret: Mapped[str | None] = mapped_column(Text, nullable=True)
-    github_token: Mapped[str | None] = mapped_column(Text, nullable=True)
+    slack_webhook_url: Mapped[str | None] = mapped_column(
+        _secret("slack_webhook_url"), nullable=True
+    )
+    discord_webhook_url: Mapped[str | None] = mapped_column(
+        _secret("discord_webhook_url"), nullable=True
+    )
+    outbound_webhook_url: Mapped[str | None] = mapped_column(
+        _secret("outbound_webhook_url"), nullable=True
+    )
+    outbound_webhook_secret: Mapped[str | None] = mapped_column(
+        _secret("outbound_webhook_secret"), nullable=True
+    )
+    github_token: Mapped[str | None] = mapped_column(_secret("github_token"), nullable=True)
     github_issues_repo: Mapped[str | None] = mapped_column(String(200), nullable=True)
-    github_webhook_secret: Mapped[str | None] = mapped_column(Text, nullable=True)
+    github_webhook_secret: Mapped[str | None] = mapped_column(
+        _secret("github_webhook_secret"), nullable=True
+    )
     jira_base_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     jira_email: Mapped[str | None] = mapped_column(String(320), nullable=True)
-    jira_api_token: Mapped[str | None] = mapped_column(Text, nullable=True)
+    jira_api_token: Mapped[str | None] = mapped_column(_secret("jira_api_token"), nullable=True)
     jira_project_key: Mapped[str | None] = mapped_column(String(64), nullable=True)
-    teams_webhook_url: Mapped[str | None] = mapped_column(Text, nullable=True)
-    jira_webhook_secret: Mapped[str | None] = mapped_column(Text, nullable=True)
+    teams_webhook_url: Mapped[str | None] = mapped_column(
+        _secret("teams_webhook_url"), nullable=True
+    )
+    jira_webhook_secret: Mapped[str | None] = mapped_column(
+        _secret("jira_webhook_secret"), nullable=True
+    )
     updated_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=_now)
 
 

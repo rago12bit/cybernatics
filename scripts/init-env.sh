@@ -15,6 +15,9 @@ APP_DB_PASSWORD=$(rand)
 S3_ACCESS_KEY=bulwark
 S3_SECRET_KEY=$(rand)
 BULWARK_API_TOKEN=$(rand)
+# Encrypts the integration secrets (webhook URLs, GitHub/Jira tokens) in the database. Keep a copy:
+# without it they cannot be read back and have to be entered again (docs/data-protection.md).
+BULWARK_SECRETS_KEY=$(openssl rand -hex 32)
 # OpenBao's dev-mode root token (Week 47, plan §22.2): fine for local dev, where OpenBao auto-unseals
 # and this token is already root -- production must never run OpenBao in dev mode or use a token
 # generated this way (see docs/data-protection.md).

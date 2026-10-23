@@ -6,6 +6,12 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 ## [Unreleased]
 
 ### Security
+- **Integration secrets are encrypted in the database.** The Slack, Discord, Teams and outbound webhook
+  URLs, the GitHub and Jira tokens and the webhook secrets were plain-text columns. With
+  `BULWARK_SECRETS_KEY` set (new `.env` files get one), each is stored AES-256-GCM encrypted and bound
+  to its column; nothing that reads them changed. Values saved earlier still read, and
+  `bulwark secrets encrypt-stored` encrypts them; a value that does not decrypt reads as unset. Without
+  a key, nothing changes.
 - **Live scan updates work for signed-in people and their own tokens.** The scan WebSocket took the shared
   token only, so a person signed in with SSO, or using a token of their own, was refused, and the scan
   page then showed "Your session expired" for a running scan. It now authenticates like every other

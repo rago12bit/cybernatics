@@ -46,8 +46,8 @@ issuance process** (cert-manager or equivalent) -- this script is dev/self-signe
 
 ## Secrets
 
-`BULWARK_GITHUB_APP_PRIVATE_KEY`, `BULWARK_GITHUB_WEBHOOK_SECRET`, `BULWARK_API_TOKEN`, and
-`BULWARK_LLM_API_KEY` all prefer a value stored in OpenBao's KV store when one exists there, falling
+`BULWARK_GITHUB_APP_PRIVATE_KEY`, `BULWARK_GITHUB_WEBHOOK_SECRET`, `BULWARK_API_TOKEN`,
+`BULWARK_LLM_API_KEY` and `BULWARK_SECRETS_KEY` all prefer a value stored in OpenBao's KV store when one exists there, falling
 back to the plain environment variable otherwise -- unconditionally, so a deployment that has never
 touched OpenBao for secrets keeps working exactly as before. Move existing plaintext secrets into
 OpenBao once `BULWARK_OPENBAO_ADDR`/`BULWARK_OPENBAO_TOKEN` are set:
@@ -58,6 +58,22 @@ bulwark secrets migrate-env
 
 This reports which secrets it moved and which were left alone (not set in the environment). It is
 the only thing that writes to OpenBao's secret store; nothing does this automatically.
+
+### Integration secrets in the database
+
+An organization's integration settings hold credentials: the Slack, Discord, Teams and outbound
+webhook URLs, the outbound webhook's signing secret, the GitHub token, the Jira API token and the
+GitHub and Jira inbound webhook secrets. With `BULWARK_SECRETS_KEY` set (64 hex characters;
+`scripts/init-env.sh` writes one), each is stored AES-256-GCM encrypted, bound to its own column, and
+the key itself is never in the database. A database dump or backup alone does not reveal them.
+
+- **Turning it on for an existing deployment:** add the key (`openssl rand -hex 32`) to the API's
+  and the worker's environment, restart both, then run `bulwark secrets encrypt-stored` once. Values
+  saved before the key still read in the meantime.
+- **Without a key** they are stored in plain text, as before this existed, and the log says so.
+- **Keep the key:** a value that does not decrypt (key lost or changed, row tampered with) reads as
+  unset, so that integration stops until its settings are entered again. Changing the key means
+  entering them again; there is no re-keying command yet.
 
 ## Attachments and their origin
 

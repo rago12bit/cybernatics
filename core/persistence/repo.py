@@ -68,6 +68,7 @@ from core.persistence.models import (
     ToolRun,
 )
 from core.rag.embed import HashingEmbedder
+from core.secrets.fields import EncryptedText
 from core.tenancy import DEFAULT_ORG_ID, session_org, session_projects
 from core.triage_assistant.contract import TriageVerdict
 
@@ -2596,6 +2597,24 @@ def set_integration_settings(
     s.commit()
     s.refresh(row)
     return row
+
+
+def reencrypt_integration_secrets(s: Session, org_id: str) -> int:
+    """Write this organization's integration secrets again, so values stored before
+    BULWARK_SECRETS_KEY was set are encrypted under it (`EncryptedText` encrypts on write). Returns
+    how many were rewritten. Commits."""
+    from sqlalchemy.orm.attributes import flag_modified
+
+    row = s.get(IntegrationSettingsRow, org_id)
+    if row is None:
+        return 0
+    names = [n for n in _INTEGRATION_FIELDS
+             if isinstance(IntegrationSettingsRow.__table__.c[n].type, EncryptedText)
+             and getattr(row, n) is not None]  # fmt: skip
+    for name in names:
+        flag_modified(row, name)
+    s.commit()
+    return len(names)
 
 
 def create_external_link(
