@@ -135,7 +135,7 @@ from core.dast import campaign as campaign_rules
 from core.dast import ownership
 from core.export import FORMATS, ReportData, render
 from core.gitfetch import GitUrlError, validate_git_url
-from core.github_app import parse_pull_request_event, verify_signature
+from core.github_app import account_allowed, parse_pull_request_event, verify_signature
 from core.integrations.ssrf import WebhookUrlError, validate_webhook_url
 from core.llm import budget as llm_budget
 from core.llm import cache as llm_cache
@@ -524,12 +524,21 @@ def create_app(app_state: AppState) -> FastAPI:
         if event == "ping":
             return {"status": "pong"}
 
+        allowed = st.settings.github_app_allowed_accounts
         with st.sessions() as s:
             if event == "installation":
                 inst = payload.get("installation") or {}
                 inst_id = str(inst.get("id") or "")
                 if payload.get("action") == "created" and inst_id:
                     login = str((inst.get("account") or {}).get("login") or "")
+                    if not account_allowed(login, allowed):
+                        # No organization, no mapping: an installation by an account this server
+                        # does not serve leaves only this record behind.
+                        repo.append_audit_entry(
+                            s, actor="webhook:github", action="installation.refused",
+                            target=inst_id, payload={"account_login": login},
+                        )  # fmt: skip
+                        return {"status": "refused"}
                     row = repo.get_or_create_installation(
                         s, installation_id=inst_id, account_login=login
                     )
@@ -549,6 +558,8 @@ def create_app(app_state: AppState) -> FastAPI:
                 pr = parse_pull_request_event(payload)
                 if pr is None:
                     return {"status": "ignored"}
+                if not account_allowed(pr.account_login, allowed):
+                    return {"status": "refused"}  # checked before an organization is created
                 installation = repo.get_or_create_installation(
                     s, installation_id=pr.installation_id, account_login=pr.account_login
                 )
@@ -581,6 +592,10 @@ def create_app(app_state: AppState) -> FastAPI:
                     st.settings.github_app_id and st.settings.github_app_private_key
                 ):
                     return {"status": "ignored"}  # never creates an organization, unlike a PR
+                if not account_allowed(known.account_login, allowed):
+                    return {
+                        "status": "refused"
+                    }  # installed before the account was taken off the list
                 settings = st.settings
                 gh = pr_fix.GitHub(
                     lambda: installation_token(

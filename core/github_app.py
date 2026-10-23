@@ -114,6 +114,13 @@ def verify_signature(payload: bytes, signature_header: str | None, secret: str) 
     return hmac.compare_digest(signature_header[len("sha256=") :], expected)
 
 
+def account_allowed(login: str, allowed: frozenset[str]) -> bool:
+    """Whether this server serves the App installation of GitHub account `login`. An empty
+    allow-list serves every account (see `Settings.github_app_allowed_accounts`); GitHub logins are
+    case-insensitive, so the match is too. An empty login is never allowed by a non-empty list."""
+    return not allowed or (bool(login) and login.lower() in allowed)
+
+
 @dataclass(frozen=True)
 class PullRequestEvent:
     installation_id: str

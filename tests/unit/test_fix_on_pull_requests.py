@@ -438,6 +438,14 @@ def test_the_webhook_answers_a_signed_comment(
         assert s.get(GithubInstallation, "999") is None
     assert post(comment_payload("thanks!")).json() == {"status": "ignored"}
 
+    # Taken off the installation allow-list: a known installation's comments get no answer.
+    listed = Settings(**{**settings.__dict__, "github_app_allowed_accounts": frozenset({"other"})})
+    client = TestClient(create_app(AppState(listed, world.sessions, lambda *a: None,
+                                            FakeSubscriber())))  # fmt: skip
+    seen = len(world.gh.comments)
+    assert post(comment_payload("/fix")).json() == {"status": "refused"}
+    assert len(world.gh.comments) == seen
+
 
 def test_a_pull_request_scan_records_the_head_commit() -> None:
     from core.github_app import parse_pull_request_event

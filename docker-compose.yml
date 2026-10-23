@@ -34,6 +34,8 @@ x-app-env: &app-env
   BULWARK_GITHUB_APP_ID: ${BULWARK_GITHUB_APP_ID:-}
   BULWARK_GITHUB_APP_PRIVATE_KEY: ${BULWARK_GITHUB_APP_PRIVATE_KEY:-}
   BULWARK_GITHUB_WEBHOOK_SECRET: ${BULWARK_GITHUB_WEBHOOK_SECRET:-}
+  # Comma-separated GitHub logins whose installations are served; empty serves every installation.
+  BULWARK_GITHUB_APP_ALLOWED_ACCOUNTS: ${BULWARK_GITHUB_APP_ALLOWED_ACCOUNTS:-}
   # Envelope encryption (Week 47, plan §22.2): dev-mode OpenBao, see the `openbao` service below.
   # Unset in production env files; a real deployment points these at a real, unsealed OpenBao.
   BULWARK_OPENBAO_ADDR: http://openbao:8200

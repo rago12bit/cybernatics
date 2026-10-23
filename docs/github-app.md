@@ -36,6 +36,19 @@ BULWARK_GITHUB_APP_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIEvQ...\n-----END
 BULWARK_GITHUB_WEBHOOK_SECRET=<the secret from step 3>
 ```
 
+### Who may use it
+
+```bash
+BULWARK_GITHUB_APP_ALLOWED_ACCOUNTS=acme,raghav   # GitHub user or organization logins, any case
+```
+
+Anyone who can install the App gets their pull requests scanned on your server, and each installation
+becomes a Bulwark organization. If you registered the App as private ("Only on this account"), only you
+can install it and the list can stay empty. If the App is public, set the list: an installation by any
+other account is refused and recorded in the audit log as `installation.refused`, and pull requests and
+`/fix` comments from accounts not on the list are not acted on, including installations made before the
+account was taken off the list.
+
 `docker-compose.yml` already wires these through to both `api` (receives webhooks) and `worker`
 (posts the result comment once a scan finishes) — set them in `.env` and `docker compose up -d api
 worker`.

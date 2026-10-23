@@ -217,3 +217,91 @@ def test_unrecognized_event_is_ignored_not_an_error(client: tuple[TestClient, li
     c, _ = client
     r = post(c, "star", {"action": "created"})
     assert r.status_code == 200 and r.json()["status"] == "ignored"
+
+
+# ---- the installation allow-list (BULWARK_GITHUB_APP_ALLOWED_ACCOUNTS) ------------------------
+
+
+@pytest.fixture
+def allow_listed(sessions: sessionmaker[Session], tmp_path: Path) -> tuple[TestClient, list[Any]]:
+    enqueued: list[tuple[str, str]] = []
+    settings = Settings(
+        database_url="sqlite://", redis_url="", s3_endpoint=None, s3_access_key="",
+        s3_secret_key="", s3_bucket="b", api_token=TOKEN, workdir=tmp_path,
+        upload_dir=tmp_path / "up", max_upload_bytes=1000, github_webhook_secret=SECRET,
+        github_app_allowed_accounts=frozenset({"acme"}),
+    )  # fmt: skip
+    app = create_app(
+        AppState(settings, sessions, lambda sid, org: enqueued.append((sid, org)), FakeSubscriber())
+    )
+    return TestClient(app), enqueued
+
+
+def test_an_installation_by_an_account_not_on_the_list_creates_nothing(
+    allow_listed: tuple[TestClient, list[Any]], sessions: sessionmaker[Session]
+) -> None:
+    c, _ = allow_listed
+    with sessions() as s:
+        orgs_before = s.query(Organization).count()
+    payload = {"action": "created", "installation": {"id": 77, "account": {"login": "mallory"}}}
+    r = post(c, "installation", payload)
+    assert r.status_code == 200 and r.json() == {"status": "refused"}
+    with sessions() as s:
+        assert s.get(GithubInstallation, "77") is None
+        assert s.query(Organization).count() == orgs_before
+
+
+def test_a_pull_request_from_an_account_not_on_the_list_is_not_scanned(
+    allow_listed: tuple[TestClient, list[Any]], sessions: sessionmaker[Session]
+) -> None:
+    c, enqueued = allow_listed
+    payload = _pr_payload(installation_id=78)
+    payload["repository"] = {
+        "owner": {"login": "mallory"},
+        "full_name": "mallory/thing",
+        "clone_url": "https://github.com/mallory/thing.git",
+    }
+    with sessions() as s:
+        orgs_before = s.query(Organization).count()
+    r = post(c, "pull_request", payload)
+    assert r.status_code == 200 and r.json() == {"status": "refused"}
+    assert enqueued == []
+    with sessions() as s:
+        assert s.query(Scan).count() == 0
+        assert s.get(GithubInstallation, "78") is None
+        assert s.query(Organization).count() == orgs_before
+
+
+def test_an_account_on_the_list_is_served_whatever_the_case_of_its_login(
+    allow_listed: tuple[TestClient, list[Any]], sessions: sessionmaker[Session]
+) -> None:
+    c, enqueued = allow_listed
+    install = {"action": "created", "installation": {"id": 79, "account": {"login": "ACME"}}}
+    assert post(c, "installation", install).json() == {"status": "ok"}
+    r = post(c, "pull_request", _pr_payload(installation_id=79))  # owner "acme"
+    assert r.json()["status"] == "queued" and len(enqueued) == 1
+
+
+def test_an_installation_made_before_its_account_left_the_list_is_no_longer_served(
+    allow_listed: tuple[TestClient, list[Any]], sessions: sessionmaker[Session]
+) -> None:
+    c, enqueued = allow_listed
+    with sessions() as s:
+        org = Organization(id="org-old", name="old")
+        s.add(org)
+        s.flush()
+        s.add(GithubInstallation(id="80", account_login="mallory", org_id=org.id))
+        s.commit()
+    payload = _pr_payload(installation_id=80)
+    payload["repository"]["owner"] = {"login": "mallory"}
+    assert post(c, "pull_request", payload).json() == {"status": "refused"}
+    assert enqueued == []
+
+
+def test_account_allowed() -> None:
+    from core.github_app import account_allowed
+
+    assert account_allowed("anyone", frozenset())  # no list: every account (a private App)
+    assert account_allowed("Acme", frozenset({"acme"}))
+    assert not account_allowed("acme-evil", frozenset({"acme"}))
+    assert not account_allowed("", frozenset({"acme"}))

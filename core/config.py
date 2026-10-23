@@ -30,6 +30,11 @@ class Settings:
         ""  # PEM; `\n` escapes are unescaped, since most secret stores flatten them
     )
     github_webhook_secret: str = ""
+    # The GitHub accounts (user or organization logins, lowercased) whose App installations are
+    # served. Empty serves every installation, which is only right for an App registered as private
+    # ("Only on this account"): a public App can be installed by anyone, and each installation
+    # becomes a Bulwark organization whose pull requests get scanned on this server.
+    github_app_allowed_accounts: frozenset[str] = frozenset()
     # Envelope encryption (Week 47, plan §22.2, ADR-0032). Both empty by default: callers that need
     # a core.secrets.openbao.OpenBaoClient construct it explicitly and get a clear error at the
     # point of use if these are unset, the same "off means off, not a silent no-op" posture as the
@@ -99,6 +104,11 @@ class Settings:
             ).replace("\\n", "\n"),
             github_webhook_secret=resolve_secret(
                 "BULWARK_GITHUB_WEBHOOK_SECRET", kv_path="bulwark/github-webhook-secret"
+            ),
+            github_app_allowed_accounts=frozenset(
+                a.strip().lower()
+                for a in os.environ.get("BULWARK_GITHUB_APP_ALLOWED_ACCOUNTS", "").split(",")
+                if a.strip()
             ),
             openbao_addr=os.environ.get("BULWARK_OPENBAO_ADDR", ""),
             openbao_token=os.environ.get("BULWARK_OPENBAO_TOKEN", ""),
