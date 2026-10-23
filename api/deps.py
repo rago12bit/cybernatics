@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Protocol
 
-from fastapi import Depends, HTTPException, Request
+from fastapi import Depends, HTTPException, Request, WebSocket
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
@@ -295,6 +295,36 @@ def require_scope(scope: str) -> Callable[..., None]:
             raise HTTPException(403, f"this token does not have the '{scope}' scope")
 
     return _check
+
+
+def websocket_auth(ws: WebSocket, st: AppState, token: str) -> AuthContext | None:
+    """Who a WebSocket connected as, by the same rules as `require_auth`: a token from the first
+    message (the shared token or a scoped one), else the browser's session cookie. The cookie only
+    counts from an origin the API already trusts (`cors_origins`): a browser sends cookies with any
+    page's WebSocket handshake and no CORS check applies to what comes back, so without this another
+    site could read a signed-in person's scans (cross-site WebSocket hijacking)."""
+    if token:
+        if token_ok(token, st.settings.api_token):
+            return AuthContext(org_id=None, scopes=None, actor="shared-token")
+        return _scoped_token_context(st, token)
+    secret = ws.cookies.get(web_sessions.COOKIE)
+    if not secret or ws.headers.get("origin") not in st.settings.cors_origins:
+        return None
+    with st.sessions() as s:
+        row = web_sessions.resolve(s, secret)
+        return None if row is None else _person_context(s, row.org_id, row.user_id)
+
+
+def may_read_scan(st: AppState, auth: AuthContext, scan_id: str) -> bool:
+    """`require_scope("scans:read")` for a route that cannot use it (a WebSocket): a person needs
+    the scope on the scan's project and must be able to see it; a token needs the scope."""
+    if auth.access is not None:
+        project = _project_of(st, auth, {"scan_id": scan_id})
+        if project is _MISSING:
+            return False
+        where = project if isinstance(project, str) else None
+        return "scans:read" in auth.access.scopes_on(where)
+    return auth.scopes is None or "scans:read" in auth.scopes
 
 
 def current_org(request: Request, auth: AuthContext = Depends(require_auth)) -> str:

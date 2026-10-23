@@ -48,8 +48,10 @@ def api_doc(spec: dict) -> str:
         "`scripts/gen-api-docs.py`; do not edit._",
         "",
         "All endpoints except `/healthz` need `Authorization: Bearer <BULWARK_API_TOKEN>`.",
-        'The WebSocket `/scans/{id}/ws` authenticates with a first message `{"token": "..."}`',
-        "and then streams `snapshot`, `tool.finished` and `scan.finished` events.",
+        'The WebSocket `/scans/{id}/ws` authenticates with a first message `{"token": "..."}` (or `{}` '
+        "from a",
+        "signed-in browser, see below) and then streams `snapshot`, `tool.finished` and "
+        "`scan.finished` events.",
         "",
     ]
     for path, ops in spec["paths"].items():
@@ -64,6 +66,23 @@ def api_doc(spec: dict) -> str:
         "## Live progress (WebSocket)",
         "",
         "`GET /scans/{scan_id}/ws` (not part of OpenAPI).",
+        "",
+        "The first message authenticates, by the same rules as every other route:",
+        "",
+        '- `{"token": "<token>"}`: the shared `BULWARK_API_TOKEN`, a scoped token, or a person\'s '
+        "own token. Only",
+        '  the shared token may add `"org": "<organization id>"` to choose an organization; any '
+        "other token",
+        "  always sees its own.",
+        "- `{}`: a browser signed in with a session cookie. The cookie counts only when the "
+        "handshake's `Origin`",
+        "  is in `BULWARK_CORS_ORIGINS`, so another site's page cannot open the socket as the "
+        "signed-in person.",
+        "",
+        "The caller needs `scans:read` on the scan's project. Closes with `4401` when nothing "
+        "authenticates, and",
+        "with `4404` when the scan does not exist or the caller may not read it (the two look "
+        "the same).",
         "",
     ]
     return "\n".join(lines)

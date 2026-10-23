@@ -179,7 +179,8 @@ inject hostile titles, paths, snippets and descriptions into each of them (`web/
 ### T11 Unauthorized API access (Partial)
 - **Done:** every endpoint except `/healthz` needs a bearer token; comparison is constant-time; the API refuses
   to start with a weak token (under 16 characters); CORS is an explicit allowlist; the WebSocket authenticates
-  in its first message so the token is never in a URL.
+  in its first message so the token is never in a URL, and takes a session cookie only from an origin on
+  the CORS allowlist (cross-site WebSocket hijacking).
 - **Done since (Weeks 29 and 75):** scoped, expiring, revocable tokens per organization (ADR-0018); user
   accounts that sign in through the organization's identity provider, with roles per organization,
   business unit and project, and tokens that act as their person and die with them (T18, ADR-0058).

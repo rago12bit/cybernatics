@@ -49,11 +49,12 @@ from api.deps import (
     EventSubscriber,
     current_org,
     db,
+    may_read_scan,
     read_capped_body,
     require_auth,
     require_scope,
     state,
-    token_ok,
+    websocket_auth,
 )
 from api.engagements import register_engagement_routes
 from api.identity import register_identity_routes
@@ -2234,22 +2235,28 @@ def create_app(app_state: AppState) -> FastAPI:
 
     @app.websocket("/scans/{scan_id}/ws")
     async def scan_ws(ws: WebSocket, scan_id: str) -> None:
-        """Live progress. First client message must be {"token": "<bearer token>"}."""
+        """Live progress. The first client message is {"token": "<bearer token>"} for a token
+        (shared or scoped), or {} from a browser signed in with a session cookie."""
         st: AppState = ws.app.state.bulwark
         await ws.accept()
         try:
             hello = await asyncio.wait_for(ws.receive_json(), timeout=10)
-            if not token_ok(str(hello.get("token", "")), st.settings.api_token):
+            auth = websocket_auth(ws, st, str(hello.get("token") or ""))
+            if auth is None:
                 await ws.close(code=4401, reason="unauthorized")
                 return
             # No FastAPI `Depends(db)` on a WebSocket route, so there's no request-scoped
             # `SET LOCAL` here (Postgres RLS still applies at the DB level regardless, ADR-0013);
             # this app-level check is what scopes this path, like every other `repo.py` call site.
-            org = str(hello.get("org") or "").strip() or DEFAULT_ORG_ID
+            # A scoped token or a person has an organization of their own; only the shared token
+            # picks one, as the X-Bulwark-Org header does on every other route.
+            org = auth.org_id or str(hello.get("org") or "").strip() or DEFAULT_ORG_ID
             with st.sessions() as s:
-                if not _UUID.match(scan_id) or repo.get_scan(s, scan_id, org_id=org) is None:
-                    await ws.close(code=4404, reason="scan not found")
-                    return
+                found = _UUID.match(scan_id) and repo.get_scan(s, scan_id, org_id=org) is not None
+            # Not found and not allowed answer alike, so a socket cannot probe for scan ids.
+            if not found or not may_read_scan(st, auth, scan_id):
+                await ws.close(code=4404, reason="scan not found")
+                return
             # Subscribe BEFORE reading the snapshot so no event falls in the gap between them.
             events = st.subscriber.subscribe(scan_id)
             async with contextlib.aclosing(events):  # type: ignore[type-var]

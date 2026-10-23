@@ -6,6 +6,13 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 ## [Unreleased]
 
 ### Security
+- **Live scan updates work for signed-in people and their own tokens.** The scan WebSocket took the shared
+  token only, so a person signed in with SSO, or using a token of their own, was refused, and the scan
+  page then showed "Your session expired" for a running scan. It now authenticates like every other
+  route (session cookie, shared, scoped or personal token) and needs `scans:read` on the scan's
+  project. The cookie counts only from an origin on the CORS allowlist, so another site cannot open the
+  socket as the signed-in person; a token with an organization of its own can no longer be pointed at
+  another one.
 - **The GitHub App serves only the accounts you list.** Any account that installed the App had its pull
   requests scanned on the server, each installation becoming a new organization. With
   `BULWARK_GITHUB_APP_ALLOWED_ACCOUNTS` set (comma-separated logins, any case), an installation by another

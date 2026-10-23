@@ -81,5 +81,7 @@ whose privileges a session has.
 - A person limited to some projects cannot make organization-wide changes, including bulk changes on
   the cross-project Issues list; on their own projects' pages they can.
 - The first admin is made with `bulwark users add --role admin`, or by the shared token.
-- The WebSocket for live scans authenticates with a pasted token only; signed-in browsers fall back
-  to polling, which the scan page already does.
+- The WebSocket for live scans authenticated with a pasted token only, so a signed-in browser was
+  refused, and the scan page read the refusal as an expired session. Since 2026-10-23 it takes the
+  session cookie (from a trusted origin only) and people's own tokens too, with `scans:read` on the
+  scan's project, like `GET /scans/{id}`.
