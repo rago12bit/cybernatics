@@ -1,0 +1,3 @@
+# Besides pyproject.toml's dependencies (with the llm and otel extras the image installs), what the
+# image needs pinned. Lock with scripts/lock-app-deps.sh.
+setuptools  # builds the project itself (no [build-system] table); python:3.12-slim ships without it

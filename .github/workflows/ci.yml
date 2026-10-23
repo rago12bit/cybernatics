@@ -407,6 +407,8 @@ jobs:
       - run: pip install -e ".[dev,llm,otel]" # matches the licenses job's own extras choice above
       - run: pip install pip-audit
       - run: pip-audit --desc off
+      # The app image installs this hash-pinned set, not whatever is newest, so it is audited on its own.
+      - run: pip-audit --desc off --require-hashes --disable-pip -r docker/app/requirements.txt
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22

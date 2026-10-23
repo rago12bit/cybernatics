@@ -23,10 +23,18 @@ open('/usr/local/bin/opa', 'wb').write(data) if digest == sums[arch] \
  && chmod 0755 /usr/local/bin/opa && opa version
 RUN useradd -m -u 10002 bulwark
 WORKDIR /app
+# Dependencies first, from the hash-pinned lock (scripts/lock-app-deps.sh): pip refuses any file whose
+# hash differs and any dependency the lock does not pin, so a rebuild installs exactly what was
+# reviewed. The lock carries the llm extra (optional Anthropic SDK, off unless enabled) and the otel
+# extra (trace export). It is its own layer, so a code change does not reinstall them.
+COPY docker/app/requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir --require-hashes -r /tmp/requirements.txt && rm /tmp/requirements.txt
 COPY pyproject.toml README.md alembic.ini ./
 COPY core core
 COPY cli cli
 COPY api api
 COPY migrations migrations
-RUN pip install --no-cache-dir '.[llm,otel]'  # llm: optional Anthropic SDK (off unless enabled); otel: trace export
+# The project itself, against what is already installed: no index, no new packages, then every
+# requirement checked as met.
+RUN pip install --no-cache-dir --no-deps --no-build-isolation --no-index . && pip check
 USER bulwark
