@@ -198,9 +198,9 @@ Bulwark is not affiliated with or endorsed by DefectDojo, Inc.
 | websockets | 16.1.1 | BSD-3-Clause |
 | xmlschema | 2.5.1 | MIT |
 
-## npm dependencies: web app (277 runtime, 319 development)
+## npm dependencies: web app (276 runtime, 319 development)
 
-Runtime license summary: MIT 193, ISC 35, Apache-2.0 21, LGPL-3.0-or-later 10, BSD-3-Clause 7, Apache-2.0 AND LGPL-3.0-or-later 3, OFL-1.1 2, Apache-2.0 AND LGPL-3.0-or-later AND MIT 1, CC-BY-4.0 1, (MPL-2.0 OR Apache-2.0) 1, EPL-2.0 1, Unlicense 1, 0BSD 1
+Runtime license summary: MIT 192, ISC 35, Apache-2.0 21, LGPL-3.0-or-later 10, BSD-3-Clause 7, Apache-2.0 AND LGPL-3.0-or-later 3, OFL-1.1 2, Apache-2.0 AND LGPL-3.0-or-later AND MIT 1, CC-BY-4.0 1, (MPL-2.0 OR Apache-2.0) 1, EPL-2.0 1, Unlicense 1, 0BSD 1
 
 | Package | Version | License |
 |---|---|---|
@@ -248,15 +248,15 @@ Runtime license summary: MIT 193, ISC 35, Apache-2.0 21, LGPL-3.0-or-later 10, B
 | @img/sharp-win32-ia32 | 0.35.5 | Apache-2.0 AND LGPL-3.0-or-later |
 | @img/sharp-win32-x64 | 0.35.5 | Apache-2.0 AND LGPL-3.0-or-later |
 | @mermaid-js/parser | 2.0.1 | MIT |
-| @next/env | 16.4.0 | MIT |
-| @next/swc-darwin-arm64 | 16.4.0 | MIT |
-| @next/swc-darwin-x64 | 16.4.0 | MIT |
-| @next/swc-linux-arm64-gnu | 16.4.0 | MIT |
-| @next/swc-linux-arm64-musl | 16.4.0 | MIT |
-| @next/swc-linux-x64-gnu | 16.4.0 | MIT |
-| @next/swc-linux-x64-musl | 16.4.0 | MIT |
-| @next/swc-win32-arm64-msvc | 16.4.0 | MIT |
-| @next/swc-win32-x64-msvc | 16.4.0 | MIT |
+| @next/env | 16.4.2 | MIT |
+| @next/swc-darwin-arm64 | 16.4.2 | MIT |
+| @next/swc-darwin-x64 | 16.4.2 | MIT |
+| @next/swc-linux-arm64-gnu | 16.4.2 | MIT |
+| @next/swc-linux-arm64-musl | 16.4.2 | MIT |
+| @next/swc-linux-x64-gnu | 16.4.2 | MIT |
+| @next/swc-linux-x64-musl | 16.4.2 | MIT |
+| @next/swc-win32-arm64-msvc | 16.4.2 | MIT |
+| @next/swc-win32-x64-msvc | 16.4.2 | MIT |
 | @radix-ui/primitive | 1.1.7 | MIT |
 | @radix-ui/react-arrow | 1.1.16 | MIT |
 | @radix-ui/react-collection | 1.1.16 | MIT |
@@ -398,7 +398,7 @@ Runtime license summary: MIT 193, ISC 35, Apache-2.0 21, LGPL-3.0-or-later 10, B
 | dequal | 2.0.3 | MIT |
 | detect-node-es | 1.1.0 | MIT |
 | devlop | 1.1.0 | MIT |
-| dompurify | 3.4.16 | (MPL-2.0 OR Apache-2.0) |
+| dompurify | 3.4.17 | (MPL-2.0 OR Apache-2.0) |
 | elkjs | 0.9.3 | EPL-2.0 |
 | es-toolkit | 1.52.0 | MIT |
 | fast-equals | 4.0.3 | MIT |
@@ -427,7 +427,7 @@ Runtime license summary: MIT 193, ISC 35, Apache-2.0 21, LGPL-3.0-or-later 10, B
 | micromark-util-symbol | 2.0.1 | MIT |
 | micromark-util-types | 2.0.3 | MIT |
 | nanoid | 3.3.19 | MIT |
-| next | 16.4.0 | MIT |
+| next | 16.4.2 | MIT |
 | object-assign | 4.1.1 | MIT |
 | oniguruma-parser | 0.12.2 | MIT |
 | oniguruma-to-es | 4.3.6 | MIT |
