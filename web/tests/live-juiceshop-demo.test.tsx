@@ -67,6 +67,8 @@ describe("the launch landing page's live Juice Shop replay (plan §33, Week 52)"
     });
     expect(host.textContent).toContain("replay finished");
     expect(host.querySelector("button")?.textContent).toContain("Watch it again");
+    // "Finished" is when the recording finished, not when the replay did: it agrees with "recorded <date>".
+    expect(host.querySelector("time")?.getAttribute("datetime")).toBe(data.scan.finished_at);
   });
 
   it("lets a visitor skip the replay straight to the finished report", async () => {

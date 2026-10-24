@@ -7,7 +7,9 @@ import {
 } from "@/lib/api";
 import type { Rule, RuleDryRun, RuleRun, RuleTemplate } from "@/lib/types";
 import { Button } from "@/design-system/primitives/Button";
+import { ConfirmButton } from "@/design-system/primitives/ConfirmButton";
 import "./automation.css";
+import { formatDateTime } from "@/lib/format";
 
 /** Plan §45 and the IA's "Automation: rules, templates, run history". Held runs come first: a rule
  * that would act on more issues than its threshold waits here for an Admin. Writing a rule, testing
@@ -23,7 +25,7 @@ export const RUN_WORD: Record<RuleRun["status"], string> = {
   failed: "Failed",
 };
 
-const when = (iso: string) => new Date(iso).toLocaleString();
+const when = (iso: string) => formatDateTime(iso);
 
 export function outcomeSummary(run: RuleRun): string {
   if (run.status === "held") return `Would act on ${run.subject_ids.length} issue${run.subject_ids.length === 1 ? "" : "s"}.`;
@@ -140,14 +142,10 @@ function RuleCard({ rule, onChanged }: { rule: Rule; onChanged: () => void }) {
         <Button disabled={busy} onClick={() => act(() => setRuleEnabled(rule.id, !rule.enabled), onChanged)}>
           {rule.enabled ? "Turn off" : "Turn on"}
         </Button>
-        <Button
-          disabled={busy}
-          onClick={() => {
-            if (window.confirm(`Delete “${rule.name}”? Its run history stays.`)) act(() => deleteRule(rule.id), onChanged);
-          }}
-        >
+        <ConfirmButton className="ds-button" disabled={busy} title={`Delete “${rule.name}”?`} description="Its run history stays."
+          confirmLabel="Delete" onConfirm={() => act(() => deleteRule(rule.id), onChanged)}>
           Delete
-        </Button>
+        </ConfirmButton>
       </div>
     </li>
   );

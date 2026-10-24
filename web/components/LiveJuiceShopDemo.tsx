@@ -86,10 +86,8 @@ export function LiveJuiceShopDemo() {
   }, [runId]);
 
   const scan: ScanView = useMemo(() => {
-    if (done) {
-      const finishedAt = new Date(Date.parse(startedAt) + REPLAY_MS).toISOString();
-      return { ...finalScan, created_at: startedAt, started_at: startedAt, finished_at: finishedAt };
-    }
+    // Finished: the recording's own timestamps, so the header agrees with "recorded <date>" above.
+    if (done) return finalScan;
     const tool_status: Record<string, ToolStatus> = { ...skippedTools };
     for (const [name, t] of realTools) {
       const revealAt = ((t.duration_seconds ?? 0) / maxRealSeconds) * REPLAY_MS;

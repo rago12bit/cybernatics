@@ -6,13 +6,14 @@ import { ApiError, compareScans, getAssetOverview } from "@/lib/api";
 import type { ComparedIssue, ProjectOverview, ScanComparison as ScanComparisonData } from "@/lib/types";
 import { SeverityBadge } from "@/design-system/severity";
 import "./scan-comparison.css";
+import { formatDateTime } from "@/lib/format";
 
 function severityKey(s: string): "critical" | "high" | "medium" | "low" | "info" {
   return s.toLowerCase() as "critical" | "high" | "medium" | "low" | "info";
 }
 
 function label(side: ScanComparisonData["earlier"]): string {
-  const when = side.finished_at ? new Date(side.finished_at).toLocaleString() : "in progress";
+  const when = side.finished_at ? formatDateTime(side.finished_at) : "in progress";
   const pr = side.github_pr_number ? ` (PR #${side.github_pr_number})` : "";
   return `${side.source_label}${pr} — ${when}`;
 }
@@ -110,7 +111,7 @@ export function ScanComparison({ assetId }: { assetId: string }) {
           <select value={earlierId} onChange={(e) => setEarlierId(e.target.value)}>
             {options.map((p) => (
               <option key={p.scan_id} value={p.scan_id}>
-                {new Date(p.finished_at).toLocaleString()} ({p.open_count} open)
+                {formatDateTime(p.finished_at)} ({p.open_count} open)
               </option>
             ))}
           </select>
@@ -120,7 +121,7 @@ export function ScanComparison({ assetId }: { assetId: string }) {
           <select value={laterId} onChange={(e) => setLaterId(e.target.value)}>
             {options.map((p) => (
               <option key={p.scan_id} value={p.scan_id}>
-                {new Date(p.finished_at).toLocaleString()} ({p.open_count} open)
+                {formatDateTime(p.finished_at)} ({p.open_count} open)
               </option>
             ))}
           </select>

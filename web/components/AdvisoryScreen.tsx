@@ -7,6 +7,7 @@ import type { AdvisoryImpact, AdvisoryIssuesCreated, AdvisoryUse, VexDrafted } f
 import { Button } from "@/design-system/primitives/Button";
 import { Severity, ago } from "./AdvisoriesScreen";
 import "./advisories.css";
+import { formatDate } from "@/lib/format";
 
 /** Plan §55.5, the advisory impact view (journey J7): where an affected version is, which projects'
  * code imports the library, who owns them, how exposed they are, the fix, and Issues in one click.
@@ -159,7 +160,7 @@ export function AdvisoryScreen({ vulnKey }: { vulnKey: string }) {
         <p className="ds-adv-lede">{a.summary}</p>
         <p className="ds-adv-meta">
           {a.ids.join(", ")}{a.aliases.length ? ` · also ${a.aliases.join(", ")}` : ""}
-          {a.published ? ` · published ${new Date(a.published).toLocaleDateString()}` : ""} · first seen here {ago(a.first_seen_at)}
+          {a.published ? ` · published ${formatDate(a.published)}` : ""} · first seen here {ago(a.first_seen_at)}
         </p>
       </header>
 
@@ -274,7 +275,7 @@ export function AdvisoryScreen({ vulnKey }: { vulnKey: string }) {
             {a.no_longer_affected.map((u) => (
               <li key={`${u.project_id}-${u.library}-${u.version}`}>
                 <Link href={`/app/projects/${u.project_id}`}>{u.project}</Link> · {u.library} <code>{u.version}</code>
-                <span className="ds-adv-meta"> · not in its SBOM since {u.resolved_at ? new Date(u.resolved_at).toLocaleDateString() : "—"}</span>
+                <span className="ds-adv-meta"> · not in its SBOM since {u.resolved_at ? formatDate(u.resolved_at) : "—"}</span>
               </li>
             ))}
           </ul>

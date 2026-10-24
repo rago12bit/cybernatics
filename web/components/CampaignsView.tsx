@@ -6,6 +6,7 @@ import { ApiError, listDastCampaigns, startDastCampaign } from "@/lib/api";
 import type { ScanSummary } from "@/lib/types";
 import { Button } from "@/design-system/primitives/Button";
 import "./campaigns-view.css";
+import { formatDateTime } from "@/lib/format";
 
 /** DAST campaign view (plan §22.4, Week 49 task 3): start a passive or active scan and see past
  * campaigns -- each one is a Scan under the hood, so "View results" goes straight to the existing
@@ -69,7 +70,7 @@ export function CampaignsView({ assetId }: { assetId: string }) {
           <tbody>
             {campaigns.map((c) => (
               <tr key={c.id}>
-                <td>{new Date(c.created_at).toLocaleString()}</td>
+                <td>{formatDateTime(c.created_at)}</td>
                 <td>{c.status}</td>
                 <td>{c.unique_findings}</td>
                 <td>

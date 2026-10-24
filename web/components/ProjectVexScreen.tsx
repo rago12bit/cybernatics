@@ -7,6 +7,7 @@ import type { ProjectVex, VexStatement } from "@/lib/types";
 import { Button } from "@/design-system/primitives/Button";
 import { justificationLabel } from "@/lib/vex";
 import "./compliance.css";
+import { formatDate } from "@/lib/format";
 
 /** A project's VEX (plan §46.3): what its exported documents say about each vulnerability in its
  * current SBOM, the statements people confirmed (with the evidence), and the downloads. Only
@@ -113,7 +114,7 @@ export function ProjectVexScreen({ assetId }: { assetId: string }) {
                   <ul className="ds-cmp-meta">{st.evidence.caveats.map((c) => <li key={c}>{c}</li>)}</ul>
                 )}
                 <p className="ds-cmp-meta">
-                  Proposed {new Date(st.proposed_at).toLocaleDateString()}
+                  Proposed {formatDate(st.proposed_at)}
                   {st.decided_by && ` · ${STATE[st.state].toLowerCase()} by ${st.decided_by}`}
                   {st.note && ` · ${st.note}`}
                 </p>

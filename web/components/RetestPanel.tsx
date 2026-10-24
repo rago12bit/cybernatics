@@ -5,13 +5,14 @@ import { ApiError, getRetest, retestStep, runTargetedRetest } from "@/lib/api";
 import type { Retest, RetestAction } from "@/lib/types";
 import { Button } from "@/design-system/primitives/Button";
 import "./collab.css";
+import { formatDate } from "@/lib/format";
 
 /** Plan §43.3: a developer marks the issue ready for retest; a tester confirms it fixed or
  * reproduces it (with a note). When one rule or one DAST template can check it, a targeted retest
  * re-runs only that, against only that location. */
 
 const POLL_MS = 2000;
-const day = (iso: string) => new Date(iso).toLocaleDateString();
+const day = (iso: string) => formatDate(iso);
 
 export function RetestPanel({ issueId, onChange }: { issueId: string; onChange?: () => void }) {
   const fid = useId();

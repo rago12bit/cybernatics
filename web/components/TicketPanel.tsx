@@ -8,12 +8,13 @@ import {
 import type { IssueGroupSummary, IssueTicket, Watchers } from "@/lib/types";
 import { Button } from "@/design-system/primitives/Button";
 import "./collab.css";
+import { formatDateTime } from "@/lib/format";
 
 /** Plan §49 on the issue page: watching it, its group, and its ticket in Jira or GitHub Issues --
  * whose status comes from the ticket (or from Bulwark, if the project says so), and whose summary
  * and severity label come from Bulwark. */
 
-const ago = (iso: string | null) => (iso ? new Date(iso).toLocaleString() : "never");
+const ago = (iso: string | null) => (iso ? formatDateTime(iso) : "never");
 const PROVIDER = { jira: "Jira", github: "GitHub Issues" } as const;
 
 export function WatchButton({ issueId }: { issueId: string }) {

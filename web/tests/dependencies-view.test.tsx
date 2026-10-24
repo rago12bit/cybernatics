@@ -91,6 +91,18 @@ describe("DependenciesView", () => {
     expect(host.textContent).not.toContain("flask");
   });
 
+  it("expands a row from the keyboard: its name is a button that says whether it is open", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => json(view)));
+    const host = await mount();
+    const toggle = [...host.querySelectorAll<HTMLButtonElement>("button.ds-deps-toggle")].find((b) => b.textContent?.includes("werkzeug"))!;
+    expect(toggle).toBeDefined();
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    // Enter or Space on a focused button fires a click; it bubbles to the row once, not twice.
+    await act(async () => toggle.click());
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    expect(host.textContent).toContain("Path from root");
+  });
+
   it("expands a row to show its path from root and its dependents", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => json(view)));
     const host = await mount();

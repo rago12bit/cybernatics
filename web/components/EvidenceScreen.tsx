@@ -5,6 +5,7 @@ import { ApiError, createEvidencePack, downloadEvidencePack, listEvidencePacks, 
 import type { ComplianceFramework, EvidencePack, EvidencePreview, EvidenceSummary } from "@/lib/types";
 import { Button } from "@/design-system/primitives/Button";
 import "./compliance.css";
+import { formatDateTime } from "@/lib/format";
 
 /** Evidence packs (plan §47): pick a period and frameworks, see what will be included, generate a
  * signed PDF plus a machine-readable bundle an auditor can check with its own verify.py. */
@@ -114,7 +115,7 @@ export function EvidenceScreen() {
               <li key={p.id} className="ds-cmp-item">
                 <div>
                   <strong>{p.period_start} to {p.period_end}</strong> · {p.signed ? "signed" : <span className="ds-cmp-bad">unsigned</span>} · {(p.size / 1024).toFixed(0)} KB
-                  <span className="ds-cmp-meta"> · by {p.created_by}, {new Date(p.created_at).toLocaleString()}</span>
+                  <span className="ds-cmp-meta"> · by {p.created_by}, {formatDateTime(p.created_at)}</span>
                 </div>
                 <Summary s={p.summary} />
                 <p className="ds-cmp-meta ds-cmp-wrap">SHA-256 <code>{p.sha256}</code></p>

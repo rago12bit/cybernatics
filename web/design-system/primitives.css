@@ -143,6 +143,12 @@
   font-size: var(--ds-text-2);
   margin: 0 0 var(--ds-space-2);
 }
+.ds-dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ds-space-1);
+  margin-top: var(--ds-space-2);
+}
 
 .ds-tabs-list {
   display: flex;

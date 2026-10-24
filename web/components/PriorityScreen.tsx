@@ -6,6 +6,7 @@ import { ApiError, getPriority, previewPriority, savePriority } from "@/lib/api"
 import type { PriorityBand, PriorityContext, PriorityOverview, PriorityPreview, PriorityPreviewRow, PriorityRecompute } from "@/lib/types";
 import { Button } from "@/design-system/primitives/Button";
 import "./priority-screen.css";
+import { formatDate, formatDateTime } from "@/lib/format";
 
 /** A project's priority weights (plan §44.3, §55.7, Week 63): its business context, a slider per
  * factor, and -- before anything is saved -- the top 50 issues under the new weights next to where
@@ -135,7 +136,7 @@ export function PriorityScreen({ assetId }: { assetId: string }) {
       <p className="ds-prio-verdict">
         {data.version === 0
           ? "Issues are ranked by the standard risk score. Adjust the weights below to rank them for this project."
-          : `Ranked by version ${data.version}, saved ${latest ? `by ${latest.changed_by ?? "someone"} on ${new Date(latest.changed_at).toLocaleDateString()}` : ""}.`}
+          : `Ranked by version ${data.version}, saved ${latest ? `by ${latest.changed_by ?? "someone"} on ${formatDate(latest.changed_at)}` : ""}.`}
       </p>
       {status && (
         <p role="status" className={`ds-prio-status ds-prio-status-${data.recompute?.status}`}>
@@ -295,7 +296,7 @@ export function PriorityScreen({ assetId }: { assetId: string }) {
               return (
                 <tr key={h.version}>
                   <td>{h.version}</td>
-                  <td>{new Date(h.changed_at).toLocaleString()}</td>
+                  <td>{formatDateTime(h.changed_at)}</td>
                   <td>{h.changed_by ?? "—"}</td>
                   <td>{[...changed, ...ctx].join(", ") || "Nothing"}</td>
                   <td>{h.recompute.status === "done" ? `${h.recompute.processed} issues` : h.recompute.status}</td>

@@ -8,6 +8,7 @@ import { present, type Table } from "@/lib/dashboard-present";
 import { Button } from "@/design-system/primitives/Button";
 import { Dialog } from "@/design-system/primitives/Dialog";
 import { ChartView } from "./charts";
+import { formatDateTime } from "@/lib/format";
 
 /* One widget: its title opens the metric's written definition; its numbers open the Issues behind
  * them; a chart can be read as a table. Records how long it took to draw once its data arrived
@@ -116,7 +117,7 @@ export function MetricWidget({
             {data?.period && <p className="dash-muted">Period: {data.period[0]} to {data.period[1]}.</p>}
             {data && (
               <p className="dash-muted">
-                Computed {new Date(data.generated_at).toLocaleString()}
+                Computed {formatDateTime(data.generated_at)}
                 {data.pending_refresh > 0 && `; ${data.pending_refresh} project${data.pending_refresh === 1 ? " is" : "s are"} still being refreshed`}. Every definition is also in docs/metrics.md.
               </p>
             )}

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useId, useState, type FormEvent } from "react";
 import { ApiError, createMyToken, listMyTokens, revokeMyToken } from "@/lib/api";
 import { TOKEN_SCOPES, type TokenView } from "@/lib/identity";
 import { Button } from "@/design-system/primitives/Button";
+import { ConfirmButton } from "@/design-system/primitives/ConfirmButton";
 import "./identity.css";
 
 /* My API tokens (Week 75): for CI and scripts. A token acts as me, within the scopes it was given
@@ -63,7 +64,9 @@ export function MyTokens() {
         <ul className="idn-overrides">
           {live.map((t) => (
             <li key={t.id}><strong>{t.name}</strong> <span className="idn-muted">{t.prefix}… · {(t.scopes ?? []).join(", ")} · expires {t.expires_at?.slice(0, 10) ?? "never"} · last used {t.last_used_at?.slice(0, 10) ?? "never"}</span>{" "}
-              <button type="button" className="idn-link" onClick={() => revoke(t)} aria-label={`Revoke ${t.name}`}>Revoke</button></li>
+              <ConfirmButton className="idn-link" aria-label={`Revoke ${t.name}`} title={`Revoke the token ${t.name}?`}
+                description="Anything still using it, such as a CI job, stops working at once. This can't be undone."
+                confirmLabel="Revoke" onConfirm={() => revoke(t)}>Revoke</ConfirmButton></li>
           ))}
         </ul>
       )}

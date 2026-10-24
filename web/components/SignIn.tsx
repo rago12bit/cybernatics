@@ -1,13 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useId, useState, type FormEvent } from "react";
+import { useEffect, useId, useState, type FormEvent } from "react";
 import { ApiError, discoverSso, setToken, ssoStartUrl, verifyToken } from "@/lib/api";
 import { SIGNIN_ERRORS, type SsoChoice } from "@/lib/identity";
 
 /* Signing in (Week 75): with the organization's identity provider, found from a work email's
  * domain; or, for scripts, the shared server and organizations without single sign-on, by pasting
  * an API token, which stays in this tab only. */
+
+export const SIGN_IN_TITLE = "Sign in · Bulwark";
 
 export function SignIn({ next, error, onToken }: { next: string; error?: string | null; onToken?: () => void }) {
   const id = useId();
@@ -18,6 +20,13 @@ export function SignIn({ next, error, onToken }: { next: string; error?: string 
   const [tokenOpen, setTokenOpen] = useState(false);
   const [token, setTokenValue] = useState("");
   const [show, setShow] = useState(false);
+
+  // Shown in place of any app page while signed out: the tab says so, not "Projects" or "App".
+  useEffect(() => {
+    const before = document.title;
+    document.title = SIGN_IN_TITLE;
+    return () => { document.title = before; };
+  }, []);
   const [tokenError, setTokenError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -89,7 +98,7 @@ export function SignIn({ next, error, onToken }: { next: string; error?: string 
             <button className="btn" disabled={busy || !token.trim()}>{busy ? "Checking…" : "Use this token"}</button>
           </form>
         </details>
-        <p className="small muted gate-alt">No server handy? <Link href="/sample">Explore a sample scan</Link>, no sign-in needed.</p>
+        <p className="small muted gate-alt">No server handy? <Link href="/sample">See the recorded scan</Link>, no sign-in needed.</p>
       </div>
     </div>
   );

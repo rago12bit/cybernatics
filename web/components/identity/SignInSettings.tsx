@@ -8,6 +8,7 @@ import {
 import { OVERRIDE_ROLES, type OverrideRole, type SsoProvider, type SsoProviderInput, type TokenView } from "@/lib/identity";
 import { Button } from "@/design-system/primitives/Button";
 import { Dialog } from "@/design-system/primitives/Dialog";
+import { ConfirmButton } from "@/design-system/primitives/ConfirmButton";
 import "./identity.css";
 
 /* Sign-in and provisioning (Week 75): the organization's identity providers -- OIDC (Google
@@ -75,7 +76,9 @@ export function SignInSettings() {
                   <Button type="button" onClick={() => test(p)}>Test</Button>
                   <Button type="button" onClick={() => setEditing(p)}>Change</Button>
                   <Button type="button" onClick={() => toggle(p)}>{p.enabled ? "Turn off" : "Turn on"}</Button>
-                  <Button type="button" onClick={() => remove(p)} aria-label={`Remove ${p.name}`}>Remove</Button>
+                  <ConfirmButton className="ds-button" aria-label={`Remove ${p.name}`} title={`Remove ${p.name}?`}
+                    description="Nobody can sign in with it any more. People who signed in with it keep their accounts, but need another way in."
+                    confirmLabel="Remove" onConfirm={() => remove(p)}>Remove</ConfirmButton>
                 </div>
               </div>
               {tests[p.id] && <p role="status" className={tests[p.id]!.ok ? "idn-ok" : "idn-error"}>{tests[p.id]!.message}</p>}
@@ -217,7 +220,9 @@ function ScimSection() {
         <ul className="idn-overrides">
           {live.map((t) => (
             <li key={t.id}>{t.name} <span className="idn-muted">({t.prefix}…, last used {t.last_used_at ? t.last_used_at.slice(0, 10) : "never"})</span>{" "}
-              <button type="button" className="idn-link" onClick={() => revoke(t)} aria-label={`Revoke the SCIM token ${t.name}`}>Revoke</button></li>
+              <ConfirmButton className="idn-link" aria-label={`Revoke the SCIM token ${t.name}`} title={`Revoke the SCIM token ${t.name}?`}
+                description="Your identity provider stops syncing people at once. This can't be undone."
+                confirmLabel="Revoke" onConfirm={() => revoke(t)}>Revoke</ConfirmButton></li>
           ))}
         </ul>
       )}

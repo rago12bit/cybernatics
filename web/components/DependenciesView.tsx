@@ -60,10 +60,13 @@ function PackageRow({
   const path = expanded ? pathTo(packages, pkg.purl) : null;
   return (
     <>
-      <tr className="ds-deps-row" onClick={onToggle} aria-expanded={expanded}>
+      {/* The whole row is a mouse target; the button inside makes it reachable by keyboard too. */}
+      <tr className="ds-deps-row" onClick={onToggle}>
         <td>
-          <span className="ds-deps-name">{pkg.name}</span>
-          <span className="ds-deps-version">{pkg.version}</span>
+          <button type="button" className="ds-deps-toggle" aria-expanded={expanded}>
+            <span className="ds-deps-name">{pkg.name}</span>
+            <span className="ds-deps-version">{pkg.version}</span>
+          </button>
         </td>
         <td>{pkg.ecosystem}</td>
         <td>

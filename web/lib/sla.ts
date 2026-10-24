@@ -1,4 +1,5 @@
 import type { IssueSla, SlaState } from "./types";
+import { formatDate } from "./format";
 
 /** How an Issue's SLA reads (plan §44.1): a word for the state, never colour alone, and the time
  * left or overdue in whole days. */
@@ -27,7 +28,7 @@ const DAY = 86_400_000;
 export function slaDetail(sla: IssueSla | undefined, now: number = Date.now()): string {
   if (!sla?.due_at) return "";
   const left = (new Date(sla.due_at).getTime() - now) / DAY;
-  if (sla.state === "met" || sla.state === "missed") return `due ${new Date(sla.due_at).toLocaleDateString()}`;
+  if (sla.state === "met" || sla.state === "missed") return `due ${formatDate(sla.due_at)}`;
   if (left < 0) {
     const n = Math.floor(-left);
     return n >= 1 ? `${n} day${n === 1 ? "" : "s"} overdue` : "overdue today";

@@ -57,3 +57,17 @@ describe("connecting to the API", () => {
     expect(host.textContent).not.toContain("the app");
   });
 });
+
+describe("signed out", () => {
+  it("titles the tab for signing in, not for the page it stands in for, and gives the title back", async () => {
+    document.title = "Projects · Bulwark";
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("{}", { status: 401, headers: { "Content-Type": "application/json" } })));
+    await mountGate();
+    await act(async () => {});
+    expect(host.textContent).toContain("Sign in to Bulwark");
+    expect(document.title).toBe("Sign in · Bulwark");
+    await act(async () => root.unmount());
+    root = createRoot(host);
+    expect(document.title).toBe("Projects · Bulwark");
+  });
+});

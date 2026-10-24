@@ -6,6 +6,7 @@ import { ApiError, getInbox, markNotificationsRead } from "@/lib/api";
 import type { Inbox, NotificationItem } from "@/lib/types";
 import { Button } from "@/design-system/primitives/Button";
 import "./automation.css";
+import { formatDateTime } from "@/lib/format";
 
 /** Plan §49: what Bulwark told you -- mentions, assignments, notes and retests on issues you watch,
  * SLA crossings, risk acceptances, tickets, rules waiting for you. Newest first; plain text. */
@@ -15,7 +16,7 @@ export const KIND_WORD: Record<string, string> = {
   risk_acceptance: "Risk acceptance", ticket: "Ticket", rules: "Rule",
 };
 
-const when = (iso: string) => new Date(iso).toLocaleString();
+const when = (iso: string) => formatDateTime(iso);
 
 export function inboxVerdict(inbox: Inbox): string {
   if (!inbox.person) return "You are signed in with the shared token, which is nobody: notifications go to personal tokens.";

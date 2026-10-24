@@ -17,9 +17,11 @@ import type { SavedView } from "@/lib/issues";
 import type { AssetSummary, ComplianceFramework, Portfolio } from "@/lib/types";
 import { Button } from "@/design-system/primitives/Button";
 import { Dialog } from "@/design-system/primitives/Dialog";
+import { ConfirmButton } from "@/design-system/primitives/ConfirmButton";
 import { WidgetFiltersForm } from "../dashboard/WidgetFiltersForm";
 import "../dashboard/dashboard.css";
 import "./reports.css";
+import { formatDate, formatDateTime } from "@/lib/format";
 
 /* The report builder (plan §48.3): blocks in order (Move up / Move down, announced), each with its
  * settings; the executive summary, which a model may draft and a person must confirm; a schedule;
@@ -267,7 +269,7 @@ function RunRow({ run }: { run: ReportRun }) {
   if (run.status !== "done") {
     return (
       <li className="rep-run">
-        <p><strong>{new Date(run.created_at).toLocaleString()}</strong> · {run.trigger === "schedule" ? "on its schedule" : `by ${run.created_by_name ?? run.created_by}`}</p>
+        <p><strong>{formatDateTime(run.created_at)}</strong> · {run.trigger === "schedule" ? "on its schedule" : `by ${run.created_by_name ?? run.created_by}`}</p>
         {run.status === "queued"
           ? <p role="status">Being made. This takes a few seconds.</p>
           : <p role="alert" className="dash-error">{run.error ?? "Could not make the PDF."}</p>}
@@ -277,7 +279,7 @@ function RunRow({ run }: { run: ReportRun }) {
   return (
     <li className="rep-run">
       <p>
-        <strong>{new Date(run.created_at).toLocaleString()}</strong> · {run.trigger === "schedule" ? "on its schedule" : `by ${run.created_by_name ?? run.created_by}`} ·
+        <strong>{formatDateTime(run.created_at)}</strong> · {run.trigger === "schedule" ? "on its schedule" : `by ${run.created_by_name ?? run.created_by}`} ·
         covers {run.period[0]} to {run.period[1]} · {(run.size / 1024).toFixed(0)} KB · {run.signed ? "signed" : "not signed (no key set up)"}
         {run.ai_summary ? " · AI-drafted summary, reviewed" : ""}
       </p>
@@ -297,7 +299,7 @@ function RunRow({ run }: { run: ReportRun }) {
       {error && <p role="alert" className="dash-error">{error}</p>}
       {url && (
         <div role="status" className="rep-link">
-          <p>Anyone with this link can open the PDF until {new Date(fresh!.expires_at).toLocaleDateString()}. It is shown only now:</p>
+          <p>Anyone with this link can open the PDF until {formatDate(fresh!.expires_at)}. It is shown only now:</p>
           <input readOnly value={url} aria-label="The new link" onFocus={(e) => e.currentTarget.select()} />
           <Button type="button" onClick={() => void navigator.clipboard?.writeText(url)}>Copy</Button>
         </div>
@@ -310,11 +312,12 @@ function RunRow({ run }: { run: ReportRun }) {
           <tbody>
             {links.map((l) => (
               <tr key={l.id}>
-                <th scope="row">{new Date(l.created_at).toLocaleString()} by {l.created_by_name ?? l.created_by}</th>
+                <th scope="row">{formatDateTime(l.created_at)} by {l.created_by_name ?? l.created_by}</th>
                 <td>{l.state}</td>
-                <td>{new Date(l.expires_at).toLocaleDateString()}</td>
+                <td>{formatDate(l.expires_at)}</td>
                 <td>{l.opens} time{l.opens === 1 ? "" : "s"}</td>
-                <td>{l.state === "active" && <Button type="button" onClick={() => void revoke(l)} aria-label={`Revoke the link created ${new Date(l.created_at).toLocaleString()}`}>Revoke</Button>}</td>
+                <td>{l.state === "active" && <ConfirmButton className="ds-button" aria-label={`Revoke the link created ${formatDateTime(l.created_at)}`} title="Revoke this link?"
+                  description="Anyone who has it can no longer open the PDF. This can't be undone." confirmLabel="Revoke" onConfirm={() => revoke(l)}>Revoke</ConfirmButton>}</td>
               </tr>
             ))}
           </tbody>
@@ -392,7 +395,6 @@ export function ReportBuilder({ reportId }: { reportId: string }) {
     } finally { setBusy(false); }
   }
   async function remove() {
-    if (!window.confirm(`Delete “${report!.name}” and every PDF generated from it? Links to them stop working.`)) return;
     try { await deleteReport(reportId); router.push("/app/reports"); }
     catch (e) { setError({ field: "", message: errorOf(e, "Could not delete the report.").message }); }
   }
@@ -410,7 +412,7 @@ export function ReportBuilder({ reportId }: { reportId: string }) {
       <p><Link href="/app/reports">← Reports</Link></p>
       <span className="eyebrow">Report</span>
       <h1>{report.name}</h1>
-      <p className="dash-muted">{scheduleWords(report.schedule)}{report.next_run_at ? `; next on ${new Date(report.next_run_at).toLocaleString()}` : ""}.</p>
+      <p className="dash-muted">{scheduleWords(report.schedule)}{report.next_run_at ? `; next on ${formatDateTime(report.next_run_at)}` : ""}.</p>
       <div aria-live="polite" className="sr-only">{announce.text && <p key={announce.n}>{announce.text}</p>}</div>
       {notice && <p role="status" className="dash-notice">{notice}</p>}
       {error && !error.field.startsWith("blocks[") && <p role="alert" className="dash-error">{error.message}</p>}
@@ -469,7 +471,8 @@ export function ReportBuilder({ reportId }: { reportId: string }) {
         <Button type="button" variant="primary" onClick={() => void generate()} disabled={busy || report.summary_needs_review}>
           {busy ? "Working…" : dirty ? "Save and generate PDF" : "Generate PDF"}
         </Button>
-        <Button type="button" onClick={() => void remove()}>Delete report</Button>
+        <ConfirmButton className="ds-button" title={`Delete “${report.name}”?`} description="Every PDF generated from it goes too, and links to them stop working."
+          confirmLabel="Delete report" onConfirm={() => remove()}>Delete report</ConfirmButton>
       </div>
       {report.summary_needs_review && <p className="rep-warn">Confirm the AI-drafted summary before generating.</p>}
 

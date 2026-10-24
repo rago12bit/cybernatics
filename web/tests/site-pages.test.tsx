@@ -12,6 +12,7 @@ import HowItWorks from "../app/how-it-works/page";
 import Integrations from "../app/integrations/page";
 import Migrate from "../app/migrate/page";
 import Security from "../app/security/page";
+import { metadata as notFoundMeta } from "../app/not-found";
 import { IntegrationsCatalogue } from "../components/site/IntegrationsCatalogue";
 import { Landing } from "../components/site/Landing";
 import { Recording } from "../components/site/Recording";
@@ -136,6 +137,12 @@ describe("the public site's pages (Week 77)", () => {
   });
 });
 
+describe("the 404 page", () => {
+  it("has its own tab title, not the home page's", () => {
+    expect(notFoundMeta.title).toBe("Page not found · Bulwark");
+  });
+});
+
 describe("the recorded Juice Shop scan", () => {
   const out = renderToStaticMarkup(<Recording />);
 
@@ -146,6 +153,13 @@ describe("the recorded Juice Shop scan", () => {
     }
     expect(out).toContain(provenance.commit.slice(0, 12));
     expect(out).toContain(provenance.recorded_on);
+  });
+
+  it("labels each half's merged count, the one its severity bars add up to", () => {
+    // The running app showed only its raw 47 alerts while its bars added up to the merged 38.
+    for (const scan of [codeScan, runtimeScan]) {
+      expect(out).toContain(`>${scan.unique_findings}</span><span class="label dimmed">After merging<`);
+    }
   });
 
   it("says what it does not show", () => {

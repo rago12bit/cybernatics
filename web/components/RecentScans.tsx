@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { listScans } from "@/lib/api";
-import { relativeTime } from "@/lib/format";
+import { relativeTime, formatDateTime } from "@/lib/format";
 import type { ScanSummary } from "@/lib/types";
 import { SeverityCounts, StatusBadge } from "./Badges";
 
@@ -50,7 +50,7 @@ export function RecentScans() {
       {rows?.length === 0 && (
         <div className="empty">
           <p className="muted">No scans yet. Start one on the left, or take a look at what a finished report looks like.</p>
-          <Link href="/sample" className="btn sm">View a sample scan →</Link>
+          <Link href="/sample" className="btn sm">See the recorded scan →</Link>
         </div>
       )}
       {rows && rows.length > 0 && (
@@ -63,7 +63,7 @@ export function RecentScans() {
                   <td><Link href={`/scans/${r.id}`} className="src-link wrap">{r.source_label}</Link></td>
                   <td><StatusBadge status={r.status} /></td>
                   <td>{r.status === "queued" || r.status === "running" ? <span className="muted">…</span> : <span className="cell-num">{r.unique_findings} <SeverityCounts counts={r.severity_counts} /></span>}</td>
-                  <td><time dateTime={r.created_at} title={new Date(r.created_at).toLocaleString()} className="muted">{relativeTime(r.created_at, now)}</time></td>
+                  <td><time dateTime={r.created_at} title={formatDateTime(r.created_at)} className="muted">{relativeTime(r.created_at, now)}</time></td>
                 </tr>
               ))}
             </tbody>

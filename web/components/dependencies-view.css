@@ -97,6 +97,15 @@
 .ds-deps-row:hover {
   background: var(--ds-raised);
 }
+.ds-deps-toggle {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
 .ds-deps-name {
   font-weight: 500;
 }

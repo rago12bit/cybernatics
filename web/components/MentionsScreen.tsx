@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { ApiError, listMentions } from "@/lib/api";
 import type { Mention } from "@/lib/types";
 import "./collab.css";
+import { formatDateTime } from "@/lib/format";
 
 /** Plan §49: notes that @mention you, newest first. "You" is the API token you signed in with,
  * until user accounts exist (Week 75). */
@@ -35,7 +36,7 @@ export function MentionsScreen() {
               <p className="ds-note-head">
                 <strong>{names[m.note.author] ?? m.note.author}</strong> on{" "}
                 <Link href={`/app/projects/${m.project_id}/issues/${m.note.issue_id}`}>{m.issue_title}</Link>{" "}
-                <time dateTime={m.note.created_at} className="ds-rt-meta">{new Date(m.note.created_at).toLocaleString()}</time>
+                <time dateTime={m.note.created_at} className="ds-rt-meta">{formatDateTime(m.note.created_at)}</time>
               </p>
               <p className="ds-note-body">{m.note.body.length > 400 ? `${m.note.body.slice(0, 400)}…` : m.note.body}</p>
             </li>

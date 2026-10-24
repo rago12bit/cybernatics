@@ -8,6 +8,7 @@ import type {
 } from "@/lib/types";
 import { Button } from "@/design-system/primitives/Button";
 import "./matching-screen.css";
+import { formatDateTime } from "@/lib/format";
 
 /** How each source's findings are matched into Issues (plan §42.3, §55.1's "Matching" row, ADR-0042).
  *
@@ -25,7 +26,7 @@ const LABEL: Record<DedupStrategyName, string> = {
 };
 const NEEDS_FIELDS = new Set<DedupStrategyName>(["hash_fields", "tool_id_or_hash"]);
 
-const when = (iso: string | null) => (iso ? new Date(iso).toLocaleString() : "never");
+const when = (iso: string | null) => (iso ? formatDateTime(iso) : "never");
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
 export function MatchingScreen({ assetId }: { assetId: string }) {

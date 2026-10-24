@@ -1,4 +1,5 @@
 import type { IssueRef, ScanStatus, Severity, ToolState } from "@/lib/types";
+import { formatDateTime } from "@/lib/format";
 
 export function SeverityBadge({ severity }: { severity: Severity }) {
   return <span className={`tag sev-${severity.toLowerCase()}`}>{severity}</span>;
@@ -48,7 +49,7 @@ export function ConfirmedAtRuntimeBadge({ issue }: { issue?: IssueRef | null }) 
   return (
     <span
       className="tag issue-confirmed-runtime"
-      title={`A DAST campaign confirmed this at runtime on ${new Date(issue.confirmed_at_runtime_at).toLocaleString()}`}
+      title={`A DAST campaign confirmed this at runtime on ${formatDateTime(issue.confirmed_at_runtime_at)}`}
     >
       Confirmed at runtime
     </span>

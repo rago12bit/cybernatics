@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { formatDateTime } from "@/lib/format";
 
 const stable = (iso: string) => {
   const d = new Date(iso);
@@ -15,7 +16,7 @@ export function LocalTime({ iso, className }: { iso: string; className?: string 
   const [text, setText] = useState(() => stable(iso));
   useEffect(() => {
     const d = new Date(iso);
-    if (!Number.isNaN(d.getTime())) setText(d.toLocaleString());
+    if (!Number.isNaN(d.getTime())) setText(formatDateTime(d));
   }, [iso]);
   return <time dateTime={iso} className={className}>{text}</time>;
 }

@@ -7,6 +7,7 @@ import { SLA_MARK, SLA_WORD } from "@/lib/sla";
 import type { SlaBand, SlaBasis, SlaOverview } from "@/lib/types";
 import { Button } from "@/design-system/primitives/Button";
 import "./sla-screen.css";
+import { formatDateTime } from "@/lib/format";
 
 /** A project's SLA policy (plan §44.1, Week 61): how many days each severity -- or, since Week 63,
  * each priority band -- has to be fixed from first detection, and when it counts as due soon.
@@ -199,7 +200,7 @@ export function SlaScreen({ assetId }: { assetId: string }) {
               {data.history.map((h) => (
                 <tr key={h.version}>
                   <td>{h.version}</td>
-                  <td>{new Date(h.changed_at).toLocaleString()}</td>
+                  <td>{formatDateTime(h.changed_at)}</td>
                   <td>{h.changed_by ?? "—"}</td>
                   <td>{h.enabled ? BANDS_BY[h.basis ?? "severity"].filter((b) => h.bands[b]?.days).map((b) => `${bandName(b)} ${h.bands[b]?.days}d`).join(", ") : "Off"}</td>
                   <td>{h.note ?? ""}</td>

@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { ApiError, evidenceDownloadUrl, listManualFindings } from "@/lib/api";
 import type { ManualFindingView } from "@/lib/types";
 import { Button } from "@/design-system/primitives/Button";
+import { formatDate } from "@/lib/format";
 
 /** What a person recorded about this Issue by hand (plan §43.2): the CVSS 4.0 vector beside its
  * score, the steps as written, and the evidence -- which is only ever downloaded, never displayed
@@ -36,7 +37,7 @@ export function ManualFindingPanel({ assetId, issueId }: { assetId: string; issu
         <div key={m.id}>
           <div className="ds-issue-label">Recorded by hand</div>
           <p className="ds-issue-meta">
-            {m.created_by ?? "Someone"} on <time dateTime={m.created_at}>{new Date(m.created_at).toLocaleDateString()}</time>
+            {m.created_by ?? "Someone"} on <time dateTime={m.created_at}>{formatDate(m.created_at)}</time>
             {m.location_kind === "route" && m.route && <> · <code>{m.method ?? ""} {m.route}</code></>}
             {m.host && <> on <code>{m.host}</code></>}
           </p>

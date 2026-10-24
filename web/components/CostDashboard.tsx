@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ApiError, getCostSummary } from "@/lib/api";
 import type { CostSummary } from "@/lib/types";
-import { formatDuration } from "@/lib/format";
+import { formatDuration, formatDateTime } from "@/lib/format";
 import "./cost-dashboard.css";
 
 function formatUsd(n: number): string {
@@ -98,7 +98,7 @@ export function CostDashboard() {
                       <td>
                         <Link href={`/scans/${row.scan_id}`}>{row.source_label}</Link>
                       </td>
-                      <td>{new Date(row.created_at).toLocaleString()}</td>
+                      <td>{formatDateTime(row.created_at)}</td>
                       <td>{formatDuration(row.compute_seconds)}</td>
                       <td>{row.llm_tokens.toLocaleString()}</td>
                       <td>{formatUsd(row.total_usd)}</td>

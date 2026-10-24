@@ -273,7 +273,13 @@ describe("my API tokens", () => {
     await flush();
     expect(calls.find((c) => c.method === "POST")!.body).toEqual({ name: "CI", scopes: ["scans:read", "scans:write"], days: 90 });
     expect(byLabel(host, "Your token").value).toBe("bulwark_once");
+    // The first click only asks: nothing is revoked until the dialog's own button is pressed.
     await act(async () => button(host, "Revoke CI").click());
+    await flush();
+    expect(calls.some((c) => c.method === "DELETE")).toBe(false);
+    const dialog = document.querySelector<HTMLElement>("[role=dialog]")!;
+    expect(dialog.textContent).toContain("Revoke the token CI?");
+    await act(async () => button(dialog, "Revoke").click());
     await flush();
     expect(calls.some((c) => c.method === "DELETE")).toBe(true);
   });

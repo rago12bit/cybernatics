@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { ApiError, listRiskAcceptances } from "@/lib/api";
 import type { RiskAcceptance } from "@/lib/types";
 import "./risk-acceptance.css";
+import { formatDate } from "@/lib/format";
 
 /** Plan §55.3: the approvals queue -- requests waiting for someone other than their requester --
  * then what is in force and what has ended. Whether *you* may decide is the server's answer
@@ -19,7 +20,7 @@ export const STATE_WORD: Record<RiskAcceptance["state"], string> = {
   extended: "Replaced by an extension",
 };
 
-const date = (iso: string) => new Date(iso).toLocaleDateString();
+const date = (iso: string) => formatDate(iso);
 
 export function approvalsVerdict(all: RiskAcceptance[]): string {
   const mine = all.filter((r) => r.state === "requested" && r.can_decide).length;

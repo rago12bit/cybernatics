@@ -27,6 +27,7 @@ import { RiskAcceptanceRequest } from "@/components/RiskAcceptanceRequest";
 import { JUSTIFICATIONS, justificationLabel } from "@/lib/vex";
 import type { VexJustification } from "@/lib/types";
 import "./issue-detail.css";
+import { formatDate } from "@/lib/format";
 
 const isTyping = (t: EventTarget | null) => t instanceof HTMLElement && /^(INPUT|SELECT|TEXTAREA)$/.test(t.tagName);
 
@@ -169,7 +170,7 @@ export function IssueDetail({ assetId, issueId }: { assetId: string; issueId: st
         <div className="ds-issue-triage-banner" role="status">
           {live.state === "requested"
             ? `Risk acceptance requested by ${live.names?.[live.requested_by] ?? live.requested_by}; waiting for ${live.approver ? (live.names?.[live.approver] ?? live.approver) : "someone else"} to approve. The issue stays open meanwhile.`
-            : `Risk acceptance (${live.decision}) approved by ${live.decided_by ? (live.names?.[live.decided_by] ?? live.decided_by) : "—"}, until ${new Date(live.expires_at).toLocaleDateString()}. To end it early, open it and expire it.`}
+            : `Risk acceptance (${live.decision}) approved by ${live.decided_by ? (live.names?.[live.decided_by] ?? live.decided_by) : "—"}, until ${formatDate(live.expires_at)}. To end it early, open it and expire it.`}
           {" "}<Link href={`/app/risk-acceptances/${live.id}`}>View it</Link>
         </div>
       )}
@@ -183,7 +184,7 @@ export function IssueDetail({ assetId, issueId }: { assetId: string; issueId: st
           {finding.issue?.triage_expires_at && (
             <>
               {" "}
-              — until <time dateTime={finding.issue.triage_expires_at}>{new Date(finding.issue.triage_expires_at).toLocaleDateString()}</time>
+              — until <time dateTime={finding.issue.triage_expires_at}>{formatDate(finding.issue.triage_expires_at)}</time>
             </>
           )}
           <Button onClick={() => runTriage("reopen")} disabled={busy}>Reopen</Button>
@@ -238,7 +239,7 @@ export function IssueDetail({ assetId, issueId }: { assetId: string; issueId: st
             <SeverityBadge severity={finding.scoring.normalized_severity.toLowerCase() as "critical" | "high" | "medium" | "low" | "info"} reachable={finding.scoring.reachable !== false} />
             {finding.issue?.first_seen_at && (
               <p className="ds-issue-meta">
-                First seen <time dateTime={finding.issue.first_seen_at}>{new Date(finding.issue.first_seen_at).toLocaleDateString()}</time>
+                First seen <time dateTime={finding.issue.first_seen_at}>{formatDate(finding.issue.first_seen_at)}</time>
               </p>
             )}
             {finding.issue?.sla && finding.issue.sla.state !== "none" && (
@@ -246,7 +247,7 @@ export function IssueDetail({ assetId, issueId }: { assetId: string; issueId: st
                 <span aria-hidden="true">{SLA_MARK[finding.issue.sla.state]} </span>
                 SLA: {slaSentence(finding.issue.sla)}
                 {finding.issue.sla.due_at && finding.issue.sla.state !== "met" && finding.issue.sla.state !== "missed" && (
-                  <> (due <time dateTime={finding.issue.sla.due_at}>{new Date(finding.issue.sla.due_at).toLocaleDateString()}</time>)</>
+                  <> (due <time dateTime={finding.issue.sla.due_at}>{formatDate(finding.issue.sla.due_at)}</time>)</>
                 )}
               </p>
             )}
@@ -274,7 +275,7 @@ export function IssueDetail({ assetId, issueId }: { assetId: string; issueId: st
             <div className="ds-issue-label">History</div>
             <ul className="ds-issue-history">
               {(history ?? []).map((h, i) => (
-                <li key={i}><time dateTime={h.at}>{new Date(h.at).toLocaleDateString()}</time> {h.label}</li>
+                <li key={i}><time dateTime={h.at}>{formatDate(h.at)}</time> {h.label}</li>
               ))}
             </ul>
           </div>

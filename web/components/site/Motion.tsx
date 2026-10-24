@@ -10,7 +10,8 @@ const motionOk = () => typeof window !== "undefined" && window.matchMedia?.(MOTI
 
 /**
  * A number that counts up the first time it scrolls into view. The server (and no-JS, and reduced-motion)
- * output is the final value, so nothing depends on the animation running.
+ * output is the final value, so nothing depends on the animation running. Screen readers always get the
+ * final value: before, a number still waiting below the fold read as "0".
  */
 export function CountUp({ value, decimals = 0, suffix = "", ms = 1300 }: { value: number; decimals?: number; suffix?: string; ms?: number }) {
   const ref = useRef<HTMLSpanElement>(null);
@@ -36,7 +37,13 @@ export function CountUp({ value, decimals = 0, suffix = "", ms = 1300 }: { value
     return () => { io.disconnect(); cancelAnimationFrame(raf); };
   }, [value, decimals, ms]);
 
-  return <span ref={ref}>{shown.toFixed(decimals)}{suffix}</span>;
+  // Assistive tech and copy-paste get the real value at once; only the eye sees it count.
+  return (
+    <span ref={ref}>
+      <span className="sr-only">{value.toFixed(decimals)}{suffix}</span>
+      <span aria-hidden="true">{shown.toFixed(decimals)}{suffix}</span>
+    </span>
+  );
 }
 
 /**

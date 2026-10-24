@@ -152,7 +152,24 @@ export function relativeTime(iso: string, now: number = Date.now()): string {
   if (s < 3600) return `${Math.round(s / 60)} min ago`;
   if (s < 86400) return `${Math.round(s / 3600)} h ago`;
   if (s < 7 * 86400) return `${Math.round(s / 86400)} d ago`;
-  return new Date(t).toLocaleDateString();
+  return formatDate(t);
+}
+
+// One way to write a date across the app: the viewer's own locale, month as a word so 10/11 can't be
+// misread, and never seconds. Calendar grids and pickers keep their own layouts.
+const DAY: Intl.DateTimeFormatOptions = { day: "numeric", month: "short", year: "numeric" };
+const DAY_TIME: Intl.DateTimeFormatOptions = { ...DAY, hour: "numeric", minute: "2-digit" };
+
+/** "Oct 11, 2026" (in the viewer's locale), or "—" for a missing or broken timestamp. */
+export function formatDate(when: string | number | Date): string {
+  const d = new Date(when);
+  return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString(undefined, DAY);
+}
+
+/** "Oct 11, 2026, 6:52 PM" (in the viewer's locale), or "—" for a missing or broken timestamp. */
+export function formatDateTime(when: string | number | Date): string {
+  const d = new Date(when);
+  return Number.isNaN(d.getTime()) ? "—" : d.toLocaleString(undefined, DAY_TIME);
 }
 
 /** A date as the person's own calendar day, "2026-10-08" -- for a date a person picks (an

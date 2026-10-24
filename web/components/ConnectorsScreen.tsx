@@ -9,6 +9,7 @@ import {
 import type { AssetSummary, ConnectorKind, ConnectorStatus, ConnectorView, FieldError } from "@/lib/types";
 import { Button } from "@/design-system/primitives/Button";
 import "./connectors-screen.css";
+import { formatDateTime } from "@/lib/format";
 
 /** Connector health (plan §55.7, §42.5, ADR-0045): every connector's last success, what it fetched,
  * and a warning when it connects but fetches nothing -- the quiet failure. The page opens with a
@@ -161,7 +162,7 @@ function Runs({ id }: { id: string }) {
   const [c, setC] = useState<ConnectorView | null>(null);
   useEffect(() => { getConnector(id).then(setC, () => setC(null)); }, [id]);
   if (!c) return <p role="status">Loading runs…</p>;
-  if (c.runs.length === 0) return <p>No runs yet. Next run: {c.next_run_at ? new Date(c.next_run_at).toLocaleString() : "when it is turned on"}.</p>;
+  if (c.runs.length === 0) return <p>No runs yet. Next run: {c.next_run_at ? formatDateTime(c.next_run_at) : "when it is turned on"}.</p>;
   return (
     <table className="ds-conn-runs">
       <caption>Recent runs of {c.name}</caption>
@@ -169,7 +170,7 @@ function Runs({ id }: { id: string }) {
       <tbody>
         {c.runs.map((r) => (
           <tr key={r.id}>
-            <td><time dateTime={r.started_at}>{new Date(r.started_at).toLocaleString()}</time></td>
+            <td><time dateTime={r.started_at}>{formatDateTime(r.started_at)}</time></td>
             <td>{r.outcome === "ok" ? "Done" : r.outcome === "empty" ? "Fetched nothing" : "Failed"}</td>
             <td>{r.items}</td>
             <td>

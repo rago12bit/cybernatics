@@ -10,13 +10,14 @@ import type { RiskAcceptance, RiskAcceptancePolicy } from "@/lib/types";
 import { Button } from "@/design-system/primitives/Button";
 import { STATE_WORD } from "./RiskAcceptancesScreen";
 import "./risk-acceptance.css";
+import { formatDate, formatDateTime } from "@/lib/format";
 
 /** One risk acceptance (plan §44.2, §55.3): what was asked and why, its issues and proof, every
  * step from the audit log, and what you may do next. The server decides who may approve; the
  * buttons only appear when it says you can. */
 
-const when = (iso: string) => new Date(iso).toLocaleString();
-const day = (iso: string) => new Date(iso).toLocaleDateString();
+const when = (iso: string) => formatDateTime(iso);
+const day = (iso: string) => formatDate(iso);
 
 export function RiskAcceptanceDetail({ id }: { id: string }) {
   const fid = useId();

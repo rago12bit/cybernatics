@@ -71,7 +71,7 @@ export function Recording() {
             campaign. Every number here is what Bulwark reported on {provenance.recorded_on}.
           </p>
         </div>
-        <Link href="/sample" className="btn primary">Explore the findings →</Link>
+        <Link href="/sample" className="btn primary">Explore the recorded scan →</Link>
       </div>
       <div className="rec-grid">
         <div className="rec-half">
@@ -88,6 +88,7 @@ export function Recording() {
           <span className="eyebrow plain">The running app</span>
           <div className="rec-nums">
             <div><span className="numeral">{runtimeScan.raw_findings}</span><span className="label dimmed">Alerts</span></div>
+            <div><span className="numeral">{runtimeScan.unique_findings}</span><span className="label dimmed">After merging</span></div>
             <div><span className="numeral">{refusedTotal()}</span><span className="label dimmed">Connections refused</span></div>
           </div>
           <SevBars scan={runtimeScan} />

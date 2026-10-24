@@ -6,6 +6,7 @@ import { ApiError, listLibraries, searchComponents } from "@/lib/api";
 import type { ComponentSearch, ComponentUse, LibrarySummary } from "@/lib/types";
 import { Button } from "@/design-system/primitives/Button";
 import "./components-screen.css";
+import { formatDate } from "@/lib/format";
 
 /** Plan §46.1: "where do we use this?" -- a library, optionally a version condition, and every
  * project whose latest SBOM has it. The library box suggests libraries by name as you type (the
@@ -217,7 +218,7 @@ export function ComponentsScreen({ initialPurl = "", initialVersion = "" }: { in
                     <td data-label="Exposure" className="ds-comp-nowrap" title={u.exposure === "unset" ? "Not set in the project's priority settings; ranked as internet-facing" : undefined}>{EXPOSURE[u.exposure]}</td>
                     <td data-label="Found in" className="ds-comp-paths">
                       {u.paths[0] ?? "—"}{u.paths.length > 1 ? ` +${u.paths.length - 1} more` : ""}
-                      <span className="ds-comp-meta"> · {u.source === "scan" ? "scan" : "import"}, {new Date(u.seen_at).toLocaleDateString()}</span>
+                      <span className="ds-comp-meta"> · {u.source === "scan" ? "scan" : "import"}, {formatDate(u.seen_at)}</span>
                     </td>
                   </tr>
                 ))}

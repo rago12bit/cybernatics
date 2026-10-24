@@ -1,4 +1,7 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = { title: "Page not found · Bulwark" };
 
 export default function NotFound() {
   return (
@@ -9,7 +12,7 @@ export default function NotFound() {
         <p className="lede">The link may be old, or the scan may have been removed.</p>
         <div className="hero-actions">
           <Link href="/" className="btn primary">Back home →</Link>
-          <Link href="/sample" className="btn">View a sample scan</Link>
+          <Link href="/sample" className="btn">See the recorded scan</Link>
         </div>
       </div>
     </div>

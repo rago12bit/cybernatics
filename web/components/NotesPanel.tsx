@@ -4,14 +4,16 @@ import { Fragment, useCallback, useEffect, useId, useMemo, useRef, useState } fr
 import { ApiError, addNote, attachToNote, deleteNote, editNote, listNotes, listPeople, noteFileLink } from "@/lib/api";
 import type { Note, NotesView, Person } from "@/lib/types";
 import { Button } from "@/design-system/primitives/Button";
+import { ConfirmButton } from "@/design-system/primitives/ConfirmButton";
 import "./collab.css";
+import { formatDateTime } from "@/lib/format";
 
 /** Plan §49: notes on an issue, threaded, with @mentions. Bodies are shown as plain text -- never
  * HTML or Markdown -- with known @handles marked. Files attached to a note are never shown inline:
  * they download through a short-lived link from the separate attachments origin. */
 
 const MENTION = /(^|[^\w@.])@([a-z0-9][a-z0-9._-]{0,63})/gi;
-const when = (iso: string) => new Date(iso).toLocaleString();
+const when = (iso: string) => formatDateTime(iso);
 
 function Body({ text, handles }: { text: string; handles: Set<string> }) {
   const parts: React.ReactNode[] = [];
@@ -179,7 +181,6 @@ export function NotesPanel({ issueId }: { issueId: string }) {
   }
 
   async function remove(n: Note) {
-    if (!window.confirm("Delete this note? Replies stay.")) return;
     try {
       setView(await deleteNote(n.id));
     } catch (e) {
@@ -230,7 +231,7 @@ export function NotesPanel({ issueId }: { issueId: string }) {
                   {n.author === view.you && (
                     <>
                       <button type="button" className="ds-note-link" onClick={() => setEditing(n.id)}>Edit</button>
-                      <button type="button" className="ds-note-link" onClick={() => remove(n)}>Delete</button>
+                      <ConfirmButton className="ds-note-link" title="Delete this note?" description="Replies to it stay." confirmLabel="Delete" onConfirm={() => remove(n)}>Delete</ConfirmButton>
                     </>
                   )}
                 </div>

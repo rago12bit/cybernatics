@@ -148,7 +148,7 @@ button.row-title { font: 500 0.9375rem/1.35 var(--sans); letter-spacing: -0.01em
 button.row-title:hover { color: var(--teal); }
 .clamp { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; }
 .findings-table td:nth-child(3) { white-space: nowrap; }
-.loc { font: 400 0.75rem/1.3 var(--mono); color: var(--muted); }
+.loc { font: 400 0.75rem/1.3 var(--mono); color: var(--muted); overflow-wrap: anywhere; } /* long paths wrap, never widen the page */
 
 /* ---------- Cells & panels ---------- */
 .cell { padding: clamp(1.1rem, 2.4vw, 2rem); }
@@ -264,7 +264,7 @@ button.row-title:hover { color: var(--teal); }
 .app-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); }
 .app-grid > * { min-width: 0; }
 .app-grid > * + * { border-left: 1px solid var(--line); }
-.crumb { font: 400 0.75rem/1 var(--mono); letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); text-decoration: none; }
+.crumb { display: inline-block; padding: 0.5rem 0; margin: -0.5rem 0; font: 400 0.75rem/1 var(--mono); letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); text-decoration: none; }
 .crumb:hover { color: var(--text); }
 .scan-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
 .scan-head h1 { overflow-wrap: anywhere; }
@@ -612,7 +612,7 @@ kbd { font: 500 0.6875rem/1 var(--mono); border: 1px solid var(--line-strong); p
 .gate-choices { list-style: none; padding: 0; margin: 0.25rem 0 0; display: grid; gap: 0.4rem; }
 .gate-choices .btn { width: 100%; justify-content: center; }
 .gate-token { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--line); }
-.gate-token summary { cursor: pointer; font: 400 0.75rem/1.2 var(--mono); letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); }
+.gate-token summary { cursor: pointer; padding: 0.45rem 0; margin: -0.45rem 0; font: 400 0.75rem/1.2 var(--mono); letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); }
 .gate-token form { display: grid; gap: 0.4rem; margin-top: 0.5rem; }
 .gate-token .btn { justify-content: center; margin-top: 0.5rem; }
 .empty { display: grid; gap: 0.9rem; justify-items: start; }
@@ -620,7 +620,8 @@ kbd { font: 500 0.6875rem/1 var(--mono); border: 1px solid var(--line-strong); p
 /* ---------- Demo banner, state pages ---------- */
 .demo-banner { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding: 0.9rem clamp(1.25rem, 3vw, 2.5rem); background: #132520; border-bottom: 1px solid var(--line); }
 .demo-banner p { margin-top: 0.35rem; }
-.state-page { padding: clamp(2rem, 8vw, 6rem) clamp(1.25rem, 4vw, 3.5rem); display: grid; gap: 1.25rem; justify-items: start; min-height: 60vh; align-content: center; }
+.state-page { padding: clamp(2rem, 8vw, 6rem) clamp(1.25rem, 4vw, 3.5rem); display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.25rem; justify-items: start; min-height: 60vh; align-content: center; }
+.state-page > .snippet { justify-self: stretch; } /* scrolls inside its own box on a phone */
 .state-page.compact { min-height: 40vh; }
 
 /* ---------- Risk: "Fix these first", signals, why-panel ---------- */
