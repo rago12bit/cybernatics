@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { ApiError, getDependencies } from "@/lib/api";
 import type { DependenciesView as DependenciesData, DependencyPackage, DependencyRelation } from "@/lib/types";
+import { EmptyState } from "@/design-system/primitives/EmptyState";
 import "./dependencies-view.css";
 
 const RELATION_LABEL: Record<DependencyRelation, string> = {
@@ -169,12 +170,19 @@ export function DependenciesView({ assetId }: { assetId: string }) {
 
   if (data.components === 0) {
     return (
-      <div className="ds-deps-empty">
-        <p>No SBOM for this project yet.</p>
-        <p className="muted small">
-          Start a new scan with <code>syft</code> selected under &quot;Supply-chain risk&quot; to populate this screen.
+      <EmptyState
+        title="No SBOM for this project yet"
+        actions={<>
+          <Link href="/app/scan" className="ds-button primary">Scan with Syft →</Link>
+          <Link href={`/app/projects/${assetId}/import`} className="ds-button">Import an SBOM</Link>
+        </>}
+      >
+        <p>
+          Every package this project uses, with its licence, known vulnerabilities and OpenSSF Scorecard, appears here
+          once a scan runs <code>syft</code> (tick &quot;Supply-chain risk&quot; when you start it) or you import a
+          CycloneDX or SPDX file.
         </p>
-      </div>
+      </EmptyState>
     );
   }
 
@@ -183,16 +191,6 @@ export function DependenciesView({ assetId }: { assetId: string }) {
 
   return (
     <div className="ds-deps">
-      <div className="ds-deps-crumbline">
-        <Link href={`/app/projects/${assetId}`}>overview</Link> <span aria-hidden="true">·</span>{" "}
-        <Link href={`/app/projects/${assetId}/issues`}>all issues</Link>
-        {data.scan_id && (
-          <>
-            {" "}
-            <span aria-hidden="true">·</span> <Link href={`/scans/${data.scan_id}`}>full scan report</Link>
-          </>
-        )}
-      </div>
 
       <div className="ds-deps-summary">
         <div>

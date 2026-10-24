@@ -8,8 +8,9 @@ import {
 } from "@/lib/api";
 import type { AssetSummary, ConnectorKind, ConnectorStatus, ConnectorView, FieldError } from "@/lib/types";
 import { Button } from "@/design-system/primitives/Button";
+import { Loading } from "@/design-system/primitives/Loading";
 import "./connectors-screen.css";
-import { formatDateTime } from "@/lib/format";
+import { formatDateTime, projectName } from "@/lib/format";
 
 /** Connector health (plan §55.7, §42.5, ADR-0045): every connector's last success, what it fetched,
  * and a warning when it connects but fetches nothing -- the quiet failure. The page opens with a
@@ -84,7 +85,7 @@ export function ConnectorsScreen() {
     }
   }
 
-  if (!list) return error ? <p role="alert" className="ds-conn-error">{error}</p> : <p role="status">Loading…</p>;
+  if (!list) return error ? <p role="alert" className="ds-conn-error">{error}</p> : <Loading />;
 
   return (
     <div className="ds-conn">
@@ -115,7 +116,7 @@ export function ConnectorsScreen() {
                     {c.credential_store === "database" ? " · credential not encrypted" : ""}
                   </span>
                 </th>
-                <td><Link href={`/app/projects/${c.project_id}`}>{c.project}</Link></td>
+                <td><Link href={`/app/projects/${c.project_id}`} title={c.project}>{projectName(c.project)}</Link></td>
                 <td>
                   <span className={`ds-conn-status ds-conn-${c.status}`}>
                     <span aria-hidden="true">{STATUS[c.status].mark}</span> {STATUS[c.status].word}

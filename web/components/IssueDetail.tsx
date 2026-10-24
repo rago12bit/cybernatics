@@ -156,14 +156,16 @@ export function IssueDetail({ assetId, issueId }: { assetId: string; issueId: st
   return (
     <div className="ds-issue">
       <div className="ds-issue-topline">
-        <Link href={`/app/projects/${assetId}/issues`}>← Issues</Link>
-        <code>{finding.id}</code>
+        <div className="ds-issue-topline-bar">
+          <Link href={`/app/projects/${assetId}/issues`}>← All issues</Link>
+          <label className="ds-mode-toggle">
+            <input type="checkbox" checked={mode === "expert"} onChange={(e) => setMode(e.target.checked ? "expert" : "novice")} />
+            Expert mode
+          </label>
+        </div>
+        {/* The title is what the issue is: the page's heading, whole, not an ellipsis beside its id. */}
         <h1 className="ds-issue-topline-title">{finding.title}</h1>
-        <div className="ds-issue-topline-spacer" />
-        <label className="ds-mode-toggle">
-          <input type="checkbox" checked={mode === "expert"} onChange={(e) => setMode(e.target.checked ? "expert" : "novice")} />
-          Expert mode
-        </label>
+        <code>{finding.id}</code>
       </div>
 
       {live && (

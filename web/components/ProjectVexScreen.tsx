@@ -6,8 +6,9 @@ import { ApiError, decideVex, downloadVex, getProjectVex } from "@/lib/api";
 import type { ProjectVex, VexStatement } from "@/lib/types";
 import { Button } from "@/design-system/primitives/Button";
 import { justificationLabel } from "@/lib/vex";
+import { Loading } from "@/design-system/primitives/Loading";
 import "./compliance.css";
-import { formatDate } from "@/lib/format";
+import { formatDate, projectName } from "@/lib/format";
 
 /** A project's VEX (plan §46.3): what its exported documents say about each vulnerability in its
  * current SBOM, the statements people confirmed (with the evidence), and the downloads. Only
@@ -54,12 +55,12 @@ export function ProjectVexScreen({ assetId }: { assetId: string }) {
     }
   }
 
-  if (!v) return <div className="ds-cmp">{error ? <p role="alert" className="ds-cmp-error">{error}</p> : <p>Loading…</p>}</div>;
+  if (!v) return <div className="ds-cmp">{error ? <p role="alert" className="ds-cmp-error">{error}</p> : <Loading />}</div>;
   const counts = Object.entries(v.counts).map(([k, n]) => `${n} ${STATUS[k as VexStatement["status"]].toLowerCase()}`);
   return (
     <div className="ds-cmp">
       <header>
-        <h1 className="ds-cmp-title">VEX for {v.project}</h1>
+        <h1 className="ds-cmp-title">VEX for {projectName(v.project)}</h1>
         <p className="ds-cmp-lede">
           {v.exported.length
             ? `The project's VEX says, for each vulnerability in its current SBOM: ${counts.join(", ")}.`

@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { ApiError, listDastCampaigns, startDastCampaign } from "@/lib/api";
 import type { ScanSummary } from "@/lib/types";
 import { Button } from "@/design-system/primitives/Button";
+import { Loading } from "@/design-system/primitives/Loading";
 import "./campaigns-view.css";
 import { formatDateTime } from "@/lib/format";
 
@@ -54,7 +55,7 @@ export function CampaignsView({ assetId }: { assetId: string }) {
       </div>
 
       {campaigns === null ? (
-        <p className="small muted">Loading…</p>
+        <Loading />
       ) : campaigns.length === 0 ? (
         <p className="small muted">No campaigns yet.</p>
       ) : (

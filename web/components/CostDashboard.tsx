@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ApiError, getCostSummary } from "@/lib/api";
 import type { CostSummary } from "@/lib/types";
-import { formatDuration, formatDateTime } from "@/lib/format";
+import { formatDuration, formatDateTime, projectName } from "@/lib/format";
+import { Loading } from "@/design-system/primitives/Loading";
 import "./cost-dashboard.css";
 
 function formatUsd(n: number): string {
@@ -54,7 +55,7 @@ export function CostDashboard() {
       {error && <p className="ds-cost-error" role="alert">{error}</p>}
 
       {summary === null ? (
-        <p className="small muted">Loading…</p>
+        <Loading />
       ) : (
         <>
           <div className="ds-cost-totals">
@@ -96,7 +97,7 @@ export function CostDashboard() {
                   {summary.scans.map((row) => (
                     <tr key={row.scan_id}>
                       <td>
-                        <Link href={`/scans/${row.scan_id}`}>{row.source_label}</Link>
+                        <Link href={`/scans/${row.scan_id}`} title={row.source_label}>{projectName(row.source_label)}</Link>
                       </td>
                       <td>{formatDateTime(row.created_at)}</td>
                       <td>{formatDuration(row.compute_seconds)}</td>

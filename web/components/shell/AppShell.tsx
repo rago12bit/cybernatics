@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { listAssets } from "@/lib/api";
+import { projectName } from "@/lib/format";
 import type { AssetSummary } from "@/lib/types";
 import { DropdownMenuChildren } from "@/design-system/primitives/DropdownMenu";
 import { Dialog as DsDialog } from "@/design-system/primitives/Dialog";
@@ -13,6 +14,7 @@ import { ModeProvider } from "@/design-system/mode";
 import * as RadixDropdown from "@radix-ui/react-dropdown-menu";
 import "@/design-system/fonts.css";
 import "@/design-system/tokens.css";
+import { ProjectNav, projectFromPath } from "./ProjectNav";
 import "./shell.css";
 
 export type Crumb = { label: string; href?: string };
@@ -26,7 +28,21 @@ export type Crumb = { label: string; href?: string };
  * component doesn't open with one. */
 export function AppShell({ crumbs, title, eyebrow, children }: { crumbs: Crumb[]; title?: string; eyebrow?: string; children: ReactNode }) {
   const router = useRouter();
+  const path = usePathname() ?? "";
   const [assets, setAssets] = useState<AssetSummary[] | null>(null);
+
+  // On a project's pages: its name in the breadcrumbs (they say "Project" until the list arrives) and
+  // its tabs under the bar. `undefined` while loading, `null` for a project not in the list.
+  const proj = projectFromPath(path);
+  const asset = proj && assets !== null ? assets.find((a) => a.id === proj.id) ?? null : undefined;
+  const projectHref = proj ? `/app/projects/${proj.id}` : null;
+  const shown: Crumb[] = crumbs.map((c) => (c.href === projectHref && asset ? { ...c, label: projectName(asset.label) } : c));
+  if (proj && asset && !crumbs.some((c) => c.href === projectHref)) {
+    // A page whose crumbs skip the project (Projects / Issues) still says which project it is.
+    const name = projectName(asset.label);
+    if (proj.sub === "") shown.push({ label: name });
+    else shown.splice(shown[0]?.href === "/app/projects" ? 1 : 0, 0, { label: name, href: projectHref! });
+  }
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
 
@@ -59,7 +75,7 @@ export function AppShell({ crumbs, title, eyebrow, children }: { crumbs: Crumb[]
       <div className="ds-shell">
         <div className="ds-shell-bar">
           <nav aria-label="Breadcrumb" className="ds-shell-crumbs">
-            {crumbs.map((c, i) => (
+            {shown.map((c, i) => (
               <span key={i}>
                 {i > 0 && <span aria-hidden="true" className="ds-shell-sep">/</span>}
                 {c.href ? <Link href={c.href}>{c.label}</Link> : <span aria-current="page">{c.label}</span>}
@@ -77,6 +93,7 @@ export function AppShell({ crumbs, title, eyebrow, children }: { crumbs: Crumb[]
             <Button onClick={() => setShortcutsOpen(true)} aria-label="Show keyboard shortcuts">?</Button>
           </div>
         </div>
+        {proj && <ProjectNav id={proj.id} sub={proj.sub} asset={asset} />}
         <div className="ds-shell-main">
           {title && (
             <div className="ds-page-head">
@@ -109,8 +126,8 @@ function ProjectSwitcher({ assets, onNavigate }: { assets: AssetSummary[] | null
       {assets === null && <div className="ds-dropdown-item" aria-disabled="true">Loading…</div>}
       {assets !== null && assets.length === 0 && <div className="ds-dropdown-item" aria-disabled="true">No projects scanned yet</div>}
       {assets?.map((a) => (
-        <RadixDropdown.Item key={a.id} className="ds-dropdown-item" onSelect={() => onNavigate(a.id)}>
-          {a.label}
+        <RadixDropdown.Item key={a.id} className="ds-dropdown-item" onSelect={() => onNavigate(a.id)} title={a.label}>
+          {projectName(a.label)}
         </RadixDropdown.Item>
       ))}
       <RadixDropdown.Separator className="ds-dropdown-separator" />
@@ -191,7 +208,7 @@ function CommandPalette({
             onMouseEnter={() => setActive(i)}
             onClick={() => onNavigate(a.id)}
           >
-            {a.label}
+            {projectName(a.label)}
           </li>
         ))}
       </ul>

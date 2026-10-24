@@ -20,6 +20,37 @@ export class ApiError extends Error {
   }
 }
 
+// What to say when the API gives no message of its own. Not `res.statusText`: it is empty over HTTP/2,
+// which most production proxies speak, and "Unprocessable Entity" means nothing to the person reading it.
+const STATUS_MESSAGE: Record<number, string> = {
+  400: "The request was not valid.",
+  401: "You are signed out. Sign in again to continue.",
+  403: "You do not have access to this.",
+  404: "Not found. It may have been removed.",
+  409: "This changed since you opened it. Reload and try again.",
+  413: "That is too large to upload.",
+  422: "Some of what was sent was not valid.",
+  429: "Too many requests at once. Wait a moment and try again.",
+};
+
+/** A sentence for a failed response: the API's own `detail` when it sent one, else one by status. */
+export function errorMessage(status: number, body: unknown): string {
+  const detail = (body as { detail?: unknown } | null)?.detail;
+  if (typeof detail === "string" && detail.trim()) return detail;
+  if (detail && typeof detail === "object" && !Array.isArray(detail) && typeof (detail as { message?: unknown }).message === "string") {
+    return (detail as { message: string }).message;
+  }
+  // FastAPI's validation errors: a list of {loc, msg}. Name the first field rather than say only "422".
+  if (Array.isArray(detail) && detail.length > 0) {
+    const first = detail[0] as { loc?: unknown[]; msg?: unknown };
+    const field = (first.loc ?? []).filter((x) => x !== "body" && x !== "query" && x !== "path").join(".");
+    const msg = typeof first.msg === "string" ? first.msg : "";
+    if (field || msg) return `${STATUS_MESSAGE[422]} ${field ? `${field}: ` : ""}${msg}`.trim();
+  }
+  if (STATUS_MESSAGE[status]) return STATUS_MESSAGE[status]!;
+  return status >= 500 ? "The server ran into a problem. Try again in a moment." : `The request failed (HTTP ${status}).`;
+}
+
 const AUTH_EVENT = "bulwark:auth";
 const notifyAuth = () => {
   try {
@@ -119,19 +150,15 @@ async function request<T>(path: string, init: RequestInit = {}, token = getToken
     throw new ApiError(0, `Cannot reach the Bulwark API at ${API_URL}. Is it running?`);
   }
   if (!res.ok) {
-    let detail = res.statusText;
-    let data: unknown;
+    let body: unknown = null;
     try {
-      const body = await res.json();
-      if (typeof body?.detail === "string") detail = body.detail;
-      else if (body?.detail && typeof body.detail === "object") {
-        data = body.detail;
-        if (typeof body.detail.message === "string") detail = body.detail.message;
-      }
+      body = await res.json();
     } catch {
       /* non-JSON error body */
     }
-    throw new ApiError(res.status, detail, data);
+    const detail = (body as { detail?: unknown } | null)?.detail;
+    const data = detail && typeof detail === "object" ? detail : undefined;
+    throw new ApiError(res.status, errorMessage(res.status, body), data);
   }
   if (res.status === 204) return undefined as T;
   return (await res.json()) as T;
@@ -178,14 +205,13 @@ export async function fetchReport(id: string, format: ReportFormat): Promise<Blo
     throw new ApiError(0, `Cannot reach the Bulwark API at ${API_URL}. Is it running?`);
   }
   if (!res.ok) {
-    let detail = res.statusText;
+    let body: unknown = null;
     try {
-      const body = await res.json();
-      if (typeof body?.detail === "string") detail = body.detail;
+      body = await res.json();
     } catch {
       /* non-JSON error body */
     }
-    throw new ApiError(res.status, detail);
+    throw new ApiError(res.status, errorMessage(res.status, body));
   }
   return res.blob();
 }

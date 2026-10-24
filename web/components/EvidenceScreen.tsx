@@ -4,6 +4,7 @@ import { useEffect, useId, useState } from "react";
 import { ApiError, createEvidencePack, downloadEvidencePack, listEvidencePacks, listFrameworks, previewEvidencePack } from "@/lib/api";
 import type { ComplianceFramework, EvidencePack, EvidencePreview, EvidenceSummary } from "@/lib/types";
 import { Button } from "@/design-system/primitives/Button";
+import { Loading } from "@/design-system/primitives/Loading";
 import "./compliance.css";
 import { formatDateTime } from "@/lib/format";
 
@@ -109,7 +110,7 @@ export function EvidenceScreen() {
 
       <section aria-labelledby={`${fid}-list`} className="ds-cmp-box">
         <h2 id={`${fid}-list`}>Generated</h2>
-        {packs === null ? <p>Loading…</p> : packs.length === 0 ? <p className="ds-cmp-meta">None yet.</p> : (
+        {packs === null ? <Loading lines={2} /> : packs.length === 0 ? <p className="ds-cmp-meta">None yet.</p> : (
           <ul className="ds-cmp-list">
             {packs.map((p) => (
               <li key={p.id} className="ds-cmp-item">

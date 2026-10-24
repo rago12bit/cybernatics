@@ -6,6 +6,8 @@ export { DropdownMenu, DropdownMenuChildren } from "./primitives/DropdownMenu";
 export type { DropdownItem } from "./primitives/DropdownMenu";
 export { Dialog } from "./primitives/Dialog";
 export { ConfirmButton } from "./primitives/ConfirmButton";
+export { EmptyState } from "./primitives/EmptyState";
+export { Loading } from "./primitives/Loading";
 export { Tabs } from "./primitives/Tabs";
 export { WhyRankedPanel, WhyRankedTrigger } from "./why-ranked";
 export { TaintStepper } from "./taint-stepper";

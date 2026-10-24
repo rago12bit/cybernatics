@@ -9,6 +9,7 @@ import { Dialog } from "@/design-system/primitives/Dialog";
 import { SeverityIcon } from "@/design-system/severity";
 import { EngagementForm } from "./EngagementForm";
 import "./engagement.css";
+import { projectName } from "@/lib/format";
 
 /** Plan §55.2: one assessment. Scope and people, checklist progress, its findings -- with what else
  * found them ("Also found by Opengrep taint", cross-source correlation where the tester works) and
@@ -111,7 +112,7 @@ export function EngagementScreen({ id }: { id: string }) {
       <header className="ds-eng-head">
         <h1 className="ds-eng-title">{e.name}</h1>
         <p className="ds-eng-meta">
-          <Link href={project}>{e.project}</Link> <span aria-hidden="true">·</span>{" "}
+          <Link href={project} title={e.project}>{projectName(e.project)}</Link> <span aria-hidden="true">·</span>{" "}
           <span className={`ds-eng-status ds-eng-status-${e.status}`}>{STATUS_WORD[e.status]}</span>, {dateRange(e)}
         </p>
       </header>

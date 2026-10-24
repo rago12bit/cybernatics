@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { dedupSummary, isTerminal, issueSummary } from "@/lib/format";
+import { dedupSummary, isTerminal, issueSummary, projectName } from "@/lib/format";
 import type { Connection } from "@/lib/useScan";
 import type { FindingsPage, FindingsQuery, GuidanceApi, ScanView, Severity } from "@/lib/types";
 import { SeverityCounts, StatusBadge } from "./Badges";
@@ -49,7 +49,8 @@ export function ScanReport({
           <div className="scan-head">
             <div className="stack">
               <span className="eyebrow">Scan</span>
-              <h1 id="scan-h" className="wrap">{scan.source_label}</h1>
+              <h1 id="scan-h" className="wrap">{projectName(scan.source_label)}</h1>
+              {projectName(scan.source_label) !== scan.source_label && <p className="small muted wrap scan-source">{scan.source_label}</p>}
             </div>
             <span className="scan-head-right">
               {!done && (scan.started_at ?? scan.created_at) && <ElapsedTime since={scan.started_at ?? scan.created_at} />}

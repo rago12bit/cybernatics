@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { ApiError, dismissHypothesis, generateHypotheses, listHypotheses, promoteHypothesis } from "@/lib/api";
 import type { Hypothesis } from "@/lib/types";
 import { Button } from "@/design-system/primitives/Button";
+import { Loading } from "@/design-system/primitives/Loading";
 import "./hypotheses-lane.css";
 
 function HypothesisCard({
@@ -123,7 +124,7 @@ export function HypothesesLane({ assetId }: { assetId: string }) {
       {error && <p className="ds-hyp-error" role="alert">{error}</p>}
 
       {items === null ? (
-        <p className="small muted">Loading…</p>
+        <Loading />
       ) : items.length === 0 ? (
         <p className="ds-hyp-empty">
           Nothing here yet. Click Generate to check this project&apos;s latest scan for routes that may be

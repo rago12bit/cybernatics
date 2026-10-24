@@ -9,13 +9,6 @@
   color: var(--ds-ink);
 }
 
-.ds-deps-crumbline {
-  font-size: var(--ds-text-2);
-  color: var(--ds-muted);
-}
-.ds-deps-crumbline a {
-  color: var(--ds-brand);
-}
 
 .ds-deps-empty {
   padding: var(--ds-space-4);

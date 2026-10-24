@@ -1,0 +1,5 @@
+/* Applied to every visual snapshot (playwright.config.ts): the Next.js dev overlay is development-only
+   chrome that comes and goes (an "Insight" badge appeared over the Copilot button), not the app. */
+nextjs-portal {
+  display: none !important;
+}

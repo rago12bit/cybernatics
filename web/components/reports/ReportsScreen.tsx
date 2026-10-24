@@ -6,8 +6,10 @@ import { useEffect, useId, useState } from "react";
 import { ApiError, createReport, listReportTemplates, listReports } from "@/lib/api";
 import { scheduleWords, type Report, type ReportTemplate } from "@/lib/reports";
 import { Button } from "@/design-system/primitives/Button";
+import { Loading } from "@/design-system/primitives/Loading";
 import "../dashboard/dashboard.css";
 import "./reports.css";
+import { EmptyState } from "@/design-system/primitives/EmptyState";
 
 /* Reports (plan §48.3): every report, and a new one from a template. */
 export function ReportsScreen() {
@@ -56,8 +58,12 @@ export function ReportsScreen() {
       </form>
       <section aria-labelledby={`${id}-list`}>
         <h2 id={`${id}-list`}>Your organization&apos;s reports</h2>
-        {!reports && !error && <p role="status">Loading…</p>}
-        {reports?.length === 0 && <p className="dash-muted">No reports yet.</p>}
+        {!reports && !error && <Loading lines={2} />}
+        {reports?.length === 0 && (
+          <EmptyState compact title="No reports yet">
+            <p>Pick a starting point above and press Create. Each report keeps its blocks, its schedule and any links you share.</p>
+          </EmptyState>
+        )}
         {reports && reports.length > 0 && (
           <table className="dash-table">
             <caption className="sr-only">Reports</caption>

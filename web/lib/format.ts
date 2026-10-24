@@ -172,6 +172,31 @@ export function formatDateTime(when: string | number | Date): string {
   return Number.isNaN(d.getTime()) ? "—" : d.toLocaleString(undefined, DAY_TIME);
 }
 
+// The hosts a project can be cloned from (core/gitfetch.py); a repository there is named `owner/repo`.
+const CODE_HOSTS = new Set(["github.com", "gitlab.com", "bitbucket.org"]);
+const URLISH = /^(?:https?:\/\/)?(?:www\.)?([a-z0-9-]+(?:\.[a-z0-9-]+)+(?::\d+)?)(\/[^\s?#]*)?$/i;
+
+/**
+ * A project the way people say it: `acme/payments-api` for a repository on a code host, the host and
+ * path for a web target (`shop.example.com`), and anything else -- an uploaded archive, an import --
+ * unchanged. Screens that shorten a label keep the full one as a tooltip.
+ */
+export function projectName(label: string): string {
+  const m = URLISH.exec(label.trim());
+  if (!m) return label;
+  const host = m[1]!.toLowerCase();
+  const path = (m[2] ?? "").replace(/\/+$/, "");
+  if (CODE_HOSTS.has(host) && path.split("/").filter(Boolean).length >= 2) return path.slice(1).replace(/\.git$/i, "");
+  return /^https?:\/\//i.test(label.trim()) ? host + path : label;
+}
+
+/** The code host a project lives on ("github.com"), or null for web targets, uploads and imports. */
+export function projectHost(label: string): string | null {
+  const m = URLISH.exec(label.trim());
+  const host = m?.[1]?.toLowerCase();
+  return host && CODE_HOSTS.has(host) && (m?.[2] ?? "").split("/").filter(Boolean).length >= 2 ? host : null;
+}
+
 /** A date as the person's own calendar day, "2026-10-08" -- for a date a person picks (an
  * engagement's start, an acceptance's expiry). Not `toISOString()`, which is the UTC day: east of
  * UTC, just after midnight, that is still yesterday (found in Week 74). */

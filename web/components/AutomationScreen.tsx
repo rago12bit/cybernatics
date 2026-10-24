@@ -9,7 +9,7 @@ import type { Rule, RuleDryRun, RuleRun, RuleTemplate } from "@/lib/types";
 import { Button } from "@/design-system/primitives/Button";
 import { ConfirmButton } from "@/design-system/primitives/ConfirmButton";
 import "./automation.css";
-import { formatDateTime } from "@/lib/format";
+import { formatDateTime, projectName } from "@/lib/format";
 
 /** Plan §45 and the IA's "Automation: rules, templates, run history". Held runs come first: a rule
  * that would act on more issues than its threshold waits here for an Admin. Writing a rule, testing
@@ -56,7 +56,7 @@ function Subjects({ run }: { run: RuleRun }) {
           ) : (
             x.text
           )}
-          {x.severity && <span className="ds-au-meta"> · {x.severity}{x.priority_band ? `, ${x.priority_band}` : ""} · {x.project}</span>}
+          {x.severity && <span className="ds-au-meta"> · {x.severity}{x.priority_band ? `, ${x.priority_band}` : ""} · {projectName(x.project)}</span>}
         </li>
       ))}
       {run.subject_ids.length > run.subjects.length && (

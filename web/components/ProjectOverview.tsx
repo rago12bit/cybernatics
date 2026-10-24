@@ -5,7 +5,7 @@ import { ProjectOwner } from "@/components/ProjectOwner";
 import { TagsEditor } from "@/components/TagsEditor";
 import { useEffect, useState } from "react";
 import { ApiError, getAssetOverview } from "@/lib/api";
-import { shortLocation } from "@/lib/format";
+import { projectName, shortLocation } from "@/lib/format";
 import { CopilotPanel } from "@/components/CopilotPanel";
 import type { ProjectOverview as ProjectOverviewData } from "@/lib/types";
 import { SeverityBadge } from "@/design-system/severity";
@@ -69,7 +69,7 @@ export function ProjectOverview({ assetId }: { assetId: string }) {
   if (data.latest_scan_id === null) {
     return (
       <div className="ds-ov-empty">
-        <p>{data.asset.label} has been added but hasn&apos;t finished a scan yet.</p>
+        <p>{projectName(data.asset.label)} has been added but hasn&apos;t finished a scan yet.</p>
       </div>
     );
   }
@@ -79,28 +79,6 @@ export function ProjectOverview({ assetId }: { assetId: string }) {
 
   return (
     <div className="ds-ov">
-      <nav aria-label="This project" className="ds-ov-crumbline">
-        <span className="ds-ov-project">{data.asset.label}</span>
-        <ul>
-          <li><Link href={`/app/projects/${assetId}/issues`}>All issues</Link></li>
-          <li><Link href={`/scans/${data.latest_scan_id}`}>Full scan report</Link></li>
-          <li><Link href={`/app/projects/${assetId}/compare`}>Compare scans</Link></li>
-          <li><Link href={`/app/projects/${assetId}/dependencies`}>Dependencies</Link></li>
-          <li><Link href={`/app/projects/${assetId}/hypotheses`}>Hypotheses</Link></li>
-          <li><Link href={`/app/projects/${assetId}/attack-paths`}>Attack paths</Link></li>
-          <li><Link href={`/app/projects/${assetId}/threat-model`}>Threat model</Link></li>
-          <li><Link href={`/app/projects/${assetId}/import`}>Import a report</Link></li>
-          <li><Link href={`/app/projects/${assetId}/findings/new`}>Record a finding</Link></li>
-          <li><Link href={`/app/projects/${assetId}/matching`}>Matching</Link></li>
-          <li><Link href={`/app/projects/${assetId}/sla`}>SLA</Link></li>
-          <li><Link href={`/app/projects/${assetId}/priority`}>Priority</Link></li>
-          <li><Link href={`/app/projects/${assetId}/engagements`}>Engagements</Link></li>
-          <li><Link href={`/app/projects/${assetId}/tickets`}>Tickets</Link></li>
-          <li><Link href={`/app/projects/${assetId}/vex`}>VEX</Link></li>
-          <li><Link href={`/app/projects/${assetId}/asvs`}>ASVS</Link></li>
-        </ul>
-      </nav>
-
       <div className="ds-ov-verdict">
         <h1>
           {data.verdict_count === 0

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { ApiError, getThreatModel, regenerateThreatModel, saveThreatModel } from "@/lib/api";
 import type { StrideRow, ThreatModel } from "@/lib/types";
 import { Button } from "@/design-system/primitives/Button";
+import { Loading } from "@/design-system/primitives/Loading";
 import "./threat-model-editor.css";
 
 /* The diagram is drawn inside its own frame (app/diagram-frame), not in this page. Mermaid puts a
@@ -194,7 +195,7 @@ export function ThreatModelEditor({ assetId }: { assetId: string }) {
       {error && <p className="ds-tm-error" role="alert">{error}</p>}
 
       {model === null ? (
-        <p className="small muted">Loading…</p>
+        <Loading />
       ) : (
         <>
           <div className="ds-tm-meta">

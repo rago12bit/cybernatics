@@ -9,6 +9,7 @@ import {
 import type { AssetSummary, Person, RuleAction, RuleDryRun, RuleInput, RulesCatalogue, RuleTemplate, RuleTrigger } from "@/lib/types";
 import { Button } from "@/design-system/primitives/Button";
 import "./automation.css";
+import { projectName } from "@/lib/format";
 
 /** Plan §55.7: "Trigger, condition, and action builders, with a Rego view for people who prefer to
  * write the condition. Test this rule runs the dry run against the last 7 days." The builder writes
@@ -230,7 +231,7 @@ export function RuleEditor({ ruleId, templateKey }: { ruleId?: string; templateK
         <label htmlFor={`${fid}-project`}>Applies to</label>
         <select id={`${fid}-project`} value={draft.project_id ?? ""} onChange={(e) => set("project_id", e.target.value || null)}>
           <option value="">Every project</option>
-          {projects.map((a) => <option key={a.id} value={a.id}>{a.label}</option>)}
+          {projects.map((a) => <option key={a.id} value={a.id}>{projectName(a.label)}</option>)}
         </select>
       </div>
 

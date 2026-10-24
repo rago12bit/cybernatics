@@ -65,7 +65,8 @@ describe("CostDashboard", () => {
     expect(host.textContent).toContain("2,000 tokens");
     const link = host.querySelector('a[href="/scans/s1"]');
     expect(link).not.toBeNull();
-    expect(link?.textContent).toBe("https://github.com/octocat/Hello-World");
+    expect(link?.textContent).toBe("octocat/Hello-World"); // named the way people say it
+    expect(link?.getAttribute("title")).toBe("https://github.com/octocat/Hello-World"); // the full label on hover
   });
 
   it("switches the window and refetches with the new days value", async () => {

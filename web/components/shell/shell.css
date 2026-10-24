@@ -56,6 +56,114 @@
   font-size: 0.6875rem;
 }
 
+/* A project's name and tabs, under the bar on every one of its pages (ProjectNav.tsx). */
+.ds-proj {
+  padding: 0 clamp(1rem, 3vw, 2rem);
+  border-bottom: 1px solid var(--ds-rule);
+  background: var(--ds-surface);
+}
+.ds-proj-id {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem 1rem;
+  padding: 1.1rem 0 0.6rem;
+}
+.ds-proj-host {
+  flex-basis: 100%;
+  font: 400 var(--ds-text-1) / 1 var(--ds-font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ds-muted);
+}
+.ds-proj-name {
+  min-width: 0;
+  font: 500 1.375rem / 1.2 var(--ds-font-sans);
+  letter-spacing: -0.02em;
+  color: var(--ds-ink);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+.ds-proj-name:hover {
+  color: var(--ds-brand);
+}
+.ds-proj-sk {
+  display: inline-block;
+  width: min(16rem, 60vw);
+  height: 1.5rem;
+}
+.ds-proj-report {
+  margin-left: auto;
+  padding: 0.4rem 0;
+  font: 400 var(--ds-text-1) / 1 var(--ds-font-mono);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ds-brand);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.ds-proj-report:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.ds-proj-tabs {
+  display: flex;
+  gap: clamp(1rem, 2vw, 1.6rem);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.ds-proj-tabs::-webkit-scrollbar {
+  display: none;
+}
+.ds-proj-tabs a,
+.ds-proj-more {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.8rem 0 0.7rem;
+  font: 400 var(--ds-text-1) / 1 var(--ds-font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--ds-muted);
+  text-decoration: none;
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  cursor: pointer;
+  transition: color var(--ds-duration-fast) linear, border-color var(--ds-duration-fast) linear;
+}
+.ds-proj-tabs a:hover,
+.ds-proj-more:hover,
+.ds-proj-more[data-state="open"] {
+  color: var(--ds-ink);
+}
+.ds-proj-tabs a[aria-current="page"],
+.ds-proj-more[data-current] {
+  color: var(--ds-ink);
+  border-bottom-color: var(--ds-brand);
+}
+.ds-proj-tabs a:focus-visible,
+.ds-proj-more:focus-visible {
+  outline: 2px solid var(--ds-brand);
+  outline-offset: -2px;
+}
+.ds-proj-more svg {
+  transition: transform 220ms var(--ds-ease-out);
+}
+.ds-proj-more[data-state="open"] svg {
+  transform: rotate(180deg);
+  color: var(--ds-brand);
+}
+.ds-proj-menu {
+  width: min(34rem, calc(100vw - 2rem));
+}
+.ds-proj-menu .nav-more-groups {
+  grid-template-areas: none;
+}
+
 .ds-shell-main {
   padding: clamp(1.25rem, 3vw, 2.5rem) clamp(1rem, 3vw, 2rem) clamp(2rem, 4vw, 3.5rem);
 }

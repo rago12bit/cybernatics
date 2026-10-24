@@ -10,6 +10,7 @@ import type {
   DedupSource, FormatCandidates, ImportCounts, ImportView, ParserInfo, ProjectTest, SavedMapping,
 } from "@/lib/types";
 import { Button } from "@/design-system/primitives/Button";
+import { projectName } from "@/lib/format";
 import "./import-screen.css";
 
 /** Importing a report from a tool Bulwark does not run (plan §55.1, §42.1, ADR-0040).
@@ -97,7 +98,7 @@ export function ImportScreen({
     listProjectTests(assetId).then(setTests, () => setTests([]));
     getDedup(assetId).then((d) => setMatching(d.sources.filter((s) => s.version > 0)), () => setMatching([]));
     listAssets().then(
-      (all) => setProjectLabel(all.find((a) => a.id === assetId)?.label ?? assetId),
+      (all) => { const a = all.find((x) => x.id === assetId); setProjectLabel(a ? projectName(a.label) : assetId); },
       () => undefined,
     );
   }, [assetId]);

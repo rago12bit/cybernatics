@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ApiError, getUnitOverview, listUnitOverviews } from "@/lib/api";
 import { ago, drillHref, type UnitOverview, type UnitProject, type UnitSummary } from "@/lib/dashboard";
+import { Loading } from "@/design-system/primitives/Loading";
 import "../dashboard/dashboard.css";
 import "./home.css";
 
@@ -113,7 +114,7 @@ export function UnitOverviewScreen({ id }: { id: string }) {
     getUnitOverview(id).then(setUnit, (e) => setError(e instanceof ApiError ? e.message : "Could not load this business unit."));
   }, [id]);
   if (error) return <p role="alert" className="dash-error">{error}</p>;
-  if (!unit) return <p role="status">Loading…</p>;
+  if (!unit) return <Loading />;
   return (
     <div className="dash">
       <span className="eyebrow">Business unit</span>
@@ -136,7 +137,7 @@ export function UnitList({ heading = "Business units", level = 1 }: { heading?: 
     <section className="home-section" aria-labelledby="units-heading">
       <H id="units-heading">{heading}</H>
       {error && <p role="alert" className="dash-error">{error}</p>}
-      {!units && !error && <p role="status">Loading…</p>}
+      {!units && !error && <Loading />}
       {units?.length === 0 && <p className="dash-muted">No projects yet.</p>}
       {units && units.length > 0 && (
         <ul className="home-units-list">

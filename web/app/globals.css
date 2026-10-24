@@ -125,6 +125,22 @@ input[type="file"]::file-selector-button { margin-right: 0.75rem; padding: 0.4re
    focus indicator at all -- a real keyboard-walkthrough finding (Week 35), not a hypothetical. */
 input[type="checkbox"]:focus-visible, input[type="radio"]:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
 input::placeholder { color: var(--dim); }
+/* A label wrapped around a checkbox or radio is a sentence ("Enforce an SLA for this project"), not a
+   field name: plain text, not the uppercase monospace above, which made long choices hard to read.
+   `:where()` keeps this at element specificity, so a screen's own label class still wins. */
+label:where(:has(> input[type="checkbox"], > input[type="radio"])) { font: 400 0.875rem/1.45 var(--sans); letter-spacing: normal; text-transform: none; color: var(--text-2); cursor: pointer; }
+label:where(:has(> input[type="checkbox"], > input[type="radio"])) > input { margin: 0 0.5rem 0 0; vertical-align: -0.12em; }
+/* Never stretched by a screen's `input { width: 100% }` (the token scopes were) or squeezed by a flex row. */
+input[type="checkbox"], input[type="radio"] { flex: none; }
+/* One chevron on every single select, drawn here instead of the operating system's. Specific enough
+   that a screen's own `padding` or `background` shorthand cannot drop it or run text under it. */
+:root select:not([multiple]):not([size]) {
+  -webkit-appearance: none; appearance: none; padding-right: 2rem; cursor: pointer; text-overflow: ellipsis;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%239b9c8f' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 0.7rem center; background-size: 10px 6px;
+}
+:root select:not([multiple]):not([size]):hover:not(:disabled):not(:focus-visible) { border-color: var(--text-2); }
+select:disabled, input:disabled, textarea:disabled { opacity: 0.55; cursor: not-allowed; }
 input[type="file"] { padding: 0.5rem; }
 fieldset { border: 1px solid var(--line); border-radius: var(--radius); margin: 1.25rem 0 0; padding: 0.5rem 1rem 0.9rem; }
 legend { padding: 0 0.5rem; font: 400 0.75rem/1 var(--mono); letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); }

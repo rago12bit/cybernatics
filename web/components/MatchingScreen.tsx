@@ -7,6 +7,7 @@ import type {
   DedupHistoryEntry, DedupOverview, DedupPreview, DedupSource, DedupStrategyName,
 } from "@/lib/types";
 import { Button } from "@/design-system/primitives/Button";
+import { Loading } from "@/design-system/primitives/Loading";
 import "./matching-screen.css";
 import { formatDateTime } from "@/lib/format";
 
@@ -41,7 +42,7 @@ export function MatchingScreen({ assetId }: { assetId: string }) {
   useEffect(load, [load]);
 
   if (error && !overview) return <p role="alert" className="ds-match-error">{error}</p>;
-  if (!overview) return <p role="status">Loading…</p>;
+  if (!overview) return <Loading />;
 
   return (
     <div className="ds-match">

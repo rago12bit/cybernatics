@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { ApiError, getMetricIssues } from "@/lib/api";
 import type { MetricIssue } from "@/lib/dashboard";
+import { Loading } from "@/design-system/primitives/Loading";
 import "./dashboard.css";
+import { projectName } from "@/lib/format";
 
 /* The Issues behind a number on a dashboard (plan §55.4, principle 11): the same filters the
  * widget used, a page at a time. */
@@ -22,6 +24,9 @@ export function MetricIssuesScreen({ query }: { query: string }) {
   const expected = params.get("n");
   params.delete("label");
   params.delete("n");
+  // A link without a kind (a bookmark, a hand-typed URL) means open issues, as the title says. The API
+  // requires it, so leaving it off answered 422 and the page showed only "Unprocessable Entity".
+  if (!params.get("kind")) params.set("kind", "open");
   const base = params.toString();
   const [rows, setRows] = useState<MetricIssue[]>([]);
   const [next, setNext] = useState<string | null>(null);
@@ -68,7 +73,7 @@ export function MetricIssuesScreen({ query }: { query: string }) {
         {scope.length ? `, ${scope.join(", ")}` : ""}. <Link href="/app/dashboards">Back to dashboards</Link>
       </p>
       {error && <p role="alert" className="dash-error">{error}</p>}
-      {!loaded && <p role="status">Loading…</p>}
+      {!loaded && <Loading />}
       {loaded && !error && (
         <div className="dash-table-wrap">
           <table className="dash-table">
@@ -95,7 +100,7 @@ export function MetricIssuesScreen({ query }: { query: string }) {
                   <th scope="row">
                     <Link href={`/app/projects/${encodeURIComponent(r.project_id)}/issues/${encodeURIComponent(r.id)}`}>{r.title}</Link>
                   </th>
-                  <td>{r.project}</td>
+                  <td title={r.project}>{projectName(r.project)}</td>
                   <td>{r.band ?? "—"}</td>
                   <td>{r.severity}</td>
                   <td>{r.first_seen_at?.slice(0, 10) ?? "—"}</td>

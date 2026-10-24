@@ -9,8 +9,9 @@ import {
 import type { RiskAcceptance, RiskAcceptancePolicy } from "@/lib/types";
 import { Button } from "@/design-system/primitives/Button";
 import { STATE_WORD } from "./RiskAcceptancesScreen";
+import { Loading } from "@/design-system/primitives/Loading";
 import "./risk-acceptance.css";
-import { formatDate, formatDateTime } from "@/lib/format";
+import { formatDate, formatDateTime, projectName } from "@/lib/format";
 
 /** One risk acceptance (plan §44.2, §55.3): what was asked and why, its issues and proof, every
  * step from the audit log, and what you may do next. The server decides who may approve; the
@@ -73,14 +74,14 @@ export function RiskAcceptanceDetail({ id }: { id: string }) {
     }
   }
 
-  if (!ra) return error ? <p role="alert">{error}</p> : <p role="status">Loading…</p>;
+  if (!ra) return error ? <p role="alert">{error}</p> : <Loading />;
   const mine = policy?.you === ra.requested_by;
   const who = (actor: string | null) => (actor ? (ra.names?.[actor] ?? actor) : "—");
 
   return (
     <div className="ds-ra-page ds-ra-detail">
       <p><Link href="/app/risk-acceptances">← Risk acceptance</Link></p>
-      <h1>{ra.decision.charAt(0).toUpperCase() + ra.decision.slice(1)}: {ra.issue_count} issue{ra.issue_count === 1 ? "" : "s"} in {ra.project}</h1>
+      <h1>{ra.decision.charAt(0).toUpperCase() + ra.decision.slice(1)}: {ra.issue_count} issue{ra.issue_count === 1 ? "" : "s"} in {projectName(ra.project)}</h1>
       <p className={`ds-ra-verdict ds-ra-state-${ra.state}`}>
         {STATE_WORD[ra.state]}
         {ra.state === "requested" && ` -- ${ra.approver ? `asked ${who(ra.approver)}` : "anyone but the requester can decide"}. The issues stay open until then.`}

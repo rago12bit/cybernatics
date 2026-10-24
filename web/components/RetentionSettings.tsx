@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { ApiError, getRetentionSettings, saveRetentionSettings } from "@/lib/api";
 import type { RetentionSettings as RetentionSettingsData } from "@/lib/types";
 import { Button } from "@/design-system/primitives/Button";
+import { Loading } from "@/design-system/primitives/Loading";
 import "./retention-settings.css";
 
 export function RetentionSettings() {
@@ -53,7 +54,7 @@ export function RetentionSettings() {
       {error && <p className="ds-retention-error" role="alert">{error}</p>}
 
       {settings === null ? (
-        <p className="small muted">Loading…</p>
+        <Loading lines={2} />
       ) : (
         <div className="ds-retention-form">
           <label className="ds-retention-label" htmlFor="retention-days">

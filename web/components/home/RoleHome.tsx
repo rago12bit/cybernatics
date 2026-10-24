@@ -22,8 +22,10 @@ import { Button } from "@/design-system/primitives/Button";
 import { DashboardScreen } from "../dashboard/DashboardScreen";
 import { AppShell } from "../shell/AppShell";
 import { UnitList } from "./UnitOverviewScreen";
+import { Loading } from "@/design-system/primitives/Loading";
 import "../dashboard/dashboard.css";
 import "./home.css";
+import { projectName } from "@/lib/format";
 
 /* Role-based homes (plan §48.2): leads land on a program dashboard, engineers on what is assigned
  * to them, testers on their engagements. Until user accounts carry roles (Week 75) each person
@@ -111,7 +113,7 @@ function Assigned() {
           {error}
         </p>
       )}
-      {!data && !error && <p role="status">Loading…</p>}
+      {!data && !error && <Loading />}
       {data && data.total === 0 && (
         <p className="dash-muted">Nothing is assigned to you.</p>
       )}
@@ -143,7 +145,7 @@ function Assigned() {
                       {r.title}
                     </Link>
                   </th>
-                  <td>{r.project}</td>
+                  <td title={r.project}>{projectName(r.project)}</td>
                   <td>{r.band}</td>
                   <td
                     className={
@@ -182,7 +184,7 @@ function Engagements() {
           {error}
         </p>
       )}
-      {!rows && !error && <p role="status">Loading…</p>}
+      {!rows && !error && <Loading lines={2} />}
       {rows?.length === 0 && (
         <p className="dash-muted">
           No engagement names you as its lead or a tester yet. Engagements name
@@ -210,7 +212,7 @@ function Engagements() {
                       {e.name}
                     </Link>
                   </th>
-                  <td>{e.project}</td>
+                  <td title={e.project}>{projectName(e.project)}</td>
                   <td>{e.as.join(" and ")}</td>
                   <td>{e.status}</td>
                   <td className={e.overdue ? "home-late" : undefined}>

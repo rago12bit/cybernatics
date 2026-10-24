@@ -239,4 +239,13 @@ describe("the Issues behind a number", () => {
     expect(host.querySelector("tbody a")!.getAttribute("href")).toBe(`/app/projects/${PROJECT}/issues/i0`);
     expect((await axe.run(host, AXE)).violations).toEqual([]);
   });
+
+  it("asks for open issues when the link names no kind, as its title says", async () => {
+    // /app/metrics/issues on its own answered 422 and showed only "Unprocessable Entity".
+    const calls = api();
+    const host = await mount(<MetricIssuesScreen query="" />);
+    expect(host.querySelector("h1")!.textContent).toBe("Open issues");
+    const req = calls.find((c) => c.path === "/v2/metrics/issues")!;
+    expect(new URLSearchParams(req.search).get("kind")).toBe("open");
+  });
 });

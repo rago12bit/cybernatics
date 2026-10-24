@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { test, expect } from "@playwright/test";
 import { API_URL, E2E_TOKEN } from "../playwright.config";
+import { projectName } from "../lib/format";
 import { expectAccessible, newProject, signIn, uniqueRepoUrl } from "./helpers";
 
 /**
@@ -90,7 +91,7 @@ test.describe("J7 — the new-CVE morning", () => {
     await page.keyboard.press("Enter"); // at once: the suggestions must not be needed (Week 74 fix)
     const result = page.getByRole("region", { name: /log4j-core is in \d+ projects?/ });
     await expect(result).toBeVisible({ timeout: 10_000 });
-    await expect(result.getByRole("link", { name: project.url })).toBeVisible();
+    await expect(result.getByRole("link", { name: projectName(project.url) })).toBeVisible(); // owner/repo, not the clone URL
     await expectAccessible(page, "the component search result");
 
     // Its impact.
@@ -99,7 +100,7 @@ test.describe("J7 — the new-CVE morning", () => {
     // Most important uses first; ours may be under "Show all" when other runs' projects use it too.
     const showAll = page.getByRole("button", { name: "Show all" });
     if (await showAll.isVisible()) await showAll.click();
-    const row = page.getByRole("row").filter({ has: page.getByRole("link", { name: project.url }) });
+    const row = page.getByRole("row").filter({ has: page.getByRole("link", { name: projectName(project.url) }) });
     await expect(row).toContainText("2.14.1");
     await expect(row).toContainText("2.15.0"); // the fixed version
     await expectAccessible(page, "the advisory impact view");

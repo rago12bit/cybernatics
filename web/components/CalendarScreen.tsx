@@ -6,6 +6,7 @@ import { ApiError, getCalendar, listAssets } from "@/lib/api";
 import type { AssetSummary, CalendarEntry, CalendarKind, CalendarView } from "@/lib/types";
 import { Button } from "@/design-system/primitives/Button";
 import "./calendar.css";
+import { projectName } from "@/lib/format";
 
 /** Plan §49: "a calendar of engagements, SLA due dates, and expiring risk acceptances". A month,
  * Monday first, in UTC days -- the days the server counts deadlines in -- with the same entries as a
@@ -61,7 +62,7 @@ const dayLabel = (day: string) => utc(Number(day.slice(0, 4)), Number(day.slice(
 function Chip({ e }: { e: CalendarEntry }) {
   const cls = `ds-cal-chip ds-cal-${e.kind}${e.state === "breached" ? " ds-cal-breached" : ""}`;
   return (
-    <Link href={e.link} className={cls} title={`${ONE[e.kind]}: ${e.title} (${e.project}) · ${e.detail}`}>
+    <Link href={e.link} className={cls} title={`${ONE[e.kind]}: ${e.title} (${projectName(e.project)}) · ${e.detail}`}>
       <span className="ds-cal-kind">{ONE[e.kind]}</span> {e.title}
     </Link>
   );
@@ -172,7 +173,7 @@ export function CalendarScreen({ initial }: { initial?: { year: number; month: n
                 {agendaFor(monthEntries, day, monthStart, firstDay).map((e, i) => (
                   <li key={`${e.kind}-${e.link}-${i}`}>
                     <Link href={e.link}><span className={`ds-cal-tag ds-cal-${e.kind}${e.state === "breached" ? " ds-cal-breached" : ""}`}>{ONE[e.kind]}</span> {e.title}</Link>
-                    <span className="ds-cal-meta"> · {e.project} · {e.detail}{e.kind === "engagement" && e.start !== e.end ? ` (${dayLabel(e.start)} to ${dayLabel(e.end)})` : ""}</span>
+                    <span className="ds-cal-meta"> · {projectName(e.project)} · {e.detail}{e.kind === "engagement" && e.start !== e.end ? ` (${dayLabel(e.start)} to ${dayLabel(e.end)})` : ""}</span>
                   </li>
                 ))}
               </ul>

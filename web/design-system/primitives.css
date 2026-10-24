@@ -42,6 +42,86 @@
   outline: 1px solid var(--ds-brand);
   outline-offset: 3px;
 }
+a.ds-button {
+  text-decoration: none;
+}
+
+/* Loading placeholders (Loading.tsx): text-shaped lines that pulse, on the site's .sk skeleton. */
+.ds-loading {
+  display: grid;
+  gap: 0.6rem;
+  max-width: 40rem;
+  padding: 0.25rem 0;
+}
+.ds-loading-line {
+  height: 0.8rem;
+  width: 100%;
+}
+.ds-loading-line:nth-child(2) {
+  width: 62%;
+  height: 1.4rem;
+}
+.ds-loading-line:nth-child(3) {
+  width: 88%;
+}
+.ds-loading-line:nth-child(4) {
+  width: 74%;
+}
+
+/* Empty states (EmptyState.tsx): a dashed frame like the site's blueprint cells, a title, a line on
+   why, and the next step. */
+.ds-empty {
+  display: grid;
+  justify-items: start;
+  gap: 0.7rem;
+  max-width: 46rem;
+  padding: clamp(1.5rem, 4vw, 2.5rem);
+  border: 1px dashed var(--ds-rule-strong);
+  background: var(--ds-raised);
+}
+.ds-empty.compact {
+  gap: 0.5rem;
+  padding: 1.1rem 1.25rem;
+}
+.ds-empty-mark {
+  width: 2rem;
+  height: 2rem;
+  color: var(--ds-brand);
+  margin-bottom: 0.25rem;
+}
+.ds-empty.compact .ds-empty-mark {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+.ds-empty-title {
+  margin: 0;
+  font: 500 var(--ds-text-4) / 1.3 var(--ds-font-sans);
+  letter-spacing: -0.015em;
+  color: var(--ds-ink);
+}
+.ds-empty.compact .ds-empty-title {
+  font-size: var(--ds-text-3);
+}
+.ds-empty-body {
+  display: grid;
+  gap: 0.5rem;
+  max-width: 40rem;
+  font-size: var(--ds-text-2);
+  line-height: 1.55;
+  color: var(--ds-muted);
+}
+.ds-empty-body p {
+  margin: 0;
+}
+.ds-empty-body a {
+  color: var(--ds-brand);
+}
+.ds-empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+}
 
 .ds-tooltip {
   border-radius: var(--ds-radius-panel);

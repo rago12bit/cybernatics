@@ -6,7 +6,8 @@ import { ApiError, listLibraries, searchComponents } from "@/lib/api";
 import type { ComponentSearch, ComponentUse, LibrarySummary } from "@/lib/types";
 import { Button } from "@/design-system/primitives/Button";
 import "./components-screen.css";
-import { formatDate } from "@/lib/format";
+import { formatDate, projectName } from "@/lib/format";
+import { EmptyState } from "@/design-system/primitives/EmptyState";
 
 /** Plan §46.1: "where do we use this?" -- a library, optionally a version condition, and every
  * project whose latest SBOM has it. The library box suggests libraries by name as you type (the
@@ -209,7 +210,7 @@ export function ComponentsScreen({ initialPurl = "", initialVersion = "" }: { in
                 {r.uses.map((u) => (
                   <tr key={`${u.project_id}-${u.version}-${u.source}`}>
                     <th scope="row" data-label="Project">
-                      <Link href={`/app/projects/${u.project_id}`}>{u.project}</Link>
+                      <Link href={`/app/projects/${u.project_id}`} title={u.project}>{projectName(u.project)}</Link>
                       {u.portfolio && <span className="ds-comp-meta"> · {u.portfolio}</span>}
                     </th>
                     <td data-label="Version" className="ds-comp-nowrap"><code>{u.version || "(none)"}</code></td>
@@ -233,7 +234,9 @@ export function ComponentsScreen({ initialPurl = "", initialVersion = "" }: { in
         <section aria-labelledby={`${fid}-top`}>
           <h2 id={`${fid}-top`}>Most used</h2>
           {top.length === 0 ? (
-            <p>No SBOMs yet. Run a scan with Syft, or import a CycloneDX or SPDX file, and its packages appear here.</p>
+            <EmptyState compact title="No SBOMs yet" actions={<Link href="/app/scan" className="ds-button">Scan with Syft →</Link>}>
+              <p>Run a scan with Syft, or import a CycloneDX or SPDX file into a project, and its packages appear here.</p>
+            </EmptyState>
           ) : (
             <ul className="ds-comp-top">
               {top.map((l) => (

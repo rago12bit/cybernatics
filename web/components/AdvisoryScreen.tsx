@@ -6,8 +6,9 @@ import { ApiError, createAdvisoryIssues, decideVex, draftVex, getAdvisory } from
 import type { AdvisoryImpact, AdvisoryIssuesCreated, AdvisoryUse, VexDrafted } from "@/lib/types";
 import { Button } from "@/design-system/primitives/Button";
 import { Severity, ago } from "./AdvisoriesScreen";
+import { Loading } from "@/design-system/primitives/Loading";
 import "./advisories.css";
-import { formatDate } from "@/lib/format";
+import { formatDate, projectName } from "@/lib/format";
 
 /** Plan §55.5, the advisory impact view (journey J7): where an affected version is, which projects'
  * code imports the library, who owns them, how exposed they are, the fix, and Issues in one click.
@@ -131,7 +132,7 @@ export function AdvisoryScreen({ vulnKey }: { vulnKey: string }) {
     }
   }
 
-  if (!a) return <div className="ds-adv">{error ? <p role="alert" className="ds-adv-error">{error}</p> : <p>Loading…</p>}</div>;
+  if (!a) return <div className="ds-adv">{error ? <p role="alert" className="ds-adv-error">{error}</p> : <Loading />}</div>;
   const uses = a.uses;
   const shown = all ? uses : uses.slice(0, SHOWN);
   const rest = uses.slice(SHOWN);
@@ -179,7 +180,7 @@ export function AdvisoryScreen({ vulnKey }: { vulnKey: string }) {
               {shown.map((u) => (
                 <tr key={`${u.project_id}-${u.library}-${u.version}`}>
                   <th scope="row" data-label="Project">
-                    <Link href={`/app/projects/${u.project_id}`}>{u.project}</Link>
+                    <Link href={`/app/projects/${u.project_id}`} title={u.project}>{projectName(u.project)}</Link>
                     <span className="ds-adv-meta"> · {u.library}</span>
                   </th>
                   <td data-label="Version" className="ds-adv-nowrap">
@@ -250,7 +251,7 @@ export function AdvisoryScreen({ vulnKey }: { vulnKey: string }) {
               return (
                 <li key={st.id} className="ds-adv-vex-item">
                   <div>
-                    <Link href={`/app/projects/${u.project_id}`}>{u.project}</Link> · {u.library} <code>{u.version}</code>
+                    <Link href={`/app/projects/${u.project_id}`} title={u.project}>{projectName(u.project)}</Link> · {u.library} <code>{u.version}</code>
                     {ev && <span className="ds-adv-vex-kind"> · {ev.label}</span>}
                   </div>
                   <p>{st.impact_statement}</p>
@@ -274,7 +275,7 @@ export function AdvisoryScreen({ vulnKey }: { vulnKey: string }) {
           <ul className="ds-adv-plain">
             {a.no_longer_affected.map((u) => (
               <li key={`${u.project_id}-${u.library}-${u.version}`}>
-                <Link href={`/app/projects/${u.project_id}`}>{u.project}</Link> · {u.library} <code>{u.version}</code>
+                <Link href={`/app/projects/${u.project_id}`} title={u.project}>{projectName(u.project)}</Link> · {u.library} <code>{u.version}</code>
                 <span className="ds-adv-meta"> · not in its SBOM since {u.resolved_at ? formatDate(u.resolved_at) : "—"}</span>
               </li>
             ))}

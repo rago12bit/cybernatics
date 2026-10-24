@@ -6,6 +6,7 @@ import type { BulkAction, BulkParams, BulkPreview, BulkResult, Selection } from 
 import { Button } from "@/design-system/primitives/Button";
 import { Dialog } from "@/design-system/primitives/Dialog";
 import { RiskAcceptanceRequest } from "@/components/RiskAcceptanceRequest";
+import { projectName } from "@/lib/format";
 
 /* Bulk changes (plan §56; principle 9, "show the effect before the action"). Choosing an action
  * opens its dialog; the preview says, as counts, what will change, what already is as asked and
@@ -113,7 +114,7 @@ export function BulkDialog({ action, selection, selectedText, onClose, onDone }:
               <table className="iss-mini">
                 <caption className="sr-only">Issues that will change, by project</caption>
                 <thead><tr><th scope="col">Project</th><th scope="col" className="num">Will change</th></tr></thead>
-                <tbody>{preview.by_project.map((p) => <tr key={p.project}><td>{p.project}</td><td className="num">{p.count.toLocaleString("en-US")}</td></tr>)}</tbody>
+                <tbody>{preview.by_project.map((p) => <tr key={p.project}><td title={p.project}>{projectName(p.project)}</td><td className="num">{p.count.toLocaleString("en-US")}</td></tr>)}</tbody>
               </table>
             )}
             {action === "accept" ? (
@@ -121,16 +122,16 @@ export function BulkDialog({ action, selection, selectedText, onClose, onDone }:
                 <ul className="iss-flow">
                   {projects.map((p) => (
                     <li key={p.project_id}>
-                      <span>{p.project}: {p.count.toLocaleString("en-US")} Issue{p.count === 1 ? "" : "s"}{p.truncated ? ` (the first ${p.issue_ids.length} in this request)` : ""}</span>
+                      <span>{projectName(p.project)}: {p.count.toLocaleString("en-US")} Issue{p.count === 1 ? "" : "s"}{p.truncated ? ` (the first ${p.issue_ids.length} in this request)` : ""}</span>
                       {requested.has(p.project_id) ? <span className="iss-ok">Requested</span> : (
-                        <Button type="button" onClick={() => setRequesting(p.project_id)} aria-label={`Request risk acceptance for ${p.project}`}>Request</Button>
+                        <Button type="button" onClick={() => setRequesting(p.project_id)} aria-label={`Request risk acceptance for ${projectName(p.project)}`}>Request</Button>
                       )}
                     </li>
                   ))}
                 </ul>
                 {current && (
                   <div className="iss-subflow">
-                    <h3>{current.project}</h3>
+                    <h3>{projectName(current.project)}</h3>
                     <RiskAcceptanceRequest assetId={current.project_id} issueIds={current.issue_ids}
                       onCancel={() => setRequesting(null)}
                       onDone={() => { setRequested((s) => new Set(s).add(current.project_id)); setRequesting(null); }} />

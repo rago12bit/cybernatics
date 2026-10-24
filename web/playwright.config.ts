@@ -37,7 +37,7 @@ export default defineConfig({
   // different physical machines, even with the identical pinned browser build. A small tolerance
   // is Playwright's own documented answer to this, not a way to hide a real regression -- a
   // broken layout produces a far larger diff than 1-2%.
-  expect: { toHaveScreenshot: { maxDiffPixelRatio: 0.02 } },
+  expect: { toHaveScreenshot: { maxDiffPixelRatio: 0.02, stylePath: "./tests-e2e/screenshot.css" } },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: [
     {

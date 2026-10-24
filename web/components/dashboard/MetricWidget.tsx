@@ -9,6 +9,7 @@ import { Button } from "@/design-system/primitives/Button";
 import { Dialog } from "@/design-system/primitives/Dialog";
 import { ChartView } from "./charts";
 import { formatDateTime } from "@/lib/format";
+import { Loading } from "@/design-system/primitives/Loading";
 
 /* One widget: its title opens the metric's written definition; its numbers open the Issues behind
  * them; a chart can be read as a table. Records how long it took to draw once its data arrived
@@ -137,7 +138,7 @@ export function MetricWidget({
       {filters && <p className="dash-filters">{filters}</p>}
       <div className="dash-widget-body">
         {error && <p role="alert" className="dash-error">{error}</p>}
-        {!error && !shown && <p role="status" className="dash-muted">Loading…</p>}
+        {!error && !shown && <Loading />}
         {shown && (
           <>
             <p className="dash-headline">

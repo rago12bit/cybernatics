@@ -5,7 +5,9 @@ import { Fragment, useCallback, useEffect, useId, useMemo, useState } from "reac
 import { ApiError, getAsvs, setAsvsStatus } from "@/lib/api";
 import type { AsvsBenchmark, AsvsRequirement, AsvsStatus } from "@/lib/types";
 import { Button } from "@/design-system/primitives/Button";
+import { Loading } from "@/design-system/primitives/Loading";
 import "./compliance.css";
+import { projectName } from "@/lib/format";
 
 /** A project's ASVS 4.0.3 checklist (plan §47): every requirement up to a level, with a status and
  * the evidence for it. Only a person marks a requirement met; Bulwark shows open Issues of its CWE
@@ -82,11 +84,11 @@ export function AsvsScreen({ assetId }: { assetId: string }) {
   useEffect(load, [load]);
 
   const rows = useMemo(() => (b ? b.requirements.filter((r) => filter === "all" || r.status === filter) : []), [b, filter]);
-  if (!b) return <div className="ds-cmp">{error ? <p role="alert" className="ds-cmp-error">{error}</p> : <p>Loading…</p>}</div>;
+  if (!b) return <div className="ds-cmp">{error ? <p role="alert" className="ds-cmp-error">{error}</p> : <Loading />}</div>;
   return (
     <div className="ds-cmp">
       <header>
-        <h1 className="ds-cmp-title">ASVS for {b.project}</h1>
+        <h1 className="ds-cmp-title">ASVS for {projectName(b.project)}</h1>
         <p className="ds-cmp-lede">{b.disclaimer}</p>
         <p className="ds-cmp-meta">
           {b.framework.name}, © OWASP Foundation, CC BY-SA 4.0 · <a href={b.framework.source.url} rel="noopener noreferrer" target="_blank">source</a>

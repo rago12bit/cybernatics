@@ -1,8 +1,7 @@
 /* VEX, ASVS and evidence packs (Week 69, plan §46.3, §47). */
 .ds-cmp {
+  /* Left-aligned in the shell's own padding, like every other screen (it was centred, with more padding). */
   max-width: 72rem;
-  margin: 0 auto;
-  padding: var(--ds-space-4);
   display: grid;
   gap: var(--ds-space-4);
   min-width: 0;

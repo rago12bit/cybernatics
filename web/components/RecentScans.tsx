@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { listScans } from "@/lib/api";
-import { relativeTime, formatDateTime } from "@/lib/format";
+import { relativeTime, formatDateTime, projectName } from "@/lib/format";
 import type { ScanSummary } from "@/lib/types";
 import { SeverityCounts, StatusBadge } from "./Badges";
 
@@ -60,7 +60,7 @@ export function RecentScans() {
             <tbody>
               {rows.map((r) => (
                 <tr key={r.id}>
-                  <td><Link href={`/scans/${r.id}`} className="src-link wrap">{r.source_label}</Link></td>
+                  <td><Link href={`/scans/${r.id}`} className="src-link wrap" title={r.source_label}>{projectName(r.source_label)}</Link></td>
                   <td><StatusBadge status={r.status} /></td>
                   <td>{r.status === "queued" || r.status === "running" ? <span className="muted">…</span> : <span className="cell-num">{r.unique_findings} <SeverityCounts counts={r.severity_counts} /></span>}</td>
                   <td><time dateTime={r.created_at} title={formatDateTime(r.created_at)} className="muted">{relativeTime(r.created_at, now)}</time></td>

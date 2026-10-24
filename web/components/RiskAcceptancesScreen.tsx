@@ -4,8 +4,9 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { ApiError, listRiskAcceptances } from "@/lib/api";
 import type { RiskAcceptance } from "@/lib/types";
+import { Loading } from "@/design-system/primitives/Loading";
 import "./risk-acceptance.css";
-import { formatDate } from "@/lib/format";
+import { formatDate, projectName } from "@/lib/format";
 
 /** Plan §55.3: the approvals queue -- requests waiting for someone other than their requester --
  * then what is in force and what has ended. Whether *you* may decide is the server's answer
@@ -35,7 +36,7 @@ export function AcceptanceItem({ r }: { r: RiskAcceptance }) {
     <li className="ds-ra-item">
       <div className="ds-ra-item-head">
         <Link href={`/app/risk-acceptances/${r.id}`}>
-          {r.decision.charAt(0).toUpperCase() + r.decision.slice(1)}: {r.issue_count} issue{r.issue_count === 1 ? "" : "s"} in {r.project}
+          {r.decision.charAt(0).toUpperCase() + r.decision.slice(1)}: {r.issue_count} issue{r.issue_count === 1 ? "" : "s"} in {projectName(r.project)}
         </Link>
         <span className={`ds-ra-state ds-ra-state-${r.state}`}>{STATE_WORD[r.state]}</span>
         {r.legacy && <span className="ds-ra-meta">accepted alone, before approvals</span>}
@@ -58,7 +59,7 @@ export function RiskAcceptancesScreen() {
   useEffect(load, [load]);
 
   if (error) return <p role="alert">{error}</p>;
-  if (!rows) return <p role="status">Loading…</p>;
+  if (!rows) return <Loading />;
   const waiting = rows.filter((r) => r.state === "requested");
   const live = rows.filter((r) => r.state === "approved");
   const ended = rows.filter((r) => r.state !== "requested" && r.state !== "approved");

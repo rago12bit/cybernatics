@@ -5,8 +5,9 @@ import { useEffect, useMemo, useState } from "react";
 import { ApiError, compareScans, getAssetOverview } from "@/lib/api";
 import type { ComparedIssue, ProjectOverview, ScanComparison as ScanComparisonData } from "@/lib/types";
 import { SeverityBadge } from "@/design-system/severity";
-import "./scan-comparison.css";
+import { EmptyState } from "@/design-system/primitives/EmptyState";
 import { formatDateTime } from "@/lib/format";
+import "./scan-comparison.css";
 
 function severityKey(s: string): "critical" | "high" | "medium" | "low" | "info" {
   return s.toLowerCase() as "critical" | "high" | "medium" | "low" | "info";
@@ -100,7 +101,17 @@ export function ScanComparison({ assetId }: { assetId: string }) {
   if (overviewError) return <div className="ds-cmp-empty" role="alert">{overviewError}</div>;
   if (!overview) return <div className="ds-cmp" role="status" aria-busy="true"><span className="sr-only">Loading…</span></div>;
   if (options.length < 2) {
-    return <p className="ds-cmp-empty">This project needs at least two finished scans to compare.</p>;
+    return (
+      <EmptyState
+        title="Nothing to compare yet"
+        actions={<Link href="/app/scan" className="ds-button primary">Scan it again →</Link>}
+      >
+        <p>
+          This project needs at least two finished scans to compare. It has {options.length === 1 ? "one" : "none"} so far.
+          The next scan shows what was fixed, what is new and what came back.
+        </p>
+      </EmptyState>
+    );
   }
 
   return (

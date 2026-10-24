@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { ApiError, listAttackPaths } from "@/lib/api";
 import type { AttackPath, AttackPathNode } from "@/lib/types";
 import { Button } from "@/design-system/primitives/Button";
+import { Loading } from "@/design-system/primitives/Loading";
 import "./attack-paths-screen.css";
 
 const KIND_LABEL: Record<AttackPathNode["kind"], string> = {
@@ -70,7 +71,7 @@ export function AttackPathsScreen({ assetId }: { assetId: string }) {
       {error && <p className="ds-ap-error" role="alert">{error}</p>}
 
       {items === null ? (
-        <p className="small muted">Loading…</p>
+        <Loading />
       ) : items.length === 0 ? (
         <p className="ds-ap-empty">
           No attack paths found in this project&apos;s current open issues.
