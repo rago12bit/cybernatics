@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { FindingStory } from "@/components/site/FindingStory";
 import { SitePage } from "@/components/site/SitePage";
+import "@/components/site/sections.css";
 import { counts } from "@/lib/catalogue";
 
 export const metadata: Metadata = {
@@ -15,8 +17,19 @@ export default function HowItWorks() {
       eyebrow="How it works"
       title="From a scan to a fixed Issue"
       lede="Bulwark does not detect vulnerabilities itself. It runs mature open-source scanners, reads the reports of the ones you already run, and turns all of it into one list of Issues that each have an owner, a deadline and a history."
-      actions={<Link href="/#recording" className="btn sm">See it on a real app →</Link>}
+      actions={<>
+        <Link href="#story" className="btn primary sm">Follow one finding ↓</Link>
+        <Link href="/#recording" className="btn sm">See it on a real app →</Link>
+      </>}
     >
+      <FindingStory />
+      <section className="site-sec" id="pipeline" aria-labelledby="pipeline-h">
+      <div className="sec-head">
+        <div className="stack">
+          <h2 id="pipeline-h">The whole pipeline, stage by stage</h2>
+          <p>Every way in, and where each stage lives in the code.</p>
+        </div>
+      </div>
       <ol className="steps" aria-label="How a finding travels">
         <li>
           <div className="step-body">
@@ -109,6 +122,7 @@ export default function HowItWorks() {
           </div>
         </li>
       </ol>
+      </section>
     </SitePage>
   );
 }

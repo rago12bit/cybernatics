@@ -13,7 +13,9 @@ const motionOk = () => typeof window !== "undefined" && window.matchMedia?.(MOTI
  * output is the final value, so nothing depends on the animation running. Screen readers always get the
  * final value: before, a number still waiting below the fold read as "0".
  */
-export function CountUp({ value, decimals = 0, suffix = "", ms = 1300 }: { value: number; decimals?: number; suffix?: string; ms?: number }) {
+export function CountUp({ value, decimals = 0, suffix = "", ms = 1300, group = false }: { value: number; decimals?: number; suffix?: string; ms?: number; group?: boolean }) {
+  // `group` writes 2,552 rather than 2552, as the rest of the page writes large numbers.
+  const fmt = (n: number) => (group ? n.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals }) : n.toFixed(decimals));
   const ref = useRef<HTMLSpanElement>(null);
   const [shown, setShown] = useState(value);
 
@@ -40,8 +42,8 @@ export function CountUp({ value, decimals = 0, suffix = "", ms = 1300 }: { value
   // Assistive tech and copy-paste get the real value at once; only the eye sees it count.
   return (
     <span ref={ref}>
-      <span className="sr-only">{value.toFixed(decimals)}{suffix}</span>
-      <span aria-hidden="true">{shown.toFixed(decimals)}{suffix}</span>
+      <span className="sr-only">{fmt(value)}{suffix}</span>
+      <span aria-hidden="true">{fmt(shown)}{suffix}</span>
     </span>
   );
 }

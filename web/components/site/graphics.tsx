@@ -123,33 +123,6 @@ export function DedupChart({ repos }: { repos: { name: string; dedup: number }[]
   );
 }
 
-/** Dashed and dotted labelled boxes: the pipeline a scan flows through. */
-export function PipelineDiagram() {
-  return (
-    <svg className="art-svg" viewBox="0 0 520 470" role="img" aria-label="Scan pipeline: ingest, sandboxed scanners, normalise, correlate.">
-      <title>Scan pipeline</title>
-      <g fill="none" strokeWidth="2">
-        <rect className="s-teal" x="30" y="30" width="200" height="120" strokeDasharray="14 8" />
-        <rect className="s-khaki" x="260" y="30" width="230" height="120" strokeDasharray="2 6" />
-        <rect className="s-mint" x="30" y="180" width="270" height="170" strokeDasharray="2 6" />
-        <rect className="s-khaki" x="330" y="180" width="160" height="170" strokeDasharray="2 6" />
-        <rect className="s-teal" x="30" y="380" width="200" height="70" strokeDasharray="14 8" />
-        <rect className="s-khaki" x="260" y="380" width="230" height="70" strokeDasharray="2 6" />
-      </g>
-      {[0, 1, 2, 3].map((i) => <rect key={i} className="bp-block" x={62 + i * 40} y={56} width={16} height={60} strokeWidth="1" />)}
-      {[0, 1, 2].map((i) => <rect key={i} className="s-khaki" x={288 + i * 62} y={50} width={30} height={16} strokeWidth="1.5" />)}
-      {[0, 1, 2, 3].map((i) => <rect key={i} className="s-mint" x={52 + i * 62} y={200} width={26} height={16} strokeWidth="1.5" />)}
-      {[0, 1, 2, 3].map((i) => <rect key={i} className="s-khaki" x={362} y={206 + i * 34} width={64} height={16} strokeWidth="1.5" />)}
-      <text className="t-mono" x="46" y="140" fontSize="12">[ingest]</text>
-      <text className="t-mono" x="276" y="130" fontSize="12">[sandbox ×5]</text>
-      <text className="t-mono" x="46" y="336" fontSize="12">[normalise]</text>
-      <text className="t-mono" x="346" y="336" fontSize="12">[correlate]</text>
-      <text className="t-mono" x="46" y="424" fontSize="12">[report]</text>
-      <text className="t-mono" x="276" y="424" fontSize="12">[live events]</text>
-    </svg>
-  );
-}
-
 /** Stepped line with two square nodes (the reference's small chart cells). */
 export function StepChart({ seed = 3 }: { seed?: number }) {
   const r = rng(seed);

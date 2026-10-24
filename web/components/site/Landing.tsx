@@ -2,19 +2,25 @@ import Link from "next/link";
 import { BENCHMARK } from "@/lib/benchmark";
 import { counts } from "@/lib/catalogue";
 import { APP_CTA, APP_HREF, DEMO_ONLY, DOCS_HREF } from "@/lib/site";
-import { Blueprint, DedupChart, DedupDiagram, PipelineDiagram, StepChart, Stripes } from "./graphics";
+import { snippets } from "@/lib/snippets";
+import { Blueprint, DedupChart, DedupDiagram, StepChart, Stripes } from "./graphics";
+import { PlugIn } from "./PlugIn";
+import { ProductFrame } from "./ProductFrame";
 import { StackSection } from "./StackSection";
+import { WhereItSits } from "./WhereItSits";
 import { Recording } from "./Recording";
 import { RepoScan } from "./RepoScan";
 import { Scanners } from "./Scanners";
 import { SiteFooter } from "./SiteFooter";
 import { ScrollReveal } from "./ScrollReveal";
 import { CountUp, Glow, Reveal, RiseText, ScrollProgress } from "./Motion";
+import { widthClass } from "@/lib/recording";
+import "./sections.css";
 
 // Blocks on the home page that rise into view (the feature cells have their own Reveal).
 const HOME_REVEAL = [
   ".reveal-me", ".rec-head", ".rec-half", ".feature-grid .code-cell > *", ".metric-main > *", ".metric-side > *",
-  ".ingredients > *",
+  ".ingredients > *", ".wis-map > *", ".versus > *", ".plug-sec > *", ".pframe",
   // Not the status row or the closing panel: each slides up over the one before, so its text must already be
   // in place. Fading it in as well left the panel arriving empty and the words popping in afterwards.
 ].join(", ");
@@ -67,18 +73,35 @@ export function Landing() {
       </section>
       </StackSection>
 
-      {/* ---- Scan a GitHub repository, after signing in ---- */}
+      {/* ---- The app itself, right under the headline ---- */}
       <StackSection index={1}>
+        <section className="pframe-sec" id="app" aria-labelledby="app-h">
+          <div className="pframe-head">
+            <span className="eyebrow" id="app-h">The app</span>
+            <p>Real screens of this build, on the recorded OWASP Juice Shop scan: the verdict, one issue, and every issue at once.</p>
+            <Link href="/sample" className="btn sm">Explore the recorded scan →</Link>
+          </div>
+          <ProductFrame />
+        </section>
+      </StackSection>
+
+      {/* ---- Scan a GitHub repository, after signing in ---- */}
+      <StackSection index={2}>
         <RepoScan />
       </StackSection>
 
       {/* ---- The recorded scan (Week 77) ---- */}
-      <StackSection index={2}>
+      <StackSection index={3}>
         <Recording />
       </StackSection>
 
+      {/* ---- Where it sits: what comes in, what goes out ---- */}
+      <StackSection index={4}>
+        <WhereItSits />
+      </StackSection>
+
       {/* ---- Feature grid ---- */}
-      <StackSection index={3}>
+      <StackSection index={5}>
         <section className="section" aria-labelledby="more-h">
           <div className="sec-head">
             <h2 id="more-h">Do more with Bulwark</h2>
@@ -115,14 +138,26 @@ export function Landing() {
       </StackSection>
 
       {/* ---- Results ---- */}
-      <StackSection index={4}>
+      <StackSection index={6}>
         <section className="section metrics" id="results" aria-labelledby="results-h">
           <div className="metric-main">
-            <div className="rule"><span className="eyebrow plain">Findings after merging</span></div>
-            <div className="stack">
-              <h2 id="results-h" className="big"><CountUp value={BENCHMARK.dedupRate * 100} decimals={1} suffix="%" /></h2>
-              <p className="dedup-note">fewer findings across five public repositories: {fmt(BENCHMARK.raw)} raw reports became {fmt(BENCHMARK.unique)} unique ones.</p>
+            <div className="rule"><span className="eyebrow plain">The same five scanners, the same five repositories</span></div>
+            <h2 id="results-h" className="sr-only">{fmt(BENCHMARK.raw)} reports from the scanners run separately, {fmt(BENCHMARK.unique)} findings with Bulwark</h2>
+            <div className="versus" aria-hidden="true">
+              <div className="versus-row before">
+                <div className="versus-who"><span className="label dimmed">Run separately</span><span className="versus-num"><CountUp value={BENCHMARK.raw} group /></span></div>
+                <div className="versus-bar"><div className={`bar-fill ${widthClass(BENCHMARK.raw, BENCHMARK.raw)}`} /></div>
+              </div>
+              <div className="versus-row">
+                <div className="versus-who"><span className="label">With Bulwark</span><span className="versus-num"><CountUp value={BENCHMARK.unique} group /></span></div>
+                <div className="versus-bar"><div className={`bar-fill ${widthClass(BENCHMARK.unique, BENCHMARK.raw)}`} /><div className="bar-rest" /></div>
+              </div>
             </div>
+            <p className="dedup-note">
+              <span className="versus-gap">{pct(BENCHMARK.dedupRate)} fewer to read.</span> Five scanners on five public repositories reported
+              {" "}{fmt(BENCHMARK.raw)} alerts; merged, they are {fmt(BENCHMARK.unique)} findings, and {fmt(confirmed)} of those were confirmed by two
+              or more scanners.
+            </p>
             <DedupChart repos={BENCHMARK.repos} />
             <p className="small dim">Measured {BENCHMARK.measuredOn}. This measures duplicate reduction, not accuracy. Dependency-heavy repos overlap most; Terraform-only repos least.</p>
           </div>
@@ -155,8 +190,33 @@ export function Landing() {
         </section>
       </StackSection>
 
-      {/* ---- Scanners + pipeline ---- */}
-      <StackSection index={5}>
+      {/* ---- Plug it in ---- */}
+      <StackSection index={7}>
+        <section className="section" id="plug-in" aria-labelledby="plug-h">
+          <div className="sec-head">
+            <div className="stack">
+              <span className="eyebrow">Plug it in</span>
+              <h2 id="plug-h">One engine, wherever you work</h2>
+            </div>
+            <div className="actions"><a href={DOCS_HREF} className="btn sm">API reference</a></div>
+          </div>
+          <div className="plug-sec">
+            <div className="cell"><PlugIn items={snippets()} /></div>
+            <div className="cell stack">
+              <span className="label">Same engine, same results</span>
+              <ul className="plug-list">
+                <li><b>CLI</b><span>A scan with no server at all: JSON, SARIF, HTML or a signed PDF.</span></li>
+                <li><b>GitHub Action</b><span>Gates pull requests on what they introduce, not on old debt.</span></li>
+                <li><b>MCP</b><span>Your own agent reads Issues and fixes as you; it cannot change anything.</span></li>
+                <li><b>REST API</b><span>Everything the web app does, with scoped tokens and a WebSocket for live progress.</span></li>
+              </ul>
+            </div>
+          </div>
+        </section>
+      </StackSection>
+
+      {/* ---- Scanners + one finding's path ---- */}
+      <StackSection index={8}>
         <section className="section ingredients" id="scanners" aria-labelledby="scan-h">
           <div className="cell stack">
             <span className="eyebrow">The default scanners [05]</span>
@@ -166,16 +226,25 @@ export function Landing() {
           </div>
           <div className="hero-art">
             <Glow className="solution">
-              <div className="panel-head"><span className="eyebrow plain">How a scan flows</span><span className="label">The pipeline</span></div>
-              <div className="grid-bg"><div className="brackets" aria-hidden="true"><i /><i /><i /><i /></div><PipelineDiagram /></div>
-              <div className="panel-foot"><span>Bulwark</span><span>Sandboxed by default</span></div>
+              <div className="panel-head"><span className="eyebrow plain">Follow one finding</span><span className="label">6 steps</span></div>
+              <div className="grid-bg path-teaser">
+                <ol>
+                  <li><span>01</span>Bandit and Semgrep report one SQL injection</li>
+                  <li><span>02</span>Both become one shape: CWE-89, HIGH</li>
+                  <li><span>03</span>Merged into one finding, with a fingerprint</li>
+                  <li><span>04</span>Ranked by risk, not by count</li>
+                  <li><span>05</span>Tracked as an Issue, with an SLA and a ticket</li>
+                  <li><span>06</span>Fixed, and checked by a targeted retest</li>
+                </ol>
+              </div>
+              <div className="panel-foot"><Link href="/how-it-works#story">See every step →</Link><span>A real scan</span></div>
             </Glow>
           </div>
         </section>
       </StackSection>
 
       {/* ---- Shipped / roadmap ---- */}
-      <StackSection index={6}>
+      <StackSection index={9}>
         <section className="section stackrow" aria-label="Status">
           <div className="cell stack">
             <span className="eyebrow">What ships today</span>
@@ -205,7 +274,7 @@ export function Landing() {
       </StackSection>
 
       {/* ---- CTA + footer (the last panel slides over everything) ---- */}
-      <StackSection index={7}>
+      <StackSection index={10}>
       <section className="cta" aria-label="Get started">
         <Stripes seed={7} groups={16} rows={2} />
         <div className="cta-copy">
