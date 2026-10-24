@@ -6,7 +6,6 @@ import { snippets } from "@/lib/snippets";
 import { Blueprint, DedupChart, DedupDiagram, StepChart, Stripes } from "./graphics";
 import { PlugIn } from "./PlugIn";
 import { ProductFrame } from "./ProductFrame";
-import { StackSection } from "./StackSection";
 import { WhereItSits } from "./WhereItSits";
 import { Recording } from "./Recording";
 import { RepoScan } from "./RepoScan";
@@ -21,8 +20,6 @@ import "./sections.css";
 const HOME_REVEAL = [
   ".reveal-me", ".rec-head", ".rec-half", ".feature-grid .code-cell > *", ".metric-main > *", ".metric-side > *",
   ".ingredients > *", ".wis-map > *", ".versus > *", ".plug-sec > *", ".pframe",
-  // Not the status row or the closing panel: each slides up over the one before, so its text must already be
-  // in place. Fading it in as well left the panel arriving empty and the words popping in afterwards.
 ].join(", ");
 
 const pct = (n: number, d = 1) => `${(n * 100).toFixed(d)}%`;
@@ -37,7 +34,6 @@ export function Landing() {
       <ScrollProgress />
       <ScrollReveal selector={HOME_REVEAL} />
       {/* ---- Hero ---- */}
-      <StackSection index={0}>
       <section className="section hero" id="product">
         <div className="hero-copy">
           <div className="hero-main">
@@ -71,10 +67,8 @@ export function Landing() {
           </Glow>
         </div>
       </section>
-      </StackSection>
 
       {/* ---- The app itself, right under the headline ---- */}
-      <StackSection index={1}>
         <section className="pframe-sec" id="app" aria-labelledby="app-h">
           <div className="pframe-head">
             <span className="eyebrow" id="app-h">The app</span>
@@ -83,25 +77,17 @@ export function Landing() {
           </div>
           <ProductFrame />
         </section>
-      </StackSection>
 
       {/* ---- Scan a GitHub repository, after signing in ---- */}
-      <StackSection index={2}>
         <RepoScan />
-      </StackSection>
 
       {/* ---- The recorded scan (Week 77) ---- */}
-      <StackSection index={3}>
         <Recording />
-      </StackSection>
 
       {/* ---- Where it sits: what comes in, what goes out ---- */}
-      <StackSection index={4}>
         <WhereItSits />
-      </StackSection>
 
       {/* ---- Feature grid ---- */}
-      <StackSection index={5}>
         <section className="section" aria-labelledby="more-h">
           <div className="sec-head">
             <h2 id="more-h">Do more with Bulwark</h2>
@@ -135,10 +121,8 @@ export function Landing() {
             </div>
           </div>
         </section>
-      </StackSection>
 
       {/* ---- Results ---- */}
-      <StackSection index={6}>
         <section className="section metrics" id="results" aria-labelledby="results-h">
           <div className="metric-main">
             <div className="rule"><span className="eyebrow plain">The same five scanners, the same five repositories</span></div>
@@ -188,10 +172,8 @@ export function Landing() {
             </div>
           </div>
         </section>
-      </StackSection>
 
       {/* ---- Plug it in ---- */}
-      <StackSection index={7}>
         <section className="section" id="plug-in" aria-labelledby="plug-h">
           <div className="sec-head">
             <div className="stack">
@@ -213,10 +195,8 @@ export function Landing() {
             </div>
           </div>
         </section>
-      </StackSection>
 
       {/* ---- Scanners + one finding's path ---- */}
-      <StackSection index={8}>
         <section className="section ingredients" id="scanners" aria-labelledby="scan-h">
           <div className="cell stack">
             <span className="eyebrow">The default scanners [05]</span>
@@ -241,10 +221,8 @@ export function Landing() {
             </Glow>
           </div>
         </section>
-      </StackSection>
 
       {/* ---- Shipped / roadmap ---- */}
-      <StackSection index={9}>
         <section className="section stackrow" aria-label="Status">
           <div className="cell stack">
             <span className="eyebrow">What ships today</span>
@@ -271,10 +249,8 @@ export function Landing() {
             </ul>
           </div>
         </section>
-      </StackSection>
 
       {/* ---- CTA + footer (the last panel slides over everything) ---- */}
-      <StackSection index={10}>
       <section className="cta" aria-label="Get started">
         <Stripes seed={7} groups={16} rows={2} />
         <div className="cta-copy">
@@ -285,7 +261,6 @@ export function Landing() {
         </div>
       </section>
       <SiteFooter />
-      </StackSection>
     </div>
   );
 }

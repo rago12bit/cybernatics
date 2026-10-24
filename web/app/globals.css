@@ -521,16 +521,6 @@ a.chip { color: var(--teal); border-color: var(--teal-deep); } a.chip:hover { ba
 .tbar b.w-95 { right: auto; width: 95%; }
 .tbar b.w-100 { right: auto; width: 100%; }
 
-/* ---------- Scroll-driven section stack (reference recording): each section pins while the next slides over it ----------
-   The pin offset and --cover are set from JS through the CSSOM (allowed by the strict CSP). Stacking is only
-   switched on for wide screens without reduced motion (see lib/stack.ts STACK_QUERY); otherwise sections flow. */
-.stack-sec { --cover: 0; position: relative; background: var(--bg); scroll-margin-top: var(--header-h); }
-.stack-sec.stacked { position: sticky; box-shadow: 0 -28px 50px -24px rgba(0, 0, 0, 0.75); border-top: 1px solid var(--line-strong); }
-.stack-sec:first-child.stacked { box-shadow: none; border-top: 0; }
-.stack-inner { transform-origin: 50% 0; }
-.stack-sec.stacked .stack-inner { transform: scale(calc(1 - var(--cover) * 0.035)); will-change: transform; }
-.stack-sec.stacked::after { content: ""; position: absolute; inset: 0; background: #060605; opacity: calc(var(--cover) * 0.6); pointer-events: none; }
-
 section[id] { scroll-margin-top: var(--header-h); }
 
 .ingredients .hero-art { padding: clamp(1rem, 2.4vw, 2.5rem); align-items: center; }
