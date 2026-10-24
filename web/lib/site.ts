@@ -24,3 +24,6 @@ export function safePublicLink(raw: string | undefined, allowMailto: boolean): s
 }
 export const REPO_URL = safePublicLink(process.env.NEXT_PUBLIC_REPO_URL, false);
 export const CONTACT_URL = safePublicLink(process.env.NEXT_PUBLIC_CONTACT_URL, true);
+// Where the public site is served, for link previews, the sitemap and robots.txt. Unset (a self-hosted
+// app on a private network), those use relative links only and the sitemap stays empty.
+export const SITE_URL = safePublicLink(process.env.NEXT_PUBLIC_SITE_URL, false)?.replace(/\/+$/, "") ?? null;

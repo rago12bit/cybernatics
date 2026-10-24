@@ -11,6 +11,8 @@ primary_region = "fra"
     # Shown in the site footer when set (https URL, or mailto: for contact). Leave empty to show nothing.
     NEXT_PUBLIC_REPO_URL = "https://github.com/rago12bit/cybernatics"
     NEXT_PUBLIC_CONTACT_URL = "mailto:ragh.gupta22@gmail.com"
+    # Absolute links for link previews and the sitemap: this app's own fly.dev address.
+    NEXT_PUBLIC_SITE_URL = "https://bulwark-scan-demo.fly.dev"
 
 [http_service]
   internal_port = 3000

@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { ScrollReveal } from "@/components/site/ScrollReveal";
 import { APP_REVEAL_SELECTOR } from "@/lib/reveal";
 
-export const metadata: Metadata = { title: "App · Bulwark" };
+export const metadata: Metadata = { title: "App · Bulwark", robots: { index: false, follow: false } };
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   return (

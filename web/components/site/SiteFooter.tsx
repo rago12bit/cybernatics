@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { APP_HREF, CONTACT_URL, DEMO_ONLY, DOCS_HREF, REPO_URL } from "@/lib/site";
-import { Stripes } from "./graphics";
+import { BrandMark, Stripes } from "./graphics";
 
 // The public site's footer: every site page, plus the project's own links when the build was given
 // them (REPO_URL and CONTACT_URL are configured, never hard-coded).
@@ -42,6 +42,11 @@ export function SiteFooter() {
             {CONTACT_URL && <li><a href={CONTACT_URL} rel="noopener noreferrer">Contact</a></li>}
           </ul>
         </div>
+      </div>
+      <div className="foot-base">
+        <span className="foot-brand"><BrandMark />Bulwark</span>
+        <span className="foot-note">Security scanning, without the noise. Open source under Apache-2.0.</span>
+        <a href="#main" className="foot-top">Back to top ↑</a>
       </div>
       <Stripes seed={11} groups={16} rows={3} />
     </footer>

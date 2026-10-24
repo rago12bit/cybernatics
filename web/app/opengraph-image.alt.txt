@@ -1,0 +1,1 @@
+Bulwark: security scanning, without the noise. Two scanners report one SQL injection; Bulwark merges them into one finding.

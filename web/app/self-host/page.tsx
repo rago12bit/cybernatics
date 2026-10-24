@@ -26,7 +26,7 @@ export default function SelfHost() {
           <li>Accounts, single sign-on and project roles belong to a deployment you run. This site has none.</li>
         </ul>
         <h2>Start locally</h2>
-        <pre className="snippet"><code>{`./scripts/init-env.sh                     # writes .env with random secrets
+        <pre className="snippet" tabIndex={0} aria-label="Commands to run Bulwark"><code>{`./scripts/init-env.sh                     # writes .env with random secrets
 docker compose --profile scanners build   # app image + scanner images
 docker compose up -d                      # UI on http://localhost:3000
 
