@@ -48,7 +48,7 @@ otel = ["opentelemetry-sdk>=1.27", "opentelemetry-exporter-otlp-proto-http>=1.27
 docs = ["mkdocs>=1.6", "mkdocs-material>=9.5"]  # `mkdocs build` the site in mkdocs.yml (plan §23, Week 51 task 4)
 # The linters are pinned exactly: CI fails on any finding, and a new release of one changes what it
 # finds (black 26.10 reformatted 13 files in Oct 2026). Dependabot proposes their bumps in a PR of their own.
-dev = ["pytest>=8", "pytest-cov>=5", "pytest-rerunfailures>=14", "ruff==0.17.0", "black==26.10.1", "mypy==2.4.0", "jsonschema>=4", "pyyaml>=6", "types-PyYAML>=6", "ruamel.yaml>=0.17", "anthropic>=0.40", "temporalio>=1.7", "opentelemetry-sdk>=1.27", "opentelemetry-exporter-otlp-proto-http>=1.27", "hypothesis>=6.100"]
+dev = ["pytest>=8", "pytest-cov>=5", "pytest-rerunfailures>=14", "ruff==0.17.2", "black==26.10.1", "mypy==2.4.0", "jsonschema>=4", "pyyaml>=6", "types-PyYAML>=6", "ruamel.yaml>=0.17", "anthropic>=0.40", "temporalio>=1.7", "opentelemetry-sdk>=1.27", "opentelemetry-exporter-otlp-proto-http>=1.27", "hypothesis>=6.100"]
 
 [tool.setuptools.packages.find]
 include = ["core*", "cli*", "api*"]
