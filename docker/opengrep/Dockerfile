@@ -12,9 +12,9 @@
 # to Sell the Software", where "Sell" is defined to include offering it as a hosted service) --
 # the exact same restriction this image exists to get away from. Rules live in
 # docker/opengrep/rules/, authored for this project (see docker/opengrep/rules/LICENSE).
-FROM ghcr.io/sigstore/cosign/cosign:v3.1.3@sha256:9e5c2f2edc34351160407ca3416c61855bdf9403c3c5936e0f0be7fc261611b8 AS cosign
+FROM ghcr.io/sigstore/cosign/cosign:v3.1.4@sha256:0f06154836d2de34f887a5c273506d52ca43edaa1d9e53e6510fa78a48f69c2d AS cosign
 
-FROM alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc
+FROM alpine:3.24@sha256:be2656061b536c1883c4034790e21d0a09c5aaaf51968b89368a3c0371ea2c9a
 ARG OPENGREP_VERSION=1.30.0
 # Who signs opengrep's release binaries (the certificate on each one's .sig), THREAT-MODEL T10.
 ARG SIGNER=https://github.com/opengrep/opengrep/.github/workflows/rolling-release.yml@refs/heads/main
