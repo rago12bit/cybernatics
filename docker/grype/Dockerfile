@@ -4,7 +4,7 @@
 # Built from Anchore's release, not their image (THREAT-MODEL T10): the image is unsigned, but the
 # release's checksum file is signed with cosign by Anchore's release workflow. The build checks that
 # signature against that exact workflow, then the archive against the checksum, and fails otherwise.
-FROM ghcr.io/sigstore/cosign/cosign:v3.1.3@sha256:9e5c2f2edc34351160407ca3416c61855bdf9403c3c5936e0f0be7fc261611b8 AS cosign
+FROM ghcr.io/sigstore/cosign/cosign:v3.1.4@sha256:0f06154836d2de34f887a5c273506d52ca43edaa1d9e53e6510fa78a48f69c2d AS cosign
 
 FROM alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc AS verify
 COPY --from=cosign /ko-app/cosign /usr/local/bin/cosign

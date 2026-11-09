@@ -10,12 +10,12 @@ RUN apk add --no-cache git \
  && cp /src/LICENSE /rules/LICENSE
 
 # Stage 2: one file per language instead of hundreds (see merge-rules.py: ~25 s less start-up per scan).
-FROM semgrep/semgrep:1.90.0@sha256:7b625711ba9b6d1a543e308967b18c01b59932490a5536a06422666474bf6ee4 AS merged
+FROM semgrep/semgrep:1.183.0@sha256:2e45517a85e13a9cca14a2a00df6bb48affd66b8ebfae1b0991cd57578362fb0 AS merged
 COPY --from=rules /rules /rules-src
 COPY merge-rules.py /merge-rules.py
 RUN python3 /merge-rules.py /rules-src /rules
 
-FROM semgrep/semgrep:1.90.0@sha256:7b625711ba9b6d1a543e308967b18c01b59932490a5536a06422666474bf6ee4
+FROM semgrep/semgrep:1.183.0@sha256:2e45517a85e13a9cca14a2a00df6bb48affd66b8ebfae1b0991cd57578362fb0
 COPY --from=merged /rules /rules
 COPY --from=rules /rules/LICENSE /rules/LICENSE
 RUN adduser -D -u 10001 scanner
