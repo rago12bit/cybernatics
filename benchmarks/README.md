@@ -35,6 +35,15 @@ Robustness (metric 5): **5 / 5** repositories completed with no scanner failing 
   positive. Precision/recall against labelled corpora comes in Phase 6 (OWASP Benchmark, Juliet).
 - Five repositories is a **baseline, not the final corpus** (the target is 20-30).
 
+## Merge accuracy (plan §60)
+
+The rate above is not accuracy. `python -m benchmarks.merge_study` is the study that measures it:
+`collect` scans the pinned corpus and keeps every raw report, `sample` draws the pairs to label and
+writes a labelling page that does not say what Bulwark did with a pair, and `score` turns one or two
+raters' answers into merge precision and the missed-merge rate among look-alikes, with 95%
+intervals. Protocol and codebook: [docs/evaluation-merge-accuracy.md](../docs/evaluation-merge-accuracy.md).
+**No labels have been collected yet**, so there is no result file.
+
 ## Incremental scanning (plan §20.1/§36, Week 36)
 
 Median PR scan time against a full scan, with the content-addressed result cache

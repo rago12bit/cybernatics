@@ -115,6 +115,15 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   asserts the target was asked for `/`.
 
 ### Added
+- **A study of merge accuracy, ready to label.** The deduplication rate says how much shorter the
+  list gets, not whether the merges are right. `python -m benchmarks.merge_study` scans the pinned
+  25-repository corpus keeping every raw report, draws pairs to label (every cross-tool code merge,
+  samples of dependency and same-tool merges, and look-alike pairs Bulwark left apart), and writes
+  one labelling page that shows two reports side by side without saying what Bulwark did with them.
+  Scoring gives merge precision and the missed-merge rate among look-alikes with 95% intervals, and
+  Cohen's kappa for two raters. `core.correlation.partition` returns the raw reports behind each
+  finding. No labels have been collected yet: docs/evaluation-merge-accuracy.md has the protocol and
+  an empty results section.
 - **Sign in with any Google account.** An identity provider can sign in every email domain (`*`): with
   Google, any Google account -- Gmail, or a school or company on Google -- but only for people an
   admin has added; an email nobody added is refused and no account is created. The server refuses

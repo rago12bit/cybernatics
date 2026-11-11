@@ -137,8 +137,8 @@ class CorrelationStats:
         return 0.0 if self.raw == 0 else 1 - self.unique / self.raw
 
 
-def correlate(findings: Iterable[Finding]) -> tuple[list[Finding], CorrelationStats]:
-    items = list(findings)
+def cluster(items: list[Finding]) -> list[list[Finding]]:
+    """The reports `same_defect` joins, directly or through one another: one group per defect."""
     clusters = _Clusters(len(items), items)
     buckets: dict[str, list[int]] = defaultdict(list)
     for i, f in enumerate(items):
@@ -158,7 +158,21 @@ def correlate(findings: Iterable[Finding]) -> tuple[list[Finding], CorrelationSt
     groups: dict[int, list[Finding]] = defaultdict(list)
     for i, f in enumerate(items):
         groups[clusters.find(i)].append(f)
-    merged, repeats = _fold_repeats([_merge(g) for g in groups.values()])
+    return list(groups.values())
+
+
+def partition(findings: Iterable[Finding]) -> list[list[Finding]]:
+    """The raw reports behind each finding `correlate` returns, in first-seen order: reports merged
+    across tools, then repeats folded onto them. What a study of merge accuracy has to look at."""
+    places: dict[tuple[str, ...], list[Finding]] = {}
+    for group in cluster(list(findings)):
+        places.setdefault(_place(_merge(group)), []).extend(group)
+    return list(places.values())
+
+
+def correlate(findings: Iterable[Finding]) -> tuple[list[Finding], CorrelationStats]:
+    items = list(findings)
+    merged, repeats = _fold_repeats([_merge(g) for g in cluster(items)])
     merged.sort(key=lambda f: (-_SEV_ORDER.index(f.scoring.normalized_severity), f.location.path,
                                f.location.start_line, f.id))  # fmt: skip
     return merged, CorrelationStats(raw=len(items), unique=len(merged), repeats=repeats)

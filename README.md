@@ -125,7 +125,8 @@ the project, is in [docs/evaluation-v3.md](docs/evaluation-v3.md) (earlier versi
 - **AI quality:** verified fixes, `/fix` and the triage assistant have never run against a real
   model.
 - **VEX proposals:** the blind review of 100 proposals hasn't happened.
-- **Deduplication accuracy:** needs hand-labelled duplicate pairs.
+- **Deduplication accuracy:** needs hand-labelled duplicate pairs. The study is built and waits for
+  labels ([docs/evaluation-merge-accuracy.md](docs/evaluation-merge-accuracy.md)).
 - **Firecracker** for the fix agent's test runs is built but has never run: it needs Linux with KVM.
   The DefectDojo round trip and PDF rendering are tested by hand, not in CI.
 

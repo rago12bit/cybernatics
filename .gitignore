@@ -13,3 +13,5 @@ node_modules/
 certs/
 tests/fuzz_corpus/
 /site/
+# The merge study's labelling page: regenerated from its key by `benchmarks.merge_study sample`.
+benchmarks/results/*.label.html
