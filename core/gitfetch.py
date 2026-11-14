@@ -108,23 +108,30 @@ def _friendly_clone_error(stderr: str) -> str:
 def _run_git(
     argv: list[str], env: dict[str, str], dest: Path, deadline: float, limits: Limits
 ) -> None:
-    """Run one git subprocess, enforcing the same wall-clock and size watchdog every step needs."""
-    proc = subprocess.Popen(argv, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    try:
-        while proc.poll() is None:
-            if time.monotonic() > deadline:
-                raise IngestError("git operation timed out")
-            if dest.exists() and _dir_size(dest) > limits.max_uncompressed_bytes:
-                raise IngestError("repository exceeds max size")
-            time.sleep(0.25)
-    except IngestError:
-        proc.kill()
-        proc.wait()
-        raise
-    if proc.returncode != 0:
-        err = (proc.stderr.read() if proc.stderr else b"").decode("utf-8", "replace")[-500:].strip()
-        msg = f"{_friendly_clone_error(err)} ({err})" if err else "git operation failed"
-        raise IngestError(msg)
+    """Run one git subprocess, enforcing the same wall-clock and size watchdog every step needs.
+
+    git's output goes to a file, not a pipe. Nothing reads a pipe while the loop below waits, so
+    once git had written a pipe's worth (64 KB; a warning per path is enough) it blocked on the
+    next write, and a clone that would have finished, or failed with a reason, sat until the
+    deadline and was reported as "timed out"."""
+    with tempfile.TemporaryFile() as errors:
+        proc = subprocess.Popen(argv, env=env, stdout=subprocess.DEVNULL, stderr=errors)
+        try:
+            while proc.poll() is None:
+                if time.monotonic() > deadline:
+                    raise IngestError("git operation timed out")
+                if dest.exists() and _dir_size(dest) > limits.max_uncompressed_bytes:
+                    raise IngestError("repository exceeds max size")
+                time.sleep(0.25)
+        except IngestError:
+            proc.kill()
+            proc.wait()
+            raise
+        if proc.returncode != 0:
+            errors.seek(max(errors.seek(0, os.SEEK_END) - 4000, 0))
+            err = errors.read().decode("utf-8", "replace")[-500:].strip()
+            msg = f"{_friendly_clone_error(err)} ({err})" if err else "git operation failed"
+            raise IngestError(msg)
 
 
 def clone_repo(

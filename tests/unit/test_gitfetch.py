@@ -89,7 +89,6 @@ def test_dns_failure_is_a_clean_rejection() -> None:
 
 
 # ---- clone_repo: exercised with a fake `git` process (no network) -------------------------
-import io  # noqa: E402
 from pathlib import Path  # noqa: E402
 from typing import Any  # noqa: E402
 
@@ -105,7 +104,7 @@ class FakeGit:
     def __init__(self, argv: list[str], **kw: Any) -> None:
         self.argv, self.env = argv, kw["env"]
         self.dest = Path(argv[-1])
-        self.stderr = io.BytesIO(FakeGit.err)
+        kw["stderr"].write(FakeGit.err)  # git writes its errors to the file it is given
         self._polls = 0
         self.killed = False
         FakeGit.instances.append(self)
@@ -241,7 +240,7 @@ class FakeGitSteps:
 
     def __init__(self, argv: list[str], **kw: Any) -> None:
         self.argv, self.env = argv, kw["env"]
-        self.stderr = io.BytesIO(FakeGitSteps.err)
+        kw["stderr"].write(FakeGitSteps.err)
         self._polls = 0
         self.killed = False
         FakeGitSteps.instances.append(self)
