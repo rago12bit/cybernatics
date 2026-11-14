@@ -7,10 +7,12 @@ access to the Docker daemon. Start one with:  celery -A core.tasks worker -l inf
 
 from __future__ import annotations
 
+import logging
 import os
 import re
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from celery import Celery, group
 from celery.exceptions import SoftTimeLimitExceeded
@@ -18,6 +20,11 @@ from celery.signals import setup_logging, worker_ready, worker_shutdown
 
 from core.runner import RunnerError
 from core.scan import ADAPTERS, ToolOutcome
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import Session
+
+log = logging.getLogger(__name__)
 
 _REDIS = os.environ.get("BULWARK_REDIS_URL", "redis://localhost:6379/0")
 _BROKER = os.environ.get("BULWARK_BROKER_URL", _REDIS)
@@ -180,64 +187,36 @@ def run_import_task(self: Any, import_id: str, org_id: str) -> str:
 def connectors_due_task() -> int:
     """Queue every enabled connector whose next run is due, one organization at a time (the
     `organizations` table carries no RLS; each org's connectors are read with its scope set)."""
-    from sqlalchemy import select
-
     from core.connectors import service
-    from core.persistence.db import get_session_factory
-    from core.persistence.models import Organization
-    from core.tenancy import set_session_org
 
-    queued = 0
-    with get_session_factory()() as s:
-        org_ids = list(s.scalars(select(Organization.id)))
-    for org_id in org_ids:
-        with get_session_factory()() as s:
-            set_session_org(s, org_id)
-            for c in service.due(s, org_id):
-                run_connector_task.delay(c.id, org_id)
-                queued += 1
-    return queued
+    def queue(s: Session, org_id: str) -> int:
+        due = service.due(s, org_id)
+        for c in due:
+            run_connector_task.delay(c.id, org_id)
+        return len(due)
+
+    return _each_org("connectors", queue)
 
 
 @celery_app.task(name="bulwark.sla_sweep", ignore_result=True)  # type: ignore[untyped-decorator]
 def sla_sweep_task() -> int:
     """Each organization's SLA crossings, announced once each (plan §44.1), with its scope set."""
-    from sqlalchemy import select
-
-    from core.persistence.db import get_session_factory
-    from core.persistence.models import Organization
     from core.sla import service
-    from core.tenancy import set_session_org
 
-    announced = 0
-    with get_session_factory()() as s:
-        org_ids = list(s.scalars(select(Organization.id)))
-    for org_id in org_ids:
-        with get_session_factory()() as s:
-            set_session_org(s, org_id)
-            announced += service.sweep(s, org_id).announced
-    return announced
+    return _each_org("the SLA sweep", lambda s, org_id: service.sweep(s, org_id).announced)
 
 
 @celery_app.task(name="bulwark.expire_risk_acceptances", ignore_result=True)  # type: ignore[untyped-decorator]
 def expire_risk_acceptances_task() -> int:
     """End each organization's due risk acceptances, with its scope set (plan §44.2)."""
-    from sqlalchemy import select
-
     from core.acceptance import service
-    from core.persistence.db import get_session_factory
-    from core.persistence.models import Organization
-    from core.tenancy import set_session_org
 
-    ended = 0
-    with get_session_factory()() as s:
-        org_ids = list(s.scalars(select(Organization.id)))
-    for org_id in org_ids:
-        with get_session_factory()() as s:
-            set_session_org(s, org_id)
-            ended += len(service.expire_due(s, org_id).expired)
-            service.warn_expiring(s, org_id)
-    return ended
+    def expire(s: Session, org_id: str) -> int:
+        ended = len(service.expire_due(s, org_id).expired)
+        service.warn_expiring(s, org_id)
+        return ended
+
+    return _each_org("risk acceptance expiry", expire)
 
 
 def _org_ids() -> list[str]:
@@ -250,66 +229,67 @@ def _org_ids() -> list[str]:
         return list(s.scalars(select(Organization.id)))
 
 
-@celery_app.task(name="bulwark.dispatch_outbox", ignore_result=True)  # type: ignore[untyped-decorator]
-def dispatch_outbox_task() -> int:
-    """Each organization's new outbox events, to the rules engine (plan §41.1, §45)."""
-    from core.dispatch import drain
+def _each_org(job: str, run: Callable[[Session, str], int]) -> int:
+    """`run(session, org_id)` for every organization, each in a session of its own with its scope
+    set (the `organizations` table carries no RLS; everything a job reads does). Returns the total.
+
+    One organization failing does not stop the rest. These jobs ran every organization in one
+    loop with nothing around each, so a single organization that raised -- a rule that would not
+    evaluate, a row another job left half-written -- ended the task there, and every organization
+    after it in the list was skipped, on that run and every run after. It is logged with the
+    organization, and the next run tries it again."""
     from core.persistence.db import get_session_factory
     from core.tenancy import set_session_org
 
     total = 0
     for org_id in _org_ids():
-        with get_session_factory()() as s:
-            set_session_org(s, org_id)
-            total += drain(s, org_id)
+        try:
+            with get_session_factory()() as s:
+                set_session_org(s, org_id)
+                total += run(s, org_id)
+        except Exception:  # noqa: BLE001 - whatever it was, the other organizations still run
+            log.exception("%s failed for organization %s", job, org_id)
     return total
+
+
+@celery_app.task(name="bulwark.dispatch_outbox", ignore_result=True)  # type: ignore[untyped-decorator]
+def dispatch_outbox_task() -> int:
+    """Each organization's new outbox events, to the rules engine (plan §41.1, §45)."""
+    from core.dispatch import drain
+
+    return _each_org("the outbox", drain)
 
 
 @celery_app.task(name="bulwark.notification_digest", ignore_result=True)  # type: ignore[untyped-decorator]
 def notification_digest_task() -> int:
     """Each organization's digests whose hour has come (plan §49)."""
     from core.notify.service import run_digests
-    from core.persistence.db import get_session_factory
-    from core.tenancy import set_session_org
 
-    sent = 0
-    for org_id in _org_ids():
-        with get_session_factory()() as s:
-            set_session_org(s, org_id)
-            r = run_digests(s, org_id)
-            sent += r.emails + r.team_messages
-    return sent
+    def digests(s: Session, org_id: str) -> int:
+        r = run_digests(s, org_id)
+        return r.emails + r.team_messages
+
+    return _each_org("the notification digest", digests)
 
 
 @celery_app.task(name="bulwark.tickets_sync", ignore_result=True)  # type: ignore[untyped-decorator]
 def tickets_sync_task() -> int:
     """Linked tickets not synced for ten minutes, both ways (plan §49)."""
-    from core.persistence.db import get_session_factory
-    from core.tenancy import set_session_org
     from core.tickets.sync import sync_due
 
-    n = 0
-    for org_id in _org_ids():
-        with get_session_factory()() as s:
-            set_session_org(s, org_id)
-            n += sync_due(s, org_id)
-    return n
+    return _each_org("ticket sync", sync_due)
 
 
 @celery_app.task(name="bulwark.rules_sweep", ignore_result=True)  # type: ignore[untyped-decorator]
 def rules_sweep_task() -> int:
     """Quiet projects and schedules (plan §45), each organization with its scope set."""
-    from core.persistence.db import get_session_factory
     from core.rules.engine import sweep
-    from core.tenancy import set_session_org
 
-    fired = 0
-    for org_id in _org_ids():
-        with get_session_factory()() as s:
-            set_session_org(s, org_id)
-            out = sweep(s, org_id)
-            fired += out.applied + out.held
-    return fired
+    def fired(s: Session, org_id: str) -> int:
+        out = sweep(s, org_id)
+        return out.applied + out.held
+
+    return _each_org("the rules sweep", fired)
 
 
 @celery_app.task(name="bulwark.inventory_backfill", ignore_result=True)  # type: ignore[untyped-decorator]
@@ -317,16 +297,13 @@ def inventory_backfill_task() -> int:
     """Projects whose SBOMs predate the component inventory (plan §46.1), a few at a time; and
     each library's usage counts, recounted."""
     from core.inventory import backfill, recount_org
-    from core.persistence.db import get_session_factory
-    from core.tenancy import set_session_org
 
-    n = 0
-    for org_id in _org_ids():
-        with get_session_factory()() as s:
-            set_session_org(s, org_id)
-            n += backfill(s, org_id)
-            recount_org(s, org_id)
-    return n
+    def fill(s: Session, org_id: str) -> int:
+        n = backfill(s, org_id)
+        recount_org(s, org_id)
+        return n
+
+    return _each_org("the inventory backfill", fill)
 
 
 @celery_app.task(name="bulwark.update_advisories", ignore_result=True)  # type: ignore[untyped-decorator]
@@ -335,18 +312,18 @@ def update_advisories_task() -> dict[str, str]:
     when much changed, as on the first run). Failures are recorded per source, never raised."""
     from core.advisories import feeds, impact, issues
     from core.persistence.db import get_session_factory
-    from core.tenancy import set_session_org
 
     with get_session_factory()() as s:
         result = feeds.update_all(s)
     full = len(result.vuln_keys) > impact.FULL_MATCH_OVER
-    for org_id in _org_ids():
-        if not result.vuln_keys:
-            break
-        with get_session_factory()() as s:
-            set_session_org(s, org_id)
-            matched = impact.match(s, org_id, vuln_keys=None if full else result.vuln_keys)
-            issues.sync_changed(s, org_id, matched.changed_assets)
+
+    def match(s: Session, org_id: str) -> int:
+        matched = impact.match(s, org_id, vuln_keys=None if full else result.vuln_keys)
+        issues.sync_changed(s, org_id, matched.changed_assets)
+        return len(matched.changed_assets)
+
+    if result.vuln_keys:
+        _each_org("advisory matching", match)
     return result.errors
 
 
@@ -354,30 +331,16 @@ def update_advisories_task() -> dict[str, str]:
 def refresh_metrics_task() -> int:
     """Each organization's dirty metric scopes (plan §48.1)."""
     from core.metrics import rollup
-    from core.persistence.db import get_session_factory
-    from core.tenancy import set_session_org
 
-    n = 0
-    for org_id in _org_ids():
-        with get_session_factory()() as s:
-            set_session_org(s, org_id)
-            n += rollup.refresh_dirty(s, org_id)
-    return n
+    return _each_org("the metrics refresh", rollup.refresh_dirty)
 
 
 @celery_app.task(name="bulwark.refresh_metrics_all", ignore_result=True)  # type: ignore[untyped-decorator]
 def refresh_metrics_all_task() -> int:
     """Every project of every organization (plan §48.1)."""
     from core.metrics import rollup
-    from core.persistence.db import get_session_factory
-    from core.tenancy import set_session_org
 
-    n = 0
-    for org_id in _org_ids():
-        with get_session_factory()() as s:
-            set_session_org(s, org_id)
-            n += rollup.refresh_all(s, org_id)
-    return n
+    return _each_org("the full metrics refresh", rollup.refresh_all)
 
 
 @celery_app.task(name="bulwark.render_report", bind=True, acks_late=True, ignore_result=True)  # type: ignore[untyped-decorator]
@@ -397,16 +360,9 @@ def render_report_task(self: Any, run_id: str, org_id: str) -> str:
 @celery_app.task(name="bulwark.run_due_reports", ignore_result=True)  # type: ignore[untyped-decorator]
 def run_due_reports_task() -> int:
     """Generate and email each organization's reports whose schedule is due (plan §48.3)."""
-    from core.persistence.db import get_session_factory
     from core.reports import service
-    from core.tenancy import set_session_org
 
-    n = 0
-    for org_id in _org_ids():
-        with get_session_factory()() as s:
-            set_session_org(s, org_id)
-            n += service.run_due(s, org_id)
-    return n
+    return _each_org("scheduled reports", service.run_due)
 
 
 @celery_app.task(name="bulwark.recompute_priority", bind=True, acks_late=True, ignore_result=True)  # type: ignore[untyped-decorator]
