@@ -8,7 +8,7 @@ import {
   rejectVerifiedFix,
   startVerifiedFix,
 } from "@/lib/api";
-import type { VerifiedFixStatus, VerifiedFixView } from "@/lib/types";
+import type { VerifiedFixView } from "@/lib/types";
 import { Button } from "@/design-system/primitives/Button";
 import "./verified-fix-panel.css";
 

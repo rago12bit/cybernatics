@@ -2,7 +2,7 @@ import type { VexJustification, AsvsBenchmark, ComplianceFramework, EvidencePack
   EvidenceFile, ManualFindingInput, ManualFindingView, ManualRecorded, ProjectRoutes, DedupApplied, DedupChangeRequest, DedupHistoryEntry, DedupOverview, DedupPreview,
   ImportCreated, ImportView, ParserInfo, ProjectTest, RevertView,
   AssetSummary, AssetVerification, AttackPath, BulkTriageResult,
-  StrideRow, ThreatModel, RetentionSettings, Citation, CopilotConversation, CopilotMessage, CostSummary, DependenciesView, Finding, FindingsPage, FindingsQuery, GenerateHypothesesResult, Guidance, GuidanceApi, Hypothesis, IssueHistoryEvent, ProjectOverview, Remediation, ScanComparison, ScanCost, ScanSummary, ScanView, TriageAssistantView, TriageStatus, VerifiedFixStarted, VerifiedFixView } from "./types";
+  StrideRow, ThreatModel, RetentionSettings, CopilotConversation, CopilotMessage, CostSummary, DependenciesView, Finding, FindingsPage, FindingsQuery, GenerateHypothesesResult, Guidance, GuidanceApi, Hypothesis, IssueHistoryEvent, ProjectOverview, Remediation, ScanComparison, ScanCost, ScanSummary, ScanView, TriageAssistantView, TriageStatus, VerifiedFixStarted, VerifiedFixView } from "./types";
 import type { AssignedIssue, Dashboard, DashboardList, Me, MetricIssue, MetricResult, MyEngagement, Role, UnitOverview, UnitSummary, Widget } from "./dashboard";
 import { findingsQueryString } from "./format";
 import type { OrgRole, OverrideRole, SsoChoice, SsoProvider, SsoProviderInput, TokenView, UserView } from "./identity";
