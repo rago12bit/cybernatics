@@ -147,14 +147,14 @@ def _view(row: IngestMapping, history: list[IngestMapping] | None = None) -> Map
     )
 
 
-async def _store_sample(upload: UploadFile, dest_dir: Path) -> tuple[Path, str]:
-    """Stream a sample to a server-named file, refusing more than MAX_SAMPLE_BYTES."""
+def _store_sample(upload: UploadFile, dest_dir: Path) -> tuple[Path, str]:
+    """Copy a sample to a server-named file, refusing more than MAX_SAMPLE_BYTES."""
     dest_dir.mkdir(parents=True, exist_ok=True)
     dest = dest_dir / f"sample-{uuid.uuid4().hex}"
     digest, size = hashlib.sha256(), 0
     try:
         with open(dest, "wb") as out:
-            while chunk := await upload.read(256 * 1024):
+            while chunk := upload.file.read(256 * 1024):
                 size += len(chunk)
                 if size > MAX_SAMPLE_BYTES:
                     raise HTTPException(
@@ -192,7 +192,10 @@ def register_mapping_routes(app: FastAPI) -> None:
         tags=["mappings"],
         dependencies=[Depends(require_scope("ingest:write"))],
     )
-    async def analyze_sample(
+    # Not `async def` (nor `preview_mapping` below): parsing the sample runs a container, and the
+    # draft may ask a model -- up to twenty seconds each, which on the event loop is twenty
+    # seconds of every other request waiting. A plain `def` runs in a worker thread.
+    def analyze_sample(
         file: UploadFile = File(..., description="A sample of the report, at most 2 MB."),
         use_model: bool = Form(True, description="Ask the model for the draft when one is set up."),
         source: str | None = Form(None, description="The tool's name, if you know it."),
@@ -200,7 +203,7 @@ def register_mapping_routes(app: FastAPI) -> None:
         s: Session = Depends(db),
         org: str = Depends(current_org),
     ) -> AnalyzeResult:
-        path, digest = await _store_sample(file, st.settings.ingest_dir / "samples")
+        path, digest = _store_sample(file, st.settings.ingest_dir / "samples")
         try:
             analysis = _analyze(st, path)
         finally:
@@ -244,7 +247,7 @@ def register_mapping_routes(app: FastAPI) -> None:
         tags=["mappings"],
         dependencies=[Depends(require_scope("ingest:write"))],
     )
-    async def preview_mapping(
+    def preview_mapping(
         file: UploadFile = File(..., description="The sample, at most 2 MB."),
         spec: str = Form(..., description="The mapping, as JSON."),
         st: AppState = Depends(state),
@@ -254,7 +257,7 @@ def register_mapping_routes(app: FastAPI) -> None:
         except ValueError as exc:
             raise HTTPException(422, "spec is not valid JSON") from exc
         mapping = _spec(raw)
-        path, _ = await _store_sample(file, st.settings.ingest_dir / "samples")
+        path, _ = _store_sample(file, st.settings.ingest_dir / "samples")
         try:
             result = parse_file(
                 path,

@@ -198,3 +198,42 @@ def test_requires_the_scans_write_scope_to_promote(
         headers={"Authorization": f"Bearer {raw}"},
     )
     assert r.status_code == 403
+
+
+def test_a_reached_rate_limit_is_a_429_with_retry_after_not_a_crash(
+    env, monkeypatch: pytest.MonkeyPatch  # type: ignore[no-untyped-def]
+) -> None:
+    """Four routes took a slot from the usage limiter without handling its refusal, so "try again
+    in 40s" reached the caller as a 500 and the log as a crash."""
+    from core.llm.limits import UsageLimiter
+
+    client, sessions, app_state = env
+    app_state.limiter = UsageLimiter(per_minute=1)
+    asset_id = _seed_asset_with_a_completed_scan(sessions)
+    monkeypatch.setattr("core.gitfetch.clone_repo", lambda *a, **k: Path(a[1]))
+    monkeypatch.setattr("core.hypotheses.service.generate_for_checkout", lambda *_: [])
+    assert client.post(f"/assets/{asset_id}/hypotheses/generate", headers=AUTH).status_code == 200
+    r = client.post(f"/assets/{asset_id}/hypotheses/generate", headers=AUTH)
+    assert r.status_code == 429 and "per minute" in r.json()["detail"]
+    assert 1 <= int(r.headers["retry-after"]) <= 60
+    # The threat model and attack paths take a slot the same way.
+    assert client.get(f"/assets/{asset_id}/threat-model", headers=AUTH).status_code == 429
+    assert client.get(f"/assets/{asset_id}/attack-paths", headers=AUTH).status_code == 429
+
+
+def test_a_repository_that_cannot_be_cloned_is_the_callers_to_see(
+    env, monkeypatch: pytest.MonkeyPatch  # type: ignore[no-untyped-def]
+) -> None:
+    """Only a refused URL was handled. A clone that fails (the repository was deleted or made
+    private since its scan, the host is down) raises IngestError, and answered 500."""
+    from core.ingest import IngestError
+
+    client, sessions, _ = env
+    asset_id = _seed_asset_with_a_completed_scan(sessions)
+
+    def gone(*_a: object, **_k: object) -> Path:
+        raise IngestError("Couldn't find this repository. Check the URL is correct.")
+
+    monkeypatch.setattr("core.gitfetch.clone_repo", gone)
+    r = client.post(f"/assets/{asset_id}/hypotheses/generate", headers=AUTH)
+    assert r.status_code == 422 and "Couldn't find this repository" in r.json()["detail"]

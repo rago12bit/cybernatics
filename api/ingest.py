@@ -22,10 +22,10 @@ starting a scan cannot.
 
 from __future__ import annotations
 
-import asyncio
 import hashlib
 import logging
 import re
+import time
 import uuid
 from datetime import datetime
 from pathlib import Path
@@ -229,17 +229,18 @@ def _dispatch(st: AppState, s: Session, record: ImportRecord) -> None:
         raise HTTPException(503, "import queue unavailable; the import was not started") from exc
 
 
-async def _store_upload(
+def _store_upload(
     upload: UploadFile, dest_dir: Path, max_bytes: int
 ) -> tuple[Path, str, int, bytes]:
-    """Stream the upload to a server-named file, hashing as it goes. Returns the path, sha256, size
-    and the first bytes (for format detection). The client's filename is never used as a path."""
+    """Copy the upload to a server-named file, hashing as it goes. Returns the path, sha256, size
+    and the first bytes (for format detection). The client's filename is never used as a path.
+    Plain file reads, in the route's worker thread: see the note on `ingest` below."""
     dest_dir.mkdir(parents=True, exist_ok=True)
     dest = dest_dir / uuid.uuid4().hex
     digest, size, head = hashlib.sha256(), 0, b""
     try:
         with open(dest, "wb") as out:
-            while chunk := await upload.read(1024 * 1024):
+            while chunk := upload.file.read(1024 * 1024):
                 size += len(chunk)
                 if size > max_bytes:
                     raise HTTPException(413, "the file exceeds the maximum upload size")
@@ -347,7 +348,11 @@ def register_ingest_routes(app: FastAPI) -> None:
         tags=["ingest"],
         dependencies=[Depends(require_scope("ingest:write"))],
     )
-    async def ingest(
+    # Not `async def`: everything here blocks (file copies, the database, the queue, the wait
+    # below), and an `async def` route runs on the event loop, where blocking stops every other
+    # request, the health check and the live-scan sockets for as long as it lasts. A plain `def`
+    # runs in a worker thread. tests/unit/test_api_blocking.py keeps it that way.
+    def ingest(
         response: Response,
         file: UploadFile = File(..., description="The report."),
         project: str | None = Form(None, description="Project (asset) id; or give `test_id`."),
@@ -384,7 +389,7 @@ def register_ingest_routes(app: FastAPI) -> None:
             )
         if scope not in SCOPES:
             raise HTTPException(422, f"scope must be one of {SCOPES}")
-        path, digest, size, head = await _store_upload(
+        path, digest, size, head = _store_upload(
             file, st.settings.ingest_dir, st.settings.max_upload_bytes
         )
         try:
@@ -431,7 +436,7 @@ def register_ingest_routes(app: FastAPI) -> None:
                 s.refresh(record)
                 if record.status not in ("queued", "processing"):
                     break
-                await asyncio.sleep(0.25)
+                time.sleep(0.25)
         return ImportCreated(
             import_id=record.id, status=record.status, parser=parser_name,
             confidence=confidence, test_id=test_id_resolved,

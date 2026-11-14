@@ -370,7 +370,7 @@ def register_acceptance_routes(app: FastAPI) -> None:
         tags=["risk acceptance"],
         dependencies=[Depends(require_scope("scans:write"))],
     )
-    async def add_proof(
+    def add_proof(
         acceptance_id: str,
         file: UploadFile = File(...),
         st: AppState = Depends(state),
@@ -381,7 +381,7 @@ def register_acceptance_routes(app: FastAPI) -> None:
         ra = _get(s, acceptance_id, org)
         if ra.state not in service.LIVE:
             raise HTTPException(409, f"this acceptance is {ra.state}; proof can no longer change")
-        data = await file.read(attachments.MAX_BYTES + 1)
+        data = file.file.read(attachments.MAX_BYTES + 1)
         try:
             row = attachments.store(
                 s, acceptance=ra, data=data, file_name=file.filename,

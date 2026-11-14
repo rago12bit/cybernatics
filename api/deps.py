@@ -327,6 +327,15 @@ def may_read_scan(st: AppState, auth: AuthContext, scan_id: str) -> bool:
     return auth.scopes is None or "scans:read" in auth.scopes
 
 
+def has_scope(auth: AuthContext, scope: str, project_id: str | None = None) -> bool:
+    """`require_scope`'s rule, for a check a route makes itself once it knows what it is serving:
+    a person's role on that project (or in the organization), a token's own scopes, and the shared
+    token everything."""
+    if auth.access is not None:
+        return scope in auth.access.scopes_on(project_id)
+    return auth.scopes is None or scope in auth.scopes
+
+
 def current_org(request: Request, auth: AuthContext = Depends(require_auth)) -> str:
     """Which organization's data this request should see (ADR-0013). A real scoped token's org is
     fixed and authoritative -- the `X-Bulwark-Org` header is ignored for it, not merely a fallback,

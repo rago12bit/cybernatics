@@ -157,6 +157,34 @@ def test_overrides_raise_access_on_one_project_or_unit(
     assert actions.count("user.role_override.set") == 2
 
 
+def test_a_role_on_one_project_does_not_reach_another_projects_issues(
+    env: Env, org: dict[str, Any]
+) -> None:  # noqa: F811,E501
+    """The role is checked on the project in the URL, so an Issue of another project must not be
+    reachable through it: a member of one project, a viewer of the other."""
+    api, ledger, ledger2 = org["api"][0], org["ledger"][1], org["ledger"][2]
+    pa, pl = project_of(env, api), project_of(env, ledger)
+    admin = Person(env, "boss@example.com", "admin")
+    v = Person(env, "v@example.com", "viewer")
+    env.client.put(f"/v2/users/{v.id}/roles", headers=admin.write,
+                   json={"target_type": "project", "target_id": pa, "role": "member"})  # fmt: skip
+    assert triage(v, pa, api) == 200 and triage(v, pl, ledger) == 403
+    assert triage(v, pa, ledger) == 404  # the other project's Issue, through this project's URL
+    r = v.post(f"/assets/{pa}/issues/bulk-triage",
+               json={"issue_ids": [ledger2, api], "action": "not_a_risk", "reason": "x"})  # fmt: skip
+    assert r.json() == {"updated": [api], "failed": [{"issue_id": ledger2, "error": "not found"}]}
+    with env.sessions() as s:
+        assert s.get(IssueRow, ledger).triage_status == "open"  # type: ignore[union-attr]
+        assert s.get(IssueRow, ledger2).triage_status == "open"  # type: ignore[union-attr]
+    # Reading it there is refused the same way, for every route under the Issue.
+    for tail in ("", "/history", "/triage-assistant", "/verified-fix"):
+        assert v.get(f"/assets/{pa}/issues/{ledger}{tail}").status_code == 404, tail
+        assert admin.get(f"/assets/{pa}/issues/{ledger}{tail}").status_code == 404, tail
+    for tail in ("/verified-fix", "/verified-fix/approve", "/verified-fix/reject"):
+        assert v.post(f"/assets/{pa}/issues/{ledger}{tail}", json={}).status_code == 404, tail
+    assert v.get(f"/assets/{pl}/issues/{ledger}/history").status_code == 200  # at its own
+
+
 def test_someone_limited_to_some_projects_sees_nothing_else(
     env: Env, org: dict[str, Any]
 ) -> None:  # noqa: F811,E501

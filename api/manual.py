@@ -26,11 +26,20 @@ from fastapi import Depends, FastAPI, File, HTTPException, Query, Response, Uplo
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from api.deps import AppState, AuthContext, current_org, db, require_auth, require_scope, state
+from api.deps import (
+    AppState,
+    AuthContext,
+    current_org,
+    db,
+    has_scope,
+    require_auth,
+    require_scope,
+    state,
+)
 from core.manual import attachments, cvss4, cwe, service
 from core.manual.routes import latest_routes
 from core.persistence import repo
-from core.persistence.models import EvidenceAttachment, ManualFinding
+from core.persistence.models import EvidenceAttachment, ManualFinding, RiskAcceptance
 from core.tenancy import set_session_org
 
 _UUID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
@@ -284,7 +293,7 @@ def register_manual_routes(app: FastAPI) -> None:
         tags=["manual findings"],
         dependencies=[Depends(require_scope("ingest:write"))],
     )
-    async def add_attachment(
+    def add_attachment(
         manual_id: str,
         file: UploadFile = File(...),
         st: AppState = Depends(state),
@@ -293,7 +302,7 @@ def register_manual_routes(app: FastAPI) -> None:
         auth: AuthContext = Depends(require_auth),
     ) -> AttachmentOut:
         row = _get_manual(s, manual_id, org)
-        data = await file.read(attachments.MAX_BYTES + 1)
+        data = file.file.read(attachments.MAX_BYTES + 1)
         try:
             stored = attachments.store(
                 s,
@@ -321,10 +330,20 @@ def register_manual_routes(app: FastAPI) -> None:
         st: AppState = Depends(state),
         s: Session = Depends(db),
         org: str = Depends(current_org),
+        auth: AuthContext = Depends(require_auth),
     ) -> LinkOut:
+        """A short-lived download link for manual-finding evidence, and for a risk acceptance's
+        proof files. `ingest:read` is the evidence's scope. The other files an attachment can be
+        are read with `scans:read`, so this route does not hand them to a token that has only
+        `ingest:read`: a note's file has its own route (`/v2/note-attachments/{id}/link`), and a
+        proof file needs `scans:read` on its project here."""
         row = attachments.get(s, attachment_id, org) if _UUID.match(attachment_id) else None
-        if row is None:
+        if row is None or row.note_id is not None:
             raise HTTPException(404, "attachment not found")
+        if row.risk_acceptance_id is not None:
+            ra = s.get(RiskAcceptance, row.risk_acceptance_id)
+            if not has_scope(auth, "scans:read", ra.asset_id if ra is not None else None):
+                raise HTTPException(403, "a risk acceptance's proof needs the 'scans:read' scope")
         token, expires = attachments.sign(attachments.link_key(st.settings.api_token), row.id, org)
         base = st.settings.attachments_origin
         return LinkOut(

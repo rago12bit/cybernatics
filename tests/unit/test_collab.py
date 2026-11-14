@@ -139,6 +139,10 @@ def test_a_file_on_a_note_downloads_only_from_the_attachments_origin(
     listing = env.client.get(f"/v2/issues/{crew['issue']}/notes", headers=AUTH).json()
     assert listing["notes"][0]["files"][0]["file_name"] == "capture.html"
 
+    # A note's file has its own link route (`scans:read`); the evidence route does not serve it.
+    assert env.client.post(f"/v2/attachments/{up.json()['id']}/link",
+                           headers=AUTH).status_code == 404  # fmt: skip
+
     # A separate, cookieless origin for files: the app built with one configured.
     st = env.client.app.state.bulwark  # type: ignore[attr-defined]
     files_app = create_app(AppState(

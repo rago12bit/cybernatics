@@ -135,3 +135,19 @@ def test_campaigns_require_auth(sessions: sessionmaker[Session], tmp_path: Any) 
         "/assets/00000000-0000-0000-0000-000000000000/campaigns", json={"mode": "passive"}
     )
     assert r.status_code == 401
+
+
+def test_the_audit_log_says_who_started_a_campaign(
+    sessions: sessionmaker[Session], tmp_path: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """It recorded `api:<organization>`, from before there were people to name."""
+    from sqlalchemy import select
+
+    from core.persistence.models import AuditEntry
+
+    client = _client(sessions, tmp_path)
+    asset_id = _register_and_verify(client, monkeypatch)
+    client.post(f"/assets/{asset_id}/campaigns", headers=AUTH, json={"mode": "passive"})
+    with sessions() as s:
+        entry = s.scalar(select(AuditEntry).where(AuditEntry.action == "dast.campaign.started"))
+        assert entry is not None and entry.actor == "shared-token"

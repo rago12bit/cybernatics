@@ -276,7 +276,7 @@ def register_collab_routes(app: FastAPI) -> None:
         tags=["collaboration"],
         dependencies=[Depends(require_scope("scans:write"))],
     )
-    async def add_note_file(
+    def add_note_file(
         note_id: str,
         file: UploadFile = File(...),
         st: AppState = Depends(state),
@@ -287,7 +287,7 @@ def register_collab_routes(app: FastAPI) -> None:
         n = _my_note(s, note_id, org)
         if n.author != auth.actor or n.deleted_at is not None:
             raise HTTPException(403, "only its author can attach files to a note")
-        data = await file.read(attachments.MAX_BYTES + 1)
+        data = file.file.read(attachments.MAX_BYTES + 1)
         try:
             stored = attachments.store(
                 s, note=n, data=data, file_name=file.filename, declared_type=file.content_type,

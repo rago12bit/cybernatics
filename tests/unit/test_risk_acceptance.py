@@ -301,6 +301,15 @@ def test_proof_files_are_stored_with_the_acceptance(env: Env, people: Any) -> No
     assert [f["file_name"] for f in detail["proof_files"]] == ["waf-rule.png"]
     link = env.client.post(f"/v2/attachments/{r.json()['id']}/link", headers=AUTH)
     assert link.status_code == 200  # downloaded the same way as manual-finding evidence
+    # ... by someone who may read the acceptance. The link route asks for `ingest:read` (it is
+    # manual-finding evidence's), which alone opened every proof file to an import-only token.
+    importer = token(env, "CI import", ["ingest:read", "ingest:write"])
+    r2 = env.client.post(f"/v2/attachments/{r.json()['id']}/link", headers=importer)
+    assert r2.status_code == 403 and "scans:read" in r2.json()["detail"]
+    both = token(env, "Reader", ["ingest:read", "scans:read"])
+    assert (
+        env.client.post(f"/v2/attachments/{r.json()['id']}/link", headers=both).status_code == 200
+    )
     act(env, people["bob"], ra["id"], "reject", note="no")
     late = env.client.post(f"/v2/risk-acceptances/{ra['id']}/attachments", headers=people["alice"],
                            files={"file": ("x.png", b"\x89PNG\r\n\x1a\n0", "image/png")})  # fmt: skip

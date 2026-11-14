@@ -856,7 +856,7 @@
     "/assets/{asset_id}/issues/{issue_id}/triage": {
       "post": {
         "summary": "Triage One Issue",
-        "description": "Mark not-a-risk (needs a reason) or accept risk (needs an expiry), or reopen either\ndecision -- plan \u00a728.3: \"Both write to the audit log.\" `asset_id` in the path is a\nreadability/routing convenience (matches the frontend's URLs); the org check that actually\nmatters is `_get_asset` below, before the issue lookup even runs.",
+        "description": "Mark not-a-risk (needs a reason) or accept risk (needs an expiry), or reopen either\ndecision -- plan \u00a728.3: \"Both write to the audit log.\" The Issue must be one of the\nproject in the path: that is the project the caller's role was checked on\n(`_get_issue_in`).",
         "operationId": "triage_one_issue_assets__asset_id__issues__issue_id__triage_post",
         "security": [
           {
@@ -920,7 +920,7 @@
     "/assets/{asset_id}/issues/bulk-triage": {
       "post": {
         "summary": "Bulk Triage Issues",
-        "description": "Same rule per issue as the single-issue endpoint, applied to a batch: one issue failing\n(not found in this org, or a bad request for that action) doesn't abort the rest -- each\nsuccess still gets its own audit entry, exactly as if triaged one at a time.",
+        "description": "Same rule per issue as the single-issue endpoint, applied to a batch: one issue failing\n(not found in this project, or a bad request for that action) doesn't abort the rest --\neach success still gets its own audit entry, exactly as if triaged one at a time.",
         "operationId": "bulk_triage_issues_assets__asset_id__issues_bulk_triage_post",
         "security": [
           {
@@ -3896,6 +3896,7 @@
           "manual findings"
         ],
         "summary": "Attachment Link",
+        "description": "A short-lived download link for manual-finding evidence, and for a risk acceptance's\nproof files. `ingest:read` is the evidence's scope. The other files an attachment can be\nare read with `scans:read`, so this route does not hand them to a token that has only\n`ingest:read`: a note's file has its own route (`/v2/note-attachments/{id}/link`), and a\nproof file needs `scans:read` on its project here.",
         "operationId": "attachment_link_v2_attachments__attachment_id__link_post",
         "security": [
           {

@@ -262,3 +262,25 @@ def test_local_backend_is_rejected_with_a_clear_409(
     )
     assert r.status_code == 409
     assert "hosted model" in r.json()["detail"]
+
+
+def test_a_repository_that_cannot_be_cloned_is_a_422_not_a_crash(
+    env: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from core.ingest import IngestError
+
+    client, sessions, _ = env
+    asset_id = _seed_asset_with_a_completed_scan(sessions)
+    conv_id = client.post(
+        f"/assets/{asset_id}/copilot/conversations", json={}, headers=AUTH
+    ).json()["id"]
+
+    def gone(*_a: object, **_k: object) -> Path:
+        raise IngestError("Couldn't find this repository. Check the URL is correct.")
+
+    monkeypatch.setattr("core.copilot.session.clone_repo", gone)
+    r = client.post(
+        f"/assets/{asset_id}/copilot/conversations/{conv_id}/messages",
+        json={"question": "what issues are open?"}, headers=AUTH,
+    )  # fmt: skip
+    assert r.status_code == 422 and "Couldn't find this repository" in r.json()["detail"]

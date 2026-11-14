@@ -339,12 +339,17 @@ def test_the_github_issues_webhook_says_not_configured_before_reading_a_body(
     sessions: sessionmaker[Session], tmp_path: Any
 ) -> None:
     """An organization with no secret answers 404 whatever it is sent: there is nothing to check a
-    signature against, so there is no reason to read even a declared 1 GB body."""
-    r = _client(sessions, tmp_path).post(
-        f"/integrations/github-issues/webhook/{DEFAULT_ORG_ID}", content=b"{}",
-        headers={"X-GitHub-Event": "issues", "Content-Length": str(1024**3)},
-    )  # fmt: skip
+    signature against, so there is no reason to read a body, here one declared at the most a
+    webhook may be. A declared 1 GB is refused for its size before any route sees it
+    (api.body_limit): unread either way."""
+    client = _client(sessions, tmp_path)
+    url = f"/integrations/github-issues/webhook/{DEFAULT_ORG_ID}"
+    r = client.post(url, content=b"{}", headers={"X-GitHub-Event": "issues",
+                                                 "Content-Length": str(25 * 1024 * 1024)})  # fmt: skip
     assert r.status_code == 404
+    r = client.post(url, content=b"{}", headers={"X-GitHub-Event": "issues",
+                                                 "Content-Length": str(1024**3)})  # fmt: skip
+    assert r.status_code == 413
 
 
 def test_a_jira_secret_with_non_ascii_characters_is_a_401_not_a_crash(

@@ -222,6 +222,23 @@ def test_ws_rejects_a_bad_token(env) -> None:  # type: ignore[no-untyped-def]
         assert exc.value.code == 4401
 
 
+@pytest.mark.parametrize("hello", ["[]", '"token"', "7", "not json"])
+def test_ws_closes_on_a_first_message_that_is_not_an_object(env, hello: str) -> None:  # type: ignore[no-untyped-def]
+    """Anyone can open the socket; `[]` as the first message used to crash its handler."""
+    client, _, sessions, *_ = env
+    sid = _seed(sessions)
+    with client.websocket_connect(f"/scans/{sid}/ws") as ws:
+        ws.send_text(hello)
+        with pytest.raises(WebSocketDisconnect) as exc:
+            ws.receive_json()
+        assert exc.value.code == 1008
+    with client.websocket_connect(f"/scans/{sid}/ws") as ws:
+        ws.send_bytes(b"\x00\x01")
+        with pytest.raises(WebSocketDisconnect) as exc:
+            ws.receive_json()
+        assert exc.value.code == 1008
+
+
 def test_ws_unknown_scan(env) -> None:  # type: ignore[no-untyped-def]
     client = env[0]
     with client.websocket_connect("/scans/00000000-0000-0000-0000-000000000000/ws") as ws:

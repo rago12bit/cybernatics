@@ -36,6 +36,7 @@ from sqlalchemy.orm import Session
 
 from api.acceptance import register_acceptance_routes
 from api.advisories import register_advisory_routes
+from api.body_limit import BodyLimitMiddleware, limits
 from api.calendar import register_calendar_routes
 from api.collab import register_collab_routes
 from api.compliance import register_compliance_routes
@@ -231,6 +232,17 @@ def _get_issue(s: Session, issue_id: str, org_id: str) -> Any:
     return issue
 
 
+def _get_issue_in(s: Session, asset: Any, issue_id: str, org_id: str) -> Any:
+    """An Issue of this project, else 404. `require_scope` checks a person's role on the project
+    in the path (`asset_id` comes first in `api.deps._PROJECT_OF`), so a route that also names an
+    Issue must refuse one of another project: someone who may change project A and only read
+    project B could otherwise change B's Issues through A's address."""
+    issue = _get_issue(s, issue_id, org_id)
+    if issue.asset_id != asset.id:
+        raise HTTPException(404, "issue not found")
+    return issue
+
+
 def _issue_view(row: Any) -> IssueView:
     return IssueView(
         id=row.id, state=row.state, triage_status=row.triage_status,
@@ -345,6 +357,22 @@ def create_app(app_state: AppState) -> FastAPI:
         description="Unified security scanning: submit a scan, watch progress, read findings.",
     )
     app.state.bulwark = app_state
+
+    # First, so innermost: every body is capped as it is read, sign-in or not (api.body_limit says
+    # why), and the 413 still passes through CORS below on its way out.
+    app.add_middleware(BodyLimitMiddleware, limit_for=limits(app_state.settings))
+
+    # The usage limiter's and the token budget's refusals, for every route that asks them: a
+    # route that did not catch one itself (four did not) answered 500 and logged a crash.
+    @app.exception_handler(LimitExceeded)
+    async def rate_limited(_request: Request, exc: LimitExceeded) -> JSONResponse:
+        return JSONResponse(
+            {"detail": str(exc)}, status_code=429, headers={"Retry-After": str(exc.retry_after)}
+        )
+
+    @app.exception_handler(llm_budget.BudgetExceeded)
+    async def over_budget(_request: Request, exc: llm_budget.BudgetExceeded) -> JSONResponse:
+        return JSONResponse({"detail": str(exc)}, status_code=429)
 
     # Registered before CORSMiddleware, so it runs inside it: a route that crashes still gets the
     # CORS headers. Without them the browser could not read the 500 at all, and the web app told the
@@ -461,7 +489,7 @@ def create_app(app_state: AppState) -> FastAPI:
         response_model=ScanCreated,
         dependencies=[Depends(require_scope("scans:write"))],
     )
-    async def upload_scan(
+    def upload_scan(
         archive: UploadFile = File(...),
         tools: str | None = Form(
             default=None,
@@ -485,7 +513,7 @@ def create_app(app_state: AppState) -> FastAPI:
         written = 0
         try:
             with open(dest, "wb") as out:
-                while chunk := await archive.read(1024 * 1024):
+                while chunk := archive.file.read(1024 * 1024):
                     written += len(chunk)
                     if written > st.settings.max_upload_bytes:
                         raise HTTPException(413, "archive exceeds the maximum upload size")
@@ -876,6 +904,7 @@ def create_app(app_state: AppState) -> FastAPI:
         st: AppState = Depends(state),
         s: Session = Depends(db),
         org: str = Depends(current_org),
+        auth: AuthContext = Depends(require_auth),
     ) -> ScanCreated:
         """Start a DAST campaign (plan §22.4): gated on a LIVE ownership check right now (never a
         cached "verified" status) and, for an active campaign, the rate limit -- both checked before
@@ -903,8 +932,8 @@ def create_app(app_state: AppState) -> FastAPI:
                 raise HTTPException(429, f"active scan rate limit: try again in {hours:.1f}h")
         scan = repo.create_dast_campaign(s, asset=asset, mode=body.mode, org_id=org)
         repo.append_audit_entry(
-            s, actor=f"api:{org}", action="dast.campaign.started", target=scan.id,
-            payload={"asset_id": asset.id, "mode": body.mode},
+            s, actor=auth.actor, action="dast.campaign.started", target=scan.id,
+            payload={"asset_id": asset.id, "mode": body.mode, "org_id": org},
         )  # fmt: skip
         st.enqueue_dast_campaign(scan.id, org)
         return ScanCreated(id=scan.id, status=scan.status)
@@ -1039,7 +1068,7 @@ def create_app(app_state: AppState) -> FastAPI:
         """The one issue's own detail screen (plan §28.3): the same Finding shape as a row in the
         issues table, fetched on its own rather than paging through the whole list."""
         asset = _get_asset(s, asset_id, org)
-        _get_issue(s, issue_id, org)
+        _get_issue_in(s, asset, issue_id, org)
         latest = repo.latest_scan_for_asset(s, asset.id, org_id=org)
         finding = repo.get_issue_finding(s, issue_id, latest.id) if latest else None
         if finding is None:
@@ -1066,16 +1095,17 @@ def create_app(app_state: AppState) -> FastAPI:
         org: str = Depends(current_org),
     ) -> IssueView:
         """Mark not-a-risk (needs a reason) or accept risk (needs an expiry), or reopen either
-        decision -- plan §28.3: "Both write to the audit log." `asset_id` in the path is a
-        readability/routing convenience (matches the frontend's URLs); the org check that actually
-        matters is `_get_asset` below, before the issue lookup even runs."""
-        _get_asset(s, asset_id, org)
+        decision -- plan §28.3: "Both write to the audit log." The Issue must be one of the
+        project in the path: that is the project the caller's role was checked on
+        (`_get_issue_in`)."""
+        asset = _get_asset(s, asset_id, org)
         if body.action == "accepted":
             raise HTTPException(409, ACCEPT_NEEDS_APPROVAL)
         try:
             row = repo.triage_issue(
                 s, issue_id, org_id=org, action=body.action, reason=body.reason,
                 expires_at=body.expires_at, actor=auth.actor, justification=body.justification,
+                asset_id=asset.id,
             )  # fmt: skip
         except LookupError as exc:
             raise HTTPException(404, "issue not found") from exc
@@ -1098,9 +1128,9 @@ def create_app(app_state: AppState) -> FastAPI:
         org: str = Depends(current_org),
     ) -> BulkTriageResult:
         """Same rule per issue as the single-issue endpoint, applied to a batch: one issue failing
-        (not found in this org, or a bad request for that action) doesn't abort the rest -- each
-        success still gets its own audit entry, exactly as if triaged one at a time."""
-        _get_asset(s, asset_id, org)
+        (not found in this project, or a bad request for that action) doesn't abort the rest --
+        each success still gets its own audit entry, exactly as if triaged one at a time."""
+        asset = _get_asset(s, asset_id, org)
         if body.action == "accepted":
             raise HTTPException(409, ACCEPT_NEEDS_APPROVAL)
         updated: list[str] = []
@@ -1110,7 +1140,7 @@ def create_app(app_state: AppState) -> FastAPI:
                 row = repo.triage_issue(
                     s, issue_id, org_id=org, action=body.action, reason=body.reason,
                     expires_at=body.expires_at, actor=auth.actor,
-                    justification=body.justification,
+                    justification=body.justification, asset_id=asset.id,
                 )  # fmt: skip
                 if body.action == "reopen":
                     vex_service.on_issue_reopened(s, org, row, actor=auth.actor)
@@ -1129,8 +1159,7 @@ def create_app(app_state: AppState) -> FastAPI:
     def get_issue_history(
         asset_id: str, issue_id: str, s: Session = Depends(db), org: str = Depends(current_org)
     ) -> list[IssueHistoryEvent]:
-        _get_asset(s, asset_id, org)
-        _get_issue(s, issue_id, org)
+        _get_issue_in(s, _get_asset(s, asset_id, org), issue_id, org)
         return [
             IssueHistoryEvent(at=e["at"], label=e["label"]) for e in repo.issue_history(s, issue_id)
         ]
@@ -1216,7 +1245,7 @@ def create_app(app_state: AppState) -> FastAPI:
         from core.fixagent.start import start as start_fix
 
         asset = _get_asset(s, asset_id, org)
-        _get_issue(s, issue_id, org)
+        _get_issue_in(s, asset, issue_id, org)
         try:
             started = await start_fix(
                 s, org, asset, issue_id, run_tests=body.run_tests, test_image=body.test_image,
@@ -1236,8 +1265,7 @@ def create_app(app_state: AppState) -> FastAPI:
     ) -> VerifiedFixView:
         from core.fixagent import store as fixagent_store
 
-        _get_asset(s, asset_id, org)
-        _get_issue(s, issue_id, org)
+        _get_issue_in(s, _get_asset(s, asset_id, org), issue_id, org)
         run = fixagent_store.latest_run_for_issue(s, issue_id, org_id=org)
         if run is None:
             raise HTTPException(404, "no verified-fix run for this issue")
@@ -1261,8 +1289,7 @@ def create_app(app_state: AppState) -> FastAPI:
         from core.fixagent import client as fixagent_client
         from core.fixagent import store as fixagent_store
 
-        _get_asset(s, asset_id, org)
-        _get_issue(s, issue_id, org)
+        _get_issue_in(s, _get_asset(s, asset_id, org), issue_id, org)
         run = fixagent_store.latest_run_for_issue(s, issue_id, org_id=org)
         if run is None or run.status != "awaiting_approval":
             raise HTTPException(409, "no verified-fix run is awaiting approval for this issue")
@@ -1279,8 +1306,7 @@ def create_app(app_state: AppState) -> FastAPI:
         from core.fixagent import client as fixagent_client
         from core.fixagent import store as fixagent_store
 
-        _get_asset(s, asset_id, org)
-        _get_issue(s, issue_id, org)
+        _get_issue_in(s, _get_asset(s, asset_id, org), issue_id, org)
         run = fixagent_store.latest_run_for_issue(s, issue_id, org_id=org)
         if run is None or run.status != "awaiting_approval":
             raise HTTPException(409, "no verified-fix run is awaiting approval for this issue")
@@ -1313,7 +1339,7 @@ def create_app(app_state: AppState) -> FastAPI:
         if client is None:
             raise HTTPException(409, "the triage assistant is not enabled on this server")
         asset = _get_asset(s, asset_id, org)
-        _get_issue(s, issue_id, org)
+        _get_issue_in(s, asset, issue_id, org)
         scan = repo.latest_scan_for_asset(s, asset.id, org_id=org)
         if scan is None:
             raise HTTPException(409, "no completed scan for this asset")
@@ -1360,8 +1386,7 @@ def create_app(app_state: AppState) -> FastAPI:
     def get_triage_assessment(
         asset_id: str, issue_id: str, s: Session = Depends(db), org: str = Depends(current_org)
     ) -> TriageAssistantView:
-        _get_asset(s, asset_id, org)
-        issue = _get_issue(s, issue_id, org)
+        issue = _get_issue_in(s, _get_asset(s, asset_id, org), issue_id, org)
         if issue.assistant_verdict is None:
             raise HTTPException(404, "no triage-assistant verdict for this issue yet")
         return _triage_view(issue)
@@ -1403,16 +1428,16 @@ def create_app(app_state: AppState) -> FastAPI:
         import tempfile
         from pathlib import Path
 
-        from core.gitfetch import GitUrlError
         from core.gitfetch import clone_repo as git_clone_repo
         from core.hypotheses.service import generate_for_checkout
+        from core.ingest import IngestError
 
         app_state.limiter.acquire()
         checkout = Path(tempfile.mkdtemp(prefix="bulwark-hypotheses-"))
         try:
             try:
                 git_clone_repo(scan.source_ref, checkout, ref=scan.ref)
-            except GitUrlError as exc:
+            except IngestError as exc:  # a refused URL, and a clone that failed (_checkout_graph)
                 raise HTTPException(422, f"could not check out the repository: {exc}") from exc
             surfaced = generate_for_checkout(checkout, client)
         finally:
@@ -1994,13 +2019,13 @@ def create_app(app_state: AppState) -> FastAPI:
         from core.copilot.service import CopilotGiveUp, ask
         from core.copilot.session import default_cache
         from core.copilot.tools import CopilotContext
-        from core.gitfetch import GitUrlError
+        from core.ingest import IngestError
 
         try:
             checkout, graph = default_cache().get_or_clone(
                 conversation.id, scan.source_ref, scan.ref
             )
-        except GitUrlError as exc:
+        except IngestError as exc:  # a refused URL, and a clone that failed (_checkout_graph)
             raise HTTPException(422, f"could not check out the repository: {exc}") from exc
 
         app_state.limiter.acquire()
@@ -2240,7 +2265,14 @@ def create_app(app_state: AppState) -> FastAPI:
         st: AppState = ws.app.state.bulwark
         await ws.accept()
         try:
-            hello = await asyncio.wait_for(ws.receive_json(), timeout=10)
+            # Anyone can open this socket, so a malformed first message closes it (the ValueError
+            # below) rather than crashing the handler: `[]` did, and so did a binary frame.
+            try:
+                hello = await asyncio.wait_for(ws.receive_json(), timeout=10)
+            except (KeyError, TypeError) as exc:  # a binary frame where JSON text was expected
+                raise ValueError("the first message is JSON text") from exc
+            if not isinstance(hello, dict):
+                raise ValueError("the first message is a JSON object")
             auth = websocket_auth(ws, st, str(hello.get("token") or ""))
             if auth is None:
                 await ws.close(code=4401, reason="unauthorized")
