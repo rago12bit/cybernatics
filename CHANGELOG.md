@@ -6,6 +6,46 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 ## [Unreleased]
 
 ### Security
+- **A role on one project no longer reaches another project's Issues.** The routes under
+  `/assets/{project}/issues/{issue}` (triage, bulk triage, history, the triage assistant, verified
+  fixes) checked the caller's role on the project in the address, then looked the Issue up by
+  organization alone. Someone who may change project A and only read project B could triage B's
+  Issues through A's address. The Issue must now belong to the project in the address (404
+  otherwise), and `repo.triage_issue` checks it too. Found in a code audit on 2026-11-14, with the
+  rest of this list.
+- **Request bodies have a size limit, applied before they are read.** FastAPI reads a JSON body, and
+  spools a multipart upload to disk, before it checks who is asking, and uvicorn sets no limit: anyone
+  who could reach the API could make it hold gigabytes on any route that takes a body, and the upload
+  routes' own size checks only saw a file that had already arrived. Every request is now capped by
+  route (8 MB for JSON, the upload limit plus framing for uploads, 25 MB for webhooks, 2 MB for the
+  SAML callback): a larger declared body is answered 413 unread, an undeclared one is cut off at the
+  limit.
+- **The ownership check fetches only public addresses, a small file, for a short time.** Verifying a
+  web target by its well-known file followed any redirect (so a public host could send the server to
+  `http://169.254.169.254/...` or an internal name), read a response of any size, and could be held
+  open indefinitely by a slow server. It now requires https and public addresses for the first request
+  and each of at most five redirects, reads at most 4 KB, and has one deadline. A web target must be a
+  domain name: an IP address or a bare internal name is refused when it is registered.
+- **In hosted mode, an identity provider must be a public address.** The OIDC issuer an admin enters
+  is fetched by the server (its description, its keys, its token endpoint), and plain
+  `http://localhost` was accepted. Where admins are customers, that asked the server's own network;
+  it is now checked like a webhook's address. Self-hosted deployments are unchanged.
+- **A scanner's output is read as a regular file, with a size limit.** The output directory is shared
+  with the scanner's container. A scanner taken over by a hostile repository could leave a symbolic
+  link there (read on the host as its "report"), a FIFO (the worker waited on it for ever) or a file
+  of any size. The same now holds for ZAP's report and the PDF renderer's output.
+- **ZAP and Nuclei run without capabilities and can be cleaned up.** The DAST containers were started
+  with Docker's defaults. They now drop all capabilities, cannot gain privileges, and carry the
+  `bulwark.managed` label, without which the housekeeping job never removed one whose worker had
+  died. ZAP's working directory moved under the scratch directory, the only path the host and a
+  containerized worker share. Nuclei was run live with the new flags; the ZAP baseline times out on
+  the development machine with or without them, so CI's `dast-live` job is its check.
+- **The evidence link route serves evidence.** `POST /v2/attachments/{id}/link` needs `ingest:read`
+  and signed a link for any attachment: a note's file and a risk acceptance's proof too, which are
+  read with `scans:read`. A note's file is now only served by its own route, and a proof file needs
+  `scans:read` on its project.
+- **The copilot's scan comparison answers only for its own project,** and its file reader (and the fix
+  agent's) reads the first 40 KB of a file instead of the whole file.
 - **Integration secrets are encrypted in the database.** The Slack, Discord, Teams and outbound webhook
   URLs, the GitHub and Jira tokens and the webhook secrets were plain-text columns. With
   `BULWARK_SECRETS_KEY` set (new `.env` files get one), each is stored AES-256-GCM encrypted and bound
@@ -69,6 +109,32 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
   ones, or a digest other than the one the manifest names, stop the plugin from running.
 
 ### Fixed
+- **Server-side scans keep the code along a taint path.** The lines around each step are read from
+  the scan workspace, but the worker read them after the workspace was deleted, so every step was
+  stored with no code (the CLI was unaffected). A failure while saving a scan's results now fails the
+  scan at once; it used to stay "running" until housekeeping gave up on it thirty minutes later.
+- **A delivered Slack message is no longer taken for a failed one.** The shared HTTP sender parsed
+  every answer as JSON; Slack answers `ok`. The exception came after the message had gone out, so with
+  Slack as the only channel the daily digest was sent again on every run, a rule's notification was
+  recorded as failed, and each scan summary logged a failure. Any webhook receiver that answers with
+  something other than JSON was affected the same way.
+- **One organization's failure no longer stops a periodic job for the others.** The SLA sweep, risk
+  acceptance expiry, the outbox, digests, ticket sync, the rules sweep, connectors, metrics, reports
+  and advisory matching each ran every organization in one loop; the first that raised ended the
+  task, and every organization after it was skipped on that run and each later one.
+- **A reached rate limit and a failed checkout are not server errors.** Generating hypotheses, the
+  threat model, attack paths and a copilot message answered 500 when the usage limiter refused (now
+  429 with `Retry-After`), and hypotheses and the copilot answered 500 when the repository could no
+  longer be cloned (now 422 with the reason).
+- **Upload and import routes no longer stall the API.** They were `async def`, so their file copies,
+  database work and, for mapping samples, a sandbox container of up to twenty seconds ran on the
+  event loop, where nothing else in the process is served meanwhile. They run in worker threads now.
+- **A clone no longer stalls on git's own output.** git wrote to a pipe nothing read; past 64 KB it
+  blocked, and a clone that had failed with a reason was reported two minutes later as timed out.
+- The scan WebSocket closes on a first message that is not a JSON object instead of crashing its
+  handler; the audit log names the person who started a DAST campaign, not `api:<organization>`.
+- `SECURITY.md` described the API as one shared token with no users or roles; the first deduplication
+  run in the benchmark README is 19.3%, not 19.2%.
 - **The public site scrolls natively again.** The eased wheel scrolling (Lenis) made every scroll trail
   behind the wheel, which read as lag; it is removed, with the `lenis` dependency. The home page's
   closing panel no longer flickers either: its stripe bars are static, and its text is in place before

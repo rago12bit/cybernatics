@@ -78,7 +78,7 @@ both unchanged since the last scan) would be the natural next optimization, but 
 week's scope -- noted here rather than left for someone to rediscover by profiling.
 
 ### An honest before/after: aligning scanner scope
-The first run scored **19.2%** (2088 -> 1686). On `NodeGoat` only 83 of OSV-Scanner's 292 findings
+The first run scored **19.3%** (2088 -> 1686). On `NodeGoat` only 83 of OSV-Scanner's 292 findings
 had a Trivy match, which looked like a weak matcher. Investigating showed the matcher was fine: Trivy
 **skips dev dependencies by default** while OSV-Scanner includes them, so the tools were not
 scanning the same thing (208 of the 209 unmatched findings were on package versions Trivy reported

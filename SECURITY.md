@@ -27,12 +27,17 @@ The main controls that exist today:
 | Git URL abuse (SSRF, local file access) | https only, host allowlist, public-IP check with IP pinning, no redirects, submodules or hooks |
 | Secrets echoed by a scanner into reports | Gitleaks `--redact`, cross-tool redaction, raw output withheld when secrets are found |
 | Malicious scanner output rendered in the UI | All scanner data is rendered as text, never HTML; per-request-nonce CSP (`web/tests/xss.test.tsx`) |
-| Unauthenticated API use | Bearer token required on every endpoint but `/healthz`; the API refuses to start without a strong token |
+| Unauthenticated API use | A token or a signed-in session on every endpoint but `/healthz`, the sign-in routes, signed download and report links, and the webhooks (which check a signature or a secret); request bodies are size-limited before they are read; the API refuses to start without a strong token |
+| One person reaching another project's or organization's data | Roles per organization, business unit and project; Postgres row-level security under every query ([ADR-0013](docs/adr/0013-tenancy-row-level-security.md)) |
 
 ## Known limits (please read before deploying)
 
-- **One shared bearer token.** There are no users, roles or rate limiting. Do not expose the API to the
-  internet or to people you do not trust.
+- **No rate limiting.** People sign in through your identity provider and have roles, and tokens are
+  scoped, but nothing limits how often the API is called (only calls to a model are limited). Put a
+  reverse proxy that limits rates in front of it, and do not expose the API to the internet without one.
+- **The shared token can do everything.** `BULWARK_API_TOKEN` is the deployment's own key: every
+  organization, every permission, no person's name in the audit log. Keep it for automation you
+  control, and give people accounts or scoped tokens.
 - **Docker socket proxy.** The worker reaches Docker through `docker-socket-proxy`. That is much narrower
   than the raw socket, but a compromised worker could still start containers with host bind mounts.
   Production needs a dedicated runner host, rootless Docker or gVisor
