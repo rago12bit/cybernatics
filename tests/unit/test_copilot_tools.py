@@ -169,3 +169,44 @@ def test_compare_scans_tool_rejects_scans_from_different_assets(
     with pytest.raises(ToolError, match="do not belong to the same project"):
         compare_scans_tool(ctx, scan_a_id, scan_c_id)
     ctx.session.close()
+
+
+def test_compare_scans_tool_only_answers_for_the_conversations_project(
+    sessions: sessionmaker[Session], tmp_path: Path
+) -> None:
+    """The scan ids are the model's, and the model reads the repository: two scans of another
+    project of the organization were compared for whoever asked."""
+    mine = _seed_asset_with_a_completed_scan(sessions)
+    other: list[str] = []
+    for _ in range(2):
+        with sessions() as s:
+            scan = repo.create_scan(
+                s, source_type="git", source_ref="https://example.com/other.git",
+                source_label="acme/other", tools=["bandit"], org_id="org-a",
+            )  # fmt: skip
+            repo.finish_scan(s, scan.id, "completed")
+            other.append(scan.id)
+    ctx = _ctx(sessions, mine, tmp_path)
+    with pytest.raises(ToolError, match="not this project's"):
+        compare_scans_tool(ctx, other[0], other[1])
+    ctx.session.close()
+
+
+def test_reading_code_never_reads_a_whole_large_file(
+    sessions: sessionmaker[Session], tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from core.copilot import tools
+    from core.fixagent.tools import read_file
+
+    (tmp_path / "big.py").write_text("x = 1\n" * 200_000)  # 1.2 MB
+
+    def whole(*_a: object, **_k: object) -> str:
+        raise AssertionError("the whole file was read")
+
+    ctx = _ctx(sessions, _seed_asset_with_a_completed_scan(sessions), tmp_path)
+    monkeypatch.setattr(Path, "read_text", whole)
+    monkeypatch.setattr(Path, "read_bytes", whole)
+    out = tools.fetch_code_range(ctx, "big.py", start_line=1, end_line=3)
+    assert out.splitlines() == ["    1 | x = 1", "    2 | x = 1", "    3 | x = 1"]
+    assert read_file(tmp_path, "big.py", start_line=2, end_line=2) == "    2 | x = 1"
+    ctx.session.close()

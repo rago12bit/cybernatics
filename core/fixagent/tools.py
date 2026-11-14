@@ -55,7 +55,8 @@ def read_file(root: Path, path: str, *, start_line: int = 1, end_line: int | Non
     p = _safe_path(root, path)
     if not p.is_file():
         raise ToolError(f"no such file: {path!r}")
-    text = p.read_text(errors="replace")[:MAX_READ_BYTES]
+    with p.open("rb") as fh:  # the first part only: never the whole of a very large file
+        text = fh.read(MAX_READ_BYTES).decode("utf-8", errors="replace")
     lines = text.splitlines()
     lo = max(1, start_line)
     hi = len(lines) if end_line is None else min(len(lines), end_line)

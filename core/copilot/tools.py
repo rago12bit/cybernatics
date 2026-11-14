@@ -63,7 +63,8 @@ def fetch_code_range(
     p = _safe_path(ctx.checkout, path)
     if not p.is_file():
         raise ToolError(f"no such file: {path!r}")
-    text = p.read_text(errors="replace")[:MAX_READ_BYTES]
+    with p.open("rb") as fh:  # the first part only: never the whole of a very large file
+        text = fh.read(MAX_READ_BYTES).decode("utf-8", errors="replace")
     lines = text.splitlines()
     lo = max(1, start_line)
     hi = len(lines) if end_line is None else min(len(lines), end_line)
@@ -140,6 +141,10 @@ def compare_scans_tool(ctx: CopilotContext, scan_id_a: str, scan_id_b: str) -> s
     cmp = repo.compare_scans(ctx.session, scan_id_a, scan_id_b, org_id=ctx.org_id)
     if cmp is None:
         raise ToolError("these two scans do not belong to the same project")
+    if cmp.earlier.asset_id != ctx.asset_id:
+        # The ids come from the model, which reads the repository's text: a conversation about
+        # one project does not answer for another, whatever it was told to ask.
+        raise ToolError("these scans are not this project's")
 
     def fmt(items: list[dict[str, Any]]) -> str:
         return ", ".join(i["id"] for i in items) if items else "(none)"
