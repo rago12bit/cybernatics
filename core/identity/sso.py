@@ -40,6 +40,8 @@ from core.config import Settings
 from core.identity import oidc
 from core.identity import users as people
 from core.identity.roles import OVERRIDE_ROLES
+from core.integrations.ssrf import WebhookUrlError, validate_webhook_url
+from core.netsafety import Resolver, default_resolver
 from core.persistence import repo
 from core.persistence.models import (
     IdentityProvider,
@@ -51,6 +53,8 @@ from core.persistence.models import (
 from core.tenancy import set_session_org
 
 KINDS = ("oidc", "saml")
+# Swapped by tests for a fixed resolver, as in core.tickets.sync.
+RESOLVER: Resolver = default_resolver
 ATTEMPT_TTL = timedelta(minutes=10)
 _DOMAIN = re.compile(r"^(?=.{1,253}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$")
 
@@ -182,6 +186,21 @@ def get(s: Session, org_id: str, provider_id: str) -> IdentityProvider:
     return p
 
 
+def _public_in_hosted_mode(url: str, what: str, settings: Settings) -> None:
+    """In hosted mode an organization's admin is a customer, and the issuer they type is an
+    address this server then fetches (the provider's description, its keys, its token endpoint).
+    It must be a public one there, as a webhook's or a connector's must: otherwise it is a way to
+    make the server ask its own network. Self-hosted, the admin runs the server, and a provider on
+    a private network (or on this machine, for development) is their own to point at."""
+    if not settings.hosted_mode:
+        return
+    try:
+        validate_webhook_url(url, RESOLVER)
+    except WebhookUrlError as exc:
+        raise SsoError("provider", f"The provider's {what} cannot be used here: {exc}.",
+                       field="issuer") from exc  # fmt: skip
+
+
 def _claim_domains(s: Session, p: IdentityProvider, domains: list[str]) -> None:
     for d in domains:
         taken = s.get(SsoDomain, d)
@@ -225,10 +244,15 @@ def save(
         if not client_id:
             raise SsoError("invalid", "The client id the provider gave you.", field="client_id")
         try:
-            endpoints = oidc.discover(issuer, http) if issuer != cfg.get("issuer") or \
-                not cfg.get("jwks_uri") or raw.get("refresh") else {}  # fmt: skip
+            fresh = issuer != cfg.get("issuer") or not cfg.get("jwks_uri") or raw.get("refresh")
+            if fresh:
+                _public_in_hosted_mode(issuer, "issuer", settings)  # before anything is fetched
+            endpoints = oidc.discover(issuer, http) if fresh else {}
         except oidc.OidcError as exc:
             raise SsoError("provider", exc.message, field="issuer") from exc
+        for key, what in (("token_endpoint", "token URL"), ("jwks_uri", "key set URL")):
+            if key in endpoints:  # the addresses the server itself will call
+                _public_in_hosted_mode(endpoints[key], what, settings)
         cfg.update(endpoints)
         trust = bool(raw.get("trust_email", cfg.get("trust_email")))
         cfg.update({"issuer": endpoints.get("issuer", issuer), "client_id": client_id,

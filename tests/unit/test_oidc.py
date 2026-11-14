@@ -431,3 +431,51 @@ def test_every_domain_is_refused_in_hosted_mode(env: Env, idp: FakeIdP) -> None:
         set_session_org(s, ORG)
         sso.save(s, ORG, "t", {"email_domains": ["*"], "auto_create": False}, hosted, pid)
     assert err.value.field == "email_domains" and "hosted mode" in err.value.message
+
+
+def test_in_hosted_mode_a_provider_is_a_public_address(
+    env: Env, idp: FakeIdP, monkeypatch: pytest.MonkeyPatch  # noqa: F811
+) -> None:
+    """The issuer an admin types is fetched by the server. Where admins are customers, it was a
+    way to make the server ask its own network (and plain http://localhost was accepted)."""
+    from core.identity import sso
+
+    asked: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        asked.append(str(request.url))
+        base = str(request.url).split("/.well-known")[0]
+        keys = "https://keys.internal.test/jwks" if "split" in base else f"{base}/keys"
+        return httpx.Response(200, json={
+            "issuer": base, "authorization_endpoint": f"{base}/auth",
+            "token_endpoint": f"{base}/token", "jwks_uri": keys})  # fmt: skip
+
+    http = httpx.Client(transport=httpx.MockTransport(handler))
+    private = {"idp.internal.test": "10.0.0.8", "keys.internal.test": "10.0.0.9",
+               "localhost": "127.0.0.1"}  # fmt: skip
+    monkeypatch.setattr(sso, "RESOLVER", lambda host: [private.get(host, "93.184.216.34")])
+    hosted = env.settings.__class__(**{**env.settings.__dict__, "hosted_mode": True})
+
+    def save(issuer: str, domain: str, settings: Any = hosted) -> Any:
+        with env.sessions() as s:
+            set_session_org(s, ORG)
+            raw = {"kind": "oidc", "name": "x", "client_id": "c", "issuer": issuer,
+                   "email_domains": [domain]}  # fmt: skip
+            try:
+                return sso.save(s, ORG, "t", raw, settings, http=http)
+            finally:
+                s.rollback()
+
+    for issuer in ("https://idp.internal.test", "http://localhost:8080"):
+        with pytest.raises(sso.SsoError) as err:
+            save(issuer, "a.test")
+        assert err.value.field == "issuer" and "cannot be used here" in err.value.message
+    assert asked == []  # refused before anything was fetched
+    with pytest.raises(sso.SsoError) as err:  # a public issuer that names keys on a private host
+        save("https://split.example.com", "b.test")
+    assert "key set URL" in err.value.message
+    assert save("https://login.example.com", "c.test").config["issuer"] == (
+        "https://login.example.com"
+    )
+    # Self-hosted, the admin runs the server: a provider on their own network is theirs to use.
+    assert save("https://idp.internal.test", "d.test", env.settings).kind == "oidc"
