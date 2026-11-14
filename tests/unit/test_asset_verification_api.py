@@ -198,3 +198,26 @@ def test_a_web_targets_source_link_changes_without_resetting_verification(
         actions = list(s.scalars(select(AuditEntry.action).where(
             AuditEntry.target == site["asset_id"]).order_by(AuditEntry.seq)))  # fmt: skip
     assert actions == ["asset.source.linked", "asset.source.linked", "asset.source.unlinked"]
+
+
+@pytest.mark.parametrize("domain", ["127.0.0.1", "169.254.169.254:80", "localhost", "?x", ""])
+def test_a_web_target_that_is_not_a_domain_name_is_refused(
+    sessions: sessionmaker[Session], tmp_path: Any, domain: str
+) -> None:
+    """The field took any string; an address or a bare internal name became a target the server
+    would then fetch a file from."""
+    r = _client(sessions, tmp_path).post(
+        "/assets/web", headers=AUTH, json={"domain": domain, "method": "well_known"}
+    )
+    assert r.status_code == 422 and "domain name" in r.json()["detail"]
+
+
+def test_a_web_target_given_as_an_address_is_registered_by_its_host(
+    sessions: sessionmaker[Session], tmp_path: Any
+) -> None:
+    r = _client(sessions, tmp_path).post(
+        "/assets/web", headers=AUTH,
+        json={"domain": "https://Example.com:8443/shop?x=1", "method": "well_known"},
+    )  # fmt: skip
+    assert r.status_code == 200 and r.json()["domain"] == "example.com"
+    assert r.json()["well_known_url"] == "https://example.com/.well-known/bulwark-verification.txt"

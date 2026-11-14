@@ -610,6 +610,8 @@ def register_web_asset(
     archive Asset whose SAST scans provide the route map DAST correlation needs. Must already exist
     in the SAME org -- raises `ValueError` otherwise, rather than silently either ignoring it or
     linking across a tenant boundary. `set_web_asset_source` changes it later."""
+    if not ownership.is_hostname(asset_key("web", domain)):
+        raise ValueError(ownership.NOT_A_DOMAIN)
     if source_asset_id is not None:
         _source_project(s, source_asset_id, org_id)
     asset = get_or_create_asset(s, source_type="web", source_label=domain, org_id=org_id)
@@ -1145,11 +1147,16 @@ def triage_issue(
     expires_at: datetime | None = None,
     actor: str,
     justification: str | None = None,
+    asset_id: str | None = None,
 ) -> IssueRow:
     """Mark an issue `not_a_risk` (requires `reason`) or `accepted` (requires `expires_at`), or
     `reopen` it back to the active queue. Writes an audit entry either way (plan §28.3: "Both write
     to the audit log (§19.3)") -- `reopen` too, since undoing a triage decision is itself a
     security-relevant action worth a durable record.
+
+    `asset_id`: the project the caller was allowed to change. An Issue of another project is "not
+    found" (LookupError): a person's role is per project (Week 75), so being allowed to triage in
+    one must not reach an Issue of another.
 
     `justification` (Week 69, plan §46.3): for a dependency Issue marked not a risk, why, in
     OpenVEX's vocabulary (`core.vex.vocab`); exported in the project's VEX documents."""
@@ -1161,7 +1168,7 @@ def triage_issue(
     if justification and action != "not_a_risk":
         raise ValueError("a VEX justification only goes with marking an issue not a risk")
     row = get_issue(s, issue_id, org_id=org_id)
-    if row is None:
+    if row is None or (asset_id is not None and row.asset_id != asset_id):
         raise LookupError("issue not found")
     if justification and row.category not in ("sca", "container"):
         raise ValueError("a VEX justification is only for dependency issues")

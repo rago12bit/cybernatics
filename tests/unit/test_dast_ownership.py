@@ -146,3 +146,108 @@ def test_real_http_fetcher_against_a_real_domain_with_no_bulwark_file() -> None:
     fetcher = ownership.HttpxFetcher(timeout=5.0)
     outcome = ownership.check_well_known("example.com", "definitely-not-set", fetcher=fetcher)
     assert outcome.ok is False
+
+
+# --- the fetcher is guarded like every other request to an address a person gave ---------------
+
+PUBLIC, PRIVATE = "93.184.216.34", "10.0.0.5"
+
+
+def _fetcher(handler, addresses: dict[str, str], **kw):  # type: ignore[no-untyped-def]
+    import httpx
+
+    asked: list[str] = []
+
+    def record(request: httpx.Request) -> httpx.Response:
+        asked.append(str(request.url))
+        return handler(request)
+
+    fetcher = ownership.HttpxFetcher(
+        resolver=lambda host: [addresses.get(host, PUBLIC)],
+        transport=httpx.MockTransport(record),
+        **kw,
+    )
+    return fetcher, asked
+
+
+URL = "https://example.com/.well-known/bulwark-verification.txt"
+
+
+def test_the_fetcher_reads_the_file_and_follows_a_redirect_to_another_public_host() -> None:
+    import httpx
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.host == "example.com":
+            return httpx.Response(301, headers={"Location": "https://www.example.com/v.txt"})
+        return httpx.Response(200, text="tok\n")
+
+    fetcher, asked = _fetcher(handler, {})
+    assert ownership.check_well_known("example.com", "tok", fetcher=fetcher).ok
+    assert asked == [URL, "https://www.example.com/v.txt"]
+
+
+@pytest.mark.parametrize(
+    "location",
+    [
+        "http://169.254.169.254/latest/meta-data/",  # not https
+        "https://internal.example/admin",  # resolves to a private address
+        "https://127.0.0.1/",
+        "https://user:pw@www.example.com/",
+    ],
+)
+def test_a_redirect_cannot_send_the_fetcher_into_the_network(location: str) -> None:
+    """Left to the HTTP client, a public host answered `Location: http://169.254.169.254/...` and
+    the server fetched its own network (and said in the error whether anything was there)."""
+    import httpx
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.host == "example.com":
+            return httpx.Response(302, headers={"Location": location})
+        return httpx.Response(200, text="tok")  # what must never be reached
+
+    fetcher, asked = _fetcher(handler, {"internal.example": PRIVATE, "127.0.0.1": "127.0.0.1"})
+    outcome = ownership.check_well_known("example.com", "tok", fetcher=fetcher)
+    assert not outcome.ok and asked == [URL]
+
+
+def test_a_target_on_a_private_address_is_not_fetched_at_all() -> None:
+    import httpx
+
+    fetcher, asked = _fetcher(lambda r: httpx.Response(200, text="tok"), {"corp.example": PRIVATE})
+    outcome = ownership.check_well_known("corp.example", "tok", fetcher=fetcher)
+    assert not outcome.ok and "not a public address" in (outcome.error or "") and asked == []
+
+
+def test_the_fetcher_stops_at_a_small_answer_and_a_few_redirects() -> None:
+    import httpx
+
+    big, _ = _fetcher(lambda r: httpx.Response(200, content=b"x" * 1_000_000), {})
+    outcome = ownership.check_well_known("example.com", "tok", fetcher=big)
+    assert not outcome.ok and "larger than a verification file" in (outcome.error or "")
+
+    loop, asked = _fetcher(lambda r: httpx.Response(302, headers={"Location": "/again"}), {})
+    outcome = ownership.check_well_known("example.com", "tok", fetcher=loop)
+    assert not outcome.ok and "redirects" in (outcome.error or "")
+    assert len(asked) == ownership.MAX_REDIRECTS + 1
+
+    slow, asked = _fetcher(lambda r: httpx.Response(200, text="tok"), {}, total_timeout=-1.0)
+    outcome = ownership.check_well_known("example.com", "tok", fetcher=slow)
+    assert not outcome.ok and "took too long" in (outcome.error or "") and asked == []
+
+
+@pytest.mark.parametrize(
+    "domain",
+    ["127.0.0.1", "169.254.169.254", "[::1]", "localhost", "", "?x", "a b.com", "-a.com",
+     "exa_mple.com", "example.com.", "x" * 64 + ".com"],
+)  # fmt: skip
+def test_only_a_domain_name_is_a_web_target(domain: str) -> None:
+    assert not ownership.is_hostname(domain)
+    outcome = ownership.verify(
+        "well_known", domain, "tok", resolver=_FakeResolver({}), fetcher=_FakeFetcher({})
+    )
+    assert not outcome.ok and outcome.error == ownership.NOT_A_DOMAIN
+
+
+def test_domain_names_are_web_targets() -> None:
+    for domain in ("example.com", "shop.test", "a.b-c.example.co.uk", "xn--bcher-kva.example"):
+        assert ownership.is_hostname(domain), domain
