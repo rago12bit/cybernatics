@@ -35,6 +35,15 @@ class _Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def do_POST(self) -> None:  # noqa: N802 - http.server's name
+        """Answers the way Slack's incoming webhooks do: 200, and `ok` as plain text."""
+        self.rfile.read(int(self.headers.get("Content-Length", 0)))
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html")
+        self.send_header("Content-Length", "2")
+        self.end_headers()
+        self.wfile.write(b"ok")
+
     def log_message(self, *args: object) -> None:
         pass
 
@@ -69,3 +78,13 @@ def test_a_redirect_to_another_host_is_refused_and_gets_no_credentials(
     )
     assert status == 302 and data is None
     assert [port for port, _, _ in seen] == [a]  # the other server was never asked
+
+
+def test_an_answer_that_is_not_json_is_still_an_answer(servers: tuple[int, int]) -> None:
+    """Slack answers a delivered message with `ok`, and a webhook receiver with whatever it
+    likes. Parsing every body as JSON raised after the message had gone out, so the caller took a
+    delivered notification for a failed one: the daily digest was then sent again on every run,
+    and a rule's notification was recorded as failed."""
+    a, _ = servers
+    status, data = http_transport("POST", f"http://127.0.0.1:{a}/hook", {}, b'{"text": "hi"}')
+    assert (status, data) == (200, None)

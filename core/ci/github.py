@@ -47,9 +47,22 @@ def http_transport(
     try:
         with _OPENER.open(req, timeout=30) as resp:  # noqa: S310 - https only, checked by caller
             raw = resp.read(8 * 1024 * 1024)
-            return resp.status, json.loads(raw) if raw else None
+            return resp.status, _json_or_none(raw)
     except urllib.error.HTTPError as exc:
         return exc.code, None
+
+
+def _json_or_none(raw: bytes) -> Any:
+    """The body as JSON, or None when it is empty or is not JSON. Not every answer is: Slack's
+    incoming webhooks answer `ok`, and a webhook receiver answers what it likes. Raising here, after
+    the request had been delivered, made a sent notification look like a failed one. Callers that
+    need a document check for one (`isinstance(data, dict)`)."""
+    if not raw:
+        return None
+    try:
+        return json.loads(raw)
+    except ValueError:  # JSONDecodeError, or bytes that are not UTF-8
+        return None
 
 
 def post_comment(
