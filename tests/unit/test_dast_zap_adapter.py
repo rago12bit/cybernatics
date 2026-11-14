@@ -172,3 +172,36 @@ def test_a_zap_run_that_times_out_kills_its_container_by_name(monkeypatch: Any) 
         zap.run_zap_baseline("http://t/", timeout_s=1)
     name = calls[0][calls[0].index("--name") + 1]
     assert name.startswith("bulwark-zap-") and calls[1] == ["docker", "kill", name]
+
+
+def test_the_container_runs_without_privileges_and_is_labelled_for_the_reaper(
+    monkeypatch: Any,
+) -> None:
+    """The DAST containers were started with Docker's defaults: every default capability, and no
+    `bulwark.managed` label, so `cleanup_containers` never found one whose worker had died."""
+    argv = _fake_run_writing_empty_report(monkeypatch)
+    zap.run_zap_baseline("https://example.com/")
+    for flag in ("--cap-drop=ALL", "--security-opt=no-new-privileges", "--label=bulwark.managed=1"):
+        assert flag in argv["argv"], flag
+    assert "--privileged" not in argv["argv"]
+
+
+@pytest.mark.parametrize("planted", ["link", "list", "text"])
+def test_a_report_that_is_not_a_report_is_an_error_not_a_crash(
+    monkeypatch: Any, tmp_path: Path, planted: str
+) -> None:
+    secret = tmp_path / "secret.json"
+    secret.write_text('{"site": [], "token": "hunter2"}')
+
+    def fake_run(argv: list[str], **kwargs: Any) -> Any:
+        report = Path(argv[argv.index("-v") + 1].split(":")[0]) / "report.json"
+        if planted == "link":
+            report.symlink_to(secret)
+        else:
+            report.write_text("[]" if planted == "list" else "not json")
+        return subprocess.CompletedProcess(argv, 0, stdout=b"", stderr=b"")
+
+    monkeypatch.setattr(zap.subprocess, "run", fake_run)
+    with pytest.raises(zap.ZapError) as exc:
+        zap.run_zap_baseline("https://example.com/")
+    assert "hunter2" not in str(exc.value)

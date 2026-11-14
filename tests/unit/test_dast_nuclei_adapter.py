@@ -157,6 +157,15 @@ def test_without_a_proxy_the_argv_has_no_proxy_or_add_host_flags(monkeypatch: An
     assert captured["argv"][captured["argv"].index("-pt") + 1] == "http"
 
 
+def test_the_container_runs_without_privileges_and_is_labelled_for_the_reaper(
+    monkeypatch: Any,
+) -> None:
+    captured = _capture_argv(monkeypatch)
+    nuclei.run_nuclei("https://example.com/")
+    for flag in ("--cap-drop=ALL", "--security-opt=no-new-privileges", "--label=bulwark.managed=1"):
+        assert flag in captured["argv"], flag
+
+
 def test_with_a_proxy_the_argv_points_nuclei_at_it_through_host_docker_internal(
     monkeypatch: Any,
 ) -> None:

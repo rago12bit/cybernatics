@@ -24,6 +24,7 @@ from core.sandbox.docker_runtime import (
     DockerRuntime,
     build_docker_argv,
 )
+from core.sandbox.output import OutputRefused, read_output
 from core.sandbox.runtime import SandboxRuntime
 
 __all__ = [
@@ -86,8 +87,12 @@ def run_tool(
         except FileNotFoundError as exc:
             raise RunnerError(f"{active_runtime.name} is not installed or not on PATH") from exc
 
-        out_file = out_dir / spec.output_name
-        raw = out_file.read_bytes() if out_file.exists() else b""
+        try:
+            raw = read_output(out_dir / spec.output_name) or b""
+        except OutputRefused as exc:
+            # Not a file the scanner should have left (a link, a FIFO, something huge): the
+            # tool failed, and nothing of it is read (core.sandbox.output says why).
+            return RunResult(spec.name, "error", proc.returncode, b"", f"scanner output: {exc}")
         stderr = proc.stderr.decode("utf-8", errors="replace")[-2000:]
         # Scanners commonly exit non-zero when findings exist; output presence is the signal.
         status = "ok" if raw else "error"

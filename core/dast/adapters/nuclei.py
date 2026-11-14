@@ -87,7 +87,10 @@ def run_nuclei(
     0 with no results); the campaign's egress proxy tells that apart instead
     (`BackgroundProxy.target_unreached`)."""
     name = f"bulwark-nuclei-{uuid.uuid4().hex[:8]}"
-    argv = ["docker", "run", "--rm", "--name", name]
+    # No capabilities, no way to gain privileges, and the label the orphan reaper finds a
+    # container by (core.maintenance.cleanup_containers): see core.dast.adapters.zap.
+    argv = ["docker", "run", "--rm", "--name", name, "--cap-drop=ALL",
+            "--security-opt=no-new-privileges", "--label=bulwark.managed=1"]  # fmt: skip
     if proxy is not None:
         # host.docker.internal needs this explicit mapping on Linux too (Docker Engine >= 20.10);
         # macOS Docker Desktop already resolves it without the flag, but passing it unconditionally

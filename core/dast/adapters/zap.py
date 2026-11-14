@@ -24,13 +24,29 @@ import uuid
 from pathlib import Path
 from typing import Any
 
+from core.config import scratch_dir
 from core.dast.mapping import zap_alert_findings
 from core.dast.proxy import ProxyConfig
 from core.models import Finding
+from core.sandbox.output import OutputRefused, read_output
 
 ZAP_IMAGE = (  # 2.17.0, what `stable` pointed to on 2026-10-14
     "ghcr.io/zaproxy/zaproxy:2.17.0"
     "@sha256:7aaa659b0d43078febd82e29bad112285c370727e86ab8340444220e17d9f0d2"
+)
+
+
+#: A baseline report is a few hundred kilobytes; this is far above one.
+MAX_REPORT_BYTES = 64 * 1024 * 1024
+
+#: What every container Bulwark starts carries (core.sandbox.docker_runtime), as far as a scanner
+#: that needs the network and a writable home can: no capabilities, no way to gain privileges, and
+#: the label `core.maintenance.cleanup_containers` finds an orphan by -- without it a ZAP container
+#: whose worker was killed was never cleaned up.
+CONTAINER_FLAGS = (
+    "--cap-drop=ALL",
+    "--security-opt=no-new-privileges",
+    "--label=bulwark.managed=1",
 )
 
 
@@ -45,11 +61,13 @@ def run_zap_baseline(
     a WARN-level alert as informational for ZAP's own exit code (it still appears in the JSON report
     at its real risk level) -- a scan that only turned up WARN-level alerts must not be reported as
     "failed," the campaign's finding list is the actual result, not ZAP's own pass/fail verdict."""
-    with tempfile.TemporaryDirectory() as tmp:
+    # Under the scratch directory, like every other path a container is given: the host's Docker
+    # daemon mounts it, so it must be a path the worker's container and the host both have.
+    with tempfile.TemporaryDirectory(prefix="bulwark-zap-", dir=scratch_dir()) as tmp:
         tmp_path = Path(tmp)
         tmp_path.chmod(0o777)  # the zap container runs as its own non-root user, not this one
         name = f"bulwark-zap-{uuid.uuid4().hex[:8]}"
-        argv = ["docker", "run", "--rm", "--name", name]
+        argv = ["docker", "run", "--rm", "--name", name, *CONTAINER_FLAGS]
         if proxy is not None:
             # See core.dast.adapters.nuclei.run_nuclei for why this flag is unconditional whenever
             # a proxy is configured: host.docker.internal needs it on Linux, and it's a no-op on
@@ -77,11 +95,19 @@ def run_zap_baseline(
             raise ZapError(f"zap-baseline timed out after {timeout_s}s") from exc
         except FileNotFoundError as exc:
             raise ZapError("docker is not available") from exc
-        report_path = tmp_path / "report.json"
-        if not report_path.exists():
+        try:  # the container wrote it: a regular file of a sane size, or nothing is read
+            report = read_output(tmp_path / "report.json", MAX_REPORT_BYTES)
+        except OutputRefused as exc:
+            raise ZapError(f"zap-baseline's report was not readable: {exc}") from exc
+        if report is None:
             stderr = proc.stderr.decode("utf-8", errors="replace")[-2000:]
             raise ZapError(f"zap-baseline produced no report (exit {proc.returncode}): {stderr}")
-        data = json.loads(report_path.read_text())
+    try:
+        data = json.loads(report)
+    except ValueError as exc:
+        raise ZapError("zap-baseline's report is not JSON") from exc
+    if not isinstance(data, dict):
+        raise ZapError("zap-baseline's report is not a JSON object")
     return _parse_report(data)
 
 

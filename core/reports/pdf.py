@@ -19,6 +19,7 @@ import tempfile
 from pathlib import Path
 
 from core.config import scratch_dir
+from core.sandbox.output import OutputRefused, read_output
 
 PDF_IMAGE = (
     "mcr.microsoft.com/playwright:v1.63.0-jammy"
@@ -64,8 +65,11 @@ def to_pdf(html: str) -> bytes:
             raise RenderError("docker is not installed or not on PATH") from exc
         except subprocess.TimeoutExpired as exc:
             raise RenderError("rendering the PDF took longer than two minutes") from exc
-        out = work / "out.pdf"
-        if proc.returncode != 0 or not out.is_file():
+        try:  # a regular file, not whatever a link in the shared directory points to
+            pdf = read_output(work / "out.pdf", MAX_PDF_BYTES)
+        except OutputRefused as exc:
+            raise RenderError("Chromium's output was not a usable PDF") from exc
+        if proc.returncode != 0 or pdf is None:
             err = proc.stderr.decode("utf-8", "replace").strip().splitlines()
             tail = next((ln for ln in reversed(err) if "ERROR" in ln or "rror" in ln), "")
             if (
@@ -74,8 +78,7 @@ def to_pdf(html: str) -> bytes:
             ):
                 raise RenderError(f"the PDF renderer image is not available locally: {image()}")
             raise RenderError(f"Chromium could not render the PDF: {tail[:300] or 'no output'}")
-        pdf = out.read_bytes()
-        if not pdf.startswith(b"%PDF-") or len(pdf) > MAX_PDF_BYTES:
+        if not pdf.startswith(b"%PDF-"):
             raise RenderError("Chromium's output was not a usable PDF")
         return pdf
     finally:
