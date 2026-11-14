@@ -18,6 +18,11 @@ triage, assign, accept, fix and report on, with the evidence of every tool behin
 > **no usability study with real users**, **no measurement of AI fix quality** (no model has been
 > run), and the GitHub App and commercial identity providers (Google, Entra ID, Okta) have only been
 > exercised against stand-ins. [What is and isn't measured](#evidence) is below.
+>
+> `main` is ahead of 3.1.0: a whole-code audit in November 2026 found and fixed a role check that
+> let a member of one project triage another project's Issues, taint-path code missing from
+> server-side scans, and Slack digests sent repeatedly, among others. They are listed under
+> *Unreleased* in the [changelog](CHANGELOG.md) and are not in a release yet.
 
 ## What it does
 
@@ -29,7 +34,7 @@ triage, assign, accept, fix and report on, with the evidence of every tool behin
 | **Manage** | One Issues list across every project, with a query language, saved views and bulk changes; owners, SLAs, risk acceptance with approvals, notes and mentions, retests, engagements for pen tests, rules that act on events. [Issue search](docs/issue-search.md) |
 | **Know your exposure** | A component inventory, advisories matched against it, VEX statements with evidence, compliance mappings. [VEX](docs/vex.md) · [Compliance](docs/compliance.md) |
 | **Report** | Dashboards, a report builder with scheduled and shared reports, PDF/HTML/SARIF exports. [Reports](docs/reports.md) |
-| **Test running apps** | DAST with ZAP and Nuclei against web targets you've proved you own, through an egress proxy that only reaches that one host. [ADR-0035](docs/adr/0035-dast-scanning.md) |
+| **Test running apps** | DAST with ZAP and Nuclei against web targets you've proved you own (a DNS record or a file on the site, re-checked before every campaign), through an egress proxy that only reaches that one host. [ADR-0035](docs/adr/0035-dast-scanning.md) |
 | **Fix** | A verified-fix agent proposes a patch, re-runs the scanners and your tests, and opens a pull request only after a person approves; `/fix` on a pull request does the same for what that PR introduced. [Verified fixes](docs/verified-fix-agent.md) · [/fix](docs/fix-on-pull-requests.md) |
 | **Work where you are** | A GitHub Action that comments only what a PR introduces, a pre-commit hook, a VS Code extension, an MCP server for your own AI assistant, DefectDojo/Jira/GitHub Issues connectors, Slack/Discord/webhook notifications. [Action](docs/github-action.md) · [MCP](docs/mcp.md) |
 | **Run it for a team** | Organizations isolated by Postgres row-level security, sign-in with OIDC or SAML, SCIM provisioning, roles per organization, business unit and project, scoped API tokens, plugins for scanners you add yourself. [Sign-in and roles](docs/identity.md) · [Plugins](docs/plugins.md) |
@@ -79,14 +84,18 @@ A FastAPI service and Celery workers over Postgres 16 (with pgvector and forced 
 Redis, an S3-compatible object store and OpenBao for keys; the web app is Next.js. Scanners run as
 one container per tool:
 `--network=none --read-only --cap-drop=ALL --user=10001 --security-opt=no-new-privileges`, with
-memory, CPU and process limits and the code mounted read-only. The fix agent's long-running work runs
-on Temporal. Every design decision is an [ADR](docs/adr/).
+memory, CPU and process limits and the code mounted read-only. The one directory a scanner can write
+is read back as a plain file of limited size, never a link. ZAP and Nuclei need the network, so they
+run without capabilities or privilege escalation behind the egress proxy instead. The fix agent's
+long-running work runs on Temporal. Every design decision is an [ADR](docs/adr/).
 
 ## Security
 
 - **Tenant isolation in the database**, not only the app: every table is filtered by Postgres
   row-level security, and people limited to some projects run as a database role that cannot see the
   others. Tested against real Postgres on every push.
+- **Roles are checked per project:** a person's role on the project a request names decides what
+  they may do there, and what the request acts on must belong to that project.
 - **Untrusted input stays in the sandbox:** scanner output and uploaded reports are parsed in the same
   locked-down container; XML entity tricks, oversized and truncated files are refused. Parsers are
   fuzzed nightly.
@@ -95,8 +104,16 @@ on Temporal. Every design decision is an [ADR](docs/adr/).
   checksum database, and upstream images whose publishers sign are verified in CI; Bulwark's own
   images are never pulled; plugins run only the image whose Sigstore signature was verified; GitHub
   Actions are pinned by SHA.
+- **Requests are bounded and outbound calls are guarded:** every request body has a size limit that
+  applies before sign-in is checked; addresses a person supplies (Git URLs, webhooks, connectors,
+  the ownership check for a web target) are fetched over https from public addresses only.
 - **Secrets:** raw scanner output is envelope-encrypted per organization and can be crypto-shredded;
-  service connections to Postgres use client certificates.
+  integration credentials are encrypted in the database when `BULWARK_SECRETS_KEY` is set; service
+  connections to Postgres use client certificates.
+
+**Before you expose it:** the API has no rate limiting of its own. Put a reverse proxy that limits
+rates in front of it, and keep `BULWARK_API_TOKEN`, which can do everything, for automation you
+control ([known limits](SECURITY.md#known-limits-please-read-before-deploying)).
 
 Read the [threat model](docs/THREAT-MODEL.md) (including what is still open), the [OWASP ASVS Level 2
 self-assessment](docs/ASVS-SELF-ASSESSMENT.md) and [SECURITY.md](SECURITY.md) to report a
@@ -155,8 +172,9 @@ cd web && npm ci && npm test && npm run typecheck
 pip install -e ".[docs]" && mkdocs serve        # the documentation site
 ```
 
-Integration tests run against real services when they're available: set
-`BULWARK_RLS_TEST_DATABASE_URL` for Postgres (see `.github/workflows/ci.yml` for the exact setup),
+A change needs a test that fails without it. Integration tests run against real services when
+they're available: set `BULWARK_RLS_TEST_DATABASE_URL` for Postgres (see `.github/workflows/ci.yml`
+for the exact setup),
 build the scanner images for the Docker tests, and `BULWARK_KEYCLOAK_URL` for sign-in. CI runs all of
 them, on pinned runners and images.
 
