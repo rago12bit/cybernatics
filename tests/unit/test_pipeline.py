@@ -606,3 +606,58 @@ def test_pr_scan_shows_new_in_this_pr_without_touching_the_real_asset(
         issues = s.query(IssueRow).filter_by(asset_id=main_scan.asset_id).all()
         assert [i.id for i in issues] == [known_issue_id]
         assert issues[0].state == "new" and issues[0].fixed_at is None
+
+
+def test_a_server_side_scan_keeps_the_code_of_each_taint_path_step(
+    sessions: sessionmaker[Session], tmp_path: Path
+) -> None:
+    """`finalize` reads the lines around each step from the scan workspace. It ran after the
+    workspace was deleted, so every step of a scan run by the worker was stored with no code
+    (the CLI, which scans a directory that stays, had it)."""
+    src = tmp_path / "repo"
+    src.mkdir()
+    (src / "app.py").write_text(
+        "from flask import request\n\n"
+        '@app.route("/search")\n'
+        "def search():\n"
+        '    q = request.args.get("q")\n'
+        "    return helper(q)\n\n"
+        "def helper(term):\n"
+        '    query = "SELECT * FROM t WHERE name = \'" + term + "\'"\n'
+        "    return db.execute(query)\n"
+    )
+    with sessions() as s:
+        sid = make_scan(s, ["bandit"], str(src))
+    sink = finding("bandit", Category.SAST, path="app.py", line=10)
+    table = {"bandit": ToolOutcome("bandit", "ok", [sink], 1, 1.0, raw=b"RAW")}
+    assert run_scan_job(sid, sessions, MemoryStore(), MemoryPublisher(), executor_from(table)) == (
+        "completed"
+    )
+    with sessions() as s:
+        steps = s.query(FindingRow).one().data["taint_path"]
+    assert [st["line"] for st in steps] == [4, 6, 10]
+    assert "def search():" in steps[0]["snippet"] and "helper(q)" in steps[1]["snippet"]
+    assert "db.execute(query)" in steps[2]["snippet"] and steps[2]["is_sink"]
+
+
+def test_a_crash_while_saving_fails_the_scan_at_once(
+    sessions: sessionmaker[Session], sample_repo: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Only the tools were inside the failure handling: anything that raised after them left the
+    scan "running", with no final event, until housekeeping reaped it thirty minutes later."""
+    with sessions() as s:
+        sid = make_scan(s, ["bandit"], str(sample_repo))
+    table = {"bandit": ToolOutcome("bandit", "ok", [finding("bandit", Category.SAST)], 1, 1.0)}
+
+    def boom(*_a: object, **_k: object) -> None:
+        raise RuntimeError("the database went away")
+
+    monkeypatch.setattr(repo, "add_findings", boom)
+    bus = MemoryPublisher()
+    assert run_scan_job(sid, sessions, MemoryStore(), bus, executor_from(table)) == "failed"
+    with sessions() as s:
+        scan = repo.get_scan(s, sid)
+        assert scan is not None and scan.status == "failed" and scan.finished_at
+        assert scan.error == "internal error while saving the scan's results"
+    last = bus.events[-1][1]
+    assert last["type"] == "scan.finished" and last["status"] == "failed"

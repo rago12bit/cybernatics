@@ -316,6 +316,29 @@ def _run_scan_job(
             if "syft" in raws:
                 with span("sbom"):
                     sbom_findings, sbom_summary = _process_sbom(raws["syft"], reach)
+
+            # Still inside the workspace: `finalize` reads the lines around each taint-path step
+            # from it. Run after the block, as it was, the workspace was already deleted and every
+            # step of a server-side scan was stored without its code.
+            # Correlate BEFORE redacting: redaction placeholders look alike and would over-merge.
+            with span("correlate") as sp:
+                correlated, stats = correlate(
+                    [f for o in outcomes for f in o.findings] + sbom_findings
+                )
+                set_attributes(sp, raw=stats.raw, unique=stats.unique)
+            with span("finalize"):
+                ensure_fresh()
+                verdicts: dict[str, Any] = {}
+                if asset_id is not None:
+                    with sessions() as s:
+                        verdicts = repo.assistant_verdicts_for_asset(s, asset_id)
+                findings = finalize(
+                    correlated,
+                    reach=reach,
+                    taint=taint,
+                    root=workspace,
+                    verdict_lookup=(lambda f: verdicts.get(f.fingerprint)) if verdicts else None,
+                )
     except IngestError as exc:
         log.warning("ingestion failed: %s", exc)
         return fail(str(exc))
@@ -323,23 +346,61 @@ def _run_scan_job(
         log.exception("scan crashed")
         return fail("internal error while running the scan")
 
-    # Correlate BEFORE redacting: redaction placeholders look identical and would over-merge.
-    with span("correlate") as sp:
-        correlated, stats = correlate([f for o in outcomes for f in o.findings] + sbom_findings)
-        set_attributes(sp, raw=stats.raw, unique=stats.unique)
-    with span("finalize"):
-        ensure_fresh()
-        verdicts: dict[str, Any] = {}
-        if asset_id is not None:
-            with sessions() as s:
-                verdicts = repo.assistant_verdicts_for_asset(s, asset_id)
-        findings = finalize(
-            correlated,
-            reach=reach,
-            taint=taint,
-            root=workspace,
-            verdict_lookup=(lambda f: verdicts.get(f.fingerprint)) if verdicts else None,
-        )
+    try:
+        status, counts, issues, updates = _persist(
+            sessions, store, scan_id, outcomes, raws, findings, sbom_summary, route_map, taint,
+            reach, ref=ref, asset_id=asset_id, scan_org=scan_org, org_id=org_id,
+            source_label=source_label,
+        )  # fmt: skip
+    except Exception:
+        # Before this, a failure here left the scan "running" with no final event until the
+        # housekeeping job gave up on it half an hour later.
+        log.exception("scan crashed while saving its results")
+        return fail("internal error while saving the scan's results")
+    if issues is not None:
+        issue_counts: dict[str, int] | None = {
+            "new": issues.new_count,
+            "reintroduced": issues.reintroduced_count,
+            "fixed": issues.fixed_count,
+        }
+    elif updates is not None:
+        issue_counts = {
+            "new": sum(1 for u in updates if u.state == "new"),
+            "existing": sum(1 for u in updates if u.state != "new"),
+        }
+    else:
+        issue_counts = None
+    bus.publish(scan_id, {"type": "scan.finished", "scan_id": scan_id, "status": status,
+                          "findings": len(findings), "raw_findings": stats.raw,
+                          "dedup_rate": round(stats.dedup_rate, 3),
+                          "severity_counts": counts, "issues": issue_counts})  # fmt: skip
+    _cleanup_upload(source_type, source_ref)
+    github_repo, pr_number, installation_id = github
+    if github_repo and pr_number and installation_id:
+        _post_pr_comment(scan_id, github_repo, pr_number, installation_id, status, counts, findings)
+    return status, counts
+
+
+def _persist(
+    sessions: SessionFactory,
+    store: ObjectStore,
+    scan_id: str,
+    outcomes: list[ToolOutcome],
+    raws: dict[str, bytes],
+    findings: list[Finding],
+    sbom_summary: dict[str, Any] | None,
+    route_map: list[dict[str, Any]],
+    taint: Any,
+    reach: ReachabilityIndex | None,
+    *,
+    ref: str | None,
+    asset_id: str | None,
+    scan_org: str,
+    org_id: str | None,
+    source_label: str,
+) -> tuple[str, dict[str, int], Any, Any]:
+    """Store a finished scan's results and mark it finished. Returns the status, the severity
+    counts, and what the Issue sync did (`issues` for a full scan, `updates` for a PR scan)."""
     has_secrets = any(f.taxonomy.category is Category.SECRETS for f in findings)
     with span("persist", findings=len(findings)):
         _store_raw(sessions, store, scan_id, outcomes, raws, has_secrets)
@@ -391,8 +452,8 @@ def _run_scan_job(
                     s.rollback()
             repo.set_route_map(s, scan_id, route_map)
             repo.set_entrypoints(s, scan_id, _entrypoints(taint))
-            repo.finish_scan(s, scan_id, status)
             counts = repo.severity_counts(s, scan_id)
+            repo.finish_scan(s, scan_id, status)  # last: nothing after it may fail the scan
             # Integrations (Week 51 task 2, plan §23): only for a real, full scan of the asset's
             # current state, the same condition that gates writing real Issue history above -- a
             # PR scan must not notify Slack or file a GitHub issue for something that might never
@@ -405,28 +466,7 @@ def _run_scan_job(
                     )  # fmt: skip
                 except Exception:  # noqa: BLE001 - a dying integration must not fail the scan
                     log.exception("integrations dispatch failed for scan %s", scan_id)
-    if issues is not None:
-        issue_counts: dict[str, int] | None = {
-            "new": issues.new_count,
-            "reintroduced": issues.reintroduced_count,
-            "fixed": issues.fixed_count,
-        }
-    elif updates is not None:
-        issue_counts = {
-            "new": sum(1 for u in updates if u.state == "new"),
-            "existing": sum(1 for u in updates if u.state != "new"),
-        }
-    else:
-        issue_counts = None
-    bus.publish(scan_id, {"type": "scan.finished", "scan_id": scan_id, "status": status,
-                          "findings": len(findings), "raw_findings": stats.raw,
-                          "dedup_rate": round(stats.dedup_rate, 3),
-                          "severity_counts": counts, "issues": issue_counts})  # fmt: skip
-    _cleanup_upload(source_type, source_ref)
-    github_repo, pr_number, installation_id = github
-    if github_repo and pr_number and installation_id:
-        _post_pr_comment(scan_id, github_repo, pr_number, installation_id, status, counts, findings)
-    return status, counts
+    return status, counts, issues, updates
 
 
 def _post_pr_comment(
