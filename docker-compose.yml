@@ -98,7 +98,7 @@ services:
     restart: unless-stopped
 
   redis:
-    image: redis:7.2-alpine@sha256:29e8589c3f9ba699b5f7aa4b3c7733c58852a3626439e619aa0ee78de08c6ca0 # 7.2 is the last BSD-licensed line; 7.4+ is RSALv2/SSPLv1 (docs/adr/0011-redis-license.md)
+    image: redis:7.2-alpine@sha256:2f66de68111e64c3927859f158f8e666066dae2b97d9f82770a6f37a5aa1c335 # 7.2 is the last BSD-licensed line; 7.4+ is RSALv2/SSPLv1 (docs/adr/0011-redis-license.md)
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 3s
@@ -107,7 +107,7 @@ services:
 
   # S3-compatible object store for raw scanner artifacts (ADR-007). Any S3 endpoint works.
   objectstore:
-    image: rustfs/rustfs:1.0.1@sha256:1803faef57627e2d9c2e7d89d655d712ddded5389040054987163043fecb6a3c
+    image: rustfs/rustfs:1.0.5@sha256:b81d16a90ee25bd9511280127ca1471788c6e874cf0f0da759645f46b2dc1d74
     environment:
       RUSTFS_ACCESS_KEY: ${S3_ACCESS_KEY:?run scripts/init-env.sh}
       RUSTFS_SECRET_KEY: ${S3_SECRET_KEY:?run scripts/init-env.sh}
@@ -124,7 +124,7 @@ services:
   # `docker compose down` is a non-issue. A real deployment runs OpenBao unsealed and persistent,
   # never with BAO_DEV_ROOT_TOKEN_ID.
   openbao:
-    image: openbao/openbao:2.1@sha256:af40ca17625ec44aa1ffe3698f85162d71d9cc97adc9e97821ef393ac94b6e42
+    image: openbao/openbao:2.7@sha256:5046911075e137e154ce49ab051502f4ec7cf367d484ae4a4dce665d9b90561f
     environment:
       BAO_DEV_ROOT_TOKEN_ID: ${BULWARK_OPENBAO_TOKEN:?run scripts/init-env.sh}
     healthcheck:
@@ -228,7 +228,7 @@ services:
   # container than a dedicated Temporal Postgres, and this project already runs one.
   temporal:
     profiles: [fixagent]
-    image: temporalio/auto-setup:1.24.2@sha256:10e8c557ace5fa4aa99217637e7b9969316e89b929a3bfb117853a5417eef25c
+    image: temporalio/auto-setup:1.29.3@sha256:9be7b8d98f60d00f4f2ff74731c071a17848d8182bbc8429e314a24c94ea105b
     environment:
       DB: postgres12
       DB_PORT: 5432
@@ -246,7 +246,7 @@ services:
   # of the product's own web app.
   temporal-ui:
     profiles: [fixagent]
-    image: temporalio/ui:2.31.2@sha256:28bb3ea5a6ea3e09f16b521f32ab727c96470f7f1e420c66a6cbfb02001a8aa2
+    image: temporalio/ui:2.58.1@sha256:ac3c13eddb4547d830991bb5eee93a5d97140134522b7297fdb2be1fe25ef925
     environment:
       TEMPORAL_ADDRESS: temporal:7233
       TEMPORAL_CORS_ORIGINS: http://localhost:8081
@@ -372,7 +372,7 @@ services:
   # ---- optional: metrics, dashboard and traces (docker compose --profile observability up -d) ----
   prometheus:
     profiles: [observability]
-    image: prom/prometheus:v3.6.0@sha256:76947e7ef22f8a698fc638f706685909be425dbe09bd7a2cd7aca849f79b5f64
+    image: prom/prometheus:v3.16.0@sha256:e04987641b57704f408e31f6373ba4138ecf27cb4a165d24aabb6c38fddd0f06
     command: ["--config.file=/etc/prometheus/prometheus.yml", "--storage.tsdb.retention.time=7d"]
     volumes: ["./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro"]
     ports: ["127.0.0.1:9090:9090"]
@@ -387,7 +387,7 @@ services:
     restart: unless-stopped
   grafana:
     profiles: [observability]
-    image: grafana/grafana:12.2.0@sha256:74144189b38447facf737dfd0f3906e42e0776212bf575dc3334c3609183adf7
+    image: grafana/grafana:12.4.15@sha256:2894082f6cf7081aefdc1389265c04000812309208c190d75e8c65f7a30e4b7e
     environment:
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin} # local use only: the port is bound to localhost
       GF_AUTH_ANONYMOUS_ENABLED: "true"
