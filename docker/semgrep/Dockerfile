@@ -1,6 +1,6 @@
 # Stage 1: fetch community rules at BUILD time from a pinned commit. They are never committed or
 # redistributed: Semgrep Rules License v1.0 allows internal business use only (ADR-006).
-FROM alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc AS rules
+FROM alpine:3.24@sha256:f59abe656b692d901e184be3445e084786602108599d2a51d229c0f5a48c71bf AS rules
 ARG RULES_REV=a84ff9cc2453ca91d581380de4b8b3f272f6f4be
 RUN apk add --no-cache git \
  && git clone -q https://github.com/semgrep/semgrep-rules /src \
@@ -10,12 +10,12 @@ RUN apk add --no-cache git \
  && cp /src/LICENSE /rules/LICENSE
 
 # Stage 2: one file per language instead of hundreds (see merge-rules.py: ~25 s less start-up per scan).
-FROM semgrep/semgrep:1.90.0@sha256:7b625711ba9b6d1a543e308967b18c01b59932490a5536a06422666474bf6ee4 AS merged
+FROM semgrep/semgrep:1.184.0@sha256:cc1b68266f267878b39739373ea9985b9a78e5d64497dd875c8de100b22695ed AS merged
 COPY --from=rules /rules /rules-src
 COPY merge-rules.py /merge-rules.py
 RUN python3 /merge-rules.py /rules-src /rules
 
-FROM semgrep/semgrep:1.90.0@sha256:7b625711ba9b6d1a543e308967b18c01b59932490a5536a06422666474bf6ee4
+FROM semgrep/semgrep:1.184.0@sha256:cc1b68266f267878b39739373ea9985b9a78e5d64497dd875c8de100b22695ed
 COPY --from=merged /rules /rules
 COPY --from=rules /rules/LICENSE /rules/LICENSE
 RUN adduser -D -u 10001 scanner
